@@ -29,6 +29,20 @@
             <version>${ktor.version}</version>
         </dependency>
 
+        <!-- metrics -->
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-metrics-micrometer</artifactId>
+            <version>${ktor.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>1.6.4</version>
+        </dependency>
+
+
+
         <!-- logging -->
         <dependency>
             <groupId>net.logstash.logback</groupId>

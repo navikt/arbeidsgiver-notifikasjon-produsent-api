@@ -12,3 +12,6 @@ spec:
     path: /internal/alive
   readiness:
     path: /internal/ready
+  prometheus:
+    enable: true
+    path: /internal/metrics
