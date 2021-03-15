@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: ghcr.io/navikt/${{ github.repository }}
+  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   build:
