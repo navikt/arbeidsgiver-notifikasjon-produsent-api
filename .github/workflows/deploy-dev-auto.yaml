@@ -1,4 +1,4 @@
-name: experiment published
+name: deploy dev auto
 on:
   workflow_run:
     workflows: [build]
@@ -11,4 +11,4 @@ jobs:
       - run: |
           echo action: ${{ github.action }}
           echo actor: ${{ github.actor }}
-          echo event: ${{ github.event }}
+          echo event: ${{ toJSON(github.event) }}
