@@ -1,0 +1,21 @@
+name: deploy dev
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Tag of image to deploy to dev'
+        required: true
+
+env:
+  IMAGE: ghcr.io/navikt/${{ github.repository }}/${{ github.event.inputs.image-tag }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: dev-gcp
+          RESOURCE: config/nais-application.yaml

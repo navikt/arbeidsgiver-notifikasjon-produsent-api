@@ -1,0 +1,30 @@
+name: build
+on:
+  push:
+    paths: ["image/**/*"]
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/navikt/${{ github.repository }}
+
+jobs:
+  build:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '15.x'
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+      - run: mvn -B -DskipTests package
+        working-directory: app
+      - run: |
+          docker login ghcr.io -u ${{ secrets.GHCR_PUSH_USERNAME}} -p ${{ secrets.GHCR_PUSH_TOKEN }}
+          docker build --tag ${IMAGE}:${GITHUB_RUN_NUMBER} .
+          docker push ${IMAGE}:${GITHUB_RUN_NUMBER}
+        working-directory: app
