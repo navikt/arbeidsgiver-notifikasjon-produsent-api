@@ -1,0 +1,11 @@
+GET localhost:8080/internal/alive
+
+###
+GET localhost:8080/internal/ready
+
+###
+GET localhost:8080/internal/alive
+X-Correlation-id: 123
+
+###
+GET localhost:8080/internal/metrics
