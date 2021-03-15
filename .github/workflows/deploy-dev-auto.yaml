@@ -1,0 +1,14 @@
+name: experiment published
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo action: ${{ github.action }}
+          echo actor: ${{ github.actor }}
+          echo event: ${{ github.event }}
