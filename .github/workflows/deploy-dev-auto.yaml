@@ -4,14 +4,16 @@ on:
     workflows: [build]
     types: [completed]
 
+env:
+  IMAGE: ghcr.io/${{ github.repository }}:${{ github.event.workflow_run.run_number }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo action: ${{ github.action }}
-          echo actor: ${{ github.actor }}
-          echo event:
-          cat <<EOF
-          ${{ toJSON(github.event) }}
-          EOF
+      - uses: actions/checkout@v1
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: dev-gcp
+          RESOURCE: config/nais-application.yaml
