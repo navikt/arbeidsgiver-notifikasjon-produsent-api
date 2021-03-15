@@ -11,11 +11,11 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
-    val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+    val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     embeddedServer(Netty, port = 8080) {
         install(MicrometerMetrics) {
-            this.registry = registry
+            registry = meterRegistry
         }
 
         routing {
@@ -28,7 +28,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
                 }
 
                 get("metrics") {
-
+                    call.respond(meterRegistry.scrape())
                 }
             }
         }
