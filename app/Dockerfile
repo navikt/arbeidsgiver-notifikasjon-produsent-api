@@ -1,2 +1,2 @@
 FROM navikt/java:15
-COPY target/*.jar app.jar
+COPY target/*-jar-with-dependencies.jar app.jar

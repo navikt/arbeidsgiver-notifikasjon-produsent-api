@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       image-tag:
-        description: 'Tag of image to deploy to dev'
+        description: 'Build run nummer to deploy (or image tag name)'
         required: true
 
 env:
