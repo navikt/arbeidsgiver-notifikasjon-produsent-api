@@ -8,3 +8,7 @@ metadata:
     subteam: msa
 spec:
   image: {{image}}
+  liveness:
+    path: /internal/alive
+  readiness:
+    path: /internal/ready
