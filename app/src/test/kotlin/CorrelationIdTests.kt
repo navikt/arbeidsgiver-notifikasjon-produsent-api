@@ -1,69 +1,71 @@
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.core.spec.style.scopes.GivenScope
+import io.kotest.core.TestConfiguration
+import io.kotest.core.datatest.forAll
+import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.module
+import kotlin.reflect.KProperty
 
 
-class CorrelationIdTests : BehaviorSpec({
+class TestApplicationEngineDelegate(context: TestConfiguration) {
     lateinit var engine: TestApplicationEngine
 
-    fun responseOfGet(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse
-        = engine.handleRequest(HttpMethod.Get, uri, setup).response
-
-
-    aroundTest { test ->
-        engine = TestApplicationEngine(createTestEnvironment())
-        engine.start()
-        try {
-            engine.run {
-                application.module()
-                val (arg, body) = test
-                body.invoke(arg)
-            }
-        } finally {
-            engine.stop(0L, 0L)
-        }
-    }
-
-    given("no correlation id") {
-        `when`("when calling endpoing") {
-            val response = responseOfGet("/internal/alive")
-            then("I should receive one") {
-                response.headers[HttpHeaders.XCorrelationId] shouldNot beBlank()
+    init {
+        context.aroundTest { test ->
+            engine = TestApplicationEngine(createTestEnvironment())
+            engine.start()
+            try {
+                engine.run {
+                    application.module()
+                    val (arg, body) = test
+                    body.invoke(arg)
+                }
+            } finally {
+                engine.stop(0L, 0L)
             }
         }
     }
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): TestApplicationEngine {
+        return engine
+    }
+}
 
-    given("a correlation id") {
-        val id = "1234"
+fun TestConfiguration.ktorEngine() = TestApplicationEngineDelegate(this)
 
-        suspend fun GivenScope.worksFor(headerName: String) {
-            `when`("passed as $headerName") {
-                val response = responseOfGet("/internal/alive") {
-                    addHeader(headerName, id)
-                }
-                then("it should be returned") {
-                    response.headers[HttpHeaders.XCorrelationId] shouldBe id
-                }
+class CorrelationIdTest : DescribeSpec({
+    val engine by ktorEngine()
+
+    fun get(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse
+            = engine.handleRequest(HttpMethod.Get, uri, setup).response
+
+    fun getWithHeader(header: Pair<String, String>? = null): String {
+        return get("/internal/alive") {
+            if (header != null) {
+                this.addHeader(header.first, header.second)
+            }
+        }
+            .headers[HttpHeaders.XCorrelationId]!!
+    }
+
+    describe("correlation id handling") {
+        context("when no callid given") {
+            it("generates callid for us") {
+               getWithHeader() shouldNot beBlank()
             }
         }
 
-        worksFor(HttpHeaders.XCorrelationId)
-        worksFor("callid")
-        worksFor("CALLID")
-        worksFor("CALL-ID")
+        context("with callid") {
+            val callid = "1234"
 
-        `when`("passed as foobar") {
-            val response = responseOfGet("/internal/alive") {
-                addHeader("foobar", id)
-            }
-            then("a random one should be generated") {
-                response.headers[HttpHeaders.XCorrelationId] shouldNotBe id
+            context("with header name:") {
+                forAll("callid", "CALLID", "call-id") { headerName ->
+                    it("it replies with callid: $callid from $headerName") {
+                        getWithHeader(headerName to callid) shouldBe callid
+                    }
+                }
             }
         }
     }

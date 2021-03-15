@@ -29,6 +29,11 @@
             <artifactId>ktor-server-netty</artifactId>
             <version>${ktor.version}</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.apurebase</groupId>-->
+<!--            <artifactId>kgraphql-ktor</artifactId>-->
+<!--            <version>0.17.3</version>-->
+<!--        </dependency>-->
 
         <!-- metrics -->
         <dependency>
@@ -142,4 +147,11 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <repository> <!-- required for kgraphql -->
+            <id>jcenter</id>
+            <url>https://jcenter.bintray.com/</url>
+        </repository>
+    </repositories>
 </project>
