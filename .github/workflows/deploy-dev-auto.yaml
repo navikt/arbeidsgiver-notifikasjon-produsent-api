@@ -11,4 +11,7 @@ jobs:
       - run: |
           echo action: ${{ github.action }}
           echo actor: ${{ github.actor }}
-          echo event: ${{ toJSON(github.event) }}
+          echo event:
+          cat <<EOF
+          ${{ toJSON(github.event) }}
+          EOF
