@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
@@ -13,10 +14,10 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         routing {
             route("internal") {
                 get ("alive") {
-                    call.respond(200)
+                    call.respond(HttpStatusCode.OK)
                 }
                 get ("ready") {
-                    call.respond(200)
+                    call.respond(HttpStatusCode.OK)
                 }
             }
         }
