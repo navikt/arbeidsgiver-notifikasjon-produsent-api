@@ -1,7 +1,7 @@
 name: build
 on:
   push:
-    paths: ["image/**/*"]
+    paths: ["app/**/*"]
   workflow_dispatch:
 
 env:
