@@ -45,13 +45,9 @@ data class GraphQLJsonBody(
 data class World(val greeting: String)
 data class Addition(val sum: Int)
 
-const val clientId = /* System.getenv("AZURE_APP_CLIENT_ID") ?: */
-    "produsent-api"
-const val jwksUri = /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") ?: */
-    "https://fakedings.dev-gcp.nais.io/default/jwks"
-const val issuer = /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") ?:  */
-    "https://fakedings.dev-gcp.nais.io/fake"
-
+val clientId = System.getenv("AZURE_APP_CLIENT_ID") ?: "produsent-api"
+val jwksUri = System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") ?: "https://fakedings.dev-gcp.nais.io/default/jwks"
+val issuer = System.getenv("AZURE_OPENID_CONFIG_ISSUER") ?: "https://fakedings.dev-gcp.nais.io/fake"
 
 fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
     val worldFetcher = DataFetcher {

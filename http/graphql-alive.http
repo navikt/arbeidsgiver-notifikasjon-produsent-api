@@ -1,5 +1,6 @@
 POST http://localhost:8080/api/graphql
 content-type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
 "query": "query { world { greeeeeting } }"
@@ -8,6 +9,7 @@ content-type: application/json
 ###
 POST http://localhost:8080/api/graphql
 content-type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "query": "query { addition(a: 1, b: 2) { sum } }"
@@ -16,6 +18,7 @@ content-type: application/json
 ###
 POST http://localhost:8080/api/graphql
 content-type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "query": " { __schema { queryType { name } } }"

@@ -4,8 +4,12 @@ Content-Type: application/x-www-form-urlencoded
 
 sub=someproducer&aud=produsent-api
 
+> {%
+    client.global.set("auth_token", response.body);
+%}
+
 ###
 GET https://arbeidsgiver-notifikasjon-produsent-api.dev.nav.no/api/ide
-Authorization: Bearer <insert token from above here>
+Authorization: Bearer {{auth_token}}
 
 
