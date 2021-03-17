@@ -8,6 +8,8 @@ metadata:
     subteam: msa
 spec:
   image: {{image}}
+  ingresses:
+    - https://arbeidsgiver-notifikasjon-produsent-api.dev.nav.no/
   liveness:
     path: /internal/alive
   readiness:
