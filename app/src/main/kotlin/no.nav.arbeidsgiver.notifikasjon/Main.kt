@@ -59,11 +59,22 @@ data class AzureAdOpenIdConfiguration(
     val authorization_endpoint: String
 )
 
-val clientId = System.getenv("AZURE_APP_CLIENT_ID")
-val wellKnownUrl = System.getenv("AZURE_APP_WELL_KNOWN_URL")
-val jwksUri = System.getenv("AZURE_OPENID_CONFIG_JWKS_URI")
+val client = HttpClient(Apache) {
+    install(JsonFeature) {
+        serializer = JacksonSerializer {
+            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        }
+    }
+    engine {
+        customizeClient { setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault())) }
+    }
+}
+
+val clientId = System.getenv("AZURE_APP_CLIENT_ID") ?: "mock"
+val wellKnownUrl = System.getenv("AZURE_APP_WELL_KNOWN_URL") ?: "mock"
+val jwksUri = System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") ?: "mock"
 val openIdConfiguration: AzureAdOpenIdConfiguration = runBlocking {
-     client.get(wellKnownUrl)
+    client.get(wellKnownUrl)
 }
 
 fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
@@ -107,16 +118,6 @@ fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
     }
 }
 
-val client = HttpClient(Apache){
-    install(JsonFeature) {
-        serializer = JacksonSerializer {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        }
-    }
-    engine {
-        customizeClient { setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault())) }
-    }
-}
 
 fun Application.module() {
     val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
@@ -166,8 +167,8 @@ fun Application.module() {
             log.warn("unhandle exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
-                "error" to "unexpected error",
-            )
+                    "error" to "unexpected error",
+                )
             )
         }
     }
