@@ -3,19 +3,12 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.core.JsonProcessingException
 import graphql.ExecutionInput.newExecutionInput
 import graphql.GraphQL.newGraphQL
-import graphql.GraphQLError
-import graphql.Scalars.GraphQLInt
-import graphql.Scalars.GraphQLString
 import graphql.schema.DataFetcher
 import graphql.schema.FieldCoordinates.coordinates
-import graphql.schema.GraphQLArgument.newArgument
 import graphql.schema.GraphQLCodeRegistry.newCodeRegistry
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldDefinition.newFieldDefinition
-import graphql.schema.GraphQLNonNull
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLObjectType.newObject
-import graphql.schema.GraphQLSchema.newSchema
+import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.SchemaGenerator
+import graphql.schema.idl.SchemaParser
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
@@ -46,39 +39,9 @@ data class GraphQLJsonBody(
 data class World(val greeting: String)
 data class Addition(val sum: Int)
 
-fun objectType(typeName: String, setup: GraphQLObjectType.Builder.() -> Unit): GraphQLObjectType =
-    newObject().apply{
-        name(typeName)
-        setup()
-    }.build()
-
-fun withField(fieldName: String, setup: GraphQLFieldDefinition.Builder.() -> Unit): GraphQLFieldDefinition =
-    newFieldDefinition()
-        .apply {
-            name(fieldName)
-            setup()
-        }.build()
-
 fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
-    val worldType = objectType("World") {
-        description("A type for testing")
-        field(withField("greeting") {
-            type(GraphQLString)
-        })
-    }
-
     val worldFetcher = DataFetcher {
         World("Hello world!")
-    }
-
-
-    val additionType = objectType("Addition") {
-        description("Addition table")
-        field(newFieldDefinition()
-            .name("sum")
-            .type(GraphQLNonNull(GraphQLInt))
-            .build()
-        )
     }
 
     val additionFetcher = DataFetcher {
@@ -87,37 +50,15 @@ fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
         Addition(a + b)
     }
 
-    val queryType = newObject()
-        .name("Query")
-        .description("Root")
-        .field(newFieldDefinition()
-            .name("world")
-            .type(worldType)
-            .build())
-        .field(newFieldDefinition()
-            .name("addition")
-            .argument(newArgument()
-                .name("a")
-                .type(GraphQLNonNull(GraphQLInt))
-                .build())
-            .argument(newArgument()
-                .name("b")
-                .type(GraphQLNonNull(GraphQLInt))
-                .build())
-            .type(additionType)
-            .build())
-        .build()
-
-
     val codeRegistry = newCodeRegistry()
         .dataFetcher(coordinates("Query", "world"), worldFetcher)
         .dataFetcher(coordinates("Query", "addition"), additionFetcher)
         .build()
 
-    val schema = newSchema()
-        .query(queryType)
-        .codeRegistry(codeRegistry)
-        .build()
+    val schema = SchemaGenerator().makeExecutableSchema(
+            SchemaParser().parse({}.javaClass.getResourceAsStream("/schema.graphqls")),
+            RuntimeWiring.newRuntimeWiring().codeRegistry(codeRegistry).build()
+    )
 
     val graphql = newGraphQL(schema).build()
 

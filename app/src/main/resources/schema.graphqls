@@ -1,0 +1,18 @@
+"Query Root"
+type Query {
+    world: World!
+    addition(a: Int!, b: Int!): AdditionResult!
+}
+
+"World type"
+type World {
+    """
+    Description for field
+    Supports **multi-line** description for your [API](http://example.com)!
+    """
+    greeting: String!
+}
+
+type AdditionResult {
+    sum: Int!
+}
