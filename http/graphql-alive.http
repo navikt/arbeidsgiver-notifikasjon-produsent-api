@@ -1,0 +1,22 @@
+POST http://localhost:8080/api/graphql
+content-type: application/json
+
+{
+"query": "query { world { greeeeeting } }"
+}
+
+###
+POST http://localhost:8080/api/graphql
+content-type: application/json
+
+{
+  "query": "query { addition(a: 1, b: 2) { sum } }"
+}
+
+###
+POST http://localhost:8080/api/graphql
+content-type: application/json
+
+{
+  "query": " { __schema { queryType { name } } }"
+}

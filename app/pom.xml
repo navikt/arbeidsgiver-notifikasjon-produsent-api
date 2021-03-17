@@ -24,16 +24,26 @@
             <artifactId>kotlin-stdlib</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
+
+
+        <!-- http/ktor-server -->
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-server-netty</artifactId>
             <version>${ktor.version}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.apurebase</groupId>-->
-<!--            <artifactId>kgraphql-ktor</artifactId>-->
-<!--            <version>0.17.3</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-jackson</artifactId>
+            <version>${ktor.version}</version>
+        </dependency>
+
+        <!-- graphql -->
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java</artifactId>
+            <version>16.2</version>
+        </dependency>
 
         <!-- metrics -->
         <dependency>
@@ -94,11 +104,6 @@
             <version>${ktor.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-jackson</artifactId>
-            <version>${ktor.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -157,11 +162,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <repositories>
-        <repository> <!-- required for kgraphql -->
-            <id>jcenter</id>
-            <url>https://jcenter.bintray.com/</url>
-        </repository>
-    </repositories>
 </project>

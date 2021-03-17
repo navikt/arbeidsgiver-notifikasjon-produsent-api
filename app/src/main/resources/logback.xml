@@ -1,7 +1,10 @@
 <configuration scan="true">
     <appender name="maskedJsonConsoleAppender" class="no.nav.common.log.MaskingAppender">
         <appender name="consoleJsonAppender" class="ch.qos.logback.core.ConsoleAppender">
-            <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+<!--            <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>-->
+            <encoder>
+                <pattern>%d %-5level [%thread] %logger{0}: %msg%n</pattern>
+            </encoder>
         </appender>
     </appender>
     <root level="INFO">
