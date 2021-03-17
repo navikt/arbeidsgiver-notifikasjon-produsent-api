@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.auth0.jwk.JwkProviderBuilder
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import graphql.ExecutionInput.newExecutionInput
@@ -18,6 +17,7 @@ import io.ktor.auth.jwt.*
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
+import io.ktor.client.request.*
 import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.jackson.*
@@ -29,8 +29,6 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runBlocking
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.slf4j.event.Level
@@ -65,7 +63,7 @@ val clientId = System.getenv("AZURE_APP_CLIENT_ID")
 val wellKnownUrl = System.getenv("AZURE_APP_WELL_KNOWN_URL")
 val jwksUri = System.getenv("AZURE_OPENID_CONFIG_JWKS_URI")
 val openIdConfiguration: AzureAdOpenIdConfiguration = runBlocking {
-     client.get<AzureAdOpenIdConfiguration>(wellKnownUrl)
+     client.get(wellKnownUrl)
 }
 
 fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
