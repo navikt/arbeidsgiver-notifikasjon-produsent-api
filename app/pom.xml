@@ -25,20 +25,6 @@
             <version>${kotlin.version}</version>
         </dependency>
 
-        <!-- http/ktor-client -->
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-client-apache</artifactId>
-            <version>${ktor.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-client-jackson</artifactId>
-            <version>${ktor.version}</version>
-        </dependency>
-
-
-
         <!-- http/ktor-server -->
         <dependency>
             <groupId>io.ktor</groupId>

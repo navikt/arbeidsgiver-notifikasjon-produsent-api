@@ -14,10 +14,6 @@ import graphql.schema.idl.SchemaParser
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
-import io.ktor.client.*
-import io.ktor.client.engine.apache.*
-import io.ktor.client.features.json.*
-import io.ktor.client.request.*
 import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.jackson.*
@@ -29,10 +25,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import kotlinx.coroutines.runBlocking
-import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.slf4j.event.Level
-import java.net.ProxySelector
 import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -52,30 +45,13 @@ data class GraphQLJsonBody(
 data class World(val greeting: String)
 data class Addition(val sum: Int)
 
-data class AzureAdOpenIdConfiguration(
-    val jwks_uri: String,
-    val issuer: String,
-    val token_endpoint: String,
-    val authorization_endpoint: String
-)
+const val clientId = /* System.getenv("AZURE_APP_CLIENT_ID") ?: */
+    "produsent-api"
+const val jwksUri = /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") ?: */
+    "https://fakedings.dev-gcp.nais.io/default/jwks"
+const val issuer = /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") ?:  */
+    "https://fakedings.dev-gcp.nais.io/fake"
 
-val client = HttpClient(Apache) {
-    install(JsonFeature) {
-        serializer = JacksonSerializer {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        }
-    }
-    engine {
-        customizeClient { setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault())) }
-    }
-}
-
-val clientId = System.getenv("AZURE_APP_CLIENT_ID") ?: "mock"
-val wellKnownUrl = System.getenv("AZURE_APP_WELL_KNOWN_URL") ?: "mock"
-val jwksUri = System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") ?: "mock"
-val openIdConfiguration: AzureAdOpenIdConfiguration = runBlocking {
-    client.get(wellKnownUrl)
-}
 
 fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
     val worldFetcher = DataFetcher {
@@ -117,7 +93,6 @@ fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
         ).toSpecification()
     }
 }
-
 
 fun Application.module() {
     val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
@@ -184,7 +159,7 @@ fun Application.module() {
 
     install(Authentication) {
         jwt {
-            verifier(jwkProvider, openIdConfiguration.issuer)
+            verifier(jwkProvider, issuer)
             validate { credentials ->
                 try {
                     requireNotNull(credentials.payload.audience) {
