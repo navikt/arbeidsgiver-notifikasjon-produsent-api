@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.auth0.jwk.JwkProviderBuilder
-import com.auth0.jwt.JWT
 import com.fasterxml.jackson.core.JsonProcessingException
 import graphql.ExecutionInput.newExecutionInput
 import graphql.GraphQL.newGraphQL
@@ -44,10 +43,6 @@ data class GraphQLJsonBody(
 
 data class World(val greeting: String)
 data class Addition(val sum: Int)
-
-val clientId = System.getenv("AZURE_APP_CLIENT_ID") ?: "produsent-api"
-val jwksUri = System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") ?: "https://fakedings.dev-gcp.nais.io/default/jwks"
-val issuer = System.getenv("AZURE_OPENID_CONFIG_ISSUER") ?: "https://fakedings.dev-gcp.nais.io/fake"
 
 fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
     val worldFetcher = DataFetcher {
@@ -150,6 +145,9 @@ fun Application.module() {
 
     install(Authentication) {
         jwt {
+            val clientId = /* System.getenv("AZURE_APP_CLIENT_ID") */ "produsent-api"
+            val jwksUri = /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */  "https://fakedings.dev-gcp.nais.io/default/jwks"
+            val issuer = /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */ "https://fakedings.dev-gcp.nais.io/fake"
             val jwkProvider = JwkProviderBuilder(URL(jwksUri))
                 .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
                 .rateLimited(10, 1, TimeUnit.MINUTES) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
