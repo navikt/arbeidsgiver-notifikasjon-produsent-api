@@ -21,3 +21,7 @@ spec:
     application:
       enabled: true
       tenant: trygdeetaten.no
+  accessPolicy:
+    outbound:
+      external:
+        - host: fakedings.dev-gcp.nais.io
