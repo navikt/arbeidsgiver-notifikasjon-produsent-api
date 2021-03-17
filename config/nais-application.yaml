@@ -15,3 +15,7 @@ spec:
   prometheus:
     enable: true
     path: /internal/metrics
+  azure:
+    application:
+      enabled: true
+      tenant: trygdeetaten.no
