@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
+import io.ktor.jackson.*
 import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -56,6 +57,10 @@ fun Application.module() {
             call.request.path()
         }
         callIdMdc("x_correlation_id")
+    }
+
+    install(ContentNegotiation) {
+        jackson()
     }
 
     install(StatusPages) {
