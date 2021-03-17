@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import io.kotest.core.TestConfiguration
+import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlin.reflect.KProperty
 
@@ -28,3 +29,15 @@ class TestApplicationEngineDelegate(context: TestConfiguration) {
 }
 
 fun TestConfiguration.ktorEngine() = TestApplicationEngineDelegate(this)
+
+fun TestApplicationEngine.get(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
+    this.handleRequest(HttpMethod.Get, uri, setup).response
+
+fun TestApplicationEngine.getWithHeader(uri: String, vararg headers: Pair<String, String>): TestApplicationResponse {
+    return this.get(uri) {
+        headers.forEach {
+            addHeader(it.first, it.second)
+        }
+    }
+}
+
