@@ -2,6 +2,17 @@
 type Query {
     world: World!
     addition(a: Int!, b: Int!): AdditionResult!
+    beskjed (id: String!) : Beskjed
+    beskjeder : [Beskjed!]!
+}
+
+type Mutation{
+    increment: Counter!
+    nyBeskjed(nyBeskjed: InputBeskjed!): Beskjed!
+}
+
+type Counter{
+    count: Int!
 }
 
 "World type"
@@ -15,4 +26,13 @@ type World {
 
 type AdditionResult {
     sum: Int!
+}
+
+type Beskjed {
+    id: String!
+    tekst: String!
+}
+
+input InputBeskjed{
+    tekst:String!
 }

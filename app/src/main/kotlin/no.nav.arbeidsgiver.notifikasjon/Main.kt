@@ -2,9 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import graphql.ExecutionInput.newExecutionInput
 import graphql.GraphQL.newGraphQL
 import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
 import graphql.schema.FieldCoordinates.coordinates
 import graphql.schema.GraphQLCodeRegistry.newCodeRegistry
 import graphql.schema.idl.RuntimeWiring
@@ -28,6 +32,8 @@ import org.slf4j.event.Level
 import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.LinkedHashMap
+import kotlin.reflect.typeOf
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     embeddedServer(Netty, port = 8080) {
@@ -43,21 +49,59 @@ data class GraphQLJsonBody(
 
 data class World(val greeting: String)
 data class Addition(val sum: Int)
+var counter = 0
+data class Counter(val count: Int)
+data class Beskjed(val id:String, val tekst:String)
+data class InputBeskjed(val tekst: String)
+
+val objectMapper =  jacksonObjectMapper()
+
+inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T{
+    return objectMapper.convertValue(this.getArgument(name))
+}
+
+val beskjedRepo = mutableMapOf<String, Beskjed>()
 
 fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
-    val worldFetcher = DataFetcher {
+    val queryWorld = DataFetcher {
         World("Hello world!")
     }
 
-    val additionFetcher = DataFetcher {
+    val queryAddition = DataFetcher {
         val a = it.getArgument<Int>("a")
         val b = it.getArgument<Int>("b")
         Addition(a + b)
     }
 
+    val mutationIncrement = DataFetcher {
+        counter +=1
+        Counter(counter)
+    }
+
+    val mutationNyBeskjed = DataFetcher {
+        val nyBeskjed= it.getTypedArgument<InputBeskjed>("nyBeskjed")
+        val id = UUID.randomUUID().toString()
+        val b = Beskjed( id,nyBeskjed.tekst)
+        beskjedRepo[id] = b
+        b
+    }
+
+    val queryBeskjeder = DataFetcher {
+        beskjedRepo.values
+    }
+    val queryBeskjed = DataFetcher {
+        val id = it.getArgument<String>("id")
+        beskjedRepo[id]
+    }
+
+
     val codeRegistry = newCodeRegistry()
-        .dataFetcher(coordinates("Query", "world"), worldFetcher)
-        .dataFetcher(coordinates("Query", "addition"), additionFetcher)
+        .dataFetcher(coordinates("Query", "world"), queryWorld)
+        .dataFetcher(coordinates("Query", "addition"), queryAddition)
+        .dataFetcher(coordinates("Mutation", "increment"), mutationIncrement)
+        .dataFetcher(coordinates("Mutation", "nyBeskjed"), mutationNyBeskjed)
+        .dataFetcher(coordinates("Query", "beskjeder"),queryBeskjeder)
+        .dataFetcher(coordinates("Query", "beskjed"),queryBeskjed)
         .build()
 
     val schema = SchemaGenerator().makeExecutableSchema(
@@ -183,7 +227,6 @@ fun Application.module() {
                 call.respond(meterRegistry.scrape())
             }
         }
-        authenticate {
             route("api") {
                 get("ide") {
                     call.respondBytes(
@@ -232,5 +275,4 @@ fun Application.module() {
                 }
             }
         }
-    }
 }
