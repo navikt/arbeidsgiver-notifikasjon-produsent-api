@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import io.kotest.core.TestConfiguration
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.mockk.spyk
 import kotlin.reflect.KProperty
 
 class TestApplicationEngineDelegate(context: TestConfiguration) {
@@ -10,7 +11,9 @@ class TestApplicationEngineDelegate(context: TestConfiguration) {
 
     init {
         context.aroundTest { test ->
-            engine = TestApplicationEngine(createTestEnvironment())
+            engine = TestApplicationEngine(createTestEnvironment() {
+                log = spyk(log)
+            })
             engine.start()
             try {
                 engine.run {

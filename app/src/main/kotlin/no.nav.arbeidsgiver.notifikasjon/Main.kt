@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import graphql.ExecutionInput.newExecutionInput
@@ -32,8 +31,6 @@ import org.slf4j.event.Level
 import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.collections.LinkedHashMap
-import kotlin.reflect.typeOf
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     embeddedServer(Netty, port = 8080) {
@@ -168,18 +165,29 @@ fun Application.module() {
     }
 
     install(StatusPages) {
-        exception<Throwable> { ex ->
-            if (ex is JsonProcessingException) {
-                // ikke logg json-teksten som feilet.
-                ex.clearLocation()
-            }
+        exception<JsonProcessingException> { ex ->
+            ex.clearLocation()
 
-            log.warn("unhandle exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
                 )
             )
+        }
+
+        exception<RuntimeException> { ex ->
+            log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            call.respond(
+                HttpStatusCode.InternalServerError, mapOf(
+                    "error" to "unexpected error",
+                )
+            )
+        }
+
+        exception<Throwable> { ex ->
+            log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            throw ex
         }
     }
 
