@@ -14,7 +14,7 @@ import io.ktor.server.testing.*
 import io.mockk.verify
 
 
-class StatusPageTest : DescribeSpec({
+class StatusPageTests : DescribeSpec({
     val engine by ktorEngine()
 
     describe("status page handling") {

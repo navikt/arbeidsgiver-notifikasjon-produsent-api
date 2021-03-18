@@ -1,13 +1,13 @@
+package no.nav.arbeidsgiver.notifikasjon
+
 import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
-import no.nav.arbeidsgiver.notifikasjon.getWithHeader
-import no.nav.arbeidsgiver.notifikasjon.ktorEngine
 
-class CorrelationIdTest : DescribeSpec({
+class CorrelationIdTests : DescribeSpec({
     val engine by ktorEngine()
 
     describe("correlation id handling") {
