@@ -34,7 +34,7 @@ class GraphQLTests : DescribeSpec({
                 addHeader(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
                 addHeader(HttpHeaders.ContentType, "application/json")
                 addHeader(HttpHeaders.Accept, "application/json")
-                setJsonBody(GraphQLJsonBody(
+                setJsonBody(GraphQLRequest(
                         query = query
                 ))
             }.response
