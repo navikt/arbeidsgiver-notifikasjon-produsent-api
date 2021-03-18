@@ -126,7 +126,16 @@ fun graphQLExecuter(): (request: GraphQLJsonBody) -> Any {
     }
 }
 
-fun Application.module() {
+fun JWTAuthenticationProvider.Configuration.verifierConfigurer(jwksUri: String, issuer: String) {
+    verifier(JwkProviderBuilder(URL(jwksUri))
+            .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
+            .rateLimited(10, 1, TimeUnit.MINUTES) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
+            .build(), issuer)
+}
+
+fun Application.module(
+        verifierConfigurer: JWTAuthenticationProvider.Configuration.(jwksUri: String, issuer: String) -> Unit = JWTAuthenticationProvider.Configuration::verifierConfigurer
+) {
     val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     val graphql = graphQLExecuter()
@@ -200,12 +209,12 @@ fun Application.module() {
             val clientId = /* System.getenv("AZURE_APP_CLIENT_ID") */ "produsent-api"
             val jwksUri = /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */  "https://fakedings.dev-gcp.nais.io/default/jwks"
             val issuer = /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */ "https://fakedings.dev-gcp.nais.io/fake"
-            val jwkProvider = JwkProviderBuilder(URL(jwksUri))
-                .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
-                .rateLimited(10, 1, TimeUnit.MINUTES) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
-                .build()
 
-            verifier(jwkProvider, issuer)
+            verifierConfigurer(
+                    jwksUri = jwksUri,
+                    issuer = issuer
+            )
+
             validate { credentials ->
                 try {
                     requireNotNull(credentials.payload.audience) {
