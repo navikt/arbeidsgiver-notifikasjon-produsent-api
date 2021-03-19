@@ -11,6 +11,7 @@ import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
+import org.apache.kafka.clients.producer.Producer
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -46,10 +47,11 @@ data class BeskjedResultat(
     val id: String
 )
 
-val mutationNyBeskjed = DataFetcher {
-    val nyBeskjed= it.getTypedArgument<BeskjedInput>("nyBeskjed")
+private fun nyBeskjedMutation(kafkaProducer: Producer<Key, Value>) = DataFetcher {
+    val nyBeskjed = it.getTypedArgument<BeskjedInput>("nyBeskjed")
     val id = UUID.randomUUID().toString()
     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
+    kafkaProducer.sendEvent(Key(id), Value(nyBeskjed.tekst))
     BeskjedResultat(id)
 }
 
@@ -67,9 +69,11 @@ private fun GraphQLCodeRegistry.Builder.dataFetcher(
     return this.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), dataFetcher)
 }
 
-fun createGraphQL(): GraphQL {
+fun createGraphQL(
+    kafkaProducer: Producer<Key, Value> = createProducer()
+): GraphQL {
     val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
-        .dataFetcher("Mutation", "nyBeskjed", mutationNyBeskjed)
+        .dataFetcher("Mutation", "nyBeskjed", nyBeskjedMutation(kafkaProducer))
         .build()
 
     val typeDefinitionRegistry = SchemaParser().parse({}.javaClass.getResourceAsStream("/schema.graphqls"))

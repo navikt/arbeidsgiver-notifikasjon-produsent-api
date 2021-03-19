@@ -7,7 +7,6 @@ import org.apache.kafka.clients.producer.ProducerConfig.*
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.config.SslConfigs.*
 import org.apache.kafka.common.serialization.Serializer
-import org.slf4j.LoggerFactory
 import java.lang.System.getenv
 import java.util.*
 
@@ -28,7 +27,7 @@ interface JsonSerializer<T>: Serializer<T> {
 class KeySerializer: JsonSerializer<Key> {}
 class ValueSerializer: JsonSerializer<Value> {}
 
-private fun createProducer(): Producer<Key, Value> {
+fun createProducer(): Producer<Key, Value> {
     val props = Properties()
     props[BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: "localhost:9092"
     props[KEY_SERIALIZER_CLASS_CONFIG] = KeySerializer::class.java.canonicalName
@@ -42,24 +41,12 @@ private fun createProducer(): Producer<Key, Value> {
     return KafkaProducer(props)
 }
 
-object PRODUCER {
-    var logger = LoggerFactory.getLogger("PRODUCER")!!
-
-    var producer: Producer<Key, Value> = try {
-        createProducer()
-    } catch (e: Exception) {
-        logger.error("Konstruksjon av producer feilet", e)
-        throw e
-    }
-
-    fun send(key: Key, value: Value) {
-        logger.info("send({}, {})", key, value)
-        producer.send(
-            ProducerRecord(
-                "arbeidsgiver.notifikasjoner",
-                key,
-                value
-            )
+fun <K, V> Producer<K, V>.sendEvent(key: K, value: V)  {
+    this.send(
+        ProducerRecord(
+            "arbeidsgiver.notifikasjoner",
+            key,
+            value
         )
-    }
+    )
 }

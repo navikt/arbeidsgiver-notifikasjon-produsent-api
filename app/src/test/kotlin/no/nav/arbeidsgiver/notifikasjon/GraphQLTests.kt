@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.kotest.core.spec.style.DescribeSpec
@@ -11,6 +10,8 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.mockk.*
+import org.apache.kafka.clients.producer.Producer
 
 val objectMapper = jacksonObjectMapper()
 
@@ -50,6 +51,7 @@ class GraphQLTests : DescribeSpec({
         lateinit var query: String
 
         beforeEach {
+            mockkStatic(Producer<Key, Value>::sendEvent)
             response = engine.handleRequest(HttpMethod.Post, "/api/graphql") {
                 addHeader(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
                 addHeader(HttpHeaders.ContentType, "application/json")
@@ -59,7 +61,6 @@ class GraphQLTests : DescribeSpec({
                 ))
             }.response
         }
-
         context("Mutation.nyBeskjed") {
             query = """
                 mutation {
@@ -87,6 +88,11 @@ class GraphQLTests : DescribeSpec({
             }
             it("it returns id") {
                 response.getTypedContent<BeskjedResultat>("nyBeskjed").id shouldNot beBlank()
+            }
+            it("sends message to kafka") {
+                verify {
+                    any<Producer<Key, Value>>().sendEvent(any(), Value("hello world"))
+                }
             }
         }
     }

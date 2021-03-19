@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.core.JsonProcessingException
+import graphql.GraphQL
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
@@ -36,9 +37,10 @@ private val defaultVerifierConfig: JWTAuthConfig = {
     )
 }
 
-fun Application.module(verifierConfig: JWTAuthConfig = defaultVerifierConfig) {
-    val graphql = createGraphQL()
-
+fun Application.module(
+    verifierConfig: JWTAuthConfig = defaultVerifierConfig,
+    graphql: GraphQL = createGraphQL()
+) {
     install(MicrometerMetrics) {
         registry = meterRegistry
     }
