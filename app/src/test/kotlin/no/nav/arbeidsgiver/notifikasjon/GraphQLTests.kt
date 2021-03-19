@@ -48,24 +48,10 @@ class GraphQLTests : DescribeSpec({
             it("status is 200 OK") {
                 response.status() shouldBe HttpStatusCode.OK
             }
-            it("it returns greeting") {
+            /*it("it returns greeting") {
                 response.getTypedContent<World>("world").greeting shouldBe "Hello world!"
-            }
+            }*/
         }
-
-        context("Query.addition") {
-            query = """
-                { addition(a: 2, b: 2) { sum } }
-            """.trimIndent()
-
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-            it("it returns correct sum") {
-                response.getTypedContent<Addition>("addition").sum shouldBe 4
-            }
-        }
-
     }
 })
 

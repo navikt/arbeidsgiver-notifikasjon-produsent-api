@@ -1,38 +1,40 @@
 "Query Root"
 type Query {
-    world: World!
-    addition(a: Int!, b: Int!): AdditionResult!
-    beskjed (id: String!) : Beskjed
-    beskjeder : [Beskjed!]!
+    ping:String
 }
 
 type Mutation{
-    increment: Counter!
     nyBeskjed(nyBeskjed: InputBeskjed!): Beskjed!
 }
 
-type Counter{
-    count: Int!
-}
-
-"World type"
-type World {
-    """
-    Description for field
-    Supports **multi-line** description for your [API](http://example.com)!
-    """
-    greeting: String!
-}
-
-type AdditionResult {
-    sum: Int!
-}
 
 type Beskjed {
     id: String!
-    tekst: String!
 }
 
 input InputBeskjed{
+    merkelapp:String!
     tekst:String!
+    grupperingsid:String
+    lenke:String!
+    eksternid:String
+    mottaker: MottakerInput!
+    opprettetTidspunkt:String
+}
+
+"Må ha verdi i nøyaktig ett av disse feltene"
+input MottakerInput {
+    altinn:AltinnmottakerInput
+    fnr:FnrmottakerInput
+}
+
+input FnrmottakerInput {
+    fodselsnummer:String!
+    virksomhetsnummer:String!
+}
+
+input AltinnmottakerInput{
+    altinntjenesteKode:String!
+    altinntjenesteVersjon:String!
+    virksomhetsnummer:String!
 }

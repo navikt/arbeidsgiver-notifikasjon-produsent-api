@@ -11,59 +11,47 @@ import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
+import org.slf4j.LoggerFactory
 import java.util.*
 
+private val log = LoggerFactory.getLogger("graphql")!!
 
-/* Hello world */
-data class World(val greeting: String)
+data class FnrmottakerInput (
+    val fodselsnummer:String,
+    val virksomhetsnummer:String
+)
 
-val queryWorld = DataFetcher<World> {
-    World("Hello world!")
-}
+data class AltinnmottakerInput(
+    val altinntjenesteKode:String,
+    val altinntjenesteVersjon:String,
+    val virksomhetsnummer:String,
+)
 
 
-/* Addition */
-data class Addition(val sum: Int)
+data class MottakerInput(
+    val altinn:AltinnmottakerInput,
+    val fnr:FnrmottakerInput
+)
 
-val queryAddition = DataFetcher<Addition> {
-    val a = it.getArgument<Int>("a")
-    val b = it.getArgument<Int>("b")
-    Addition(a + b)
-}
-
-/* Counter */
-data class Counter(val count: Int)
-
-var counter = 0
-val mutationIncrement = DataFetcher<Counter> {
-    counter +=1
-    Counter(counter)
-}
-
+data class BeskjedInput(val merkelapp:String,
+                        val tekst: String,
+                        val grupperingsid:String,
+                        val lenke:String,
+                        val eksternid:String,
+                        val mottaker: MottakerInput,
+                        val opprettetTidspunkt:String
+)
 
 /* Beskjeder */
-data class Beskjed(val id: String, val tekst: String)
-data class InputBeskjed(val tekst: String)
+data class BeskjedResultat(val id: String
+                   )
 
-val beskjedRepo = mutableMapOf<String, Beskjed>()
-
-val mutationNyBeskjed = DataFetcher<Beskjed> {
-    val nyBeskjed= it.getTypedArgument<InputBeskjed>("nyBeskjed")
+val mutationNyBeskjed = DataFetcher<BeskjedResultat> {
+    val nyBeskjed= it.getTypedArgument<BeskjedInput>("nyBeskjed")
     val id = UUID.randomUUID().toString()
-    val b = Beskjed( id,nyBeskjed.tekst)
-    beskjedRepo[id] = b
-    b
-}
-
-val queryBeskjeder = DataFetcher<List<Beskjed>> {
-    beskjedRepo.values.toList()
-}
-
-val queryBeskjed = DataFetcher {
-    val id = it.getArgument<String>("id")
-    beskjedRepo[id]
-}
-
+    log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
+    BeskjedResultat(id)
+    }
 
 /* Infrastructure/configuration etc. */
 
@@ -81,12 +69,7 @@ private fun GraphQLCodeRegistry.Builder.dataFetcher(
 
 fun createGraphQL(): GraphQL {
     val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
-        .dataFetcher("Query", "world", queryWorld)
-        .dataFetcher("Query", "addition", queryAddition)
-        .dataFetcher("Mutation", "increment", mutationIncrement)
         .dataFetcher("Mutation", "nyBeskjed", mutationNyBeskjed)
-        .dataFetcher("Query", "beskjeder", queryBeskjeder)
-        .dataFetcher("Query", "beskjed", queryBeskjed)
         .build()
 
     val typeDefinitionRegistry = SchemaParser().parse({}.javaClass.getResourceAsStream("/schema.graphqls"))
