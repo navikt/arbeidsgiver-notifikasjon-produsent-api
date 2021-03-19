@@ -37,7 +37,7 @@ data class BeskjedInput(
     val tekst: String,
     val grupperingsid: String?,
     val lenke: String,
-    val eksternid: String,
+    val eksternid: String?,
     val mottaker: MottakerInput,
     val opprettetTidspunkt: String?
 )

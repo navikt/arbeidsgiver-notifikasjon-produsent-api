@@ -86,6 +86,14 @@
             <version>2.2020.10.15_11.43-b1f02e7bd6ae</version>
         </dependency>
 
+        <!-- kafka -->
+        <!-- Kafka -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+
         <!-- test dependencies -->
         <dependency>
             <groupId>io.kotest</groupId>

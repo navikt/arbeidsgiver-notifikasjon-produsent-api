@@ -4,6 +4,9 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNot
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
 
@@ -40,17 +43,31 @@ class GraphQLTests : DescribeSpec({
             }.response
         }
 
-        context("Query.world") {
+        context("Mutation.nyBeskjed") {
             query = """
-                { world { greeting } }
+                mutation {
+                    nyBeskjed(nyBeskjed: {
+                        lenke: "http://foo.bar",
+                        tekst: "hello world",
+                        merkelapp: "tag",
+                        mottaker: {
+                            fnr: {
+                                fodselsnummer: "12345678910",
+                                virksomhetsnummer: "42"
+                            } 
+                        }
+                    }) {
+                        id
+                    }
+                }
             """.trimIndent()
 
             it("status is 200 OK") {
                 response.status() shouldBe HttpStatusCode.OK
             }
-            /*it("it returns greeting") {
-                response.getTypedContent<World>("world").greeting shouldBe "Hello world!"
-            }*/
+            it("it returns id") {
+                response.getTypedContent<BeskjedResultat>("nyBeskjed").id shouldNot beBlank()
+            }
         }
     }
 })
