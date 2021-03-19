@@ -17,41 +17,41 @@ import java.util.*
 private val log = LoggerFactory.getLogger("graphql")!!
 
 data class FnrmottakerInput (
-    val fodselsnummer:String,
-    val virksomhetsnummer:String
+    val fodselsnummer: String,
+    val virksomhetsnummer: String
 )
 
 data class AltinnmottakerInput(
-    val altinntjenesteKode:String,
-    val altinntjenesteVersjon:String,
-    val virksomhetsnummer:String,
+    val altinntjenesteKode: String,
+    val altinntjenesteVersjon: String,
+    val virksomhetsnummer: String,
 )
-
 
 data class MottakerInput(
-    val altinn:AltinnmottakerInput,
-    val fnr:FnrmottakerInput
+    val altinn: AltinnmottakerInput?,
+    val fnr: FnrmottakerInput?
 )
 
-data class BeskjedInput(val merkelapp:String,
-                        val tekst: String,
-                        val grupperingsid:String,
-                        val lenke:String,
-                        val eksternid:String,
-                        val mottaker: MottakerInput,
-                        val opprettetTidspunkt:String
+data class BeskjedInput(
+    val merkelapp: String,
+    val tekst: String,
+    val grupperingsid: String?,
+    val lenke: String,
+    val eksternid: String,
+    val mottaker: MottakerInput,
+    val opprettetTidspunkt: String?
 )
 
-/* Beskjeder */
-data class BeskjedResultat(val id: String
-                   )
+data class BeskjedResultat(
+    val id: String
+)
 
 val mutationNyBeskjed = DataFetcher<BeskjedResultat> {
     val nyBeskjed= it.getTypedArgument<BeskjedInput>("nyBeskjed")
     val id = UUID.randomUUID().toString()
     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
     BeskjedResultat(id)
-    }
+}
 
 /* Infrastructure/configuration etc. */
 

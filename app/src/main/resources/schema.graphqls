@@ -1,40 +1,40 @@
 "Query Root"
 type Query {
-    ping:String
+    ping: String
 }
 
-type Mutation{
-    nyBeskjed(nyBeskjed: InputBeskjed!): Beskjed!
+type Mutation {
+    nyBeskjed(nyBeskjed: BeskjedInput!): BeskjedResultat!
 }
 
 
-type Beskjed {
+type BeskjedResultat {
     id: String!
 }
 
-input InputBeskjed{
-    merkelapp:String!
-    tekst:String!
-    grupperingsid:String
-    lenke:String!
-    eksternid:String
+input BeskjedInput {
+    merkelapp: String!
+    tekst: String!
+    grupperingsid: String
+    lenke: String!
+    eksternid: String
     mottaker: MottakerInput!
-    opprettetTidspunkt:String
+    opprettetTidspunkt: String
 }
 
 "Må ha verdi i nøyaktig ett av disse feltene"
 input MottakerInput {
-    altinn:AltinnmottakerInput
-    fnr:FnrmottakerInput
+    altinn: AltinnmottakerInput
+    fnr: FnrmottakerInput
 }
 
 input FnrmottakerInput {
-    fodselsnummer:String!
-    virksomhetsnummer:String!
+    fodselsnummer: String!
+    virksomhetsnummer: String!
 }
 
-input AltinnmottakerInput{
-    altinntjenesteKode:String!
-    altinntjenesteVersjon:String!
-    virksomhetsnummer:String!
+input AltinnmottakerInput {
+    altinntjenesteKode: String!
+    altinntjenesteVersjon: String!
+    virksomhetsnummer: String!
 }
