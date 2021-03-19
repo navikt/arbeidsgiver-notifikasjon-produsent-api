@@ -18,6 +18,12 @@ fun TestApplicationRequest.setJsonBody(body: Any) {
     setBody(objectMapper.writeValueAsString(body))
 }
 
+data class GraphQLError(
+    val message: String,
+    val locations: List<Map<String, Number>>,
+    val extensions: Map<String, Any>?
+)
+
 inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T{
     if (this.content == null) {
         throw NullPointerException("content is null. status:${status()}")
@@ -27,13 +33,13 @@ inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T{
     return objectMapper.convertValue(node)
 }
 
-fun TestApplicationResponse.getGraphqlErrors(): List<JsonNode> {
+fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
     if (this.content == null) {
         throw NullPointerException("content is null. status:${status()}")
     }
     val tree = objectMapper.readTree(this.content!!)
     val errors = tree.get("errors")
-    return errors?.elements()?.asSequence()?.toList() ?: emptyList()
+    return if (errors == null) emptyList() else objectMapper.convertValue(errors)
 }
 
 class GraphQLTests : DescribeSpec({
