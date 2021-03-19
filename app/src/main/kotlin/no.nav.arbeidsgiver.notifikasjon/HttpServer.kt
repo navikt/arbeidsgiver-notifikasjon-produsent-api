@@ -24,7 +24,9 @@ object AuthConfig {
     val issuer = "https://fakedings.dev-gcp.nais.io/fake" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
 }
 
-fun JWTAuthenticationProvider.Configuration.defaultVerifierConfiguration() {
+typealias JWTAuthConfig = JWTAuthenticationProvider.Configuration.() -> Unit
+
+private val defaultVerifierConfig: JWTAuthConfig = {
     verifier(
         JwkProviderBuilder(URL(AuthConfig.jwksUri))
             .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
@@ -34,9 +36,7 @@ fun JWTAuthenticationProvider.Configuration.defaultVerifierConfiguration() {
     )
 }
 
-fun Application.module(
-    verifierConfiguration: JWTAuthenticationProvider.Configuration.() -> Unit = JWTAuthenticationProvider.Configuration::defaultVerifierConfiguration
-) {
+fun Application.module(verifierConfig: JWTAuthConfig = defaultVerifierConfig) {
     val graphql = createGraphQL()
 
     install(MicrometerMetrics) {
@@ -105,7 +105,7 @@ fun Application.module(
 
     install(Authentication) {
         jwt {
-            verifierConfiguration()
+            verifierConfig()
 
             validate { credentials ->
                 try {
