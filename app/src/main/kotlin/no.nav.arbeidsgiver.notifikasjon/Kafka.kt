@@ -1,7 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
@@ -11,8 +9,6 @@ import org.apache.kafka.common.config.SslConfigs.*
 import org.apache.kafka.common.serialization.Serializer
 import org.slf4j.LoggerFactory
 import java.lang.System.getenv
-import java.net.URI
-import java.net.URL
 import java.util.*
 
 

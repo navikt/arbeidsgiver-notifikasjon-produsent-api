@@ -46,7 +46,7 @@ data class BeskjedResultat(
     val id: String
 )
 
-val mutationNyBeskjed = DataFetcher<BeskjedResultat> {
+val mutationNyBeskjed = DataFetcher {
     val nyBeskjed= it.getTypedArgument<BeskjedInput>("nyBeskjed")
     val id = UUID.randomUUID().toString()
     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
