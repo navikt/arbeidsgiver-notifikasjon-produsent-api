@@ -7,7 +7,7 @@
         "url": "http://localhost:8080/api/graphql",
         "headers": {
           "user-agent": "JS GraphQL",
-          "authorization": "Bearer eyJraWQiOiJtb2NrLW9hdXRoMi1zZXJ2ZXIta2V5IiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJzb21lcHJvZHVjZXIiLCJhdWQiOiJwcm9kdXNlbnQtYXBpIiwibmJmIjoxNjE2MTYyODY3LCJpc3MiOiJodHRwczpcL1wvZmFrZWRpbmdzLmRldi1nY3AubmFpcy5pb1wvZmFrZSIsImV4cCI6MTYxOTc2Mjg2NywiaWF0IjoxNjE2MTYyODY3LCJqdGkiOiIwYTBjZjUxMC03ODIwLTRjYzYtYjRhNS0xZDIwZmQwNmMwZTMifQ.fKfhKwSS1jM_14_TvNhgbn8GUgeYonwf-jq5laV7Hc0oBGSMNbJQ01IZJRYxqFxrJlfen7QCqm1Gq7Ykm9gH9DTwLoLIWFAhnnx8EJceZRu9p_n--x2WiNucBA5VAWOx0uKxGDSOtmCo--5uKe05v6uZcJLuqEgYqQevQ1avTEPm0Ajs8_ZXeu7WKYLIIPuYj_9JyGuNOaBZ_THojHdgFD4BmMsBzXAr0O6ECWfySb4-8oeVroMT63WDVGKxlpGqXIVdDscpgvtaAcmKHzNNTF76Phph-FyWGxJlnir6Q_gDRu3aK08tHov55w80T1HsCO-9UOnCQ5i2kCoxB46Faw"
+          "authorization": "Bearer ${env:fakedings_token}"
         },
         "introspect": false
       }

@@ -19,29 +19,33 @@ data class Value(
     val value: String
 )
 
-interface JsonSerializer<T>: Serializer<T> {
+interface JsonSerializer<T> : Serializer<T> {
     override fun serialize(topic: String?, data: T): ByteArray {
         return objectMapper.writeValueAsBytes(data)
     }
 }
-class KeySerializer: JsonSerializer<Key> {}
-class ValueSerializer: JsonSerializer<Value> {}
+
+class KeySerializer : JsonSerializer<Key> {}
+class ValueSerializer : JsonSerializer<Value> {}
 
 fun createProducer(): Producer<Key, Value> {
     val props = Properties()
     props[BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: "localhost:9092"
     props[KEY_SERIALIZER_CLASS_CONFIG] = KeySerializer::class.java.canonicalName
     props[VALUE_SERIALIZER_CLASS_CONFIG] = ValueSerializer::class.java.canonicalName
-    props[SSL_KEYSTORE_LOCATION_CONFIG] = getenv("KAFKA_KEYSTORE_PATH") ?: ""
-    props[SSL_KEYSTORE_PASSWORD_CONFIG] = getenv("KAFKA_CREDSTORE_PASSWORD") ?: ""
-    props[SSL_TRUSTSTORE_LOCATION_CONFIG] = getenv("KAFKA_TRUSTSTORE_PATH") ?: ""
-    props[SSL_TRUSTSTORE_PASSWORD_CONFIG] = getenv("KAFKA_CREDSTORE_PASSWORD") ?: ""
-    props[SECURITY_PROTOCOL_CONFIG] = "SSL"
+
+    getenv("KAFKA_KEYSTORE_PATH")?.let { props[SSL_KEYSTORE_LOCATION_CONFIG] = it }
+    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_KEYSTORE_PASSWORD_CONFIG] = it }
+    getenv("KAFKA_TRUSTSTORE_PATH")?.let { props[SSL_TRUSTSTORE_LOCATION_CONFIG] = it }
+    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_TRUSTSTORE_PASSWORD_CONFIG] = it }
+    if (props[SSL_KEYSTORE_LOCATION_CONFIG] != null) {
+        props[SECURITY_PROTOCOL_CONFIG] = "SSL"
+    }
 
     return KafkaProducer(props)
 }
 
-fun <K, V> Producer<K, V>.sendEvent(key: K, value: V)  {
+fun <K, V> Producer<K, V>.sendEvent(key: K, value: V) {
     this.send(
         ProducerRecord(
             "arbeidsgiver.notifikasjoner",
