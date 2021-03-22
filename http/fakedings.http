@@ -9,6 +9,15 @@ sub=someproducer&aud=produsent-api
 %}
 
 ###
+POST https://arbeidsgiver-notifikasjon-produsent-api.dev.nav.no/api/graphql
+content-type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "query": "query { ping }"
+}
+
+###
 GET https://arbeidsgiver-notifikasjon-produsent-api.dev.nav.no/api/ide
 Authorization: Bearer {{auth_token}}
 

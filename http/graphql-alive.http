@@ -1,18 +1,10 @@
-POST http://localhost:8080/api/graphql
-content-type: application/json
-Authorization: Bearer {{auth_token}}
-
-{
-"query": "query { world { greeeeeting } }"
-}
-
 ###
 POST http://localhost:8080/api/graphql
 content-type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
-  "query": "query { addition(a: 1, b: 2) { sum } }"
+"query": "query { ping }"
 }
 
 ###
