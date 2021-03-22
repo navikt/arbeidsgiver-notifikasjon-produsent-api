@@ -1,0 +1,17 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: notifikasjon
+  namespace: arbeidsgiver
+  labels:
+    team: arbeidsgiver
+spec:
+  pool: nav-dev
+  config:
+    minimumInSyncReplicas: 1
+    retentionBytes: -1
+    retentionHours: -1
+  acl:
+    - team: arbeidsgiver
+      application: notifikasjon-produsent-api
+      access: write
