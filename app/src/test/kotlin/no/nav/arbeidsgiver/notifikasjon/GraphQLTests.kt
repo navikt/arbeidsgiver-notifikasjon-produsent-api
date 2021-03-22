@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
@@ -12,12 +11,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.*
 import org.apache.kafka.clients.producer.Producer
-
-val objectMapper = jacksonObjectMapper()
-
-fun TestApplicationRequest.setJsonBody(body: Any) {
-    setBody(objectMapper.writeValueAsString(body))
-}
+import java.util.*
 
 data class GraphQLError(
     val message: String,
@@ -51,15 +45,15 @@ class GraphQLTests : DescribeSpec({
         lateinit var query: String
 
         beforeEach {
-            mockkStatic(Producer<Key, Value>::sendEvent)
-            response = engine.handleRequest(HttpMethod.Post, "/api/graphql") {
+            mockkStatic(Producer<Key, Event>::sendEvent)
+            response = engine.post("/api/graphql") {
                 addHeader(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
                 addHeader(HttpHeaders.ContentType, "application/json")
                 addHeader(HttpHeaders.Accept, "application/json")
                 setJsonBody(GraphQLRequest(
-                        query = query
+                    query = query
                 ))
-            }.response
+            }
         }
         context("Mutation.nyBeskjed") {
             query = """
@@ -86,12 +80,32 @@ class GraphQLTests : DescribeSpec({
             it("response inneholder ikke feil") {
                 response.getGraphqlErrors() should beEmpty()
             }
-            it("it returns id") {
-                response.getTypedContent<BeskjedResultat>("nyBeskjed").id shouldNot beBlank()
-            }
-            it("sends message to kafka") {
-                verify {
-                    any<Producer<Key, Value>>().sendEvent(any(), Value("hello world"))
+
+            context("respons er parsed som BeskjedResultat") {
+                lateinit var resultat: BeskjedResultat
+
+                beforeEach {
+                    resultat = response.getTypedContent<BeskjedResultat>("nyBeskjed")
+                }
+
+                it("id er gitt") {
+                    resultat.id shouldNot beBlank()
+                }
+
+                it("sends message to kafka") {
+                    val eventSlot = slot<BeskjedOpprettet>()
+                    verify {
+                        any<Producer<Key, Event>>().sendEvent(any(), capture(eventSlot))
+                    }
+                    val event = eventSlot.captured
+                    event.guid.toString() shouldBe  resultat.id
+                    event.lenke shouldBe "http://foo.bar"
+                    event.tekst shouldBe "hello world"
+                    event.merkelapp shouldBe "tag"
+                    event.mottaker shouldBe FodselsnummerMottaker(
+                        fodselsnummer = "12345678910",
+                        virksomhetsnummer = "42"
+                    )
                 }
             }
         }
