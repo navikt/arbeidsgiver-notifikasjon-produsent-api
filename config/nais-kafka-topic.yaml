@@ -14,4 +14,4 @@ spec:
   acl:
     - team: arbeidsgiver
       application: notifikasjon-produsent-api
-      access: write
+      access: readwrite
