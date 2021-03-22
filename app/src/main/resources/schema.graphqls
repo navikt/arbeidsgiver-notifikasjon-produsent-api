@@ -1,12 +1,12 @@
 "Query Root"
 type Query {
     ping: String
+    whoami: String
 }
 
 type Mutation {
     nyBeskjed(nyBeskjed: BeskjedInput!): BeskjedResultat!
 }
-
 
 type BeskjedResultat {
     id: String!

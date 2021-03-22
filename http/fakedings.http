@@ -9,12 +9,21 @@ sub=someproducer&aud=produsent-api
 %}
 
 ###
+POST http://localhost:8080/api/graphql
+content-type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "query": "query { whoami  }"
+}
+
+###
 POST https://arbeidsgiver-notifikasjon-produsent-api.dev.nav.no/api/graphql
 content-type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
-  "query": "query { ping }"
+  "query": "query { whoami }"
 }
 
 ###

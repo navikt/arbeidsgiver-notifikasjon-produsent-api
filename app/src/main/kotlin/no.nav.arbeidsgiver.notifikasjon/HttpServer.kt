@@ -141,8 +141,12 @@ fun Application.module(
         authenticate {
             route("api") {
                 post("graphql") {
+                    val token = call.principal<JWTPrincipal>()!!.payload
+                    val context = Context(
+                        produsentId = "iss:${token.issuer} sub:${token.subject}"
+                    )
                     val request = call.receive<GraphQLRequest>()
-                    val result = graphql.execute(request)
+                    val result = graphql.execute(request, context)
                     call.respond(result)
                 }
                 get("ide") {

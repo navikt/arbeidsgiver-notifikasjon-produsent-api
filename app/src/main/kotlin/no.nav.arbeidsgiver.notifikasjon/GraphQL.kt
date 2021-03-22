@@ -29,7 +29,6 @@ data class FnrmottakerInput (
         )
 }
 
-
 data class AltinnmottakerInput(
     val altinntjenesteKode: String,
     val altinntjenesteVersjon: String,
@@ -85,6 +84,10 @@ data class BeskjedResultat(
     val id: String
 )
 
+private val whoamiQuery = DataFetcher {
+    it.getContext<Context>().produsentId
+}
+
 private fun nyBeskjedMutation(kafkaProducer: Producer<Key, Event>) = DataFetcher {
     val nyBeskjed = it.getTypedArgument<BeskjedInput>("nyBeskjed")
     val id = UUID.randomUUID()
@@ -112,6 +115,8 @@ fun createGraphQL(
     kafkaProducer: Producer<Key, Event> = createProducer()
 ): GraphQL {
     val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
+        .dataFetcher("Query", "ping", DataFetcher<String> {"pong"})
+        .dataFetcher("Query", "whoami", whoamiQuery)
         .dataFetcher("Mutation", "nyBeskjed", nyBeskjedMutation(kafkaProducer))
         .build()
 
@@ -127,7 +132,11 @@ data class GraphQLRequest(
     val variables: Map<String, String>? = null
 )
 
-fun GraphQL.execute(request: GraphQLRequest): Any {
+data class Context(
+    val produsentId: String
+)
+
+fun GraphQL.execute(request: GraphQLRequest, context: Context): Any {
     val executionInput = ExecutionInput.newExecutionInput()
         .apply {
             query(request.query)
@@ -139,6 +148,8 @@ fun GraphQL.execute(request: GraphQLRequest): Any {
             request.variables?.let {
                 variables(it)
             }
+
+            context(context)
         }.build()
 
     return this.execute(executionInput).toSpecification()
