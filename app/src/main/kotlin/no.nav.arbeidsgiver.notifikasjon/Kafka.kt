@@ -48,7 +48,7 @@ fun createProducer(): Producer<Key, Value> {
 fun <K, V> Producer<K, V>.sendEvent(key: K, value: V) {
     this.send(
         ProducerRecord(
-            "arbeidsgiver.notifikasjoner",
+            "arbeidsgiver.notifikasjon",
             key,
             value
         )
