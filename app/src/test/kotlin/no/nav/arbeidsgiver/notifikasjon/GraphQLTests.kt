@@ -10,6 +10,8 @@ import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.*
+import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
+import no.nav.arbeidsgiver.notifikasjon.graphql.GraphQLBeskjed
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
 import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
@@ -22,7 +24,7 @@ data class GraphQLError(
     val extensions: Map<String, Any>?
 )
 
-inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T{
+inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T {
     val errors = getGraphqlErrors()
     if (errors.isEmpty()) {
         val tree = objectMapper.readTree(this.content!!)
@@ -52,13 +54,14 @@ class GraphQLTests : DescribeSpec({
         beforeEach {
             mockkStatic(Producer<KafkaKey, Event>::sendEvent)
             response = engine.produsentPost("/api/graphql") {
-                addHeader(HttpHeaders.Host, "produsent-api.nav.no")
                 addHeader(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
                 addHeader(HttpHeaders.ContentType, "application/json")
                 addHeader(HttpHeaders.Accept, "application/json")
-                setJsonBody(GraphQLRequest(
-                    query = query
-                ))
+                setJsonBody(
+                    GraphQLRequest(
+                        query = query
+                    )
+                )
             }
         }
         context("Mutation.nyBeskjed") {
@@ -105,7 +108,7 @@ class GraphQLTests : DescribeSpec({
                         any<Producer<KafkaKey, Event>>().sendEvent(any(), capture(eventSlot))
                     }
                     val event = eventSlot.captured
-                    event.guid.toString() shouldBe  resultat.id
+                    event.guid.toString() shouldBe resultat.id
                     event.lenke shouldBe "http://foo.bar"
                     event.tekst shouldBe "hello world"
                     event.merkelapp shouldBe "tag"
@@ -113,6 +116,71 @@ class GraphQLTests : DescribeSpec({
                         fodselsnummer = "12345678910",
                         virksomhetsnummer = "42"
                     )
+                }
+            }
+        }
+    }
+
+    describe("POST bruker-api /api/graphql") {
+        lateinit var response: TestApplicationResponse
+        lateinit var query: String
+        val beskjed = Beskjed(
+            merkelapp = "foo",
+            tekst = "",
+            grupperingsid = "",
+            lenke = "",
+            eksternId = "",
+            mottaker = FodselsnummerMottaker("42", "43"),
+            opprettetTidspunkt = ""
+        )
+
+        beforeEach {
+            repository.clear()
+            repository[Koordinat(beskjed.mottaker, beskjed.merkelapp, "")] = beskjed
+            response = engine.brukerPost("/api/graphql") {
+                addHeader(HttpHeaders.ContentType, "application/json")
+                addHeader(HttpHeaders.Accept, "application/json")
+                setJsonBody(
+                    GraphQLRequest(
+                        query = query
+                    )
+                )
+            }
+        }
+        afterEach {
+            repository.clear()
+        }
+        context("Query.notifikasjoner") {
+            query = """
+                {
+                    notifikasjoner {
+                        ...on Beskjed {
+                            lenke
+                            tekst
+                            merkelapp
+                            opprettetTidspunkt
+                        }
+                    }
+                }
+            """.trimIndent()
+
+            it("status is 200 OK") {
+                response.status() shouldBe HttpStatusCode.OK
+            }
+            it("response inneholder ikke feil") {
+                response.getGraphqlErrors() should beEmpty()
+            }
+
+            context("respons er parsed som liste av Beskjed") {
+                lateinit var resultat: List<GraphQLBeskjed>
+
+                beforeEach {
+                    resultat = response.getTypedContent("notifikasjoner")
+                }
+
+                it("returnerer beskjeden fra repo") {
+                    resultat shouldNot beEmpty()
+                    resultat[0].merkelapp shouldBe beskjed.merkelapp
                 }
             }
         }

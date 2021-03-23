@@ -13,6 +13,8 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import no.nav.arbeidsgiver.notifikasjon.graphql.brukerGraphQL
+import no.nav.arbeidsgiver.notifikasjon.graphql.produsentGraphQL
 import org.slf4j.event.Level
 import java.net.URL
 import java.util.*

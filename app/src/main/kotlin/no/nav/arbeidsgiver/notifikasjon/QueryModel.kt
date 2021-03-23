@@ -23,7 +23,7 @@ data class Beskjed(
     val opprettetTidspunkt: String
 )
 
-private val repository = mutableMapOf<Koordinat, Beskjed>()
+val repository = mutableMapOf<Koordinat, Beskjed>()
 
 fun tilQueryBeskjed(event: Event): Beskjed =
     when (event) {

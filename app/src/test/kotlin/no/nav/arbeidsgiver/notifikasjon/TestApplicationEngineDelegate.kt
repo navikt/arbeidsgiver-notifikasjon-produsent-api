@@ -8,6 +8,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import io.mockk.spyk
+import no.nav.arbeidsgiver.notifikasjon.graphql.produsentGraphQL
 import kotlin.reflect.KProperty
 
 const val tokenDingsToken =
@@ -57,19 +58,18 @@ class TestApplicationEngineDelegate(context: TestConfiguration) {
 
 fun TestConfiguration.ktorEngine() = TestApplicationEngineDelegate(this)
 
-fun TestApplicationEngine.produsentGet(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
+fun TestApplicationEngine.get(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
     this.handleRequest(HttpMethod.Get, uri) {
-        addHeader(HttpHeaders.Host, "produsent-api.nav.no")
         setup()
     }
         .response
 
-fun TestApplicationEngine.produsentPost(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
-    this.handleRequest(HttpMethod.Post, uri) {
+fun TestApplicationEngine.produsentGet(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
+    this.get(uri) {
         addHeader(HttpHeaders.Host, "produsent-api.nav.no")
         setup()
     }
-        .response
+
 
 fun TestApplicationEngine.produsentGetWithHeader(uri: String, vararg headers: Pair<String, String>): TestApplicationResponse {
     return this.produsentGet(uri) {
@@ -78,6 +78,23 @@ fun TestApplicationEngine.produsentGetWithHeader(uri: String, vararg headers: Pa
         }
     }
 }
+
+fun TestApplicationEngine.post(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
+    this.handleRequest(HttpMethod.Post, uri) {
+        setup()
+    }.response
+
+fun TestApplicationEngine.produsentPost(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
+    this.post(uri) {
+        addHeader(HttpHeaders.Host, "produsent-api.nav.no")
+        setup()
+    }
+
+fun TestApplicationEngine.brukerPost(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
+    this.post(uri) {
+        addHeader(HttpHeaders.Host, "bruker-api.nav.no")
+        setup()
+    }
 
 fun TestApplicationRequest.setJsonBody(body: Any) {
     setBody(objectMapper.writeValueAsString(body))

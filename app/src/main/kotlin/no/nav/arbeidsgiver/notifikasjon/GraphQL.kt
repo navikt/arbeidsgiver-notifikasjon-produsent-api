@@ -11,99 +11,14 @@ import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
-import no.nav.arbeidsgiver.notifikasjon.hendelse.*
-import org.apache.kafka.clients.producer.Producer
-import org.slf4j.LoggerFactory
-import java.time.Instant
-import java.util.*
-
-private val log = LoggerFactory.getLogger("graphql")!!
-
-data class FnrmottakerInput (
-    val fodselsnummer: String,
-    val virksomhetsnummer: String
-) {
-    fun tilDomene(): Mottaker =
-        FodselsnummerMottaker(
-            fodselsnummer = fodselsnummer,
-            virksomhetsnummer = virksomhetsnummer
-        )
-}
-
-data class AltinnmottakerInput(
-    val altinntjenesteKode: String,
-    val altinntjenesteVersjon: String,
-    val virksomhetsnummer: String,
-) {
-    fun tilDomene(): Mottaker =
-        AltinnMottaker(
-            altinntjenesteKode = altinntjenesteKode,
-            altinntjenesteVersjon = altinntjenesteVersjon,
-            virksomhetsnummer = virksomhetsnummer
-        )
-}
-
-data class MottakerInput(
-    val altinn: AltinnmottakerInput?,
-    val fnr: FnrmottakerInput?
-) {
-
-    fun tilDomene(): Mottaker {
-        return if (altinn != null && fnr == null) {
-            altinn.tilDomene()
-        } else if (fnr != null && altinn == null) {
-            fnr.tilDomene()
-        } else {
-            throw IllegalArgumentException("Ugyldig mottaker")
-        }
-    }
-}
-
-data class BeskjedInput(
-    val merkelapp: String,
-    val tekst: String,
-    val grupperingsid: String?,
-    val lenke: String,
-    val eksternId: String,
-    val mottaker: MottakerInput,
-    val opprettetTidspunkt: String = Instant.now().toString()
-) {
-    fun tilDomene(guid: UUID): BeskjedOpprettet =
-        BeskjedOpprettet(
-            guid = guid,
-            merkelapp = merkelapp,
-            tekst = tekst,
-            grupperingsid = grupperingsid,
-            lenke = lenke,
-            eksternId = eksternId,
-            mottaker = mottaker.tilDomene(),
-            opprettetTidspunkt = opprettetTidspunkt
-        )
-}
-
-data class BeskjedResultat(
-    val id: String
-)
-
-private val whoamiQuery = DataFetcher {
-    it.getContext<Context>().produsentId
-}
-
-private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Event>) = DataFetcher {
-    val nyBeskjed = it.getTypedArgument<BeskjedInput>("nyBeskjed")
-    val id = UUID.randomUUID()
-    log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
-    kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
-    BeskjedResultat(id.toString())
-}
 
 /* Infrastructure/configuration etc. */
 
-private inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T {
+inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T {
     return objectMapper.convertValue(this.getArgument(name))
 }
 
-private fun GraphQLCodeRegistry.Builder.dataFetcher(
+fun GraphQLCodeRegistry.Builder.dataFetcher(
     parentType: String,
     fieldName: String,
     dataFetcher: DataFetcher<*>
@@ -112,22 +27,9 @@ private fun GraphQLCodeRegistry.Builder.dataFetcher(
 }
 
 
-fun produsentGraphQL(kafkaProducer: Producer<KafkaKey, Event> = createProducer()): GraphQL =
-    createGraphQL("/produsent.graphqls") {
-        dataFetcher("Query", "ping", DataFetcher<String> {"pong"})
-        dataFetcher("Query", "whoami", whoamiQuery)
-        dataFetcher("Mutation", "nyBeskjed", nyBeskjedMutation(kafkaProducer))
-    }
-
-fun brukerGraphQL(): GraphQL =
-    createGraphQL("/bruker.graphqls") {
-        dataFetcher("Query", "ping", DataFetcher<String> {"pong"})
-    }
-
-
 typealias CodeRegistryConfig = GraphQLCodeRegistry.Builder.() -> Unit
 
-private fun createGraphQL(
+fun createGraphQL(
     schemaFilePath: String,
     codeRegistryConfig: CodeRegistryConfig
 ): GraphQL {
