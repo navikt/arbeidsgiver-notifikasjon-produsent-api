@@ -11,6 +11,7 @@ import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
+import no.nav.arbeidsgiver.notifikasjon.hendelse.*
 import org.apache.kafka.clients.producer.Producer
 import org.slf4j.LoggerFactory
 import java.time.Instant
@@ -92,8 +93,7 @@ private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Event>) = DataFe
     val nyBeskjed = it.getTypedArgument<BeskjedInput>("nyBeskjed")
     val id = UUID.randomUUID()
     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
-    val mottaker = nyBeskjed.mottaker.tilDomene()
-    kafkaProducer.sendEvent(KafkaKey(mottaker), nyBeskjed.tilDomene(id))
+    kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
     BeskjedResultat(id.toString())
 }
 
@@ -111,16 +111,31 @@ private fun GraphQLCodeRegistry.Builder.dataFetcher(
     return this.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), dataFetcher)
 }
 
-fun createGraphQL(
-    kafkaProducer: Producer<KafkaKey, Event> = createProducer()
+
+fun produsentGraphQL(kafkaProducer: Producer<KafkaKey, Event> = createProducer()): GraphQL =
+    createGraphQL("/produsent.graphqls") {
+        dataFetcher("Query", "ping", DataFetcher<String> {"pong"})
+        dataFetcher("Query", "whoami", whoamiQuery)
+        dataFetcher("Mutation", "nyBeskjed", nyBeskjedMutation(kafkaProducer))
+    }
+
+fun brukerGraphQL(): GraphQL =
+    createGraphQL("/bruker.graphqls") {
+        dataFetcher("Query", "ping", DataFetcher<String> {"pong"})
+    }
+
+
+typealias CodeRegistryConfig = GraphQLCodeRegistry.Builder.() -> Unit
+
+private fun createGraphQL(
+    schemaFilePath: String,
+    codeRegistryConfig: CodeRegistryConfig
 ): GraphQL {
     val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
-        .dataFetcher("Query", "ping", DataFetcher<String> {"pong"})
-        .dataFetcher("Query", "whoami", whoamiQuery)
-        .dataFetcher("Mutation", "nyBeskjed", nyBeskjedMutation(kafkaProducer))
+        .apply(codeRegistryConfig)
         .build()
 
-    val typeDefinitionRegistry = SchemaParser().parse({}.javaClass.getResourceAsStream("/schema.graphqls"))
+    val typeDefinitionRegistry = SchemaParser().parse({}.javaClass.getResourceAsStream(schemaFilePath))
     val runtimeWiring = newRuntimeWiring().codeRegistry(codeRegistry).build()
     val schema = SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
     return newGraphQL(schema).build()
@@ -136,7 +151,7 @@ data class Context(
     val produsentId: String
 )
 
-fun GraphQL.execute(request: GraphQLRequest, context: Context): Any {
+fun GraphQL.execute(request: GraphQLRequest, context: Context? = null): Any {
     val executionInput = ExecutionInput.newExecutionInput()
         .apply {
             query(request.query)

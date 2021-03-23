@@ -12,7 +12,7 @@ class CorrelationIdTests : DescribeSpec({
 
     describe("correlation id handling") {
         context("when no callid given") {
-            val response = engine.getWithHeader("/internal/alive")
+            val response = engine.produsentGet("/internal/alive")
             it("generates callid for us") {
                 response.headers[HttpHeaders.XCorrelationId] shouldNot beBlank()
             }
@@ -23,7 +23,7 @@ class CorrelationIdTests : DescribeSpec({
 
             context("with header name:") {
                 forAll("callid", "CALLID", "call-id") { headerName ->
-                    val response = engine.getWithHeader( "/internal/alive", headerName to callid)
+                    val response = engine.produsentGetWithHeader( "/internal/alive", headerName to callid)
                     it("it replies with callid: $callid from $headerName") {
                         response.headers[HttpHeaders.XCorrelationId] shouldBe callid
                     }

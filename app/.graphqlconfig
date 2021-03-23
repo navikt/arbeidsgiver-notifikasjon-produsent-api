@@ -3,9 +3,18 @@
   "schemaPath": "schema.graphql",
   "extensions": {
     "endpoints": {
-      "Default GraphQL Endpoint": {
+      "bruker-api": {
         "url": "http://localhost:8080/api/graphql",
         "headers": {
+          "host": "bruker-api.nav.no",
+          "user-agent": "JS GraphQL"
+        },
+        "introspect": false
+      },
+      "produsent-api": {
+        "url": "http://localhost:8080/api/graphql",
+        "headers": {
+          "host": "produsent-api.nav.no",
           "user-agent": "JS GraphQL",
           "authorization": "Bearer ${env:fakedings_token}"
         },

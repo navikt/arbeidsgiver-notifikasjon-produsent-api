@@ -39,7 +39,8 @@ private val defaultVerifierConfig: JWTAuthConfig = {
 
 fun Application.module(
     verifierConfig: JWTAuthConfig = defaultVerifierConfig,
-    graphql: GraphQL = createGraphQL()
+    produsentGraphql: GraphQL = produsentGraphQL(),
+    brukerGraphql: GraphQL = brukerGraphQL()
 ) {
     install(MicrometerMetrics) {
         registry = meterRegistry
@@ -138,22 +139,43 @@ fun Application.module(
                 call.respond(meterRegistry.scrape())
             }
         }
-        authenticate {
-            route("api") {
-                post("graphql") {
-                    val token = call.principal<JWTPrincipal>()!!.payload
-                    val context = Context(
-                        produsentId = "iss:${token.issuer} sub:${token.subject}"
-                    )
-                    val request = call.receive<GraphQLRequest>()
-                    val result = graphql.execute(request, context)
-                    call.respond(result)
-                }
-                get("ide") {
-                    call.respondBytes(graphiqlHTML.trimIndent().toByteArray(), ContentType.parse("text/html"))
+
+        host("""produsent-api\..*""".toRegex()) {
+            authenticate {
+                route("api") {
+                    post("graphql") {
+                        val token = call.principal<JWTPrincipal>()!!.payload
+                        val context = Context(
+                            produsentId = "iss:${token.issuer} sub:${token.subject}"
+                        )
+                        val request = call.receive<GraphQLRequest>()
+                        val result = produsentGraphql.execute(request, context)
+                        call.respond(result)
+                    }
+                    get("ide") {
+                        call.respondBytes(graphiqlHTML.trimIndent().toByteArray(), ContentType.parse("text/html"))
+                    }
                 }
             }
         }
+
+        host("""bruker-api\..*""".toRegex()) {
+            route("api") {
+                post("graphql") {
+                    val request = call.receive<GraphQLRequest>()
+                    val result = brukerGraphql.execute(request)
+                    call.respond(result)
+                }
+                get("ide") {
+                    call.respondBytes(
+                        graphiqlHTML.trimIndent().toByteArray(),
+                        ContentType.parse("text/html")
+                    )
+                }
+            }
+
+        }
+
     }
 }
 
@@ -182,7 +204,7 @@ private const val graphiqlHTML =
 
         <script>
           const fetcher = GraphiQL.createFetcher({
-            url: 'http://localhost:8080/api/graphql', 
+            url: '/api/graphql', 
             enableIncrementalDelivery: false
           });
 

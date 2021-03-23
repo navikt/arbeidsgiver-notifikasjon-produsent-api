@@ -1,7 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonTypeName
+import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Mottaker
 import org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig.*
@@ -24,42 +25,6 @@ data class KafkaKey(
     val mottaker: Mottaker
 )
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-sealed class Event {
-    abstract val merkelapp: String
-    abstract val eksternId: String
-    abstract val mottaker: Mottaker
-}
-
-data class BeskjedOpprettet(
-    override val merkelapp: String,
-    override val eksternId: String,
-    override val mottaker: Mottaker,
-
-    /* nb. id-en er kun ment for å identifisere eventet */
-    val guid: UUID,
-    val tekst: String,
-    val grupperingsid: String? = null,
-    val lenke: String,
-    val opprettetTidspunkt: String
-): Event()
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-sealed class Mottaker
-
-@JsonTypeName("fodselsnummer")
-data class FodselsnummerMottaker (
-    val fodselsnummer: String,
-    val virksomhetsnummer: String
-) : Mottaker()
-
-@JsonTypeName("altinn")
-data class AltinnMottaker(
-    val altinntjenesteKode: String,
-    val altinntjenesteVersjon: String,
-    val virksomhetsnummer: String,
-): Mottaker()
-
 interface JsonSerializer<T> : Serializer<T> {
     override fun serialize(topic: String?, data: T): ByteArray {
         return objectMapper.writeValueAsBytes(data)
@@ -76,7 +41,6 @@ class KeySerializer : JsonSerializer<KafkaKey>
 class ValueSerializer : JsonSerializer<Event>
 class ValueDeserializer : JsonDeserializer<Event>(Event::class.java)
 class KeyDeserializer : JsonDeserializer<KafkaKey>(KafkaKey::class.java)
-
 
 const val DEFAULT_BROKER = "localhost:9092"
 
@@ -98,14 +62,23 @@ fun createProducer(): Producer<KafkaKey, Event> {
     return KafkaProducer(props)
 }
 
+
+fun <K, V> Producer<K, V>.sendSync(record: ProducerRecord<K, V>) {
+    this.send(record).get()
+}
+
 fun <K, V> Producer<K, V>.sendEvent(key: K, value: V) {
-    this.send(
+    this.sendSync(
         ProducerRecord(
             "arbeidsgiver.notifikasjon",
             key,
             value
         )
-    ).get()
+    )
+}
+
+fun Producer<KafkaKey, Event>.beskjedOpprettet(beskjed: BeskjedOpprettet) {
+    sendEvent(KafkaKey(beskjed.mottaker), beskjed)
 }
 
 fun createConsumer(): Consumer<KafkaKey, Event> {
@@ -128,9 +101,9 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
     }
 }
 
-private val log = LoggerFactory.getLogger("Consumer.proces")!!
+private val log = LoggerFactory.getLogger("Consumer.processSingle")!!
 
-fun <K, V>Consumer<K, V>.processSingle(processor: (K, V) -> Unit) {
+fun <K, V>Consumer<K, V>.processSingle(processor: (V) -> Unit) {
     /* TODO: lag guage for failed. remember parition & offset as tags */
     var failed = 0
     while (true) {
@@ -149,7 +122,7 @@ fun <K, V>Consumer<K, V>.processSingle(processor: (K, V) -> Unit) {
         val record = records.first()
         try {
             log.info("processing {}", record.loggableToString())
-            processor(record.key(), record.value())
+            processor(record.value())
             this.commitSync()
             failed = 0
             log.info("successfully processed {}", record.loggableToString())

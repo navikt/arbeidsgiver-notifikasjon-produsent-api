@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.hendelse.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import java.util.*
 
 private val guid = UUID.fromString("70a4beb3-53b9-49f0-ae31-2d5e6cfe52bf")

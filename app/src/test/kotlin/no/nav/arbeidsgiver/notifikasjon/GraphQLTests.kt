@@ -10,6 +10,9 @@ import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
+import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
 import org.apache.kafka.clients.producer.Producer
 import java.util.*
 
@@ -42,13 +45,14 @@ fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
 class GraphQLTests : DescribeSpec({
     val engine by ktorEngine()
 
-    describe("POST /api/graphql") {
+    describe("POST produsent-api /api/graphql") {
         lateinit var response: TestApplicationResponse
         lateinit var query: String
 
         beforeEach {
             mockkStatic(Producer<KafkaKey, Event>::sendEvent)
-            response = engine.post("/api/graphql") {
+            response = engine.produsentPost("/api/graphql") {
+                addHeader(HttpHeaders.Host, "produsent-api.nav.no")
                 addHeader(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
                 addHeader(HttpHeaders.ContentType, "application/json")
                 addHeader(HttpHeaders.Accept, "application/json")

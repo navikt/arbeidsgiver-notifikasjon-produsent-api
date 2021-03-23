@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.auth0.jwt.JWT
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.JWTVerifier
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.kotest.core.TestConfiguration
 import io.ktor.http.*
 import io.ktor.server.testing.*
@@ -39,7 +38,9 @@ class TestApplicationEngineDelegate(context: TestConfiguration) {
                 engine.run {
                     application.module(
                         verifierConfig = noopVerifierConfig,
-                        graphql = createGraphQL(kafkaProducer = mockk(relaxed = true))
+                        produsentGraphql = produsentGraphQL(
+                            kafkaProducer = mockk(relaxed = true)
+                        )
                     )
                     val (arg, body) = test
                     body.invoke(arg)
@@ -56,14 +57,22 @@ class TestApplicationEngineDelegate(context: TestConfiguration) {
 
 fun TestConfiguration.ktorEngine() = TestApplicationEngineDelegate(this)
 
-fun TestApplicationEngine.get(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
-    this.handleRequest(HttpMethod.Get, uri, setup).response
+fun TestApplicationEngine.produsentGet(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
+    this.handleRequest(HttpMethod.Get, uri) {
+        addHeader(HttpHeaders.Host, "produsent-api.nav.no")
+        setup()
+    }
+        .response
 
-fun TestApplicationEngine.post(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
-    this.handleRequest(HttpMethod.Post, uri, setup).response
+fun TestApplicationEngine.produsentPost(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
+    this.handleRequest(HttpMethod.Post, uri) {
+        addHeader(HttpHeaders.Host, "produsent-api.nav.no")
+        setup()
+    }
+        .response
 
-fun TestApplicationEngine.getWithHeader(uri: String, vararg headers: Pair<String, String>): TestApplicationResponse {
-    return this.get(uri) {
+fun TestApplicationEngine.produsentGetWithHeader(uri: String, vararg headers: Pair<String, String>): TestApplicationResponse {
+    return this.produsentGet(uri) {
         headers.forEach {
             addHeader(it.first, it.second)
         }

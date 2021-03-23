@@ -1,0 +1,7 @@
+###
+POST localhost:8080/api/graphql
+Host: bruker-api.nav.no
+Content-type: application/json
+Accept: application/json
+
+{ "query": "{ping} " }

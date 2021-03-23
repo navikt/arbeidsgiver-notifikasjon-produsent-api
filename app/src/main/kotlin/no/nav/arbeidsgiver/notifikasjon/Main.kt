@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.application.*
@@ -12,7 +11,6 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.apache.kafka.clients.consumer.Consumer
 
 val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
