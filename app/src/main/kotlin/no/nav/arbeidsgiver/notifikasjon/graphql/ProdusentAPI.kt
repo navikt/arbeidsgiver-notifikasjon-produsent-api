@@ -92,7 +92,16 @@ private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Event>) = DataFe
 
 fun produsentGraphQL(kafkaProducer: Producer<KafkaKey, Event> = createProducer()): GraphQL =
     createGraphQL("/produsent.graphqls") {
-        dataFetcher("Query", "ping") { "pong" }
-        dataFetcher("Query", "whoami", whoamiQuery)
-        dataFetcher("Mutation", "nyBeskjed", nyBeskjedMutation(kafkaProducer))
+
+        wire("Query") {
+            dataFetcher("ping") {
+                "pong"
+            }
+
+            dataFetcher("whoami", whoamiQuery)
+        }
+
+        wire("Mutation") {
+            dataFetcher("nyBeskjed", nyBeskjedMutation(kafkaProducer))
+        }
     }

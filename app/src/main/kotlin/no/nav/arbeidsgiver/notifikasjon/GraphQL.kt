@@ -8,9 +8,11 @@ import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
+import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
+import graphql.schema.idl.TypeRuntimeWiring
 
 /* Infrastructure/configuration etc. */
 
@@ -18,27 +20,24 @@ inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T 
     return objectMapper.convertValue(this.getArgument(name))
 }
 
-fun GraphQLCodeRegistry.Builder.dataFetcher(
-    parentType: String,
-    fieldName: String,
-    dataFetcher: DataFetcher<*>
-): GraphQLCodeRegistry.Builder {
-    return this.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), dataFetcher)
+fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Builder.() -> Unit) {
+    this.type(typeName) {
+        it.apply {
+            config()
+        }
+    }
 }
-
-
-typealias CodeRegistryConfig = GraphQLCodeRegistry.Builder.() -> Unit
 
 fun createGraphQL(
     schemaFilePath: String,
-    codeRegistryConfig: CodeRegistryConfig
+    runtimeWiringConfig: RuntimeWiring.Builder.() -> Unit
 ): GraphQL {
-    val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
-        .apply(codeRegistryConfig)
+    val typeDefinitionRegistry = SchemaParser().parse({}.javaClass.getResourceAsStream(schemaFilePath))
+
+    val runtimeWiring = newRuntimeWiring()
+        .apply(runtimeWiringConfig)
         .build()
 
-    val typeDefinitionRegistry = SchemaParser().parse({}.javaClass.getResourceAsStream(schemaFilePath))
-    val runtimeWiring = newRuntimeWiring().codeRegistry(codeRegistry).build()
     val schema = SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
     return newGraphQL(schema).build()
 }

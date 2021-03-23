@@ -124,7 +124,7 @@ class GraphQLTests : DescribeSpec({
     describe("POST bruker-api /api/graphql") {
         lateinit var response: TestApplicationResponse
         lateinit var query: String
-        val beskjed = Beskjed(
+        val beskjed = QueryBeskjed(
             merkelapp = "foo",
             tekst = "",
             grupperingsid = "",

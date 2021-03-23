@@ -13,7 +13,7 @@ data class Koordinat(
     val eksternId: String,
 )
 
-data class Beskjed(
+data class QueryBeskjed(
     val merkelapp: String,
     val tekst: String,
     val grupperingsid: String? = null,
@@ -23,12 +23,12 @@ data class Beskjed(
     val opprettetTidspunkt: String
 )
 
-val repository = mutableMapOf<Koordinat, Beskjed>()
+val repository = mutableMapOf<Koordinat, QueryBeskjed>()
 
-fun tilQueryBeskjed(event: Event): Beskjed =
+fun tilQueryBeskjed(event: Event): QueryBeskjed =
     when (event) {
         is BeskjedOpprettet ->
-            Beskjed(
+            QueryBeskjed(
                 merkelapp = event.merkelapp,
                 tekst = event.tekst,
                 grupperingsid = event.grupperingsid,
@@ -39,7 +39,7 @@ fun tilQueryBeskjed(event: Event): Beskjed =
             )
     }
 
-fun Beskjed?.oppdatertMed(nyBeskjed: Beskjed): Beskjed {
+fun QueryBeskjed?.oppdatertMed(nyBeskjed: QueryBeskjed): QueryBeskjed {
     return if (this == null) {
         nyBeskjed
     } else if (this == nyBeskjed) {

@@ -1,30 +1,44 @@
 package no.nav.arbeidsgiver.notifikasjon.graphql
 
 import graphql.GraphQL
+import graphql.schema.DataFetcher
 import no.nav.arbeidsgiver.notifikasjon.createGraphQL
-import no.nav.arbeidsgiver.notifikasjon.dataFetcher
 import no.nav.arbeidsgiver.notifikasjon.repository
-
+import no.nav.arbeidsgiver.notifikasjon.wire
 
 fun brukerGraphQL(): GraphQL =
     createGraphQL("/bruker.graphqls") {
-        dataFetcher("Query", "ping") { "pong" }
-        dataFetcher("Query", "notifikasjon") {
-            repository.values.map {
-                GraphQLBeskjed(
-                    merkelapp = it.merkelapp,
-                    tekst = it.tekst,
-                    lenke = it.lenke,
-                    opprettetTidspunkt = it.opprettetTidspunkt
-                )
+
+        wire("Notifikasjon") {
+            typeResolver { env ->
+                val objectTypeName = when (env.getObject<Notifikasjon>()) {
+                    is GraphQLBeskjed -> "Beskjed"
+                }
+                env.schema.getObjectType(objectTypeName)
             }
+        }
+
+        wire("Query") {
+            dataFetcher("ping") {
+                "pong"
+            }
+
+            dataFetcher( "notifikasjoner", DataFetcher<List<Notifikasjon>> {
+                repository.values.map { queryBeskjed ->
+                    GraphQLBeskjed(
+                        merkelapp = queryBeskjed.merkelapp,
+                        tekst = queryBeskjed.tekst,
+                        lenke = queryBeskjed.lenke,
+                        opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
+                    )
+                }
+            })
         }
     }
 
-sealed class Notifikasjon {}
+sealed class Notifikasjon
 
 data class GraphQLBeskjed(
-    val __typename: String = "Beskjed",
     val merkelapp: String,
     val tekst: String,
     val lenke: String,
