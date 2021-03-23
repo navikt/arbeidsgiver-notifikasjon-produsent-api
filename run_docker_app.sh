@@ -1,7 +1,8 @@
 #!/bin/bash
 
+docker network create my-net || true
 docker build -t produsent-api app
-dpid=$(docker run --rm -d --network host --name produsent-api -p 8080 produsent-api)
+dpid=$(docker run --rm -d --env KAFKA_BROKERS="broker:9092" --network my-net --name produsent-api -p 8080:8080 produsent-api)
 
 sleep 5s
 docker logs $dpid

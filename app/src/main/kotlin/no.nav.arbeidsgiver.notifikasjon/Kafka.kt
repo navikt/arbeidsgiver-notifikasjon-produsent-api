@@ -69,6 +69,7 @@ fun createProducer(): Producer<Key, Event> {
     props[BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: "localhost:9092"
     props[KEY_SERIALIZER_CLASS_CONFIG] = KeySerializer::class.java.canonicalName
     props[VALUE_SERIALIZER_CLASS_CONFIG] = ValueSerializer::class.java.canonicalName
+    props[MAX_BLOCK_MS_CONFIG] = 5_000
 
     getenv("KAFKA_KEYSTORE_PATH")?.let { props[SSL_KEYSTORE_LOCATION_CONFIG] = it }
     getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_KEYSTORE_PASSWORD_CONFIG] = it }
@@ -88,5 +89,5 @@ fun <K, V> Producer<K, V>.sendEvent(key: K, value: V) {
             key,
             value
         )
-    )
+    ).get()
 }
