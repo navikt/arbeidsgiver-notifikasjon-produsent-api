@@ -9,6 +9,12 @@ type Mutation {
 }
 
 type BeskjedResultat {
+    """
+    TODO: denne burde kanskje ikke eksponeres i det
+    hele tatt. Vi gir ingen garantier for at denne
+    kan brukes til noe fornuftig.
+    En ID som unikt identifiserer hendelsen.
+    """
     id: String!
 }
 
@@ -17,7 +23,7 @@ input BeskjedInput {
     tekst: String!
     grupperingsid: String
     lenke: String!
-    eksternid: String
+    eksternId: String!
     mottaker: MottakerInput!
 
     "ISO YYYYMMDDTHHMMSS"

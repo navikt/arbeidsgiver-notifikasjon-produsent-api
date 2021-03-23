@@ -15,17 +15,19 @@ import java.util.*
 
 data class GraphQLError(
     val message: String,
-    val locations: List<Map<String, Number>>,
+    val locations: Any,
     val extensions: Map<String, Any>?
 )
 
 inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T{
-    if (this.content == null) {
-        throw NullPointerException("content is null. status:${status()}")
+    val errors = getGraphqlErrors()
+    if (errors.isEmpty()) {
+        val tree = objectMapper.readTree(this.content!!)
+        val node = tree.get("data").get(name)
+        return objectMapper.convertValue(node)
+    } else {
+        throw Exception("Got errors $errors")
     }
-    val tree = objectMapper.readTree(this.content!!)
-    val node = tree.get("data").get(name)
-    return objectMapper.convertValue(node)
 }
 
 fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
@@ -45,7 +47,7 @@ class GraphQLTests : DescribeSpec({
         lateinit var query: String
 
         beforeEach {
-            mockkStatic(Producer<Key, Event>::sendEvent)
+            mockkStatic(Producer<KafkaKey, Event>::sendEvent)
             response = engine.post("/api/graphql") {
                 addHeader(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
                 addHeader(HttpHeaders.ContentType, "application/json")
@@ -62,6 +64,7 @@ class GraphQLTests : DescribeSpec({
                         lenke: "http://foo.bar",
                         tekst: "hello world",
                         merkelapp: "tag",
+                        eksternId: "heu",
                         mottaker: {
                             fnr: {
                                 fodselsnummer: "12345678910",
@@ -95,7 +98,7 @@ class GraphQLTests : DescribeSpec({
                 it("sends message to kafka") {
                     val eventSlot = slot<BeskjedOpprettet>()
                     verify {
-                        any<Producer<Key, Event>>().sendEvent(any(), capture(eventSlot))
+                        any<Producer<KafkaKey, Event>>().sendEvent(any(), capture(eventSlot))
                     }
                     val event = eventSlot.captured
                     event.guid.toString() shouldBe  resultat.id

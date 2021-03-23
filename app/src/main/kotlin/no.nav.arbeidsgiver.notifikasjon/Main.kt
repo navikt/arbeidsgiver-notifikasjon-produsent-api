@@ -10,6 +10,9 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.apache.kafka.clients.consumer.Consumer
 
 val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
@@ -24,6 +27,10 @@ val objectMapper = jacksonObjectMapper().apply {
 }
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
+    GlobalScope.launch {
+        createConsumer().processSingle(::queryModelBuilderProcessor)
+    }
+
     embeddedServer(Netty, port = 8080, module = Application::module)
         .start(wait = true)
 }

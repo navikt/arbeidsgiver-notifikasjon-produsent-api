@@ -22,7 +22,8 @@ class KafkaSerializerTests : DescribeSpec({
                     virksomhetsnummer = "123456789"
                 ),
                 lenke = "https://foop.no",
-                opprettetTidspunkt = "20200101T121212"
+                opprettetTidspunkt = "20200101T121212",
+                eksternId= "ekstern 1234h"
             )
 
             it("serde to itself") {

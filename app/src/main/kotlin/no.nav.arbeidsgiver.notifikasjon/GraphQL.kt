@@ -63,7 +63,7 @@ data class BeskjedInput(
     val tekst: String,
     val grupperingsid: String?,
     val lenke: String,
-    val eksternid: String?,
+    val eksternId: String,
     val mottaker: MottakerInput,
     val opprettetTidspunkt: String = Instant.now().toString()
 ) {
@@ -74,7 +74,7 @@ data class BeskjedInput(
             tekst = tekst,
             grupperingsid = grupperingsid,
             lenke = lenke,
-            eksternid = eksternid,
+            eksternId = eksternId,
             mottaker = mottaker.tilDomene(),
             opprettetTidspunkt = opprettetTidspunkt
         )
@@ -88,12 +88,12 @@ private val whoamiQuery = DataFetcher {
     it.getContext<Context>().produsentId
 }
 
-private fun nyBeskjedMutation(kafkaProducer: Producer<Key, Event>) = DataFetcher {
+private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Event>) = DataFetcher {
     val nyBeskjed = it.getTypedArgument<BeskjedInput>("nyBeskjed")
     val id = UUID.randomUUID()
     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
     val mottaker = nyBeskjed.mottaker.tilDomene()
-    kafkaProducer.sendEvent(Key(mottaker), nyBeskjed.tilDomene(id))
+    kafkaProducer.sendEvent(KafkaKey(mottaker), nyBeskjed.tilDomene(id))
     BeskjedResultat(id.toString())
 }
 
@@ -112,7 +112,7 @@ private fun GraphQLCodeRegistry.Builder.dataFetcher(
 }
 
 fun createGraphQL(
-    kafkaProducer: Producer<Key, Event> = createProducer()
+    kafkaProducer: Producer<KafkaKey, Event> = createProducer()
 ): GraphQL {
     val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
         .dataFetcher("Query", "ping", DataFetcher<String> {"pong"})
