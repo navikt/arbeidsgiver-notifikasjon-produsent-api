@@ -13,6 +13,7 @@ import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerConfig.*
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.config.SslConfigs.*
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
@@ -96,8 +97,15 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
     props[MAX_POLL_RECORDS_CONFIG] = "1"
     props[ENABLE_AUTO_COMMIT_CONFIG] = "false"
 
-    return KafkaConsumer<KafkaKey, Event>(props).also {
-        it.subscribe(listOf("arbeidsgiver.notifikasjon"))
+    return KafkaConsumer<KafkaKey, Event>(props).also { consumer ->
+        consumer.subscribe(listOf("arbeidsgiver.notifikasjon"))
+
+        /* TODO: dette er midlertidig. Fjernes når query-modellen er lagret og delt
+         * mellom pods. */
+        consumer.seekToBeginning(
+            consumer.partitionsFor("arbeidsgiver.notifikasjon")
+                .map { info -> TopicPartition(info.topic(), info.partition()) }
+        )
     }
 }
 
