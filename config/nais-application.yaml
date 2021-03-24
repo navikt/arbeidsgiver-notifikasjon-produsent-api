@@ -9,7 +9,8 @@ metadata:
 spec:
   image: {{image}}
   ingresses:
-    - https://arbeidsgiver-notifikasjon-produsent-api.dev.nav.no/
+    - https://produsent-api.notifikasjon-ag.dev.nav.no/
+    - https://bruker-api.notifikasjon-ag.dev.nav.no/
   liveness:
     path: /internal/alive
   readiness:
