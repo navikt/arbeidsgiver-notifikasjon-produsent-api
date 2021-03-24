@@ -43,6 +43,11 @@
             <artifactId>ktor-jackson</artifactId>
             <version>${ktor.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.11.2</version>
+        </dependency>
 
 
         <!-- graphql -->
@@ -87,7 +92,6 @@
         </dependency>
 
         <!-- kafka -->
-        <!-- Kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>

@@ -35,7 +35,7 @@ fun tilQueryBeskjed(event: Event): QueryBeskjed =
                 lenke = event.lenke,
                 eksternId = event.eksternId,
                 mottaker = event.mottaker,
-                opprettetTidspunkt = event.opprettetTidspunkt
+                opprettetTidspunkt = event.opprettetTidspunkt.toString()
             )
     }
 

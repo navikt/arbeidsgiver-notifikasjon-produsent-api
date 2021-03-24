@@ -11,16 +11,17 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
-import no.nav.arbeidsgiver.notifikasjon.graphql.GraphQLBeskjed
+import no.nav.arbeidsgiver.notifikasjon.graphql.Beskjed
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
 import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
 import org.apache.kafka.clients.producer.Producer
+import java.time.Instant
 import java.util.*
 
 data class GraphQLError(
     val message: String,
-    val locations: Any,
+    val locations: Any?,
     val extensions: Map<String, Any>?
 )
 
@@ -78,6 +79,7 @@ class GraphQLTests : DescribeSpec({
                                 virksomhetsnummer: "42"
                             } 
                         }
+                        opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                     }) {
                         id
                     }
@@ -116,6 +118,7 @@ class GraphQLTests : DescribeSpec({
                         fodselsnummer = "12345678910",
                         virksomhetsnummer = "42"
                     )
+                    event.opprettetTidspunkt shouldBe Instant.parse("2019-10-12T07:20:50.52Z")
                 }
             }
         }
@@ -172,7 +175,7 @@ class GraphQLTests : DescribeSpec({
             }
 
             context("respons er parsed som liste av Beskjed") {
-                lateinit var resultat: List<GraphQLBeskjed>
+                lateinit var resultat: List<Beskjed>
 
                 beforeEach {
                     resultat = response.getTypedContent("notifikasjoner")

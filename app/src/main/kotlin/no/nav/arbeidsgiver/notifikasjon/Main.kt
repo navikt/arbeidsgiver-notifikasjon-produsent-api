@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.application.*
 import io.ktor.server.engine.*
@@ -22,6 +23,7 @@ val objectMapper = jacksonObjectMapper().apply {
         }
     )
     configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+    registerModule(JavaTimeModule())
 }
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {

@@ -15,9 +15,10 @@ type BeskjedResultat {
     kan brukes til noe fornuftig.
     En ID som unikt identifiserer hendelsen.
     """
-    id: String!
+    id: ID!
 }
 
+scalar Instant
 input BeskjedInput {
     merkelapp: String!
     tekst: String!
@@ -25,9 +26,7 @@ input BeskjedInput {
     lenke: String!
     eksternId: String!
     mottaker: MottakerInput!
-
-    "ISO YYYYMMDDTHHMMSS"
-    opprettetTidspunkt: String
+    opprettetTidspunkt: Instant
 }
 
 "Må ha verdi i nøyaktig ett av disse feltene"

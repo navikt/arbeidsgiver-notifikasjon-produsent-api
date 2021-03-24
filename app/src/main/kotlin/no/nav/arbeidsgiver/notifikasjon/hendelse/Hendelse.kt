@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.hendelse
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import java.time.Instant
 import java.util.*
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
@@ -22,7 +23,7 @@ data class BeskjedOpprettet(
     val tekst: String,
     val grupperingsid: String? = null,
     val lenke: String,
-    val opprettetTidspunkt: String
+    val opprettetTidspunkt: Instant
 ): Event()
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)

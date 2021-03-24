@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.graphql
 
 import graphql.GraphQL
-import graphql.schema.DataFetcher
 import no.nav.arbeidsgiver.notifikasjon.createGraphQL
 import no.nav.arbeidsgiver.notifikasjon.repository
 import no.nav.arbeidsgiver.notifikasjon.wire
@@ -12,7 +11,7 @@ fun brukerGraphQL(): GraphQL =
         wire("Notifikasjon") {
             typeResolver { env ->
                 val objectTypeName = when (env.getObject<Notifikasjon>()) {
-                    is GraphQLBeskjed -> "Beskjed"
+                    is Beskjed -> "Beskjed"
                 }
                 env.schema.getObjectType(objectTypeName)
             }
@@ -23,22 +22,22 @@ fun brukerGraphQL(): GraphQL =
                 "pong"
             }
 
-            dataFetcher( "notifikasjoner", DataFetcher<List<Notifikasjon>> {
+            dataFetcher( "notifikasjoner") {
                 repository.values.map { queryBeskjed ->
-                    GraphQLBeskjed(
+                    Beskjed(
                         merkelapp = queryBeskjed.merkelapp,
                         tekst = queryBeskjed.tekst,
                         lenke = queryBeskjed.lenke,
                         opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
                     )
                 }
-            })
+            }
         }
     }
 
 sealed class Notifikasjon
 
-data class GraphQLBeskjed(
+data class Beskjed(
     val merkelapp: String,
     val tekst: String,
     val lenke: String,
