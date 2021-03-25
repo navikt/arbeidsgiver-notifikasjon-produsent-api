@@ -87,25 +87,23 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
     props["bootstrap.servers"] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
     props[KEY_DESERIALIZER_CLASS_CONFIG] = KeyDeserializer::class.java.canonicalName
     props["value.deserializer"] = ValueDeserializer::class.java.canonicalName
-    props["ssl.keystore.location"] = getenv("KAFKA_KEYSTORE_PATH") ?: ""
-    props["ssl.keystore.password"] = getenv("KAFKA_CREDSTORE_PASSWORD") ?: ""
-    props["ssl.truststore.location"] = getenv("KAFKA_TRUSTSTORE_PATH") ?: ""
-    props["ssl.truststore.password"] = getenv("KAFKA_CREDSTORE_PASSWORD") ?: ""
-    props["security.protocol"] = "SSL"
+    getenv("KAFKA_KEYSTORE_PATH")?.let { props[SSL_KEYSTORE_LOCATION_CONFIG] = it }
+    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_KEYSTORE_PASSWORD_CONFIG] = it }
+    getenv("KAFKA_TRUSTSTORE_PATH")?.let { props[SSL_TRUSTSTORE_LOCATION_CONFIG] = it }
+    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_TRUSTSTORE_PASSWORD_CONFIG] = it }
+    if (props[SSL_KEYSTORE_LOCATION_CONFIG] != null) {
+        props[SECURITY_PROTOCOL_CONFIG] = "SSL"
+    }
 
-    props["group.id"] = "query-model-builder"
+    /* TODO: dette er midlertidig. Fjernes når query-modellen er lagret og delt
+     * mellom pods. */
+
+    props["group.id"] = "query-model-builder" + UUID.randomUUID().toString()
     props[MAX_POLL_RECORDS_CONFIG] = "1"
     props[ENABLE_AUTO_COMMIT_CONFIG] = "false"
 
     return KafkaConsumer<KafkaKey, Event>(props).also { consumer ->
         consumer.subscribe(listOf("arbeidsgiver.notifikasjon"))
-
-        /* TODO: dette er midlertidig. Fjernes når query-modellen er lagret og delt
-         * mellom pods. */
-        consumer.seekToBeginning(
-            consumer.partitionsFor("arbeidsgiver.notifikasjon")
-                .map { info -> TopicPartition(info.topic(), info.partition()) }
-        )
     }
 }
 
