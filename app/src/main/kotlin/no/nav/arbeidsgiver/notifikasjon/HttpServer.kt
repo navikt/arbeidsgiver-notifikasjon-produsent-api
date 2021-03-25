@@ -44,6 +44,12 @@ fun Application.module(
     produsentGraphql: GraphQL = produsentGraphQL(),
     brukerGraphql: GraphQL = brukerGraphQL()
 ) {
+
+    install(CORS) {
+        allowNonSimpleContentTypes = true
+        host("arbeidsgiver-q.nav.no", schemes = listOf("https"))
+    }
+
     install(MicrometerMetrics) {
         registry = meterRegistry
     }
@@ -175,9 +181,7 @@ fun Application.module(
                     )
                 }
             }
-
         }
-
     }
 }
 
