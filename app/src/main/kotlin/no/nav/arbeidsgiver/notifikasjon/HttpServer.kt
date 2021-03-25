@@ -47,7 +47,7 @@ fun Application.module(
 
     install(CORS) {
         allowNonSimpleContentTypes = true
-        host("bruker-api.notifikasjon-ag.dev.nav.no", schemes = listOf("https"))
+        host("arbeidsgiver-q.nav.no", schemes = listOf("https"))
     }
 
     install(MicrometerMetrics) {
