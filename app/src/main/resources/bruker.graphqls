@@ -5,9 +5,10 @@ type Query {
 
 union Notifikasjon = Beskjed
 
+scalar Instant
 type Beskjed {
     merkelapp: String!
     tekst: String!
     lenke: String!
-    opprettetTidspunkt: String!
+    opprettetTidspunkt: Instant!
 }

@@ -4,10 +4,11 @@ import graphql.GraphQL
 import no.nav.arbeidsgiver.notifikasjon.createGraphQL
 import no.nav.arbeidsgiver.notifikasjon.repository
 import no.nav.arbeidsgiver.notifikasjon.wire
+import java.time.Instant
 
 fun brukerGraphQL(): GraphQL =
     createGraphQL("/bruker.graphqls") {
-
+        scalar(Scalars.Instant)
         wire("Notifikasjon") {
             typeResolver { env ->
                 val objectTypeName = when (env.getObject<Notifikasjon>()) {
@@ -41,5 +42,5 @@ data class Beskjed(
     val merkelapp: String,
     val tekst: String,
     val lenke: String,
-    val opprettetTidspunkt: String
+    val opprettetTidspunkt: Instant
 ) : Notifikasjon()

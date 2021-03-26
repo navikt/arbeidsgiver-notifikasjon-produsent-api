@@ -134,7 +134,7 @@ class GraphQLTests : DescribeSpec({
             lenke = "",
             eksternId = "",
             mottaker = FodselsnummerMottaker("42", "43"),
-            opprettetTidspunkt = ""
+            opprettetTidspunkt = Instant.EPOCH
         )
 
         beforeEach {

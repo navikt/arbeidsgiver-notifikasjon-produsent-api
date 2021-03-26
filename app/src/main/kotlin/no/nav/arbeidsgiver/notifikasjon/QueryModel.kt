@@ -4,6 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Mottaker
 import org.slf4j.LoggerFactory
+import java.time.Instant
 
 private val log = LoggerFactory.getLogger("query-model-builder-processor")
 
@@ -20,7 +21,7 @@ data class QueryBeskjed(
     val lenke: String,
     val eksternId: String,
     val mottaker: Mottaker,
-    val opprettetTidspunkt: String
+    val opprettetTidspunkt: Instant,
 )
 
 val repository = mutableMapOf<Koordinat, QueryBeskjed>()
@@ -35,7 +36,7 @@ fun tilQueryBeskjed(event: Event): QueryBeskjed =
                 lenke = event.lenke,
                 eksternId = event.eksternId,
                 mottaker = event.mottaker,
-                opprettetTidspunkt = event.opprettetTidspunkt.toString()
+                opprettetTidspunkt = event.opprettetTidspunkt,
             )
     }
 
