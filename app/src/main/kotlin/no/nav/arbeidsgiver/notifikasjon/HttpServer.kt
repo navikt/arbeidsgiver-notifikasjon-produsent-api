@@ -148,7 +148,7 @@ fun Application.module(
             }
         }
 
-        host("""produsent-api\..*""".toRegex()) {
+        host("""ag-notifikasjon-produsent-api\..*""".toRegex()) {
             authenticate {
                 route("api") {
                     post("graphql") {
@@ -167,7 +167,7 @@ fun Application.module(
             }
         }
 
-        host("""bruker-api\..*""".toRegex()) {
+        host("""ag-notifikasjon-bruker-api\..*""".toRegex()) {
             route("api") {
                 post("graphql") {
                     val request = call.receive<GraphQLRequest>()
