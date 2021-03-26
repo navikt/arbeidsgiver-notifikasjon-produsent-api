@@ -66,7 +66,7 @@ fun TestApplicationEngine.get(uri: String, setup: TestApplicationRequest.() -> U
 
 fun TestApplicationEngine.produsentGet(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
     this.get(uri) {
-        addHeader(HttpHeaders.Host, "produsent-api.nav.no")
+        addHeader(HttpHeaders.Host, "ag-notifikasjon-produsent-api.nav.no")
         setup()
     }
 
@@ -86,13 +86,13 @@ fun TestApplicationEngine.post(uri: String, setup: TestApplicationRequest.() -> 
 
 fun TestApplicationEngine.produsentPost(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
     this.post(uri) {
-        addHeader(HttpHeaders.Host, "produsent-api.nav.no")
+        addHeader(HttpHeaders.Host, "ag-notifikasjon-produsent-api.nav.no")
         setup()
     }
 
 fun TestApplicationEngine.brukerPost(uri: String, setup: TestApplicationRequest.() -> Unit = {}): TestApplicationResponse =
     this.post(uri) {
-        addHeader(HttpHeaders.Host, "bruker-api.nav.no")
+        addHeader(HttpHeaders.Host, "ag-notifikasjon-bruker-api.nav.no")
         setup()
     }
 
