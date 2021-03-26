@@ -41,9 +41,11 @@ fun createGraphQL(
 
 data class GraphQLRequest(
     val query: String,
-    val operationName: String? = null,
-    val variables: Map<String, String>? = null
-)
+    val operationName: String?,
+    val variables: Map<String, String>?,
+) {
+    constructor(query: String) : this(query, null, null)
+}
 
 data class Context(
     val produsentId: String

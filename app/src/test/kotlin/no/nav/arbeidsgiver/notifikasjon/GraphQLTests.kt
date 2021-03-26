@@ -54,16 +54,12 @@ class GraphQLTests : DescribeSpec({
 
         beforeEach {
             mockkStatic(Producer<KafkaKey, Event>::sendEvent)
-            response = engine.produsentPost("/api/graphql") {
-                addHeader(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
-                addHeader(HttpHeaders.ContentType, "application/json")
-                addHeader(HttpHeaders.Accept, "application/json")
-                setJsonBody(
-                    GraphQLRequest(
-                        query = query
-                    )
-                )
-            }
+            response = engine.post("/api/graphql",
+                host = PRODUSENT_HOST,
+                jsonBody = GraphQLRequest(query),
+                accept = "application/json",
+                authorization = "Bearer $tokenDingsToken"
+            )
         }
         context("Mutation.nyBeskjed") {
             query = """
@@ -140,15 +136,11 @@ class GraphQLTests : DescribeSpec({
         beforeEach {
             repository.clear()
             repository[Koordinat(beskjed.mottaker, beskjed.merkelapp, "")] = beskjed
-            response = engine.brukerPost("/api/graphql") {
-                addHeader(HttpHeaders.ContentType, "application/json")
-                addHeader(HttpHeaders.Accept, "application/json")
-                setJsonBody(
-                    GraphQLRequest(
-                        query = query
-                    )
-                )
-            }
+            response = engine.post("/api/graphql",
+                host = BRUKER_HOST,
+                jsonBody = GraphQLRequest(query),
+                accept = "application/json"
+            )
         }
         afterEach {
             repository.clear()
