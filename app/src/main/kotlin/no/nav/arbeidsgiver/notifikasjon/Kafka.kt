@@ -98,6 +98,7 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
     /* TODO: dette er midlertidig. Fjernes når query-modellen er lagret og delt
      * mellom pods. */
 
+    props[AUTO_OFFSET_RESET_CONFIG] = "earliest"
     props["group.id"] = "query-model-builder" + UUID.randomUUID().toString()
     props[MAX_POLL_RECORDS_CONFIG] = "1"
     props[ENABLE_AUTO_COMMIT_CONFIG] = "false"
