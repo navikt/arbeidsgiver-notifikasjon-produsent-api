@@ -1,9 +1,7 @@
 type Query {
     ping: String
-    notifikasjoner: [Notifikasjon!]!
+    notifikasjoner: [Beskjed!]!
 }
-
-union Notifikasjon = Beskjed
 
 scalar Instant
 type Beskjed {
