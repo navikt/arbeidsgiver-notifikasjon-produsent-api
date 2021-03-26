@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Mottaker
@@ -7,13 +8,13 @@ import org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig.*
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerConfig.*
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.config.SslConfigs.*
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
@@ -99,7 +100,7 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
      * mellom pods. */
 
     props[AUTO_OFFSET_RESET_CONFIG] = "earliest"
-    props["group.id"] = "query-model-builder" + UUID.randomUUID().toString()
+    props[GROUP_ID_CONFIG] = "query-model-builder" + UUID.randomUUID().toString()
     props[MAX_POLL_RECORDS_CONFIG] = "1"
     props[ENABLE_AUTO_COMMIT_CONFIG] = "false"
 
@@ -110,28 +111,60 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
 
 private val log = LoggerFactory.getLogger("Consumer.processSingle")!!
 
-fun <K, V>Consumer<K, V>.processSingle(processor: (V) -> Unit) {
+suspend fun <K, V>Consumer<K, V>.processSingle(processor: (V) -> Unit) {
     /* TODO: lag guage for failed. remember parition & offset as tags */
-    var failed = 0
     while (true) {
-        val records = this.poll(Duration.ofMillis(1000))
-        if (records.isEmpty) {
-            continue
-        } else if (records.count() > 1) {
-            log.error("Misconfiguration, polling returned more than 1 record")
-            /* TODO: this is a serious error, and should stop consuming completely
-             * requires manual intervention.
-             */
-            throw IllegalStateException("Misconfiguration, polling returned more than 1 record")
+        val records = try {
+            poll(Duration.ofMillis(1000))
+        } catch (e: Exception) {
+            log.error("Unrecoverable error during poll {}", assignment(), e)
+            throw e
         }
 
+        processWithRetry(records, processor)
+    }
+}
 
-        val record = records.first()
+private suspend fun <K, V> Consumer<K, V>.processWithRetry(
+    records: ConsumerRecords<K, V>,
+    processor: (V) -> Unit
+) {
+    if (records.isEmpty) {
+        return
+    } else if (records.count() > 1) {
+        log.error("Misconfiguration, polling returned more than 1 record")
+        /* TODO: this is a serious error, and should stop consuming completely
+         * requires manual intervention.
+         */
+        throw IllegalStateException("Misconfiguration, polling returned more than 1 record")
+    }
+
+    var failed = 0
+    var success = false
+    var backoffMillis = 5000L
+
+    val backoffMultiplier = 2
+    val record = records.first()
+    while (!success) {
         try {
+            if (failed > 0) {
+                backoffMillis += backoffMillis * backoffMultiplier
+                log.warn(
+                    "failed record(key={},partition={},offset={},timestamp={}) {} times. retrying with backoff={}",
+                    record.key(), record.partition(), record.offset(), record.timestamp(), failed, Duration.ofMillis(backoffMillis)
+                )
+//                  committed(assignment()).forEach {
+//                      val offset = it.value?.offset() ?: 0
+//                      log.info("seek {} => {}, {}", it.key, offset, it.value)
+//                      seek(it.key, offset)
+//                  }
+                delay(backoffMillis)
+            }
+
             log.info("processing {}", record.loggableToString())
             processor(record.value())
             this.commitSync()
-            failed = 0
+            success = true
             log.info("successfully processed {}", record.loggableToString())
         } catch (e: Exception) {
             failed += 1
