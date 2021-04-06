@@ -6,7 +6,7 @@
       "bruker-api": {
         "url": "http://localhost:8080/api/graphql",
         "headers": {
-          "host": "bruker-api.nav.no",
+          "host": "ag-notifikasjon-bruker-api.nav.no",
           "user-agent": "JS GraphQL"
         },
         "introspect": false
@@ -14,7 +14,7 @@
       "produsent-api": {
         "url": "http://localhost:8080/api/graphql",
         "headers": {
-          "host": "produsent-api.nav.no",
+          "host": "ag-notifikasjon-produsent-api.nav.no",
           "user-agent": "JS GraphQL",
           "authorization": "Bearer ${env:fakedings_token}"
         },

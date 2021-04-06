@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory
 import java.lang.System.getenv
 import java.time.Duration
 import java.util.*
+import org.apache.kafka.clients.consumer.OffsetAndMetadata
+
 
 data class KafkaKey(
     val mottaker: Mottaker
@@ -131,44 +133,41 @@ private suspend fun <K, V> Consumer<K, V>.processWithRetry(
 ) {
     if (records.isEmpty) {
         return
-    } else if (records.count() > 1) {
-        log.error("Misconfiguration, polling returned more than 1 record")
-        /* TODO: this is a serious error, and should stop consuming completely
-         * requires manual intervention.
-         */
-        throw IllegalStateException("Misconfiguration, polling returned more than 1 record")
     }
 
-    var failed = 0
-    var success = false
-    var backoffMillis = 5000L
+    records.partitions().forEach { partition ->
+        records.records(partition).forEach { record ->
+            var failed = 0
+            var success = false
+            var backoffMillis = 5000L
+            val backoffMultiplier = 2
+            while (!success) {
+                try {
+                    if (failed > 0) {
+                        // TODO: metric på antall feil (gauge?)
+                        backoffMillis += backoffMillis * backoffMultiplier
+                        log.warn(
+                            "failed record(key={},partition={},offset={},timestamp={}) {} times. retrying with backoff={}",
+                            record.key(),
+                            record.partition(),
+                            record.offset(),
+                            record.timestamp(),
+                            failed,
+                            Duration.ofMillis(backoffMillis)
+                        )
+                        delay(backoffMillis)
+                    }
 
-    val backoffMultiplier = 2
-    val record = records.first()
-    while (!success) {
-        try {
-            if (failed > 0) {
-                backoffMillis += backoffMillis * backoffMultiplier
-                log.warn(
-                    "failed record(key={},partition={},offset={},timestamp={}) {} times. retrying with backoff={}",
-                    record.key(), record.partition(), record.offset(), record.timestamp(), failed, Duration.ofMillis(backoffMillis)
-                )
-//                  committed(assignment()).forEach {
-//                      val offset = it.value?.offset() ?: 0
-//                      log.info("seek {} => {}, {}", it.key, offset, it.value)
-//                      seek(it.key, offset)
-//                  }
-                delay(backoffMillis)
+                    log.info("processing {}", record.loggableToString())
+                    processor(record.value())
+                    commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
+                    success = true
+                    log.info("successfully processed {}", record.loggableToString())
+                } catch (e: Exception) {
+                    failed += 1
+                    log.error("exception while processing {}", record.loggableToString(), e)
+                }
             }
-
-            log.info("processing {}", record.loggableToString())
-            processor(record.value())
-            this.commitSync()
-            success = true
-            log.info("successfully processed {}", record.loggableToString())
-        } catch (e: Exception) {
-            failed += 1
-            log.error("exception while processing {}", record.loggableToString(), e)
         }
     }
 }
