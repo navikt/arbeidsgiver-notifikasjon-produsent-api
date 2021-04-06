@@ -47,11 +47,8 @@ data class GraphQLRequest(
     constructor(query: String) : this(query, null, null)
 }
 
-data class Context(
-    val produsentId: String
-)
 
-fun GraphQL.execute(request: GraphQLRequest, context: Context? = null): Any {
+fun <T>GraphQL.execute (request: GraphQLRequest, context: T? = null): Any {
     val executionInput = ExecutionInput.newExecutionInput()
         .apply {
             query(request.query)

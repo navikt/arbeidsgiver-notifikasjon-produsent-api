@@ -13,6 +13,8 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import no.nav.arbeidsgiver.notifikasjon.graphql.BrukerContext
+import no.nav.arbeidsgiver.notifikasjon.graphql.ProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.graphql.brukerGraphQL
 import no.nav.arbeidsgiver.notifikasjon.graphql.produsentGraphQL
 import org.slf4j.event.Level
@@ -20,27 +22,40 @@ import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-@Suppress("MayBeConstant") /* wont work when using System.getenv */
-object AuthConfig {
-    val clientId = "produsent-api" /* System.getenv("AZURE_APP_CLIENT_ID") */
-    val jwksUri = "https://fakedings.dev-gcp.nais.io/default/jwks" /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
-    val issuer = "https://fakedings.dev-gcp.nais.io/fake" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
-}
+data class AuthConfig(val clientId: String, val jwksUri: String, val issuer: String)
 
-typealias JWTAuthConfig = JWTAuthenticationProvider.Configuration.() -> Unit
+typealias JWTAuthConfig = JWTAuthenticationProvider.Configuration.(AuthConfig) -> Unit
 
-private val defaultVerifierConfig: JWTAuthConfig = {
+fun JWTAuthenticationProvider.Configuration.standardAuthenticationConfiguration(authConfig: AuthConfig) {
     verifier(
-        JwkProviderBuilder(URL(AuthConfig.jwksUri))
+        JwkProviderBuilder(URL(authConfig.jwksUri))
             .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
-            .rateLimited(10, 1, TimeUnit.MINUTES) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
+            .rateLimited(
+                10,
+                1,
+                TimeUnit.MINUTES
+            ) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
             .build(),
-        AuthConfig.issuer
+        authConfig.issuer
     )
+
+    validate { credentials ->
+        try {
+            requireNotNull(credentials.payload.audience) {
+                "Auth: Missing audience in token"
+            }
+            require(credentials.payload.audience.contains(authConfig.clientId)) {
+                "Auth: Valid audience not found in claims"
+            }
+            JWTPrincipal(credentials.payload)
+        } catch (e: Throwable) {
+            null
+        }
+    }
 }
 
 fun Application.module(
-    verifierConfig: JWTAuthConfig = defaultVerifierConfig,
+    authenticationConfiguration: JWTAuthConfig = JWTAuthenticationProvider.Configuration::standardAuthenticationConfiguration,
     produsentGraphql: GraphQL = produsentGraphQL(),
     brukerGraphql: GraphQL = brukerGraphQL()
 ) {
@@ -115,22 +130,23 @@ fun Application.module(
     }
 
     install(Authentication) {
-        jwt {
-            verifierConfig()
-
-            validate { credentials ->
-                try {
-                    requireNotNull(credentials.payload.audience) {
-                        "Auth: Missing audience in token"
-                    }
-                    require(credentials.payload.audience.contains(AuthConfig.clientId)) {
-                        "Auth: Valid audience not found in claims"
-                    }
-                    JWTPrincipal(credentials.payload)
-                } catch (e: Throwable) {
-                    null
-                }
-            }
+        jwt(name = "Produsent") {
+            authenticationConfiguration(
+                AuthConfig(
+                    clientId = "produsent-api", /* System.getenv("AZURE_APP_CLIENT_ID") */
+                    jwksUri = "https://fakedings.dev-gcp.nais.io/default/jwks", /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
+                    issuer = "https://fakedings.dev-gcp.nais.io/fake" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
+                )
+            )
+        }
+        jwt(name = "Bruker") {
+            authenticationConfiguration(
+                AuthConfig(
+                    clientId = "0090b6e1-ffcc-4c37-bc21-049f7d1f0fe5", /* System.getenv("AZURE_APP_CLIENT_ID") */
+                    jwksUri = "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/discovery/v2.0/keys?p=b2c_1a_idporten_ver1", /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
+                    issuer = "https://navtestb2c.b2clogin.com/d38f25aa-eab8-4c50-9f28-ebf92c1256f2/v2.0/" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
+                )
+            )
         }
     }
 
@@ -149,11 +165,11 @@ fun Application.module(
         }
 
         host("""ag-notifikasjon-produsent-api\..*""".toRegex()) {
-            authenticate {
+            authenticate("Produsent") {
                 route("api") {
                     post("graphql") {
                         val token = call.principal<JWTPrincipal>()!!.payload
-                        val context = Context(
+                        val context = ProdusentContext(
                             produsentId = "iss:${token.issuer} sub:${token.subject}"
                         )
                         val request = call.receive<GraphQLRequest>()
@@ -169,10 +185,14 @@ fun Application.module(
 
         host("""ag-notifikasjon-bruker-api\..*""".toRegex()) {
             route("api") {
-                post("graphql") {
-                    val request = call.receive<GraphQLRequest>()
-                    val result = brukerGraphql.execute(request)
-                    call.respond(result)
+                authenticate("Bruker") {
+                    post("graphql") {
+                        val token = call.principal<JWTPrincipal>()!!.payload
+
+                        val request = call.receive<GraphQLRequest>()
+                        val result = brukerGraphql.execute(request, BrukerContext(token.subject))
+                        call.respond(result)
+                    }
                 }
                 get("ide") {
                     call.respondBytes(
@@ -180,6 +200,7 @@ fun Application.module(
                         ContentType.parse("text/html")
                     )
                 }
+
             }
         }
     }

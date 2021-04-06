@@ -6,6 +6,10 @@ import no.nav.arbeidsgiver.notifikasjon.repository
 import no.nav.arbeidsgiver.notifikasjon.wire
 import java.time.Instant
 
+data class BrukerContext(
+    val fnr:String
+)
+
 fun brukerGraphQL(): GraphQL =
     createGraphQL("/bruker.graphqls") {
         scalar(Scalars.Instant)
@@ -32,6 +36,9 @@ fun brukerGraphQL(): GraphQL =
                         opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
                     )
                 }
+            }
+            dataFetcher("whoami"){
+                it.getContext<BrukerContext>().fnr
             }
         }
     }

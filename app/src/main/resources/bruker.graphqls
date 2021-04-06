@@ -1,6 +1,7 @@
 type Query {
     ping: String
     notifikasjoner: [Beskjed!]!
+    whoami: String
 }
 
 scalar Instant

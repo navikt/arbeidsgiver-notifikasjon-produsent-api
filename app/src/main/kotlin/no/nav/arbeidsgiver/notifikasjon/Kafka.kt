@@ -4,12 +4,10 @@ import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Mottaker
+import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG
-import org.apache.kafka.clients.consumer.Consumer
+import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.consumer.ConsumerConfig.*
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.clients.consumer.ConsumerRecords
-import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerConfig
@@ -22,7 +20,6 @@ import org.slf4j.LoggerFactory
 import java.lang.System.getenv
 import java.time.Duration
 import java.util.*
-import org.apache.kafka.clients.consumer.OffsetAndMetadata
 
 
 data class KafkaKey(
@@ -54,6 +51,8 @@ fun createProducer(): Producer<KafkaKey, Event> {
     props[KEY_SERIALIZER_CLASS_CONFIG] = KeySerializer::class.java.canonicalName
     props[VALUE_SERIALIZER_CLASS_CONFIG] = ValueSerializer::class.java.canonicalName
     props[MAX_BLOCK_MS_CONFIG] = 5_000
+    props[CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG] = "500"
+    props[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = "5000"
 
     getenv("KAFKA_KEYSTORE_PATH")?.let { props[SSL_KEYSTORE_LOCATION_CONFIG] = it }
     getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_KEYSTORE_PASSWORD_CONFIG] = it }
@@ -105,6 +104,8 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
     props[GROUP_ID_CONFIG] = "query-model-builder" + UUID.randomUUID().toString()
     props[MAX_POLL_RECORDS_CONFIG] = "1"
     props[ENABLE_AUTO_COMMIT_CONFIG] = "false"
+    props[CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG] = "500"
+    props[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = "5000"
 
     return KafkaConsumer<KafkaKey, Event>(props).also { consumer ->
         consumer.subscribe(listOf("arbeidsgiver.notifikasjon"))

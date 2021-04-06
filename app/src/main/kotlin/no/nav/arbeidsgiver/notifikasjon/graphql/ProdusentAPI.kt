@@ -9,11 +9,14 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.*
 
+data class ProdusentContext(
+    val produsentId: String
+)
 
 private val log = LoggerFactory.getLogger("GraphQL.ProdusentAPI")!!
 
 private val whoamiQuery = DataFetcher {
-    it.getContext<Context>().produsentId
+    it.getContext<ProdusentContext>().produsentId
 }
 
 data class FnrmottakerInput(

@@ -139,7 +139,8 @@ class GraphQLTests : DescribeSpec({
             response = engine.post("/api/graphql",
                 host = BRUKER_HOST,
                 jsonBody = GraphQLRequest(query),
-                accept = "application/json"
+                accept = "application/json",
+                authorization = "Bearer $tokenDingsToken"
             )
         }
         afterEach {
