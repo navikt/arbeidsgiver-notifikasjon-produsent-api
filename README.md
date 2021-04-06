@@ -21,9 +21,9 @@
 * juster opp antall partisjoner for topic
   * `kafka-topics --zookeeper zookeeper:2181 --alter --topic arbeidsgiver.notifikasjon --partitions 5`
 * purge en topic (krever å sette retention lav, så vente, så slette retention)
-  * `kafka-topics --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --add-config retention.ms=1000`
+  * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --add-config retention.ms=1000`
   * _a few moments later_
-  * `kafka-topics --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --delete-config retention.ms`
+  * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --delete-config retention.ms`
 * delete topic
   * `kafka-topics --zookeeper zookeeper:2181 --delete --topic arbeidsgiver.notifikasjon@wd wdwaddd`
 * consume en topic og print til console (default from latest)

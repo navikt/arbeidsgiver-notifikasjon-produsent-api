@@ -6,5 +6,16 @@ Authorization: Bearer {{auth_token}}
 {
   "query":
   "mutation { nyBeskjed(nyBeskjed: {merkelapp: \"tiltak\" tekst: \"fin tekst\" lenke: \"https://vg.no\" mottaker: { altinn: { altinntjenesteKode: \"1234\" altinntjenesteVersjon: \"1\" virksomhetsnummer: \"123456789\" } } }) { id } }"
+
 }
 
+###
+POST http://localhost:8080/api/graphql
+content-type: application/json
+host: ag-notifikasjon-produsent-api.,
+Authorization: Bearer {{auth_token}}
+
+{
+  "query":
+  "mutation { nyBeskjed(nyBeskjed: {merkelapp: \"tiltak\" tekst: \"fin tekst\" lenke: \"https://vg.no\" eksternId: \"\" mottaker: { altinn: { altinntjenesteKode: \"1234\" altinntjenesteVersjon: \"1\" virksomhetsnummer: \"123456789\" } } }) { id } }"
+}
