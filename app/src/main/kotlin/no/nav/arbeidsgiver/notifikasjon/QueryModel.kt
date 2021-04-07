@@ -1,8 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
-import no.nav.arbeidsgiver.notifikasjon.hendelse.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.*
 import org.slf4j.LoggerFactory
 import java.time.Instant
 
@@ -25,6 +23,26 @@ data class QueryBeskjed(
 )
 
 val repository = mutableMapOf<Koordinat, QueryBeskjed>()
+
+data class Tilgang(
+    val virksomhet: String,
+    val servicecode: String,
+    val serviceedition: String,
+)
+
+fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<QueryBeskjed> {
+    return repository.values.filter { beskjed ->
+        when (val mottaker = beskjed.mottaker) {
+            is FodselsnummerMottaker ->
+                mottaker.fodselsnummer == fnr
+            is AltinnMottaker -> tilganger.any { tilgang ->
+                mottaker.altinntjenesteKode == tilgang.servicecode &&
+                        mottaker.altinntjenesteVersjon == tilgang.serviceedition &&
+                        mottaker.virksomhetsnummer == tilgang.virksomhet
+            }
+        }
+    }
+}
 
 fun tilQueryBeskjed(event: Event): QueryBeskjed =
     when (event) {
