@@ -101,8 +101,8 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
      * mellom pods. */
 
     props[AUTO_OFFSET_RESET_CONFIG] = "earliest"
-    props[GROUP_ID_CONFIG] = "query-model-builder" + UUID.randomUUID().toString()
-    props[MAX_POLL_RECORDS_CONFIG] = "1"
+    props[GROUP_ID_CONFIG] = "query-model-builder"
+    props[MAX_POLL_RECORDS_CONFIG] = "100"
     props[ENABLE_AUTO_COMMIT_CONFIG] = "false"
     props[CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG] = "500"
     props[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = "5000"
