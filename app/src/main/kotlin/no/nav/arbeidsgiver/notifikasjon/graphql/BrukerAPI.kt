@@ -1,10 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.graphql
 
 import graphql.GraphQL
-import no.nav.arbeidsgiver.notifikasjon.QueryModelRepository
-import no.nav.arbeidsgiver.notifikasjon.createGraphQL
-import no.nav.arbeidsgiver.notifikasjon.hentRettigheter
-import no.nav.arbeidsgiver.notifikasjon.wire
+import no.nav.arbeidsgiver.notifikasjon.*
 import java.time.Instant
 
 
@@ -31,7 +28,7 @@ fun brukerGraphQL(): GraphQL =
             }
 
             dataFetcher( "notifikasjoner") {
-                val tilganger = hentRettigheter(it.getContext<BrukerContext>().fnr,it.getContext<BrukerContext>().token)
+                val tilganger = AltinnClient.hentRettigheter(it.getContext<BrukerContext>().fnr,it.getContext<BrukerContext>().token)
                 val queryBeskjeder = QueryModelRepository.hentNotifikasjoner(
                     it.getContext<BrukerContext>().fnr,
                     tilganger

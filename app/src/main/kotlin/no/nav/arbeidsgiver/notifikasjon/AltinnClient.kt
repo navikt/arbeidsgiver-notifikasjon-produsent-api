@@ -10,7 +10,7 @@ import java.util.Set
 
 const val proxyUrl = "https://arbeidsgiver.dev.nav.no/altinn-rettigheter-proxy/"
 const val fallBackUrl = "https://vg.no" //TODO finn riktig måte å fallbacke på i gcp
-val altinnHeader: String = System.getenv("ALTINN_HEADER")
+val altinnHeader: String = System.getenv("ALTINN_HEADER") ?: "default"
 const val APIGwHeader = "String"
 
 
@@ -55,6 +55,9 @@ fun run(action: () -> List<AltinnReportee>) =
         if (error.message?.contains("403") == true) AltinnIngenRettigheter else throw error
     }
 
+
+
+
 fun hentOrganisasjonerBasertPaRettigheter(
     fnr: String,
     serviceKode: String,
@@ -86,24 +89,25 @@ private val våreTjenester = mutableSetOf(
     Pair.of("5078", "1"),
     Pair.of("5278", "1")
 )
-
-fun hentRettigheter(fnr: String, selvbetjeningsToken: String): List<Tilgang> {
-    var tilganger: MutableList<Tilgang> = mutableListOf()
-    våreTjenester.forEach { tjeneste ->
-        when (val oppslagsresultat =
-            hentOrganisasjonerBasertPaRettigheter(fnr, tjeneste.first, tjeneste.second, selvbetjeningsToken)) {
-            is AltinnOppslagVellykket -> {
-                oppslagsresultat.organisasjoner.filter { it.Type != "Enterprise" }.forEach { organisasjon ->
-                    tilganger.add(
-                        Tilgang(
-                            organisasjon.OrganizationNumber!!,
-                            tjeneste.first,
-                            tjeneste.second
+object AltinnClient{
+    fun hentRettigheter(fnr: String, selvbetjeningsToken: String): List<Tilgang> {
+        var tilganger: MutableList<Tilgang> = mutableListOf()
+        våreTjenester.forEach { tjeneste ->
+            when (val oppslagsresultat =
+                hentOrganisasjonerBasertPaRettigheter(fnr, tjeneste.first, tjeneste.second, selvbetjeningsToken)) {
+                is AltinnOppslagVellykket -> {
+                    oppslagsresultat.organisasjoner.filter { it.Type != "Enterprise" }.forEach { organisasjon ->
+                        tilganger.add(
+                            Tilgang(
+                                organisasjon.OrganizationNumber!!,
+                                tjeneste.first,
+                                tjeneste.second
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
+        return tilganger
     }
-    return tilganger
 }

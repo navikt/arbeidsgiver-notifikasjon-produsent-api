@@ -10,8 +10,8 @@ import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
 import no.nav.arbeidsgiver.notifikasjon.graphql.Beskjed
+import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
 import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
@@ -54,7 +54,8 @@ class GraphQLTests : DescribeSpec({
 
         beforeEach {
             mockkStatic(Producer<KafkaKey, Event>::sendEvent)
-            response = engine.post("/api/graphql",
+            response = engine.post(
+                "/api/graphql",
                 host = PRODUSENT_HOST,
                 jsonBody = GraphQLRequest(query),
                 accept = "application/json",
@@ -138,6 +139,9 @@ class GraphQLTests : DescribeSpec({
             every {
                 QueryModelRepository.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed)
+            mockkObject(AltinnClient)
+            every { AltinnClient.hentRettigheter(any(), any()) } returns emptyList()
+
             response = engine.post("/api/graphql",
                 host = BRUKER_HOST,
                 jsonBody = GraphQLRequest(query),
