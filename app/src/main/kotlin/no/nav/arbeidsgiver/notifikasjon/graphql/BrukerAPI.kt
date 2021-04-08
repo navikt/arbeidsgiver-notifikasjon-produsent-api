@@ -1,12 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.graphql
 
 import graphql.GraphQL
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
 import no.nav.arbeidsgiver.notifikasjon.*
 import java.time.Instant
 
 
 data class BrukerContext(
-    val fnr:String
+    val fnr:String,
+    val token: String
 )
 
 fun brukerGraphQL(): GraphQL =
