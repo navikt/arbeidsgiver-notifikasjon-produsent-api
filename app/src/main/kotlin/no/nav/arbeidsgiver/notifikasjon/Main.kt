@@ -32,5 +32,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     }
 
     embeddedServer(Netty, port = 8080, module = Application::module)
+        .apply {
+            DB.datasource.migrate()
+        }
         .start(wait = true)
 }

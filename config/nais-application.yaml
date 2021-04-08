@@ -24,6 +24,16 @@ spec:
       tenant: trygdeetaten.no
   kafka:
     pool: nav-dev
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_12
+        tier: db-custom-1-3840
+        diskSize: 20
+        diskAutoresize: true
+        highAvailability: false
+        databases:
+          - name: ag-notifikasjon-query
+            envVarPrefix: DB
   accessPolicy:
     outbound:
       external:
@@ -33,3 +43,8 @@ spec:
   replicas:
     max: 1
     min: 1
+
+    "tier": "db-custom-2-7680",
+              "diskSize": "40",
+              "diskAutoresize": "true",
+              "highAvailability": "true"
