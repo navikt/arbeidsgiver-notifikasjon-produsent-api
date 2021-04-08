@@ -6,14 +6,13 @@ import org.flywaydb.core.Flyway
 import javax.sql.DataSource
 
 val hikariConfig = HikariConfig().apply {
-    jdbcUrl = String.format(
-        "jdbc:postgresql://%s:%s/%s",
-        System.getenv("DB_HOST") ?: "localhost",
-        System.getenv("DB_PORT") ?: "5432",
-        System.getenv("DB_DATABASE") ?: "postgres"
-    )
+    val host = System.getenv("DB_HOST") ?: "localhost"
+    val port = System.getenv("DB_PORT") ?: "5432"
+    val db = System.getenv("DB_DATABASE") ?: "postgres"
+
     username =  System.getenv("DB_USERNAME") ?: "postgres"
     password = System.getenv("DB_PASSWORD") ?: "postgres"
+    jdbcUrl = "jdbc:postgresql://$host:$port/$db"
     driverClassName = "org.postgresql.Driver"
 }
 
