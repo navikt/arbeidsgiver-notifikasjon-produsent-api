@@ -43,8 +43,3 @@ spec:
   replicas:
     max: 1
     min: 1
-
-    "tier": "db-custom-2-7680",
-              "diskSize": "40",
-              "diskAutoresize": "true",
-              "highAvailability": "true"
