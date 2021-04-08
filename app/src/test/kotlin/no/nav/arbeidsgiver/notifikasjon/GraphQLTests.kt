@@ -93,7 +93,7 @@ class GraphQLTests : DescribeSpec({
                 lateinit var resultat: BeskjedResultat
 
                 beforeEach {
-                    resultat = response.getTypedContent<BeskjedResultat>("nyBeskjed")
+                    resultat = response.getTypedContent("nyBeskjed")
                 }
 
                 it("id er gitt") {
@@ -129,7 +129,7 @@ class GraphQLTests : DescribeSpec({
             grupperingsid = "",
             lenke = "",
             eksternId = "",
-            mottaker = FodselsnummerMottaker("42", "43"),
+            mottaker = FodselsnummerMottaker("00000000000", "43"),
             opprettetTidspunkt = Instant.EPOCH
         )
 
@@ -140,7 +140,7 @@ class GraphQLTests : DescribeSpec({
                 host = BRUKER_HOST,
                 jsonBody = GraphQLRequest(query),
                 accept = "application/json",
-                authorization = "Bearer $tokenDingsToken"
+                authorization = "Bearer $selbetjeningsToken"
             )
         }
         afterEach {
