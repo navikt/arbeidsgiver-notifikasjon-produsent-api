@@ -8,10 +8,10 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.common.utils.Pair
 import java.util.Set
 
-val proxyUrl = "https://arbeidsgiver.dev.nav.no/altinn-rettigheter-proxy/"
-val fallBackUrl = "https://vg.no" //TODO finn riktig måte å fallbacke på i gcp
-val altinnHeader = "String"
-val APIGwHeader = "String"
+const val proxyUrl = "https://arbeidsgiver.dev.nav.no/altinn-rettigheter-proxy/"
+const val fallBackUrl = "https://vg.no" //TODO finn riktig måte å fallbacke på i gcp
+val altinnHeader: String = System.getenv("ALTINN_HEADER")
+const val APIGwHeader = "String"
 
 
 data class Organisasjon(
@@ -89,21 +89,21 @@ private val våreTjenester = mutableSetOf(
 
 fun hentRettigheter(fnr: String, selvbetjeningsToken: String): List<Tilgang> {
     var tilganger: MutableList<Tilgang> = mutableListOf()
-    våreTjenester.forEach {
+    våreTjenester.forEach { tjeneste ->
         when (val oppslagsresultat =
-            hentOrganisasjonerBasertPaRettigheter(fnr, it.first, it.second, selvbetjeningsToken)) {
+            hentOrganisasjonerBasertPaRettigheter(fnr, tjeneste.first, tjeneste.second, selvbetjeningsToken)) {
             is AltinnOppslagVellykket -> {
-                oppslagsresultat.organisasjoner.filter{ it.Type != "Enterprise" }.forEach { organisasjon ->
+                oppslagsresultat.organisasjoner.filter { it.Type != "Enterprise" }.forEach { organisasjon ->
                     tilganger.add(
                         Tilgang(
                             organisasjon.OrganizationNumber!!,
-                            it.first,
-                            it.second
+                            tjeneste.first,
+                            tjeneste.second
                         )
                     )
                 }
             }
         }
     }
-return tilganger
+    return tilganger
 }

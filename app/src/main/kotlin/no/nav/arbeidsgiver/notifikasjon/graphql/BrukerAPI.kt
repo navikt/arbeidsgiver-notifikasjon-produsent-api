@@ -1,8 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.graphql
 
 import graphql.GraphQL
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.QueryModelRepository
+import no.nav.arbeidsgiver.notifikasjon.createGraphQL
+import no.nav.arbeidsgiver.notifikasjon.hentRettigheter
+import no.nav.arbeidsgiver.notifikasjon.wire
 import java.time.Instant
 
 
@@ -29,24 +31,7 @@ fun brukerGraphQL(): GraphQL =
             }
 
             dataFetcher( "notifikasjoner") {
-                val tilganger = listOf(
-                    Tilgang(
-                        virksomhet = "910825631", /* akkarvik */
-                        servicecode = "5278", /* tilskudd */
-                        serviceedition = "1"
-                    ),
-                    Tilgang(
-                        virksomhet = "910825631", /* akkarvik */
-                        servicecode = "5332", /* arbeidstrening */
-                        serviceedition = "1"
-                    ),
-                    Tilgang(
-                        virksomhet = "910953494", /* haukedalen */
-                        servicecode = "5332", /* arbeidstrening */
-                        serviceedition = "1"
-                    )
-                )
-
+                val tilganger = hentRettigheter(it.getContext<BrukerContext>().fnr,it.getContext<BrukerContext>().token)
                 val queryBeskjeder = QueryModelRepository.hentNotifikasjoner(
                     it.getContext<BrukerContext>().fnr,
                     tilganger
