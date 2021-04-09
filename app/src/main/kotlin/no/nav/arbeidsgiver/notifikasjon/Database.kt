@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import java.sql.Connection
 import javax.sql.DataSource
 
 val hikariConfig = HikariConfig().apply {
@@ -21,6 +22,8 @@ fun hikariDatasource(config: HikariConfig = hikariConfig) = HikariDataSource(con
 object DB {
     val dataSource: DataSource
         get() = hikariDatasource()
+    val connection: Connection
+        get() = dataSource.connection
 }
 
 internal fun DataSource.migrate() {
@@ -29,3 +32,31 @@ internal fun DataSource.migrate() {
         .load()
         .migrate()
 }
+
+class UnhandeledTransactionRollback(msg: String, e: Throwable) : Exception(msg, e)
+
+private fun <T>defaultRollback(e: Exception): T {
+    throw UnhandeledTransactionRollback("no rollback function registered", e)
+}
+
+private fun <T> Connection.transaction(rollback: (e: Exception) -> T = ::defaultRollback, body: () -> T): T {
+    val savedAutoCommit = autoCommit
+    autoCommit = false
+
+    return try {
+        val result = body()
+        commit()
+        result
+    } catch (e: Exception) {
+        rollback(e)
+    } finally {
+        autoCommit = savedAutoCommit
+    }
+}
+
+internal fun <T> DataSource.transaction(rollback: (e: Exception) -> T = ::defaultRollback, body: (c: Connection) -> T): T =
+    connection.use { c ->
+        c.transaction(rollback) {
+            body(c)
+        }
+    }

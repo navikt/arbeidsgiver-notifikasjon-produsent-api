@@ -22,25 +22,52 @@ data class QueryBeskjed(
     val opprettetTidspunkt: Instant,
 )
 
-val repository = mutableMapOf<Koordinat, QueryBeskjed>()
-
 data class Tilgang(
     val virksomhet: String,
     val servicecode: String,
     val serviceedition: String,
 )
 
-fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<QueryBeskjed> {
-    return repository.values.filter { beskjed ->
-        when (val mottaker = beskjed.mottaker) {
-            is FodselsnummerMottaker ->
-                mottaker.fodselsnummer == fnr
-            is AltinnMottaker -> tilganger.any { tilgang ->
-                mottaker.altinntjenesteKode == tilgang.servicecode &&
-                        mottaker.altinntjenesteVersjon == tilgang.serviceedition &&
-                        mottaker.virksomhetsnummer == tilgang.virksomhet
+object QueryModelRepository {
+    fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<QueryBeskjed> {
+        return sequence {
+            val connection = DB.connection
+
+            val tilgangerJsonB = tilganger.map { "'${objectMapper.writeValueAsString(AltinnMottaker(it.servicecode, it.serviceedition, it.virksomhet))}'" }.joinToString()
+            val prepstat = connection.prepareStatement(
+                """
+                select * from notifikasjon
+                where (
+                    mottaker ->> '@type' = 'fodselsnummer'
+                    and mottaker ->> 'fodselsnummer' = ?
+                ) 
+                or (
+                    mottaker ->> '@type' = 'altinn'
+                    and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
+            """
+            )
+
+            prepstat.setString(1, fnr)
+            val resultSet = prepstat.executeQuery()
+            while (resultSet.next()) {
+                yield(
+                    QueryBeskjed(
+                        merkelapp = resultSet.getString("merkelapp"),
+                        tekst = resultSet.getString("tekst"),
+                        grupperingsid = resultSet.getString("grupperingsid"),
+                        lenke = resultSet.getString("lenke"),
+                        eksternId = resultSet.getString("ekstern_id"),
+                        mottaker = objectMapper.readValue(
+                            resultSet.getString("mottaker"),
+                            Mottaker::class.java
+                        ),
+                        opprettetTidspunkt = Instant.now()
+                    )
+                )
             }
-        }
+            resultSet.close()
+            connection.close()
+        }.toList()
     }
 }
 
@@ -58,23 +85,35 @@ fun tilQueryBeskjed(event: Event): QueryBeskjed =
             )
     }
 
-fun QueryBeskjed?.oppdatertMed(nyBeskjed: QueryBeskjed): QueryBeskjed {
-    return if (this == null) {
-        nyBeskjed
-    } else if (this == nyBeskjed) {
-        this
-    } else {
-        log.error("forsøk på å endre eksisterende beskjed")
-        this
-    }
-}
-
 fun queryModelBuilderProcessor(event: Event) {
     val koordinat = Koordinat(
         mottaker = event.mottaker,
         merkelapp = event.merkelapp,
         eksternId = event.eksternId
     )
+    val nyBeskjed = tilQueryBeskjed(event)
 
-    repository[koordinat] = repository[koordinat].oppdatertMed(tilQueryBeskjed(event))
+    DB.dataSource.transaction { connection ->
+        val prepstat = connection.prepareStatement("""
+            insert into notifikasjon(
+                koordinat,
+                merkelapp,
+                tekst,
+                grupperingsid,
+                lenke,
+                ekstern_id,
+                mottaker
+            )
+            values (?, ?, ?, ?, ?, ?, ?::json);
+        """)
+        prepstat.setString(1, koordinat.toString())
+        prepstat.setString(2, nyBeskjed.merkelapp)
+        prepstat.setString(3, nyBeskjed.tekst)
+        prepstat.setString(4, nyBeskjed.grupperingsid)
+        prepstat.setString(5, nyBeskjed.lenke)
+        prepstat.setString(6, nyBeskjed.eksternId)
+        prepstat.setString(7, objectMapper.writeValueAsString(nyBeskjed.mottaker))
+//        prepstat.setObject( 8, nyBeskjed.opprettetTidspunkt) TODO
+        prepstat.execute()
+    }
 }

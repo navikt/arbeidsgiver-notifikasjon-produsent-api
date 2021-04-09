@@ -134,17 +134,16 @@ class GraphQLTests : DescribeSpec({
         )
 
         beforeEach {
-            repository.clear()
-            repository[Koordinat(beskjed.mottaker, beskjed.merkelapp, "")] = beskjed
+            mockkObject(QueryModelRepository)
+            every {
+                QueryModelRepository.hentNotifikasjoner(any(), any())
+            } returns listOf(beskjed)
             response = engine.post("/api/graphql",
                 host = BRUKER_HOST,
                 jsonBody = GraphQLRequest(query),
                 accept = "application/json",
                 authorization = "Bearer $selbetjeningsToken"
             )
-        }
-        afterEach {
-            repository.clear()
         }
         context("Query.notifikasjoner") {
             query = """
