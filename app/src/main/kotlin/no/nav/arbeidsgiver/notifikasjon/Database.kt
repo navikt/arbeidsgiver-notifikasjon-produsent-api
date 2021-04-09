@@ -19,7 +19,7 @@ val hikariConfig = HikariConfig().apply {
 fun hikariDatasource(config: HikariConfig = hikariConfig) = HikariDataSource(config)
 
 object DB {
-    val datasource: DataSource
+    val dataSource: DataSource
         get() = hikariDatasource()
 }
 
