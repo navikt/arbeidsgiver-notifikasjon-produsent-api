@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import java.sql.Connection
 import org.flywaydb.core.api.output.MigrateResult
 import org.slf4j.LoggerFactory
 import java.lang.Thread.sleep
