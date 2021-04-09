@@ -38,5 +38,7 @@ spec:
     outbound:
       external:
         - host: fakedings.dev-gcp.nais.io
+        - host: arbeidsgiver.dev.nav.no
+
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
