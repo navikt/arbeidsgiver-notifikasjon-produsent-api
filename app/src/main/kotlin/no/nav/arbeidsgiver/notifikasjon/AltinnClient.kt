@@ -9,7 +9,7 @@ import no.nav.common.utils.Pair
 import java.util.Set
 
 const val proxyUrl = "https://arbeidsgiver.dev.nav.no/altinn-rettigheter-proxy/"
-const val fallBackUrl = "https://vg.no" //TODO finn riktig måte å fallbacke på i gcp
+const val fallBackUrl = "test" //TODO finn riktig måte å fallbacke på i gcp
 val altinnHeader: String = System.getenv("ALTINN_HEADER") ?: "default"
 const val APIGwHeader = "String"
 
