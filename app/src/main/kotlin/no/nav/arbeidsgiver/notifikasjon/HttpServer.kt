@@ -153,10 +153,19 @@ fun Application.module(
     routing {
         route("internal") {
             get("alive") {
-                call.respond(HttpStatusCode.OK)
+                if (livenessGauge.all { it.value } ) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.ServiceUnavailable, livenessGauge)
+                }
             }
+
             get("ready") {
-                call.respond(HttpStatusCode.OK)
+                if (readinessGauge.all { it.value } ) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.ServiceUnavailable, livenessGauge)
+                }
             }
 
             get("metrics") {
