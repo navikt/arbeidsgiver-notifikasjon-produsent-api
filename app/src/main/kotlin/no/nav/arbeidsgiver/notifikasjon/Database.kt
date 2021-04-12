@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.output.MigrateResult
 import java.sql.Connection
 import javax.sql.DataSource
 
@@ -26,8 +27,8 @@ object DB {
         get() = dataSource.connection
 }
 
-internal fun DataSource.migrate() {
-    Flyway.configure()
+internal fun DataSource.migrate(): MigrateResult? {
+    return Flyway.configure()
         .dataSource(this)
         .load()
         .migrate()

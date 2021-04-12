@@ -11,8 +11,10 @@ import io.ktor.server.netty.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import javax.sql.DataSource
 
 private val log = LoggerFactory.getLogger("Main")!!
 val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
@@ -42,9 +44,20 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     GlobalScope.launch {
         createConsumer().processSingle(::queryModelBuilderProcessor)
     }
-    GlobalScope.run {
+    GlobalScope.launch {
+        var dataSource: DataSource?
+        do {
+            dataSource = try {
+                DB.dataSource
+            } catch(e: Exception) {
+                log.info("venter på database connection. ")
+                delay(250)
+                null
+            }
+        } while (dataSource == null)
+
         try {
-            DB.dataSource.migrate()
+            dataSource.migrate()
             readinessGauge[Checks.DATABASE] = true
         } catch(e: Exception)  {
             log.error("migrering feilet", e)
