@@ -5,8 +5,6 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxy
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
-import no.nav.common.utils.Pair
-import java.util.Set
 
 const val proxyUrl = "https://arbeidsgiver.dev.nav.no/altinn-rettigheter-proxy/"
 const val fallBackUrl = "https://api-gw-q1.oera.no/" //TODO finn riktig måte å fallbacke på i gcp
@@ -74,25 +72,25 @@ fun hentOrganisasjonerBasertPaRettigheter(
         )
     }
 
-private val våreTjenester = mutableSetOf(
-    Pair.of("5216", "1"),
-    Pair.of("5212", "1"),
-    Pair.of("5384", "1"),
-    Pair.of("5159", "1"),
-    Pair.of("4936", "1"),
-    Pair.of("5332", "2"),
-    Pair.of("5332", "1"),
-    Pair.of("5441", "1"),
-    Pair.of("5516", "1"),
-    Pair.of("5516", "2"),
-    Pair.of("3403", "2"),
-    Pair.of("5078", "1"),
-    Pair.of("5278", "1")
+private val vaareTjenester = mutableSetOf(
+    "5216" to "1", // Mentortilskudd
+    "5212" to "1", // Inkluderingstilskudd
+    "5384" to "1", // Ekspertbistand
+    "5159" to "1", // Lønnstilskudd
+    "4936" to "1", // Inntektsmelding
+    "5332" to "2", // Arbeidstrening
+    "5332" to "1", // Arbeidstrening
+    "5441" to "1", // Arbeidsforhold
+    "5516" to "1", // Midlertidig lønnstilskudd
+    "5516" to "2", // Varig lønnstilskudd'
+    "3403" to "2", // Sykfraværsstatistikk
+    "5078" to "1", // Rekruttering
+    "5278" to "1"  // Tilskuddsbrev om NAV-tiltak
 )
 object AltinnClient{
     fun hentRettigheter(fnr: String, selvbetjeningsToken: String): List<Tilgang> {
-        var tilganger: MutableList<Tilgang> = mutableListOf()
-        våreTjenester.forEach { tjeneste ->
+        val tilganger: MutableList<Tilgang> = mutableListOf()
+        vaareTjenester.forEach { tjeneste ->
             when (val oppslagsresultat =
                 hentOrganisasjonerBasertPaRettigheter(fnr, tjeneste.first, tjeneste.second, selvbetjeningsToken)) {
                 is AltinnOppslagVellykket -> {
