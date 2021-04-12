@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import kotlinx.coroutines.delay
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
 import org.slf4j.LoggerFactory
@@ -12,7 +11,7 @@ import java.sql.DriverManager
 import javax.sql.DataSource
 import kotlin.reflect.KProperty
 
-fun hikariConfig() : HikariConfig {
+fun hikariConfig(): HikariConfig {
     return HikariConfig().apply {
         val host = System.getenv("DB_HOST") ?: "localhost"
         val port = System.getenv("DB_PORT") ?: "5432"
@@ -36,6 +35,7 @@ fun hikariDatasource(): HikariDataSource {
 }
 
 private val log = LoggerFactory.getLogger("DB")!!
+
 object DB {
     val dataSource: DataSource by DataSourceDelegate()
     val connection: Connection
@@ -72,7 +72,7 @@ internal fun DataSource.migrate(): MigrateResult? {
 
 class UnhandeledTransactionRollback(msg: String, e: Throwable) : Exception(msg, e)
 
-private fun <T>defaultRollback(e: Exception): T {
+private fun <T> defaultRollback(e: Exception): T {
     throw UnhandeledTransactionRollback("no rollback function registered", e)
 }
 
@@ -91,7 +91,10 @@ private fun <T> Connection.transaction(rollback: (e: Exception) -> T = ::default
     }
 }
 
-internal fun <T> DataSource.transaction(rollback: (e: Exception) -> T = ::defaultRollback, body: (c: Connection) -> T): T =
+internal fun <T> DataSource.transaction(
+    rollback: (e: Exception) -> T = ::defaultRollback,
+    body: (c: Connection) -> T
+): T =
     connection.use { c ->
         c.transaction(rollback) {
             body(c)
