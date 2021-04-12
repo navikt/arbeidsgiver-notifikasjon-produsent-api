@@ -2,10 +2,14 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.delay
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
+import org.slf4j.LoggerFactory
+import java.lang.Thread.sleep
 import java.sql.Connection
 import javax.sql.DataSource
+import kotlin.reflect.KProperty
 
 fun hikariConfig() : HikariConfig {
     return HikariConfig().apply {
@@ -25,11 +29,33 @@ fun hikariDatasource(): HikariDataSource {
     return HikariDataSource(hikariConfig)
 }
 
+private val log = LoggerFactory.getLogger("DB")!!
 object DB {
-    val dataSource: DataSource
-        get() = hikariDatasource()
+    val dataSource: DataSource by DataSourceDelegate()
     val connection: Connection
         get() = dataSource.connection
+
+
+}
+
+class DataSourceDelegate {
+    var dataSource: DataSource
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): DataSource {
+        return dataSource
+    }
+
+    init {
+        var ds: DataSource?
+        do {
+            ds = kotlin.runCatching {
+                hikariDatasource()
+            }.onFailure {
+                log.info("venter på database connection. ")
+                sleep(1000)
+            }.getOrNull()
+        } while (ds == null)
+        dataSource = ds
+    }
 }
 
 internal fun DataSource.migrate(): MigrateResult? {
