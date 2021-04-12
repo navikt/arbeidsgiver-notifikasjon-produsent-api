@@ -8,6 +8,7 @@ import org.flywaydb.core.api.output.MigrateResult
 import org.slf4j.LoggerFactory
 import java.lang.Thread.sleep
 import java.sql.Connection
+import java.sql.DriverManager
 import javax.sql.DataSource
 import kotlin.reflect.KProperty
 
@@ -24,6 +25,11 @@ fun hikariConfig() : HikariConfig {
     }
 }
 
+fun HikariConfig.test() {
+    val connection = DriverManager.getConnection(jdbcUrl, username, password)
+    connection.createStatement().execute("select 1")
+}
+
 fun hikariDatasource(): HikariDataSource {
     val hikariConfig = hikariConfig()
     return HikariDataSource(hikariConfig)
@@ -34,8 +40,6 @@ object DB {
     val dataSource: DataSource by DataSourceDelegate()
     val connection: Connection
         get() = dataSource.connection
-
-
 }
 
 class DataSourceDelegate {
@@ -48,6 +52,7 @@ class DataSourceDelegate {
         var ds: DataSource?
         do {
             ds = kotlin.runCatching {
+                hikariConfig().test()
                 hikariDatasource()
             }.onFailure {
                 log.info("venter på database connection. ")
