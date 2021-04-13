@@ -26,7 +26,10 @@ fun hikariConfig(): HikariConfig {
 
 fun HikariConfig.test() {
     val connection = DriverManager.getConnection(jdbcUrl, username, password)
-    connection.createStatement().execute("select 1")
+    val test = connection.createStatement()
+    test.execute("select 1")
+    test.close()
+    connection.close()
 }
 
 fun hikariDatasource(): HikariDataSource {
