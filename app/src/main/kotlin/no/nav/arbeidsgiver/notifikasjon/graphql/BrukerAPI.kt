@@ -45,7 +45,7 @@ fun brukerGraphQL(): GraphQL =
                     )
                 )
 
-                val queryBeskjeder = hentNotifikasjoner(
+                val queryBeskjeder = QueryModelRepository.hentNotifikasjoner(
                     it.getContext<BrukerContext>().fnr,
                     tilganger
                 )

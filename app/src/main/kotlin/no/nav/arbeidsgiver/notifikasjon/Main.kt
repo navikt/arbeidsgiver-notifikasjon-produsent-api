@@ -42,7 +42,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     GlobalScope.launch {
         createConsumer().processSingle(::queryModelBuilderProcessor)
     }
-    GlobalScope.run {
+    GlobalScope.launch {
         try {
             DB.dataSource.migrate()
             readinessGauge[Checks.DATABASE] = true
