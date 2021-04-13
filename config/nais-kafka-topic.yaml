@@ -8,6 +8,7 @@ metadata:
 spec:
   pool: nav-dev
   config:
+    partitions: 2
     minimumInSyncReplicas: 1
     retentionBytes: -1
     retentionHours: -1

@@ -119,7 +119,6 @@ private fun addSslConfig(props: Properties) {
 private val log = LoggerFactory.getLogger("Consumer.processSingle")!!
 
 suspend fun <K, V>Consumer<K, V>.processSingle(processor: (V) -> Unit) {
-    /* TODO: lag guage for failed. remember parition & offset as tags */
     while (true) {
         val records = try {
             poll(Duration.ofMillis(1000))
