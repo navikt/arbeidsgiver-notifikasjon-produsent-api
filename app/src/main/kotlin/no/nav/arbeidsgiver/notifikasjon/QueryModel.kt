@@ -98,6 +98,7 @@ fun queryModelBuilderProcessor(event: Event) {
     DB.dataSource.transaction(rollback = {
         if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) {
             log.error("forsøk på å endre eksisterende beskjed")
+            throw it // TODO: ta bort. midlertidig for å fremprovosere lagg
         } else {
             throw it
         }
