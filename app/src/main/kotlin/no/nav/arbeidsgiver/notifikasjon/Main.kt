@@ -8,14 +8,16 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.micrometer.prometheus.PrometheusConfig
+import io.micrometer.core.instrument.Clock.SYSTEM
+import io.micrometer.prometheus.PrometheusConfig.DEFAULT
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import io.prometheus.client.CollectorRegistry
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Main")!!
-val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+val meterRegistry = PrometheusMeterRegistry(DEFAULT, CollectorRegistry.defaultRegistry, SYSTEM)
 
 enum class Checks {
     DATABASE
