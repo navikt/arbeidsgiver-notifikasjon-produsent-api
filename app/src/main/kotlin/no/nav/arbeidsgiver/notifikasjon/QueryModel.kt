@@ -1,6 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.*
+import org.postgresql.util.PSQLException
+import org.postgresql.util.PSQLState
 import org.slf4j.LoggerFactory
 import java.time.Instant
 
@@ -93,7 +95,13 @@ fun queryModelBuilderProcessor(event: Event) {
     )
     val nyBeskjed = tilQueryBeskjed(event)
 
-    DB.dataSource.transaction { connection ->
+    DB.dataSource.transaction(rollback = {
+        if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) { // same as !(obj is String)
+            log.error("forsøk på å endre eksisterende beskjed")
+        } else {
+            throw it
+        }
+    }) { connection ->
         val prepstat = connection.prepareStatement("""
             insert into notifikasjon(
                 koordinat,
