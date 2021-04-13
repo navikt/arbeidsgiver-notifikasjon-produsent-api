@@ -1,5 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import io.micrometer.core.instrument.Tag
+import io.micrometer.core.instrument.Tags
+import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
@@ -10,7 +13,6 @@ import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.consumer.ConsumerConfig.*
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerConfig.*
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.config.SslConfigs.*
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory
 import java.lang.System.getenv
 import java.time.Duration
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 
 data class KafkaKey(
@@ -47,22 +50,17 @@ const val DEFAULT_BROKER = "localhost:9092"
 
 fun createProducer(): Producer<KafkaKey, Event> {
     val props = Properties()
-    props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
+    props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
     props[KEY_SERIALIZER_CLASS_CONFIG] = KeySerializer::class.java.canonicalName
     props[VALUE_SERIALIZER_CLASS_CONFIG] = ValueSerializer::class.java.canonicalName
     props[MAX_BLOCK_MS_CONFIG] = 5_000
     props[CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG] = "500"
     props[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = "5000"
+    addSslConfig(props)
 
-    getenv("KAFKA_KEYSTORE_PATH")?.let { props[SSL_KEYSTORE_LOCATION_CONFIG] = it }
-    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_KEYSTORE_PASSWORD_CONFIG] = it }
-    getenv("KAFKA_TRUSTSTORE_PATH")?.let { props[SSL_TRUSTSTORE_LOCATION_CONFIG] = it }
-    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_TRUSTSTORE_PASSWORD_CONFIG] = it }
-    if (props[SSL_KEYSTORE_LOCATION_CONFIG] != null) {
-        props[SECURITY_PROTOCOL_CONFIG] = "SSL"
+    return KafkaProducer<KafkaKey, Event>(props).also { producer ->
+        KafkaClientMetrics(producer).bindTo(meterRegistry)
     }
-
-    return KafkaProducer(props)
 }
 
 
@@ -86,29 +84,35 @@ fun Producer<KafkaKey, Event>.beskjedOpprettet(beskjed: BeskjedOpprettet) {
 
 fun createConsumer(): Consumer<KafkaKey, Event> {
     val props = Properties()
-    props["bootstrap.servers"] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
+    props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
     props[KEY_DESERIALIZER_CLASS_CONFIG] = KeyDeserializer::class.java.canonicalName
-    props["value.deserializer"] = ValueDeserializer::class.java.canonicalName
-    getenv("KAFKA_KEYSTORE_PATH")?.let { props[SSL_KEYSTORE_LOCATION_CONFIG] = it }
-    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_KEYSTORE_PASSWORD_CONFIG] = it }
-    getenv("KAFKA_TRUSTSTORE_PATH")?.let { props[SSL_TRUSTSTORE_LOCATION_CONFIG] = it }
-    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_TRUSTSTORE_PASSWORD_CONFIG] = it }
-    if (props[SSL_KEYSTORE_LOCATION_CONFIG] != null) {
-        props[SECURITY_PROTOCOL_CONFIG] = "SSL"
-    }
+    props[VALUE_DESERIALIZER_CLASS_CONFIG] = ValueDeserializer::class.java.canonicalName
+    addSslConfig(props)
 
     /* TODO: dette er midlertidig. Fjernes når query-modellen er lagret og delt
      * mellom pods. */
 
     props[AUTO_OFFSET_RESET_CONFIG] = "earliest"
     props[GROUP_ID_CONFIG] = "query-model-builder"
-    props[MAX_POLL_RECORDS_CONFIG] = "100"
+    props[MAX_POLL_RECORDS_CONFIG] = "1"
+    props[MAX_POLL_INTERVAL_MS_CONFIG] = Int.MAX_VALUE
     props[ENABLE_AUTO_COMMIT_CONFIG] = "false"
     props[CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG] = "500"
     props[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = "5000"
 
     return KafkaConsumer<KafkaKey, Event>(props).also { consumer ->
+        KafkaClientMetrics(consumer).bindTo(meterRegistry)
         consumer.subscribe(listOf("arbeidsgiver.notifikasjon"))
+    }
+}
+
+private fun addSslConfig(props: Properties) {
+    getenv("KAFKA_KEYSTORE_PATH")?.let { props[SSL_KEYSTORE_LOCATION_CONFIG] = it }
+    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_KEYSTORE_PASSWORD_CONFIG] = it }
+    getenv("KAFKA_TRUSTSTORE_PATH")?.let { props[SSL_TRUSTSTORE_LOCATION_CONFIG] = it }
+    getenv("KAFKA_CREDSTORE_PASSWORD")?.let { props[SSL_TRUSTSTORE_PASSWORD_CONFIG] = it }
+    if (props[SSL_KEYSTORE_LOCATION_CONFIG] != null) {
+        props[SECURITY_PROTOCOL_CONFIG] = "SSL"
     }
 }
 
@@ -128,6 +132,7 @@ suspend fun <K, V>Consumer<K, V>.processSingle(processor: (V) -> Unit) {
     }
 }
 
+val retriesPerPartition = mutableMapOf<Int, AtomicInteger>()
 private suspend fun <K, V> Consumer<K, V>.processWithRetry(
     records: ConsumerRecords<K, V>,
     processor: (V) -> Unit
@@ -138,15 +143,18 @@ private suspend fun <K, V> Consumer<K, V>.processWithRetry(
 
     records.partitions().forEach { partition ->
         records.records(partition).forEach { record ->
-            var failed = 0
+            val failed = meterRegistry.gauge(
+                "kafka_consumer_retries_per_partition",
+                Tags.of(Tag.of("partition", "${record.partition()}")),
+                retriesPerPartition.getOrPut(record.partition(), { AtomicInteger(0) })
+            )
             var success = false
-            var backoffMillis = 5000L
+            var backoffMillis = 1000L
             val backoffMultiplier = 2
             while (!success) {
                 try {
-                    if (failed > 0) {
-                        // TODO: metric på antall feil (gauge?)
-                        backoffMillis += backoffMillis * backoffMultiplier
+                    if (failed.get() > 0) {
+                        backoffMillis *= backoffMultiplier
                         log.warn(
                             "failed record(key={},partition={},offset={},timestamp={}) {} times. retrying with backoff={}",
                             record.key(),
@@ -163,9 +171,10 @@ private suspend fun <K, V> Consumer<K, V>.processWithRetry(
                     processor(record.value())
                     commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     success = true
+                    failed.set(0)
                     log.info("successfully processed {}", record.loggableToString())
                 } catch (e: Exception) {
-                    failed += 1
+                    failed.getAndIncrement()
                     log.error("exception while processing {}", record.loggableToString(), e)
                 }
             }

@@ -17,5 +17,5 @@ Authorization: Bearer {{auth_token}}
 
 {
   "query":
-  "mutation { nyBeskjed(nyBeskjed: {merkelapp: \"tiltak\" tekst: \"fin tekst\" lenke: \"https://vg.no\" eksternId: \"\" mottaker: { altinn: { altinntjenesteKode: \"1234\" altinntjenesteVersjon: \"1\" virksomhetsnummer: \"123456789\" } } }) { id } }"
+  "mutation { nyBeskjed(nyBeskjed: {merkelapp: \"tiltak\" tekst: \"fin tekst\" lenke: \"https://vg.no\" eksternId: \"8\" mottaker: { altinn: { altinntjenesteKode: \"1234\" altinntjenesteVersjon: \"1\" virksomhetsnummer: \"123456789\" } } }) { id } }"
 }

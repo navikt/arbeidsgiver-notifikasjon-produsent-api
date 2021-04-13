@@ -30,6 +30,13 @@
   * `kafka-console-consumer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true`
   * _from the beginning_ (legg til `--from-beginning`)
     * `kafka-console-consumer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true --from-beginning`
- 
+* delete messages from a topic
+  * `kafka-delete-records.sh --bootstrap-server $KAFKA_BROKERS --offset-json-file delete-records.json`
+* inspect a consumer group
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /kafka.properties --group query-model-builder --describe` 
+* adjust offset of a consumer group
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon --reset-offsets --to-earliest --execute`
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon --shift-by 1 --execute`
+
 ref:
 https://medium.com/@TimvanBaarsen/apache-kafka-cli-commands-cheat-sheet-a6f06eac01b
