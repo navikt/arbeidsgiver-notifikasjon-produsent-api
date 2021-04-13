@@ -16,7 +16,7 @@ spec:
   readiness:
     path: /internal/ready
   prometheus:
-    enable: true
+    enabled: true
     path: /internal/metrics
   azure:
     application:
