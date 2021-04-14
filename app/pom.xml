@@ -146,6 +146,12 @@
             <version>${mockk.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>no.nav</groupId>
+            <artifactId>kafka-embedded-env</artifactId>
+            <version>2.7.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

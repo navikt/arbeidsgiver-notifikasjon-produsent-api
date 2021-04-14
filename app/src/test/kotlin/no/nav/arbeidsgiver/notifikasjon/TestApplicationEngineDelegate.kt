@@ -7,7 +7,6 @@ import io.kotest.core.TestConfiguration
 import io.ktor.auth.jwt.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.mockk.mockk
 import io.mockk.spyk
 import no.nav.arbeidsgiver.notifikasjon.graphql.produsentGraphQL
 import kotlin.reflect.KProperty
@@ -48,7 +47,7 @@ class TestApplicationEngineDelegate(context: TestConfiguration) {
                     application.module(
                         authenticationConfiguration = (noopVerifierConfig),
                         produsentGraphql = produsentGraphQL(
-                            kafkaProducer = mockk(relaxed = true)
+                            kafkaProducer = context.kafkaEnv().producer
                         )
                     )
                     val (arg, body) = test

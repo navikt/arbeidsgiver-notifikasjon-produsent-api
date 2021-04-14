@@ -48,7 +48,7 @@ class KeyDeserializer : JsonDeserializer<KafkaKey>(KafkaKey::class.java)
 
 const val DEFAULT_BROKER = "localhost:9092"
 
-fun createProducer(): Producer<KafkaKey, Event> {
+fun createProducer(configure: Properties.() -> Unit = {}): KafkaProducer<KafkaKey, Event> {
     val props = Properties()
     props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
     props[KEY_SERIALIZER_CLASS_CONFIG] = KeySerializer::class.java.canonicalName
@@ -57,7 +57,7 @@ fun createProducer(): Producer<KafkaKey, Event> {
     props[CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG] = "500"
     props[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = "5000"
     addSslConfig(props)
-
+    props.configure()
     return KafkaProducer<KafkaKey, Event>(props).also { producer ->
         KafkaClientMetrics(producer).bindTo(meterRegistry)
     }
@@ -82,7 +82,7 @@ fun Producer<KafkaKey, Event>.beskjedOpprettet(beskjed: BeskjedOpprettet) {
     sendEvent(KafkaKey(beskjed.mottaker), beskjed)
 }
 
-fun createConsumer(): Consumer<KafkaKey, Event> {
+fun createConsumer(configure: Properties.() -> Unit = {}): KafkaConsumer<KafkaKey, Event> {
     val props = Properties()
     props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
     props[KEY_DESERIALIZER_CLASS_CONFIG] = KeyDeserializer::class.java.canonicalName
@@ -96,7 +96,7 @@ fun createConsumer(): Consumer<KafkaKey, Event> {
     props[ENABLE_AUTO_COMMIT_CONFIG] = "false"
     props[CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG] = "500"
     props[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = "5000"
-
+    props.configure()
     return KafkaConsumer<KafkaKey, Event>(props).also { consumer ->
         KafkaClientMetrics(consumer).bindTo(meterRegistry)
         consumer.subscribe(listOf("arbeidsgiver.notifikasjon"))

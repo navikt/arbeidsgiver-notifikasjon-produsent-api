@@ -1,23 +1,28 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.module.kotlin.convertValue
+import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
+import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
+import io.mockk.every
+import io.mockk.mockkObject
 import no.nav.arbeidsgiver.notifikasjon.graphql.Beskjed
+import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
 import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
-import org.apache.kafka.clients.producer.Producer
+import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.time.Instant
-import java.util.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
+import kotlin.time.toJavaDuration
 
 data class GraphQLError(
     val message: String,
@@ -45,15 +50,17 @@ fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
     return if (errors == null) emptyList() else objectMapper.convertValue(errors)
 }
 
+@ExperimentalTime
 class GraphQLTests : DescribeSpec({
     val engine by ktorEngine()
+
+    listener(EmbeddedKafkaListener())
 
     describe("POST produsent-api /api/graphql") {
         lateinit var response: TestApplicationResponse
         lateinit var query: String
 
         beforeEach {
-            mockkStatic(Producer<KafkaKey, Event>::sendEvent)
             response = engine.post("/api/graphql",
                 host = PRODUSENT_HOST,
                 jsonBody = GraphQLRequest(query),
@@ -101,11 +108,11 @@ class GraphQLTests : DescribeSpec({
                 }
 
                 it("sends message to kafka") {
-                    val eventSlot = slot<BeskjedOpprettet>()
-                    verify {
-                        any<Producer<KafkaKey, Event>>().sendEvent(any(), capture(eventSlot))
-                    }
-                    val event = eventSlot.captured
+                    val consumer = EmbeddedKafka.consumer
+                    val poll = consumer.poll(5.seconds.toJavaDuration())
+                    val value = poll.last().value()
+                    value should beOfType<BeskjedOpprettet>()
+                    val event = value as BeskjedOpprettet
                     event.guid.toString() shouldBe resultat.id
                     event.lenke shouldBe "http://foo.bar"
                     event.tekst shouldBe "hello world"
