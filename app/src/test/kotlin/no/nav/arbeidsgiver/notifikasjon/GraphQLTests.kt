@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.module.kotlin.convertValue
-import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
@@ -17,8 +16,6 @@ import no.nav.arbeidsgiver.notifikasjon.graphql.Beskjed
 import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.time.Instant
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
