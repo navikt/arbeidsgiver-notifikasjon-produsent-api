@@ -38,8 +38,3 @@ spec:
     outbound:
       external:
         - host: fakedings.dev-gcp.nais.io
-
-  # Replica-begrensing bør slettes når query-modellen blir lagret og delt mellom pods
-  replicas:
-    max: 1
-    min: 1
