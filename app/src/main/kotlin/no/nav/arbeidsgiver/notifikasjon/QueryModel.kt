@@ -1,10 +1,15 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import no.nav.arbeidsgiver.notifikasjon.hendelse.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Mottaker
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
 import org.slf4j.LoggerFactory
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 private val log = LoggerFactory.getLogger("query-model-builder-processor")
 
@@ -63,7 +68,7 @@ object QueryModelRepository {
                             resultSet.getString("mottaker"),
                             Mottaker::class.java
                         ),
-                        opprettetTidspunkt = Instant.now()
+                        opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant()
                     )
                 )
             }
@@ -110,9 +115,10 @@ fun queryModelBuilderProcessor(event: Event) {
                 grupperingsid,
                 lenke,
                 ekstern_id,
+                opprettet_tidspunkt,
                 mottaker
             )
-            values (?, ?, ?, ?, ?, ?, ?::json);
+            values (?, ?, ?, ?, ?, ?, ?, ?::json);
         """)
         prepstat.setString(1, koordinat.toString())
         prepstat.setString(2, nyBeskjed.merkelapp)
@@ -120,8 +126,8 @@ fun queryModelBuilderProcessor(event: Event) {
         prepstat.setString(4, nyBeskjed.grupperingsid)
         prepstat.setString(5, nyBeskjed.lenke)
         prepstat.setString(6, nyBeskjed.eksternId)
-        prepstat.setString(7, objectMapper.writeValueAsString(nyBeskjed.mottaker))
-//        prepstat.setObject( 8, nyBeskjed.opprettetTidspunkt) TODO
+        prepstat.setObject( 7, nyBeskjed.opprettetTidspunkt.atOffset(ZoneOffset.UTC))
+        prepstat.setString(8, objectMapper.writeValueAsString(nyBeskjed.mottaker))
         prepstat.execute()
     }
 }

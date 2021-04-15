@@ -145,6 +145,9 @@ class GraphQLTests : DescribeSpec({
                 authorization = "Bearer $selbetjeningsToken"
             )
         }
+        afterEach {
+            unmockkObject(QueryModelRepository)
+        }
         context("Query.notifikasjoner") {
             query = """
                 {
