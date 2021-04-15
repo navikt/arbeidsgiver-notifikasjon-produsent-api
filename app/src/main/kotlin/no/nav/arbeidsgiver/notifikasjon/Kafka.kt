@@ -48,7 +48,7 @@ class KeyDeserializer : JsonDeserializer<KafkaKey>(KafkaKey::class.java)
 
 const val DEFAULT_BROKER = "localhost:9092"
 
-fun createProducer(configure: Properties.() -> Unit = {}): KafkaProducer<KafkaKey, Event> {
+fun createProducer(configure: Properties.() -> Unit = {}): Producer<KafkaKey, Event> {
     val props = Properties()
     props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
     props[KEY_SERIALIZER_CLASS_CONFIG] = KeySerializer::class.java.canonicalName
@@ -82,7 +82,7 @@ fun Producer<KafkaKey, Event>.beskjedOpprettet(beskjed: BeskjedOpprettet) {
     sendEvent(KafkaKey(beskjed.mottaker), beskjed)
 }
 
-fun createConsumer(configure: Properties.() -> Unit = {}): KafkaConsumer<KafkaKey, Event> {
+fun createConsumer(configure: Properties.() -> Unit = {}): Consumer<KafkaKey, Event> {
     val props = Properties()
     props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = getenv("KAFKA_BROKERS") ?: DEFAULT_BROKER
     props[KEY_DESERIALIZER_CLASS_CONFIG] = KeyDeserializer::class.java.canonicalName
