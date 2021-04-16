@@ -39,6 +39,7 @@ spec:
       external:
         - host: fakedings.dev-gcp.nais.io
         - host: arbeidsgiver.dev.nav.no
+        - host: navtestb2c.b2clogin.com
 
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
