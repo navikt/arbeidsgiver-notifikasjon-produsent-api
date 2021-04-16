@@ -18,7 +18,7 @@ type BeskjedResultat {
     id: ID!
 }
 
-scalar Instant
+scalar ISO8601DateTime
 input BeskjedInput {
     merkelapp: String!
     tekst: String!
@@ -26,7 +26,7 @@ input BeskjedInput {
     lenke: String!
     eksternId: String!
     mottaker: MottakerInput!
-    opprettetTidspunkt: Instant
+    opprettetTidspunkt: ISO8601DateTime
 }
 
 "Må ha verdi i nøyaktig ett av disse feltene"

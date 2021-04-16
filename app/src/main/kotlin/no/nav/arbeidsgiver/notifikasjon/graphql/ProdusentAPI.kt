@@ -6,7 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.*
 import org.apache.kafka.clients.producer.Producer
 import org.slf4j.LoggerFactory
-import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.*
 
 data class ProdusentContext(
@@ -66,7 +66,7 @@ data class BeskjedInput(
     val lenke: String,
     val eksternId: String,
     val mottaker: MottakerInput,
-    val opprettetTidspunkt: Instant = Instant.now()
+    val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now()
 ) {
     fun tilDomene(guid: UUID): BeskjedOpprettet =
         BeskjedOpprettet(
@@ -95,7 +95,7 @@ private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Event>) = DataFe
 
 fun produsentGraphQL(kafkaProducer: Producer<KafkaKey, Event> = createProducer()): GraphQL =
     createGraphQL("/produsent.graphqls") {
-        scalar(Scalars.Instant)
+        scalar(Scalars.ISO8601DateTime)
         wire("Query") {
             dataFetcher("ping") {
                 "pong"

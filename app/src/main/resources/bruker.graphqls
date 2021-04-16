@@ -4,10 +4,10 @@ type Query {
     whoami: String
 }
 
-scalar Instant
+scalar ISO8601DateTime
 type Beskjed {
     merkelapp: String!
     tekst: String!
     lenke: String!
-    opprettetTidspunkt: Instant!
+    opprettetTidspunkt: ISO8601DateTime!
 }

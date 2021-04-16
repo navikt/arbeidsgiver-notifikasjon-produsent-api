@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.graphql
 
 import graphql.GraphQL
 import no.nav.arbeidsgiver.notifikasjon.*
-import java.time.Instant
+import java.time.OffsetDateTime
 
 
 data class BrukerContext(
@@ -12,7 +12,7 @@ data class BrukerContext(
 
 fun brukerGraphQL(): GraphQL =
     createGraphQL("/bruker.graphqls") {
-        scalar(Scalars.Instant)
+        scalar(Scalars.ISO8601DateTime)
         wire("Notifikasjon") {
             typeResolver { env ->
                 val objectTypeName = when (env.getObject<Notifikasjon>()) {
@@ -55,5 +55,5 @@ data class Beskjed(
     val merkelapp: String,
     val tekst: String,
     val lenke: String,
-    val opprettetTidspunkt: Instant
+    val opprettetTidspunkt: OffsetDateTime
 ) : Notifikasjon()

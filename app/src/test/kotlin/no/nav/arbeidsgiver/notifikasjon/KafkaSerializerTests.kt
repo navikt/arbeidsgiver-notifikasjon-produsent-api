@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.*
 
 private val guid = UUID.fromString("70a4beb3-53b9-49f0-ae31-2d5e6cfe52bf")
@@ -25,7 +26,7 @@ class KafkaSerializerTests : DescribeSpec({
                     virksomhetsnummer = "123456789"
                 ),
                 lenke = "https://foop.no",
-                opprettetTidspunkt = Instant.parse("2020-01-01T00:00:00.00Z"),
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T00:00:00.00Z"),
                 eksternId = "ekstern 1234h"
             )
 
