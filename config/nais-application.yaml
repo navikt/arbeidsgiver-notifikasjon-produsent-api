@@ -40,6 +40,8 @@ spec:
         - host: fakedings.dev-gcp.nais.io
         - host: arbeidsgiver.dev.nav.no
         - host: navtestb2c.b2clogin.com
-
+  env:
+    - name: JAVA_OPTS
+      value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
