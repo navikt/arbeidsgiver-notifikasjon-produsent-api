@@ -1,9 +1,7 @@
-package no.nav.arbeidsgiver.notifikasjon.graphql
+package no.nav.arbeidsgiver.notifikasjon
 
-import graphql.GraphQL
 import graphql.schema.DataFetcher
-import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.hendelse.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.producer.Producer
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
@@ -93,9 +91,13 @@ private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Event>) = DataFe
     BeskjedResultat(id.toString())
 }
 
-fun produsentGraphQL(kafkaProducer: Producer<KafkaKey, Event> = createProducer()): GraphQL =
+fun createProdusentGraphQL(
+    kafkaProducer: Producer<KafkaKey, Event> = createKafkaProducer()
+) = TypedGraphQL<ProdusentContext>(
     createGraphQL("/produsent.graphqls") {
+
         scalar(Scalars.ISO8601DateTime)
+
         wire("Query") {
             dataFetcher("ping") {
                 "pong"
@@ -108,4 +110,5 @@ fun produsentGraphQL(kafkaProducer: Producer<KafkaKey, Event> = createProducer()
             dataFetcher("nyBeskjed", nyBeskjedMutation(kafkaProducer))
         }
     }
+)
 

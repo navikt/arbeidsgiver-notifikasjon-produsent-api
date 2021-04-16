@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
@@ -14,6 +14,7 @@ import ch.qos.logback.core.spi.LifeCycle
 import net.logstash.logback.encoder.LogstashEncoder
 import no.nav.common.log.MaskingAppender
 
+@Suppress("unused") /* see resources/META-INF/services/ch.qos.logback.classic.spi */
 class LogConfig : ContextAwareBase(), Configurator {
     override fun configure(lc: LoggerContext) {
         val rootAppender = MaskingAppender().setup(lc) {

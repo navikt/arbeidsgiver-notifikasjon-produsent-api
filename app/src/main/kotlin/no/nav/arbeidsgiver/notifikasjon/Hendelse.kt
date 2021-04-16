@@ -1,8 +1,7 @@
-package no.nav.arbeidsgiver.notifikasjon.hendelse
+package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 

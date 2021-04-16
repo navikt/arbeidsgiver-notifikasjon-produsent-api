@@ -1,18 +1,23 @@
-package no.nav.arbeidsgiver.notifikasjon.graphql
+package no.nav.arbeidsgiver.notifikasjon
 
-import graphql.GraphQL
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
-
+import java.util.concurrent.Future
+import javax.sql.DataSource
 
 data class BrukerContext(
     val fnr:String,
     val token: String
 )
 
-fun brukerGraphQL(): GraphQL =
+fun createBrukerGraphQL(
+    altinn: Altinn,
+    dataSourceAsync: Future<DataSource>
+) = TypedGraphQL<BrukerContext>(
     createGraphQL("/bruker.graphqls") {
+
         scalar(Scalars.ISO8601DateTime)
+
         wire("Notifikasjon") {
             typeResolver { env ->
                 val objectTypeName = when (env.getObject<Notifikasjon>()) {
@@ -28,8 +33,12 @@ fun brukerGraphQL(): GraphQL =
             }
 
             dataFetcher( "notifikasjoner") {
-                val tilganger = AltinnClient.hentRettigheter(it.getContext<BrukerContext>().fnr,it.getContext<BrukerContext>().token)
+                val tilganger = altinn.hentAlleTilganger(
+                    it.getContext<BrukerContext>().fnr,
+                    it.getContext<BrukerContext>().token
+                )
                 val queryBeskjeder = QueryModelRepository.hentNotifikasjoner(
+                    dataSourceAsync.get(),
                     it.getContext<BrukerContext>().fnr,
                     tilganger
                 )
@@ -48,6 +57,7 @@ fun brukerGraphQL(): GraphQL =
             }
         }
     }
+)
 
 sealed class Notifikasjon
 

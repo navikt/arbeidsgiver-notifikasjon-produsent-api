@@ -1,13 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import no.nav.arbeidsgiver.notifikasjon.hendelse.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
-import no.nav.arbeidsgiver.notifikasjon.hendelse.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transaction
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
+import javax.sql.DataSource
 
 private val log = LoggerFactory.getLogger("query-model-builder-processor")
 
@@ -34,11 +32,21 @@ data class Tilgang(
 )
 
 object QueryModelRepository {
-    fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<QueryBeskjed> {
+    fun hentNotifikasjoner(dataSource: DataSource, fnr: String, tilganger: Collection<Tilgang>): List<QueryBeskjed> {
         return sequence {
-            val connection = DB.connection
+            val connection = dataSource.connection
 
-            val tilgangerJsonB = tilganger.map { "'${objectMapper.writeValueAsString(AltinnMottaker(it.servicecode, it.serviceedition, it.virksomhet))}'" }.joinToString()
+            val tilgangerJsonB = tilganger.joinToString {
+                "'${
+                    objectMapper.writeValueAsString(
+                        AltinnMottaker(
+                            it.servicecode,
+                            it.serviceedition,
+                            it.virksomhet
+                        )
+                    )
+                }'"
+            }
             val prepstat = connection.prepareStatement(
                 """
                 select * from notifikasjon
@@ -90,7 +98,7 @@ fun tilQueryBeskjed(event: Event): QueryBeskjed =
             )
     }
 
-fun queryModelBuilderProcessor(event: Event) {
+fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
     val koordinat = Koordinat(
         mottaker = event.mottaker,
         merkelapp = event.merkelapp,
@@ -98,7 +106,7 @@ fun queryModelBuilderProcessor(event: Event) {
     )
     val nyBeskjed = tilQueryBeskjed(event)
 
-    DB.dataSource.transaction(rollback = {
+    dataSource.transaction(rollback = {
         if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) {
             log.error("forsøk på å endre eksisterende beskjed")
         } else {

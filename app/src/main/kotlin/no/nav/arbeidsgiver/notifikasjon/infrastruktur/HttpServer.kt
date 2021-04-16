@@ -1,8 +1,7 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.core.JsonProcessingException
-import graphql.GraphQL
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
@@ -13,22 +12,25 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import no.nav.arbeidsgiver.notifikasjon.graphql.BrukerContext
-import no.nav.arbeidsgiver.notifikasjon.graphql.ProdusentContext
-import no.nav.arbeidsgiver.notifikasjon.graphql.brukerGraphQL
-import no.nav.arbeidsgiver.notifikasjon.graphql.produsentGraphQL
+import no.nav.arbeidsgiver.notifikasjon.BrukerContext
+import no.nav.arbeidsgiver.notifikasjon.ProdusentContext
+import no.nav.arbeidsgiver.notifikasjon.objectMapper
 import org.slf4j.event.Level
 import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-data class AuthConfig(val clientId: String, val jwksUri: String, val issuer: String)
+data class JwtAuthenticationParameters(
+    val clientId: String,
+    val jwksUri: String,
+    val issuer: String
+)
 
-typealias JWTAuthConfig = JWTAuthenticationProvider.Configuration.(AuthConfig) -> Unit
+typealias JwtAuthentication = JWTAuthenticationProvider.Configuration.(JwtAuthenticationParameters) -> Unit
 
-fun JWTAuthenticationProvider.Configuration.standardAuthenticationConfiguration(authConfig: AuthConfig) {
+val STANDARD_JWT_AUTHENTICATION: JwtAuthentication = { parameter ->
     verifier(
-        JwkProviderBuilder(URL(authConfig.jwksUri))
+        JwkProviderBuilder(URL(parameter.jwksUri))
             .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
             .rateLimited(
                 10,
@@ -36,7 +38,7 @@ fun JWTAuthenticationProvider.Configuration.standardAuthenticationConfiguration(
                 TimeUnit.MINUTES
             ) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
             .build(),
-        authConfig.issuer
+        parameter.issuer
     )
 
     validate { credentials ->
@@ -44,7 +46,7 @@ fun JWTAuthenticationProvider.Configuration.standardAuthenticationConfiguration(
             requireNotNull(credentials.payload.audience) {
                 "Auth: Missing audience in token"
             }
-            require(credentials.payload.audience.contains(authConfig.clientId)) {
+            require(credentials.payload.audience.contains(parameter.clientId)) {
                 "Auth: Valid audience not found in claims"
             }
             JWTPrincipal(credentials.payload)
@@ -54,10 +56,10 @@ fun JWTAuthenticationProvider.Configuration.standardAuthenticationConfiguration(
     }
 }
 
-fun Application.module(
-    authenticationConfiguration: JWTAuthConfig = JWTAuthenticationProvider.Configuration::standardAuthenticationConfiguration,
-    produsentGraphql: GraphQL = produsentGraphQL(),
-    brukerGraphql: GraphQL = brukerGraphQL()
+fun Application.httpServerSetup(
+    jwtAuthentication: JwtAuthentication = STANDARD_JWT_AUTHENTICATION,
+    produsentGraphQL: TypedGraphQL<ProdusentContext>,
+    brukerGraphQL: TypedGraphQL<BrukerContext>,
 ) {
 
     install(CORS) {
@@ -66,7 +68,7 @@ fun Application.module(
     }
 
     install(MicrometerMetrics) {
-        registry = meterRegistry
+        registry = Health.meterRegistry
     }
 
     install(CallId) {
@@ -130,51 +132,47 @@ fun Application.module(
     }
 
     install(Authentication) {
-        jwt(name = "Produsent") {
-            authenticationConfiguration(
-                AuthConfig(
-                    clientId = "produsent-api", /* System.getenv("AZURE_APP_CLIENT_ID") */
-                    jwksUri = "https://fakedings.dev-gcp.nais.io/default/jwks", /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
-                    issuer = "https://fakedings.dev-gcp.nais.io/fake" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
-                )
-            )
+        jwt(name = "produsent") {
+            jwtAuthentication(JwtAuthenticationParameters(
+                clientId = "produsent-api", /* System.getenv("AZURE_APP_CLIENT_ID") */
+                jwksUri = "https://fakedings.dev-gcp.nais.io/default/jwks", /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
+                issuer = "https://fakedings.dev-gcp.nais.io/fake" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
+            ))
         }
-        jwt(name = "Bruker") {
-            authenticationConfiguration(
-                AuthConfig(
-                    clientId = "0090b6e1-ffcc-4c37-bc21-049f7d1f0fe5", /* System.getenv("AZURE_APP_CLIENT_ID") */
-                    jwksUri = "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/discovery/v2.0/keys?p=b2c_1a_idporten_ver1", /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
-                    issuer = "https://navtestb2c.b2clogin.com/d38f25aa-eab8-4c50-9f28-ebf92c1256f2/v2.0/" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
-                )
-            )
+        jwt(name = "bruker") {
+            jwtAuthentication(JwtAuthenticationParameters(
+                clientId = "0090b6e1-ffcc-4c37-bc21-049f7d1f0fe5", /* System.getenv("AZURE_APP_CLIENT_ID") */
+                jwksUri = "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/discovery/v2.0/keys?p=b2c_1a_idporten_ver1", /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
+                issuer = "https://navtestb2c.b2clogin.com/d38f25aa-eab8-4c50-9f28-ebf92c1256f2/v2.0/" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
+            ))
         }
     }
 
     routing {
         route("internal") {
             get("alive") {
-                if (livenessGauge.all { it.value } ) {
+                if (Health.alive) {
                     call.respond(HttpStatusCode.OK)
                 } else {
-                    call.respond(HttpStatusCode.ServiceUnavailable, livenessGauge)
+                    call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
                 }
             }
 
             get("ready") {
-                if (readinessGauge.all { it.value } ) {
+                if (Health.ready) {
                     call.respond(HttpStatusCode.OK)
                 } else {
-                    call.respond(HttpStatusCode.ServiceUnavailable, livenessGauge)
+                    call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
                 }
             }
 
             get("metrics") {
-                call.respond(meterRegistry.scrape())
+                call.respond(Health.meterRegistry.scrape())
             }
         }
 
         host("""ag-notifikasjon-produsent-api\..*""".toRegex()) {
-            authenticate("Produsent") {
+            authenticate("produsent") {
                 route("api") {
                     post("graphql") {
                         val token = call.principal<JWTPrincipal>()!!.payload
@@ -182,11 +180,11 @@ fun Application.module(
                             produsentId = "iss:${token.issuer} sub:${token.subject}"
                         )
                         val request = call.receive<GraphQLRequest>()
-                        val result = produsentGraphql.execute(request, context)
+                        val result = produsentGraphQL.execute(request, context)
                         call.respond(result)
                     }
                     get("ide") {
-                        call.respondBytes(graphiqlHTML.trimIndent().toByteArray(), ContentType.parse("text/html"))
+                        call.respondBytes(graphiqlHTML, ContentType.Text.Html)
                     }
                 }
             }
@@ -194,28 +192,25 @@ fun Application.module(
 
         host("""ag-notifikasjon-bruker-api\..*""".toRegex()) {
             route("api") {
-                authenticate("Bruker") {
+                authenticate("bruker") {
                     post("graphql") {
                         val token = call.principal<JWTPrincipal>()!!
                         val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
                         val request = call.receive<GraphQLRequest>()
-                        val result = brukerGraphql.execute(request, BrukerContext(token.payload.subject, authHeader))
+                        val result = brukerGraphQL.execute(request, BrukerContext(token.payload.subject, authHeader))
                         call.respond(result)
                     }
                 }
                 get("ide") {
-                    call.respondBytes(
-                        graphiqlHTML.trimIndent().toByteArray(),
-                        ContentType.parse("text/html")
-                    )
+                    call.respondBytes(graphiqlHTML, ContentType.Text.Html)
                 }
-
             }
         }
     }
 }
 
-private const val graphiqlHTML =
+
+private val graphiqlHTML: ByteArray =
     """
     <html>
       <head>
@@ -252,3 +247,5 @@ private const val graphiqlHTML =
       </body>
     </html>
     """
+        .trimIndent()
+        .toByteArray()

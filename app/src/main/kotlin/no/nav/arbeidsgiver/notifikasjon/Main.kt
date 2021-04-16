@@ -5,32 +5,17 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.ktor.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.micrometer.core.instrument.Clock.SYSTEM
-import io.micrometer.prometheus.PrometheusConfig.DEFAULT
-import io.micrometer.prometheus.PrometheusMeterRegistry
-import io.prometheus.client.CollectorRegistry
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.slf4j.LoggerFactory
-import java.util.concurrent.ConcurrentHashMap
 
 private val log = LoggerFactory.getLogger("Main")!!
-val meterRegistry = PrometheusMeterRegistry(DEFAULT, CollectorRegistry.defaultRegistry, SYSTEM)
-
-enum class Checks {
-    DATABASE
-}
-
-val livenessGauge = ConcurrentHashMap<Checks, Boolean>().apply {
-    this[Checks.DATABASE] = true
-}
-
-val readinessGauge = ConcurrentHashMap<Checks, Boolean>().apply {
-    this[Checks.DATABASE] = false
-}
 
 val objectMapper = jacksonObjectMapper().apply {
     setDefaultPrettyPrinter(
@@ -44,18 +29,38 @@ val objectMapper = jacksonObjectMapper().apply {
 }
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
-    GlobalScope.launch {
-        createConsumer().processSingle(::queryModelBuilderProcessor)
-    }
-    GlobalScope.launch {
-        try {
-            DB.dataSource.migrate()
-            readinessGauge[Checks.DATABASE] = true
-        } catch(e: Exception)  {
-            log.error("migrering feilet", e)
-            livenessGauge[Checks.DATABASE] = false
+    runBlocking(Dispatchers.Default) {
+        val dataSourceAsync = async {
+            try {
+                createDataSource().also {
+                    Health.subsystemReady[Subsystem.DATABASE] = true
+                }
+            } catch (e: Exception) {
+                Health.subsystemAlive[Subsystem.DATABASE] = false
+                throw e
+            }
+        }
+
+        launch {
+            val kafkaConsumer = createKafkaConsumer()
+            val dataSource = dataSourceAsync.await()
+
+            kafkaConsumer.forEachEvent { event ->
+                queryModelBuilderProcessor(dataSource, event)
+            }
+        }
+
+        launch {
+            val httpServer = embeddedServer(Netty, port = 8080) {
+                httpServerSetup(
+                    brukerGraphQL = createBrukerGraphQL(
+                        altinn = AltinnImpl,
+                        dataSourceAsync = dataSourceAsync.asCompletableFuture()
+                    ),
+                    produsentGraphQL = createProdusentGraphQL(createKafkaProducer())
+                )
+            }
+            httpServer.start(wait = true)
         }
     }
-    embeddedServer(Netty, port = 8080, module = Application::module)
-        .start(wait = true)
 }

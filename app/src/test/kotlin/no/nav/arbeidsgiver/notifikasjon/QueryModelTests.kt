@@ -2,15 +2,16 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
-import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
+import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.createDataSource
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
 class QueryModelTests : DescribeSpec({
-    listener(PostgresTestListener())
+    val dataSource = runBlocking { createDataSource() }
+    listener(PostgresTestListener(dataSource))
 
     describe("QueryModel") {
         describe("#queryModelBuilderProcessor()") {
@@ -31,12 +32,16 @@ class QueryModelTests : DescribeSpec({
                 )
 
                 beforeEach {
-                    queryModelBuilderProcessor(event)
+                    queryModelBuilderProcessor(dataSource, event)
                 }
 
                 it("opprettes beskjed i databasen") {
                     val notifikasjoner =
-                        QueryModelRepository.hentNotifikasjoner(mottaker.fodselsnummer, emptyList())
+                        QueryModelRepository.hentNotifikasjoner(
+                            dataSource,
+                            mottaker.fodselsnummer,
+                            emptyList()
+                        )
                     notifikasjoner shouldHaveSingleElement QueryBeskjed(
                         merkelapp = "foo",
                         eksternId = "42",

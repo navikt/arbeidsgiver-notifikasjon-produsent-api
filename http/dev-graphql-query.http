@@ -1,5 +1,6 @@
 ###
-POST https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql
+POST http://localhost:8080/api/graphql
+host: ag-notifikasjon-produsent-api.dev.nav.no
 content-type: application/json
 Authorization: Bearer {{auth_token}}
 

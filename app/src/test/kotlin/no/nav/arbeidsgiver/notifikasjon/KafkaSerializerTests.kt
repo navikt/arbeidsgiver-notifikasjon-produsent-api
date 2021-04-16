@@ -2,9 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.hendelse.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
-import java.time.Instant
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ValueDeserializer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ValueSerializer
 import java.time.OffsetDateTime
 import java.util.*
 

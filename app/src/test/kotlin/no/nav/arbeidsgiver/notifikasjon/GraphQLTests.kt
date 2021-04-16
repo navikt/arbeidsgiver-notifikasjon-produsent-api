@@ -10,14 +10,12 @@ import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.graphql.Beskjed
-import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
-import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
-import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
+import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.producer.Producer
 import java.time.OffsetDateTime
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 data class GraphQLError(
     val message: String,
@@ -46,7 +44,17 @@ fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
 }
 
 class GraphQLTests : DescribeSpec({
-    val engine by ktorEngine()
+    val altinn = object : Altinn {
+        override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<Tilgang>()
+    }
+
+    val engine by ktorEngine(
+        brukerGraphQL = createBrukerGraphQL(
+            altinn = altinn,
+            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { createDataSource() })
+        ),
+        produsentGraphQL = createProdusentGraphQL()
+    )
 
     describe("POST produsent-api /api/graphql") {
         lateinit var response: TestApplicationResponse
@@ -59,14 +67,14 @@ class GraphQLTests : DescribeSpec({
                 host = PRODUSENT_HOST,
                 jsonBody = GraphQLRequest(query),
                 accept = "application/json",
-                authorization = "Bearer $tokenDingsToken"
+                authorization = "Bearer $TOKENDINGS_TOKEN"
             )
         }
         context("Mutation.nyBeskjed") {
             query = """
                 mutation {
                     nyBeskjed(nyBeskjed: {
-                        lenke: "http://foo.bar",
+                        lenke: "https://foo.bar",
                         tekst: "hello world",
                         merkelapp: "tag",
                         eksternId: "heu",
@@ -108,7 +116,7 @@ class GraphQLTests : DescribeSpec({
                     }
                     val event = eventSlot.captured
                     event.guid.toString() shouldBe resultat.id
-                    event.lenke shouldBe "http://foo.bar"
+                    event.lenke shouldBe "https://foo.bar"
                     event.tekst shouldBe "hello world"
                     event.merkelapp shouldBe "tag"
                     event.mottaker shouldBe FodselsnummerMottaker(
@@ -137,16 +145,14 @@ class GraphQLTests : DescribeSpec({
         beforeEach {
             mockkObject(QueryModelRepository)
             every {
-                QueryModelRepository.hentNotifikasjoner(any(), any())
+                QueryModelRepository.hentNotifikasjoner(any(), any(), any())
             } returns listOf(beskjed)
-            mockkObject(AltinnClient)
-            every { AltinnClient.hentRettigheter(any(), any()) } returns emptyList()
 
             response = engine.post("/api/graphql",
                 host = BRUKER_HOST,
                 jsonBody = GraphQLRequest(query),
                 accept = "application/json",
-                authorization = "Bearer $selbetjeningsToken"
+                authorization = "Bearer $SELVBETJENING_TOKEN"
             )
         }
         afterEach {
