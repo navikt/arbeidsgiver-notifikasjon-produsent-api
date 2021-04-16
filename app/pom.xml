@@ -12,14 +12,22 @@
         <kotlin.version>1.4.31</kotlin.version>
         <ktor.version>1.5.2</ktor.version>
         <kotest.version>4.4.3</kotest.version>
-        <mockk.version>1.11.0</mockk.version>
-        <altinn-rettigheter-proxy-klient.version>2.0.1</altinn-rettigheter-proxy-klient.version>
 
         <jvm.version>15</jvm.version>
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency> <!-- inkludert av altinn-rettigheter-proxy-klient -->
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-reflect</artifactId>
+                <version>${kotlin.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -54,9 +62,10 @@
         <dependency>
             <groupId>no.nav.arbeidsgiver</groupId>
             <artifactId>altinn-rettigheter-proxy-klient</artifactId>
-            <version>${altinn-rettigheter-proxy-klient.version}</version>
+            <version>2.0.1</version>
             <classifier>kotlin-client</classifier>
         </dependency>
+
         <!-- graphql -->
         <dependency>
             <groupId>com.graphql-java</groupId>
@@ -150,7 +159,7 @@
         <dependency>
             <groupId>io.mockk</groupId>
             <artifactId>mockk</artifactId>
-            <version>${mockk.version}</version>
+            <version>1.11.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
