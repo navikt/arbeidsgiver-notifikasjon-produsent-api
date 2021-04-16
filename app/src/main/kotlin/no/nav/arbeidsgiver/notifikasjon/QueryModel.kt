@@ -7,9 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.Mottaker
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
 import org.slf4j.LoggerFactory
-import java.time.Instant
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
 
 private val log = LoggerFactory.getLogger("query-model-builder-processor")
 
@@ -26,7 +24,7 @@ data class QueryBeskjed(
     val lenke: String,
     val eksternId: String,
     val mottaker: Mottaker,
-    val opprettetTidspunkt: Instant,
+    val opprettetTidspunkt: OffsetDateTime,
 )
 
 data class Tilgang(
@@ -68,7 +66,7 @@ object QueryModelRepository {
                             resultSet.getString("mottaker"),
                             Mottaker::class.java
                         ),
-                        opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant()
+                        opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java)
                     )
                 )
             }
@@ -126,7 +124,7 @@ fun queryModelBuilderProcessor(event: Event) {
         prepstat.setString(4, nyBeskjed.grupperingsid)
         prepstat.setString(5, nyBeskjed.lenke)
         prepstat.setString(6, nyBeskjed.eksternId)
-        prepstat.setObject( 7, nyBeskjed.opprettetTidspunkt.atOffset(ZoneOffset.UTC))
+        prepstat.setObject(7, nyBeskjed.opprettetTidspunkt)
         prepstat.setString(8, objectMapper.writeValueAsString(nyBeskjed.mottaker))
         prepstat.execute()
     }

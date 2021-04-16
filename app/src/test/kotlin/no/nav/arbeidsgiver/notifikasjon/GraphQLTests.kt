@@ -10,13 +10,13 @@ import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
 import no.nav.arbeidsgiver.notifikasjon.graphql.Beskjed
+import no.nav.arbeidsgiver.notifikasjon.graphql.BeskjedResultat
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Event
 import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
 import org.apache.kafka.clients.producer.Producer
-import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.*
 
 data class GraphQLError(
@@ -114,7 +114,7 @@ class GraphQLTests : DescribeSpec({
                         fodselsnummer = "12345678910",
                         virksomhetsnummer = "42"
                     )
-                    event.opprettetTidspunkt shouldBe Instant.parse("2019-10-12T07:20:50.52Z")
+                    event.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
                 }
             }
         }
@@ -130,7 +130,7 @@ class GraphQLTests : DescribeSpec({
             lenke = "",
             eksternId = "",
             mottaker = FodselsnummerMottaker("00000000000", "43"),
-            opprettetTidspunkt = Instant.EPOCH
+            opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00")
         )
 
         beforeEach {

@@ -4,7 +4,8 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
 import no.nav.arbeidsgiver.notifikasjon.hendelse.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.FodselsnummerMottaker
-import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
@@ -26,7 +27,7 @@ class QueryModelTests : DescribeSpec({
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",
-                    opprettetTidspunkt = Instant.now().truncatedTo(MILLIS)
+                    opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS)
                 )
 
                 beforeEach {
