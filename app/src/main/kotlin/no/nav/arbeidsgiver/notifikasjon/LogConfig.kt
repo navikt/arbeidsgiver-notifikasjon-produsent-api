@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.layout.TTLLLayout
@@ -29,7 +30,10 @@ class LogConfig : ContextAwareBase(), Configurator {
             )
         }
 
-        lc.getLogger(Logger.ROOT_LOGGER_NAME).addAppender(rootAppender)
+        lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
+            level = Level.INFO
+            addAppender(rootAppender)
+        }
     }
 }
 
