@@ -6,7 +6,8 @@ import java.time.Instant
 
 
 data class BrukerContext(
-    val fnr:String
+    val fnr:String,
+    val token: String
 )
 
 fun brukerGraphQL(): GraphQL =
@@ -27,24 +28,7 @@ fun brukerGraphQL(): GraphQL =
             }
 
             dataFetcher( "notifikasjoner") {
-                val tilganger = listOf(
-                    Tilgang(
-                        virksomhet = "910825631", /* akkarvik */
-                        servicecode = "5278", /* tilskudd */
-                        serviceedition = "1"
-                    ),
-                    Tilgang(
-                        virksomhet = "910825631", /* akkarvik */
-                        servicecode = "5332", /* arbeidstrening */
-                        serviceedition = "1"
-                    ),
-                    Tilgang(
-                        virksomhet = "910953494", /* haukedalen */
-                        servicecode = "5332", /* arbeidstrening */
-                        serviceedition = "1"
-                    )
-                )
-
+                val tilganger = AltinnClient.hentRettigheter(it.getContext<BrukerContext>().fnr,it.getContext<BrukerContext>().token)
                 val queryBeskjeder = QueryModelRepository.hentNotifikasjoner(
                     it.getContext<BrukerContext>().fnr,
                     tilganger

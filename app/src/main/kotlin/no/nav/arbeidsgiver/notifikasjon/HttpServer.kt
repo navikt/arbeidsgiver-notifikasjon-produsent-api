@@ -196,10 +196,10 @@ fun Application.module(
             route("api") {
                 authenticate("Bruker") {
                     post("graphql") {
-                        val token = call.principal<JWTPrincipal>()!!.payload
-
+                        val token = call.principal<JWTPrincipal>()!!
+                        val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
                         val request = call.receive<GraphQLRequest>()
-                        val result = brukerGraphql.execute(request, BrukerContext(token.subject))
+                        val result = brukerGraphql.execute(request, BrukerContext(token.payload.subject, authHeader))
                         call.respond(result)
                     }
                 }
