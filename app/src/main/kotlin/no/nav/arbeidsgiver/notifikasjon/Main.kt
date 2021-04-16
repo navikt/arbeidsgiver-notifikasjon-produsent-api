@@ -15,6 +15,7 @@ import io.prometheus.client.CollectorRegistry
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
 
 private val log = LoggerFactory.getLogger("Main")!!
 val meterRegistry = PrometheusMeterRegistry(DEFAULT, CollectorRegistry.defaultRegistry, SYSTEM)
@@ -22,12 +23,14 @@ val meterRegistry = PrometheusMeterRegistry(DEFAULT, CollectorRegistry.defaultRe
 enum class Checks {
     DATABASE
 }
-val livenessGauge = mutableMapOf(
-    Checks.DATABASE to true,
-)
-val readinessGauge = mutableMapOf(
-    Checks.DATABASE to false,
-)
+
+val livenessGauge = ConcurrentHashMap<Checks, Boolean>().apply {
+    this[Checks.DATABASE] = true
+}
+
+val readinessGauge = ConcurrentHashMap<Checks, Boolean>().apply {
+    this[Checks.DATABASE] = false
+}
 
 val objectMapper = jacksonObjectMapper().apply {
     setDefaultPrettyPrinter(
