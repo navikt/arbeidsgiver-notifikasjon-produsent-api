@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory
 import java.lang.System.getenv
 import java.time.Duration
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import org.apache.kafka.clients.CommonClientConfigs as CommonProp
 import org.apache.kafka.clients.consumer.ConsumerConfig as ConsumerProp
@@ -127,7 +128,8 @@ suspend fun <K, V>Consumer<K, V>.forEachEvent(processor: (V) -> Unit) {
     }
 }
 
-val retriesPerPartition = mutableMapOf<Int, AtomicInteger>()
+val retriesPerPartition = ConcurrentHashMap<Int, AtomicInteger>()
+
 private suspend fun <K, V> Consumer<K, V>.processWithRetry(
     records: ConsumerRecords<K, V>,
     processor: (V) -> Unit
@@ -141,7 +143,7 @@ private suspend fun <K, V> Consumer<K, V>.processWithRetry(
             val failed = Health.meterRegistry.gauge(
                 "kafka_consumer_retries_per_partition",
                 Tags.of(Tag.of("partition", "${record.partition()}")),
-                retriesPerPartition.getOrPut(record.partition(), { AtomicInteger(0) })
+                retriesPerPartition.getOrPut(record.partition()) { AtomicInteger(0) }
             )
             var success = false
             var backoffMillis = 1000L
