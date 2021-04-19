@@ -15,6 +15,7 @@ import io.ktor.routing.*
 import no.nav.arbeidsgiver.notifikasjon.BrukerContext
 import no.nav.arbeidsgiver.notifikasjon.ProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.objectMapper
+import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.net.URL
 import java.util.*
@@ -27,7 +28,7 @@ data class JwtAuthenticationParameters(
 )
 
 typealias JwtAuthentication = JWTAuthenticationProvider.Configuration.(JwtAuthenticationParameters) -> Unit
-
+private val log = LoggerFactory.getLogger("HttpServer")!!
 val STANDARD_JWT_AUTHENTICATION: JwtAuthentication = { parameter ->
     verifier(
         JwkProviderBuilder(URL(parameter.jwksUri))
@@ -43,6 +44,10 @@ val STANDARD_JWT_AUTHENTICATION: JwtAuthentication = { parameter ->
 
     validate { credentials ->
         try {
+            log.debug(
+                "validate credentials -> aud:{} iss:{} parameter:{}",
+                credentials.payload.audience, credentials.payload.issuer, parameter
+            )
             requireNotNull(credentials.payload.audience) {
                 "Auth: Missing audience in token"
             }
@@ -51,6 +56,7 @@ val STANDARD_JWT_AUTHENTICATION: JwtAuthentication = { parameter ->
             }
             JWTPrincipal(credentials.payload)
         } catch (e: Throwable) {
+            log.info("invalid credentials: {}", e.message)
             null
         }
     }
