@@ -71,6 +71,7 @@ fun Application.httpServerSetup(
     install(CORS) {
         allowNonSimpleContentTypes = true
         host("arbeidsgiver-q.nav.no", schemes = listOf("https"))
+        host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
     }
 
     install(MicrometerMetrics) {
