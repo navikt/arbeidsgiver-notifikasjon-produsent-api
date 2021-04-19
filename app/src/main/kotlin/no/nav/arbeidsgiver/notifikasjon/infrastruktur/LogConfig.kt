@@ -38,6 +38,9 @@ class LogConfig : ContextAwareBase(), Configurator {
         lc.getLogger("org.apache.kafka").apply {
             level = Level.INFO
         }
+        lc.getLogger("io.ktor.auth").apply {
+            level = Level.TRACE
+        }
     }
 }
 
