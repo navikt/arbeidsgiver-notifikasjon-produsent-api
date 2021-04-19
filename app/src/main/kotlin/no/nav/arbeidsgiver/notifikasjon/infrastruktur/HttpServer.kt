@@ -93,7 +93,7 @@ fun Application.httpServerSetup(
 
     install(CallLogging) {
         filter { call ->
-            log.info("call.auth: {}", (call.request.authorization() ?: "").take(20))
+            log.info("call.auth: {}...{}", (call.request.authorization() ?: "").take(20), (call.request.authorization() ?: "").takeLast(10))
             !call.request.path().startsWith("/internal/")
         }
 
