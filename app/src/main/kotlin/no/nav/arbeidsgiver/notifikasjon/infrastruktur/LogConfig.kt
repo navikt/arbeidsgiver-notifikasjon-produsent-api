@@ -37,6 +37,7 @@ class LogConfig : ContextAwareBase(), Configurator {
         }
         lc.getLogger("org.apache.kafka").level = Level.INFO
         lc.getLogger("com.zaxxer.hikari").level = Level.INFO
+        lc.getLogger("io.netty").level = Level.INFO
     }
 }
 
