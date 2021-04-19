@@ -32,15 +32,11 @@ class LogConfig : ContextAwareBase(), Configurator {
         }
 
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
-            level = Level.DEBUG
+            level = Level.TRACE
             addAppender(rootAppender)
         }
-        lc.getLogger("org.apache.kafka").apply {
-            level = Level.INFO
-        }
-        lc.getLogger("io.ktor.auth").apply {
-            level = Level.TRACE
-        }
+        lc.getLogger("org.apache.kafka").level = Level.INFO
+        lc.getLogger("com.zaxxer.hikari").level = Level.INFO
     }
 }
 
