@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxy
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.Tilgang
+import org.slf4j.LoggerFactory
 
 interface Altinn {
     fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<Tilgang>
@@ -26,7 +27,7 @@ private val VÅRE_TJENESTER = setOf(
     "5078" to "1", // Rekruttering
     "5278" to "1"  // Tilskuddsbrev om NAV-tiltak
 )
-
+private val log = LoggerFactory.getLogger("Altinn")!!
 fun AltinnrettigheterProxyKlient.hentTilganger(
     fnr: String,
     serviceCode: String,
@@ -42,6 +43,15 @@ fun AltinnrettigheterProxyKlient.hentTilganger(
             false
         )
             .filter { it.type != "Enterprise" }
+            .filter {
+                if (it.organizationNumber == null) {
+                    log.warn("filtrerer ut reportee uten organizationNumber")
+                    false
+                } else {
+                    true
+                }
+
+            }
             .map {
                 Tilgang(
                     virksomhet = it.organizationNumber!!,
