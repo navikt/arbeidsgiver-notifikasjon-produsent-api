@@ -53,7 +53,9 @@ class GraphQLTests : DescribeSpec({
             altinn = altinn,
             dataSourceAsync = CompletableFuture.completedFuture(runBlocking { createDataSource() })
         ),
-        produsentGraphQL = createProdusentGraphQL()
+        produsentGraphQL = createProdusentGraphQL(
+            kafkaProducer = mockk(relaxed = true)
+        )
     )
 
     describe("POST produsent-api /api/graphql") {
