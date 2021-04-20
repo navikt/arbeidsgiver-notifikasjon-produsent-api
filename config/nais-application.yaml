@@ -36,6 +36,8 @@ spec:
             envVarPrefix: DB
   accessPolicy:
     outbound:
+      rules:
+        - application: altinn-rettigheter-proxy
       external:
         - host: fakedings.dev-gcp.nais.io
         - host: arbeidsgiver.dev.nav.no
