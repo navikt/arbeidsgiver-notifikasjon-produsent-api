@@ -79,7 +79,7 @@ object AltinnImpl : Altinn {
     private val altinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(
         AltinnrettigheterProxyKlientConfig(
             ProxyConfig(
-                url = "https://arbeidsgiver.dev.nav.no/altinn-rettigheter-proxy/",
+                url = "https://arbeidsgiver.dev.nav.no/altinn-rettigheter-proxy",
                 consumerId = "arbeidsgiver-arbeidsforhold-api",
             ),
             AltinnConfig(
