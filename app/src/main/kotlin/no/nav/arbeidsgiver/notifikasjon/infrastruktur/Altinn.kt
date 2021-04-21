@@ -1,10 +1,16 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
 import no.nav.arbeidsgiver.notifikasjon.Tilgang
 import org.slf4j.LoggerFactory
 
@@ -70,10 +76,13 @@ fun AltinnrettigheterProxyKlient.hentTilganger(
 fun AltinnrettigheterProxyKlient.hentAlleTilganger(
     fnr: String,
     selvbetjeningsToken: String,
-): List<Tilgang> =
-    VÅRE_TJENESTER.flatMap {
-        hentTilganger(fnr, it.first, it.second, selvbetjeningsToken)
-    }
+): List<Tilgang> = runBlocking {
+    VÅRE_TJENESTER.map {
+        async {
+            hentTilganger(fnr, it.first, it.second, selvbetjeningsToken)
+        }
+    }.awaitAll().flatten()
+}
 
 object AltinnImpl : Altinn {
     private val altinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(
