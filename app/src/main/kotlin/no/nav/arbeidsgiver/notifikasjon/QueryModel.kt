@@ -57,6 +57,7 @@ object QueryModelRepository {
                 or (
                     mottaker ->> '@type' = 'altinn'
                     and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
+                order by opprettet_tidspunkt desc
             """
             )
 
