@@ -80,15 +80,21 @@ private val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
     ConsumerProp.ENABLE_AUTO_COMMIT_CONFIG to "false"
 )
 
-fun createKafkaProducer(): Producer<KafkaKey, Event> {
-    val properties = Properties().apply { putAll(PRODUCER_PROPERTIES) }
+fun createKafkaProducer(configure: Properties.() -> Unit = {}): Producer<KafkaKey, Event> {
+    val properties = Properties().apply {
+        putAll(PRODUCER_PROPERTIES)
+        configure()
+    }
     val kafkaProducer = KafkaProducer<KafkaKey, Event>(properties)
     KafkaClientMetrics(kafkaProducer).bindTo(Health.meterRegistry)
     return kafkaProducer
 }
 
-fun createKafkaConsumer(): Consumer<KafkaKey, Event> {
-    val properties = Properties().apply { putAll(CONSUMER_PROPERTIES) }
+fun createKafkaConsumer(configure: Properties.() -> Unit = {}): Consumer<KafkaKey, Event> {
+    val properties = Properties().apply {
+        putAll(CONSUMER_PROPERTIES)
+        configure()
+    }
     val kafkaConsumer = KafkaConsumer<KafkaKey, Event>(properties)
     KafkaClientMetrics(kafkaConsumer).bindTo(Health.meterRegistry)
     kafkaConsumer.subscribe(listOf("arbeidsgiver.notifikasjon"))
