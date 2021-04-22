@@ -180,7 +180,8 @@ fun Application.httpServerSetup(
                     post("graphql") {
                         val token = call.principal<JWTPrincipal>()!!.payload
                         val context = ProdusentContext(
-                            produsentId = "iss:${token.issuer} sub:${token.subject}"
+                            produsentId = "iss:${token.issuer} sub:${token.subject}",
+                            produsent = token.subject
                         )
                         val request = call.receive<GraphQLRequest>()
                         val result = produsentGraphQL.execute(request, context)
