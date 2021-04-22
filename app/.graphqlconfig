@@ -20,6 +20,22 @@
           "authorization": "Bearer ${env:fakedings_token}"
         },
         "introspect": false
+      },
+      "produsent-api.dev-gcp": {
+        "url": "https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql",
+        "headers": {
+          "user-agent": "JS GraphQL",
+          "authorization": "Bearer ${env:fakedings_token}"
+        },
+        "introspect": false
+      },
+      "bruker-api.dev-gcp": {
+        "url": "https://ag-notifikasjon-bruker-api.dev.nav.no/api/graphql",
+        "headers": {
+          "user-agent": "JS GraphQL",
+          "authorization": "Bearer ${env:bruker_token}"
+        },
+        "introspect": false
       }
     }
   }
