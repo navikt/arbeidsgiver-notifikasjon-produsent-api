@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transaction
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
@@ -71,10 +72,7 @@ object QueryModelRepository {
                         grupperingsid = resultSet.getString("grupperingsid"),
                         lenke = resultSet.getString("lenke"),
                         eksternId = resultSet.getString("ekstern_id"),
-                        mottaker = objectMapper.readValue(
-                            resultSet.getString("mottaker"),
-                            Mottaker::class.java
-                        ),
+                        mottaker = objectMapper.readValue(resultSet.getString("mottaker")),
                         opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java)
                     )
                 )

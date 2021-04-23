@@ -15,7 +15,19 @@ type BeskjedResultat {
     kan brukes til noe fornuftig.
     En ID som unikt identifiserer hendelsen.
     """
-    id: ID!
+    id: ID
+    errors: [MutationError!]!
+}
+
+interface MutationError {
+    feilmelding: String!
+}
+
+"""
+Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til
+"""
+type UgyldigMerkelapp implements MutationError {
+    feilmelding: String!
 }
 
 scalar ISO8601DateTime

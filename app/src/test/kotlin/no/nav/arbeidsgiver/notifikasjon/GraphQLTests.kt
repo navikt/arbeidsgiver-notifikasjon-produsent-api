@@ -3,10 +3,12 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.module.kotlin.convertValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.ktor.server.testing.*
@@ -133,6 +135,43 @@ class GraphQLTests : DescribeSpec({
                         virksomhetsnummer = "42"
                     )
                     event.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
+                }
+
+                context("når produsent mangler tilgang til merkelapp") {
+                    val merkelapp = "foo-bar"
+                    query = """
+                        mutation {
+                            nyBeskjed(nyBeskjed: {
+                                lenke: "https://foo.bar",
+                                tekst: "hello world",
+                                merkelapp: "$merkelapp",
+                                eksternId: "heu",
+                                mottaker: {
+                                    fnr: {
+                                        fodselsnummer: "12345678910",
+                                        virksomhetsnummer: "42"
+                                    } 
+                                }
+                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            }) {
+                                id
+                                errors {
+                                    __typename
+                                    feilmelding
+                                }
+                            }
+                        }
+                    """.trimIndent()
+
+                    it("id er null") {
+                        resultat.id shouldBe null
+                    }
+
+                    it("errors har forklarende feilmelding") {
+                        resultat.errors shouldHaveSize 1
+                        resultat.errors.first() should beOfType<UgyldigMerkelapp>()
+                        resultat.errors.first().feilmelding shouldContain merkelapp
+                    }
                 }
             }
         }

@@ -1,5 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import com.auth0.jwt.interfaces.Payload
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import graphql.schema.DataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.producer.Producer
@@ -8,7 +10,9 @@ import java.time.OffsetDateTime
 import java.util.*
 
 data class ProdusentContext(
-    val produsentId: String
+    val payload: Payload,
+    val subject: String = payload.subject,
+    val produsentId: String = "iss:${payload.issuer} sub:${payload.subject}"
 )
 
 private val log = LoggerFactory.getLogger("GraphQL.ProdusentAPI")!!
@@ -80,15 +84,33 @@ data class BeskjedInput(
 }
 
 data class BeskjedResultat(
-    val id: String
+    val id: String? = null,
+    val errors: List<MutationError> = emptyList()
 )
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+sealed class MutationError {
+    abstract val feilmelding: String
+}
+data class UgyldigMerkelapp(override val feilmelding: String) : MutationError()
 
 private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Event>) = DataFetcher {
     val nyBeskjed = it.getTypedArgument<BeskjedInput>("nyBeskjed")
-    val id = UUID.randomUUID()
-    log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
-    kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
-    BeskjedResultat(id.toString())
+    val produsentMerkelapp = ProdusentRegister.finn(it.getContext<ProdusentContext>().subject)
+    if (!produsentMerkelapp.har(nyBeskjed.merkelapp)) {
+        BeskjedResultat(
+            errors = listOf(
+                UgyldigMerkelapp("""
+                | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentMerkelapp.produsent}'. 
+                | Gyldige merkelapper er: ${produsentMerkelapp.merkelapper}
+                """.trimMargin())
+            )
+        )
+    } else {
+        val id = UUID.randomUUID()
+        log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
+        kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
+        BeskjedResultat(id.toString())
+    }
 }
 
 fun createProdusentGraphQL(
@@ -109,6 +131,17 @@ fun createProdusentGraphQL(
         wire("Mutation") {
             dataFetcher("nyBeskjed", nyBeskjedMutation(kafkaProducer))
         }
+
+        type("MutationError") {
+            it.typeResolver { env ->
+                env.schema.getObjectType(
+                    when (env.getObject<MutationError>()) {
+                        is UgyldigMerkelapp -> "UgyldigMerkelapp"
+                    }
+                )
+            }
+        }
+
     }
 )
 
