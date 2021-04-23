@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import com.auth0.jwt.interfaces.Payload
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.producer.Producer
@@ -10,8 +10,9 @@ import java.time.OffsetDateTime
 import java.util.*
 
 data class ProdusentContext(
-    val produsentId: String,
-    val produsent: String
+    val payload: Payload,
+    val subject: String = payload.subject,
+    val produsentId: String = "iss:${payload.issuer} sub:${payload.subject}"
 )
 
 private val log = LoggerFactory.getLogger("GraphQL.ProdusentAPI")!!
@@ -94,7 +95,7 @@ data class UgyldigMerkelapp(override val feilmelding: String) : MutationError()
 
 private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Event>) = DataFetcher {
     val nyBeskjed = it.getTypedArgument<BeskjedInput>("nyBeskjed")
-    val produsentMerkelapp = ProdusentMerkelappRegister.finn(it.getContext<ProdusentContext>().produsent)
+    val produsentMerkelapp = ProdusentRegister.finn(it.getContext<ProdusentContext>().subject)
     if (!produsentMerkelapp.har(nyBeskjed.merkelapp)) {
         BeskjedResultat(
             errors = listOf(
@@ -129,7 +130,6 @@ fun createProdusentGraphQL(
 
         wire("Mutation") {
             dataFetcher("nyBeskjed", nyBeskjedMutation(kafkaProducer))
-
         }
 
         type("MutationError") {
