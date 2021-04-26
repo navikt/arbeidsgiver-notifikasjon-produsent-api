@@ -6,30 +6,25 @@ import io.ktor.client.engine.apache.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import java.lang.System.currentTimeMillis
 import java.time.Instant
 import kotlin.system.measureTimeMillis
 
 val client = HttpClient(Apache) {
     engine {
-        followRedirects = true
-        socketTimeout = 10_000
-        connectTimeout = 10_000
-        connectionRequestTimeout = 20_000
+        socketTimeout = 0
+        connectTimeout = 0
+        connectionRequestTimeout = 0
         customizeClient {
-            setMaxConnTotal(1000)
-            setMaxConnPerRoute(100)
+            setMaxConnTotal(10)
         }
     }
 }
 const val selvbetjeningToken =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MTk0NTIzNzcsIm5iZiI6MTYxOTQ0ODc3NywidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoiYURFc3lpcjJuYUtHaHF3Rm5FWkRMSF9yLXcyTWh1N3ZuVEppVnNMTFNRayIsImlhdCI6MTYxOTQ0ODc3NywiYXV0aF90aW1lIjoxNjE5NDQ4Nzc2LCJqdGkiOiJZazU5aERvY1NhcE9fdjJtWVNXQW00VS1Dazg1cm91MnR3TFZMR3doTlVzIiwiYXRfaGFzaCI6IkU0VkJPSGtzdkM4RTB4Nm1BMW03RWcifQ.SOuaammouGocprnkBUHC7dKeu5mOFvuhdYUi3yONhIv2x0KmMmhfkaVV2HOaGpMzvcnwlaGMyUFIdBmbJMa6VwbTsaNNveXorwFMPqM0o-qEBe44KPXeUolSMaLojSXKnTYEYe8xV-AJFMJtwTaJ86orDiRPre0r_nGU8RXXSvzQmxF6nnySoduaqTTTEINhnnikfR419Lxsx-fCzMlorsUUPnktM4ItwruwtqIdckmQ2h96kDk5mQCYk5iQO6F4RHaau2aSrT0zsPMZx7psS33dlbmeY3klqdXPEBF28zYAm_M9gLpgHAzWtW_ZKPIPYUT43DTE0hxGdIHS5qNeLQ"
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MTk0NzAzNDIsIm5iZiI6MTYxOTQ2Njc0MiwidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoiNDdvWmNGU045YmxxNkVJOHROLWE2aThVNUVHZzBWR281ZVF3SENkZVAzcyIsImlhdCI6MTYxOTQ2Njc0MiwiYXV0aF90aW1lIjoxNjE5NDY2NzQxLCJqdGkiOiIwRXNDaFBubkQ3OFYzZ3Q1cF9nTmdqWTNGTUx4NmtMV21iMGFMQ3JCTWFrIiwiYXRfaGFzaCI6ImFZZmxsU2NmNm1ReDN1NF9MYzdjZ2cifQ.MAAQniUjWasxIi28DGl4j6WE63Tai4oo5YUWX-emmZHseOsMs6zbzMBh1rovsfddF66ZxJUPXty8oGvzIKCy7xyz_P7J1DZdL8NQp6GlOp1StE6OLOYWQh-BPCc4etoZs3ZZ9E44zudQDp2EmuOZYMkGBIWhRxIQdUqWXUV-TFRo5QyqdNy2CPCvVKjtLFYY9vSXQigcCzeDVijpKqTJb8679ZMhob0KBXGeiRqLQnvgPeRMilqeagu77QDAe9bAYxeY6mQUpQ8KPWjIQTNA3wj2hRX9XVA0tnAvjftovM8tO7prVOGwf1a6AqF135Te35Q1f8422hdmBtm3h6n3MA"
 const val tokenDingsToken =
-    "eyJraWQiOiJtb2NrLW9hdXRoMi1zZXJ2ZXIta2V5IiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJzb21lcHJvZHVjZXIiLCJhdWQiOiJwcm9kdXNlbnQtYXBpIiwibmJmIjoxNjE5NDQ4ODEyLCJpc3MiOiJodHRwczpcL1wvZmFrZWRpbmdzLmRldi1nY3AubmFpcy5pb1wvZmFrZSIsImV4cCI6MTYyMzA0ODgxMiwiaWF0IjoxNjE5NDQ4ODEyLCJqdGkiOiI4Y2RiODNiYi02NjcxLTQ0MGMtYTI1Ni04NDI4M2IwNzBkMzkifQ.WmR0WQXRZARLvsaCmBSh9RPjRuzhAzNwv5eEaEz7uzxHorpIvklA0dTtI_XLtKDZBfn6eaAZKuTR8-caOvmd2rA9Hcpld_BLZo19R_0iw3L8ZT_MQv56UBT9ZWOLTgg4lw0zC0D88gZd6j_mb2t-_ESybmci9Slz603qwdujN08RIa_zfgFz8_ibvp8RTQ9PQbxR_RGSpHpMgQ4kHft2qgBvFvp9gNkeJk8gZ4gHfi23VjJD8vXl2PWbhxNpC520fNRETvoZeR0z5caQeEYGoGm0viwUC0fovd3V_68IUT3Vf99O9tXhrJDPXlsT1VAc3Hj1Mp8QJb7IVMwOiQNbRA"
+    "eyJraWQiOiJtb2NrLW9hdXRoMi1zZXJ2ZXIta2V5IiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJzb21lcHJvZHVjZXIiLCJhdWQiOiJwcm9kdXNlbnQtYXBpIiwibmJmIjoxNjE5NDY2ODA0LCJpc3MiOiJodHRwczpcL1wvZmFrZWRpbmdzLmRldi1nY3AubmFpcy5pb1wvZmFrZSIsImV4cCI6MTYyMzA2NjgwNCwiaWF0IjoxNjE5NDY2ODA0LCJqdGkiOiJkNjM4NzA1OC0wYzE2LTRmOWUtYmVlYy1kYjg1NzJlNDZlYzEifQ.FhMOh9nwW9rGLKBFCu0SyMug_JV_6bRYHaoAQU9vPLyp1uYuBWjObZRb61ZxYjtLWjm3IW45P-JIuxGDNF3cxb9lnDD9ayc_Yzox9I8s7vgChL1-3yZN_jDHS2hPvgNFgJSf2eb7nNx4jsk2f-1YCArfD1eLYGOzLxPLbhaKRP4w-srxuvcwL826lYxH8ojQQ8c-V03QFMBI54__WGcGOZn-VeuR2YNJbdcvhu9CCZdFh0-ZystDtOsWyyqqN01H0RFIybNhr8FLcN2mvCF1Njb8iUSrLpdDZR7i9FNHMPsHmhB0SZg532xrxXQyH56zRUnYmlJO9laoF99kcSMDTw"
 
 suspend fun concurrentWithStats(
     title: String = "work",
@@ -48,11 +43,13 @@ suspend fun concurrentWithStats(
             }.onSuccess {
                 progressBar.add()
             }.onFailure {
+                println()
                 println(it)
                 progressBar.add()
             }
         }
     }.awaitAll()
+    val durationMs = currentTimeMillis() - start
     val statsSuccess = stats.filter { it.isSuccess }.map { it.getOrThrow() }
     val statsFailure = stats.filter { it.isFailure }
     println(
@@ -61,7 +58,7 @@ suspend fun concurrentWithStats(
         | $title stats:
         |  Error: ${((statsFailure.count().toDouble() / stats.count()) * 100).toInt()}%
         |  
-        |     Duration: ${currentTimeMillis() - start}ms 
+        |     Duration: ${durationMs}ms 
         |     Ok count: ${statsSuccess.count()}
         |  Error count: ${statsFailure.count()}
         |  Total Count: ${stats.count()}
@@ -71,6 +68,7 @@ suspend fun concurrentWithStats(
         |       Min: ${statsSuccess.minOrNull()}ms
         |   Average: ${statsSuccess.average().toInt()}ms
         |       Sum: ${statsSuccess.sum()}ms
+        |     req/s: ${statsSuccess.count() / (durationMs / 1000)}
         |----------------------------
         |""".trimMargin()
     )
@@ -150,8 +148,10 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
 }
 
 fun main() = runBlocking {
-    nyBeskjed(1, Api.PRODUSENT_GCP)
-    hentNotifikasjoner(1, Api.BRUKER_GCP)
+    client.use {
+        nyBeskjed(1_000, Api.PRODUSENT_GCP)
+        hentNotifikasjoner(1_000, Api.BRUKER_GCP)
+    }
 }
 
 class ProgressBar(
