@@ -12,6 +12,7 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import no.nav.arbeidsgiver.notifikasjon.BrukerContext
 import no.nav.arbeidsgiver.notifikasjon.ProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.objectMapper
@@ -76,6 +77,9 @@ fun Application.httpServerSetup(
 
     install(MicrometerMetrics) {
         registry = Health.meterRegistry
+        distributionStatisticConfig = DistributionStatisticConfig.Builder()
+            .percentilesHistogram(true)
+            .build()
     }
 
     install(CallId) {
