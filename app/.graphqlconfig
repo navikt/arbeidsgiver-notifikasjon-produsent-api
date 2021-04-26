@@ -22,7 +22,7 @@
         "introspect": false
       },
       "produsent-api.dev-gcp": {
-        "url": "https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql",
+        "url": "https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql",
         "headers": {
           "user-agent": "JS GraphQL",
           "authorization": "Bearer ${env:fakedings_token}"

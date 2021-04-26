@@ -19,7 +19,7 @@ Authorization: Bearer {{auth_token}}
 }
 
 ###
-POST https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql
+POST https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
@@ -28,7 +28,7 @@ Authorization: Bearer {{auth_token}}
 }
 
 ###
-GET https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/ide
+GET https://ag-notifikasjon-produsent-api.dev.nav.no/api/ide
 Authorization: Bearer {{auth_token}}
 
 ###
