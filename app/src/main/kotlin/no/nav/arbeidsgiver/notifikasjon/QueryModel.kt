@@ -59,6 +59,7 @@ object QueryModelRepository {
                     mottaker ->> '@type' = 'altinn'
                     and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
                 order by opprettet_tidspunkt desc
+                limit 50
             """
             )
 
