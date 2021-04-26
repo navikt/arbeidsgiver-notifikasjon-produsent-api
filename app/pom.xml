@@ -168,6 +168,12 @@
             <version>2.7.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-apache</artifactId>
+            <version>${ktor.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

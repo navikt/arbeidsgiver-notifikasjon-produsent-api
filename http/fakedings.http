@@ -10,8 +10,8 @@ sub=someproducer&aud=produsent-api
 
 ###
 POST http://localhost:8080/api/graphql
-content-type: application/json
-host: ag-notifikasjon-produsent-api.invalid
+Content-Type: application/json
+Host: ag-notifikasjon-produsent-api.local
 Authorization: Bearer {{auth_token}}
 
 {
@@ -19,8 +19,8 @@ Authorization: Bearer {{auth_token}}
 }
 
 ###
-POST https://arbeidsgiver-notifikasjon-produsent-api.dev.nav.no/api/graphql
-content-type: application/json
+POST https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql
+Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
@@ -28,7 +28,10 @@ Authorization: Bearer {{auth_token}}
 }
 
 ###
-GET https://arbeidsgiver-notifikasjon-produsent-api.dev.nav.no/api/ide
+GET https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/ide
 Authorization: Bearer {{auth_token}}
+
+###
+GET https://ag-notifikasjon-bruker-api.dev.nav.no/api/ide
 
 
