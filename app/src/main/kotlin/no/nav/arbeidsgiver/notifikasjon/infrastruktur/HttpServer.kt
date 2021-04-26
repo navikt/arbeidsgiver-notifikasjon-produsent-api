@@ -97,6 +97,9 @@ fun Application.httpServerSetup(
         mdc("method") { call ->
             call.request.httpMethod.value
         }
+        mdc("host") { call ->
+            call.request.header("host")
+        }
         mdc("path") { call ->
             call.request.path()
         }

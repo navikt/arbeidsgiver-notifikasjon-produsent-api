@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
-import ch.qos.logback.classic.layout.TTLLLayout
+import ch.qos.logback.classic.PatternLayout
 import ch.qos.logback.classic.spi.Configurator
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.ConsoleAppender
@@ -24,7 +24,9 @@ class LogConfig : ContextAwareBase(), Configurator {
                         encoder = LogstashEncoder().setup(lc)
                     } else {
                         encoder = LayoutWrappingEncoder<ILoggingEvent>().setup(lc).apply {
-                            layout = TTLLLayout().setup(lc)
+                            layout = PatternLayout().also {
+                                it.pattern = "%d %-5level [%thread] %logger{0}: %msg %mdc%n"
+                            }.setup(lc)
                         }
                     }
                 }
