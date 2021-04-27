@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
@@ -74,13 +73,8 @@ fun AltinnrettigheterProxyKlient.hentTilganger(
 fun AltinnrettigheterProxyKlient.hentAlleTilganger(
     fnr: String,
     selvbetjeningsToken: String,
-): List<Tilgang> = runBlocking(Dispatchers.IO) {
-    VÅRE_TJENESTER.map {
-        async {
-//            hentTilganger(fnr, it.first, it.second, selvbetjeningsToken)
-            emptyList<Tilgang>()
-        }
-    }.awaitAll().flatten()
+): List<Tilgang> = VÅRE_TJENESTER.flatMap {
+    hentTilganger(fnr, it.first, it.second, selvbetjeningsToken)
 }
 
 object AltinnImpl : Altinn {
