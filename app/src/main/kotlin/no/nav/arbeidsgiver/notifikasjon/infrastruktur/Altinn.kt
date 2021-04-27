@@ -1,9 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
@@ -80,7 +77,8 @@ fun AltinnrettigheterProxyKlient.hentAlleTilganger(
 ): List<Tilgang> = runBlocking(Dispatchers.IO) {
     VÅRE_TJENESTER.map {
         async {
-            hentTilganger(fnr, it.first, it.second, selvbetjeningsToken)
+//            hentTilganger(fnr, it.first, it.second, selvbetjeningsToken)
+            emptyList<Tilgang>()
         }
     }.awaitAll().flatten()
 }
