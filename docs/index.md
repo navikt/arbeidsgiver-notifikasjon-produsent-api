@@ -1,6 +1,12 @@
 # Notifikasjoner rettet mot arbeidsgivere
 
-## Sende beskjed
+Som en produsent av notifikasjoner, så bruker dere GraphQL for å opprette nye beskjeder.
 
-## Opprette token
-## GraphQL (HTTP)
+
+## Autentisering
+Tilgangen til produsent-api-et bruker Azure AD (https://doc.nais.io/security/auth/azure-ad/).
+
+Det er videre tilgangsstyring for merkelapper.
+
+## GraphQL-endepunkt
+
