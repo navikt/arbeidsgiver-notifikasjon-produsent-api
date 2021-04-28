@@ -39,31 +39,26 @@ object QueryModelRepository {
         return timer.recordCallable {
             sequence {
                 val connection = dataSource.connection
-
-                val tilgangerJsonB = tilganger.joinToString {
-                    "'${
-                        objectMapper.writeValueAsString(
-                            AltinnMottaker(
-                                it.servicecode,
-                                it.serviceedition,
-                                it.virksomhet
-                            )
-                        )
-                    }'"
+                val tilgangerClause = tilganger.joinToString(" ") {
+                    """ 
+                    | or (
+                    |     mottaker ->> '@type' = 'altinn'
+                    |     and mottaker ->> 'altinntjenesteKode' = '${it.servicecode}'
+                    |     and mottaker ->> 'altinntjenesteVersjon' = '${it.serviceedition}'
+                    |     and mottaker ->> 'virksomhetsnummer' = '${it.virksomhet}'
+                    | )""".trimMargin()
                 }
                 val prepstat = connection.prepareStatement(
                     """
-                select * from notifikasjon
-                where (
-                    mottaker ->> '@type' = 'fodselsnummer'
-                    and mottaker ->> 'fodselsnummer' = ?
-                ) 
-                or (
-                    mottaker ->> '@type' = 'altinn'
-                    and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
-                order by opprettet_tidspunkt desc
-                limit 50
-            """
+                    | select * from notifikasjon
+                    | where (
+                    |     mottaker ->> '@type' = 'fodselsnummer'
+                    |     and mottaker ->> 'fodselsnummer' = ?
+                    | ) 
+                    | $tilgangerClause
+                    | order by opprettet_tidspunkt desc
+                    | limit 50
+                    | """.trimMargin()
                 )
 
                 prepstat.setString(1, fnr)
@@ -117,7 +112,8 @@ fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
             throw it
         }
     }) { connection ->
-        val prepstat = connection.prepareStatement("""
+        val prepstat = connection.prepareStatement(
+            """
             insert into notifikasjon(
                 koordinat,
                 merkelapp,
@@ -129,7 +125,8 @@ fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
                 mottaker
             )
             values (?, ?, ?, ?, ?, ?, ?, ?::json);
-        """)
+        """
+        )
         prepstat.setString(1, koordinat.toString())
         prepstat.setString(2, nyBeskjed.merkelapp)
         prepstat.setString(3, nyBeskjed.tekst)

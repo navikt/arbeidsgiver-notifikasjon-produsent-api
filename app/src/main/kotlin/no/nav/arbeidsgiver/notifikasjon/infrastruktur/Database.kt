@@ -38,6 +38,7 @@ fun HikariConfig.connectionPossible(): Boolean {
     }
 }
 
+
 suspend fun createDataSource(hikariConfig: HikariConfig = DEFAULT_HIKARI_CONFIG): DataSource {
     while (!hikariConfig.connectionPossible()) {
         delay(1000)
