@@ -1,7 +1,6 @@
-# Notifikasjoner rettet mot arbeidsgivere
 Dette er en plattform som lar dere (NAV-systemer, produsenter) sender notifikasjoner til arbeidsgivere.
 
-## Kortversjon
+# Kortversjon
 Tjenesten deres må autentisere seg med Azure AD, type server–server, som [beskrevet i nais-dokumentasjonen](https://doc.nais.io/security/auth/azure-ad/).
 
 Legg deres system, med tilhørende merkelapper, til i produsent-registeret ([se filen her](https://github.com/navikt/arbeidsgiver-notifikasjon-produsent-api/blob/main/app/src/main/resources/produsent-register.json)). Bruk subject som produsent-navn.
