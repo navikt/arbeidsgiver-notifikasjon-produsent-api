@@ -1,6 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
@@ -83,6 +86,7 @@ fun AltinnrettigheterProxyKlient.hentAlleTilganger(
 }
 
 object AltinnImpl : Altinn {
+    private val timer = Health.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
     private val altinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(
         AltinnrettigheterProxyKlientConfig(
             ProxyConfig(
@@ -98,6 +102,8 @@ object AltinnImpl : Altinn {
     )
 
     override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<Tilgang> =
-        altinnrettigheterProxyKlient.hentAlleTilganger(fnr, selvbetjeningsToken)
+        timer.recordCallable {
+            altinnrettigheterProxyKlient.hentAlleTilganger(fnr, selvbetjeningsToken)
+        }
 }
 
