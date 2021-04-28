@@ -5,8 +5,8 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
@@ -51,7 +51,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         }
 
         launch {
-            val httpServer = embeddedServer(Netty, port = 8080) {
+            val httpServer = embeddedServer(CIO, port = 8080) {
                 httpServerSetup(
                     brukerGraphQL = createBrukerGraphQL(
                         altinn = AltinnImpl,

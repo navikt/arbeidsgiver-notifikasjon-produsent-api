@@ -49,7 +49,7 @@
         <!-- http/ktor-server -->
         <dependency>
             <groupId>io.ktor</groupId>
-            <artifactId>ktor-server-netty</artifactId>
+            <artifactId>ktor-server-cio</artifactId>
             <version>${ktor.version}</version>
         </dependency>
         <dependency>
