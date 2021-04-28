@@ -13,6 +13,8 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.BrukerContext
 import no.nav.arbeidsgiver.notifikasjon.ProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.objectMapper
@@ -20,7 +22,9 @@ import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.net.URL
 import java.util.*
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 
 data class JwtAuthenticationParameters(
     val clientId: String,
@@ -104,6 +108,14 @@ fun Application.httpServerSetup(
         mdc("host") { call ->
             call.request.header("host")
         }
+//        mdc("payload.subject") { call ->
+//            // todo: too early.. https://github.com/ktorio/ktor/issues/1414
+//            call.principal<JWTPrincipal>()?.payload?.subject
+//        }
+//        mdc("payload.issuer") { call ->
+//            // todo: too early.. https://github.com/ktorio/ktor/issues/1414
+//            call.principal<JWTPrincipal>()?.payload?.issuer
+//        }
         mdc("path") { call ->
             call.request.path()
         }
@@ -184,15 +196,8 @@ fun Application.httpServerSetup(
         host("""ag-notifikasjon-produsent-api\..*""".toRegex()) {
             authenticate("produsent") {
                 route("api") {
-                    post("graphql") {
-                        val context = ProdusentContext(payload = call.principal<JWTPrincipal>()!!.payload)
-                        val request = call.receive<GraphQLRequest>()
-                        val result = produsentGraphQL.execute(request, context)
-                        call.respond(result)
-                    }
-                    get("ide") {
-                        call.respondBytes(graphiqlHTML, ContentType.Text.Html)
-                    }
+                    produsentGraphQL("graphql", produsentGraphQL)
+                    ide()
                 }
             }
         }
@@ -200,22 +205,49 @@ fun Application.httpServerSetup(
         host("""ag-notifikasjon-bruker-api\..*""".toRegex()) {
             route("api") {
                 authenticate("bruker") {
-                    post("graphql") {
-                        val token = call.principal<JWTPrincipal>()!!
-                        val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
-                        val request = call.receive<GraphQLRequest>()
-                        val result = brukerGraphQL.execute(request, BrukerContext(token.payload.subject, authHeader))
-                        call.respond(result)
-                    }
+                    brukerGraphQL("graphql", brukerGraphQL)
                 }
-                get("ide") {
-                    call.respondBytes(graphiqlHTML, ContentType.Text.Html)
-                }
+                ide()
             }
         }
     }
 }
 
+fun Route.ide() {
+    get("ide") {
+        call.respondBytes(graphiqlHTML, ContentType.Text.Html)
+    }
+}
+
+private val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+fun Route.brukerGraphQL(
+    path: String,
+    graphQL: TypedGraphQL<BrukerContext>
+) {
+    post(path) {
+        withContext(this.coroutineContext + brukerGraphQLDispatcher) {
+            val token = call.principal<JWTPrincipal>()!!
+            val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
+            val request = call.receive<GraphQLRequest>()
+            val result = graphQL.execute(request, BrukerContext(token.payload.subject, authHeader))
+            call.respond(result)
+        }
+    }
+}
+private val produsentGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+fun Route.produsentGraphQL(
+    path: String,
+    graphQL: TypedGraphQL<ProdusentContext>
+) {
+    post(path) {
+        withContext(this.coroutineContext + produsentGraphQLDispatcher) {
+            val context = ProdusentContext(payload = call.principal<JWTPrincipal>()!!.payload)
+            val request = call.receive<GraphQLRequest>()
+            val result = graphQL.execute(request, context)
+            call.respond(result)
+        }
+    }
+}
 
 private val graphiqlHTML: ByteArray =
     """
