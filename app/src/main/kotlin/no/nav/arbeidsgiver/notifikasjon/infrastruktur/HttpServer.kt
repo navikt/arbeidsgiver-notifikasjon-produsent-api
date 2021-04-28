@@ -108,14 +108,6 @@ fun Application.httpServerSetup(
         mdc("host") { call ->
             call.request.header("host")
         }
-//        mdc("payload.subject") { call ->
-//            // todo: too early.. https://github.com/ktorio/ktor/issues/1414
-//            call.principal<JWTPrincipal>()?.payload?.subject
-//        }
-//        mdc("payload.issuer") { call ->
-//            // todo: too early.. https://github.com/ktorio/ktor/issues/1414
-//            call.principal<JWTPrincipal>()?.payload?.issuer
-//        }
         mdc("path") { call ->
             call.request.path()
         }
@@ -172,25 +164,7 @@ fun Application.httpServerSetup(
 
     routing {
         route("internal") {
-            get("alive") {
-                if (Health.alive) {
-                    call.respond(HttpStatusCode.OK)
-                } else {
-                    call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
-                }
-            }
-
-            get("ready") {
-                if (Health.ready) {
-                    call.respond(HttpStatusCode.OK)
-                } else {
-                    call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
-                }
-            }
-
-            get("metrics") {
-                call.respond(Health.meterRegistry.scrape())
-            }
+            internal()
         }
 
         host("""ag-notifikasjon-produsent-api\..*""".toRegex()) {
@@ -209,6 +183,35 @@ fun Application.httpServerSetup(
                 }
                 ide()
             }
+        }
+    }
+}
+
+private val internalDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+fun Route.internal() {
+    get("alive") {
+        withContext(this.coroutineContext + internalDispatcher) {
+            if (Health.alive) {
+                call.respond(HttpStatusCode.OK)
+            } else {
+                call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
+            }
+        }
+    }
+
+    get("ready") {
+        withContext(this.coroutineContext + internalDispatcher) {
+            if (Health.ready) {
+                call.respond(HttpStatusCode.OK)
+            } else {
+                call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
+            }
+        }
+    }
+
+    get("metrics") {
+        withContext(this.coroutineContext + internalDispatcher) {
+            call.respond(Health.meterRegistry.scrape())
         }
     }
 }
