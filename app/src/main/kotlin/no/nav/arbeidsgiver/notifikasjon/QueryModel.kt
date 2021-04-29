@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transaction
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
@@ -33,54 +34,56 @@ data class Tilgang(
 )
 
 object QueryModelRepository {
+    private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
     fun hentNotifikasjoner(dataSource: DataSource, fnr: String, tilganger: Collection<Tilgang>): List<QueryBeskjed> {
-        return sequence {
-            val connection = dataSource.connection
+        return timer.recordCallable {
+            sequence {
+                val connection = dataSource.connection
+                val tilgangerJsonB = tilganger.joinToString {
+                    "'${
+                        objectMapper.writeValueAsString(
+                            AltinnMottaker(
+                                it.servicecode,
+                                it.serviceedition,
+                                it.virksomhet
+                            )
+                        )
+                    }'"
+                }
+                val prepstat = connection.prepareStatement(
+                    """
+                    | select * from notifikasjon
+                    | where (
+                    |     mottaker ->> '@type' = 'fodselsnummer'
+                    |     and mottaker ->> 'fodselsnummer' = ?
+                    | ) 
+                    | or (
+                    |     mottaker ->> '@type' = 'altinn'
+                    |     and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
+                    | order by opprettet_tidspunkt desc
+                    | limit 50
+                    | """.trimMargin()
+                )
 
-            val tilgangerJsonB = tilganger.joinToString {
-                "'${
-                    objectMapper.writeValueAsString(
-                        AltinnMottaker(
-                            it.servicecode,
-                            it.serviceedition,
-                            it.virksomhet
+                prepstat.setString(1, fnr)
+                val resultSet = prepstat.executeQuery()
+                while (resultSet.next()) {
+                    yield(
+                        QueryBeskjed(
+                            merkelapp = resultSet.getString("merkelapp"),
+                            tekst = resultSet.getString("tekst"),
+                            grupperingsid = resultSet.getString("grupperingsid"),
+                            lenke = resultSet.getString("lenke"),
+                            eksternId = resultSet.getString("ekstern_id"),
+                            mottaker = objectMapper.readValue(resultSet.getString("mottaker")),
+                            opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java)
                         )
                     )
-                }'"
-            }
-            val prepstat = connection.prepareStatement(
-                """
-                select * from notifikasjon
-                where (
-                    mottaker ->> '@type' = 'fodselsnummer'
-                    and mottaker ->> 'fodselsnummer' = ?
-                ) 
-                or (
-                    mottaker ->> '@type' = 'altinn'
-                    and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
-                order by opprettet_tidspunkt desc
-                limit 50
-            """
-            )
-
-            prepstat.setString(1, fnr)
-            val resultSet = prepstat.executeQuery()
-            while (resultSet.next()) {
-                yield(
-                    QueryBeskjed(
-                        merkelapp = resultSet.getString("merkelapp"),
-                        tekst = resultSet.getString("tekst"),
-                        grupperingsid = resultSet.getString("grupperingsid"),
-                        lenke = resultSet.getString("lenke"),
-                        eksternId = resultSet.getString("ekstern_id"),
-                        mottaker = objectMapper.readValue(resultSet.getString("mottaker")),
-                        opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java)
-                    )
-                )
-            }
-            resultSet.close()
-            connection.close()
-        }.toList()
+                }
+                resultSet.close()
+                connection.close()
+            }.toList()
+        }
     }
 }
 
@@ -113,7 +116,8 @@ fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
             throw it
         }
     }) { connection ->
-        val prepstat = connection.prepareStatement("""
+        val prepstat = connection.prepareStatement(
+            """
             insert into notifikasjon(
                 koordinat,
                 merkelapp,
@@ -125,7 +129,8 @@ fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
                 mottaker
             )
             values (?, ?, ?, ?, ?, ?, ?, ?::json);
-        """)
+        """
+        )
         prepstat.setString(1, koordinat.toString())
         prepstat.setString(2, nyBeskjed.merkelapp)
         prepstat.setString(3, nyBeskjed.tekst)

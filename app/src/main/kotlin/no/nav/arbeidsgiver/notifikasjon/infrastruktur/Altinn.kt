@@ -86,6 +86,7 @@ fun AltinnrettigheterProxyKlient.hentAlleTilganger(
 }
 
 object AltinnImpl : Altinn {
+    private val timer = Health.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
     private val altinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(
         AltinnrettigheterProxyKlientConfig(
             ProxyConfig(
@@ -101,6 +102,8 @@ object AltinnImpl : Altinn {
     )
 
     override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<Tilgang> =
-        altinnrettigheterProxyKlient.hentAlleTilganger(fnr, selvbetjeningsToken)
+        timer.recordCallable {
+            altinnrettigheterProxyKlient.hentAlleTilganger(fnr, selvbetjeningsToken)
+        }
 }
 

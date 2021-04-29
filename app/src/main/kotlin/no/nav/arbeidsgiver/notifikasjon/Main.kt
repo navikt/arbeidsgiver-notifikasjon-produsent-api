@@ -51,7 +51,11 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         }
 
         launch {
-            val httpServer = embeddedServer(Netty, port = 8080) {
+            val httpServer = embeddedServer(Netty, port = 8080, configure = {
+                connectionGroupSize = 16
+                callGroupSize = 16
+                workerGroupSize = 16
+            }) {
                 httpServerSetup(
                     brukerGraphQL = createBrukerGraphQL(
                         altinn = AltinnImpl,
