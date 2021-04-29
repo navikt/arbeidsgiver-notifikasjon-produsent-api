@@ -6,6 +6,7 @@ import io.ktor.client.engine.apache.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.http.ContentType.Application.FormUrlEncoded
 import kotlinx.coroutines.*
 import java.lang.System.currentTimeMillis
 import java.time.Instant
@@ -17,14 +18,18 @@ val client = HttpClient(Apache) {
         connectTimeout = 0
         connectionRequestTimeout = 0
         customizeClient {
-            setMaxConnTotal(10)
+            setMaxConnTotal(20)
         }
     }
 }
 const val selvbetjeningToken =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MTk0NzAzNDIsIm5iZiI6MTYxOTQ2Njc0MiwidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoiNDdvWmNGU045YmxxNkVJOHROLWE2aThVNUVHZzBWR281ZVF3SENkZVAzcyIsImlhdCI6MTYxOTQ2Njc0MiwiYXV0aF90aW1lIjoxNjE5NDY2NzQxLCJqdGkiOiIwRXNDaFBubkQ3OFYzZ3Q1cF9nTmdqWTNGTUx4NmtMV21iMGFMQ3JCTWFrIiwiYXRfaGFzaCI6ImFZZmxsU2NmNm1ReDN1NF9MYzdjZ2cifQ.MAAQniUjWasxIi28DGl4j6WE63Tai4oo5YUWX-emmZHseOsMs6zbzMBh1rovsfddF66ZxJUPXty8oGvzIKCy7xyz_P7J1DZdL8NQp6GlOp1StE6OLOYWQh-BPCc4etoZs3ZZ9E44zudQDp2EmuOZYMkGBIWhRxIQdUqWXUV-TFRo5QyqdNy2CPCvVKjtLFYY9vSXQigcCzeDVijpKqTJb8679ZMhob0KBXGeiRqLQnvgPeRMilqeagu77QDAe9bAYxeY6mQUpQ8KPWjIQTNA3wj2hRX9XVA0tnAvjftovM8tO7prVOGwf1a6AqF135Te35Q1f8422hdmBtm3h6n3MA"
-const val tokenDingsToken =
-    "eyJraWQiOiJtb2NrLW9hdXRoMi1zZXJ2ZXIta2V5IiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJzb21lcHJvZHVjZXIiLCJhdWQiOiJwcm9kdXNlbnQtYXBpIiwibmJmIjoxNjE5NDY2ODA0LCJpc3MiOiJodHRwczpcL1wvZmFrZWRpbmdzLmRldi1nY3AubmFpcy5pb1wvZmFrZSIsImV4cCI6MTYyMzA2NjgwNCwiaWF0IjoxNjE5NDY2ODA0LCJqdGkiOiJkNjM4NzA1OC0wYzE2LTRmOWUtYmVlYy1kYjg1NzJlNDZlYzEifQ.FhMOh9nwW9rGLKBFCu0SyMug_JV_6bRYHaoAQU9vPLyp1uYuBWjObZRb61ZxYjtLWjm3IW45P-JIuxGDNF3cxb9lnDD9ayc_Yzox9I8s7vgChL1-3yZN_jDHS2hPvgNFgJSf2eb7nNx4jsk2f-1YCArfD1eLYGOzLxPLbhaKRP4w-srxuvcwL826lYxH8ojQQ8c-V03QFMBI54__WGcGOZn-VeuR2YNJbdcvhu9CCZdFh0-ZystDtOsWyyqqN01H0RFIybNhr8FLcN2mvCF1Njb8iUSrLpdDZR7i9FNHMPsHmhB0SZg532xrxXQyH56zRUnYmlJO9laoF99kcSMDTw"
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MTk2NjAyMTQsIm5iZiI6MTYxOTY1NjYxNCwidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoiVFp1Ti1TTi01ZG9zSmVoYkg5SGNaTVJNMUxZcTVHbmNmZTdXdi1ydEhSRSIsImlhdCI6MTYxOTY1NjYxNCwiYXV0aF90aW1lIjoxNjE5NjU2NjEzLCJqdGkiOiJUZTFlN3dzODQxeUtyaFlFTGVFdzZLb3NObDZNRlNfdVFaUGRRa3EzRzlrIiwiYXRfaGFzaCI6IlQ5RHA3M1BzaWlidjhFdVhfMENkVFEifQ.szuNOGqw-Cv0Hh09Hvzvu1n5nD-aYulp7LJhc49dGcQN9m7T_PfIRaHL0h8OXT8Ed8xGoZpRUVs5TvDoNGKc28ZrRmT3acjePD9OUUM-GNmSIZfQWty32PenBAY4dPLlqakbKiu-0MuIg0X8PA6hZD7BMlv-Z0aP4zlGKZC9M9VBV3OKD09dAaLzhLlFseCd5LnEcFagN0ATdkgV6WqEoS3h06UdqaNJqfvx8UzmLCjw8VM5UgLdNUw-tNYHWy7F8m6GkqMTQW9YH1ezTImEZzIrhIe9ZXkhGtBNUrB-y3klx-I3soQuBAO2NnWIpKfAhx0EEjgNNf2OWmdfnFXjRg"
+val tokenDingsToken : String = runBlocking {
+    client.post<HttpResponse>("https://fakedings.dev-gcp.nais.io/fake/custom") {
+        contentType(FormUrlEncoded)
+        body = "sub=someproducer&aud=produsent-api"
+    }.readText()
+}
 
 suspend fun concurrentWithStats(
     title: String = "work",
@@ -149,8 +154,8 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
 
 fun main() = runBlocking {
     client.use {
-        nyBeskjed(1_000, Api.PRODUSENT_GCP)
-        hentNotifikasjoner(1_000, Api.BRUKER_GCP)
+        nyBeskjed(10_000)
+        hentNotifikasjoner(10_000)
     }
 }
 
