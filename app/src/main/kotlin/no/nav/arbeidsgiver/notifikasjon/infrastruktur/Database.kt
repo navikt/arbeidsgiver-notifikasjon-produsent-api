@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import kotlinx.coroutines.delay
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
@@ -20,6 +21,7 @@ private val DEFAULT_HIKARI_CONFIG = HikariConfig().apply {
     username = System.getenv("DB_USERNAME") ?: "postgres"
     password = System.getenv("DB_PASSWORD") ?: "postgres"
     driverClassName = "org.postgresql.Driver"
+    metricsTrackerFactory = PrometheusMetricsTrackerFactory()
 }
 
 fun HikariConfig.connectionPossible(): Boolean {
