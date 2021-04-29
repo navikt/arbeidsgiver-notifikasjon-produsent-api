@@ -8,6 +8,7 @@ import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.ResultSet
 import javax.sql.DataSource
 
 private val log = LoggerFactory.getLogger("DB")!!
@@ -55,6 +56,9 @@ suspend fun createDataSource(hikariConfig: HikariConfig = DEFAULT_HIKARI_CONFIG)
         }
 }
 
+inline fun <T>DataSource.useConnection(body: (Connection) -> T): T =
+    this.connection.use(body)
+
 class UnhandeledTransactionRollback(msg: String, e: Throwable) : Exception(msg, e)
 
 private fun <T> defaultRollback(e: Exception): T {
@@ -85,3 +89,11 @@ internal fun <T> DataSource.transaction(
             body(c)
         }
     }
+
+inline fun <T> ResultSet.map(f: () -> T): List<T> {
+    val list = ArrayList<T>()
+    while (this.next()) {
+        list.add(f())
+    }
+    return list
+}
