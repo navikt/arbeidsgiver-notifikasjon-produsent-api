@@ -39,14 +39,16 @@ object QueryModelRepository {
         return timer.recordCallable {
             sequence {
                 val connection = dataSource.connection
-                val tilgangerClause = tilganger.joinToString(" ") {
-                    """ 
-                    | or (
-                    |     mottaker ->> '@type' = 'altinn'
-                    |     and mottaker ->> 'altinntjenesteKode' = '${it.servicecode}'
-                    |     and mottaker ->> 'altinntjenesteVersjon' = '${it.serviceedition}'
-                    |     and mottaker ->> 'virksomhetsnummer' = '${it.virksomhet}'
-                    | )""".trimMargin()
+                val tilgangerJsonB = tilganger.joinToString {
+                    "'${
+                        objectMapper.writeValueAsString(
+                            AltinnMottaker(
+                                it.servicecode,
+                                it.serviceedition,
+                                it.virksomhet
+                            )
+                        )
+                    }'"
                 }
                 val prepstat = connection.prepareStatement(
                     """
@@ -55,7 +57,9 @@ object QueryModelRepository {
                     |     mottaker ->> '@type' = 'fodselsnummer'
                     |     and mottaker ->> 'fodselsnummer' = ?
                     | ) 
-                    | $tilgangerClause
+                    | or (
+                    |     mottaker ->> '@type' = 'altinn'
+                    |     and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
                     | order by opprettet_tidspunkt desc
                     | limit 50
                     | """.trimMargin()
