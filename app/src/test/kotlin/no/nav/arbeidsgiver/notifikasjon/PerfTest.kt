@@ -12,6 +12,13 @@ import java.lang.System.currentTimeMillis
 import java.time.Instant
 import kotlin.system.measureTimeMillis
 
+fun main() = runBlocking {
+    client.use {
+        nyBeskjed(10_000)
+        hentNotifikasjoner(10_000)
+    }
+}
+
 val client = HttpClient(Apache) {
     engine {
         socketTimeout = 0
@@ -149,13 +156,6 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
                     | }"
                     |}""".trimMarginAndNewline()
         }
-    }
-}
-
-fun main() = runBlocking {
-    client.use {
-        nyBeskjed(10_000)
-        hentNotifikasjoner(10_000)
     }
 }
 
