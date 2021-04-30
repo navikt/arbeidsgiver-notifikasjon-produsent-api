@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.concurrent.Future
@@ -33,20 +34,21 @@ fun createBrukerGraphQL(
                 "pong"
             }
 
-            dataFetcher( "notifikasjoner") {
+            dataFetcher("notifikasjoner") {
                 val tilganger = altinn.hentAlleTilganger(
                     it.getContext<BrukerContext>().fnr,
                     it.getContext<BrukerContext>().token
                 )
-                val queryBeskjeder = runBlocking { // TODO: bedre måte?
+                val datasource = dataSourceAsync.get()
+                val queryBeskjeder = GlobalScope.future {
                     QueryModelRepository.hentNotifikasjoner(
-                        dataSourceAsync.get(),
+                        datasource,
                         it.getContext<BrukerContext>().fnr,
                         tilganger
                     )
                 }
 
-                queryBeskjeder.map { queryBeskjed ->
+                queryBeskjeder.get().map { queryBeskjed ->
                     Beskjed(
                         merkelapp = queryBeskjed.merkelapp,
                         tekst = queryBeskjed.tekst,
