@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.concurrent.Future
@@ -37,11 +38,13 @@ fun createBrukerGraphQL(
                     it.getContext<BrukerContext>().fnr,
                     it.getContext<BrukerContext>().token
                 )
-                val queryBeskjeder = QueryModelRepository.hentNotifikasjoner(
-                    dataSourceAsync.get(),
-                    it.getContext<BrukerContext>().fnr,
-                    tilganger
-                )
+                val queryBeskjeder = runBlocking { // TODO: bedre måte?
+                    QueryModelRepository.hentNotifikasjoner(
+                        dataSourceAsync.get(),
+                        it.getContext<BrukerContext>().fnr,
+                        tilganger
+                    )
+                }
 
                 queryBeskjeder.map { queryBeskjed ->
                     Beskjed(

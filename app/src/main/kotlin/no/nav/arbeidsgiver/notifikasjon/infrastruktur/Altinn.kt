@@ -19,7 +19,7 @@ interface Altinn {
     fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<Tilgang>
 }
 
-private val VÅRE_TJENESTER = setOf(
+val VÅRE_TJENESTER = setOf(
     "5216" to "1", // Mentortilskudd
     "5212" to "1", // Inkluderingstilskudd
     "5384" to "1", // Ekspertbistand

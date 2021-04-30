@@ -3,7 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
 import java.sql.Connection
@@ -56,8 +58,13 @@ suspend fun createDataSource(hikariConfig: HikariConfig = DEFAULT_HIKARI_CONFIG)
         }
 }
 
-inline fun <T>DataSource.useConnection(body: (Connection) -> T): T =
+inline fun <T> DataSource.useConnection(body: (Connection) -> T): T =
     this.connection.use(body)
+
+internal suspend fun <T> DataSource.useConnectionAsync(body: (Connection) -> T): T =
+    withContext(Dispatchers.IO) {
+        useConnection(body)
+    }
 
 class UnhandeledTransactionRollback(msg: String, e: Throwable) : Exception(msg, e)
 
@@ -87,6 +94,18 @@ internal fun <T> DataSource.transaction(
     connection.use { c ->
         c.transaction(rollback) {
             body(c)
+        }
+    }
+
+internal suspend fun <T> DataSource.transactionAsync(
+    rollback: (e: Exception) -> T = ::defaultRollback,
+    body: (c: Connection) -> T
+): T =
+    withContext(Dispatchers.IO) {
+        connection.use { c ->
+            c.transaction(rollback) {
+                body(c)
+            }
         }
     }
 
