@@ -12,6 +12,12 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -84,6 +90,14 @@ fun Application.httpServerSetup(
         distributionStatisticConfig = DistributionStatisticConfig.Builder()
             .percentilesHistogram(true)
             .build()
+        meterBinders = listOf(
+            ClassLoaderMetrics(),
+            JvmMemoryMetrics(),
+            JvmGcMetrics(),
+            ProcessorMetrics(),
+            JvmThreadMetrics(),
+            LogbackMetrics()
+        )
     }
 
     install(CallId) {
