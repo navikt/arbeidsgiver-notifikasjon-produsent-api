@@ -57,20 +57,18 @@ object QueryModelRepository {
                     }'"
                 }
 
-                val prepstat = connection.prepareStatement(
-                    """
-                            select * from notifikasjon
-                            where (
-                                mottaker ->> '@type' = 'fodselsnummer'
-                                and mottaker ->> 'fodselsnummer' = ?
-                            ) 
-                            or (
-                                mottaker ->> '@type' = 'altinn'
-                                and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
-                            order by opprettet_tidspunkt desc
-                            limit 50
-                        """
-                )
+                val prepstat = connection.prepareStatement("""
+                    select * from notifikasjon
+                    where (
+                        mottaker ->> '@type' = 'fodselsnummer'
+                        and mottaker ->> 'fodselsnummer' = ?
+                    ) 
+                    or (
+                        mottaker ->> '@type' = 'altinn'
+                        and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
+                    order by opprettet_tidspunkt desc
+                    limit 50
+                """)
                 prepstat.setString(1, fnr)
 
                 prepstat.executeQuery().use { resultSet ->
@@ -82,10 +80,7 @@ object QueryModelRepository {
                             lenke = resultSet.getString("lenke"),
                             eksternId = resultSet.getString("ekstern_id"),
                             mottaker = objectMapper.readValue(resultSet.getString("mottaker")),
-                            opprettetTidspunkt = resultSet.getObject(
-                                "opprettet_tidspunkt",
-                                OffsetDateTime::class.java
-                            )
+                            opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java)
                         )
                     }
                 }
