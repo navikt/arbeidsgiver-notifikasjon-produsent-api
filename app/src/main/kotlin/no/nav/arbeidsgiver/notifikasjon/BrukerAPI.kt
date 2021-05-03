@@ -41,9 +41,9 @@ fun createBrukerGraphQL(
                     it.getContext<BrukerContext>().fnr,
                     it.getContext<BrukerContext>().token
                 )
-                //GlobalScope.future {
+                GlobalScope.future {
                     QueryModelRepository.hentNotifikasjoner(
-                        dataSourceAsync.get(),
+                        dataSourceAsync.await(),
                         it.getContext<BrukerContext>().fnr,
                         tilganger
                     ).map { queryBeskjed ->
@@ -54,7 +54,7 @@ fun createBrukerGraphQL(
                             opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
                         )
                     }
-                //}
+                }
             }
             dataFetcher("whoami"){
                 it.getContext<BrukerContext>().fnr

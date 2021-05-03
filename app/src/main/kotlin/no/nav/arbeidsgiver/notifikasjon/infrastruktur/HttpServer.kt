@@ -246,7 +246,7 @@ fun Route.brukerGraphQL(
             val token = call.principal<JWTPrincipal>()!!
             val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
             val request = call.receive<GraphQLRequest>()
-            val result = graphQL.execute(request, BrukerContext(token.payload.subject, authHeader))
+            val result = graphQL.executeAsync(request, BrukerContext(token.payload.subject, authHeader))
             call.respond(result)
         }
     }

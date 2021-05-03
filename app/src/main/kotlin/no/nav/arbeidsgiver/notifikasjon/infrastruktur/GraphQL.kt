@@ -10,6 +10,7 @@ import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeRuntimeWiring
+import kotlinx.coroutines.future.await
 import no.nav.arbeidsgiver.notifikasjon.objectMapper
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T =
@@ -49,7 +50,20 @@ class TypedGraphQL<T>(
     private val graphQL: GraphQL
 ) {
     fun execute(request: GraphQLRequest, context: T): Any {
-        val executionInput = ExecutionInput.newExecutionInput()
+        val executionInput = executionInput(request, context)
+        return graphQL.execute(executionInput).toSpecification()
+    }
+
+    suspend fun executeAsync(request: GraphQLRequest, context: T): Any {
+        val executionInput = executionInput(request, context)
+        return graphQL.executeAsync(executionInput).await().toSpecification()
+    }
+
+    private fun executionInput(
+        request: GraphQLRequest,
+        context: T
+    ): ExecutionInput {
+        return ExecutionInput.newExecutionInput()
             .apply {
                 query(request.query)
 
@@ -63,7 +77,5 @@ class TypedGraphQL<T>(
 
                 context(context)
             }.build()
-
-        return graphQL.execute(executionInput).toSpecification()
     }
 }

@@ -3,8 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.map
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.useConnection
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transactionAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.useConnectionAsync
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
 import org.slf4j.LoggerFactory
@@ -38,12 +38,12 @@ data class Tilgang(
 object QueryModelRepository {
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
-    fun hentNotifikasjoner(
+    suspend fun hentNotifikasjoner(
         dataSource: DataSource,
         fnr: String,
         tilganger: Collection<Tilgang>
     ): List<QueryBeskjed> =
-        dataSource.useConnection { connection ->
+        dataSource.useConnectionAsync { connection ->
             timer.recordCallable {
                 val tilgangerJsonB = tilganger.joinToString {
                     "'${
@@ -107,7 +107,7 @@ fun tilQueryBeskjed(event: Event): QueryBeskjed =
             )
     }
 
-fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
+suspend fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
     val koordinat = Koordinat(
         mottaker = event.mottaker,
         merkelapp = event.merkelapp,
@@ -115,7 +115,7 @@ fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
     )
     val nyBeskjed = tilQueryBeskjed(event)
 
-    dataSource.transaction(rollback = {
+    dataSource.transactionAsync(rollback = {
         if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) {
             log.error("forsøk på å endre eksisterende beskjed")
         } else {
