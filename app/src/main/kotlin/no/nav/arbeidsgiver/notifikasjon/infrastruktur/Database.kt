@@ -25,13 +25,6 @@ private val DEFAULT_HIKARI_CONFIG = HikariConfig().apply {
     password = System.getenv("DB_PASSWORD") ?: "postgres"
     driverClassName = "org.postgresql.Driver"
     metricsTrackerFactory = PrometheusMetricsTrackerFactory()
-    leakDetectionThreshold = 30000
-    minimumIdle = 0
-    idleTimeout = 10001
-    connectionTimeout = 10000
-    maxLifetime = 30001
-    isAutoCommit = false
-    transactionIsolation = "TRANSACTION_REPEATABLE_READ"
 }
 
 fun HikariConfig.connectionPossible(): Boolean {
