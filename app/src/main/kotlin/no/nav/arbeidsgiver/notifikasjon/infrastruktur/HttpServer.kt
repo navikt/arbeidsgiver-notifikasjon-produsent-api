@@ -201,7 +201,7 @@ fun Application.httpServerSetup(
     }
 }
 
-private val internalDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+private val internalDispatcher: CoroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 fun Route.internal() {
     get("alive") {
         withContext(this.coroutineContext + internalDispatcher) {

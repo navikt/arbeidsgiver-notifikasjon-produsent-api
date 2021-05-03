@@ -39,22 +39,20 @@ fun createBrukerGraphQL(
                     it.getContext<BrukerContext>().fnr,
                     it.getContext<BrukerContext>().token
                 )
-                val datasource = dataSourceAsync.get()
-                val queryBeskjeder = GlobalScope.future {
+                val dataSource = dataSourceAsync.get()
+                GlobalScope.future {
                     QueryModelRepository.hentNotifikasjoner(
-                        datasource,
+                        dataSource,
                         it.getContext<BrukerContext>().fnr,
                         tilganger
-                    )
-                }
-
-                queryBeskjeder.get().map { queryBeskjed ->
-                    Beskjed(
-                        merkelapp = queryBeskjed.merkelapp,
-                        tekst = queryBeskjed.tekst,
-                        lenke = queryBeskjed.lenke,
-                        opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
-                    )
+                    ).map { queryBeskjed ->
+                        Beskjed(
+                            merkelapp = queryBeskjed.merkelapp,
+                            tekst = queryBeskjed.tekst,
+                            lenke = queryBeskjed.lenke,
+                            opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
+                        )
+                    }
                 }
             }
             dataFetcher("whoami"){
