@@ -47,6 +47,6 @@ spec:
         - host: navtestb2c.b2clogin.com
   env:
     - name: JAVA_OPTS
-      value: -Dio.ktor.development=true
+      value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dio.ktor.development=true
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
