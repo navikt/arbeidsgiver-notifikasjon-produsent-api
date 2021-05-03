@@ -236,7 +236,7 @@ fun Route.ide() {
     }
 }
 
-private val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
 fun Route.brukerGraphQL(
     path: String,
     graphQL: TypedGraphQL<BrukerContext>
