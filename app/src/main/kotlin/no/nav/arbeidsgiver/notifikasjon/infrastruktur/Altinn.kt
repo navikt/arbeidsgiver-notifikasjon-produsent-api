@@ -8,6 +8,10 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
 import no.nav.arbeidsgiver.notifikasjon.Tilgang
 import org.slf4j.LoggerFactory
 
@@ -36,8 +40,38 @@ fun AltinnrettigheterProxyKlient.hentTilganger(
     serviceCode: String,
     serviceEdition: String,
     selvbetjeningsToken: String,
-): List<Tilgang> = VÅRE_TJENESTER.map { Tilgang("910825518", it.first, it.second) }
+): List<Tilgang> =
+    try {
+        this.hentOrganisasjoner(
+            SelvbetjeningToken(selvbetjeningsToken),
+            Subject(fnr),
+            ServiceCode(serviceCode),
+            ServiceEdition(serviceEdition),
+            false
+        )
+            .filter { it.type != "Enterprise" }
+            .filter {
+                if (it.organizationNumber == null) {
+                    log.warn("filtrerer ut reportee uten organizationNumber")
+                    false
+                } else {
+                    true
+                }
 
+            }
+            .map {
+                Tilgang(
+                    virksomhet = it.organizationNumber!!,
+                    servicecode = serviceCode,
+                    serviceedition = serviceEdition
+                )
+            }
+    } catch (error: Exception) {
+        if (error.message?.contains("403") == true)
+            emptyList()
+        else
+            throw error
+    }
 
 
 fun AltinnrettigheterProxyKlient.hentAlleTilganger(
