@@ -1,9 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.sql.DataSource
 
@@ -14,7 +16,7 @@ data class BrukerContext(
 
 fun createBrukerGraphQL(
     altinn: Altinn,
-    dataSourceAsync: Future<DataSource>
+    dataSourceAsync: CompletableFuture<DataSource>
 ) = TypedGraphQL<BrukerContext>(
     createGraphQL("/bruker.graphqls") {
 
@@ -39,10 +41,9 @@ fun createBrukerGraphQL(
                     it.getContext<BrukerContext>().fnr,
                     it.getContext<BrukerContext>().token
                 )
-                val dataSource = dataSourceAsync.get()
                 GlobalScope.future {
                     QueryModelRepository.hentNotifikasjoner(
-                        dataSource,
+                        dataSourceAsync.await(),
                         it.getContext<BrukerContext>().fnr,
                         tilganger
                     ).map { queryBeskjed ->
