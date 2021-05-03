@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.map
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transactionAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.useConnectionAsync
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
@@ -107,7 +107,7 @@ fun tilQueryBeskjed(event: Event): QueryBeskjed =
             )
     }
 
-suspend fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
+fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
     val koordinat = Koordinat(
         mottaker = event.mottaker,
         merkelapp = event.merkelapp,
@@ -115,7 +115,7 @@ suspend fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
     )
     val nyBeskjed = tilQueryBeskjed(event)
 
-    dataSource.transactionAsync(rollback = {
+    dataSource.transaction(rollback = {
         if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) {
             log.error("forsøk på å endre eksisterende beskjed")
         } else {

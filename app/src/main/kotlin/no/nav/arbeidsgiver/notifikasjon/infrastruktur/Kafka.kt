@@ -121,7 +121,7 @@ fun Producer<KafkaKey, Event>.beskjedOpprettet(beskjed: BeskjedOpprettet) {
 
 private val log = LoggerFactory.getLogger("Consumer.processSingle")!!
 
-suspend fun <K, V>Consumer<K, V>.forEachEvent(processor: suspend (V) -> Unit) {
+suspend fun <K, V>Consumer<K, V>.forEachEvent(processor: (V) -> Unit) {
     while (true) {
         val records = try {
             poll(Duration.ofMillis(1000))
@@ -138,7 +138,7 @@ val retriesPerPartition = ConcurrentHashMap<Int, AtomicInteger>()
 
 private suspend fun <K, V> Consumer<K, V>.processWithRetry(
     records: ConsumerRecords<K, V>,
-    processor: suspend (V) -> Unit
+    processor: (V) -> Unit
 ) {
     if (records.isEmpty) {
         return
