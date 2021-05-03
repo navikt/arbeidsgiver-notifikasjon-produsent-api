@@ -236,7 +236,7 @@ fun Route.ide() {
     }
 }
 
-private val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+private val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
 fun Route.brukerGraphQL(
     path: String,
     graphQL: TypedGraphQL<BrukerContext>
@@ -251,7 +251,7 @@ fun Route.brukerGraphQL(
         }
     }
 }
-private val produsentGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+private val produsentGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
 fun Route.produsentGraphQL(
     path: String,
     graphQL: TypedGraphQL<ProdusentContext>
