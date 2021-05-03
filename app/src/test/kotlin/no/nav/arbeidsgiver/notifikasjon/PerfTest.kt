@@ -15,8 +15,8 @@ import kotlin.system.measureTimeMillis
 
 fun main() = runBlocking {
     client.use {
-        nyBeskjed(100_000, Api.LOCAL)
-//        hentNotifikasjoner(10_000, Api.LOCAL)
+        nyBeskjed(5000, Api.LOCAL)
+        hentNotifikasjoner(5000, Api.LOCAL)
     }
 }
 val client = HttpClient(Apache) {
@@ -25,12 +25,12 @@ val client = HttpClient(Apache) {
         connectTimeout = 0
         connectionRequestTimeout = 0
         customizeClient {
-            setMaxConnTotal(10)
+            setMaxConnTotal(250)
         }
     }
 }
 const val selvbetjeningToken =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MTk3ODgyMzksIm5iZiI6MTYxOTc4NDYzOSwidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoiU09vWjJzRWRZUW45dVh1MXo5emVtblRuZThDcU9sMEVFM1hpdnhkY3dYTSIsImlhdCI6MTYxOTc4NDYzOSwiYXV0aF90aW1lIjoxNjE5Nzg0NjM5LCJqdGkiOiJQVTBWYWNYX2pUZ1VkSTlJaTZIRXR3ZGtZcXBrRnNiWmtKX09nX3ZidlA0IiwiYXRfaGFzaCI6IjFJQXE1WDBEeWZ3X2ZvaExzNTJESUEifQ.PsVGg9M4PR0ovhPlxpt-PP1NXEI4bucvIHic5hEx1_cM-mrLWTTVcvyG7xwVWE3fuGzeVOGFf7QDX1d338cwu21_BEKgDBMb-oUStGO_1QjJPsFdmkeS1sWnapVLEzaVhZm1b-dX2iXamK-XyR4jouUn5JIQJl6mANc6qCyrBlQVNfcwwePujXCpx3ZCcYHvzWMgYOXzPGJq-IAfmd835g1lb2uB2mxnbHUAkPMVe000pHvbr4bv0L-an54kmBN9iWS4Yz4zgneej9L-y4zbfrItCkDS7YYL8_n4QmfT5wU0fXb-_y7JlW53aBvYU_bfvtDrSkhr7IohGh9nkzzr9Q"
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MjAwNDUxMjcsIm5iZiI6MTYyMDA0MTUyNywidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoidXFLUU1FeDlDQmF5aDAyLVc5cFFOYzFDdnJmZmVBampsaHVuNkpMVTVLVSIsImlhdCI6MTYyMDA0MTUyNywiYXV0aF90aW1lIjoxNjIwMDQxNTI2LCJqdGkiOiJ0bkNna0VBZkZjb1N6VWxyTjlSNDBpbF9aTUdPX2VZdFh5djJscGthTlA4IiwiYXRfaGFzaCI6IjZZY3hNSzdBR2FUMVc5VlhXYnpNMEEifQ.YU37kso7tRCldQCpzlBOORkF5g6ioSFX_aYKWMQ1dQTm3KEoGsEMeugByDoUbg4PfDkukufNElxeLnlTBIDgqNT6zEfEmON9kROlLfLTKg2szj8dhiBNurJS5qCI3LGnGX3ckBFIib6SgvOqDGqTqrsgrhc9k0Pbomzle-RgWNJw_Ofl_cl8fIb3h8ccFbj-8MjiG19FOvhZM5pXRlQSsicOKUzHOlN6Qzj3CYY6WwqfuvNMpdJJ6jLgPPS5cmO_4-_h8303qVHXsXegUrKsFHd4HVdJi3HiwMhEhd6Sj2rKkzJGzke89e0jvHWbmLRIwcNFy75Rqg6bphQf_hbL2g"
 val tokenDingsToken : String = runBlocking {
     client.post<HttpResponse>("https://fakedings.dev-gcp.nais.io/fake/custom") {
         contentType(FormUrlEncoded)
