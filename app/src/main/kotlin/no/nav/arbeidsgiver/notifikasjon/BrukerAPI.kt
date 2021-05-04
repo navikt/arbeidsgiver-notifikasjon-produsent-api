@@ -40,6 +40,7 @@ fun createBrukerGraphQL(
                     it.getContext<BrukerContext>().fnr,
                     it.getContext<BrukerContext>().token
                 )
+                // TODO: er det riktig med GlobalScope her eller finnes en bedre måte?
                 GlobalScope.future(brukerGraphQLDispatcher) {
                     QueryModelRepository.hentNotifikasjoner(
                         dataSourceAsync.await(),
