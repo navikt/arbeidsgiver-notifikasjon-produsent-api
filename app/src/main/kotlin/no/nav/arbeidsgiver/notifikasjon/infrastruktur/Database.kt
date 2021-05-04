@@ -3,7 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
 import java.sql.Connection
@@ -23,6 +25,11 @@ private val DEFAULT_HIKARI_CONFIG = HikariConfig().apply {
     password = System.getenv("DB_PASSWORD") ?: "postgres"
     driverClassName = "org.postgresql.Driver"
     metricsTrackerFactory = PrometheusMetricsTrackerFactory()
+    minimumIdle = 1
+    maximumPoolSize = 2
+    connectionTimeout = 10000
+    idleTimeout = 10001
+    maxLifetime = 30001
 }
 
 fun HikariConfig.connectionPossible(): Boolean {
@@ -41,7 +48,6 @@ fun HikariConfig.connectionPossible(): Boolean {
     }
 }
 
-
 suspend fun createDataSource(hikariConfig: HikariConfig = DEFAULT_HIKARI_CONFIG): DataSource {
     while (!hikariConfig.connectionPossible()) {
         delay(1000)
@@ -56,8 +62,10 @@ suspend fun createDataSource(hikariConfig: HikariConfig = DEFAULT_HIKARI_CONFIG)
         }
 }
 
-inline fun <T>DataSource.useConnection(body: (Connection) -> T): T =
-    this.connection.use(body)
+suspend fun <T> DataSource.useConnection(body: (Connection) -> T): T =
+    withContext(Dispatchers.IO) {
+        connection.use(body)
+    }
 
 class UnhandeledTransactionRollback(msg: String, e: Throwable) : Exception(msg, e)
 
@@ -80,11 +88,11 @@ private fun <T> Connection.transaction(rollback: (Exception) -> T = ::defaultRol
     }
 }
 
-internal fun <T> DataSource.transaction(
+suspend fun <T> DataSource.transaction(
     rollback: (e: Exception) -> T = ::defaultRollback,
     body: (c: Connection) -> T
 ): T =
-    connection.use { c ->
+    useConnection { c ->
         c.transaction(rollback) {
             body(c)
         }

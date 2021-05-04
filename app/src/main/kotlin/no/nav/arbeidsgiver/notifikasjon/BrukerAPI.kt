@@ -1,8 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
-import java.util.concurrent.Future
+import java.util.concurrent.CompletableFuture
 import javax.sql.DataSource
 
 data class BrukerContext(
@@ -12,7 +15,7 @@ data class BrukerContext(
 
 fun createBrukerGraphQL(
     altinn: Altinn,
-    dataSourceAsync: Future<DataSource>
+    dataSourceAsync: CompletableFuture<DataSource>
 ) = TypedGraphQL<BrukerContext>(
     createGraphQL("/bruker.graphqls") {
 
@@ -32,24 +35,25 @@ fun createBrukerGraphQL(
                 "pong"
             }
 
-            dataFetcher( "notifikasjoner") {
+            dataFetcher("notifikasjoner") {
                 val tilganger = altinn.hentAlleTilganger(
                     it.getContext<BrukerContext>().fnr,
                     it.getContext<BrukerContext>().token
                 )
-                val queryBeskjeder = QueryModelRepository.hentNotifikasjoner(
-                    dataSourceAsync.get(),
-                    it.getContext<BrukerContext>().fnr,
-                    tilganger
-                )
-
-                queryBeskjeder.map { queryBeskjed ->
-                    Beskjed(
-                        merkelapp = queryBeskjed.merkelapp,
-                        tekst = queryBeskjed.tekst,
-                        lenke = queryBeskjed.lenke,
-                        opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
-                    )
+                // TODO: er det riktig med GlobalScope her eller finnes en bedre måte?
+                GlobalScope.future(brukerGraphQLDispatcher) {
+                    QueryModelRepository.hentNotifikasjoner(
+                        dataSourceAsync.await(),
+                        it.getContext<BrukerContext>().fnr,
+                        tilganger
+                    ).map { queryBeskjed ->
+                        Beskjed(
+                            merkelapp = queryBeskjed.merkelapp,
+                            tekst = queryBeskjed.tekst,
+                            lenke = queryBeskjed.lenke,
+                            opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
+                        )
+                    }
                 }
             }
             dataFetcher("whoami"){

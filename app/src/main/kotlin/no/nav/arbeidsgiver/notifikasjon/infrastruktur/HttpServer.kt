@@ -12,6 +12,12 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -84,6 +90,14 @@ fun Application.httpServerSetup(
         distributionStatisticConfig = DistributionStatisticConfig.Builder()
             .percentilesHistogram(true)
             .build()
+        meterBinders = listOf(
+            ClassLoaderMetrics(),
+            JvmMemoryMetrics(),
+            JvmGcMetrics(),
+            ProcessorMetrics(),
+            JvmThreadMetrics(),
+            LogbackMetrics()
+        )
     }
 
     install(CallId) {
@@ -187,7 +201,7 @@ fun Application.httpServerSetup(
     }
 }
 
-private val internalDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+private val internalDispatcher: CoroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 fun Route.internal() {
     get("alive") {
         withContext(this.coroutineContext + internalDispatcher) {
@@ -222,7 +236,7 @@ fun Route.ide() {
     }
 }
 
-private val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
 fun Route.brukerGraphQL(
     path: String,
     graphQL: TypedGraphQL<BrukerContext>
@@ -232,7 +246,7 @@ fun Route.brukerGraphQL(
             val token = call.principal<JWTPrincipal>()!!
             val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
             val request = call.receive<GraphQLRequest>()
-            val result = graphQL.execute(request, BrukerContext(token.payload.subject, authHeader))
+            val result = graphQL.executeAsync(request, BrukerContext(token.payload.subject, authHeader))
             call.respond(result)
         }
     }

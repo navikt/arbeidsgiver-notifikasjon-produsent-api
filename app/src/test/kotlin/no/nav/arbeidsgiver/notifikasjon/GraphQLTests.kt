@@ -12,7 +12,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.mockk.every
+import io.mockk.coEvery
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import kotlinx.coroutines.runBlocking
@@ -192,7 +192,7 @@ class GraphQLTests : DescribeSpec({
 
         beforeEach {
             mockkObject(QueryModelRepository)
-            every {
+            coEvery {
                 QueryModelRepository.hentNotifikasjoner(any(), any(), any())
             } returns listOf(beskjed)
 

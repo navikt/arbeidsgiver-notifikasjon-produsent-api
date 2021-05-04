@@ -8,29 +8,29 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
 import kotlinx.coroutines.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.VÅRE_TJENESTER
 import java.lang.System.currentTimeMillis
 import java.time.Instant
 import kotlin.system.measureTimeMillis
 
 fun main() = runBlocking {
     client.use {
-        nyBeskjed(10_000)
-        hentNotifikasjoner(10_000)
+        nyBeskjed(5000, Api.LOCAL)
+        hentNotifikasjoner(5000, Api.LOCAL)
     }
 }
-
 val client = HttpClient(Apache) {
     engine {
         socketTimeout = 0
         connectTimeout = 0
         connectionRequestTimeout = 0
         customizeClient {
-            setMaxConnTotal(20)
+            setMaxConnTotal(250)
         }
     }
 }
 const val selvbetjeningToken =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MTk2NjAyMTQsIm5iZiI6MTYxOTY1NjYxNCwidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoiVFp1Ti1TTi01ZG9zSmVoYkg5SGNaTVJNMUxZcTVHbmNmZTdXdi1ydEhSRSIsImlhdCI6MTYxOTY1NjYxNCwiYXV0aF90aW1lIjoxNjE5NjU2NjEzLCJqdGkiOiJUZTFlN3dzODQxeUtyaFlFTGVFdzZLb3NObDZNRlNfdVFaUGRRa3EzRzlrIiwiYXRfaGFzaCI6IlQ5RHA3M1BzaWlidjhFdVhfMENkVFEifQ.szuNOGqw-Cv0Hh09Hvzvu1n5nD-aYulp7LJhc49dGcQN9m7T_PfIRaHL0h8OXT8Ed8xGoZpRUVs5TvDoNGKc28ZrRmT3acjePD9OUUM-GNmSIZfQWty32PenBAY4dPLlqakbKiu-0MuIg0X8PA6hZD7BMlv-Z0aP4zlGKZC9M9VBV3OKD09dAaLzhLlFseCd5LnEcFagN0ATdkgV6WqEoS3h06UdqaNJqfvx8UzmLCjw8VM5UgLdNUw-tNYHWy7F8m6GkqMTQW9YH1ezTImEZzIrhIe9ZXkhGtBNUrB-y3klx-I3soQuBAO2NnWIpKfAhx0EEjgNNf2OWmdfnFXjRg"
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MjAwNDUxMjcsIm5iZiI6MTYyMDA0MTUyNywidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoidXFLUU1FeDlDQmF5aDAyLVc5cFFOYzFDdnJmZmVBampsaHVuNkpMVTVLVSIsImlhdCI6MTYyMDA0MTUyNywiYXV0aF90aW1lIjoxNjIwMDQxNTI2LCJqdGkiOiJ0bkNna0VBZkZjb1N6VWxyTjlSNDBpbF9aTUdPX2VZdFh5djJscGthTlA4IiwiYXRfaGFzaCI6IjZZY3hNSzdBR2FUMVc5VlhXYnpNMEEifQ.YU37kso7tRCldQCpzlBOORkF5g6ioSFX_aYKWMQ1dQTm3KEoGsEMeugByDoUbg4PfDkukufNElxeLnlTBIDgqNT6zEfEmON9kROlLfLTKg2szj8dhiBNurJS5qCI3LGnGX3ckBFIib6SgvOqDGqTqrsgrhc9k0Pbomzle-RgWNJw_Ofl_cl8fIb3h8ccFbj-8MjiG19FOvhZM5pXRlQSsicOKUzHOlN6Qzj3CYY6WwqfuvNMpdJJ6jLgPPS5cmO_4-_h8303qVHXsXegUrKsFHd4HVdJi3HiwMhEhd6Sj2rKkzJGzke89e0jvHWbmLRIwcNFy75Rqg6bphQf_hbL2g"
 val tokenDingsToken : String = runBlocking {
     client.post<HttpResponse>("https://fakedings.dev-gcp.nais.io/fake/custom") {
         contentType(FormUrlEncoded)
@@ -122,7 +122,9 @@ suspend fun hentNotifikasjoner(count: Int, api: Api = Api.BRUKER_GCP) {
 suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
     val run = Instant.now()
     val eksterIder = generateSequence(1) { it + 1 }.iterator()
+    val tjenester = VÅRE_TJENESTER.asSequence().looping().iterator()
     concurrentWithStats("nyBeskjed", count) {
+        val (tjenesteKode, tjenesteVersjon) = tjenester.next()
         client.post<HttpResponse>(api.url) {
             headers {
                 append(HttpHeaders.ContentType, "application/json")
@@ -140,8 +142,8 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
                     |          merkelapp: \"tiltak\",
                     |          mottaker: {
                     |              altinn: {
-                    |                  altinntjenesteKode: \"5159\",
-                    |                  altinntjenesteVersjon: \"1\",
+                    |                  altinntjenesteKode: \"$tjenesteKode\",
+                    |                  altinntjenesteVersjon: \"$tjenesteVersjon\",
                     |                  virksomhetsnummer: \"910825518\"
                     |              }
                     |          },
@@ -195,3 +197,5 @@ class ProgressBar(
 
 fun String.trimMarginAndNewline() =
     this.trimMargin().replace(Regex("\n"), " ")
+
+fun <T> Sequence<T>.looping() = generateSequence(this) { it }.flatten()

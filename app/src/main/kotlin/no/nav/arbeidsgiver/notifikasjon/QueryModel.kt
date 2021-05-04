@@ -38,21 +38,25 @@ data class Tilgang(
 object QueryModelRepository {
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
-    fun hentNotifikasjoner(dataSource: DataSource, fnr: String, tilganger: Collection<Tilgang>): List<QueryBeskjed> =
-        timer.recordCallable {
-            val tilgangerJsonB = tilganger.joinToString {
-                "'${
-                    objectMapper.writeValueAsString(
-                        AltinnMottaker(
-                            it.servicecode,
-                            it.serviceedition,
-                            it.virksomhet
+    suspend fun hentNotifikasjoner(
+        dataSource: DataSource,
+        fnr: String,
+        tilganger: Collection<Tilgang>
+    ): List<QueryBeskjed> =
+        dataSource.useConnection { connection ->
+            timer.recordCallable {
+                val tilgangerJsonB = tilganger.joinToString {
+                    "'${
+                        objectMapper.writeValueAsString(
+                            AltinnMottaker(
+                                it.servicecode,
+                                it.serviceedition,
+                                it.virksomhet
+                            )
                         )
-                    )
-                }'"
-            }
+                    }'"
+                }
 
-            dataSource.useConnection { connection ->
                 val prepstat = connection.prepareStatement("""
                     select * from notifikasjon
                     where (
@@ -98,7 +102,7 @@ fun tilQueryBeskjed(event: Event): QueryBeskjed =
             )
     }
 
-fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
+suspend fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
     val koordinat = Koordinat(
         mottaker = event.mottaker,
         merkelapp = event.merkelapp,
@@ -113,7 +117,8 @@ fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
             throw it
         }
     }) { connection ->
-        val prepstat = connection.prepareStatement("""
+        val prepstat = connection.prepareStatement(
+            """
             insert into notifikasjon(
                 koordinat,
                 merkelapp,
@@ -125,7 +130,8 @@ fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
                 mottaker
             )
             values (?, ?, ?, ?, ?, ?, ?, ?::json);
-        """)
+        """
+        )
         prepstat.setString(1, koordinat.toString())
         prepstat.setString(2, nyBeskjed.merkelapp)
         prepstat.setString(3, nyBeskjed.tekst)
