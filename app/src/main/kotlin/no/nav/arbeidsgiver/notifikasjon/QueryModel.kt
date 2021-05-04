@@ -3,8 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.map
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transactionAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.useConnectionAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.useConnection
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
 import org.slf4j.LoggerFactory
@@ -43,7 +43,7 @@ object QueryModelRepository {
         fnr: String,
         tilganger: Collection<Tilgang>
     ): List<QueryBeskjed> =
-        dataSource.useConnectionAsync { connection ->
+        dataSource.useConnection { connection ->
             timer.recordCallable {
                 val tilgangerJsonB = tilganger.joinToString {
                     "'${
@@ -110,7 +110,7 @@ suspend fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
     )
     val nyBeskjed = tilQueryBeskjed(event)
 
-    dataSource.transactionAsync(rollback = {
+    dataSource.transaction(rollback = {
         if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) {
             log.error("forsøk på å endre eksisterende beskjed")
         } else {

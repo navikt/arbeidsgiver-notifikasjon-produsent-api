@@ -48,7 +48,6 @@ fun HikariConfig.connectionPossible(): Boolean {
     }
 }
 
-
 suspend fun createDataSource(hikariConfig: HikariConfig = DEFAULT_HIKARI_CONFIG): DataSource {
     while (!hikariConfig.connectionPossible()) {
         delay(1000)
@@ -63,12 +62,9 @@ suspend fun createDataSource(hikariConfig: HikariConfig = DEFAULT_HIKARI_CONFIG)
         }
 }
 
-inline fun <T> DataSource.useConnection(body: (Connection) -> T): T =
-    this.connection.use(body)
-
-internal suspend fun <T> DataSource.useConnectionAsync(body: (Connection) -> T): T =
+suspend fun <T> DataSource.useConnection(body: (Connection) -> T): T =
     withContext(Dispatchers.IO) {
-        useConnection(body)
+        connection.use(body)
     }
 
 class UnhandeledTransactionRollback(msg: String, e: Throwable) : Exception(msg, e)
@@ -92,25 +88,13 @@ private fun <T> Connection.transaction(rollback: (Exception) -> T = ::defaultRol
     }
 }
 
-internal fun <T> DataSource.transaction(
+suspend fun <T> DataSource.transaction(
     rollback: (e: Exception) -> T = ::defaultRollback,
     body: (c: Connection) -> T
 ): T =
-    connection.use { c ->
+    useConnection { c ->
         c.transaction(rollback) {
             body(c)
-        }
-    }
-
-internal suspend fun <T> DataSource.transactionAsync(
-    rollback: (e: Exception) -> T = ::defaultRollback,
-    body: (c: Connection) -> T
-): T =
-    withContext(Dispatchers.IO) {
-        connection.use { c ->
-            c.transaction(rollback) {
-                body(c)
-            }
         }
     }
 
