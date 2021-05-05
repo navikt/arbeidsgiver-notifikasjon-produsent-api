@@ -13,6 +13,10 @@ data class BrukerContext(
     val token: String
 )
 
+data class NotifikasjonKlikketPaaResultat(
+    val errors: List<Nothing>
+)
+
 fun createBrukerGraphQL(
     altinn: Altinn,
     dataSourceAsync: CompletableFuture<DataSource>
@@ -51,6 +55,18 @@ fun createBrukerGraphQL(
             }
             dataFetcher("whoami"){
                 it.getContext<BrukerContext>().fnr
+            }
+        }
+
+        wire("Mutations") {
+            dataFetcher("notifikasjonKlikketPaa") {
+                val id = it.getTypedArgument<String>("id")
+
+                /* do something */
+
+                NotifikasjonKlikketPaaResultat(
+                    errors = listOf()
+                )
             }
         }
 

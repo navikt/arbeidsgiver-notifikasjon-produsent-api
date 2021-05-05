@@ -93,7 +93,6 @@ object QueryModelRepository {
                             mottaker = objectMapper.readValue(resultSet.getString("mottaker")),
                             opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                             id = resultSet.getString("id")
-
                         )
                     }
                 }
