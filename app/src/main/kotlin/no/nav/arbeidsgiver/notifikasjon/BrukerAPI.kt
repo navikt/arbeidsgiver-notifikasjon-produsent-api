@@ -21,14 +21,6 @@ fun createBrukerGraphQL(
 
         scalar(Scalars.ISO8601DateTime)
 
-        wire("Notifikasjon") {
-            typeResolver { env ->
-                val objectTypeName = when (env.getObject<Notifikasjon>()) {
-                    is Beskjed -> "Beskjed"
-                }
-                env.schema.getObjectType(objectTypeName)
-            }
-        }
 
         wire("Query") {
             dataFetcher("ping") {
@@ -51,13 +43,23 @@ fun createBrukerGraphQL(
                             merkelapp = queryBeskjed.merkelapp,
                             tekst = queryBeskjed.tekst,
                             lenke = queryBeskjed.lenke,
-                            opprettetTidspunkt = queryBeskjed.opprettetTidspunkt
+                            opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
+                            id = queryBeskjed.id
                         )
                     }
                 }
             }
             dataFetcher("whoami"){
                 it.getContext<BrukerContext>().fnr
+            }
+        }
+
+        wire("Notifikasjon") {
+            typeResolver { env ->
+                val objectTypeName = when (env.getObject<Notifikasjon>()) {
+                    is Beskjed -> "Beskjed"
+                }
+                env.schema.getObjectType(objectTypeName)
             }
         }
     }
@@ -69,5 +71,6 @@ data class Beskjed(
     val merkelapp: String,
     val tekst: String,
     val lenke: String,
-    val opprettetTidspunkt: OffsetDateTime
+    val opprettetTidspunkt: OffsetDateTime,
+    val id:String
 ) : Notifikasjon()

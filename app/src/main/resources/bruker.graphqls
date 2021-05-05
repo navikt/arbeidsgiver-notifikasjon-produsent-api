@@ -10,4 +10,21 @@ type Beskjed {
     tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
+    id: ID!
 }
+
+#type Mutation {
+#    notifikasjonKlikketPaa(id:ID!):KlikketPaaResultat!
+#}
+
+#type KlikketPaaResultat {
+#    errors: [MutationError!]!
+#}
+
+#interface MutationError {
+# feilmelding: String!
+#}
+
+#type UgyldigId implements MutationError {
+#    feilmelding: String!
+#}

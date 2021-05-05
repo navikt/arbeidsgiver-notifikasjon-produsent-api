@@ -180,14 +180,15 @@ class GraphQLTests : DescribeSpec({
     describe("POST bruker-api /api/graphql") {
         lateinit var response: TestApplicationResponse
         lateinit var query: String
-        val beskjed = QueryBeskjed(
+        val beskjed = QueryBeskjedMedId(
             merkelapp = "foo",
             tekst = "",
             grupperingsid = "",
             lenke = "",
             eksternId = "",
             mottaker = FodselsnummerMottaker("00000000000", "43"),
-            opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00")
+            opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
+            id = "1"
         )
 
         beforeEach {
@@ -215,6 +216,7 @@ class GraphQLTests : DescribeSpec({
                             tekst
                             merkelapp
                             opprettetTidspunkt
+                            id
                         }
                     }
                 }
@@ -227,6 +229,7 @@ class GraphQLTests : DescribeSpec({
                 response.getGraphqlErrors() should beEmpty()
             }
 
+
             context("respons er parsed som liste av Beskjed") {
                 lateinit var resultat: List<Beskjed>
 
@@ -237,6 +240,8 @@ class GraphQLTests : DescribeSpec({
                 it("returnerer beskjeden fra repo") {
                     resultat shouldNot beEmpty()
                     resultat[0].merkelapp shouldBe beskjed.merkelapp
+                    resultat[0].id shouldNot beBlank()
+                    resultat[0].id shouldBe "1"
                 }
             }
         }

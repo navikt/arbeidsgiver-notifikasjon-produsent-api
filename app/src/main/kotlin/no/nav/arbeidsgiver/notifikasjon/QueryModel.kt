@@ -19,6 +19,17 @@ data class Koordinat(
     val eksternId: String,
 )
 
+data class QueryBeskjedMedId(
+    val merkelapp: String,
+    val tekst: String,
+    val grupperingsid: String? = null,
+    val lenke: String,
+    val eksternId: String,
+    val mottaker: Mottaker,
+    val opprettetTidspunkt: OffsetDateTime,
+    val id: String
+)
+
 data class QueryBeskjed(
     val merkelapp: String,
     val tekst: String,
@@ -42,7 +53,7 @@ object QueryModelRepository {
         dataSource: DataSource,
         fnr: String,
         tilganger: Collection<Tilgang>
-    ): List<QueryBeskjed> =
+    ): List<QueryBeskjedMedId> =
         dataSource.useConnection { connection ->
             timer.recordCallable {
                 val tilgangerJsonB = tilganger.joinToString {
@@ -73,14 +84,16 @@ object QueryModelRepository {
 
                 prepstat.executeQuery().use { resultSet ->
                     resultSet.map {
-                        QueryBeskjed(
+                        QueryBeskjedMedId(
                             merkelapp = resultSet.getString("merkelapp"),
                             tekst = resultSet.getString("tekst"),
                             grupperingsid = resultSet.getString("grupperingsid"),
                             lenke = resultSet.getString("lenke"),
                             eksternId = resultSet.getString("ekstern_id"),
                             mottaker = objectMapper.readValue(resultSet.getString("mottaker")),
-                            opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java)
+                            opprettetTidspunkt = resultSet.getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                            id = resultSet.getString("id")
+
                         )
                     }
                 }
