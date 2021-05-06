@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import com.fasterxml.jackson.module.kotlin.convertValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -12,7 +11,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.mockk.*
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
@@ -23,34 +22,9 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 import kotlin.time.toJavaDuration
 
-data class GraphQLError(
-    val message: String,
-    val locations: Any?,
-    val extensions: Map<String, Any>?
-)
-
-inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T {
-    val errors = getGraphqlErrors()
-    if (errors.isEmpty()) {
-        val tree = objectMapper.readTree(this.content!!)
-        val node = tree.get("data").get(name)
-        return objectMapper.convertValue(node)
-    } else {
-        throw Exception("Got errors $errors")
-    }
-}
-
-fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
-    if (this.content == null) {
-        throw NullPointerException("content is null. status:${status()}")
-    }
-    val tree = objectMapper.readTree(this.content!!)
-    val errors = tree.get("errors")
-    return if (errors == null) emptyList() else objectMapper.convertValue(errors)
-}
 
 @ExperimentalTime
-class GraphQLTests : DescribeSpec({
+class ProdusentApiTests : DescribeSpec({
     val altinn = object : Altinn {
         override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<Tilgang>()
     }
@@ -172,76 +146,6 @@ class GraphQLTests : DescribeSpec({
                         resultat.errors.first() should beOfType<UgyldigMerkelapp>()
                         resultat.errors.first().feilmelding shouldContain merkelapp
                     }
-                }
-            }
-        }
-    }
-
-    describe("POST bruker-api /api/graphql") {
-        lateinit var response: TestApplicationResponse
-        lateinit var query: String
-        val beskjed = QueryBeskjedMedId(
-            merkelapp = "foo",
-            tekst = "",
-            grupperingsid = "",
-            lenke = "",
-            eksternId = "",
-            mottaker = FodselsnummerMottaker("00000000000", "43"),
-            opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-            id = "1"
-        )
-
-        beforeEach {
-            mockkObject(QueryModelRepository)
-            coEvery {
-                QueryModelRepository.hentNotifikasjoner(any(), any(), any())
-            } returns listOf(beskjed)
-
-            response = engine.post("/api/graphql",
-                host = BRUKER_HOST,
-                jsonBody = GraphQLRequest(query),
-                accept = "application/json",
-                authorization = "Bearer $SELVBETJENING_TOKEN"
-            )
-        }
-        afterEach {
-            unmockkObject(QueryModelRepository)
-        }
-        context("Query.notifikasjoner") {
-            query = """
-                {
-                    notifikasjoner {
-                        ...on Beskjed {
-                            lenke
-                            tekst
-                            merkelapp
-                            opprettetTidspunkt
-                            id
-                        }
-                    }
-                }
-            """.trimIndent()
-
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
-
-
-            context("respons er parsed som liste av Beskjed") {
-                lateinit var resultat: List<Beskjed>
-
-                beforeEach {
-                    resultat = response.getTypedContent("notifikasjoner")
-                }
-
-                it("returnerer beskjeden fra repo") {
-                    resultat shouldNot beEmpty()
-                    resultat[0].merkelapp shouldBe beskjed.merkelapp
-                    resultat[0].id shouldNot beBlank()
-                    resultat[0].id shouldBe "1"
                 }
             }
         }
