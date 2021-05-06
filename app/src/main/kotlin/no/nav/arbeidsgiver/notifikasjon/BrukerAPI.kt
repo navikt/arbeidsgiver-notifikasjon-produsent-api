@@ -1,9 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import org.apache.kafka.clients.producer.Producer
 import java.time.OffsetDateTime
 import java.util.concurrent.CompletableFuture
 import javax.sql.DataSource
@@ -17,9 +19,17 @@ data class NotifikasjonKlikketPaaResultat(
     val errors: List<Nothing>
 )
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+sealed class BrukerMutationError {
+    abstract val feilmelding: String
+}
+
+data class UgyldigId(override val feilmelding: String) : BrukerMutationError()
+
 fun createBrukerGraphQL(
     altinn: Altinn,
-    dataSourceAsync: CompletableFuture<DataSource>
+    dataSourceAsync: CompletableFuture<DataSource>,
+    kafkaProducer: Producer<KafkaKey, Event>
 ) = TypedGraphQL<BrukerContext>(
     createGraphQL("/bruker.graphqls") {
 
@@ -58,7 +68,7 @@ fun createBrukerGraphQL(
             }
         }
 
-        wire("Mutations") {
+        wire("Mutation") {
             dataFetcher("notifikasjonKlikketPaa") {
                 val id = it.getTypedArgument<String>("id")
 
@@ -70,12 +80,15 @@ fun createBrukerGraphQL(
             }
         }
 
-        wire("Notifikasjon") {
-            typeResolver { env ->
-                val objectTypeName = when (env.getObject<Notifikasjon>()) {
-                    is Beskjed -> "Beskjed"
-                }
-                env.schema.getObjectType(objectTypeName)
+        subtypes<Notifikasjon>("Notifikasjon") {
+            when (it) {
+                is Beskjed -> "Beskjed"
+            }
+        }
+
+        subtypes<BrukerMutationError>("MutationError") {
+            when (it) {
+                is UgyldigId -> "UgyldigId"
             }
         }
     }

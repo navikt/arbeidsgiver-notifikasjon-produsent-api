@@ -14,18 +14,18 @@ type Beskjed {
     id: ID!
 }
 
-#type Mutation {
-#    notifikasjonKlikketPaa(id: ID!): NotifikasjonKlikketPaaResultat!
-#}
-#
-#type NotifikasjonKlikketPaaResultat {
-#    errors: [MutationError!]!
-#}
-#
-#interface MutationError {
-#    feilmelding: String!
-#}
-#
-#type UgyldigId implements MutationError {
-#    feilmelding: String!
-#}
+type Mutation {
+    notifikasjonKlikketPaa(id: ID!): NotifikasjonKlikketPaaResultat!
+}
+
+type NotifikasjonKlikketPaaResultat {
+    errors: [MutationError!]!
+}
+
+interface MutationError {
+    feilmelding: String!
+}
+
+type UgyldigId implements MutationError {
+    feilmelding: String!
+}

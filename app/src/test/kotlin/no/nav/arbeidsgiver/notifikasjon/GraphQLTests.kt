@@ -60,7 +60,8 @@ class GraphQLTests : DescribeSpec({
     val engine by ktorEngine(
         brukerGraphQL = createBrukerGraphQL(
             altinn = altinn,
-            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { createDataSource() })
+            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { createDataSource() }),
+            kafkaProducer = mockk()
         ),
         produsentGraphQL = createProdusentGraphQL(
             kafkaProducer = embeddedKafka.newProducer()
