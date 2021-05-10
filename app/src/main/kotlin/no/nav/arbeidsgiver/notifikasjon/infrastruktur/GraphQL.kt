@@ -11,6 +11,8 @@ import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.future.await
+import no.nav.arbeidsgiver.notifikasjon.MutationError
+import no.nav.arbeidsgiver.notifikasjon.UgyldigMerkelapp
 import no.nav.arbeidsgiver.notifikasjon.objectMapper
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T =
@@ -20,6 +22,14 @@ fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Build
     this.type(typeName) {
         it.apply {
             config()
+        }
+    }
+}
+
+fun <T> RuntimeWiring.Builder.subtypes(supertype: String, typenameOf: (T) -> String) {
+    type(supertype) {
+        it.typeResolver { env ->
+            env.schema.getObjectType(typenameOf(env.getObject()))
         }
     }
 }

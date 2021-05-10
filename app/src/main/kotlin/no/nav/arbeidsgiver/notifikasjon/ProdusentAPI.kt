@@ -132,16 +132,11 @@ fun createProdusentGraphQL(
             dataFetcher("nyBeskjed", nyBeskjedMutation(kafkaProducer))
         }
 
-        type("MutationError") {
-            it.typeResolver { env ->
-                env.schema.getObjectType(
-                    when (env.getObject<MutationError>()) {
-                        is UgyldigMerkelapp -> "UgyldigMerkelapp"
-                    }
-                )
+        subtypes<MutationError>("MutationError") {
+            when (it) {
+                is UgyldigMerkelapp -> "UgyldigMerkelapp"
             }
         }
-
     }
 )
 

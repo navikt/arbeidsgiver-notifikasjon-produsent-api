@@ -59,7 +59,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
                 httpServerSetup(
                     brukerGraphQL = createBrukerGraphQL(
                         altinn = AltinnImpl,
-                        dataSourceAsync = dataSourceAsync.asCompletableFuture()
+                        dataSourceAsync = dataSourceAsync.asCompletableFuture(),
+                        kafkaProducer = createKafkaProducer()
                     ),
                     produsentGraphQL = createProdusentGraphQL(createKafkaProducer())
                 )

@@ -42,14 +42,15 @@ class QueryModelTests : DescribeSpec({
                             mottaker.fodselsnummer,
                             emptyList()
                         )
-                    notifikasjoner shouldHaveSingleElement QueryBeskjed(
+                    notifikasjoner shouldHaveSingleElement QueryBeskjedMedId(
                         merkelapp = "foo",
                         eksternId = "42",
                         mottaker = mottaker,
                         tekst = "teste",
                         grupperingsid = "gr1",
                         lenke = "foo.no/bar",
-                        opprettetTidspunkt = event.opprettetTidspunkt
+                        opprettetTidspunkt = event.opprettetTidspunkt,
+                        id = "1"
                     )
                 }
             }

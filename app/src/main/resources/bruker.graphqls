@@ -5,9 +5,27 @@ type Query {
 }
 
 scalar ISO8601DateTime
+
 type Beskjed {
     merkelapp: String!
     tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
+    id: ID!
+}
+
+type Mutation {
+    notifikasjonKlikketPaa(id: ID!): NotifikasjonKlikketPaaResultat!
+}
+
+type NotifikasjonKlikketPaaResultat {
+    errors: [MutationError!]!
+}
+
+interface MutationError {
+    feilmelding: String!
+}
+
+type UgyldigId implements MutationError {
+    feilmelding: String!
 }
