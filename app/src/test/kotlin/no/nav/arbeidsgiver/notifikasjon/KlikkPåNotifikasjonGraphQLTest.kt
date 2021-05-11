@@ -4,11 +4,14 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNot
+import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
-import io.mockk.mockk
+import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
 import org.apache.kafka.clients.producer.Producer
 import java.util.concurrent.CompletableFuture
 import javax.sql.DataSource
@@ -27,19 +30,16 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
         produsentGraphQL = mockk()
     )
 
+    mockkStatic(Producer<KafkaKey, Hendelse>::brukerKlikket)
+    every { any<Producer<KafkaKey, Hendelse>>().brukerKlikket(any()) } returns Unit
+
+    afterSpec {
+        unmockkAll()
+    }
+
     describe("bruker-api: rapporterer om at notifikasjon er klikket på") {
-//        beforeEach {
-//            mockkObject(QueryModelRepository)
-//            mockkStatic(Producer<*, *>::sendEvent)
-//        }
-//
-//        afterEach {
-//            unmockkObject(QueryModelRepository)
-//            unmockkStatic()
-//        }
 
         context("uklikket-notifikasjon eksisterer for bruker") {
-            val fnr = "12345"
             val id = "4321"
             val query = """
                     mutation {
@@ -57,7 +57,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
                 host = BRUKER_HOST,
                 jsonBody = GraphQLRequest(query),
                 accept = "application/json",
-                authorization = "Bearer $TOKENDINGS_TOKEN"
+                authorization = "Bearer $SELVBETJENING_TOKEN"
             )
 
             it("ingen http/graphql-feil") {
@@ -71,17 +71,18 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
                 graphqlSvar.errors should beEmpty()
             }
 
-//            it("backenden gjør") {
-//                verify {
-//                    QueryModelRepository.registereKlikkPåNotifikasjon(fnr, id)
-//                }
-//            }
-//
-//            it("backend") {
-//                verify {
-//                    mockedPRoducer.sendEventKlikkPåNotifikasjon(fnr, id)
-//                }
-//            }
+            xit("Event produseres på kafka") {
+                verify {
+                    any<Producer<KafkaKey, Hendelse>>().brukerKlikket(
+                        withArg { brukerKlikket ->
+                            /* Feilmeldingen på ikke-match er dårlig */
+                            brukerKlikket.fnr shouldNot beBlank()
+                            brukerKlikket.notifikasjonsId shouldBe id
+                            brukerKlikket.virksomhetsnummer shouldNot beBlank()
+                        }
+                    )
+                }
+            }
         }
     }
 })

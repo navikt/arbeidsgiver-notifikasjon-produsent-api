@@ -98,27 +98,31 @@ object QueryModel {
             }
         }
 
-    private fun Hendelse.tilQueryDomene(): QueryBeskjed =
-        when (this) {
-            is Hendelse.BeskjedOpprettet ->
-                QueryBeskjed(
-                    merkelapp = this.merkelapp,
-                    tekst = this.tekst,
-                    grupperingsid = this.grupperingsid,
-                    lenke = this.lenke,
-                    eksternId = this.eksternId,
-                    mottaker = this.mottaker,
-                    opprettetTidspunkt = this.opprettetTidspunkt,
-                )
-        }
+    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryBeskjed =
+        QueryBeskjed(
+            merkelapp = this.merkelapp,
+            tekst = this.tekst,
+            grupperingsid = this.grupperingsid,
+            lenke = this.lenke,
+            eksternId = this.eksternId,
+            mottaker = this.mottaker,
+            opprettetTidspunkt = this.opprettetTidspunkt,
+        )
 
     suspend fun builderProcessor(dataSource: DataSource, hendelse: Hendelse) {
+        when (hendelse) {
+            is Hendelse.BeskjedOpprettet -> builderProcessor(dataSource, hendelse)
+            is Hendelse.BrukerKlikket -> TODO()
+        }
+    }
+
+    suspend fun builderProcessor(dataSource: DataSource, beskjedOpprettet: Hendelse.BeskjedOpprettet) {
         val koordinat = Koordinat(
-            mottaker = hendelse.mottaker,
-            merkelapp = hendelse.merkelapp,
-            eksternId = hendelse.eksternId
+            mottaker = beskjedOpprettet.mottaker,
+            merkelapp = beskjedOpprettet.merkelapp,
+            eksternId = beskjedOpprettet.eksternId
         )
-        val nyBeskjed = hendelse.tilQueryDomene()
+        val nyBeskjed = beskjedOpprettet.tilQueryDomene()
 
         dataSource.transaction(rollback = {
             if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) {

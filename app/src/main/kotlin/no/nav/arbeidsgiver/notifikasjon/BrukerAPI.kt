@@ -96,9 +96,15 @@ object BrukerAPI {
 
             wire("Mutation") {
                 dataFetcher("notifikasjonKlikketPaa") {
-                    val id = it.getTypedArgument<String>("id")
+                    val hendelse = Hendelse.BrukerKlikket(
+                        notifikasjonsId = it.getTypedArgument("id"),
+                        fnr = it.getContext<Context>().fnr,
+                        virksomhetsnummer = "" /* TODO: må fylles inn */
+                    )
 
-                    /* do something */
+                    kafkaProducer.brukerKlikket(hendelse)
+
+                    /* oppdatere database */
 
                     NotifikasjonKlikketPaaResultat(
                         errors = listOf()

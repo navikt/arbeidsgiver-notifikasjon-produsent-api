@@ -8,16 +8,13 @@ import java.util.*
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class Hendelse {
     abstract val virksomhetsnummer: String
-    abstract val merkelapp: String
-    abstract val eksternId: String
-    abstract val mottaker: Mottaker
 
-    @JsonTypeName("beskjed opprettet")
+    @JsonTypeName("BeskjedOpprettet")
     data class BeskjedOpprettet(
         override val virksomhetsnummer: String,
-        override val merkelapp: String,
-        override val eksternId: String,
-        override val mottaker: Mottaker,
+        val merkelapp: String,
+        val eksternId: String,
+        val mottaker: Mottaker,
 
         /* nb. id-en er kun ment for å identifisere eventet */
         val guid: UUID,
@@ -25,6 +22,13 @@ sealed class Hendelse {
         val grupperingsid: String? = null,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime
+    ): Hendelse()
+
+    @JsonTypeName("BrukerKlikket")
+    data class BrukerKlikket(
+        override val virksomhetsnummer: String,
+        val fnr: String,
+        val notifikasjonsId: String
     ): Hendelse()
 }
 
