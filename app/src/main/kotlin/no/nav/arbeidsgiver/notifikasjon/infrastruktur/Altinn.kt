@@ -35,6 +35,7 @@ val VÅRE_TJENESTER = setOf(
     "5278" to "1"  // Tilskuddsbrev om NAV-tiltak
 )
 private val log = LoggerFactory.getLogger("Altinn")!!
+
 fun AltinnrettigheterProxyKlient.hentTilganger(
     fnr: String,
     serviceCode: String,
