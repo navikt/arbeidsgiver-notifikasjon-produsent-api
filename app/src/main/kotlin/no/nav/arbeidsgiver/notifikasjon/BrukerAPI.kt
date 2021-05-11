@@ -103,11 +103,13 @@ object BrukerAPI {
 
                     kafkaProducer.brukerKlikket(hendelse)
 
-                    /* oppdatere database */
+                    GlobalScope.future(brukerGraphQLDispatcher) {
+                        queryModelFuture.await().oppdaterModellEtterBrukerKlikket(hendelse)
 
-                    NotifikasjonKlikketPaaResultat(
-                        errors = listOf()
-                    )
+                        NotifikasjonKlikketPaaResultat(
+                            errors = listOf()
+                        )
+                    }
                 }
             }
         }

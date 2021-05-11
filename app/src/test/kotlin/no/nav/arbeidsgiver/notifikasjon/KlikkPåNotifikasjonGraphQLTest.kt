@@ -71,9 +71,10 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
             }
 
             val brukerKlikketMatcher: MockKAssertScope.(Hendelse.BrukerKlikket) -> Unit = { brukerKlikket ->
-                /* Feilmeldingen på ikke-match er dårlig */
                 brukerKlikket.fnr shouldNot beBlank()
                 brukerKlikket.notifikasjonsId shouldBe id
+
+                /* For øyeblikket feiler denne, siden virksomhetsnummer ikke hentes ut. */
                 brukerKlikket.virksomhetsnummer shouldNot beBlank()
             }
 
