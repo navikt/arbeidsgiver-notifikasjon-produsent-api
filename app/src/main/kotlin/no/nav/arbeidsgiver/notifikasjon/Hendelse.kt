@@ -7,6 +7,7 @@ import java.util.*
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class Event {
+    abstract val virksomhetsnummer: String
     abstract val merkelapp: String
     abstract val eksternId: String
     abstract val mottaker: Mottaker
@@ -14,6 +15,7 @@ sealed class Event {
 
 @JsonTypeName("beskjed opprettet")
 data class BeskjedOpprettet(
+    override val virksomhetsnummer: String,
     override val merkelapp: String,
     override val eksternId: String,
     override val mottaker: Mottaker,

@@ -14,6 +14,8 @@ class KafkaSerializerTests : DescribeSpec({
         val serializer = ValueSerializer()
         val deserializer = ValueDeserializer()
 
+        val virksomhetsnummer = "123456789"
+
         context("BeskjedOpprettet") {
             val b = BeskjedOpprettet(
                 tekst = "hallo",
@@ -22,11 +24,12 @@ class KafkaSerializerTests : DescribeSpec({
                 mottaker = AltinnMottaker(
                     altinntjenesteKode = "1234",
                     altinntjenesteVersjon = "1",
-                    virksomhetsnummer = "123456789"
+                    virksomhetsnummer = virksomhetsnummer
                 ),
                 lenke = "https://foop.no",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T00:00:00.00Z"),
-                eksternId = "ekstern 1234h"
+                eksternId = "ekstern 1234h",
+                virksomhetsnummer = virksomhetsnummer
             )
 
             it("serde preservers all values") {

@@ -9,8 +9,8 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <kotlin.version>1.4.32</kotlin.version>
-        <ktor.version>1.5.3</ktor.version>
+        <kotlin.version>1.5.0</kotlin.version>
+        <ktor.version>1.5.4</ktor.version>
         <kotest.version>4.4.3</kotest.version>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <jvm.version>15</jvm.version>

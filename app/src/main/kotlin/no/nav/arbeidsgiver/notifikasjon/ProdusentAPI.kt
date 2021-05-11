@@ -79,7 +79,8 @@ data class BeskjedInput(
             lenke = lenke,
             eksternId = eksternId,
             mottaker = mottaker.tilDomene(),
-            opprettetTidspunkt = opprettetTidspunkt
+            opprettetTidspunkt = opprettetTidspunkt,
+            virksomhetsnummer = mottaker.altinn?.virksomhetsnummer ?: mottaker.fnr?.virksomhetsnummer !!
         )
 }
 

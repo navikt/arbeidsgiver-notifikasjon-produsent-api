@@ -6,14 +6,18 @@ import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.Event
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.objectMapper
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.Partitioner
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.Cluster
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.kafka.common.utils.Utils
 import org.slf4j.LoggerFactory
 import java.lang.System.getenv
 import java.time.Duration
@@ -25,9 +29,34 @@ import org.apache.kafka.clients.consumer.ConsumerConfig as ConsumerProp
 import org.apache.kafka.clients.producer.ProducerConfig as ProducerProp
 import org.apache.kafka.common.config.SslConfigs as SSLProp
 
-data class KafkaKey(
-    val mottaker: Mottaker
-)
+typealias KafkaKey = String
+
+class OrgnrPartitioner: Partitioner {
+    companion object {
+        fun partitionForOrgnr(orgnr: String, numPartitions: Int): Int =
+            Utils.toPositive(Utils.murmur2(orgnr.toByteArray())) % numPartitions
+    }
+
+    override fun partition(
+        topic: String,
+        key: Any?,
+        keyBytes: ByteArray?,
+        value: Any?,
+        valueBytes: ByteArray?,
+        cluster: Cluster
+    ): Int =
+        when (value) {
+            is Event -> partitionForOrgnr(value.virksomhetsnummer, cluster.partitionsForTopic(topic).size)
+            null -> throw IllegalArgumentException("OrgnrPartition skal ikke motta tombstone-records")
+            else -> throw IllegalArgumentException("Ukjent event-type ${value::class.qualifiedName}")
+        }
+
+    override fun configure(configs: MutableMap<String, *>?) {
+    }
+
+    override fun close() {
+    }
+}
 
 interface JsonSerializer<T> : Serializer<T> {
     override fun serialize(topic: String?, data: T): ByteArray {
@@ -41,10 +70,8 @@ abstract class JsonDeserializer<T>(private val clazz: Class<T>): Deserializer<T>
     }
 }
 
-class KeySerializer : JsonSerializer<KafkaKey>
 class ValueSerializer : JsonSerializer<Event>
 class ValueDeserializer : JsonDeserializer<Event>(Event::class.java)
-class KeyDeserializer : JsonDeserializer<KafkaKey>(KafkaKey::class.java)
 
 private val COMMON_PROPERTIES = mapOf(
     CommonProp.BOOTSTRAP_SERVERS_CONFIG to (getenv("KAFKA_BROKERS") ?: "localhost:9092"),
@@ -64,13 +91,14 @@ else
     )
 
 private val PRODUCER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
-    ProducerProp.KEY_SERIALIZER_CLASS_CONFIG to KeySerializer::class.java.canonicalName,
+    ProducerProp.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java.canonicalName,
     ProducerProp.VALUE_SERIALIZER_CLASS_CONFIG to ValueSerializer::class.java.canonicalName,
+    ProducerProp.PARTITIONER_CLASS_CONFIG to OrgnrPartitioner::class.java.canonicalName,
     ProducerProp.MAX_BLOCK_MS_CONFIG to 5_000,
 )
 
 private val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
-    ConsumerProp.KEY_DESERIALIZER_CLASS_CONFIG to KeyDeserializer::class.java.canonicalName,
+    ConsumerProp.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java.canonicalName,
     ConsumerProp.VALUE_DESERIALIZER_CLASS_CONFIG to ValueDeserializer::class.java.canonicalName,
 
     ConsumerProp.AUTO_OFFSET_RESET_CONFIG to "earliest",
@@ -116,7 +144,7 @@ fun <K, V> Producer<K, V>.sendEvent(key: K, value: V) {
 }
 
 fun Producer<KafkaKey, Event>.beskjedOpprettet(beskjed: BeskjedOpprettet) {
-    sendEvent(KafkaKey(beskjed.mottaker), beskjed)
+    sendEvent(beskjed.guid.toString(), beskjed)
 }
 
 private val log = LoggerFactory.getLogger("Consumer.processSingle")!!

@@ -28,7 +28,8 @@ class QueryModelTests : DescribeSpec({
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",
-                    opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS)
+                    opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS),
+                    virksomhetsnummer = mottaker.virksomhetsnummer
                 )
 
                 beforeEach {
