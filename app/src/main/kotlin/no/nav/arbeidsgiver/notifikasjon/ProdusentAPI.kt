@@ -9,13 +9,13 @@ import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
 import java.util.*
 
+private val log = LoggerFactory.getLogger("GraphQL.ProdusentAPI")!!
+
 data class ProdusentContext(
     val payload: Payload,
     val subject: String = payload.subject,
     val produsentId: String = "iss:${payload.issuer} sub:${payload.subject}"
 )
-
-private val log = LoggerFactory.getLogger("GraphQL.ProdusentAPI")!!
 
 private val whoamiQuery = DataFetcher {
     it.getContext<ProdusentContext>().produsentId
@@ -70,18 +70,23 @@ data class BeskjedInput(
     val mottaker: MottakerInput,
     val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now()
 ) {
-    fun tilDomene(guid: UUID): BeskjedOpprettet =
-        BeskjedOpprettet(
+    fun tilDomene(guid: UUID): BeskjedOpprettet {
+        val mottaker = mottaker.tilDomene()
+        return BeskjedOpprettet(
             guid = guid,
             merkelapp = merkelapp,
             tekst = tekst,
             grupperingsid = grupperingsid,
             lenke = lenke,
             eksternId = eksternId,
-            mottaker = mottaker.tilDomene(),
+            mottaker = mottaker,
             opprettetTidspunkt = opprettetTidspunkt,
-            virksomhetsnummer = mottaker.altinn?.virksomhetsnummer ?: mottaker.fnr?.virksomhetsnummer !!
+            virksomhetsnummer = when (mottaker) {
+                is FodselsnummerMottaker -> mottaker.virksomhetsnummer
+                is AltinnMottaker -> mottaker.virksomhetsnummer
+            }
         )
+    }
 }
 
 data class BeskjedResultat(
