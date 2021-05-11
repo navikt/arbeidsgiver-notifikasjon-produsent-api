@@ -1,14 +1,20 @@
 type Query {
     ping: String
-    notifikasjoner: [Beskjed!]!
+    notifikasjoner: [Notifikasjon!]!
     whoami: String
 }
 
+union Notifikasjon = Beskjed | Dummy
+
 scalar ISO8601DateTime
 
-type Beskjed {
-    merkelapp: String!
-    tekst: String!
+interface Klikkbar {
+    klikketPaa: Boolean!
+}
+
+type Beskjed implements Klikkbar {
+    klikketPaa: Boolean!
+    merkelapp: String! tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
     id: ID!
@@ -28,4 +34,8 @@ interface MutationError {
 
 type UgyldigId implements MutationError {
     feilmelding: String!
+}
+
+type Dummy {
+    dummy: String
 }

@@ -23,10 +23,10 @@ fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Build
     }
 }
 
-fun <T> RuntimeWiring.Builder.subtypes(supertype: String, typenameOf: (T) -> String) {
-    type(supertype) {
+inline fun <reified T : Any> RuntimeWiring.Builder.resolveSubtypes() {
+    type(T::class.simpleName) {
         it.typeResolver { env ->
-            env.schema.getObjectType(typenameOf(env.getObject()))
+            env.schema.getObjectType(env.getObject<T>().javaClass.simpleName)
         }
     }
 }

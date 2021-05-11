@@ -129,11 +129,7 @@ object ProdusentAPI {
 
             scalar(Scalars.ISO8601DateTime)
 
-            subtypes<MutationError>("MutationError") {
-                when (it) {
-                    is MutationError.UgyldigMerkelapp -> "UgyldigMerkelapp"
-                }
-            }
+            resolveSubtypes<MutationError>()
 
             wire("Query") {
                 dataFetcher("ping") {

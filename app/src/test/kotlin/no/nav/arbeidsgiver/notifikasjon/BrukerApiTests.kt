@@ -67,6 +67,7 @@ class BrukerApiTests : DescribeSpec({
                 {
                     notifikasjoner {
                         ...on Beskjed {
+                            klikketPaa
                             lenke
                             tekst
                             merkelapp
@@ -97,6 +98,7 @@ class BrukerApiTests : DescribeSpec({
                     resultat[0].merkelapp shouldBe beskjed.merkelapp
                     resultat[0].id shouldNot beBlank()
                     resultat[0].id shouldBe "1"
+                    resultat[0].klikketPaa shouldBe false
                 }
             }
         }

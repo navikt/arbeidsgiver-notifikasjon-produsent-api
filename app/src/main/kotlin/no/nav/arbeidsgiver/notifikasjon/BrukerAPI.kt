@@ -17,14 +17,19 @@ object BrukerAPI {
         val token: String
     )
 
+    sealed interface Klikkbar {
+        val klikketPaa: Boolean
+    }
+
     sealed class Notifikasjon {
         data class Beskjed(
             val merkelapp: String,
             val tekst: String,
             val lenke: String,
             val opprettetTidspunkt: OffsetDateTime,
-            val id: String
-        ) : Notifikasjon()
+            val id: String,
+            override val klikketPaa: Boolean = false
+        ) : Notifikasjon(), Klikkbar
     }
 
     data class NotifikasjonKlikketPaaResultat(
@@ -48,17 +53,9 @@ object BrukerAPI {
         createGraphQL("/bruker.graphqls") {
             scalar(Scalars.ISO8601DateTime)
 
-            subtypes<Notifikasjon>("Notifikasjon") {
-                when (it) {
-                    is Notifikasjon.Beskjed -> "Beskjed"
-                }
-            }
-
-            subtypes<MutationError>("MutationError") {
-                when (it) {
-                    is MutationError.UgyldigId -> "UgyldigId"
-                }
-            }
+            resolveSubtypes<Notifikasjon>()
+            resolveSubtypes<Klikkbar>()
+            resolveSubtypes<MutationError>()
 
             wire("Query") {
                 dataFetcher("ping") {
