@@ -12,11 +12,11 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningTok
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
-import no.nav.arbeidsgiver.notifikasjon.Tilgang
+import no.nav.arbeidsgiver.notifikasjon.QueryModel
 import org.slf4j.LoggerFactory
 
 interface Altinn {
-    fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<Tilgang>
+    fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<QueryModel.Tilgang>
 }
 
 val VÅRE_TJENESTER = setOf(
@@ -40,7 +40,7 @@ fun AltinnrettigheterProxyKlient.hentTilganger(
     serviceCode: String,
     serviceEdition: String,
     selvbetjeningsToken: String,
-): List<Tilgang> =
+): List<QueryModel.Tilgang> =
     try {
         this.hentOrganisasjoner(
             SelvbetjeningToken(selvbetjeningsToken),
@@ -60,7 +60,7 @@ fun AltinnrettigheterProxyKlient.hentTilganger(
 
             }
             .map {
-                Tilgang(
+                QueryModel.Tilgang(
                     virksomhet = it.organizationNumber!!,
                     servicecode = serviceCode,
                     serviceedition = serviceEdition
@@ -77,7 +77,7 @@ fun AltinnrettigheterProxyKlient.hentTilganger(
 fun AltinnrettigheterProxyKlient.hentAlleTilganger(
     fnr: String,
     selvbetjeningsToken: String,
-): List<Tilgang> = runBlocking(Dispatchers.IO) {
+): List<QueryModel.Tilgang> = runBlocking(Dispatchers.IO) {
     VÅRE_TJENESTER.map {
         async {
             hentTilganger(fnr, it.first, it.second, selvbetjeningsToken)
@@ -101,9 +101,8 @@ object AltinnImpl : Altinn {
         )
     )
 
-    override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<Tilgang> =
+    override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<QueryModel.Tilgang> =
         timer.recordCallable {
             altinnrettigheterProxyKlient.hentAlleTilganger(fnr, selvbetjeningsToken)
         }
 }
-

@@ -13,59 +13,54 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("Main")!!
+object Main {
+    val log = logger()
 
-val objectMapper = jacksonObjectMapper().apply {
-    setDefaultPrettyPrinter(
-        DefaultPrettyPrinter().apply {
-            indentArraysWith(DefaultPrettyPrinter.FixedSpaceIndenter.instance)
-            indentObjectsWith(DefaultIndenter("  ", "\n"))
-        }
-    )
-    configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-    registerModule(JavaTimeModule())
-}
-
-fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
-    runBlocking(Dispatchers.Default) {
-        val dataSourceAsync = async {
-            try {
-                createDataSource().also {
-                    Health.subsystemReady[Subsystem.DATABASE] = true
+    fun main() {
+        runBlocking(Dispatchers.Default) {
+            val dataSourceAsync = async {
+                try {
+                    Database.createDataSource().also {
+                        Health.subsystemReady[Subsystem.DATABASE] = true
+                    }
+                } catch (e: Exception) {
+                    Health.subsystemAlive[Subsystem.DATABASE] = false
+                    throw e
                 }
-            } catch (e: Exception) {
-                Health.subsystemAlive[Subsystem.DATABASE] = false
-                throw e
             }
-        }
 
-        launch {
-            val kafkaConsumer = createKafkaConsumer()
-            val dataSource = dataSourceAsync.await()
+            launch {
+                val kafkaConsumer = createKafkaConsumer()
+                val dataSource = dataSourceAsync.await()
 
-            kafkaConsumer.forEachEvent { event ->
-                queryModelBuilderProcessor(dataSource, event)
+                kafkaConsumer.forEachEvent { event ->
+                    QueryModel.builderProcessor(dataSource, event)
+                }
             }
-        }
 
-        launch {
-            val httpServer = embeddedServer(Netty, port = 8080, configure = {
-                connectionGroupSize = 16
-                callGroupSize = 16
-                workerGroupSize = 16
-            }) {
-                httpServerSetup(
-                    brukerGraphQL = createBrukerGraphQL(
-                        altinn = AltinnImpl,
-                        dataSourceAsync = dataSourceAsync.asCompletableFuture(),
-                        kafkaProducer = createKafkaProducer()
-                    ),
-                    produsentGraphQL = createProdusentGraphQL(createKafkaProducer())
-                )
+            launch {
+                val httpServer = embeddedServer(Netty, port = 8080, configure = {
+                    connectionGroupSize = 16
+                    callGroupSize = 16
+                    workerGroupSize = 16
+                }) {
+                    httpServerSetup(
+                        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
+                            altinn = AltinnImpl,
+                            dataSourceAsync = dataSourceAsync.asCompletableFuture(),
+                            kafkaProducer = createKafkaProducer()
+                        ),
+                        produsentGraphQL = ProdusentAPI.newGraphQL(createKafkaProducer())
+                    )
+                }
+                httpServer.start(wait = true)
             }
-            httpServer.start(wait = true)
         }
     }
 }
+
+fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
+    Main.main()
+}
+

@@ -17,7 +17,7 @@ class KafkaSerializerTests : DescribeSpec({
         val virksomhetsnummer = "123456789"
 
         context("BeskjedOpprettet") {
-            val b = BeskjedOpprettet(
+            val b = Hendelse.BeskjedOpprettet(
                 tekst = "hallo",
                 merkelapp = "merkelappen",
                 guid = guid,

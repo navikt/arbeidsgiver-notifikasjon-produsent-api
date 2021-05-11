@@ -16,10 +16,10 @@ import javax.sql.DataSource
 class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     val altinn: Altinn = mockk()
     val dataSource: DataSource = mockk()
-    val kafkaProducer: Producer<KafkaKey, Event> = mockk()
+    val kafkaProducer: Producer<KafkaKey, Hendelse> = mockk()
 
     val engine by ktorEngine(
-        brukerGraphQL = createBrukerGraphQL(
+        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
             dataSourceAsync = CompletableFuture.completedFuture(dataSource),
             kafkaProducer = kafkaProducer
@@ -65,7 +65,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
                 httpResponse.getGraphqlErrors() should beEmpty()
             }
 
-            val graphqlSvar = httpResponse.getTypedContent<NotifikasjonKlikketPaaResultat>("notifikasjonKlikketPaa")
+            val graphqlSvar = httpResponse.getTypedContent<BrukerAPI.NotifikasjonKlikketPaaResultat>("notifikasjonKlikketPaa")
 
             it("ingen domene-feil") {
                 graphqlSvar.errors should beEmpty()

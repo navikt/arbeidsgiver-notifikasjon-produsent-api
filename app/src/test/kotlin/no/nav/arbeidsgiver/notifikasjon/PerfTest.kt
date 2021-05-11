@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.request.*
@@ -16,7 +15,7 @@ import kotlin.system.measureTimeMillis
 fun main() = runBlocking {
     client.use {
         nyBeskjed(5000, Api.LOCAL)
-        hentNotifikasjoner(5000, Api.LOCAL)
+        //hentNotifikasjoner(5000, Api.LOCAL)
     }
 }
 val client = HttpClient(Apache) {

@@ -16,7 +16,7 @@ import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.createDataSource
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import java.time.OffsetDateTime
 import java.util.concurrent.CompletableFuture
 import kotlin.time.ExperimentalTime

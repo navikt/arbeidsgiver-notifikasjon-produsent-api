@@ -11,9 +11,6 @@ import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.future.await
-import no.nav.arbeidsgiver.notifikasjon.MutationError
-import no.nav.arbeidsgiver.notifikasjon.UgyldigMerkelapp
-import no.nav.arbeidsgiver.notifikasjon.objectMapper
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T =
     objectMapper.convertValue(this.getArgument(name))

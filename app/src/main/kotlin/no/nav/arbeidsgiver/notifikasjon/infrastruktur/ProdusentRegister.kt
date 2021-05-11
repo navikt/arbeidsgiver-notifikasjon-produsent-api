@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import no.nav.arbeidsgiver.notifikasjon.objectMapper
 import com.fasterxml.jackson.module.kotlin.*
 
 data class Produsent(val produsent: String, val merkelapper: List<String>) {
@@ -10,7 +9,7 @@ data class Produsent(val produsent: String, val merkelapper: List<String>) {
 }
 
 object ProdusentRegister {
-    val json = this.javaClass.getResource("/produsent-register.json")
+    val json = this.javaClass.getResource("/produsent-register.json")!!
     val register: Map<String, List<String>> = objectMapper.readValue(json)
     fun finn(subject: String): Produsent {
         return Produsent(subject, register.getOrDefault(subject, emptyList()))

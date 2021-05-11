@@ -21,9 +21,8 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
-import no.nav.arbeidsgiver.notifikasjon.BrukerContext
-import no.nav.arbeidsgiver.notifikasjon.ProdusentContext
-import no.nav.arbeidsgiver.notifikasjon.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.ProdusentAPI
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.net.URL
@@ -32,6 +31,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
+private val log = LoggerFactory.getLogger("HttpServer")!!
+
 data class JwtAuthenticationParameters(
     val clientId: String,
     val jwksUri: String,
@@ -39,7 +40,6 @@ data class JwtAuthenticationParameters(
 )
 
 typealias JwtAuthentication = JWTAuthenticationProvider.Configuration.(JwtAuthenticationParameters) -> Unit
-private val log = LoggerFactory.getLogger("HttpServer")!!
 val STANDARD_JWT_AUTHENTICATION: JwtAuthentication = { parameter ->
     verifier(
         JwkProviderBuilder(URL(parameter.jwksUri))
@@ -75,8 +75,8 @@ val STANDARD_JWT_AUTHENTICATION: JwtAuthentication = { parameter ->
 
 fun Application.httpServerSetup(
     jwtAuthentication: JwtAuthentication = STANDARD_JWT_AUTHENTICATION,
-    produsentGraphQL: TypedGraphQL<ProdusentContext>,
-    brukerGraphQL: TypedGraphQL<BrukerContext>,
+    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context>,
+    brukerGraphQL: TypedGraphQL<BrukerAPI.Context>,
 ) {
 
     install(CORS) {
@@ -239,14 +239,14 @@ fun Route.ide() {
 val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
 fun Route.brukerGraphQL(
     path: String,
-    graphQL: TypedGraphQL<BrukerContext>
+    graphQL: TypedGraphQL<BrukerAPI.Context>
 ) {
     post(path) {
         withContext(this.coroutineContext + brukerGraphQLDispatcher) {
             val token = call.principal<JWTPrincipal>()!!
             val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
             val request = call.receive<GraphQLRequest>()
-            val result = graphQL.executeAsync(request, BrukerContext(token.payload.subject, authHeader))
+            val result = graphQL.executeAsync(request, BrukerAPI.Context(token.payload.subject, authHeader))
             call.respond(result)
         }
     }
@@ -254,11 +254,11 @@ fun Route.brukerGraphQL(
 private val produsentGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
 fun Route.produsentGraphQL(
     path: String,
-    graphQL: TypedGraphQL<ProdusentContext>
+    graphQL: TypedGraphQL<ProdusentAPI.Context>
 ) {
     post(path) {
         withContext(this.coroutineContext + produsentGraphQLDispatcher) {
-            val context = ProdusentContext(payload = call.principal<JWTPrincipal>()!!.payload)
+            val context = ProdusentAPI.Context(payload = call.principal<JWTPrincipal>()!!.payload)
             val request = call.receive<GraphQLRequest>()
             val result = graphQL.execute(request, context)
             call.respond(result)

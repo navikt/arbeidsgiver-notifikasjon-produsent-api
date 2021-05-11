@@ -9,10 +9,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import io.mockk.spyk
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.JwtAuthentication
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.TypedGraphQL
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.httpServerSetup
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.removeAllWhitespace
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import kotlin.reflect.KProperty
 
 const val PRODUSENT_HOST = "ag-notifikasjon-produsent-api.invalid"
@@ -62,8 +59,8 @@ private val NOOP_JWT_AUTHENTICATION: JwtAuthentication = {
 
 class TestApplicationEngineDelegate(
     context: TestConfiguration,
-    brukerGraphQL: TypedGraphQL<BrukerContext>,
-    produsentGraphQL: TypedGraphQL<ProdusentContext>
+    brukerGraphQL: TypedGraphQL<BrukerAPI.Context>,
+    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context>
 ) {
     lateinit var engine: TestApplicationEngine
 
@@ -94,8 +91,8 @@ class TestApplicationEngineDelegate(
 }
 
 fun TestConfiguration.ktorEngine(
-    brukerGraphQL: TypedGraphQL<BrukerContext> = mockk(),
-    produsentGraphQL: TypedGraphQL<ProdusentContext> = mockk()
+    brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
+    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context> = mockk()
 ) =
     TestApplicationEngineDelegate(this, brukerGraphQL, produsentGraphQL)
 

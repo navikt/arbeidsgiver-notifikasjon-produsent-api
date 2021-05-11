@@ -4,9 +4,7 @@ import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.delay
-import no.nav.arbeidsgiver.notifikasjon.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.Event
-import no.nav.arbeidsgiver.notifikasjon.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Partitioner
@@ -46,7 +44,7 @@ class OrgnrPartitioner: Partitioner {
         cluster: Cluster
     ): Int =
         when (value) {
-            is Event -> partitionForOrgnr(value.virksomhetsnummer, cluster.partitionsForTopic(topic).size)
+            is Hendelse -> partitionForOrgnr(value.virksomhetsnummer, cluster.partitionsForTopic(topic).size)
             null -> throw IllegalArgumentException("OrgnrPartition skal ikke motta tombstone-records")
             else -> throw IllegalArgumentException("Ukjent event-type ${value::class.qualifiedName}")
         }
@@ -70,8 +68,8 @@ abstract class JsonDeserializer<T>(private val clazz: Class<T>): Deserializer<T>
     }
 }
 
-class ValueSerializer : JsonSerializer<Event>
-class ValueDeserializer : JsonDeserializer<Event>(Event::class.java)
+class ValueSerializer : JsonSerializer<Hendelse>
+class ValueDeserializer : JsonDeserializer<Hendelse>(Hendelse::class.java)
 
 private val COMMON_PROPERTIES = mapOf(
     CommonProp.BOOTSTRAP_SERVERS_CONFIG to (getenv("KAFKA_BROKERS") ?: "localhost:9092"),
@@ -108,22 +106,22 @@ private val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
     ConsumerProp.ENABLE_AUTO_COMMIT_CONFIG to "false"
 )
 
-fun createKafkaProducer(configure: Properties.() -> Unit = {}): Producer<KafkaKey, Event> {
+fun createKafkaProducer(configure: Properties.() -> Unit = {}): Producer<KafkaKey, Hendelse> {
     val properties = Properties().apply {
         putAll(PRODUCER_PROPERTIES)
         configure()
     }
-    val kafkaProducer = KafkaProducer<KafkaKey, Event>(properties)
+    val kafkaProducer = KafkaProducer<KafkaKey, Hendelse>(properties)
     KafkaClientMetrics(kafkaProducer).bindTo(Health.meterRegistry)
     return kafkaProducer
 }
 
-fun createKafkaConsumer(configure: Properties.() -> Unit = {}): Consumer<KafkaKey, Event> {
+fun createKafkaConsumer(configure: Properties.() -> Unit = {}): Consumer<KafkaKey, Hendelse> {
     val properties = Properties().apply {
         putAll(CONSUMER_PROPERTIES)
         configure()
     }
-    val kafkaConsumer = KafkaConsumer<KafkaKey, Event>(properties)
+    val kafkaConsumer = KafkaConsumer<KafkaKey, Hendelse>(properties)
     KafkaClientMetrics(kafkaConsumer).bindTo(Health.meterRegistry)
     kafkaConsumer.subscribe(listOf("arbeidsgiver.notifikasjon"))
     return kafkaConsumer
@@ -143,7 +141,7 @@ fun <K, V> Producer<K, V>.sendEvent(key: K, value: V) {
     )
 }
 
-fun Producer<KafkaKey, Event>.beskjedOpprettet(beskjed: BeskjedOpprettet) {
+fun Producer<KafkaKey, Hendelse>.beskjedOpprettet(beskjed: Hendelse.BeskjedOpprettet) {
     sendEvent(beskjed.guid.toString(), beskjed)
 }
 

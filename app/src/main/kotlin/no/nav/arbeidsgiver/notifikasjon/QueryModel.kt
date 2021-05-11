@@ -1,52 +1,51 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.map
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.useConnection
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.map
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.useConnection
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
-import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
 import javax.sql.DataSource
 
-private val log = LoggerFactory.getLogger("query-model-builder-processor")
+object QueryModel {
+    private val log = logger()
 
-data class Koordinat(
-    val mottaker: Mottaker,
-    val merkelapp: String,
-    val eksternId: String,
-)
+    data class Koordinat(
+        val mottaker: Mottaker,
+        val merkelapp: String,
+        val eksternId: String,
+    )
 
-data class QueryBeskjedMedId(
-    val merkelapp: String,
-    val tekst: String,
-    val grupperingsid: String? = null,
-    val lenke: String,
-    val eksternId: String,
-    val mottaker: Mottaker,
-    val opprettetTidspunkt: OffsetDateTime,
-    val id: String
-)
+    data class QueryBeskjedMedId(
+        val merkelapp: String,
+        val tekst: String,
+        val grupperingsid: String? = null,
+        val lenke: String,
+        val eksternId: String,
+        val mottaker: Mottaker,
+        val opprettetTidspunkt: OffsetDateTime,
+        val id: String
+    )
 
-data class QueryBeskjed(
-    val merkelapp: String,
-    val tekst: String,
-    val grupperingsid: String? = null,
-    val lenke: String,
-    val eksternId: String,
-    val mottaker: Mottaker,
-    val opprettetTidspunkt: OffsetDateTime,
-)
+    data class QueryBeskjed(
+        val merkelapp: String,
+        val tekst: String,
+        val grupperingsid: String? = null,
+        val lenke: String,
+        val eksternId: String,
+        val mottaker: Mottaker,
+        val opprettetTidspunkt: OffsetDateTime,
+    )
 
-data class Tilgang(
-    val virksomhet: String,
-    val servicecode: String,
-    val serviceedition: String,
-)
+    data class Tilgang(
+        val virksomhet: String,
+        val servicecode: String,
+        val serviceedition: String,
+    )
 
-object QueryModelRepository {
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
     suspend fun hentNotifikasjoner(
@@ -98,39 +97,38 @@ object QueryModelRepository {
                 }
             }
         }
-}
 
-fun tilQueryBeskjed(event: Event): QueryBeskjed =
-    when (event) {
-        is BeskjedOpprettet ->
-            QueryBeskjed(
-                merkelapp = event.merkelapp,
-                tekst = event.tekst,
-                grupperingsid = event.grupperingsid,
-                lenke = event.lenke,
-                eksternId = event.eksternId,
-                mottaker = event.mottaker,
-                opprettetTidspunkt = event.opprettetTidspunkt,
-            )
-    }
-
-suspend fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
-    val koordinat = Koordinat(
-        mottaker = event.mottaker,
-        merkelapp = event.merkelapp,
-        eksternId = event.eksternId
-    )
-    val nyBeskjed = tilQueryBeskjed(event)
-
-    dataSource.transaction(rollback = {
-        if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) {
-            log.error("forsøk på å endre eksisterende beskjed")
-        } else {
-            throw it
+    private fun Hendelse.tilQueryDomene(): QueryBeskjed =
+        when (this) {
+            is Hendelse.BeskjedOpprettet ->
+                QueryBeskjed(
+                    merkelapp = this.merkelapp,
+                    tekst = this.tekst,
+                    grupperingsid = this.grupperingsid,
+                    lenke = this.lenke,
+                    eksternId = this.eksternId,
+                    mottaker = this.mottaker,
+                    opprettetTidspunkt = this.opprettetTidspunkt,
+                )
         }
-    }) { connection ->
-        val prepstat = connection.prepareStatement(
-            """
+
+    suspend fun builderProcessor(dataSource: DataSource, hendelse: Hendelse) {
+        val koordinat = Koordinat(
+            mottaker = hendelse.mottaker,
+            merkelapp = hendelse.merkelapp,
+            eksternId = hendelse.eksternId
+        )
+        val nyBeskjed = hendelse.tilQueryDomene()
+
+        dataSource.transaction(rollback = {
+            if (it is PSQLException && PSQLState.UNIQUE_VIOLATION.state == it.sqlState) {
+                log.error("forsøk på å endre eksisterende beskjed")
+            } else {
+                throw it
+            }
+        }) { connection ->
+            val prepstat = connection.prepareStatement(
+                """
             insert into notifikasjon(
                 koordinat,
                 merkelapp,
@@ -143,15 +141,16 @@ suspend fun queryModelBuilderProcessor(dataSource: DataSource, event: Event) {
             )
             values (?, ?, ?, ?, ?, ?, ?, ?::json);
         """
-        )
-        prepstat.setString(1, koordinat.toString())
-        prepstat.setString(2, nyBeskjed.merkelapp)
-        prepstat.setString(3, nyBeskjed.tekst)
-        prepstat.setString(4, nyBeskjed.grupperingsid)
-        prepstat.setString(5, nyBeskjed.lenke)
-        prepstat.setString(6, nyBeskjed.eksternId)
-        prepstat.setObject(7, nyBeskjed.opprettetTidspunkt)
-        prepstat.setString(8, objectMapper.writeValueAsString(nyBeskjed.mottaker))
-        prepstat.execute()
+            )
+            prepstat.setString(1, koordinat.toString())
+            prepstat.setString(2, nyBeskjed.merkelapp)
+            prepstat.setString(3, nyBeskjed.tekst)
+            prepstat.setString(4, nyBeskjed.grupperingsid)
+            prepstat.setString(5, nyBeskjed.lenke)
+            prepstat.setString(6, nyBeskjed.eksternId)
+            prepstat.setObject(7, nyBeskjed.opprettetTidspunkt)
+            prepstat.setString(8, objectMapper.writeValueAsString(nyBeskjed.mottaker))
+            prepstat.execute()
+        }
     }
 }

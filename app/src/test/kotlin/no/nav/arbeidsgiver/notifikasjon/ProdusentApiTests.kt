@@ -14,8 +14,8 @@ import io.ktor.server.testing.*
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.createDataSource
 import java.time.OffsetDateTime
 import java.util.concurrent.CompletableFuture
 import kotlin.time.ExperimentalTime
@@ -26,18 +26,18 @@ import kotlin.time.toJavaDuration
 @ExperimentalTime
 class ProdusentApiTests : DescribeSpec({
     val altinn = object : Altinn {
-        override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<Tilgang>()
+        override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
 
     val embeddedKafka = EmbeddedKafkaTestListener()
     listener(embeddedKafka)
     val engine by ktorEngine(
-        brukerGraphQL = createBrukerGraphQL(
+        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
-            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { createDataSource() }),
+            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { Database.createDataSource() }),
             kafkaProducer = mockk()
         ),
-        produsentGraphQL = createProdusentGraphQL(
+        produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = embeddedKafka.newProducer()
         )
     )
@@ -84,7 +84,7 @@ class ProdusentApiTests : DescribeSpec({
             }
 
             context("respons er parsed som BeskjedResultat") {
-                lateinit var resultat: BeskjedResultat
+                lateinit var resultat: ProdusentAPI.BeskjedResultat
 
                 beforeEach {
                     resultat = response.getTypedContent("nyBeskjed")
@@ -98,8 +98,8 @@ class ProdusentApiTests : DescribeSpec({
                     val consumer = embeddedKafka.newConsumer()
                     val poll = consumer.poll(5.seconds.toJavaDuration())
                     val value = poll.last().value()
-                    value should beOfType<BeskjedOpprettet>()
-                    val event = value as BeskjedOpprettet
+                    value should beOfType<Hendelse.BeskjedOpprettet>()
+                    val event = value as Hendelse.BeskjedOpprettet
                     event.guid.toString() shouldBe resultat.id
                     event.lenke shouldBe "https://foo.bar"
                     event.tekst shouldBe "hello world"
@@ -143,7 +143,7 @@ class ProdusentApiTests : DescribeSpec({
 
                     it("errors har forklarende feilmelding") {
                         resultat.errors shouldHaveSize 1
-                        resultat.errors.first() should beOfType<UgyldigMerkelapp>()
+                        resultat.errors.first() should beOfType<ProdusentAPI.MutationError.UgyldigMerkelapp>()
                         resultat.errors.first().feilmelding shouldContain merkelapp
                     }
                 }

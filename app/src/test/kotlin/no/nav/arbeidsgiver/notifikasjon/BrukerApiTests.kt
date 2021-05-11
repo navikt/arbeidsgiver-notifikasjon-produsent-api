@@ -14,8 +14,8 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.createDataSource
 import java.time.OffsetDateTime
 import java.util.concurrent.CompletableFuture
 import kotlin.time.ExperimentalTime
@@ -23,16 +23,16 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class BrukerApiTests : DescribeSpec({
     val altinn = object : Altinn {
-        override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<Tilgang>()
+        override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
 
     val engine by ktorEngine(
-        brukerGraphQL = createBrukerGraphQL(
+        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
-            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { createDataSource() }),
+            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { Database.createDataSource() }),
             kafkaProducer = mockk()
         ),
-        produsentGraphQL = createProdusentGraphQL(
+        produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk()
         )
     )
@@ -40,7 +40,7 @@ class BrukerApiTests : DescribeSpec({
     describe("POST bruker-api /api/graphql") {
         lateinit var response: TestApplicationResponse
         lateinit var query: String
-        val beskjed = QueryBeskjedMedId(
+        val beskjed = QueryModel.QueryBeskjedMedId(
             merkelapp = "foo",
             tekst = "",
             grupperingsid = "",
@@ -52,9 +52,9 @@ class BrukerApiTests : DescribeSpec({
         )
 
         beforeEach {
-            mockkObject(QueryModelRepository)
+            mockkObject(QueryModel)
             coEvery {
-                QueryModelRepository.hentNotifikasjoner(any(), any(), any())
+                QueryModel.hentNotifikasjoner(any(), any(), any())
             } returns listOf(beskjed)
 
             response = engine.post("/api/graphql",
@@ -65,7 +65,7 @@ class BrukerApiTests : DescribeSpec({
             )
         }
         afterEach {
-            unmockkObject(QueryModelRepository)
+            unmockkObject(QueryModel)
         }
         context("Query.notifikasjoner") {
             query = """
@@ -91,7 +91,7 @@ class BrukerApiTests : DescribeSpec({
 
 
             context("respons er parsed som liste av Beskjed") {
-                lateinit var resultat: List<Beskjed>
+                lateinit var resultat: List<BrukerAPI.Notifikasjon.Beskjed>
 
                 beforeEach {
                     resultat = response.getTypedContent("notifikasjoner")
