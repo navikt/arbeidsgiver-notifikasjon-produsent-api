@@ -1,10 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
@@ -19,11 +14,11 @@ object Main {
 
     fun main() {
         runBlocking(Dispatchers.Default) {
-            val dataSourceAsync = async {
+            val queryModelAsync = async {
                 try {
-                    Database.createDataSource().also {
-                        Health.subsystemReady[Subsystem.DATABASE] = true
-                    }
+                    val dataSource = Database.createDataSource()
+                    Health.subsystemReady[Subsystem.DATABASE] = true
+                    QueryModel(dataSource)
                 } catch (e: Exception) {
                     Health.subsystemAlive[Subsystem.DATABASE] = false
                     throw e
@@ -32,10 +27,10 @@ object Main {
 
             launch {
                 val kafkaConsumer = createKafkaConsumer()
-                val dataSource = dataSourceAsync.await()
+                val queryModel = queryModelAsync.await()
 
                 kafkaConsumer.forEachEvent { event ->
-                    QueryModel.builderProcessor(dataSource, event)
+                    queryModel.oppdaterModellEtterHendelse(event)
                 }
             }
 
@@ -48,7 +43,7 @@ object Main {
                     httpServerSetup(
                         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
                             altinn = AltinnImpl,
-                            dataSourceAsync = dataSourceAsync.asCompletableFuture(),
+                            queryModelFuture = queryModelAsync.asCompletableFuture(),
                             kafkaProducer = createKafkaProducer()
                         ),
                         produsentGraphQL = ProdusentAPI.newGraphQL(createKafkaProducer())

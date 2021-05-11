@@ -34,7 +34,7 @@ class ProdusentApiTests : DescribeSpec({
     val engine by ktorEngine(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
-            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { Database.createDataSource() }),
+            queryModelFuture = mockk(),
             kafkaProducer = mockk()
         ),
         produsentGraphQL = ProdusentAPI.newGraphQL(

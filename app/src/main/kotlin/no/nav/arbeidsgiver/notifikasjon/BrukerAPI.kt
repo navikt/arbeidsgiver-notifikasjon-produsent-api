@@ -8,7 +8,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.producer.Producer
 import java.time.OffsetDateTime
 import java.util.concurrent.CompletableFuture
-import javax.sql.DataSource
 
 object BrukerAPI {
     private val log = logger()
@@ -43,7 +42,7 @@ object BrukerAPI {
 
     fun createBrukerGraphQL(
         altinn: Altinn,
-        dataSourceAsync: CompletableFuture<DataSource>,
+        queryModelFuture: CompletableFuture<QueryModel>,
         kafkaProducer: Producer<KafkaKey, Hendelse>
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphqls") {
@@ -73,19 +72,19 @@ object BrukerAPI {
                     )
                     // TODO: er det riktig med GlobalScope her eller finnes en bedre måte?
                     GlobalScope.future(brukerGraphQLDispatcher) {
-                        QueryModel.hentNotifikasjoner(
-                            dataSourceAsync.await(),
-                            it.getContext<Context>().fnr,
-                            tilganger
-                        ).map { queryBeskjed ->
-                            Notifikasjon.Beskjed(
-                                merkelapp = queryBeskjed.merkelapp,
-                                tekst = queryBeskjed.tekst,
-                                lenke = queryBeskjed.lenke,
-                                opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
-                                id = queryBeskjed.id
-                            )
-                        }
+                        queryModelFuture.await()
+                            .hentNotifikasjoner(
+                                it.getContext<Context>().fnr,
+                                tilganger
+                            ).map { queryBeskjed ->
+                                Notifikasjon.Beskjed(
+                                    merkelapp = queryBeskjed.merkelapp,
+                                    tekst = queryBeskjed.tekst,
+                                    lenke = queryBeskjed.lenke,
+                                    opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
+                                    id = queryBeskjed.id
+                                )
+                            }
                     }
                 }
 

@@ -10,11 +10,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.coEvery
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
 import java.time.OffsetDateTime
 import java.util.concurrent.CompletableFuture
@@ -26,10 +22,12 @@ class BrukerApiTests : DescribeSpec({
         override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
 
+    val queryModel: QueryModel = mockk()
+
     val engine by ktorEngine(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
-            dataSourceAsync = CompletableFuture.completedFuture(runBlocking { Database.createDataSource() }),
+            queryModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = mockk()
         ),
         produsentGraphQL = ProdusentAPI.newGraphQL(
@@ -52,9 +50,8 @@ class BrukerApiTests : DescribeSpec({
         )
 
         beforeEach {
-            mockkObject(QueryModel)
             coEvery {
-                QueryModel.hentNotifikasjoner(any(), any(), any())
+                queryModel.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed)
 
             response = engine.post("/api/graphql",
@@ -64,9 +61,7 @@ class BrukerApiTests : DescribeSpec({
                 authorization = "Bearer $SELVBETJENING_TOKEN"
             )
         }
-        afterEach {
-            unmockkObject(QueryModel)
-        }
+
         context("Query.notifikasjoner") {
             query = """
                 {

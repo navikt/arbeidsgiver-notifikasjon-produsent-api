@@ -11,6 +11,8 @@ import java.util.*
 
 class QueryModelTests : DescribeSpec({
     val dataSource = runBlocking { Database.createDataSource() }
+    val queryModel = QueryModel(dataSource)
+
     listener(PostgresTestListener(dataSource))
 
     describe("QueryModel") {
@@ -33,13 +35,12 @@ class QueryModelTests : DescribeSpec({
                 )
 
                 beforeEach {
-                    QueryModel.builderProcessor(dataSource, event)
+                    queryModel.oppdaterModellEtterBeskjedOpprettet(event)
                 }
 
                 it("opprettes beskjed i databasen") {
                     val notifikasjoner =
-                        QueryModel.hentNotifikasjoner(
-                            dataSource,
+                        queryModel.hentNotifikasjoner(
                             mottaker.fodselsnummer,
                             emptyList()
                         )

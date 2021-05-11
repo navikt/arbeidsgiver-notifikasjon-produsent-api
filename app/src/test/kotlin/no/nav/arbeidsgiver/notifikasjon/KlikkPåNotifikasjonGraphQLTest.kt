@@ -14,17 +14,16 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
 import org.apache.kafka.clients.producer.Producer
 import java.util.concurrent.CompletableFuture
-import javax.sql.DataSource
 
 class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     val altinn: Altinn = mockk()
-    val dataSource: DataSource = mockk()
+    val queryModel: QueryModel = mockk(relaxed = true)
     val kafkaProducer: Producer<KafkaKey, Hendelse> = mockk()
 
     val engine by ktorEngine(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
-            dataSourceAsync = CompletableFuture.completedFuture(dataSource),
+            queryModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = kafkaProducer
         ),
         produsentGraphQL = mockk()
@@ -71,15 +70,25 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
                 graphqlSvar.errors should beEmpty()
             }
 
+            val brukerKlikketMatcher: MockKAssertScope.(Hendelse.BrukerKlikket) -> Unit = { brukerKlikket ->
+                /* Feilmeldingen på ikke-match er dårlig */
+                brukerKlikket.fnr shouldNot beBlank()
+                brukerKlikket.notifikasjonsId shouldBe id
+                brukerKlikket.virksomhetsnummer shouldNot beBlank()
+            }
+
             xit("Event produseres på kafka") {
                 verify {
                     any<Producer<KafkaKey, Hendelse>>().brukerKlikket(
-                        withArg { brukerKlikket ->
-                            /* Feilmeldingen på ikke-match er dårlig */
-                            brukerKlikket.fnr shouldNot beBlank()
-                            brukerKlikket.notifikasjonsId shouldBe id
-                            brukerKlikket.virksomhetsnummer shouldNot beBlank()
-                        }
+                        withArg(brukerKlikketMatcher)
+                    )
+                }
+            }
+
+            xit("Database oppdaters") {
+                coVerify {
+                    queryModel.oppdaterModellEtterBrukerKlikket(
+                        withArg(brukerKlikketMatcher)
                     )
                 }
             }

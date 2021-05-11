@@ -10,7 +10,9 @@ import org.postgresql.util.PSQLState
 import java.time.OffsetDateTime
 import javax.sql.DataSource
 
-object QueryModel {
+class QueryModel(
+    private val dataSource: DataSource
+) {
     private val log = logger()
 
     data class Koordinat(
@@ -49,7 +51,6 @@ object QueryModel {
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
     suspend fun hentNotifikasjoner(
-        dataSource: DataSource,
         fnr: String,
         tilganger: Collection<Tilgang>
     ): List<QueryBeskjedMedId> =
@@ -109,14 +110,18 @@ object QueryModel {
             opprettetTidspunkt = this.opprettetTidspunkt,
         )
 
-    suspend fun builderProcessor(dataSource: DataSource, hendelse: Hendelse) {
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         when (hendelse) {
-            is Hendelse.BeskjedOpprettet -> builderProcessor(dataSource, hendelse)
-            is Hendelse.BrukerKlikket -> TODO()
+            is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
+            is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
         }
     }
 
-    suspend fun builderProcessor(dataSource: DataSource, beskjedOpprettet: Hendelse.BeskjedOpprettet) {
+    suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
+        TODO()
+    }
+
+    suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
         val koordinat = Koordinat(
             mottaker = beskjedOpprettet.mottaker,
             merkelapp = beskjedOpprettet.merkelapp,
