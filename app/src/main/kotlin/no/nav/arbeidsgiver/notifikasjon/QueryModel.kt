@@ -106,13 +106,7 @@ class QueryModel(
             """, {
                 setString(1, notifikasjonsid)
             }) {
-                log.error("XB".repeat(40))
-                try {
-                    getString("virksomhetsnummer")!!
-                } catch (e: Exception) {
-                    log.error("MD".repeat(40))
-                    throw e
-                }
+                getString("virksomhetsnummer")!!
             }.getOrNull(0)
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
