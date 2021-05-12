@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.annotation.JsonTypeName
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -33,13 +34,14 @@ object BrukerAPI {
     }
 
     data class NotifikasjonKlikketPaaResultat(
-        val errors: List<Nothing>
+        val errors: List<MutationError>
     )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class MutationError {
         abstract val feilmelding: String
 
+        @JsonTypeName("UgyldigId")
         data class UgyldigId(
             override val feilmelding: String
         ) : MutationError()
@@ -91,17 +93,26 @@ object BrukerAPI {
             }
 
             wire("Mutation") {
-                dataFetcher("notifikasjonKlikketPaa") {
-                    val hendelse = Hendelse.BrukerKlikket(
-                        notifikasjonsId = it.getTypedArgument("id"),
-                        fnr = it.getContext<Context>().fnr,
-                        virksomhetsnummer = "" /* TODO: må fylles inn */
-                    )
+                dataFetcher("notifikasjonKlikketPaa") { env ->
+                    // TODO: er det riktig med GlobalScope her eller finnes en bedre måte?
+                    GlobalScope.future(brukerGraphQLDispatcher) fetcher@{
+                        val notifikasjonsid = env.getTypedArgument<String>("id")
+                        val queryModel = queryModelFuture.await()
 
-                    kafkaProducer.brukerKlikket(hendelse)
+                        val virksomhetsnummer = queryModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
+                            ?: return@fetcher NotifikasjonKlikketPaaResultat(
+                                errors = listOf(MutationError.UgyldigId(""))
+                            )
 
-                    GlobalScope.future(brukerGraphQLDispatcher) {
-                        queryModelFuture.await().oppdaterModellEtterBrukerKlikket(hendelse)
+                        val hendelse = Hendelse.BrukerKlikket(
+                            notifikasjonsId = notifikasjonsid,
+                            fnr = env.getContext<Context>().fnr,
+                            virksomhetsnummer = virksomhetsnummer
+                        )
+
+                        kafkaProducer.brukerKlikket(hendelse)
+
+                        queryModel.oppdaterModellEtterBrukerKlikket(hendelse)
 
                         NotifikasjonKlikketPaaResultat(
                             errors = listOf()

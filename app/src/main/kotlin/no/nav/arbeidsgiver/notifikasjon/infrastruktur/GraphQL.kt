@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import graphql.ExecutionInput
 import graphql.GraphQL
 import graphql.GraphQL.newGraphQL
+import graphql.GraphQLError
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring

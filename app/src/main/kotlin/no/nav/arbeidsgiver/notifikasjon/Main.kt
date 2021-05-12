@@ -16,9 +16,9 @@ object Main {
         runBlocking(Dispatchers.Default) {
             val queryModelAsync = async {
                 try {
-                    val dataSource = Database.createDataSource()
+                    val database = Database.openDatabase()
                     Health.subsystemReady[Subsystem.DATABASE] = true
-                    QueryModel(dataSource)
+                    QueryModel(database)
                 } catch (e: Exception) {
                     Health.subsystemAlive[Subsystem.DATABASE] = false
                     throw e

@@ -40,6 +40,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
 
         context("uklikket-notifikasjon eksisterer for bruker") {
             val id = "4321"
+            coEvery { queryModel.virksomhetsnummerForNotifikasjon(id) } returns "1234"
             val query = """
                     mutation {
                         notifikasjonKlikketPaa(id: "$id") {
@@ -78,7 +79,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
                 brukerKlikket.virksomhetsnummer shouldNot beBlank()
             }
 
-            xit("Event produseres på kafka") {
+            it("Event produseres på kafka") {
                 verify {
                     any<Producer<KafkaKey, Hendelse>>().brukerKlikket(
                         withArg(brukerKlikketMatcher)
@@ -86,7 +87,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
                 }
             }
 
-            xit("Database oppdaters") {
+            it("Database oppdaters") {
                 coVerify {
                     queryModel.oppdaterModellEtterBrukerKlikket(
                         withArg(brukerKlikketMatcher)
