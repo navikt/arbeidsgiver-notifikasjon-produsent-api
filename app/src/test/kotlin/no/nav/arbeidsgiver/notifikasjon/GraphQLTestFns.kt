@@ -29,11 +29,14 @@ data class GraphQLError(
     val extensions: Map<String, Any>?
 )
 
+fun String.ensurePrefix(prefix: String) =
+    if (this.startsWith(prefix)) this else prefix + this
+
 inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T {
     val errors = getGraphqlErrors()
     if (errors.isEmpty()) {
         val tree = objectMapper.readTree(this.content!!)
-        val node = tree.get("data").get(name)
+        val node = tree.get("data").at(name.ensurePrefix("/"))
         return objectMapper.convertValue(node)
     } else {
         throw Exception("Got errors $errors")

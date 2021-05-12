@@ -111,7 +111,7 @@ class QueryModel(
     suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
         database.nonTransactionalCommand("""
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
-            ON CONFLICT ON CONSTRAINT brukerklikket_unique
+            ON CONFLICT ON CONSTRAINT brukerklikk_pkey
             DO NOTHING
         """) {
             string(brukerKlikket.fnr)

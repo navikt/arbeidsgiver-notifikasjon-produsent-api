@@ -70,6 +70,7 @@ object BrukerAPI {
                         it.getContext<Context>().fnr,
                         it.getContext<Context>().token
                     )
+
                     // TODO: er det riktig med GlobalScope her eller finnes en bedre måte?
                     GlobalScope.future(brukerGraphQLDispatcher) {
                         queryModelFuture.await()

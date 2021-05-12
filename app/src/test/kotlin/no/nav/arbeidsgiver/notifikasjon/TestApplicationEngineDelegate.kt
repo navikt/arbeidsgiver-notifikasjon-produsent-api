@@ -161,3 +161,17 @@ fun TestApplicationEngine.post(
             config()
         }
     )
+
+fun TestApplicationEngine.brukerApi(req: GraphQLRequest): TestApplicationResponse {
+    return post(
+        "/api/graphql",
+        host = BRUKER_HOST,
+        jsonBody = req,
+        accept = "application/json",
+        authorization = "Bearer $SELVBETJENING_TOKEN"
+    )
+}
+
+fun TestApplicationEngine.brukerApi(req: String): TestApplicationResponse {
+    return brukerApi(GraphQLRequest(req))
+}

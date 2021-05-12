@@ -19,7 +19,7 @@ create table brukerklikk
 (
     fnr                 char(11) not null,
     notifikasjonsid     uuid not null,
-    constraint brukerklikk_pk primary key (fnr, notifikasjonsid)
+    constraint brukerklikk_pkey primary key (fnr, notifikasjonsid)
 );
 
 create index brukerklikk_fnr_index on brukerklikk(fnr);

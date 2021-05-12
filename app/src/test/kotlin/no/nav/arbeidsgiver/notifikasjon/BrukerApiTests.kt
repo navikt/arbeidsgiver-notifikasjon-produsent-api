@@ -16,21 +16,6 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.time.ExperimentalTime
 
-
-fun TestApplicationEngine.brukerApi(req: GraphQLRequest): TestApplicationResponse {
-    return post(
-        "/api/graphql",
-        host = BRUKER_HOST,
-        jsonBody = req,
-        accept = "application/json",
-        authorization = "Bearer $SELVBETJENING_TOKEN"
-    )
-}
-
-fun TestApplicationEngine.brukerApi(req: String): TestApplicationResponse {
-    return brukerApi(GraphQLRequest(req))
-}
-
 @ExperimentalTime
 class BrukerApiTests : DescribeSpec({
     val altinn = object : Altinn {
