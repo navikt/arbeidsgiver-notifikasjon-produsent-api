@@ -25,7 +25,7 @@
   * _a few moments later_
   * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --delete-config retention.ms`
 * delete topic
-  * `kafka-topics --zookeeper zookeeper:2181 --delete --topic arbeidsgiver.notifikasjon@wd wdwaddd`
+  * `kafka-topics --zookeeper zookeeper:2181 --delete --topic arbeidsgiver.notifikasjon`
 * consume en topic og print til console (default from latest)
   * `kafka-console-consumer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true`
   * _from the beginning_ (legg til `--from-beginning`)

@@ -198,6 +198,7 @@
 
                 <configuration>
                     <jvmTarget>${jvm.version}</jvmTarget>
+                    <languageVersion>1.5</languageVersion>
                 </configuration>
                 <executions>
                     <execution>

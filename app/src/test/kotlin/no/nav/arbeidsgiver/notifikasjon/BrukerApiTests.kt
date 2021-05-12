@@ -16,6 +16,21 @@ import java.time.OffsetDateTime
 import java.util.concurrent.CompletableFuture
 import kotlin.time.ExperimentalTime
 
+
+fun TestApplicationEngine.brukerApi(req: GraphQLRequest): TestApplicationResponse {
+    return post(
+        "/api/graphql",
+        host = BRUKER_HOST,
+        jsonBody = req,
+        accept = "application/json",
+        authorization = "Bearer $SELVBETJENING_TOKEN"
+    )
+}
+
+fun TestApplicationEngine.brukerApi(req: String): TestApplicationResponse {
+    return brukerApi(GraphQLRequest(req))
+}
+
 @ExperimentalTime
 class BrukerApiTests : DescribeSpec({
     val altinn = object : Altinn {
@@ -36,69 +51,52 @@ class BrukerApiTests : DescribeSpec({
     )
 
     describe("POST bruker-api /api/graphql") {
-        lateinit var response: TestApplicationResponse
-        lateinit var query: String
-        val beskjed = QueryModel.QueryBeskjedMedId(
-            merkelapp = "foo",
-            tekst = "",
-            grupperingsid = "",
-            lenke = "",
-            eksternId = "",
-            mottaker = FodselsnummerMottaker("00000000000", "43"),
-            opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-            id = "1"
-        )
-
-        beforeEach {
+        context("Query.notifikasjoner") {
+            val beskjed = QueryModel.QueryBeskjedMedId(
+                merkelapp = "foo",
+                tekst = "",
+                grupperingsid = "",
+                lenke = "",
+                eksternId = "",
+                mottaker = FodselsnummerMottaker("00000000000", "43"),
+                opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
+                id = "1"
+            )
             coEvery {
                 queryModel.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed)
-
-            response = engine.post("/api/graphql",
-                host = BRUKER_HOST,
-                jsonBody = GraphQLRequest(query),
-                accept = "application/json",
-                authorization = "Bearer $SELVBETJENING_TOKEN"
-            )
-        }
-
-        context("Query.notifikasjoner") {
-            query = """
-                {
-                    notifikasjoner {
-                        ...on Beskjed {
-                            klikketPaa
-                            lenke
-                            tekst
-                            merkelapp
-                            opprettetTidspunkt
-                            id
+            val response = engine.brukerApi(
+                """
+                    {
+                        notifikasjoner {
+                            ...on Beskjed {
+                                klikketPaa
+                                lenke
+                                tekst
+                                merkelapp
+                                opprettetTidspunkt
+                                id
+                            }
                         }
                     }
-                }
-            """.trimIndent()
+                """.trimIndent()
+            )
 
             it("status is 200 OK") {
                 response.status() shouldBe HttpStatusCode.OK
             }
+
             it("response inneholder ikke feil") {
                 response.getGraphqlErrors() should beEmpty()
             }
 
-
-            context("respons er parsed som liste av Beskjed") {
-                lateinit var resultat: List<BrukerAPI.Notifikasjon.Beskjed>
-
-                beforeEach {
-                    resultat = response.getTypedContent("notifikasjoner")
-                }
-
-                it("returnerer beskjeden fra repo") {
-                    resultat shouldNot beEmpty()
-                    resultat[0].merkelapp shouldBe beskjed.merkelapp
-                    resultat[0].id shouldNot beBlank()
-                    resultat[0].id shouldBe "1"
-                    resultat[0].klikketPaa shouldBe false
+            it("response inneholder riktig data") {
+                response.getTypedContent<List<BrukerAPI.Notifikasjon.Beskjed>>("notifikasjoner").let {
+                    it shouldNot beEmpty()
+                    it[0].merkelapp shouldBe beskjed.merkelapp
+                    it[0].id shouldNot beBlank()
+                    it[0].id shouldBe "1"
+                    it[0].klikketPaa shouldBe false
                 }
             }
         }
