@@ -15,9 +15,7 @@ sealed class Hendelse {
         val merkelapp: String,
         val eksternId: String,
         val mottaker: Mottaker,
-
-        /* nb. id-en er kun ment for å identifisere eventet */
-        val guid: UUID,
+        val uuid: UUID,
         val tekst: String,
         val grupperingsid: String? = null,
         val lenke: String,
@@ -28,7 +26,7 @@ sealed class Hendelse {
     data class BrukerKlikket(
         override val virksomhetsnummer: String,
         val fnr: String,
-        val notifikasjonsId: String
+        val notifikasjonsId: UUID
     ): Hendelse()
 }
 

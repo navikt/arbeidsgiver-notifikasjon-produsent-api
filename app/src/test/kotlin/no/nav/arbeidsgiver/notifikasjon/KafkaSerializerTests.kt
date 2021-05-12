@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ValueSerializer
 import java.time.OffsetDateTime
 import java.util.*
 
-private val guid = UUID.fromString("70a4beb3-53b9-49f0-ae31-2d5e6cfe52bf")
+private val uuid = UUID.fromString("70a4beb3-53b9-49f0-ae31-2d5e6cfe52bf")
 
 class KafkaSerializerTests : DescribeSpec({
     describe("kafka value serde") {
@@ -20,7 +20,7 @@ class KafkaSerializerTests : DescribeSpec({
             val b = Hendelse.BeskjedOpprettet(
                 tekst = "hallo",
                 merkelapp = "merkelappen",
-                guid = guid,
+                uuid = uuid,
                 mottaker = AltinnMottaker(
                     altinntjenesteKode = "1234",
                     altinntjenesteVersjon = "1",

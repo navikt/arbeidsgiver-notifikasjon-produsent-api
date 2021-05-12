@@ -142,7 +142,7 @@ fun <K, V> Producer<K, V>.sendEvent(key: K, value: V) {
 }
 
 fun Producer<KafkaKey, Hendelse>.beskjedOpprettet(beskjed: Hendelse.BeskjedOpprettet) {
-    sendEvent(beskjed.guid.toString(), beskjed)
+    sendEvent(beskjed.uuid.toString(), beskjed)
 }
 fun Producer<KafkaKey, Hendelse>.brukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
     sendEvent(UUID.randomUUID().toString(), brukerKlikket)

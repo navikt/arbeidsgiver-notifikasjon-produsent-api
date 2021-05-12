@@ -4,6 +4,7 @@ import com.auth0.jwt.interfaces.Payload
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetcher
+import graphql.schema.GraphQLInputValueDefinition
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.producer.Producer
 import java.time.OffsetDateTime
@@ -70,7 +71,7 @@ object ProdusentAPI {
         fun tilDomene(guid: UUID): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.BeskjedOpprettet(
-                guid = guid,
+                uuid = guid,
                 merkelapp = merkelapp,
                 tekst = tekst,
                 grupperingsid = grupperingsid,
@@ -87,7 +88,7 @@ object ProdusentAPI {
     }
 
     data class BeskjedResultat(
-        val id: String? = null,
+        val uuid: UUID? = null,
         val errors: List<MutationError> = emptyList()
     )
 
@@ -118,7 +119,7 @@ object ProdusentAPI {
             val id = UUID.randomUUID()
             log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
             kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
-            BeskjedResultat(id.toString())
+            BeskjedResultat(id)
         }
     }
 

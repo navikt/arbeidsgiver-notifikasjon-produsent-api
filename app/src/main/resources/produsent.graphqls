@@ -15,7 +15,7 @@ type BeskjedResultat {
     kan brukes til noe fornuftig.
     En ID som unikt identifiserer hendelsen.
     """
-    id: ID
+    uuid: ID
     errors: [MutationError!]!
 }
 

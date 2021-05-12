@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
 import org.apache.kafka.clients.producer.Producer
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
@@ -39,11 +40,11 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     describe("bruker-api: rapporterer om at notifikasjon er klikket på") {
 
         context("uklikket-notifikasjon eksisterer for bruker") {
-            val id = "4321"
+            val id = UUID.fromString("09d5a598-b31a-11eb-8529-0242ac130003")
             coEvery { queryModel.virksomhetsnummerForNotifikasjon(id) } returns "1234"
             val query = """
                     mutation {
-                        notifikasjonKlikketPaa(id: "$id") {
+                        notifikasjonKlikketPaa(uuid: "$id") {
                             errors {
                                 __typename
                                 feilmelding

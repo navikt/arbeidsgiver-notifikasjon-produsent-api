@@ -12,6 +12,8 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.time.OffsetDateTime
+import java.util.*
 import javax.sql.DataSource
 
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
@@ -79,7 +81,7 @@ value class Database private constructor(
 
     suspend fun <T> runNonTransactionalQuery(
         sql: String,
-        setup: PreparedStatement.() -> Unit = {},
+        setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> =
         withConnection {
@@ -88,7 +90,7 @@ value class Database private constructor(
 
     suspend fun nonTransactionalCommand(
         sql: String,
-        setup: PreparedStatement.() -> Unit = {},
+        setup: ParameterSetters.() -> Unit = {},
     ): Int = withConnection {
         Transaction(this).executeCommand(sql, setup)
     }
@@ -132,13 +134,13 @@ value class Transaction(
 ) {
     fun <T> runQuery(
         sql: String,
-        setup: PreparedStatement.() -> Unit = {},
+        setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> {
         return connection
             .prepareStatement(sql)
             .use { preparedStatement ->
-                preparedStatement.apply(setup)
+                ParameterSetters(preparedStatement).apply(setup)
                 preparedStatement.executeQuery().use { resultSet ->
                     val resultList = mutableListOf<T>()
                     while (resultSet.next()) {
@@ -151,15 +153,32 @@ value class Transaction(
 
     fun executeCommand(
         sql: String,
-        setup: PreparedStatement.() -> Unit = {},
+        setup: ParameterSetters.() -> Unit = {},
     ): Int {
         return connection
             .prepareStatement(sql)
             .use { preparedStatement ->
-                preparedStatement.apply(setup)
+                ParameterSetters(preparedStatement).apply(setup)
                 preparedStatement.executeUpdate()
             }
     }
 }
 
+class ParameterSetters(
+    private val preparedStatement: PreparedStatement
+) {
+    private var index = 1
+
+    fun string(value: String) =
+        preparedStatement.setString(index++, value)
+
+    fun nullableString(value: String?) =
+        preparedStatement.setString(index++, value)
+
+    fun uuid(value: UUID) =
+        preparedStatement.setObject(index++, value)
+
+    fun timestamptz(value: OffsetDateTime) =
+        preparedStatement.setObject(index++, value)
+}
 

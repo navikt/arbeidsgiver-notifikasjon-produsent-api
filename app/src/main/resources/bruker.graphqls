@@ -17,11 +17,11 @@ type Beskjed implements Klikkbar {
     merkelapp: String! tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
-    id: ID!
+    uuid: ID!
 }
 
 type Mutation {
-    notifikasjonKlikketPaa(id: ID!): NotifikasjonKlikketPaaResultat!
+    notifikasjonKlikketPaa(uuid: ID!): NotifikasjonKlikketPaaResultat!
 }
 
 type NotifikasjonKlikketPaaResultat {

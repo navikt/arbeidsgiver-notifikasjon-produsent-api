@@ -21,6 +21,7 @@ class QueryModelTests : DescribeSpec({
     describe("QueryModel") {
         describe("#oppdaterModellEtterBeskjedOpprettet()") {
             context("når event er BeskjedOpprettet") {
+                val uuid = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
                 val mottaker = FodselsnummerMottaker(
                     fodselsnummer = "314",
                     virksomhetsnummer = "1337"
@@ -29,7 +30,7 @@ class QueryModelTests : DescribeSpec({
                     merkelapp = "foo",
                     eksternId = "42",
                     mottaker = mottaker,
-                    guid = UUID.randomUUID(),
+                    uuid = uuid,
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",
@@ -53,7 +54,7 @@ class QueryModelTests : DescribeSpec({
                         grupperingsid = "gr1",
                         lenke = "foo.no/bar",
                         opprettetTidspunkt = event.opprettetTidspunkt,
-                        id = "1"
+                        uuid = uuid
                     )
                 }
 
@@ -78,7 +79,7 @@ class QueryModelTests : DescribeSpec({
                             grupperingsid = "gr1",
                             lenke = "foo.no/bar",
                             opprettetTidspunkt = event.opprettetTidspunkt,
-                            id = "1"
+                            uuid = uuid
                         )
                     }
                 }
@@ -106,7 +107,7 @@ class QueryModelTests : DescribeSpec({
                             grupperingsid = "gr1",
                             lenke = "foo.no/bar",
                             opprettetTidspunkt = event.opprettetTidspunkt,
-                            id = "1"
+                            uuid = uuid
                         )
                     }
                 }

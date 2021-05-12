@@ -5,6 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
 import java.time.OffsetDateTime
+import java.util.*
 
 class QueryModel(
     private val database: Database
@@ -25,21 +26,12 @@ class QueryModel(
         val eksternId: String,
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
-        val id: String
+        val uuid: UUID
     )
 
-    data class QueryBeskjed(
-        val merkelapp: String,
-        val tekst: String,
-        val grupperingsid: String? = null,
-        val lenke: String,
-        val eksternId: String,
-        val mottaker: Mottaker,
-        val opprettetTidspunkt: OffsetDateTime,
-    )
-
-    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryBeskjed =
-        QueryBeskjed(
+    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryBeskjedMedId =
+        QueryBeskjedMedId(
+            uuid = this.uuid,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
             grupperingsid = this.grupperingsid,
@@ -85,7 +77,7 @@ class QueryModel(
             order by opprettet_tidspunkt desc
             limit 50
         """, {
-            setString(1, fnr)
+            string(fnr)
         }) {
             QueryBeskjedMedId(
                 merkelapp = getString("merkelapp"),
@@ -95,16 +87,16 @@ class QueryModel(
                 eksternId = getString("ekstern_id"),
                 mottaker = objectMapper.readValue(getString("mottaker")),
                 opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                id = getString("id")
+                uuid = getObject("uuid", UUID::class.java)
             )
         }
     }
 
-    suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: String): String? =
+    suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
             database.runNonTransactionalQuery("""
                 SELECT virksomhetsnummer FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ? LIMIT 1
             """, {
-                setString(1, notifikasjonsid)
+                uuid(notifikasjonsid)
             }) {
                 getString("virksomhetsnummer")!!
             }.getOrNull(0)
@@ -122,8 +114,8 @@ class QueryModel(
             ON CONFLICT ON CONSTRAINT brukerklikket_unique
             DO NOTHING
         """) {
-            setString(1, brukerKlikket.fnr)
-            setString(2, brukerKlikket.notifikasjonsId)
+            string(brukerKlikket.fnr)
+            uuid(brukerKlikket.notifikasjonsId)
         }
     }
 
@@ -148,6 +140,7 @@ class QueryModel(
             executeCommand("""
                 insert into notifikasjon(
                     koordinat,
+                    uuid,
                     merkelapp,
                     tekst,
                     grupperingsid,
@@ -156,23 +149,24 @@ class QueryModel(
                     opprettet_tidspunkt,
                     mottaker
                 )
-                values (?, ?, ?, ?, ?, ?, ?, ?::json);
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?::json);
             """) {
-                setString(1, koordinat.toString())
-                setString(2, nyBeskjed.merkelapp)
-                setString(3, nyBeskjed.tekst)
-                setString(4, nyBeskjed.grupperingsid)
-                setString(5, nyBeskjed.lenke)
-                setString(6, nyBeskjed.eksternId)
-                setObject(7, nyBeskjed.opprettetTidspunkt)
-                setString(8, objectMapper.writeValueAsString(nyBeskjed.mottaker))
+                string(koordinat.toString())
+                uuid(nyBeskjed.uuid)
+                string(nyBeskjed.merkelapp)
+                string(nyBeskjed.tekst)
+                nullableString(nyBeskjed.grupperingsid)
+                string(nyBeskjed.lenke)
+                string(nyBeskjed.eksternId)
+                timestamptz(nyBeskjed.opprettetTidspunkt)
+                string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
             }
 
             executeCommand("""
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
             """) {
-                setString(1, beskjedOpprettet.guid.toString())
-                setString(2, beskjedOpprettet.virksomhetsnummer)
+                uuid(beskjedOpprettet.uuid)
+                string(beskjedOpprettet.virksomhetsnummer)
             }
         }
     }

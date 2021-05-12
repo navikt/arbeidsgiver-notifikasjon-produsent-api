@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -74,7 +75,7 @@ class ProdusentApiTests : DescribeSpec({
                             }
                             opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                         }) {
-                            id
+                            uuid
                         }
                     }
                 """.trimIndent()
@@ -89,9 +90,8 @@ class ProdusentApiTests : DescribeSpec({
             }
 
             it("respons inneholder forventet data") {
-                response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed").let {
-                    it.id shouldNot beBlank()
-                }
+                val nyBeskjed = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
+                nyBeskjed.uuid shouldNot beNull()
             }
 
             it("sends message to kafka") {
@@ -101,7 +101,7 @@ class ProdusentApiTests : DescribeSpec({
                 value should beOfType<Hendelse.BeskjedOpprettet>()
                 val event = value as Hendelse.BeskjedOpprettet
                 val nyBeskjed = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
-                event.guid.toString() shouldBe nyBeskjed.id
+                event.uuid shouldBe nyBeskjed.uuid
                 event.lenke shouldBe "https://foo.bar"
                 event.tekst shouldBe "hello world"
                 event.merkelapp shouldBe "tag"
@@ -130,7 +130,7 @@ class ProdusentApiTests : DescribeSpec({
                                 }
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                             }) {
-                                id
+                                uuid
                                 errors {
                                     __typename
                                     feilmelding
@@ -143,7 +143,7 @@ class ProdusentApiTests : DescribeSpec({
                 context("response inneholder forventet data") {
                     val resultat = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
                     it("id er null") {
-                        resultat.id shouldBe null
+                        resultat.uuid shouldBe null
                     }
                     it("errors har forklarende feilmelding") {
                         resultat.errors shouldHaveSize 1

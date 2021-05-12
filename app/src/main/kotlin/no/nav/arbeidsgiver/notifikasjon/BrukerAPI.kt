@@ -8,6 +8,7 @@ import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.producer.Producer
 import java.time.OffsetDateTime
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 object BrukerAPI {
@@ -28,7 +29,7 @@ object BrukerAPI {
             val tekst: String,
             val lenke: String,
             val opprettetTidspunkt: OffsetDateTime,
-            val id: String,
+            val uuid: UUID,
             override val klikketPaa: Boolean = false
         ) : Notifikasjon(), Klikkbar
     }
@@ -81,7 +82,7 @@ object BrukerAPI {
                                     tekst = queryBeskjed.tekst,
                                     lenke = queryBeskjed.lenke,
                                     opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
-                                    id = queryBeskjed.id
+                                    uuid = queryBeskjed.uuid
                                 )
                             }
                     }
@@ -96,7 +97,7 @@ object BrukerAPI {
                 dataFetcher("notifikasjonKlikketPaa") { env ->
                     // TODO: er det riktig med GlobalScope her eller finnes en bedre måte?
                     GlobalScope.future(brukerGraphQLDispatcher) fetcher@{
-                        val notifikasjonsid = env.getTypedArgument<String>("id")
+                        val notifikasjonsid = env.getTypedArgument<UUID>("uuid")
                         val queryModel = queryModelFuture.await()
 
                         val virksomhetsnummer = queryModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)

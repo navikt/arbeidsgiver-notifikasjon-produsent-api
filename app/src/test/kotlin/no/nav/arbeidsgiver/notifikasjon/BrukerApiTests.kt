@@ -5,7 +5,6 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.coEvery
@@ -13,6 +12,7 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
 import java.time.OffsetDateTime
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.time.ExperimentalTime
 
@@ -52,6 +52,8 @@ class BrukerApiTests : DescribeSpec({
 
     describe("POST bruker-api /api/graphql") {
         context("Query.notifikasjoner") {
+            val uuid = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130003")
+
             val beskjed = QueryModel.QueryBeskjedMedId(
                 merkelapp = "foo",
                 tekst = "",
@@ -60,7 +62,7 @@ class BrukerApiTests : DescribeSpec({
                 eksternId = "",
                 mottaker = FodselsnummerMottaker("00000000000", "43"),
                 opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-                id = "1"
+                uuid = uuid
             )
             coEvery {
                 queryModel.hentNotifikasjoner(any(), any())
@@ -75,7 +77,7 @@ class BrukerApiTests : DescribeSpec({
                                 tekst
                                 merkelapp
                                 opprettetTidspunkt
-                                id
+                                uuid
                             }
                         }
                     }
@@ -94,8 +96,7 @@ class BrukerApiTests : DescribeSpec({
                 response.getTypedContent<List<BrukerAPI.Notifikasjon.Beskjed>>("notifikasjoner").let {
                     it shouldNot beEmpty()
                     it[0].merkelapp shouldBe beskjed.merkelapp
-                    it[0].id shouldNot beBlank()
-                    it[0].id shouldBe "1"
+                    it[0].uuid shouldBe uuid
                     it[0].klikketPaa shouldBe false
                 }
             }

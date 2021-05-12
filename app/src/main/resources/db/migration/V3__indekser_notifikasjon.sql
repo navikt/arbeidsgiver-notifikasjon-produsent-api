@@ -1,1 +1,0 @@
-CREATE INDEX idx_opprettet_tidspunkt ON notifikasjon (opprettet_tidspunkt);
