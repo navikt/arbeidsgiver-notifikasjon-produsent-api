@@ -20,7 +20,7 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
     val queryModel = QueryModel(database)
     listener(PostgresTestListener(database))
 
-    val engine by ktorEngine(
+    val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
             queryModelFuture = CompletableFuture.completedFuture(queryModel),
@@ -65,18 +65,17 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
             klikkMarkørFørKlikk shouldBe false
         }
 
-        context("og bruker har klikket") {
 
-            val brukerKlikket = Hendelse.BrukerKlikket(
-                virksomhetsnummer = virksomhetsnummer,
-                fnr = fnr,
-                notifikasjonsId = uuid
-            )
+        val brukerKlikket = Hendelse.BrukerKlikket(
+            virksomhetsnummer = virksomhetsnummer,
+            fnr = fnr,
+            notifikasjonsId = uuid
+        )
 
-            queryModel.oppdaterModellEtterBrukerKlikket(brukerKlikket)
+        queryModel.oppdaterModellEtterBrukerKlikket(brukerKlikket)
 
-            /* sjekk at beskjed ikke er klikket på */
-            val responseEtterKlikk = engine.brukerApi("""
+        /* sjekk at beskjed ikke er klikket på */
+        val responseEtterKlikk = engine.brukerApi("""
             {
                 notifikasjoner {
                     ...on Beskjed {
@@ -85,11 +84,10 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
                 }
             }
         """)
-            val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/0/klikketPaa")
+        val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/0/klikketPaa")
 
-            it("notifikasjon er klikket på") {
-                klikkMarkørEtterKlikk shouldBe true
-            }
+        it("notifikasjon er klikket på") {
+            klikkMarkørEtterKlikk shouldBe true
         }
     }
 })

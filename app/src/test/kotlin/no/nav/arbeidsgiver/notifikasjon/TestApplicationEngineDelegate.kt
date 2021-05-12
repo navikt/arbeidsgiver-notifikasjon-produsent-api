@@ -3,14 +3,50 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.auth0.jwt.JWT
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.JWTVerifier
-import io.kotest.core.TestConfiguration
+import io.kotest.core.listeners.TestListener
+import io.kotest.core.spec.Spec
+import io.ktor.application.*
 import io.ktor.auth.jwt.*
 import io.ktor.http.*
+import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
-import io.mockk.spyk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import kotlin.reflect.KProperty
+
+fun Spec.ktorTestServer(
+    brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
+    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context> = mockk(),
+    environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
+): TestApplicationEngine {
+    val engine = TestApplicationEngine(
+        environment = ApplicationEngineEnvironmentBuilder().build(environment)
+    )
+    listener(KtorTestListener(engine) {
+        httpServerSetup(
+            jwtAuthentication = NOOP_JWT_AUTHENTICATION,
+            brukerGraphQL = brukerGraphQL,
+            produsentGraphQL = produsentGraphQL
+        )
+    })
+    return engine
+}
+
+class KtorTestListener(
+    private val engine: TestApplicationEngine,
+    private val init: Application.() -> Unit
+) : TestListener {
+    override val name: String
+        get() = this::class.simpleName!!
+
+    override suspend fun beforeSpec(spec: Spec) {
+        engine.start()
+        engine.application.apply(init)
+    }
+
+    override suspend fun afterSpec(spec: Spec) {
+        engine.stop(0L, 0L)
+    }
+}
 
 const val PRODUSENT_HOST = "ag-notifikasjon-produsent-api.invalid"
 const val BRUKER_HOST = "ag-notifikasjon-bruker-api.invalid"
@@ -56,45 +92,6 @@ private val NOOP_JWT_AUTHENTICATION: JwtAuthentication = {
         JWTPrincipal(credentials.payload)
     }
 }
-
-class TestApplicationEngineDelegate(
-    context: TestConfiguration,
-    brukerGraphQL: TypedGraphQL<BrukerAPI.Context>,
-    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context>
-) {
-    lateinit var engine: TestApplicationEngine
-
-    init {
-        context.aroundTest { test ->
-            engine = TestApplicationEngine(createTestEnvironment {
-                log = spyk(log)
-            })
-            engine.start()
-            try {
-                engine.run {
-                    application.httpServerSetup(
-                        jwtAuthentication = NOOP_JWT_AUTHENTICATION,
-                        brukerGraphQL = brukerGraphQL,
-                        produsentGraphQL = produsentGraphQL
-                    )
-                    val (arg, body) = test
-                    body.invoke(arg)
-                }
-            } finally {
-                engine.stop(0L, 0L)
-            }
-        }
-    }
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): TestApplicationEngine {
-        return engine
-    }
-}
-
-fun TestConfiguration.ktorEngine(
-    brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
-    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context> = mockk()
-) =
-    TestApplicationEngineDelegate(this, brukerGraphQL, produsentGraphQL)
 
 typealias RequestConfig = TestApplicationRequest.() -> Unit
 

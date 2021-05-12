@@ -21,7 +21,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     val queryModel: QueryModel = mockk(relaxed = true)
     val kafkaProducer: Producer<KafkaKey, Hendelse> = mockk()
 
-    val engine by ktorEngine(
+    val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
             queryModelFuture = CompletableFuture.completedFuture(queryModel),

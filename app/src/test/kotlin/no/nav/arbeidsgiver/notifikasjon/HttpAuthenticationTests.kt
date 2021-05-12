@@ -6,7 +6,7 @@ import io.ktor.http.*
 import io.mockk.mockk
 
 class HttpAuthenticationTests: DescribeSpec({
-    val engine by ktorEngine()
+    val engine = ktorTestServer()
 
     describe("When calling graphql-endpoint without bearer token") {
         val result = engine.get("/api/ide", host = PRODUSENT_HOST)

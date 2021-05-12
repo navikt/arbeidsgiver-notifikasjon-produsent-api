@@ -22,7 +22,7 @@ class BrukerApiTests : DescribeSpec({
 
     val queryModel: QueryModel = mockk()
 
-    val engine by ktorEngine(
+    val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
             queryModelFuture = CompletableFuture.completedFuture(queryModel),

@@ -46,7 +46,7 @@ class ProdusentApiTests : DescribeSpec({
 
     val embeddedKafka = EmbeddedKafkaTestListener()
     listener(embeddedKafka)
-    val engine by ktorEngine(
+    val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
             queryModelFuture = mockk(),

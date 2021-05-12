@@ -8,7 +8,7 @@ import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 
 class CorrelationIdTests : DescribeSpec({
-    val engine by ktorEngine()
+    val engine = ktorTestServer()
 
     describe("correlation id handling") {
         context("when no callid given") {
