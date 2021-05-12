@@ -30,7 +30,7 @@ object BrukerAPI {
             val lenke: String,
             val opprettetTidspunkt: OffsetDateTime,
             val uuid: UUID,
-            override val klikketPaa: Boolean = false
+            override val klikketPaa: Boolean
         ) : Notifikasjon(), Klikkbar
     }
 
@@ -83,7 +83,8 @@ object BrukerAPI {
                                     tekst = queryBeskjed.tekst,
                                     lenke = queryBeskjed.lenke,
                                     opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
-                                    uuid = queryBeskjed.uuid
+                                    uuid = queryBeskjed.uuid,
+                                    klikketPaa = queryBeskjed.klikketPaa
                                 )
                             }
                     }

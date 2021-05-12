@@ -18,7 +18,7 @@ class QueryModel(
         val eksternId: String,
     )
 
-    data class QueryBeskjedMedId(
+    data class QueryBeskjed(
         val merkelapp: String,
         val tekst: String,
         val grupperingsid: String? = null,
@@ -26,11 +26,12 @@ class QueryModel(
         val eksternId: String,
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
-        val uuid: UUID
+        val uuid: UUID,
+        val klikketPaa: Boolean
     )
 
-    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryBeskjedMedId =
-        QueryBeskjedMedId(
+    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryBeskjed =
+        QueryBeskjed(
             uuid = this.uuid,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
@@ -39,6 +40,7 @@ class QueryModel(
             eksternId = this.eksternId,
             mottaker = this.mottaker,
             opprettetTidspunkt = this.opprettetTidspunkt,
+            klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
         )
 
     data class Tilgang(
@@ -52,7 +54,7 @@ class QueryModel(
     suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<Tilgang>
-    ): List<QueryBeskjedMedId> = timer.coRecord {
+    ): List<QueryBeskjed> = timer.coRecord {
         val tilgangerJsonB = tilganger.joinToString {
             "'${
                 objectMapper.writeValueAsString(
@@ -66,20 +68,25 @@ class QueryModel(
         }
 
         database.runNonTransactionalQuery("""
-            select * from notifikasjon
+            select noti.*, klikk.notifikasjonsid is not null as klikketPaa
+            from notifikasjon as noti
+            left outer join brukerklikk as klikk on
+                klikk.notifikasjonsid = noti.uuid
+                and klikk.fnr = ?
             where (
-                mottaker ->> '@type' = 'fodselsnummer'
-                and mottaker ->> 'fodselsnummer' = ?
-            ) 
-            or (
-                mottaker ->> '@type' = 'altinn'
-                and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
+                            mottaker ->> '@type' = 'fodselsnummer'
+                    and mottaker ->> 'fodselsnummer' = ?
+                )
+               or (
+                            mottaker ->> '@type' = 'altinn'
+                    and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
             order by opprettet_tidspunkt desc
             limit 50
         """, {
             string(fnr)
+            string(fnr)
         }) {
-            QueryBeskjedMedId(
+            QueryBeskjed(
                 merkelapp = getString("merkelapp"),
                 tekst = getString("tekst"),
                 grupperingsid = getString("grupperingsid"),
@@ -87,7 +94,8 @@ class QueryModel(
                 eksternId = getString("ekstern_id"),
                 mottaker = objectMapper.readValue(getString("mottaker")),
                 opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                uuid = getObject("uuid", UUID::class.java)
+                uuid = getObject("uuid", UUID::class.java),
+                klikketPaa = getBoolean("klikketPaa")
             )
         }
     }

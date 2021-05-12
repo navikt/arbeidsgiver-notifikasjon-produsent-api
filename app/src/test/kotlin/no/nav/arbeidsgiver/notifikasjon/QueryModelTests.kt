@@ -46,7 +46,7 @@ class QueryModelTests : DescribeSpec({
                             mottaker.fodselsnummer,
                             emptyList()
                         )
-                    notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjedMedId(
+                    notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(
                         merkelapp = "foo",
                         eksternId = "42",
                         mottaker = mottaker,
@@ -54,7 +54,8 @@ class QueryModelTests : DescribeSpec({
                         grupperingsid = "gr1",
                         lenke = "foo.no/bar",
                         opprettetTidspunkt = event.opprettetTidspunkt,
-                        uuid = uuid
+                        uuid = uuid,
+                        klikketPaa = false
                     )
                 }
 
@@ -71,7 +72,7 @@ class QueryModelTests : DescribeSpec({
                                 mottaker.fodselsnummer,
                                 emptyList()
                             )
-                        notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjedMedId(
+                        notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(
                             merkelapp = "foo",
                             eksternId = "42",
                             mottaker = mottaker,
@@ -79,7 +80,8 @@ class QueryModelTests : DescribeSpec({
                             grupperingsid = "gr1",
                             lenke = "foo.no/bar",
                             opprettetTidspunkt = event.opprettetTidspunkt,
-                            uuid = uuid
+                            uuid = uuid,
+                            klikketPaa = false
                         )
                     }
                 }
@@ -99,7 +101,7 @@ class QueryModelTests : DescribeSpec({
                                 mottaker.fodselsnummer,
                                 emptyList()
                             )
-                        notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjedMedId(
+                        notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(
                             merkelapp = "foo",
                             eksternId = "42",
                             mottaker = mottaker,
@@ -107,7 +109,8 @@ class QueryModelTests : DescribeSpec({
                             grupperingsid = "gr1",
                             lenke = "foo.no/bar",
                             opprettetTidspunkt = event.opprettetTidspunkt,
-                            uuid = uuid
+                            uuid = uuid,
+                            klikketPaa = false
                         )
                     }
                 }

@@ -6,11 +6,9 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.ktor.http.*
-import io.ktor.server.testing.*
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -39,7 +37,7 @@ class BrukerApiTests : DescribeSpec({
         context("Query.notifikasjoner") {
             val uuid = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130003")
 
-            val beskjed = QueryModel.QueryBeskjedMedId(
+            val beskjed = QueryModel.QueryBeskjed(
                 merkelapp = "foo",
                 tekst = "",
                 grupperingsid = "",
@@ -47,7 +45,8 @@ class BrukerApiTests : DescribeSpec({
                 eksternId = "",
                 mottaker = FodselsnummerMottaker("00000000000", "43"),
                 opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-                uuid = uuid
+                uuid = uuid,
+                klikketPaa = false
             )
             coEvery {
                 queryModel.hentNotifikasjoner(any(), any())

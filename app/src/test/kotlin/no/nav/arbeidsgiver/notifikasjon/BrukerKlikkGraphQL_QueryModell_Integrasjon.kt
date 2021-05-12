@@ -54,11 +54,6 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
                 notifikasjoner {
                     ...on Beskjed {
                         klikketPaa
-                        lenke
-                        tekst
-                        merkelapp
-                        opprettetTidspunkt
-                        uuid
                     }
                 }
             }
@@ -70,18 +65,31 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
             klikkMarkørFørKlikk shouldBe false
         }
 
-        val brukerKlikket = Hendelse.BrukerKlikket(
-            virksomhetsnummer = virksomhetsnummer,
-            fnr = fnr,
-            notifikasjonsId = uuid
-        )
-        queryModel.oppdaterModellEtterBrukerKlikket(brukerKlikket)
+        context("og bruker har klikket") {
 
-        val klikkMarkørEtterKlikk = response.getTypedContent<Boolean>("/notifikasjoner/0/klikketPaa")
+            val brukerKlikket = Hendelse.BrukerKlikket(
+                virksomhetsnummer = virksomhetsnummer,
+                fnr = fnr,
+                notifikasjonsId = uuid
+            )
 
-        /* Ignored: bruker-api-endepunktet har ikke implementert at klikk-status fra querymodel sendes.*/
-        xit("notifikasjon er klikket på") {
-            klikkMarkørEtterKlikk shouldBe true
+            queryModel.oppdaterModellEtterBrukerKlikket(brukerKlikket)
+
+            /* sjekk at beskjed ikke er klikket på */
+            val responseEtterKlikk = engine.brukerApi("""
+            {
+                notifikasjoner {
+                    ...on Beskjed {
+                        klikketPaa
+                    }
+                }
+            }
+        """)
+            val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/0/klikketPaa")
+
+            it("notifikasjon er klikket på") {
+                klikkMarkørEtterKlikk shouldBe true
+            }
         }
     }
 })
