@@ -30,7 +30,7 @@ data class GraphQLError(
 )
 
 fun String.ensurePrefix(prefix: String) =
-    if (this.startsWith(prefix)) this else prefix + this
+    prefix + removePrefix(prefix)
 
 inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T {
     val errors = getGraphqlErrors()

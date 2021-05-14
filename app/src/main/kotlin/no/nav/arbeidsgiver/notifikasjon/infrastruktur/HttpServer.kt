@@ -1,6 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.auth0.jwk.JwkProviderBuilder
+import com.auth0.jwt.interfaces.JWTVerifier
+import com.auth0.jwt.interfaces.Verification
 import com.fasterxml.jackson.core.JsonProcessingException
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -33,38 +35,69 @@ import kotlin.coroutines.CoroutineContext
 
 private val log = LoggerFactory.getLogger("HttpServer")!!
 
-data class JwtAuthenticationParameters(
-    val clientId: String,
-    val jwksUri: String,
-    val issuer: String
-)
+typealias JWTAuthentication = JWTAuthenticationProvider.Configuration.() -> Unit
 
-typealias JwtAuthentication = JWTAuthenticationProvider.Configuration.(JwtAuthenticationParameters) -> Unit
-val STANDARD_JWT_AUTHENTICATION: JwtAuthentication = { parameter ->
-    verifier(
-        JwkProviderBuilder(URL(parameter.jwksUri))
-            .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
-            .rateLimited(
-                10,
-                1,
-                TimeUnit.MINUTES
-            ) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
-            .build(),
-        parameter.issuer
-    )
+/* Følgende støttes:
+ * - loginservice
+ * - tokenX
+ */
+val STANDARD_BRUKER_AUTHENTICATION: JWTAuthentication = {
+    val clientId = "0090b6e1-ffcc-4c37-bc21-049f7d1f0fe5"
+    val jwksUri = "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/discovery/v2.0/keys?p=b2c_1a_idporten_ver1"
+    val issuer = "https://navtestb2c.b2clogin.com/d38f25aa-eab8-4c50-9f28-ebf92c1256f2/v2.0/"
+
+    val jwkProvider = JwkProviderBuilder(URL(jwksUri))
+        .cached(10, 24, TimeUnit.HOURS)
+        .rateLimited(
+            10,
+            1,
+            TimeUnit.MINUTES
+        )
+        .build()
+
+    verifier(jwkProvider, issuer)
 
     validate { credentials ->
         try {
-            log.debug(
-                "validate credentials -> aud:{} iss:{} parameter:{}",
-                credentials.payload.audience, credentials.payload.issuer, parameter
-            )
-            requireNotNull(credentials.payload.audience) {
-                "Auth: Missing audience in token"
-            }
-            require(credentials.payload.audience.contains(parameter.clientId)) {
+            val audience = credentials.payload.audience ?: emptyList()
+            require(audience.contains(clientId)) {
                 "Auth: Valid audience not found in claims"
             }
+
+            JWTPrincipal(credentials.payload)
+        } catch (e: Throwable) {
+            log.info("invalid credentials: {}", e.message)
+            null
+        }
+    }
+}
+
+/*
+ * AzureAD.
+ */
+val STANDARD_PRODUSENT_AUTHENTICATION: JWTAuthentication = {
+    val clientId = "produsent-api" /* System.getenv("AZURE_APP_CLIENT_ID") */
+    val jwksUri = "https://fakedings.dev-gcp.nais.io/default/jwks" /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
+    val issuer = "https://fakedings.dev-gcp.nais.io/fake" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
+
+    val jwkProvider = JwkProviderBuilder(URL(jwksUri))
+        .cached(10, 24, TimeUnit.HOURS)
+        .rateLimited(
+            10,
+            1,
+            TimeUnit.MINUTES
+        )
+        .build()
+
+    verifier(jwkProvider, issuer)
+
+    validate { credentials ->
+        try {
+            val audience = credentials.payload.audience ?: emptyList()
+            require(audience.contains(clientId)) {
+                "Auth: Valid audience not found in claims"
+            }
+
             JWTPrincipal(credentials.payload)
         } catch (e: Throwable) {
             log.info("invalid credentials: {}", e.message)
@@ -74,7 +107,8 @@ val STANDARD_JWT_AUTHENTICATION: JwtAuthentication = { parameter ->
 }
 
 fun Application.httpServerSetup(
-    jwtAuthentication: JwtAuthentication = STANDARD_JWT_AUTHENTICATION,
+    brukerAutentisering: JWTAuthentication = STANDARD_BRUKER_AUTHENTICATION,
+    produsentAutentisering: JWTAuthentication = STANDARD_PRODUSENT_AUTHENTICATION,
     produsentGraphQL: TypedGraphQL<ProdusentAPI.Context>,
     brukerGraphQL: TypedGraphQL<BrukerAPI.Context>,
 ) {
@@ -161,18 +195,10 @@ fun Application.httpServerSetup(
 
     install(Authentication) {
         jwt(name = "produsent") {
-            jwtAuthentication(JwtAuthenticationParameters(
-                clientId = "produsent-api", /* System.getenv("AZURE_APP_CLIENT_ID") */
-                jwksUri = "https://fakedings.dev-gcp.nais.io/default/jwks", /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
-                issuer = "https://fakedings.dev-gcp.nais.io/fake" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
-            ))
+            produsentAutentisering()
         }
         jwt(name = "bruker") {
-            jwtAuthentication(JwtAuthenticationParameters(
-                clientId = "0090b6e1-ffcc-4c37-bc21-049f7d1f0fe5", /* System.getenv("AZURE_APP_CLIENT_ID") */
-                jwksUri = "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/discovery/v2.0/keys?p=b2c_1a_idporten_ver1", /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
-                issuer = "https://navtestb2c.b2clogin.com/d38f25aa-eab8-4c50-9f28-ebf92c1256f2/v2.0/" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
-            ))
+            brukerAutentisering()
         }
     }
 
@@ -246,7 +272,12 @@ fun Route.brukerGraphQL(
             val token = call.principal<JWTPrincipal>()!!
             val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
             val request = call.receive<GraphQLRequest>()
-            val result = graphQL.executeAsync(request, BrukerAPI.Context(token.payload.subject, authHeader))
+            val context = BrukerAPI.Context(
+                token.payload.subject,
+                authHeader,
+                coroutineScope = this
+            )
+            val result = graphQL.executeAsync(request, context)
             call.respond(result)
         }
     }
@@ -258,7 +289,10 @@ fun Route.produsentGraphQL(
 ) {
     post(path) {
         withContext(this.coroutineContext + produsentGraphQLDispatcher) {
-            val context = ProdusentAPI.Context(payload = call.principal<JWTPrincipal>()!!.payload)
+            val context = ProdusentAPI.Context(
+                payload = call.principal<JWTPrincipal>()!!.payload,
+                coroutineScope = this
+            )
             val request = call.receive<GraphQLRequest>()
             val result = graphQL.execute(request, context)
             call.respond(result)

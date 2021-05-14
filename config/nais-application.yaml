@@ -25,6 +25,8 @@ spec:
     application:
       enabled: true
       tenant: trygdeetaten.no
+  tokenx:
+    enabled: true
   kafka:
     pool: nav-dev
   gcp:
@@ -50,3 +52,4 @@ spec:
       value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dio.ktor.development=true
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
+    - configmap: loginservice-idporten

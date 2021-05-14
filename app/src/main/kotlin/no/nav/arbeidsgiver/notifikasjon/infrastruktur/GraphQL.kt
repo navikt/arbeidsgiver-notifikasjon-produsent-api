@@ -4,14 +4,16 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import graphql.ExecutionInput
 import graphql.GraphQL
 import graphql.GraphQL.newGraphQL
-import graphql.GraphQLError
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeRuntimeWiring
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T =
     objectMapper.convertValue(this.getArgument(name))
@@ -20,6 +22,19 @@ fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Build
     this.type(typeName) {
         it.apply {
             config()
+        }
+    }
+}
+
+interface WithCoroutineScope {
+    val coroutineScope: CoroutineScope
+}
+
+fun <T> TypeRuntimeWiring.Builder.coDataFetcher(fieldName: String, fetcher: suspend (DataFetchingEnvironment) -> T) {
+    dataFetcher(fieldName) { env ->
+        val ctx = env.getContext<WithCoroutineScope>()
+        ctx.coroutineScope.future(Dispatchers.Default) {
+            fetcher(env)
         }
     }
 }
@@ -54,7 +69,7 @@ data class GraphQLRequest(
     val variables: Map<String, String>? = null,
 )
 
-class TypedGraphQL<T>(
+class TypedGraphQL<T: WithCoroutineScope>(
     private val graphQL: GraphQL
 ) {
     fun execute(request: GraphQLRequest, context: T): Any {

@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture
 class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
 
     val altinn = object : Altinn {
-        override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
+        override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
 
     val database = runBlocking { Database.openDatabase() }

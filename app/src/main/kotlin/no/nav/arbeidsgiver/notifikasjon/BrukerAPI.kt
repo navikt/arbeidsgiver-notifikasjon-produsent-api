@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -16,8 +17,9 @@ object BrukerAPI {
 
     data class Context(
         val fnr: String,
-        val token: String
-    )
+        val token: String,
+        override val coroutineScope: CoroutineScope
+    ): WithCoroutineScope
 
     sealed interface Klikkbar {
         val klikketPaa: Boolean
@@ -51,7 +53,7 @@ object BrukerAPI {
     fun createBrukerGraphQL(
         altinn: Altinn,
         queryModelFuture: CompletableFuture<QueryModel>,
-        kafkaProducer: Producer<KafkaKey, Hendelse>
+        kafkaProducer: CoroutineProducer<KafkaKey, Hendelse>
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphqls") {
             scalar(Scalars.ISO8601DateTime)
@@ -65,29 +67,22 @@ object BrukerAPI {
                     "pong"
                 }
 
-                dataFetcher("notifikasjoner") {
-                    val tilganger = altinn.hentAlleTilganger(
-                        it.getContext<Context>().fnr,
-                        it.getContext<Context>().token
-                    )
+                coDataFetcher("notifikasjoner") { env ->
+                    val context = env.getContext<Context>()
+                    val tilganger = altinn.hentAlleTilganger(context.fnr, context.token)
 
-                    // TODO: er det riktig med GlobalScope her eller finnes en bedre måte?
-                    GlobalScope.future(brukerGraphQLDispatcher) {
-                        queryModelFuture.await()
-                            .hentNotifikasjoner(
-                                it.getContext<Context>().fnr,
-                                tilganger
-                            ).map { queryBeskjed ->
-                                Notifikasjon.Beskjed(
-                                    merkelapp = queryBeskjed.merkelapp,
-                                    tekst = queryBeskjed.tekst,
-                                    lenke = queryBeskjed.lenke,
-                                    opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
-                                    uuid = queryBeskjed.uuid,
-                                    klikketPaa = queryBeskjed.klikketPaa
-                                )
-                            }
-                    }
+                    return@coDataFetcher queryModelFuture.await()
+                        .hentNotifikasjoner(context.fnr, tilganger)
+                        .map { queryBeskjed ->
+                            Notifikasjon.Beskjed(
+                                merkelapp = queryBeskjed.merkelapp,
+                                tekst = queryBeskjed.tekst,
+                                lenke = queryBeskjed.lenke,
+                                opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
+                                uuid = queryBeskjed.uuid,
+                                klikketPaa = queryBeskjed.klikketPaa
+                            )
+                        }
                 }
 
                 dataFetcher("whoami") {
@@ -96,31 +91,29 @@ object BrukerAPI {
             }
 
             wire("Mutation") {
-                dataFetcher("notifikasjonKlikketPaa") { env ->
-                    // TODO: er det riktig med GlobalScope her eller finnes en bedre måte?
-                    GlobalScope.future(brukerGraphQLDispatcher) fetcher@{
-                        val notifikasjonsid = env.getTypedArgument<UUID>("uuid")
-                        val queryModel = queryModelFuture.await()
+                coDataFetcher("notifikasjonKlikketPaa") { env ->
+                    val context = env.getContext<Context>()
+                    val notifikasjonsid = env.getTypedArgument<UUID>("uuid")
+                    val queryModel = queryModelFuture.await()
 
-                        val virksomhetsnummer = queryModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
-                            ?: return@fetcher NotifikasjonKlikketPaaResultat(
-                                errors = listOf(MutationError.UgyldigId(""))
-                            )
-
-                        val hendelse = Hendelse.BrukerKlikket(
-                            notifikasjonsId = notifikasjonsid,
-                            fnr = env.getContext<Context>().fnr,
-                            virksomhetsnummer = virksomhetsnummer
+                    val virksomhetsnummer = queryModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
+                        ?: return@coDataFetcher NotifikasjonKlikketPaaResultat(
+                            errors = listOf(MutationError.UgyldigId(""))
                         )
 
-                        kafkaProducer.brukerKlikket(hendelse)
+                    val hendelse = Hendelse.BrukerKlikket(
+                        notifikasjonsId = notifikasjonsid,
+                        fnr = context.fnr,
+                        virksomhetsnummer = virksomhetsnummer
+                    )
 
-                        queryModel.oppdaterModellEtterBrukerKlikket(hendelse)
+                    kafkaProducer.brukerKlikket(hendelse)
 
-                        NotifikasjonKlikketPaaResultat(
-                            errors = listOf()
-                        )
-                    }
+                    queryModel.oppdaterModellEtterBrukerKlikket(hendelse)
+
+                    NotifikasjonKlikketPaaResultat(
+                        errors = listOf()
+                    )
                 }
             }
         }

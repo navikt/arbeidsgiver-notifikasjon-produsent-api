@@ -8,10 +8,7 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.producer.Producer
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -19,7 +16,7 @@ import java.util.concurrent.CompletableFuture
 class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     val altinn: Altinn = mockk()
     val queryModel: QueryModel = mockk(relaxed = true)
-    val kafkaProducer: Producer<KafkaKey, Hendelse> = mockk()
+    val kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = mockk()
 
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
@@ -30,8 +27,8 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
         produsentGraphQL = mockk()
     )
 
-    mockkStatic(Producer<KafkaKey, Hendelse>::brukerKlikket)
-    every { any<Producer<KafkaKey, Hendelse>>().brukerKlikket(any()) } returns Unit
+    mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::brukerKlikket)
+    coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().brukerKlikket(any()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -81,8 +78,8 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
             }
 
             it("Event produseres på kafka") {
-                verify {
-                    any<Producer<KafkaKey, Hendelse>>().brukerKlikket(
+                coVerify {
+                    any<CoroutineProducer<KafkaKey, Hendelse>>().brukerKlikket(
                         withArg(brukerKlikketMatcher)
                     )
                 }

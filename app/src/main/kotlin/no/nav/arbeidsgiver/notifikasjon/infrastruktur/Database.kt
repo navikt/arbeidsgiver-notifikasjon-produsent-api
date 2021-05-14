@@ -6,23 +6,21 @@ import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
 import org.flywaydb.core.Flyway
-import org.flywaydb.core.api.configuration.FluentConfiguration
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.util.*
-import javax.sql.DataSource
 
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
  * takes care of of cleaning up all resources, and where it's clear whether you
  * are running a single command or a transaction.
  */
-@JvmInline
-value class Database private constructor(
-    private val dataSource: DataSource
+class Database private constructor(
+    private val dataSource: NonBlockingDataSource
 ) {
     companion object {
         private val log = logger()
@@ -54,20 +52,21 @@ value class Database private constructor(
                 delay(1000)
             }
 
-            val dataSource = HikariDataSource(hikariConfig)
-            Flyway.configure()
-                .dataSource(dataSource)
-                .load()
-                .migrate()
+            val dataSource = NonBlockingDataSource(HikariDataSource(hikariConfig))
+            dataSource.withFlyway {
+                migrate()
+            }
             return Database(dataSource)
         }
 
-        private fun HikariConfig.connectionPossible(): Boolean {
+        private suspend fun HikariConfig.connectionPossible(): Boolean {
             log.info("attempting database connection")
             return try {
-                DriverManager.getConnection(jdbcUrl, username, password).use { connection ->
-                    connection.createStatement().use { test ->
-                        test.execute("select 1")
+                withContext(Dispatchers.IO) {
+                    DriverManager.getConnection(jdbcUrl, username, password).use { connection ->
+                        connection.createStatement().use { statement ->
+                            statement.execute("select 1")
+                        }
                     }
                 }
                 log.info("attempting database connection: success")
@@ -84,14 +83,14 @@ value class Database private constructor(
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> =
-        withConnection {
+        dataSource.withConnection {
             Transaction(this).runQuery(sql, setup, transform)
         }
 
     suspend fun nonTransactionalCommand(
         sql: String,
         setup: ParameterSetters.() -> Unit = {},
-    ): Int = withConnection {
+    ): Int = dataSource.withConnection {
         Transaction(this).executeCommand(sql, setup)
     }
 
@@ -99,7 +98,7 @@ value class Database private constructor(
         rollback: (e: Exception) -> T,
         body: Transaction.() -> T
     ): T =
-        withConnection {
+        dataSource.withConnection {
             val savedAutoCommit = autoCommit
             autoCommit = false
 
@@ -115,16 +114,10 @@ value class Database private constructor(
             }
         }
 
-    private suspend fun <T> withConnection(body: suspend Connection.() -> T): T =
-        withContext(Dispatchers.IO) {
-            dataSource.connection.use { connection ->
-                body(connection)
-            }
-        }
+    suspend fun withFlyway(body: Flyway.() -> Unit) {
+        dataSource.withFlyway(body)
+    }
 
-    /* Only used in unit tests. */
-    fun flyway(): FluentConfiguration =
-        Flyway.configure().dataSource(dataSource)
 }
 
 

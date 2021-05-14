@@ -7,7 +7,6 @@ import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
@@ -16,12 +15,9 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
 import java.time.OffsetDateTime
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 import kotlin.time.toJavaDuration
-
 
 fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResponse {
     return post(
@@ -41,7 +37,7 @@ fun TestApplicationEngine.produsentApi(req: String): TestApplicationResponse {
 @ExperimentalTime
 class ProdusentApiTests : DescribeSpec({
     val altinn = object : Altinn {
-        override fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
+        override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
 
     val embeddedKafka = EmbeddedKafkaTestListener()

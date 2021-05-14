@@ -9,11 +9,9 @@ class PostgresTestListener(private val database: Database): TestListener {
         get() = "PostgresTestListener"
 
     override suspend fun beforeSpec(spec: Spec) {
-        database.flyway()
-            .load()
-            .apply {
-                clean()
-                migrate()
-            }
+        database.withFlyway {
+            clean()
+            migrate()
+        }
     }
 }

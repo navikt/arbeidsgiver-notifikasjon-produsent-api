@@ -3,10 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.auth0.jwt.interfaces.Payload
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import graphql.schema.DataFetcher
-import graphql.schema.GraphQLInputValueDefinition
+import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import org.apache.kafka.clients.producer.Producer
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -16,8 +14,9 @@ object ProdusentAPI {
     data class Context(
         val payload: Payload,
         val subject: String = payload.subject,
-        val produsentId: String = "iss:${payload.issuer} sub:${payload.subject}"
-    )
+        val produsentId: String = "iss:${payload.issuer} sub:${payload.subject}",
+        override val coroutineScope: CoroutineScope
+    ): WithCoroutineScope
 
     data class FnrmottakerInput(
         val fodselsnummer: String,
@@ -102,29 +101,8 @@ object ProdusentAPI {
         ) : MutationError()
     }
 
-
-    private fun nyBeskjedMutation(kafkaProducer: Producer<KafkaKey, Hendelse>) = DataFetcher {
-        val nyBeskjed = it.getTypedArgument<BeskjedInput>("nyBeskjed")
-        val produsentMerkelapp = ProdusentRegister.finn(it.getContext<Context>().subject)
-        if (!produsentMerkelapp.har(nyBeskjed.merkelapp)) {
-            BeskjedResultat(
-                errors = listOf(
-                    MutationError.UgyldigMerkelapp("""
-                | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentMerkelapp.produsent}'. 
-                | Gyldige merkelapper er: ${produsentMerkelapp.merkelapper}
-                """.trimMargin())
-                )
-            )
-        } else {
-            val id = UUID.randomUUID()
-            log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
-            kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
-            BeskjedResultat(id)
-        }
-    }
-
     fun newGraphQL(
-        kafkaProducer: Producer<KafkaKey, Hendelse> = createKafkaProducer()
+        kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer()
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphqls") {
 
@@ -143,7 +121,28 @@ object ProdusentAPI {
             }
 
             wire("Mutation") {
-                dataFetcher("nyBeskjed", nyBeskjedMutation(kafkaProducer))
+                coDataFetcher("nyBeskjed")  { env ->
+                    val nyBeskjed = env.getTypedArgument<BeskjedInput>("nyBeskjed")
+                    val context = env.getContext<Context>()
+
+                    val produsentMerkelapp = ProdusentRegister.finn(context.subject)
+
+                    if (!produsentMerkelapp.har(nyBeskjed.merkelapp)) {
+                        return@coDataFetcher BeskjedResultat(
+                            errors = listOf(
+                                MutationError.UgyldigMerkelapp("""
+                                    | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentMerkelapp.produsent}'. 
+                                    | Gyldige merkelapper er: ${produsentMerkelapp.merkelapper}
+                                    """.trimMargin())
+                            )
+                        )
+                    }
+
+                    val id = UUID.randomUUID()
+                    log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
+                    kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
+                    return@coDataFetcher BeskjedResultat(id)
+                }
             }
         }
     )
