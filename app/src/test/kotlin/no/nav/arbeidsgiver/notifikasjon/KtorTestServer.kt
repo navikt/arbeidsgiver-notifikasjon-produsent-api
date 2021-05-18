@@ -66,7 +66,7 @@ object LocalhostIssuer {
         }
 }
 
-private val LOCALHOST_AUTHENTICATION: JWTAuthentication = {
+val LOCALHOST_AUTHENTICATION: JWTAuthentication = {
     verifier(JWT.require(LocalhostIssuer.algorithm)
         .withIssuer(LocalhostIssuer.issuer)
         .build()

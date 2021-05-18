@@ -12,7 +12,12 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 object Main {
     val log = logger()
 
-    fun main() {
+    fun main(
+        brukerAutentisering: JWTAuthentication = STANDARD_BRUKER_AUTHENTICATION,
+        produsentAutentisering: JWTAuthentication = STANDARD_PRODUSENT_AUTHENTICATION,
+        altinn: Altinn = AltinnImpl,
+        httpPort: Int = 8080
+    ) {
         runBlocking(Dispatchers.Default) {
             val queryModelAsync = async {
                 try {
@@ -35,18 +40,20 @@ object Main {
             }
 
             launch {
-                val httpServer = embeddedServer(Netty, port = 8080, configure = {
+                val httpServer = embeddedServer(Netty, port = httpPort, configure = {
                     connectionGroupSize = 16
                     callGroupSize = 16
                     workerGroupSize = 16
                 }) {
                     httpServerSetup(
+                        brukerAutentisering = brukerAutentisering,
+                        produsentAutentisering = produsentAutentisering,
                         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-                            altinn = AltinnImpl,
+                            altinn = altinn,
                             queryModelFuture = queryModelAsync.asCompletableFuture(),
                             kafkaProducer = createKafkaProducer()
                         ),
-                        produsentGraphQL = ProdusentAPI.newGraphQL(createKafkaProducer())
+                        produsentGraphQL = ProdusentAPI.newGraphQL(createKafkaProducer()),
                     )
                 }
                 httpServer.start(wait = true)

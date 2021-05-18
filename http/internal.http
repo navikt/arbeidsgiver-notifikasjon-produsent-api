@@ -1,7 +1,7 @@
 GET http://localhost:8080/internal/alive
 
 ###
-GET localhost:8080/internal/ready
+GET localhost:8081/internal/ready
 
 ###
 GET localhost:8080/internal/alive

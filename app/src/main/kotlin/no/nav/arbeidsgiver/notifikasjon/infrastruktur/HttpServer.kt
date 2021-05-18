@@ -107,15 +107,14 @@ val STANDARD_PRODUSENT_AUTHENTICATION: JWTAuthentication = {
 }
 
 fun Application.httpServerSetup(
-    brukerAutentisering: JWTAuthentication = STANDARD_BRUKER_AUTHENTICATION,
-    produsentAutentisering: JWTAuthentication = STANDARD_PRODUSENT_AUTHENTICATION,
+    brukerAutentisering: JWTAuthentication,
+    produsentAutentisering: JWTAuthentication,
     produsentGraphQL: TypedGraphQL<ProdusentAPI.Context>,
     brukerGraphQL: TypedGraphQL<BrukerAPI.Context>,
 ) {
 
     install(CORS) {
         allowNonSimpleContentTypes = true
-        host("arbeidsgiver-q.nav.no", schemes = listOf("https"))
         host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
     }
 
