@@ -12,7 +12,11 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<QueryModel.Tilgang> {
                 val vnr = "1".repeat(9)
                 return VÅRE_TJENESTER.map {
-                    QueryModel.Tilgang(virksomhet = vnr, servicecode = it.first, serviceedition = it.second)
+                    QueryModel.Tilgang(
+                        virksomhet = vnr,
+                        servicecode = it.first,
+                        serviceedition = it.second
+                    )
                 }
             }
         }

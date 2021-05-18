@@ -114,8 +114,10 @@ fun Application.httpServerSetup(
 ) {
 
     install(CORS) {
+        /* TODO: log when reject */
         allowNonSimpleContentTypes = true
         host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
+        host("localhost:3000")
     }
 
     install(MicrometerMetrics) {
@@ -201,7 +203,9 @@ fun Application.httpServerSetup(
         }
     }
 
+
     routing {
+        trace { LoggerFactory.getLogger("httptest").info(it.buildText()) }
         route("internal") {
             internal()
         }

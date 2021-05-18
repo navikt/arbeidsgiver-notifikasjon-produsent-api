@@ -25,7 +25,7 @@ class LogConfig : ContextAwareBase(), Configurator {
                     } else {
                         encoder = LayoutWrappingEncoder<ILoggingEvent>().setup(lc).apply {
                             layout = PatternLayout().also {
-                                it.pattern = "%d %-5level [%thread] %logger{0}: %msg %mdc%n"
+                                it.pattern = "%d %-5level [%thread] %logger: %msg %mdc%n"
                             }.setup(lc)
                         }
                     }
@@ -34,9 +34,12 @@ class LogConfig : ContextAwareBase(), Configurator {
         }
 
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
-            level = Level.INFO
+            level = Level.TRACE
             addAppender(rootAppender)
         }
+
+        lc.getLogger("org.apache.kafka").level = Level.INFO
+        lc.getLogger("io.netty").level = Level.INFO
     }
 }
 

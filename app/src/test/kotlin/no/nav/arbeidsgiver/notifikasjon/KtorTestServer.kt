@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.DecodedJWT
+import com.auth0.jwt.interfaces.JWTVerifier
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
 import io.ktor.application.*
@@ -11,6 +13,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import org.slf4j.LoggerFactory
 
 fun Spec.ktorTestServer(
     brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
@@ -67,9 +70,10 @@ object LocalhostIssuer {
 }
 
 val LOCALHOST_AUTHENTICATION: JWTAuthentication = {
-    verifier(JWT.require(LocalhostIssuer.algorithm)
-        .withIssuer(LocalhostIssuer.issuer)
-        .build()
+    verifier(
+        JWT.require(LocalhostIssuer.algorithm)
+            .withIssuer(LocalhostIssuer.issuer)
+            .build()
     )
 
     validate { credentials ->
@@ -79,6 +83,10 @@ val LOCALHOST_AUTHENTICATION: JWTAuthentication = {
 
 val SELVBETJENING_TOKEN = LocalhostIssuer.issueToken()
 val TOKENDINGS_TOKEN = LocalhostIssuer.issueToken("someproducer")
+
+fun main() {
+    println(SELVBETJENING_TOKEN)
+}
 
 typealias RequestConfig = TestApplicationRequest.() -> Unit
 
