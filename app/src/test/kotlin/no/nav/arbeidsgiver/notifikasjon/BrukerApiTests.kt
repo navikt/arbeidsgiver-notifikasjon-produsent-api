@@ -5,35 +5,26 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.coEvery
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.CoroutineProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class BrukerApiTests : DescribeSpec({
     val altinn = object : Altinn {
         override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
 
     val queryModel: QueryModel = mockk()
-    val kafkaProducer : CoroutineProducer<KafkaKey, Hendelse> = mockk(relaxed = true)
 
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
             queryModelFuture = CompletableFuture.completedFuture(queryModel),
-            kafkaProducer = kafkaProducer
+            kafkaProducer = mockk()
         ),
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk()
