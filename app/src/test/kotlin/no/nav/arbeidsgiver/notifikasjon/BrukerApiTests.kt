@@ -92,52 +92,6 @@ class BrukerApiTests : DescribeSpec({
                 }
             }
         }
-
-        context("Mutation.notifikasjonKlikketPaa") {
-            val notifikasjonsId = UUID.randomUUID().toString()
-            coEvery {
-                queryModel.virksomhetsnummerForNotifikasjon(any())
-            } returns "1".repeat(9)
-            coEvery {
-                queryModel.oppdaterModellEtterBrukerKlikket(any())
-            } returns Unit
-
-            mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::brukerKlikket)
-            coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().brukerKlikket(any()) } returns Unit
-            afterContainer {
-                unmockkAll()
-            }
-            val response = engine.brukerApi(
-                """
-                    mutation {
-                        notifikasjonKlikketPaa(id: "$notifikasjonsId") {
-                            errors {
-                                feilmelding
-                            }
-                            klikketPaa
-                        }
-                    }
-                """.trimIndent()
-            )
-
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
-
-            it("response inneholder riktig data") {
-                response.getTypedContent<BrukerAPI.NotifikasjonKlikketPaaResultat>("notifikasjonKlikketPaa").let {
-                    it.errors should beEmpty()
-                    it.klikketPaa shouldBe true
-                }
-            }
-
-            // TODO: verify kafkaProducer.brukerKlikket(hendelse)
-
-        }
     }
 })
 

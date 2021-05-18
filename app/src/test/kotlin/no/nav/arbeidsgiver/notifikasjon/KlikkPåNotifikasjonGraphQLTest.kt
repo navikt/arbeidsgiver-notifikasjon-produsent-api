@@ -46,6 +46,8 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
                                 __typename
                                 feilmelding
                             }
+                            id
+                            klikketPaa
                         }
                     }
                 """.trimIndent()
@@ -67,6 +69,11 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
 
             it("ingen domene-feil") {
                 graphqlSvar.errors should beEmpty()
+            }
+
+            it("response inneholder klikketPaa og id") {
+                graphqlSvar.klikketPaa shouldBe true
+                graphqlSvar.id shouldBe id
             }
 
             val brukerKlikketMatcher: MockKAssertScope.(Hendelse.BrukerKlikket) -> Unit = { brukerKlikket ->
