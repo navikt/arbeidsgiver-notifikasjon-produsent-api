@@ -3,11 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import org.apache.kafka.clients.producer.Producer
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -31,7 +28,7 @@ object BrukerAPI {
             val tekst: String,
             val lenke: String,
             val opprettetTidspunkt: OffsetDateTime,
-            val uuid: UUID,
+            val id: UUID,
             override val klikketPaa: Boolean
         ) : Notifikasjon(), Klikkbar
     }
@@ -79,7 +76,7 @@ object BrukerAPI {
                                 tekst = queryBeskjed.tekst,
                                 lenke = queryBeskjed.lenke,
                                 opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
-                                uuid = queryBeskjed.uuid,
+                                id = queryBeskjed.id,
                                 klikketPaa = queryBeskjed.klikketPaa
                             )
                         }
@@ -93,7 +90,7 @@ object BrukerAPI {
             wire("Mutation") {
                 coDataFetcher("notifikasjonKlikketPaa") { env ->
                     val context = env.getContext<Context>()
-                    val notifikasjonsid = env.getTypedArgument<UUID>("uuid")
+                    val notifikasjonsid = env.getTypedArgument<UUID>("id")
                     val queryModel = queryModelFuture.await()
 
                     val virksomhetsnummer = queryModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)

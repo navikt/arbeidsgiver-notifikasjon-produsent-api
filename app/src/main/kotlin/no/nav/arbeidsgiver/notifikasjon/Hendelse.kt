@@ -15,7 +15,7 @@ sealed class Hendelse {
         val merkelapp: String,
         val eksternId: String,
         val mottaker: Mottaker,
-        val uuid: UUID,
+        val id: UUID,
         val tekst: String,
         val grupperingsid: String? = null,
         val lenke: String,

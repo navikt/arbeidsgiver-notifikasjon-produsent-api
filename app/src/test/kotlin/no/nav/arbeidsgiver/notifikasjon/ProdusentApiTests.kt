@@ -71,7 +71,7 @@ class ProdusentApiTests : DescribeSpec({
                             }
                             opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                         }) {
-                            uuid
+                            id
                         }
                     }
                 """.trimIndent()
@@ -87,7 +87,7 @@ class ProdusentApiTests : DescribeSpec({
 
             it("respons inneholder forventet data") {
                 val nyBeskjed = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
-                nyBeskjed.uuid shouldNot beNull()
+                nyBeskjed.id shouldNot beNull()
             }
 
             it("sends message to kafka") {
@@ -97,7 +97,7 @@ class ProdusentApiTests : DescribeSpec({
                 value should beOfType<Hendelse.BeskjedOpprettet>()
                 val event = value as Hendelse.BeskjedOpprettet
                 val nyBeskjed = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
-                event.uuid shouldBe nyBeskjed.uuid
+                event.id shouldBe nyBeskjed.id
                 event.lenke shouldBe "https://foo.bar"
                 event.tekst shouldBe "hello world"
                 event.merkelapp shouldBe "tag"
@@ -126,7 +126,7 @@ class ProdusentApiTests : DescribeSpec({
                                 }
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                             }) {
-                                uuid
+                                id
                                 errors {
                                     __typename
                                     feilmelding
@@ -139,7 +139,7 @@ class ProdusentApiTests : DescribeSpec({
                 context("response inneholder forventet data") {
                     val resultat = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
                     it("id er null") {
-                        resultat.uuid shouldBe null
+                        resultat.id shouldBe null
                     }
                     it("errors har forklarende feilmelding") {
                         resultat.errors shouldHaveSize 1

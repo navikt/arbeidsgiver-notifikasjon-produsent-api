@@ -45,7 +45,7 @@ class BrukerApiTests : DescribeSpec({
                 eksternId = "",
                 mottaker = FodselsnummerMottaker("00000000000", "43"),
                 opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-                uuid = uuid,
+                id = uuid,
                 klikketPaa = false
             )
             coEvery {
@@ -61,7 +61,7 @@ class BrukerApiTests : DescribeSpec({
                                 tekst
                                 merkelapp
                                 opprettetTidspunkt
-                                uuid
+                                id
                             }
                         }
                     }
@@ -80,7 +80,7 @@ class BrukerApiTests : DescribeSpec({
                 response.getTypedContent<List<BrukerAPI.Notifikasjon.Beskjed>>("notifikasjoner").let {
                     it shouldNot beEmpty()
                     it[0].merkelapp shouldBe beskjed.merkelapp
-                    it[0].uuid shouldBe uuid
+                    it[0].id shouldBe uuid
                     it[0].klikketPaa shouldBe false
                 }
             }

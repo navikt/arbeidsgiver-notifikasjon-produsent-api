@@ -67,10 +67,10 @@ object ProdusentAPI {
         val mottaker: MottakerInput,
         val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now()
     ) {
-        fun tilDomene(guid: UUID): Hendelse.BeskjedOpprettet {
+        fun tilDomene(id: UUID): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.BeskjedOpprettet(
-                uuid = guid,
+                id = id,
                 merkelapp = merkelapp,
                 tekst = tekst,
                 grupperingsid = grupperingsid,
@@ -87,7 +87,7 @@ object ProdusentAPI {
     }
 
     data class BeskjedResultat(
-        val uuid: UUID? = null,
+        val id: UUID? = null,
         val errors: List<MutationError> = emptyList()
     )
 

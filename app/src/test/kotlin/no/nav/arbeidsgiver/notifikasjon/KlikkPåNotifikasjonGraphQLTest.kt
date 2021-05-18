@@ -41,7 +41,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
             coEvery { queryModel.virksomhetsnummerForNotifikasjon(id) } returns "1234"
             val query = """
                     mutation {
-                        notifikasjonKlikketPaa(uuid: "$id") {
+                        notifikasjonKlikketPaa(id: "$id") {
                             errors {
                                 __typename
                                 feilmelding

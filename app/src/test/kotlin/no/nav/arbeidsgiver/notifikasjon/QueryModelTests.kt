@@ -30,7 +30,7 @@ class QueryModelTests : DescribeSpec({
                     merkelapp = "foo",
                     eksternId = "42",
                     mottaker = mottaker,
-                    uuid = uuid,
+                    id = uuid,
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",
@@ -54,7 +54,7 @@ class QueryModelTests : DescribeSpec({
                         grupperingsid = "gr1",
                         lenke = "foo.no/bar",
                         opprettetTidspunkt = event.opprettetTidspunkt,
-                        uuid = uuid,
+                        id = uuid,
                         klikketPaa = false
                     )
                 }
@@ -80,7 +80,7 @@ class QueryModelTests : DescribeSpec({
                             grupperingsid = "gr1",
                             lenke = "foo.no/bar",
                             opprettetTidspunkt = event.opprettetTidspunkt,
-                            uuid = uuid,
+                            id = uuid,
                             klikketPaa = false
                         )
                     }
@@ -109,7 +109,7 @@ class QueryModelTests : DescribeSpec({
                             grupperingsid = "gr1",
                             lenke = "foo.no/bar",
                             opprettetTidspunkt = event.opprettetTidspunkt,
-                            uuid = uuid,
+                            id = uuid,
                             klikketPaa = false
                         )
                     }

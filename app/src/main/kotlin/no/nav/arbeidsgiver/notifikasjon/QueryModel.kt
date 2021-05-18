@@ -26,13 +26,13 @@ class QueryModel(
         val eksternId: String,
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
-        val uuid: UUID,
+        val id: UUID,
         val klikketPaa: Boolean
     )
 
     private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryBeskjed =
         QueryBeskjed(
-            uuid = this.uuid,
+            id = this.id,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
             grupperingsid = this.grupperingsid,
@@ -71,7 +71,7 @@ class QueryModel(
             select noti.*, klikk.notifikasjonsid is not null as klikketPaa
             from notifikasjon as noti
             left outer join brukerklikk as klikk on
-                klikk.notifikasjonsid = noti.uuid
+                klikk.notifikasjonsid = noti.id
                 and klikk.fnr = ?
             where (
                             mottaker ->> '@type' = 'fodselsnummer'
@@ -94,7 +94,7 @@ class QueryModel(
                 eksternId = getString("ekstern_id"),
                 mottaker = objectMapper.readValue(getString("mottaker")),
                 opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                uuid = getObject("uuid", UUID::class.java),
+                id = getObject("id", UUID::class.java),
                 klikketPaa = getBoolean("klikketPaa")
             )
         }
@@ -148,7 +148,7 @@ class QueryModel(
             executeCommand("""
                 insert into notifikasjon(
                     koordinat,
-                    uuid,
+                    id,
                     merkelapp,
                     tekst,
                     grupperingsid,
@@ -160,7 +160,7 @@ class QueryModel(
                 values (?, ?, ?, ?, ?, ?, ?, ?, ?::json);
             """) {
                 string(koordinat.toString())
-                uuid(nyBeskjed.uuid)
+                uuid(nyBeskjed.id)
                 string(nyBeskjed.merkelapp)
                 string(nyBeskjed.tekst)
                 nullableString(nyBeskjed.grupperingsid)
@@ -173,7 +173,7 @@ class QueryModel(
             executeCommand("""
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
             """) {
-                uuid(beskjedOpprettet.uuid)
+                uuid(beskjedOpprettet.id)
                 string(beskjedOpprettet.virksomhetsnummer)
             }
         }

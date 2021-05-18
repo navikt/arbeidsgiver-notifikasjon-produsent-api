@@ -153,7 +153,7 @@ suspend fun CoroutineProducer<KafkaKey, Hendelse>.sendHendelse(key: KafkaKey, va
 }
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.beskjedOpprettet(beskjed: Hendelse.BeskjedOpprettet) {
-    sendHendelse(beskjed.uuid.toString(), beskjed)
+    sendHendelse(beskjed.id.toString(), beskjed)
 }
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.brukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {

@@ -40,7 +40,7 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
             virksomhetsnummer = virksomhetsnummer,
             mottaker = FodselsnummerMottaker(fnr, virksomhetsnummer),
             opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-            uuid = uuid,
+            id = uuid,
             merkelapp = "",
             eksternId = "",
             tekst = "",

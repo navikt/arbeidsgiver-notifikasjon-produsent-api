@@ -1,7 +1,7 @@
 create table notifikasjon
 (
     koordinat           text primary key,
-    uuid                uuid not null,
+    id                  uuid  not null,
     merkelapp           text  not null,
     tekst               text  not null,
     grupperingsid       text,
@@ -17,15 +17,15 @@ create index idx_opprettet_tidspunkt on notifikasjon (opprettet_tidspunkt);
 
 create table brukerklikk
 (
-    fnr                 char(11) not null,
-    notifikasjonsid     uuid not null,
+    fnr             char(11) not null,
+    notifikasjonsid uuid     not null,
     constraint brukerklikk_pkey primary key (fnr, notifikasjonsid)
 );
 
-create index brukerklikk_fnr_index on brukerklikk(fnr);
+create index brukerklikk_fnr_index on brukerklikk (fnr);
 
 create table notifikasjonsid_virksomhet_map
 (
-    notifikasjonsid     uuid not null primary key,
-    virksomhetsnummer   char(9) not null
+    notifikasjonsid   uuid    not null primary key,
+    virksomhetsnummer char(9) not null
 );
