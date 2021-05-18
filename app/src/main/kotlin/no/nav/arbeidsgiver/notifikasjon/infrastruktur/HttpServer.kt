@@ -205,7 +205,7 @@ fun Application.httpServerSetup(
 
 
     routing {
-        trace { LoggerFactory.getLogger("httptest").info(it.buildText()) }
+        trace { application.log.trace(it.buildText()) }
         route("internal") {
             internal()
         }

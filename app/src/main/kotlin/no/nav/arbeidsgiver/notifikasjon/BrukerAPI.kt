@@ -34,7 +34,9 @@ object BrukerAPI {
     }
 
     data class NotifikasjonKlikketPaaResultat(
-        val errors: List<MutationError>
+        val errors: List<MutationError>,
+        val id: UUID? = null,
+        val klikketPaa: Boolean? = null
     )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -109,7 +111,9 @@ object BrukerAPI {
                     queryModel.oppdaterModellEtterBrukerKlikket(hendelse)
 
                     NotifikasjonKlikketPaaResultat(
-                        errors = listOf()
+                        errors = listOf(),
+                        id = notifikasjonsid,
+                        klikketPaa = true
                     )
                 }
             }

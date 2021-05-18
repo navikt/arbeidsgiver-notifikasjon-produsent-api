@@ -1,22 +1,22 @@
 ###
-POST http://localhost:8080/api/graphql
+POST http://localhost:8081/api/graphql
 host: ag-notifikasjon-produsent-api.dev.nav.no
 content-type: application/json
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJzdWIiOiJzb21lcHJvZHVjZXIiLCJpc3MiOiJsb2NhbGhvc3QifQ.
 
 {
   "query":
-  "mutation { nyBeskjed(nyBeskjed: {merkelapp: \"tiltak\" tekst: \"fin tekst\" lenke: \"https://vg.no\" eksternId: \"\" mottaker: { altinn: { altinntjenesteKode: \"1234\" altinntjenesteVersjon: \"1\" virksomhetsnummer: \"123456789\" } } }) { id } }"
+  "mutation { nyBeskjed(nyBeskjed: {merkelapp: \"tag\" tekst: \"fin tekst\" lenke: \"https://vg.no\" eksternId: \"\" mottaker: { altinn: { altinntjenesteKode: \"1234\" altinntjenesteVersjon: \"1\" virksomhetsnummer: \"123456789\" } } }) { id } }"
 
 }
 
 ###
-POST http://localhost:8080/api/graphql
+POST http://localhost:8081/api/graphql
 content-type: application/json
 host: ag-notifikasjon-produsent-api.nav.no
-Authorization: Bearer {{auth_token}}
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJzdWIiOiJzb21lcHJvZHVjZXIiLCJpc3MiOiJsb2NhbGhvc3QifQ.
 
 {
   "query":
-  "mutation { nyBeskjed(nyBeskjed: {merkelapp: \"tiltak\" tekst: \"fin tekst\" lenke: \"https://vg.no\" eksternId: \"8\" mottaker: { altinn: { altinntjenesteKode: \"1234\" altinntjenesteVersjon: \"1\" virksomhetsnummer: \"123456789\" } } }) { id } }"
+  "mutation { nyBeskjed(nyBeskjed: {merkelapp: \"tag\" tekst: \"fin tekst\" lenke: \"https://vg.no\" eksternId: \"1\" mottaker: { altinn: { altinntjenesteKode: \"5216\" altinntjenesteVersjon: \"1\" virksomhetsnummer: \"811076732\" } } }) { id, errors { feilmelding } } }"
 }

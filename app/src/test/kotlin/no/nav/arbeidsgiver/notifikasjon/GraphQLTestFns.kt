@@ -1,27 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.module.kotlin.convertValue
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.collections.beEmpty
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.should
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNot
-import io.kotest.matchers.string.beBlank
-import io.kotest.matchers.string.shouldContain
-import io.kotest.matchers.types.beOfType
-import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.mockk.*
-import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
-import java.time.OffsetDateTime
-import java.util.concurrent.CompletableFuture
-import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
-import kotlin.time.toJavaDuration
 
 data class GraphQLError(
     val message: String,

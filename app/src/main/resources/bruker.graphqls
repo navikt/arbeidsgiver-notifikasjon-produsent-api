@@ -26,6 +26,8 @@ type Mutation {
 
 type NotifikasjonKlikketPaaResultat {
     errors: [MutationError!]!
+    id: ID
+    klikketPaa: Boolean
 }
 
 interface MutationError {
