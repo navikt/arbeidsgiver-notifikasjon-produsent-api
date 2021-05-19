@@ -148,6 +148,39 @@ class ProdusentApiTests : DescribeSpec({
                     }
                 }
             }
+
+            context("når tekst er over 300 tegn") {
+                val response = engine.produsentApi(
+                    """
+                        mutation {
+                            nyBeskjed(nyBeskjed: {
+                                lenke: "https://foo.bar",
+                                tekst: "${"x".repeat(301)}",
+                                merkelapp: "tag",
+                                eksternId: "heu",
+                                mottaker: {
+                                    fnr: {
+                                        fodselsnummer: "12345678910",
+                                        virksomhetsnummer: "42"
+                                    } 
+                                }
+                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            }) {
+                                id
+                                errors {
+                                    __typename
+                                    feilmelding
+                                }
+                            }
+                        }
+                    """.trimIndent()
+                )
+                it("errors har forklarende feilmelding") {
+                    val errors = response.getGraphqlErrors()
+                    errors shouldHaveSize 1
+                    errors.first().message shouldContain "felt 'tekst' overstiger max antall tegn. antall=301, max=300"
+                }
+            }
         }
     }
 })

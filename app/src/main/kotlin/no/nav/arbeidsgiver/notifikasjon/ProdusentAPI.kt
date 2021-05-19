@@ -105,6 +105,7 @@ object ProdusentAPI {
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer()
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphqls") {
+            directive("Validate", ValidateDirective)
 
             scalar(Scalars.ISO8601DateTime)
 

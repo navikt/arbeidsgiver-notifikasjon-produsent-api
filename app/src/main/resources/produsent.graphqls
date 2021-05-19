@@ -5,7 +5,7 @@ type Query {
 }
 
 type Mutation {
-    nyBeskjed(nyBeskjed: BeskjedInput!): BeskjedResultat!
+    nyBeskjed(nyBeskjed: BeskjedInput! @Validate): BeskjedResultat!
 }
 
 type BeskjedResultat {
@@ -30,16 +30,20 @@ type UgyldigMerkelapp implements MutationError {
     feilmelding: String!
 }
 
+directive @Validate on ARGUMENT_DEFINITION
+directive @MaxLength(max : Int) on INPUT_FIELD_DEFINITION
+
 scalar ISO8601DateTime
 input BeskjedInput {
     merkelapp: String!
-    tekst: String!
+    tekst: String! @MaxLength(max: 300)
     grupperingsid: String
     lenke: String!
     eksternId: String!
     mottaker: MottakerInput!
     opprettetTidspunkt: ISO8601DateTime
 }
+
 
 "Må ha verdi i nøyaktig ett av disse feltene"
 input MottakerInput {

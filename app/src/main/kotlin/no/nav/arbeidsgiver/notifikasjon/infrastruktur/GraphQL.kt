@@ -1,21 +1,18 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.module.kotlin.convertValue
-import graphql.ExecutionInput
-import graphql.GraphQL
+import graphql.*
 import graphql.GraphQL.newGraphQL
-import graphql.schema.DataFetchingEnvironment
-import graphql.schema.idl.RuntimeWiring
+import graphql.language.SourceLocation
+import graphql.schema.*
+import graphql.schema.idl.*
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
-import graphql.schema.idl.SchemaGenerator
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 
-inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name:String): T =
+inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
     objectMapper.convertValue(this.getArgument(name))
 
 fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Builder.() -> Unit) {
@@ -69,7 +66,7 @@ data class GraphQLRequest(
     val variables: Map<String, String>? = null,
 )
 
-class TypedGraphQL<T: WithCoroutineScope>(
+class TypedGraphQL<T : WithCoroutineScope>(
     private val graphQL: GraphQL
 ) {
     fun execute(request: GraphQLRequest, context: T): Any {
@@ -101,4 +98,59 @@ class TypedGraphQL<T: WithCoroutineScope>(
                 context(context)
             }.build()
     }
+}
+
+
+/**
+ * TODO:
+ * antagelse om GraphQLInputObjectType vil brekke ved f.eks scalar eller primitive, osv
+ * Nullable typer og nested verdier er hbeller ikke støttet P.T.
+ */
+object ValidateDirective : SchemaDirectiveWiring {
+    override fun onArgument(environment: SchemaDirectiveWiringEnvironment<GraphQLArgument>): GraphQLArgument {
+        val dataFetcher =
+            environment.codeRegistry.getDataFetcher(
+                environment.fieldsContainer,
+                environment.fieldDefinition
+            )
+
+        val directivesPerFelt: Map<String, List<GraphQLDirective>> =
+            ((environment.element.type as GraphQLNonNull).originalWrappedType as GraphQLInputObjectType).fields.filter {
+                it.directives.isNotEmpty()
+            }.associate {
+                it.name to it.directives
+            }
+
+        environment.codeRegistry.dataFetcher(environment.fieldsContainer, environment.fieldDefinition) {
+            val arg = it.getArgument<Map<String, String>>(environment.element.name)
+            directivesPerFelt.forEach { entry ->
+                val (feltNavn, directives) = entry
+                val feltVerdi = arg[feltNavn]
+                directives.forEach { directive ->
+                    when (directive.name) {
+                        "MaxLength" -> {
+                            val max = directive.getArgument("max").value as Int
+                            if (feltVerdi != null && feltVerdi.length > max) {
+                                throw ValideringsFeil("verdi på felt '$feltNavn' overstiger max antall tegn. antall=${feltVerdi.length}, max=$max")
+                            }
+                        }
+                        else ->
+                            throw Error("ukjent directive ${directive.name}")
+                    }
+                }
+            }
+            dataFetcher.get(it)
+        }
+        return environment.element
+    }
+}
+
+/**
+ * lånt fra https://github.com/graphql-java/graphql-java/issues/1022#issuecomment-723369519
+ * workaround for mismatch mellom kotlin og hvordan graphql eksponerer custom feil
+ */
+class ValideringsFeil(@JvmField override val message: String) : RuntimeException(message), GraphQLError {
+    override fun getMessage(): String? = super.message
+    override fun getLocations(): MutableList<SourceLocation> = mutableListOf()
+    override fun getErrorType(): ErrorClassification = ErrorType.DataFetchingException
 }
