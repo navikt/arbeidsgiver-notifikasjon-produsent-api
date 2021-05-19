@@ -6,10 +6,10 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
+import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import org.apache.kafka.clients.producer.Producer
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -42,12 +42,11 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
             val query = """
                     mutation {
                         notifikasjonKlikketPaa(id: "$id") {
-                            errors {
-                                __typename
-                                feilmelding
+                            __typename
+                            ... on BrukerKlikk {
+                                id
+                                klikketPaa
                             }
-                            id
-                            klikketPaa
                         }
                     }
                 """.trimIndent()
@@ -68,12 +67,13 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
             val graphqlSvar = httpResponse.getTypedContent<BrukerAPI.NotifikasjonKlikketPaaResultat>("notifikasjonKlikketPaa")
 
             it("ingen domene-feil") {
-                graphqlSvar.errors should beEmpty()
+                graphqlSvar should beOfType<BrukerAPI.BrukerKlikk>()
             }
 
             it("response inneholder klikketPaa og id") {
-                graphqlSvar.klikketPaa shouldBe true
-                graphqlSvar.id shouldBe id
+                val brukerKlikk = graphqlSvar as BrukerAPI.BrukerKlikk
+                brukerKlikk.klikketPaa shouldBe true
+                brukerKlikk.id shouldNot beBlank()
             }
 
             val brukerKlikketMatcher: MockKAssertScope.(Hendelse.BrukerKlikket) -> Unit = { brukerKlikket ->

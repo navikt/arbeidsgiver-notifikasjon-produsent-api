@@ -8,12 +8,8 @@ union Notifikasjon = Beskjed | Dummy
 
 scalar ISO8601DateTime
 
-interface Klikkbar {
-    klikketPaa: Boolean!
-}
-
-type Beskjed implements Klikkbar {
-    klikketPaa: Boolean!
+type Beskjed {
+    brukerKlikk: BrukerKlikk!
     merkelapp: String! tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
@@ -24,17 +20,14 @@ type Mutation {
     notifikasjonKlikketPaa(id: ID!): NotifikasjonKlikketPaaResultat!
 }
 
-type NotifikasjonKlikketPaaResultat {
-    errors: [MutationError!]!
-    id: ID
-    klikketPaa: Boolean
+union NotifikasjonKlikketPaaResultat = BrukerKlikk | UgyldigId
+
+type BrukerKlikk {
+    id: ID!
+    klikketPaa: Boolean!
 }
 
-interface MutationError {
-    feilmelding: String!
-}
-
-type UgyldigId implements MutationError {
+type UgyldigId {
     feilmelding: String!
 }
 

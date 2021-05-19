@@ -18,10 +18,6 @@ object BrukerAPI {
         override val coroutineScope: CoroutineScope
     ): WithCoroutineScope
 
-    sealed interface Klikkbar {
-        val klikketPaa: Boolean
-    }
-
     sealed class Notifikasjon {
         data class Beskjed(
             val merkelapp: String,
@@ -29,25 +25,23 @@ object BrukerAPI {
             val lenke: String,
             val opprettetTidspunkt: OffsetDateTime,
             val id: UUID,
-            override val klikketPaa: Boolean
-        ) : Notifikasjon(), Klikkbar
+            val brukerKlikk: BrukerKlikk
+        ) : Notifikasjon()
     }
-
-    data class NotifikasjonKlikketPaaResultat(
-        val errors: List<MutationError>,
-        val id: UUID? = null,
-        val klikketPaa: Boolean? = null
-    )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
-    sealed class MutationError {
-        abstract val feilmelding: String
+    sealed class NotifikasjonKlikketPaaResultat
 
-        @JsonTypeName("UgyldigId")
-        data class UgyldigId(
-            override val feilmelding: String
-        ) : MutationError()
-    }
+    @JsonTypeName("BrukerKlikk")
+    data class BrukerKlikk(
+        val id: String,
+        val klikketPaa: Boolean
+    ) : NotifikasjonKlikketPaaResultat()
+
+    @JsonTypeName("UgyldigId")
+    data class UgyldigId(
+        val feilmelding: String
+    ) : NotifikasjonKlikketPaaResultat()
 
     fun createBrukerGraphQL(
         altinn: Altinn,
@@ -58,8 +52,7 @@ object BrukerAPI {
             scalar(Scalars.ISO8601DateTime)
 
             resolveSubtypes<Notifikasjon>()
-            resolveSubtypes<Klikkbar>()
-            resolveSubtypes<MutationError>()
+            resolveSubtypes<NotifikasjonKlikketPaaResultat>()
 
             wire("Query") {
                 dataFetcher("ping") {
@@ -79,7 +72,10 @@ object BrukerAPI {
                                 lenke = queryBeskjed.lenke,
                                 opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
                                 id = queryBeskjed.id,
-                                klikketPaa = queryBeskjed.klikketPaa
+                                brukerKlikk = BrukerKlikk(
+                                    id = "${context.fnr}-${queryBeskjed.id}",
+                                    klikketPaa = queryBeskjed.klikketPaa
+                                )
                             )
                         }
                 }
@@ -96,9 +92,7 @@ object BrukerAPI {
                     val queryModel = queryModelFuture.await()
 
                     val virksomhetsnummer = queryModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
-                        ?: return@coDataFetcher NotifikasjonKlikketPaaResultat(
-                            errors = listOf(MutationError.UgyldigId(""))
-                        )
+                        ?: return@coDataFetcher UgyldigId("")
 
                     val hendelse = Hendelse.BrukerKlikket(
                         notifikasjonsId = notifikasjonsid,
@@ -110,9 +104,8 @@ object BrukerAPI {
 
                     queryModel.oppdaterModellEtterBrukerKlikket(hendelse)
 
-                    NotifikasjonKlikketPaaResultat(
-                        errors = listOf(),
-                        id = notifikasjonsid,
+                    BrukerKlikk(
+                        id = "${context.fnr}-${hendelse.notifikasjonsId}",
                         klikketPaa = true
                     )
                 }
