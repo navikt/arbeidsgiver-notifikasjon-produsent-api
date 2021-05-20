@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import com.fasterxml.jackson.module.kotlin.convertValue
 import graphql.*
 import graphql.GraphQL.newGraphQL
+import graphql.language.Directive
 import graphql.language.SourceLocation
 import graphql.schema.*
 import graphql.schema.idl.*
@@ -11,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ValidateDirective.createValidator
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
     objectMapper.convertValue(this.getArgument(name))
@@ -101,49 +103,108 @@ class TypedGraphQL<T : WithCoroutineScope>(
 }
 
 
+private typealias Validator = (Any?) -> Unit
 /**
  * TODO:
  * antagelse om GraphQLInputObjectType vil brekke ved f.eks scalar eller primitive, osv
  * Nullable typer og nested verdier er hbeller ikke støttet P.T.
  */
 object ValidateDirective : SchemaDirectiveWiring {
-    override fun onArgument(environment: SchemaDirectiveWiringEnvironment<GraphQLArgument>): GraphQLArgument {
-        val dataFetcher =
-            environment.codeRegistry.getDataFetcher(
-                environment.fieldsContainer,
-                environment.fieldDefinition
-            )
 
-        val directivesPerFelt: Map<String, List<GraphQLDirective>> =
-            ((environment.element.type as GraphQLNonNull).originalWrappedType as GraphQLInputObjectType).fields.filter {
-                it.directives.isNotEmpty()
-            }.associate {
-                it.name to it.directives
-            }
+    override fun onArgument(environment: SchemaDirectiveWiringEnvironment<GraphQLArgument>): GraphQLArgument {
+        val argument = environment.element
+        val validator = argument.type.createValidator()
+            ?: return argument
+        val dataFetcher = environment.codeRegistry.getDataFetcher(
+            environment.fieldsContainer,
+            environment.fieldDefinition
+        )
 
         environment.codeRegistry.dataFetcher(environment.fieldsContainer, environment.fieldDefinition) {
-            val arg = it.getArgument<Map<String, String>>(environment.element.name)
-            directivesPerFelt.forEach { entry ->
-                val (feltNavn, directives) = entry
-                val feltVerdi = arg[feltNavn]
-                directives.forEach { directive ->
-                    when (directive.name) {
-                        "MaxLength" -> {
-                            val max = directive.getArgument("max").value as Int
-                            if (feltVerdi != null && feltVerdi.length > max) {
-                                throw ValideringsFeil("verdi på felt '$feltNavn' overstiger max antall tegn. antall=${feltVerdi.length}, max=$max")
+            val value = it.getArgument<Any?>(argument.name)
+            validator(value)
+            dataFetcher.get(it)
+        }
+
+        return argument
+    }
+
+    private fun GraphQLInputType.createValidator(): Validator? {
+        when (this) {
+            is GraphQLNonNull -> {
+                /* Is this guaranteed to be true? */
+                return (this.wrappedType as GraphQLInputType).createValidator()
+                    ?.let { validate ->
+                        { value ->
+                            if (value != null) {
+                                validate(value)
                             }
                         }
-                        else ->
-                            throw Error("ukjent directive ${directive.name}")
+                    }
+
+            }
+            is GraphQLInputObjectType -> {
+                val validators = this.fields.mapNotNull { it.createValidator() }
+                if (validators.isEmpty()) {
+                    return null
+                } else {
+                    return { value ->
+                        validators.forEach { validator ->
+                            validator(value)
+                        }
                     }
                 }
             }
-            dataFetcher.get(it)
+            is GraphQLScalarType -> {
+                return null
+            }
+
+            /* Other types to support here? */
+
+            else -> {
+                throw Error("Unexpected graphql type ${this.javaClass.canonicalName}")
+            }
         }
-        return environment.element
+    }
+
+    fun GraphQLInputObjectField.createValidator(): Validator? {
+        val validators = this.directives.mapNotNull {
+            it.createValidator(this)
+        }
+
+        val otherValidators = type.createValidator()
+
+        if (validators.isEmpty() && otherValidators == null) {
+            return null
+        } else {
+            return { objectValue ->
+                val fieldValue = (objectValue as Map<String, Any?>)[name]
+                validators.forEach { validator ->
+                    validator(fieldValue)
+                }
+
+                otherValidators?.let { it(fieldValue) }
+            }
+        }
+    }
+
+    private fun GraphQLDirective.createValidator(field: GraphQLInputObjectField): Validator? {
+        when (name) {
+            "MaxLength" -> {
+                val max = getArgument("max").value as Int
+                return { value ->
+                    val valueStr = value as String
+                    if (valueStr.length > max) {
+                        throw ValideringsFeil("verdi på felt '${field.name}' overstiger max antall tegn. antall=${valueStr.length}, max=$max")
+                    }
+                }
+            }
+            else ->
+                throw Error("ukjent directive $name")
+        }
     }
 }
+
 
 /**
  * lånt fra https://github.com/graphql-java/graphql-java/issues/1022#issuecomment-723369519
