@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import com.fasterxml.jackson.module.kotlin.convertValue
 import graphql.*
 import graphql.GraphQL.newGraphQL
-import graphql.language.Directive
 import graphql.language.SourceLocation
 import graphql.schema.*
 import graphql.schema.idl.*
@@ -12,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ValidateDirective.createValidator
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
     objectMapper.convertValue(this.getArgument(name))
@@ -104,11 +102,7 @@ class TypedGraphQL<T : WithCoroutineScope>(
 
 
 private typealias Validator = (Any?) -> Unit
-/**
- * TODO:
- * antagelse om GraphQLInputObjectType vil brekke ved f.eks scalar eller primitive, osv
- * Nullable typer og nested verdier er hbeller ikke støttet P.T.
- */
+
 object ValidateDirective : SchemaDirectiveWiring {
 
     override fun onArgument(environment: SchemaDirectiveWiringEnvironment<GraphQLArgument>): GraphQLArgument {
@@ -188,26 +182,38 @@ object ValidateDirective : SchemaDirectiveWiring {
         }
     }
 
-    private fun GraphQLDirective.createValidator(field: GraphQLInputObjectField): Validator? {
-        when (name) {
-            "MaxLength" -> {
-                val max = getArgument("max").value as Int
-                return { value ->
-                    val valueStr = value as String
-                    if (valueStr.length > max) {
-                        throw ValideringsFeil("verdi på felt '${field.name}' overstiger max antall tegn. antall=${valueStr.length}, max=$max")
-                    }
-                }
+    private val validators = listOf(MaxLengthValidator)
+        .associateBy { it.name }
+
+    private fun GraphQLDirective.createValidator(field: GraphQLInputObjectField): Validator =
+        validators[name]
+            ?.createValidator(this, field)
+            ?: throw Error("Unknown directive '$name' to validate")
+}
+
+interface ValidatorBuilder {
+    val name: String
+    fun createValidator(directive: GraphQLDirective, field: GraphQLInputObjectField): Validator
+}
+
+object MaxLengthValidator : ValidatorBuilder {
+    override val name = "MaxLength"
+
+    override fun createValidator(directive: GraphQLDirective, field: GraphQLInputObjectField): Validator {
+        val max = directive.getArgument("max").value as Int
+        return { value ->
+            val valueStr = value as String?
+            if (valueStr != null && valueStr.length > max) {
+                throw ValideringsFeil("verdi på felt '${field.name}' overstiger max antall tegn. antall=${valueStr.length}, max=$max")
             }
-            else ->
-                throw Error("ukjent directive $name")
         }
     }
 }
 
 
+
 /**
- * lånt fra https://github.com/graphql-java/graphql-java/issues/1022#issuecomment-723369519
+* lånt fra https://github.com/graphql-java/graphql-java/issues/1022#issuecomment-723369519
  * workaround for mismatch mellom kotlin og hvordan graphql eksponerer custom feil
  */
 class ValideringsFeil(@JvmField override val message: String) : RuntimeException(message), GraphQLError {
