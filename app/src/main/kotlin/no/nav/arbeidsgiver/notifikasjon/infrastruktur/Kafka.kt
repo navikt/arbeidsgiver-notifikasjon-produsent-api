@@ -95,7 +95,7 @@ private val PRODUCER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
     ProducerProp.MAX_BLOCK_MS_CONFIG to 5_000,
 )
 
-private val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
+val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
     ConsumerProp.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java.canonicalName,
     ConsumerProp.VALUE_DESERIALIZER_CLASS_CONFIG to ValueDeserializer::class.java.canonicalName,
 
