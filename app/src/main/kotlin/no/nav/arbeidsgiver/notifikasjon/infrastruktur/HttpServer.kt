@@ -235,30 +235,26 @@ fun Application.httpServerSetup(
     }
 }
 
-private val internalDispatcher: CoroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 fun Route.internal() {
     get("alive") {
-        withContext(this.coroutineContext + internalDispatcher) {
-            if (Health.alive) {
-                call.respond(HttpStatusCode.OK)
-            } else {
-                call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
-            }
+        if (Health.alive) {
+            call.respond(HttpStatusCode.OK)
+        } else {
+            call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
         }
     }
 
     get("ready") {
-        withContext(this.coroutineContext + internalDispatcher) {
-            if (Health.ready) {
-                call.respond(HttpStatusCode.OK)
-            } else {
-                call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
-            }
+        if (Health.ready) {
+            call.respond(HttpStatusCode.OK)
+        } else {
+            call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
         }
     }
 
     get("metrics") {
-        withContext(this.coroutineContext + internalDispatcher) {
+        withContext(this.coroutineContext + metricsDispatcher) {
             call.respond(Health.meterRegistry.scrape())
         }
     }
