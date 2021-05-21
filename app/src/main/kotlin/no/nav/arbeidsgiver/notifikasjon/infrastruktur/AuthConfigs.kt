@@ -162,6 +162,8 @@ fun JWTAuthenticationProvider.Configuration.verifier(
     audience: String,
     additionalVerification: Verification.() -> Unit = {},
 ) {
+    AuthConfigs.log.info("enabling authentication with issuer: $issuer, jwksUri: $jwksUri, audience: $audience")
+
     val jwkProvider = JwkProviderBuilder(URL(jwksUri))
         .cached(10, 24, TimeUnit.HOURS)
         .rateLimited(
