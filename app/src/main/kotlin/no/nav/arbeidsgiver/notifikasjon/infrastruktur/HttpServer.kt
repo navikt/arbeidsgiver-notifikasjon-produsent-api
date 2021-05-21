@@ -1,10 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.core.JsonProcessingException
 import io.ktor.application.*
 import io.ktor.auth.*
-import io.ktor.auth.jwt.*
 import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.jackson.*
@@ -16,95 +14,18 @@ import io.micrometer.core.instrument.binder.jvm.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.ProdusentAPI
-import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
-import java.net.URL
 import java.util.*
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
-private val log = LoggerFactory.getLogger("HttpServer")!!
-
-typealias JWTAuthentication = JWTAuthenticationProvider.Configuration.() -> Unit
-
-/* Følgende støttes:
- * - loginservice
- * - tokenX
- */
-val STANDARD_BRUKER_AUTHENTICATION: JWTAuthentication = {
-    val clientId = "0090b6e1-ffcc-4c37-bc21-049f7d1f0fe5"
-    val jwksUri = "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/discovery/v2.0/keys?p=b2c_1a_idporten_ver1"
-    val issuer = "https://navtestb2c.b2clogin.com/d38f25aa-eab8-4c50-9f28-ebf92c1256f2/v2.0/"
-
-    val jwkProvider = JwkProviderBuilder(URL(jwksUri))
-        .cached(10, 24, TimeUnit.HOURS)
-        .rateLimited(
-            10,
-            1,
-            TimeUnit.MINUTES
-        )
-        .build()
-
-    verifier(jwkProvider, issuer)
-
-    validate { credentials ->
-        try {
-            val audience = credentials.payload.audience ?: emptyList()
-            require(audience.contains(clientId)) {
-                "Auth: Valid audience not found in claims"
-            }
-
-            JWTPrincipal(credentials.payload)
-        } catch (e: Throwable) {
-            log.info("invalid credentials: {}", e.message)
-            null
-        }
-    }
-}
-
-/*
- * AzureAD.
- */
-val STANDARD_PRODUSENT_AUTHENTICATION: JWTAuthentication = {
-    val clientId = "produsent-api" /* System.getenv("AZURE_APP_CLIENT_ID") */
-    val jwksUri = "https://fakedings.dev-gcp.nais.io/default/jwks" /* System.getenv("AZURE_OPENID_CONFIG_JWKS_URI") */
-    val issuer = "https://fakedings.dev-gcp.nais.io/fake" /* System.getenv("AZURE_OPENID_CONFIG_ISSUER") */
-
-    val jwkProvider = JwkProviderBuilder(URL(jwksUri))
-        .cached(10, 24, TimeUnit.HOURS)
-        .rateLimited(
-            10,
-            1,
-            TimeUnit.MINUTES
-        )
-        .build()
-
-    verifier(jwkProvider, issuer)
-
-    validate { credentials ->
-        try {
-            val audience = credentials.payload.audience ?: emptyList()
-            require(audience.contains(clientId)) {
-                "Auth: Valid audience not found in claims"
-            }
-
-            JWTPrincipal(credentials.payload)
-        } catch (e: Throwable) {
-            log.info("invalid credentials: {}", e.message)
-            null
-        }
-    }
-}
-
 fun Application.httpServerSetup(
-    brukerAutentisering: JWTAuthentication,
-    produsentAutentisering: JWTAuthentication,
+    brukerAutentisering: List<JWTAuthentication>,
+    produsentAutentisering: List<JWTAuthentication>,
     produsentGraphQL: TypedGraphQL<ProdusentAPI.Context>,
     brukerGraphQL: TypedGraphQL<BrukerAPI.Context>,
 ) {
@@ -196,14 +117,9 @@ fun Application.httpServerSetup(
     }
 
     install(Authentication) {
-        jwt(name = "produsent") {
-            produsentAutentisering()
-        }
-        jwt(name = "bruker") {
-            brukerAutentisering()
-        }
+        configureProviders("produsent", produsentAutentisering)
+        configureProviders("bruker", brukerAutentisering)
     }
-
 
     routing {
         trace { application.log.trace(it.buildText()) }
@@ -212,24 +128,25 @@ fun Application.httpServerSetup(
         }
 
         host("""ag-notifikasjon-produsent-api\..*""".toRegex()) {
-            authenticate("produsent") {
+            authenticate("produsent", produsentAutentisering) {
                 route("api") {
-                    produsentGraphQL("graphql", produsentGraphQL)
-                    ide()
+                    produsentGraphQL(produsentGraphQL)
                 }
             }
+            ide()
         }
 
         host("""ag-notifikasjon-bruker-api\..*""".toRegex()) {
-            route("api") {
-                authenticate("bruker") {
-                    brukerGraphQL("graphql", brukerGraphQL)
+            authenticate("bruker", brukerAutentisering) {
+                route("api") {
+                    brukerGraphQL(brukerGraphQL)
                 }
-                ide()
             }
+            ide()
         }
     }
 }
+
 
 private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1)
     .produceMetrics("internal-http")
@@ -259,27 +176,20 @@ fun Route.internal() {
     }
 }
 
-fun Route.ide() {
-    get("ide") {
-        call.respondBytes(graphiqlHTML, ContentType.Text.Html)
-    }
-}
-
 val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16)
     .produceMetrics("bruker-graphql")
     .asCoroutineDispatcher()
 
 fun Route.brukerGraphQL(
-    path: String,
     graphQL: TypedGraphQL<BrukerAPI.Context>
 ) {
-    post(path) {
+    post("graphql") {
         withContext(this.coroutineContext + brukerGraphQLDispatcher) {
-            val token = call.principal<JWTPrincipal>()!!
+            val token = call.principal<BrukerPrincipal>()!!
             val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
             val request = call.receive<GraphQLRequest>()
             val context = BrukerAPI.Context(
-                token.payload.subject,
+                fnr = token.fnr,
                 authHeader,
                 coroutineScope = this
             )
@@ -292,20 +202,26 @@ fun Route.brukerGraphQL(
 private val produsentGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16)
     .produceMetrics("produsent-graphql")
     .asCoroutineDispatcher()
+
 fun Route.produsentGraphQL(
-    path: String,
     graphQL: TypedGraphQL<ProdusentAPI.Context>
 ) {
-    post(path) {
+    post("graphql") {
         withContext(this.coroutineContext + produsentGraphQLDispatcher) {
             val context = ProdusentAPI.Context(
-                payload = call.principal<JWTPrincipal>()!!.payload,
+                produsentid = call.principal<ProdusentPrincipal>()!!.subject,
                 coroutineScope = this
             )
             val request = call.receive<GraphQLRequest>()
             val result = graphQL.execute(request, context)
             call.respond(result)
         }
+    }
+}
+
+fun Route.ide() {
+    get("ide") {
+        call.respondBytes(graphiqlHTML, ContentType.Text.Html)
     }
 }
 

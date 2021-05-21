@@ -10,12 +10,13 @@ import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.VÅRE_TJENESTER
 import java.lang.System.currentTimeMillis
 import java.time.Instant
+import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
 fun main() = runBlocking {
     client.use {
-        nyBeskjed(5000, Api.LOCAL)
-        //hentNotifikasjoner(5000, Api.LOCAL)
+        //nyBeskjed(20_000, Api.PRODUSENT_GCP)
+        hentNotifikasjoner(5000, Api.BRUKER_GCP)
     }
 }
 val client = HttpClient(Apache) {
@@ -47,6 +48,8 @@ suspend fun concurrentWithStats(
     val start = currentTimeMillis()
     val stats = (1..times).map {
         async {
+            val jitter = Random.nextLong(0, 2000)
+            delay(jitter)
             kotlin.runCatching {
                 val ms = measureTimeMillis {
                     work.invoke()

@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import com.auth0.jwt.interfaces.Payload
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import kotlinx.coroutines.CoroutineScope
@@ -12,9 +11,7 @@ object ProdusentAPI {
     private val log = logger()
 
     data class Context(
-        val payload: Payload,
-        val subject: String = payload.subject,
-        val produsentId: String = "iss:${payload.issuer} sub:${payload.subject}",
+        val produsentid: String,
         override val coroutineScope: CoroutineScope
     ): WithCoroutineScope
 
@@ -117,7 +114,7 @@ object ProdusentAPI {
                 }
 
                 dataFetcher("whoami") {
-                    it.getContext<Context>().produsentId
+                    it.getContext<Context>().produsentid
                 }
             }
 
@@ -126,7 +123,7 @@ object ProdusentAPI {
                     val nyBeskjed = env.getTypedArgument<BeskjedInput>("nyBeskjed")
                     val context = env.getContext<Context>()
 
-                    val produsentMerkelapp = ProdusentRegister.finn(context.subject)
+                    val produsentMerkelapp = ProdusentRegister.finn(context.produsentid)
 
                     if (!produsentMerkelapp.har(nyBeskjed.merkelapp)) {
                         return@coDataFetcher BeskjedResultat(

@@ -9,7 +9,7 @@ class HttpAuthenticationTests: DescribeSpec({
     val engine = ktorTestServer()
 
     describe("When calling graphql-endpoint without bearer token") {
-        val result = engine.get("/api/ide", host = PRODUSENT_HOST)
+        val result = engine.post("/api/graphql", host = PRODUSENT_HOST)
         it("returns 401") {
             result.status() shouldBe HttpStatusCode.Unauthorized
         }

@@ -2,18 +2,14 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.interfaces.DecodedJWT
-import com.auth0.jwt.interfaces.JWTVerifier
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
 import io.ktor.application.*
-import io.ktor.auth.jwt.*
 import io.ktor.http.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import org.slf4j.LoggerFactory
 
 fun Spec.ktorTestServer(
     brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
@@ -25,8 +21,8 @@ fun Spec.ktorTestServer(
     )
     listener(KtorTestListener(engine) {
         httpServerSetup(
-            brukerAutentisering = LOCALHOST_AUTHENTICATION,
-            produsentAutentisering = LOCALHOST_AUTHENTICATION,
+            brukerAutentisering = listOf(LOCALHOST_BRUKER_AUTHENTICATION),
+            produsentAutentisering = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
             brukerGraphQL = brukerGraphQL,
             produsentGraphQL = produsentGraphQL
         )
@@ -58,31 +54,61 @@ const val BRUKER_HOST = "ag-notifikasjon-bruker-api.invalid"
 object LocalhostIssuer {
     val issuer = "localhost"
     val algorithm = Algorithm.none()
+    val brukerAudience = "localhost:bruker-api"
+    val produsentAudience = "localhost:bruker-api"
 
     fun issueToken(
-        sub: String = "0".repeat(11)
+        sub: String,
+        audience: String,
     ): String =
         JWT.create().run {
             withIssuer(issuer)
             withSubject(sub)
+            withAudience(audience)
             sign(algorithm)
         }
+
+    fun issueProdusentToken(sub: String = "someproducer") =
+        issueToken(sub, audience = produsentAudience)
+
+    fun issueBrukerToken(sub: String = "0".repeat(11)) =
+        issueToken(sub, audience = brukerAudience)
 }
 
-val LOCALHOST_AUTHENTICATION: JWTAuthentication = {
-    verifier(
-        JWT.require(LocalhostIssuer.algorithm)
-            .withIssuer(LocalhostIssuer.issuer)
-            .build()
-    )
+val LOCALHOST_PRODUSENT_AUTHENTICATION = JWTAuthentication(
+    name = "localhost",
+    config = {
+        verifier(
+            JWT.require(LocalhostIssuer.algorithm)
+                .build()
+        )
 
-    validate { credentials ->
-        JWTPrincipal(credentials.payload)
+        validate {
+            ProdusentPrincipal(
+                subject = it.payload.subject
+            )
+        }
     }
-}
+)
 
-val SELVBETJENING_TOKEN = LocalhostIssuer.issueToken()
-val TOKENDINGS_TOKEN = LocalhostIssuer.issueToken("someproducer")
+val LOCALHOST_BRUKER_AUTHENTICATION = JWTAuthentication(
+    name = "localhost",
+    config = {
+        verifier(
+            JWT.require(LocalhostIssuer.algorithm)
+                .build()
+        )
+
+        validate {
+            BrukerPrincipal(
+                fnr = it.payload.subject
+            )
+        }
+    }
+)
+
+val SELVBETJENING_TOKEN = LocalhostIssuer.issueBrukerToken()
+val TOKENDINGS_TOKEN = LocalhostIssuer.issueProdusentToken()
 
 fun main() {
     println(SELVBETJENING_TOKEN)

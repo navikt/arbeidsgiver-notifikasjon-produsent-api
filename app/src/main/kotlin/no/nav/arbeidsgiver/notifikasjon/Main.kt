@@ -13,8 +13,8 @@ object Main {
     val log = logger()
 
     fun main(
-        brukerAutentisering: JWTAuthentication = STANDARD_BRUKER_AUTHENTICATION,
-        produsentAutentisering: JWTAuthentication = STANDARD_PRODUSENT_AUTHENTICATION,
+        brukerAutentisering: List<JWTAuthentication>,
+        produsentAutentisering: List<JWTAuthentication>,
         altinn: Altinn = AltinnImpl,
         httpPort: Int = 8080
     ) {
@@ -63,6 +63,23 @@ object Main {
 }
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
-    Main.main()
+    val brukerAutentisering = mutableListOf(
+        AuthConfigs.LOGIN_SERVICE,
+        AuthConfigs.TOKEN_X,
+    )
+
+    val produsentAutentisering = mutableListOf(
+        AuthConfigs.AZURE_AD,
+    )
+
+    if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
+        brukerAutentisering.add(AuthConfigs.FAKEDINGS_BRUKER)
+        produsentAutentisering.add(AuthConfigs.FAKEDINGS_PRODUSENT)
+    }
+
+    Main.main(
+        brukerAutentisering = brukerAutentisering,
+        produsentAutentisering = produsentAutentisering,
+    )
 }
 

@@ -53,13 +53,15 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
             {
                 notifikasjoner {
                     ...on Beskjed {
-                        klikketPaa
+                        brukerKlikk {
+                            klikketPaa
+                        }
                     }
                 }
             }
         """)
 
-        val klikkMarkørFørKlikk = response.getTypedContent<Boolean>("/notifikasjoner/0/klikketPaa")
+        val klikkMarkørFørKlikk = response.getTypedContent<Boolean>("/notifikasjoner/0/brukerKlikk/klikketPaa")
 
         it("notifikasjon er ikke klikket på") {
             klikkMarkørFørKlikk shouldBe false
@@ -79,12 +81,14 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
             {
                 notifikasjoner {
                     ...on Beskjed {
-                        klikketPaa
+                        brukerKlikk {
+                            klikketPaa
+                        }
                     }
                 }
             }
         """)
-        val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/0/klikketPaa")
+        val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/0/brukerKlikk/klikketPaa")
 
         it("notifikasjon er klikket på") {
             klikkMarkørEtterKlikk shouldBe true
