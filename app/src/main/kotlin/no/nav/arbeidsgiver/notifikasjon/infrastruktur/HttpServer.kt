@@ -151,6 +151,11 @@ fun Application.httpServerSetup(
 
     install(CallLogging) {
         level = Level.INFO
+
+        filter { call ->
+            !call.request.path().startsWith("/internal/")
+        }
+
         mdc("method") { call ->
             call.request.httpMethod.value
         }
