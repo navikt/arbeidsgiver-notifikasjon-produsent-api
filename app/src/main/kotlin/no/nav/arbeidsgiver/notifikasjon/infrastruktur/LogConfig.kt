@@ -34,11 +34,11 @@ class LogConfig : ContextAwareBase(), Configurator {
         }
 
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
-            level = Level.INFO
+            level = Level.DEBUG
             addAppender(rootAppender)
         }
 
-        lc.getLogger("org.apache.kafka").level = Level.INFO
+        lc.getLogger("org.apache.kafka").level = Level.DEBUG
         lc.getLogger("io.netty").level = Level.INFO
     }
 }
