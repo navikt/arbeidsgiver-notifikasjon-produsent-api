@@ -2,10 +2,12 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Timer
+import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.prometheus.client.CollectorRegistry
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
 enum class Subsystem {
@@ -44,4 +46,10 @@ suspend fun <T> Timer.coRecord(body: suspend () -> T): T {
         val end = Health.clock.monotonicTime()
         this.record(start - end, TimeUnit.NANOSECONDS)
     }
+}
+
+fun <T: ExecutorService> T.produceMetrics(name: String): T {
+    ExecutorServiceMetrics(this, name, emptyList())
+        .bindTo(Health.meterRegistry);
+    return this
 }

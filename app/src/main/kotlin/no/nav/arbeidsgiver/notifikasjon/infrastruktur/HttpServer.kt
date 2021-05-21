@@ -1,8 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.auth0.jwk.JwkProviderBuilder
-import com.auth0.jwt.interfaces.JWTVerifier
-import com.auth0.jwt.interfaces.Verification
 import com.fasterxml.jackson.core.JsonProcessingException
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -14,13 +12,11 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
-import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
-import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
-import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+import io.micrometer.core.instrument.binder.jvm.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.BrukerAPI
@@ -235,7 +231,10 @@ fun Application.httpServerSetup(
     }
 }
 
-private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1)
+    .produceMetrics("internal-http")
+    .asCoroutineDispatcher()
+
 fun Route.internal() {
     get("alive") {
         if (Health.alive) {
@@ -266,7 +265,10 @@ fun Route.ide() {
     }
 }
 
-val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16)
+    .produceMetrics("bruker-graphql")
+    .asCoroutineDispatcher()
+
 fun Route.brukerGraphQL(
     path: String,
     graphQL: TypedGraphQL<BrukerAPI.Context>
@@ -286,7 +288,10 @@ fun Route.brukerGraphQL(
         }
     }
 }
-private val produsentGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()
+
+private val produsentGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16)
+    .produceMetrics("produsent-graphql")
+    .asCoroutineDispatcher()
 fun Route.produsentGraphQL(
     path: String,
     graphQL: TypedGraphQL<ProdusentAPI.Context>
