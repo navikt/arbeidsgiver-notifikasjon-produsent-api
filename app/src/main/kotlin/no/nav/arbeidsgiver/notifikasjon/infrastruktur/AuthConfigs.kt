@@ -103,7 +103,7 @@ object AuthConfigs {
             config = {
                 verifier(
                     audience = "bruker-api",
-                    discoveryUrl = "https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration"
+                    discoveryUrl = "https://fakedings.dev-gcp.nais.io/custom/.well-known/openid-configuration"
                 ) {
                     `with id-porten login level 4`()
                 }
@@ -123,7 +123,7 @@ object AuthConfigs {
             config = {
                 verifier(
                     audience = "produsent-api",
-                    discoveryUrl = "https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration",
+                    discoveryUrl = "https://fakedings.dev-gcp.nais.io/custom/.well-known/openid-configuration",
                 )
 
                 validate {
