@@ -13,14 +13,16 @@ import ch.qos.logback.core.spi.ContextAwareBase
 import ch.qos.logback.core.spi.LifeCycle
 import net.logstash.logback.encoder.LogstashEncoder
 import no.nav.common.log.MaskingAppender
+import org.slf4j.LoggerFactory
 
 @Suppress("unused") /* see resources/META-INF/services/ch.qos.logback.classic.spi */
 class LogConfig : ContextAwareBase(), Configurator {
     override fun configure(lc: LoggerContext) {
+        val naisCluster = System.getenv("NAIS_CLUSTER_NAME")
         val rootAppender = MaskingAppender().setup(lc) {
             setAppender(
                 ConsoleAppender<ILoggingEvent>().setup(lc) {
-                    if (System.getenv("NAIS_CLUSTER_NAME") != null) {
+                    if (naisCluster != null) {
                         encoder = LogstashEncoder().setup(lc)
                     } else {
                         encoder = LayoutWrappingEncoder<ILoggingEvent>().setup(lc).apply {
@@ -40,6 +42,10 @@ class LogConfig : ContextAwareBase(), Configurator {
 
         lc.getLogger("org.apache.kafka").level = Level.INFO
         lc.getLogger("io.netty").level = Level.INFO
+
+        if (naisCluster == null || naisCluster == "dev-gcp") {
+            lc.getLogger("io.ktor.auth.jwt").level = Level.TRACE
+        }
     }
 }
 
