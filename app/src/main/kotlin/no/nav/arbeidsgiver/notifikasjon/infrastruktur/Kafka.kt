@@ -221,7 +221,7 @@ class CoroutineConsumerImpl<K, V>(
             return
         }
 
-        records.partitions().forEach { partition ->
+        records.partitions().forEach currentPartition@{ partition ->
             val retries = retriesForPartition(partition.partition())
             records.records(partition).forEach currentRecord@{ record ->
                 try {
@@ -234,7 +234,6 @@ class CoroutineConsumerImpl<K, V>(
                 } catch (e: Exception) {
                     val attempt = retries.incrementAndGet()
                     val backoffMillis = 1000L * 2.toThePowerOf(attempt)
-
                     log.error("exception while processing {}. attempt={}. backoff={}.",
                         record.loggableToString(),
                         attempt,
@@ -247,6 +246,7 @@ class CoroutineConsumerImpl<K, V>(
                     retryTimer.schedule(backoffMillis) {
                         resumeQueue.offer(currentPartition)
                     }
+                    return@currentPartition
                 }
             }
         }

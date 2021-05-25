@@ -2,7 +2,7 @@
 POST http://localhost:8081/api/graphql
 host: ag-notifikasjon-produsent-api.dev.nav.no
 content-type: application/json
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJzdWIiOiJzb21lcHJvZHVjZXIiLCJpc3MiOiJsb2NhbGhvc3QifQ.
+Authorization: Bearer {{auth_token}}
 
 {
   "query":
@@ -14,7 +14,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJzdWIiOiJzb21lcHJvZH
 POST http://localhost:8081/api/graphql
 content-type: application/json
 host: ag-notifikasjon-produsent-api.nav.no
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJzdWIiOiJzb21lcHJvZHVjZXIiLCJpc3MiOiJsb2NhbGhvc3QifQ.
+Authorization: Bearer {{auth_token}}
 
 {
   "query":
