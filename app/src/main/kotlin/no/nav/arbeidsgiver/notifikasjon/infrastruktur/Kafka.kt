@@ -18,6 +18,8 @@ import java.lang.System.getenv
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
 import org.apache.kafka.clients.CommonClientConfigs as CommonProp
@@ -167,7 +169,12 @@ interface CoroutineConsumer<K, V> {
     suspend fun poll(timeout: Duration): ConsumerRecords<K, V>
 }
 
-val retryTimer = Timer("retry", false)
+val retryTimer = Timer()
+val resumeQueue = ConcurrentLinkedQueue<TopicPartition>()
+fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
+    generateSequence {
+        this.poll()
+    }.toList()
 
 class CoroutineConsumerImpl<K, V>(
     private val consumer: Consumer<K, V>
@@ -194,6 +201,7 @@ class CoroutineConsumerImpl<K, V>(
 
     override suspend fun forEachEvent(body: suspend (V) -> Unit) {
         while (true) {
+            consumer.resume(resumeQueue.pollAll())
             val records = try {
                 poll(Duration.ofMillis(1000))
             } catch (e: Exception) {
@@ -237,7 +245,7 @@ class CoroutineConsumerImpl<K, V>(
                     consumer.seek(currentPartition, record.offset())
                     consumer.pause(listOf(currentPartition))
                     retryTimer.schedule(backoffMillis) {
-                        consumer.resume(listOf(currentPartition))
+                        resumeQueue.offer(currentPartition)
                     }
                 }
             }
