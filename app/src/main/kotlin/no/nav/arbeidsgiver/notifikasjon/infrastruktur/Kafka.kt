@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.producer.*
 import org.apache.kafka.common.Cluster
+import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -18,6 +19,7 @@ import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.schedule
 import org.apache.kafka.clients.CommonClientConfigs as CommonProp
 import org.apache.kafka.clients.consumer.ConsumerConfig as ConsumerProp
 import org.apache.kafka.clients.producer.ProducerConfig as ProducerProp
@@ -165,6 +167,8 @@ interface CoroutineConsumer<K, V> {
     suspend fun poll(timeout: Duration): ConsumerRecords<K, V>
 }
 
+val retryTimer = Timer("retry", false)
+
 class CoroutineConsumerImpl<K, V>(
     private val consumer: Consumer<K, V>
 ): CoroutineConsumer<K, V> {
@@ -212,27 +216,28 @@ class CoroutineConsumerImpl<K, V>(
         records.partitions().forEach { partition ->
             val retries = retriesForPartition(partition.partition())
             records.records(partition).forEach currentRecord@{ record ->
-                retries.set(0)
+                try {
+                    log.info("processing {}", record.loggableToString())
+                    body(record.value())
+                    consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
+                    log.info("successfully processed {}", record.loggableToString())
+                    retries.set(0)
+                    return@currentRecord
+                } catch (e: Exception) {
+                    val attempt = retries.incrementAndGet()
+                    val backoffMillis = 1000L * 2.toThePowerOf(attempt)
 
-                while (true) {
-                    try {
-                        log.info("processing {}", record.loggableToString())
-                        body(record.value())
-                        consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
-                        log.info("successfully processed {}", record.loggableToString())
-                        retries.set(0)
-                        return@currentRecord
-                    } catch (e: Exception) {
-                        val attempt = retries.incrementAndGet()
-                        val backoffMillis = 1000L * 2.toThePowerOf(attempt)
-
-                        log.error("exception while processing {}. attempt={}. backoff={}.",
-                            record.loggableToString(),
-                            attempt,
-                            Duration.ofMillis(backoffMillis),
-                            e
-                        )
-                        delay(backoffMillis)
+                    log.error("exception while processing {}. attempt={}. backoff={}.",
+                        record.loggableToString(),
+                        attempt,
+                        Duration.ofMillis(backoffMillis),
+                        e
+                    )
+                    val currentPartition = TopicPartition(record.topic(), record.partition())
+                    consumer.seek(currentPartition, record.offset())
+                    consumer.pause(listOf(currentPartition))
+                    retryTimer.schedule(backoffMillis) {
+                        consumer.resume(listOf(currentPartition))
                     }
                 }
             }
