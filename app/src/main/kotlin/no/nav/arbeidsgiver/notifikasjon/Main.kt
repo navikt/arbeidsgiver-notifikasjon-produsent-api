@@ -31,12 +31,12 @@ object Main {
             }
 
             launch {
-                val kafkaConsumer = createKafkaConsumer()
-                val queryModel = queryModelAsync.await()
-
-                kafkaConsumer.forEachEvent { event ->
-                    queryModel.oppdaterModellEtterHendelse(event)
-                }
+//                val kafkaConsumer = createKafkaConsumer()
+//                val queryModel = queryModelAsync.await()
+//
+//                kafkaConsumer.forEachEvent { event ->
+//                    queryModel.oppdaterModellEtterHendelse(event)
+//                }
             }
 
             launch {
