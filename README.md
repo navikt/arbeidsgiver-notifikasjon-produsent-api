@@ -34,9 +34,11 @@
   * `kafka-delete-records.sh --bootstrap-server $KAFKA_BROKERS --offset-json-file delete-records.json`
 * inspect a consumer group
   * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /kafka.properties --group query-model-builder --describe` 
-* adjust offset of a consumer group
-  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon --reset-offsets --to-earliest --execute`
+* adjust offset of a consumer group (requires group is inactive, i.e. no running consumers)
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon --reset-offsets --to-earlies --execute`
   * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon --shift-by 1 --execute`
+  * specify partition using `--topic topic:0,1,2`. e.g. reset offset for partition 14 to 5004:
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon:14 --reset-offsets --to-offset 5004 --execute`
 
 ref:
 https://medium.com/@TimvanBaarsen/apache-kafka-cli-commands-cheat-sheet-a6f06eac01b

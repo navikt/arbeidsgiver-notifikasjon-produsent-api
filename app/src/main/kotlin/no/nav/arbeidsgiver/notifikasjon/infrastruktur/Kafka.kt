@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.producer.*
 import org.apache.kafka.common.Cluster
+import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -17,7 +18,10 @@ import java.lang.System.getenv
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.schedule
 import org.apache.kafka.clients.CommonClientConfigs as CommonProp
 import org.apache.kafka.clients.consumer.ConsumerConfig as ConsumerProp
 import org.apache.kafka.clients.producer.ProducerConfig as ProducerProp
@@ -165,6 +169,13 @@ interface CoroutineConsumer<K, V> {
     suspend fun poll(timeout: Duration): ConsumerRecords<K, V>
 }
 
+val retryTimer = Timer()
+val resumeQueue = ConcurrentLinkedQueue<TopicPartition>()
+fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
+    generateSequence {
+        this.poll()
+    }.toList()
+
 class CoroutineConsumerImpl<K, V>(
     private val consumer: Consumer<K, V>
 ): CoroutineConsumer<K, V> {
@@ -190,6 +201,7 @@ class CoroutineConsumerImpl<K, V>(
 
     override suspend fun forEachEvent(body: suspend (V) -> Unit) {
         while (true) {
+            consumer.resume(resumeQueue.pollAll())
             val records = try {
                 poll(Duration.ofMillis(1000))
             } catch (e: Exception) {
@@ -209,31 +221,32 @@ class CoroutineConsumerImpl<K, V>(
             return
         }
 
-        records.partitions().forEach { partition ->
+        records.partitions().forEach currentPartition@{ partition ->
             val retries = retriesForPartition(partition.partition())
             records.records(partition).forEach currentRecord@{ record ->
-                retries.set(0)
-
-                while (true) {
-                    try {
-                        log.info("processing {}", record.loggableToString())
-                        body(record.value())
-                        consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
-                        log.info("successfully processed {}", record.loggableToString())
-                        retries.set(0)
-                        return@currentRecord
-                    } catch (e: Exception) {
-                        val attempt = retries.incrementAndGet()
-                        val backoffMillis = 1000L * 2.toThePowerOf(attempt)
-
-                        log.error("exception while processing {}. attempt={}. backoff={}.",
-                            record.loggableToString(),
-                            attempt,
-                            Duration.ofMillis(backoffMillis),
-                            e
-                        )
-                        delay(backoffMillis)
+                try {
+                    log.info("processing {}", record.loggableToString())
+                    body(record.value())
+                    consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
+                    log.info("successfully processed {}", record.loggableToString())
+                    retries.set(0)
+                    return@currentRecord
+                } catch (e: Exception) {
+                    val attempt = retries.incrementAndGet()
+                    val backoffMillis = 1000L * 2.toThePowerOf(attempt)
+                    log.error("exception while processing {}. attempt={}. backoff={}.",
+                        record.loggableToString(),
+                        attempt,
+                        Duration.ofMillis(backoffMillis),
+                        e
+                    )
+                    val currentPartition = TopicPartition(record.topic(), record.partition())
+                    consumer.seek(currentPartition, record.offset())
+                    consumer.pause(listOf(currentPartition))
+                    retryTimer.schedule(backoffMillis) {
+                        resumeQueue.offer(currentPartition)
                     }
+                    return@currentPartition
                 }
             }
         }
