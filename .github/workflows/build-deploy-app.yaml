@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_REPOSITORY: ${{ github.repository }}
 
 jobs:
 
@@ -32,14 +33,14 @@ jobs:
 
       - uses: docker/login-action@v1
         with:
-          registry: ghcr.io
+          registry: ${{ env.IMAGE_REGISTRY }}
           username: ${{ secrets.GHCR_PUSH_USERNAME }}
           password: ${{ secrets.GHCR_PUSH_TOKEN }}
 
       - run: |
           IMAGE_TAG=${{ hashFiles( 'app/**/*' ) }}
           echo "IMAGE_TAG=$IMAGE_TAG" | tee -a $GITHUB_ENV
-          docker manifest inspect $IMAGE_NAME:$IMAGE_TAG > /dev/null
+          docker manifest inspect $IMAGE_REPOSITORY:$IMAGE_TAG > /dev/null
           echo "IMAGE_PUBLISHED=$?" | tee -a $GITHUB_ENV
 
       - if: env.IMAGE_PUBLISHED == '0'
@@ -63,11 +64,11 @@ jobs:
         with:
           path: app
           push: true
-          tags: ${{ format('{}:{}', env.IMAGE_NAME, env.IMAGE_TAG) }}
+          tags: ${{ format('{}:{}', env.IMAGE_REPOSITORY, env.IMAGE_TAG) }}
 
       - uses: nais/deploy/actions/deploy@v1
         env:
-          IMAGE: ${{ format('{}:{}', env.IMAGE_NAME, env.IMAGE_TAG) }}
+          IMAGE: ${{ format('{}/{}:{}', env.IMAGE_REGISTRY, env.IMAGE_REPOSITORY, env.IMAGE_TAG) }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
           RESOURCE: config/nais-application.yaml
