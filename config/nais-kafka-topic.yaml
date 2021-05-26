@@ -5,6 +5,8 @@ metadata:
   namespace: arbeidsgiver
   labels:
     team: arbeidsgiver
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
 spec:
   pool: nav-dev
   config:

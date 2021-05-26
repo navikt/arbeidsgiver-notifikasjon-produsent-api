@@ -31,11 +31,15 @@ object Main {
             }
 
             launch {
-                val kafkaConsumer = createKafkaConsumer()
-                val queryModel = queryModelAsync.await()
+                if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
+                    log.info("KafkaConsumer er deaktivert.")
+                } else {
+                    val kafkaConsumer = createKafkaConsumer()
+                    val queryModel = queryModelAsync.await()
 
-                kafkaConsumer.forEachEvent { event ->
-                    queryModel.oppdaterModellEtterHendelse(event)
+                    kafkaConsumer.forEachEvent { event ->
+                        queryModel.oppdaterModellEtterHendelse(event)
+                    }
                 }
             }
 
