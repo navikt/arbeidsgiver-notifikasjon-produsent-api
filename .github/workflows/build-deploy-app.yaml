@@ -31,28 +31,28 @@ jobs:
       - uses: actions/checkout@v1
 
       - run: |
-          echo "IMAGE_TAG=${{ hashFiles( "app/**/*" ) }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ hashFiles( 'app/**/*' ) }}" >> $GITHUB_ENV
           docker manifest inspect $IMAGE_NAME:$IMAGE_TAG > /dev/null
           echo "IMAGE_PUBLISHED=$?" >> $GITHUB_ENV
 
       - uses: actions/setup-java@v1
-        if: env.IMAGE_PUBLISHED == "0"
+        if: env.IMAGE_PUBLISHED == '0'
         with:
           java-version: '15.x'
 
       - uses: actions/cache@v1
-        if: env.IMAGE_PUBLISHED == "0"
+        if: env.IMAGE_PUBLISHED == '0'
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven-
 
       - run: mvn -B package
-        if: env.IMAGE_PUBLISHED == "0"
+        if: env.IMAGE_PUBLISHED == '0'
         working-directory: app
 
       - name: Build container image
-        if: env.IMAGE_PUBLISHED == "0"
+        if: env.IMAGE_PUBLISHED == '0'
         uses: docker/build-push-action@v1
         with:
           path: app
@@ -64,7 +64,7 @@ jobs:
 
       - uses: nais/deploy/actions/deploy@v1
         env:
-          IMAGE: ${{ format("{}:{}", env.IMAGE_NAME, env.IMAGE_TAG) }}
+          IMAGE: ${{ format('{}:{}', env.IMAGE_NAME, env.IMAGE_TAG) }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
           RESOURCE: config/nais-application.yaml
