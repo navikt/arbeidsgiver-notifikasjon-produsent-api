@@ -1,0 +1,70 @@
+name: build-deploy-app
+on:
+  push:
+    paths:
+    - "app/**/*"
+    - "config/**/*"
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+
+jobs:
+
+  build-deploy-app:
+    runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v1
+
+      - run: |
+          echo "IMAGE_TAG=${{ hashFiles( "app/**/*" ) }}" >> $GITHUB_ENV
+          docker manifest inspect $IMAGE_NAME:$IMAGE_TAG > /dev/null
+          echo "IMAGE_PUBLISHED=$?" >> $GITHUB_ENV
+
+      - uses: actions/setup-java@v1
+        if: env.IMAGE_PUBLISHED == "0"
+        with:
+          java-version: '15.x'
+
+      - uses: actions/cache@v1
+        if: env.IMAGE_PUBLISHED == "0"
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - run: mvn -B package
+        if: env.IMAGE_PUBLISHED == "0"
+        working-directory: app
+
+      - name: Build container image
+        if: env.IMAGE_PUBLISHED == "0"
+        uses: docker/build-push-action@v1
+        with:
+          path: app
+          username: ${{ secrets.GHCR_PUSH_USERNAME }}
+          password: ${{ secrets.GHCR_PUSH_TOKEN }}
+          registry: ghcr.io
+          repository: ${{ github.repository }}
+          tags: ${{ env.IMAGE_TAG }}
+
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          IMAGE: ${{ format("{}:{}", env.IMAGE_NAME, env.IMAGE_TAG) }}
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: dev-gcp
+          RESOURCE: config/nais-application.yaml
