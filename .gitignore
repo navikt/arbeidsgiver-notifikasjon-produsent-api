@@ -5,3 +5,4 @@ app/target/
 # intellij
 .idea/
 **.iml
+.kafka-cli/

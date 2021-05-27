@@ -1,10 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import db.migration.OS
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AuthConfigs
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.VÅRE_TJENESTER
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
+    OS.setupLocal()
     Main.main(
         httpPort = 8081,
         brukerAutentisering = listOf(
