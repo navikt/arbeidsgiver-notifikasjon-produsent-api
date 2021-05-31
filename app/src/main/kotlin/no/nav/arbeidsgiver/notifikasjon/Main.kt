@@ -16,6 +16,7 @@ object Main {
         brukerAutentisering: List<JWTAuthentication>,
         produsentAutentisering: List<JWTAuthentication>,
         altinn: Altinn = AltinnImpl,
+        brreg: Brreg = BrregImpl(),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
@@ -54,6 +55,7 @@ object Main {
                         produsentAutentisering = produsentAutentisering,
                         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
                             altinn = altinn,
+                            brreg = brreg,
                             queryModelFuture = queryModelAsync.asCompletableFuture(),
                             kafkaProducer = createKafkaProducer()
                         ),

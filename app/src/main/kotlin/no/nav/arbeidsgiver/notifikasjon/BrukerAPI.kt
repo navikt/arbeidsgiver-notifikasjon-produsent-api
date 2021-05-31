@@ -25,7 +25,8 @@ object BrukerAPI {
             val lenke: String,
             val opprettetTidspunkt: OffsetDateTime,
             val id: UUID,
-            val brukerKlikk: BrukerKlikk
+            val brukerKlikk: BrukerKlikk,
+            val virksomhet: Virksomhet,
         ) : Notifikasjon()
     }
 
@@ -43,8 +44,14 @@ object BrukerAPI {
         val feilmelding: String
     ) : NotifikasjonKlikketPaaResultat()
 
+    data class Virksomhet(
+        val virksomhetsnummer: String,
+        val navn: String? = null
+    )
+
     fun createBrukerGraphQL(
         altinn: Altinn,
+        brreg: Brreg,
         queryModelFuture: CompletableFuture<QueryModel>,
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse>
     ) = TypedGraphQL<Context>(
@@ -72,12 +79,32 @@ object BrukerAPI {
                                 lenke = queryBeskjed.lenke,
                                 opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
                                 id = queryBeskjed.id,
+                                virksomhet = Virksomhet(when (queryBeskjed.mottaker) {
+                                    is FodselsnummerMottaker -> queryBeskjed.mottaker.virksomhetsnummer
+                                    is AltinnMottaker -> queryBeskjed.mottaker.virksomhetsnummer
+                                }),
                                 brukerKlikk = BrukerKlikk(
                                     id = "${context.fnr}-${queryBeskjed.id}",
                                     klikketPaa = queryBeskjed.klikketPaa
                                 )
                             )
                         }
+                }
+
+                wire("Beskjed") {
+                    coDataFetcher("virksomhet") { env ->
+                        val source = env.getSource<Notifikasjon.Beskjed>()
+                        if (env.selectionSet.contains("Virksomhet.navn")) {
+                            brreg.hentEnhet(source.virksomhet.virksomhetsnummer).let { it ->
+                                Virksomhet(
+                                    virksomhetsnummer = it.organisasjonsnummer,
+                                    navn = it.navn
+                                )
+                            }
+                        } else {
+                            source.virksomhet
+                        }
+                    }
                 }
 
                 dataFetcher("whoami") {

@@ -15,12 +15,14 @@ import java.util.concurrent.CompletableFuture
 
 class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     val altinn: Altinn = mockk()
+    val brreg: Brreg = mockk()
     val queryModel: QueryModel = mockk(relaxed = true)
     val kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = mockk()
 
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
+            brreg = brreg,
             queryModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = kafkaProducer
         ),

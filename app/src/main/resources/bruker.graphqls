@@ -14,6 +14,12 @@ type Beskjed {
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
     id: ID!
+    virksomhet: Virksomhet!
+}
+
+type Virksomhet {
+    virksomhetsnummer: String!
+    navn: String!
 }
 
 type Mutation {
