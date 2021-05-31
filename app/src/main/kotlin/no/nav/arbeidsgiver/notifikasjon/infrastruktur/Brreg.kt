@@ -47,10 +47,11 @@ class SimpleLRUCache<K, V>(val maxCapacity : Int, val loader: suspend (K) -> V) 
 
             override fun get(key: K): ValueWithExpiry<V>? {
                 val value = super.get(key)
-                if (value != null && value.valid) {
-                    return value
+                return when {
+                    value == null -> null
+                    value.expired -> null
+                    else -> value
                 }
-                return null
             }
         }
     )
@@ -66,15 +67,10 @@ class SimpleLRUCache<K, V>(val maxCapacity : Int, val loader: suspend (K) -> V) 
     }
 }
 
-@Suppress("MemberVisibilityCanBePrivate")
 data class ValueWithExpiry<T> (
     val value : T,
     val expires : LocalDateTime = LocalDateTime.now().plusHours(12),
 ) {
-    val valid: Boolean
-        get() {
-            return !expired
-        }
     val expired: Boolean
         get() {
             return LocalDateTime.now().isAfter(expires)
