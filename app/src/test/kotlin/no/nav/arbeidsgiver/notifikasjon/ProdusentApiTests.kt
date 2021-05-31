@@ -13,6 +13,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Brreg
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
@@ -39,12 +40,14 @@ class ProdusentApiTests : DescribeSpec({
     val altinn = object : Altinn {
         override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
+    val brreg: Brreg = mockk()
 
     val embeddedKafka = EmbeddedKafkaTestListener()
     listener(embeddedKafka)
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
+            brreg = brreg,
             queryModelFuture = mockk(),
             kafkaProducer = mockk()
         ),

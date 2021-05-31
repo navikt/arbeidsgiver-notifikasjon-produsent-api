@@ -5,6 +5,8 @@ import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Brreg
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.BrregEnhet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.time.OffsetDateTime
 import java.util.*
@@ -15,7 +17,7 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
     val altinn = object : Altinn {
         override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
-
+    val brreg: Brreg = mockk()
     val database = runBlocking { Database.openDatabase() }
     val queryModel = QueryModel(database)
     listener(PostgresTestListener(database))
@@ -23,6 +25,7 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
+            brreg = brreg,
             queryModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = mockk()
         ),
