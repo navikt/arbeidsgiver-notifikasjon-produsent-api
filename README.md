@@ -1,5 +1,22 @@
 # produsent-api
 
+# Lokal utvikling
+
+For lokal utvikling benyttes docker-compose til å starte nødvendige platform tjenester (postgres, kafka etc).
+Lokal app startes ved å kjøre main metoden i LocalMain.kt.
+
+Apiene blir da å nå på:
+* http://ag-notifikasjon-produsent-api.localhost:8081/api/graphql
+* http://ag-notifikasjon-bruker-api.localhost:8081/api/graphql
+
+Hvert api kan inspiseres vha hostet graphql ide:
+* http://ag-notifikasjon-produsent-api.localhost:8081/ide
+* http://ag-notifikasjon-bruker-api.localhost:8081/ide
+
+For at dette skal virke må man sende med riktig auth header (Authorization: Bearer <jwt>). 
+Du kan f.eks. sette opp mod-header plugin i chrome eller firefox.
+Bruk LocalhostIssuer til å lage tokens du kan bruke i header.
+
 ## Ticks n' Trips
 
 * start lokal kafka cluster
