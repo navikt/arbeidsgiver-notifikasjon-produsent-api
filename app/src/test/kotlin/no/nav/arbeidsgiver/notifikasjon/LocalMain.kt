@@ -15,7 +15,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         ),
         produsentAutentisering = listOf(
             AuthConfigs.FAKEDINGS_PRODUSENT,
-            LOCALHOST_BRUKER_AUTHENTICATION,
+            LOCALHOST_PRODUSENT_AUTHENTICATION,
         ),
         altinn = object: Altinn {
             override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<QueryModel.Tilgang> {
