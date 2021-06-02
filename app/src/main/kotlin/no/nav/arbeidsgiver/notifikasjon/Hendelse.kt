@@ -28,6 +28,12 @@ sealed class Hendelse {
         val fnr: String,
         val notifikasjonsId: UUID
     ): Hendelse()
+
+    @JsonTypeName("SlettHendelse")
+    data class SlettHendelse(
+        val notifikasjonsId: UUID,
+        override val virksomhetsnummer: String
+    ): Hendelse()
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
