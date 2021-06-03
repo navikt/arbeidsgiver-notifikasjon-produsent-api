@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.OrgnrPartitioner.Companion.partitionForOrgnr
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.producer.*
 import org.apache.kafka.common.Cluster
@@ -18,7 +19,6 @@ import java.lang.System.getenv
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
@@ -108,6 +108,7 @@ val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
 
 interface CoroutineProducer<K, V> {
     suspend fun send(record: ProducerRecord<K, V>): RecordMetadata
+    suspend fun tombstone(key: K, partitionLookup: Producer<K, V>.() -> Int): RecordMetadata
 }
 
 fun createKafkaProducer(configure: Properties.() -> Unit = {}): CoroutineProducer<KafkaKey, Hendelse> {
@@ -144,16 +145,36 @@ value class CoroutineProducerImpl<K, V>(
             }
         }
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override suspend fun tombstone(key: K, partitionLookup: Producer<K, V>.() -> Int): RecordMetadata {
+        return send(
+            ProducerRecord<K, V>(
+                TOPIC,
+                producer.let(partitionLookup),
+                key,
+                null
+            )
+        )
+    }
 }
 
+const val TOPIC = "arbeidsgiver.notifikasjon"
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.sendHendelse(key: KafkaKey, value: Hendelse) {
-    this.send(
+    send(
         ProducerRecord(
-            "arbeidsgiver.notifikasjon",
+            TOPIC,
             key,
             value
         )
     )
+}
+
+suspend fun CoroutineProducer<KafkaKey, Hendelse>.slett(value: Hendelse.SlettHendelse) {
+    tombstone(value.notifikasjonsId.toString()) {
+        // TODO: bedre måte å hente partisjon fra underliggende producer?
+        partitionForOrgnr(value.virksomhetsnummer, partitionsFor(TOPIC).size)
+    }
 }
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.beskjedOpprettet(beskjed: Hendelse.BeskjedOpprettet) {
@@ -270,7 +291,7 @@ fun createKafkaConsumer(configure: Properties.() -> Unit = {}): CoroutineConsume
     }
     val kafkaConsumer = KafkaConsumer<KafkaKey, Hendelse>(properties)
     KafkaClientMetrics(kafkaConsumer).bindTo(Health.meterRegistry)
-    kafkaConsumer.subscribe(listOf("arbeidsgiver.notifikasjon"))
+    kafkaConsumer.subscribe(listOf(TOPIC))
     return CoroutineConsumerImpl(kafkaConsumer)
 }
 

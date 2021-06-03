@@ -41,12 +41,18 @@ Bruk LocalhostIssuer til å lage tokens du kan bruke i header.
   * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --add-config retention.ms=1000`
   * _a few moments later_
   * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --delete-config retention.ms`
+* list config for en topic
+  * `kafka-configs --bootstrap-server localhost:9092 --describe --entity-type topics --entity-name arbeidsgiver.notifikasjon`
+* endre config på en topic
+  * `kafka-configs --bootstrap-server localhost:9092 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --add-config cleanup.policy=compact`
 * delete topic
   * `kafka-topics --zookeeper zookeeper:2181 --delete --topic arbeidsgiver.notifikasjon`
 * consume en topic og print til console (default from latest)
   * `kafka-console-consumer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true`
   * _from the beginning_ (legg til `--from-beginning`)
     * `kafka-console-consumer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true --from-beginning`
+* produce til en topic
+  * `kafka-console-producer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon`
 * delete messages from a topic
   * `kafka-delete-records.sh --bootstrap-server $KAFKA_BROKERS --offset-json-file delete-records.json`
 * inspect a consumer group
