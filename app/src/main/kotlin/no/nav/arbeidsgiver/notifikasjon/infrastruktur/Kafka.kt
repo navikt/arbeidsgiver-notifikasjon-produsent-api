@@ -148,8 +148,14 @@ value class CoroutineProducerImpl<K, V>(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun tombstone(key: K, partitionLookup: Producer<K, V>.() -> Int): RecordMetadata {
-        val partition : Int = producer.let(partitionLookup)
-        return send(ProducerRecord<K, V>(TOPIC, partition, key, null))
+        return send(
+            ProducerRecord<K, V>(
+                TOPIC,
+                producer.let(partitionLookup),
+                key,
+                null
+            )
+        )
     }
 }
 
