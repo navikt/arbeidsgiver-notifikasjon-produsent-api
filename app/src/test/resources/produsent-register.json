@@ -1,5 +1,11 @@
-{
-  "someproducer": [
-    "tag"
-  ]
-}
+[
+  {
+    "id": "someproducer",
+    "merkelapper": [
+      "tag"
+    ],
+    "mottakere": [
+      { "@type": "altinn", "code": "5441", "version": "1" }
+    ]
+  }
+]

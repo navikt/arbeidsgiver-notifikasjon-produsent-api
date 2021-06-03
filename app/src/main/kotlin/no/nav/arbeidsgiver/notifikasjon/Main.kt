@@ -30,6 +30,9 @@ object Main {
                     throw e
                 }
             }
+            launch {
+                ProdusentRegister.validateAll()
+            }
 
             launch {
                 if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {

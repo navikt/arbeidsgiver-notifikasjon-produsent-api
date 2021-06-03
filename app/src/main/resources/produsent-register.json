@@ -1,7 +1,13 @@
-{
-  "someproducer": [
-    "tiltak",
-    "sykemeldte",
-    "rekruttering"
-  ]
-}
+[
+  {
+    "id": "someproducer",
+    "merkelapper": [
+      "tiltak",
+      "sykemeldte",
+      "rekruttering"
+    ],
+    "mottakere": [
+      { "@type": "altinn", "code": "5441", "version": "1" }
+    ]
+  }
+]

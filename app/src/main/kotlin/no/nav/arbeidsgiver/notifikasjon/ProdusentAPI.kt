@@ -125,11 +125,12 @@ object ProdusentAPI {
 
                     val produsentMerkelapp = ProdusentRegister.finn(context.produsentid)
 
+                    // TODO: valider mottaker er gyldig iht register
                     if (!produsentMerkelapp.har(nyBeskjed.merkelapp)) {
                         return@coDataFetcher BeskjedResultat(
                             errors = listOf(
                                 MutationError.UgyldigMerkelapp("""
-                                    | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentMerkelapp.produsent}'. 
+                                    | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentMerkelapp.id}'. 
                                     | Gyldige merkelapper er: ${produsentMerkelapp.merkelapper}
                                     """.trimMargin())
                             )
