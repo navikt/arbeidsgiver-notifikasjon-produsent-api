@@ -28,8 +28,9 @@ class QueryModelTests : DescribeSpec({
         describe("#oppdaterModellEtterBeskjedOpprettet()") {
             context("når event er BeskjedOpprettet") {
                 val uuid = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
-                val mottaker = FodselsnummerMottaker(
-                    fodselsnummer = "314",
+                val mottaker = NærmesteLederMottaker(
+                    nærmesteLederFnr = "314",
+                    ansattFnr = "33314",
                     virksomhetsnummer = "1337"
                 )
                 val event = Hendelse.BeskjedOpprettet(
@@ -49,7 +50,7 @@ class QueryModelTests : DescribeSpec({
                 it("opprettes beskjed i databasen") {
                     val notifikasjoner =
                         queryModel.hentNotifikasjoner(
-                            mottaker.fodselsnummer,
+                            mottaker.nærmesteLederFnr,
                             emptyList()
                         )
                     notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(
@@ -75,7 +76,7 @@ class QueryModelTests : DescribeSpec({
                     it("beskjeden er uendret i databasen") {
                         val notifikasjoner =
                             queryModel.hentNotifikasjoner(
-                                mottaker.fodselsnummer,
+                                mottaker.nærmesteLederFnr,
                                 emptyList()
                             )
                         notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(
@@ -104,7 +105,7 @@ class QueryModelTests : DescribeSpec({
                     it("beskjeden er fortsatt uendret i databasen") {
                         val notifikasjoner =
                             queryModel.hentNotifikasjoner(
-                                mottaker.fodselsnummer,
+                                mottaker.nærmesteLederFnr,
                                 emptyList()
                             )
                         notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(

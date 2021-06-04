@@ -1,20 +1,119 @@
-"Query Root"
+directive @Validate on ARGUMENT_DEFINITION
+directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION
+directive @ExactlyOneFieldGiven on INPUT_OBJECT
+
+"""
+DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
+"""
+scalar ISO8601DateTime
+
+"""
+Dette er roten som alle forespørsler starter fra.
+"""
 type Query {
-    ping: String
+    """
+    Egnet for feilsøking. Forteller hvem du er autentisert som.
+    """
     whoami: String
 }
 
+"""
+Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+å opprette nye ting.
+"""
 type Mutation {
-    nyBeskjed(nyBeskjed: BeskjedInput! @Validate): BeskjedResultat!
+    """
+    Opprett en ny beskjed.
+    """
+    nyBeskjed(nyBeskjed: NyBeskjedInput! @Validate): NyBeskjedResultat!
 }
 
-type BeskjedResultat {
+input NyBeskjedInput {
     """
-    TODO: denne burde kanskje ikke eksponeres i det
-    hele tatt. Vi gir ingen garantier for at denne
-    kan brukes til noe fornuftig.
-    En ID som unikt identifiserer hendelsen.
+    Hvem som skal se notifikasjonen.
     """
+    mottaker: MottakerInput!
+
+    """
+    Merkelapp for beskjeden. Er typisk navnet på ytelse eller lignende. Den vises til brukeren.
+
+    Hva du kan oppgi som merkelapp er bestemt av produsent-registeret.
+    """
+    merkelapp: String!
+
+    """
+    Teksten som vises til brukeren.
+    """
+    tekst: String! @MaxLength(max: 300)
+
+    """
+    Lenken som brukeren føres til hvis de klikker på beskjeden.
+    """
+    lenke: String!
+
+    """
+    """
+    eksternId: String!
+
+    """
+    """
+    opprettetTidspunkt: ISO8601DateTime
+
+    """
+    """
+    grupperingsid: String
+}
+
+"""
+Du kan spesifisere mottaker av notifikasjoner på forskjellige måter. Du skal bruke nøyaktig ett av feltene.
+
+Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer som input.
+"""
+input MottakerInput @ExactlyOneFieldGiven {
+    altinn: AltinnMottakerInput
+    naermesteLeder: NaermesteLederMottakerInput
+}
+
+"""
+Spesifiser mottaker ved hjelp av tilganger i Altinn. Enhver som har den gitte tilgangen vil
+kunne se notifikasjone.
+
+Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
+bruker mister en Altinn-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn-tilgangen.
+Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikasjoner for den Altinn-tilgangen.
+"""
+input AltinnMottakerInput {
+    serviceCode: String!
+    serviceEdition: String!
+    virksomhetsnummer: String!
+}
+
+"""
+Spesifiser mottaker ved hjelp av fødselsnummer. Fødselsnummeret er det til nærmeste leder. Det er kun denne personen
+som potensielt kan se notifikasjonen. Det er videre en sjekk for å se om denne personen fortsatt er nærmeste leder
+for den ansatte notifikasjonen gjelder.
+
+Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
+"""
+input NaermesteLederMottakerInput {
+    naermesteLederFnr: String!
+    ansattFnr: String!
+    virksomhetsnummer: String!
+}
+
+
+"""
+Resultatet av nyBeskjed-mutationen er enten vellykket eller ikke.
+
+Hvis den er vellykket:
+- id er ikke null
+- errors er en tom liste
+
+Hvis den ikke er vellykket:
+- id er null
+- errors er ikke tom
+"""
+type NyBeskjedResultat {
     id: ID
     errors: [MutationError!]!
 }
@@ -24,47 +123,15 @@ interface MutationError {
 }
 
 """
-Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til
+Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.
 """
 type UgyldigMerkelapp implements MutationError {
     feilmelding: String!
 }
 
 """
-Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til
+Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.
 """
 type UgyldigMottaker implements MutationError {
     feilmelding: String!
-}
-
-directive @Validate on ARGUMENT_DEFINITION
-directive @MaxLength(max : Int) on INPUT_FIELD_DEFINITION
-
-scalar ISO8601DateTime
-input BeskjedInput {
-    merkelapp: String!
-    tekst: String! @MaxLength(max: 300)
-    grupperingsid: String
-    lenke: String!
-    eksternId: String!
-    mottaker: MottakerInput!
-    opprettetTidspunkt: ISO8601DateTime
-}
-
-
-"Må ha verdi i nøyaktig ett av disse feltene"
-input MottakerInput {
-    altinn: AltinnmottakerInput
-    fnr: FnrmottakerInput
-}
-
-input FnrmottakerInput {
-    fodselsnummer: String!
-    virksomhetsnummer: String!
-}
-
-input AltinnmottakerInput {
-    altinntjenesteKode: String!
-    altinntjenesteVersjon: String!
-    virksomhetsnummer: String!
 }

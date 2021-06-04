@@ -27,7 +27,7 @@ data class JWTAuthentication(
     val config:  JWTAuthenticationProvider.Configuration.() -> Unit,
 )
 
-object AuthConfigs {
+object HttpAuthProviders {
     val log = logger()
 
     val httpClient = HttpClient(Apache) {
@@ -146,7 +146,7 @@ fun JWTAuthenticationProvider.Configuration.verifier(
     additionalVerification: Verification.() -> Unit = {},
 ) {
     val metaData = runBlocking {
-        AuthConfigs.httpClient.get<AuthorizationServerMetaData>(discoveryUrl)
+        HttpAuthProviders.httpClient.get<AuthorizationServerMetaData>(discoveryUrl)
     }
     verifier(
         issuer = metaData.issuer,
@@ -162,7 +162,7 @@ fun JWTAuthenticationProvider.Configuration.verifier(
     audience: String,
     additionalVerification: Verification.() -> Unit = {},
 ) {
-    AuthConfigs.log.info("configuring authentication $name with issuer: $issuer, jwksUri: $jwksUri, audience: $audience")
+    HttpAuthProviders.log.info("configuring authentication $name with issuer: $issuer, jwksUri: $jwksUri, audience: $audience")
 
     val jwkProvider = JwkProviderBuilder(URL(jwksUri))
         .cached(10, 24, TimeUnit.HOURS)

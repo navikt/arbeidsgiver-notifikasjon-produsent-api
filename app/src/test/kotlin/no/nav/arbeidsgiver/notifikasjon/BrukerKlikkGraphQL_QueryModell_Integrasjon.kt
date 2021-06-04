@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import db.migration.OS
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -41,7 +42,7 @@ class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
 
         val beskjedOpprettet = Hendelse.BeskjedOpprettet(
             virksomhetsnummer = virksomhetsnummer,
-            mottaker = FodselsnummerMottaker(fnr, virksomhetsnummer),
+            mottaker = NærmesteLederMottaker(fnr, "", virksomhetsnummer),
             opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
             id = uuid,
             merkelapp = "",
