@@ -7,19 +7,19 @@
       "rekruttering"
     ],
     "mottakere": [
-      { "@type": "altinn", "code": "5216","version": "1", "description": "Mentortilskudd"              },
-      { "@type": "altinn", "code": "5212","version": "1", "description": "Inkluderingstilskudd"        },
-      { "@type": "altinn", "code": "5384","version": "1", "description": "Ekspertbistand"              },
-      { "@type": "altinn", "code": "5159","version": "1", "description": "Lønnstilskudd"               },
-      { "@type": "altinn", "code": "4936","version": "1", "description": "Inntektsmelding"             },
-      { "@type": "altinn", "code": "5332","version": "2", "description": "Arbeidstrening"              },
-      { "@type": "altinn", "code": "5332","version": "1", "description": "Arbeidstrening"              },
-      { "@type": "altinn", "code": "5441","version": "1", "description": "Arbeidsforhold"              },
-      { "@type": "altinn", "code": "5516","version": "1", "description": "Midlertidig lønnstilskudd"   },
-      { "@type": "altinn", "code": "5516","version": "2", "description": "Varig lønnstilskudd'"        },
-      { "@type": "altinn", "code": "3403","version": "2", "description": "Sykfraværsstatistikk"        },
-      { "@type": "altinn", "code": "5078","version": "1", "description": "Rekruttering"                },
-      { "@type": "altinn", "code": "5278","version": "1", "description": "Tilskuddsbrev om NAV-tiltak" }
+      { "@type": "altinn", "code": "5216","version": "1" },
+      { "@type": "altinn", "code": "5212","version": "1" },
+      { "@type": "altinn", "code": "5384","version": "1" },
+      { "@type": "altinn", "code": "5159","version": "1" },
+      { "@type": "altinn", "code": "4936","version": "1" },
+      { "@type": "altinn", "code": "5332","version": "2" },
+      { "@type": "altinn", "code": "5332","version": "1" },
+      { "@type": "altinn", "code": "5441","version": "1" },
+      { "@type": "altinn", "code": "5516","version": "1" },
+      { "@type": "altinn", "code": "5516","version": "2" },
+      { "@type": "altinn", "code": "3403","version": "2" },
+      { "@type": "altinn", "code": "5078","version": "1" },
+      { "@type": "altinn", "code": "5278","version": "1" }
     ]
   }
 ]

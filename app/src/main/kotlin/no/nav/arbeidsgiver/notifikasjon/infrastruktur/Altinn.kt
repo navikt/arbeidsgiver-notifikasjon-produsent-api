@@ -18,7 +18,7 @@ interface Altinn {
     suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<QueryModel.Tilgang>
 }
 
-val VÅRE_TJENESTER = MottakerRegister.servicecodes
+val VÅRE_TJENESTER = MottakerRegister.servicecodeDefinisjoner
 
 object AltinnImpl : Altinn {
     private val log = logger()
