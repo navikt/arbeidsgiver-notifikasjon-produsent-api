@@ -11,10 +11,9 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.mockk.every
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Brreg
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -32,6 +31,21 @@ fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResp
 
 fun TestApplicationEngine.produsentApi(req: String): TestApplicationResponse {
     return produsentApi(GraphQLRequest(req))
+}
+
+val produsentDefinisjoner = listOf(
+    ProdusentDefinisjon(
+        id = "someproducer",
+        merkelapper = listOf("tag"),
+        mottakere = listOf(ServicecodeDefinisjon(code = "5441", version = "1"))
+    )
+).associateBy { it.id }
+val mockProdusentRegister: ProdusentRegister = mockk() {
+    every {
+        finn(any())
+    } answers {
+        produsentDefinisjoner.getOrDefault(firstArg(), ProdusentDefinisjon(firstArg()))
+    }
 }
 
 @Suppress("NAME_SHADOWING")
@@ -52,7 +66,8 @@ class ProdusentApiTests : DescribeSpec({
             kafkaProducer = mockk()
         ),
         produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = embeddedKafka.newProducer()
+            kafkaProducer = embeddedKafka.newProducer(),
+            produsentRegister = mockProdusentRegister
         )
     )
 

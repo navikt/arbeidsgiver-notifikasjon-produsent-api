@@ -2,8 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.*
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 
@@ -37,7 +35,7 @@ sealed class MottakerDefinisjon
 data class ServicecodeDefinisjon(
     val code: String,
     val version: String,
-    val description: String?
+    val description: String? = null
 ) : MottakerDefinisjon() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -58,14 +56,35 @@ data class ServicecodeDefinisjon(
     }
 }
 
-private inline fun <reified T> ObjectMapper.readResource(name: String): T {
-    return objectMapper.readValue(this.javaClass.getResource(name)!!)
-}
-
 object ProdusentRegister {
-    private val REGISTER: List<ProdusentDefinisjon> = objectMapper.readResource("/produsent-register.json")
+    private val REGISTER: Map<String, ProdusentDefinisjon> = listOf(
+        ProdusentDefinisjon(
+            id = "someproducer",
+            merkelapper = listOf(
+                "tiltak",
+                "sykemeldte",
+                "rekruttering"
+            ),
+            mottakere = listOf(
+                ServicecodeDefinisjon(code = "5216", version = "1"),
+                ServicecodeDefinisjon(code = "5212", version = "1"),
+                ServicecodeDefinisjon(code = "5384", version = "1"),
+                ServicecodeDefinisjon(code = "5159", version = "1"),
+                ServicecodeDefinisjon(code = "4936", version = "1"),
+                ServicecodeDefinisjon(code = "5332", version = "2"),
+                ServicecodeDefinisjon(code = "5332", version = "1"),
+                ServicecodeDefinisjon(code = "5441", version = "1"),
+                ServicecodeDefinisjon(code = "5516", version = "1"),
+                ServicecodeDefinisjon(code = "5516", version = "2"),
+                ServicecodeDefinisjon(code = "3403", version = "2"),
+                ServicecodeDefinisjon(code = "5078", version = "1"),
+                ServicecodeDefinisjon(code = "5278", version = "1"),
+            )
+        )
+    ).associateBy { it.id }
+
     fun finn(subject: String): ProdusentDefinisjon {
-        val produsent = REGISTER.find { it.id == subject } ?: ProdusentDefinisjon(subject)
+        val produsent = REGISTER.getOrDefault(subject, ProdusentDefinisjon(subject))
         validate(produsent)
         return produsent
     }
@@ -80,7 +99,7 @@ object ProdusentRegister {
         }
     }
 
-    fun validateAll() = REGISTER.forEach(this::validate)
+    fun validateAll() = REGISTER.values.forEach(this::validate)
 }
 
 object MottakerRegister {

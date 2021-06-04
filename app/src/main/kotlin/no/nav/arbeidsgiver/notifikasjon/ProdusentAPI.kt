@@ -104,7 +104,8 @@ object ProdusentAPI {
     }
 
     fun newGraphQL(
-        kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer()
+        kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer(),
+        produsentRegister: ProdusentRegister = ProdusentRegister
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphqls") {
             directive("Validate", ValidateDirective)
@@ -128,7 +129,7 @@ object ProdusentAPI {
                     val nyBeskjed = env.getTypedArgument<BeskjedInput>("nyBeskjed")
                     val context = env.getContext<Context>()
 
-                    val produsentDefinisjon = ProdusentRegister.finn(context.produsentid)
+                    val produsentDefinisjon = produsentRegister.finn(context.produsentid)
 
                     if (!produsentDefinisjon.harTilgangTil(nyBeskjed.mottaker.tilDomene())) {
                         return@coDataFetcher BeskjedResultat(
