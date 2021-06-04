@@ -128,29 +128,27 @@ object ProdusentAPI {
                 coDataFetcher("nyBeskjed")  { env ->
                     val nyBeskjed = env.getTypedArgument<BeskjedInput>("nyBeskjed")
                     val context = env.getContext<Context>()
-
                     val produsentDefinisjon = produsentRegister.finn(context.produsentid)
+                    val errors = mutableListOf<MutationError>()
 
                     if (!produsentDefinisjon.harTilgangTil(nyBeskjed.mottaker.tilDomene())) {
-                        return@coDataFetcher BeskjedResultat(
-                            errors = listOf(
-                                MutationError.UgyldigMottaker("""
-                                    | Ugyldig mottaker '${nyBeskjed.mottaker}' for produsent '${produsentDefinisjon.id}'. 
-                                    | Gyldige mottakere er: ${produsentDefinisjon.mottakere}
-                                    """.trimMargin())
-                            )
+                        errors += MutationError.UgyldigMottaker("""
+                                | Ugyldig mottaker '${nyBeskjed.mottaker}' for produsent '${produsentDefinisjon.id}'. 
+                                | Gyldige mottakere er: ${produsentDefinisjon.mottakere}
+                                """.trimMargin()
                         )
                     }
 
                     if (!produsentDefinisjon.harTilgangTil(nyBeskjed.merkelapp)) {
-                        return@coDataFetcher BeskjedResultat(
-                            errors = listOf(
-                                MutationError.UgyldigMerkelapp("""
-                                    | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentDefinisjon.id}'. 
-                                    | Gyldige merkelapper er: ${produsentDefinisjon.merkelapper}
-                                    """.trimMargin())
-                            )
+                        errors += MutationError.UgyldigMerkelapp("""
+                                | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentDefinisjon.id}'. 
+                                | Gyldige merkelapper er: ${produsentDefinisjon.merkelapper}
+                                """.trimMargin()
                         )
+                    }
+
+                    if (errors.isNotEmpty()) {
+                        return@coDataFetcher BeskjedResultat(errors = errors)
                     }
 
                     val id = UUID.randomUUID()
