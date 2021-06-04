@@ -23,8 +23,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
                 return VÅRE_TJENESTER.map {
                     QueryModel.Tilgang(
                         virksomhet = vnr,
-                        servicecode = it.first,
-                        serviceedition = it.second
+                        servicecode = it.code,
+                        serviceedition = it.version
                     )
                 }
             }

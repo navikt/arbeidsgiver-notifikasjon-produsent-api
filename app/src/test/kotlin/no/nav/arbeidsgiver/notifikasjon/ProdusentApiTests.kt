@@ -11,10 +11,9 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.mockk.every
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Brreg
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -32,6 +31,21 @@ fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResp
 
 fun TestApplicationEngine.produsentApi(req: String): TestApplicationResponse {
     return produsentApi(GraphQLRequest(req))
+}
+
+val produsentDefinisjoner = listOf(
+    ProdusentDefinisjon(
+        id = "someproducer",
+        merkelapper = listOf("tag"),
+        mottakere = listOf(ServicecodeDefinisjon(code = "5441", version = "1"))
+    )
+).associateBy { it.id }
+val mockProdusentRegister: ProdusentRegister = mockk() {
+    every {
+        finn(any())
+    } answers {
+        produsentDefinisjoner.getOrDefault(firstArg(), ProdusentDefinisjon(firstArg()))
+    }
 }
 
 @Suppress("NAME_SHADOWING")
@@ -52,7 +66,8 @@ class ProdusentApiTests : DescribeSpec({
             kafkaProducer = mockk()
         ),
         produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = embeddedKafka.newProducer()
+            kafkaProducer = embeddedKafka.newProducer(),
+            produsentRegister = mockProdusentRegister
         )
     )
 
@@ -75,6 +90,10 @@ class ProdusentApiTests : DescribeSpec({
                             opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                         }) {
                             id
+                            errors {
+                                __typename
+                                feilmelding
+                            }
                         }
                     }
                 """.trimIndent()
@@ -148,6 +167,53 @@ class ProdusentApiTests : DescribeSpec({
                         resultat.errors shouldHaveSize 1
                         resultat.errors.first() should beOfType<ProdusentAPI.MutationError.UgyldigMerkelapp>()
                         resultat.errors.first().feilmelding shouldContain merkelapp
+                    }
+                }
+            }
+
+            context("når produsent mangler tilgang til mottaker") {
+                val mottaker = AltinnMottaker(
+                    altinntjenesteKode = "1337",
+                    altinntjenesteVersjon = "3",
+                    virksomhetsnummer = "42"
+                )
+                val response = engine.produsentApi(
+                    """
+                        mutation {
+                            nyBeskjed(nyBeskjed: {
+                                lenke: "https://foo.bar",
+                                tekst: "hello world",
+                                merkelapp: "tag",
+                                eksternId: "heu",
+                                mottaker: {
+                                    altinn: {
+                                        altinntjenesteKode: "${mottaker.altinntjenesteKode}",
+                                        altinntjenesteVersjon: "${mottaker.altinntjenesteVersjon}"
+                                        virksomhetsnummer: "${mottaker.virksomhetsnummer}"
+                                    } 
+                                }
+                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            }) {
+                                id
+                                errors {
+                                    __typename
+                                    feilmelding
+                                }
+                            }
+                        }
+                    """.trimIndent()
+                )
+
+                context("response inneholder forventet data") {
+                    val resultat = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
+                    it("id er null") {
+                        resultat.id shouldBe null
+                    }
+                    it("errors har forklarende feilmelding") {
+                        resultat.errors shouldHaveSize 1
+                        resultat.errors.first() should beOfType<ProdusentAPI.MutationError.UgyldigMottaker>()
+                        resultat.errors.first().feilmelding shouldContain mottaker.altinntjenesteKode
+                        resultat.errors.first().feilmelding shouldContain mottaker.altinntjenesteVersjon
                     }
                 }
             }

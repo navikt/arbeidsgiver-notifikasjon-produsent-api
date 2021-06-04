@@ -30,6 +30,13 @@ type UgyldigMerkelapp implements MutationError {
     feilmelding: String!
 }
 
+"""
+Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til
+"""
+type UgyldigMottaker implements MutationError {
+    feilmelding: String!
+}
+
 directive @Validate on ARGUMENT_DEFINITION
 directive @MaxLength(max : Int) on INPUT_FIELD_DEFINITION
 
