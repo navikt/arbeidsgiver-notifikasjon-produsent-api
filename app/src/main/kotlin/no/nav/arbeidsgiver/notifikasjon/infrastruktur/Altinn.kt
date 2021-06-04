@@ -18,21 +18,7 @@ interface Altinn {
     suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<QueryModel.Tilgang>
 }
 
-val VÅRE_TJENESTER = setOf(
-    "5216" to "1", // Mentortilskudd
-    "5212" to "1", // Inkluderingstilskudd
-    "5384" to "1", // Ekspertbistand
-    "5159" to "1", // Lønnstilskudd
-    "4936" to "1", // Inntektsmelding
-    "5332" to "2", // Arbeidstrening
-    "5332" to "1", // Arbeidstrening
-    "5441" to "1", // Arbeidsforhold
-    "5516" to "1", // Midlertidig lønnstilskudd
-    "5516" to "2", // Varig lønnstilskudd'
-    "3403" to "2", // Sykfraværsstatistikk
-    "5078" to "1", // Rekruttering
-    "5278" to "1"  // Tilskuddsbrev om NAV-tiltak
-)
+val VÅRE_TJENESTER = MottakerRegister.servicecodes
 
 object AltinnImpl : Altinn {
     private val log = logger()

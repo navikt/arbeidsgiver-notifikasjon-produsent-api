@@ -5,7 +5,7 @@
       "tag"
     ],
     "mottakere": [
-      { "@type": "altinn", "code": "5441", "version": "1" }
+      { "@type": "altinn", "code": "5441","version": "1", "description": "Arbeidsforhold" }
     ]
   }
 ]

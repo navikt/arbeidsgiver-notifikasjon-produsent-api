@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.module.kotlin.convertValue
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 
 data class GraphQLError(
@@ -17,6 +18,7 @@ inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T 
     val errors = getGraphqlErrors()
     if (errors.isEmpty()) {
         val tree = objectMapper.readTree(this.content!!)
+        logger().info("content: $tree")
         val node = tree.get("data").at(name.ensurePrefix("/"))
         return objectMapper.convertValue(node)
     } else {

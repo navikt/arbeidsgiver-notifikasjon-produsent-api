@@ -96,6 +96,11 @@ object ProdusentAPI {
         data class UgyldigMerkelapp(
             override val feilmelding: String
         ) : MutationError()
+
+        @JsonTypeName("UgyldigMottaker")
+        data class UgyldigMottaker(
+            override val feilmelding: String
+        ) : MutationError()
     }
 
     fun newGraphQL(
@@ -123,15 +128,25 @@ object ProdusentAPI {
                     val nyBeskjed = env.getTypedArgument<BeskjedInput>("nyBeskjed")
                     val context = env.getContext<Context>()
 
-                    val produsentMerkelapp = ProdusentRegister.finn(context.produsentid)
+                    val produsentDefinisjon = ProdusentRegister.finn(context.produsentid)
 
-                    // TODO: valider mottaker er gyldig iht register
-                    if (!produsentMerkelapp.har(nyBeskjed.merkelapp)) {
+                    if (!produsentDefinisjon.harTilgangTil(nyBeskjed.mottaker.tilDomene())) {
+                        return@coDataFetcher BeskjedResultat(
+                            errors = listOf(
+                                MutationError.UgyldigMottaker("""
+                                    | Ugyldig mottaker '${nyBeskjed.mottaker}' for produsent '${produsentDefinisjon.id}'. 
+                                    | Gyldige mottakere er: ${produsentDefinisjon.mottakere}
+                                    """.trimMargin())
+                            )
+                        )
+                    }
+
+                    if (!produsentDefinisjon.harTilgangTil(nyBeskjed.merkelapp)) {
                         return@coDataFetcher BeskjedResultat(
                             errors = listOf(
                                 MutationError.UgyldigMerkelapp("""
-                                    | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentMerkelapp.id}'. 
-                                    | Gyldige merkelapper er: ${produsentMerkelapp.merkelapper}
+                                    | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentDefinisjon.id}'. 
+                                    | Gyldige merkelapper er: ${produsentDefinisjon.merkelapper}
                                     """.trimMargin())
                             )
                         )
