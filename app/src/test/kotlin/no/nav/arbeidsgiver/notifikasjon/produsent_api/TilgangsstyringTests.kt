@@ -6,22 +6,19 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Brreg
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.BrregStub
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorTestServer
 import kotlin.time.ExperimentalTime
 
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class TilgangsstyringTests : DescribeSpec({
-    val altinn = object : Altinn {
-        override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
-    }
-    val brreg: Brreg = mockk()
-
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = altinn,
-            brreg = brreg,
+            altinn = AltinnStub(),
+            brreg = BrregStub(),
             queryModelFuture = mockk(),
             kafkaProducer = mockk()
         ),

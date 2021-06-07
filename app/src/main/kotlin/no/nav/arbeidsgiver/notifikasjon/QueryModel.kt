@@ -7,15 +7,11 @@ import org.postgresql.util.PSQLState
 import java.time.OffsetDateTime
 import java.util.*
 
-class QueryModel(
-    private val database: Database
-) {
-    private val log = logger()
-
-    data class Koordinat(
-        val mottaker: Mottaker,
-        val merkelapp: String,
-        val eksternId: String,
+interface QueryModel {
+    data class Tilgang(
+        val virksomhet: String,
+        val servicecode: String,
+        val serviceedition: String,
     )
 
     data class QueryBeskjed(
@@ -30,8 +26,25 @@ class QueryModel(
         val klikketPaa: Boolean
     )
 
-    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryBeskjed =
-        QueryBeskjed(
+    suspend fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<QueryBeskjed>
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
+    suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
+    suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket)
+}
+
+class QueryModelImpl(
+    private val database: Database
+) : QueryModel {
+    private val log = logger()
+
+    data class Koordinat(
+        val mottaker: Mottaker,
+        val merkelapp: String,
+        val eksternId: String,
+    )
+
+    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryModel.QueryBeskjed =
+        QueryModel.QueryBeskjed(
             id = this.id,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
@@ -43,18 +56,13 @@ class QueryModel(
             klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
         )
 
-    data class Tilgang(
-        val virksomhet: String,
-        val servicecode: String,
-        val serviceedition: String,
-    )
 
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
-    suspend fun hentNotifikasjoner(
+    override suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Collection<Tilgang>
-    ): List<QueryBeskjed> = timer.coRecord {
+        tilganger: Collection<QueryModel.Tilgang>
+    ): List<QueryModel.QueryBeskjed> = timer.coRecord {
         val tilgangerJsonB = tilganger.joinToString {
             "'${
                 objectMapper.writeValueAsString(
@@ -86,7 +94,7 @@ class QueryModel(
             string(fnr)
             string(fnr)
         }) {
-            QueryBeskjed(
+            QueryModel.QueryBeskjed(
                 merkelapp = getString("merkelapp"),
                 tekst = getString("tekst"),
                 grupperingsid = getString("grupperingsid"),
@@ -100,7 +108,7 @@ class QueryModel(
         }
     }
 
-    suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
+    override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
             database.runNonTransactionalQuery("""
                 SELECT virksomhetsnummer FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ? LIMIT 1
             """, {
@@ -109,14 +117,14 @@ class QueryModel(
                 getString("virksomhetsnummer")!!
             }.getOrNull(0)
 
-    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         when (hendelse) {
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
         }
     }
 
-    suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
+    override suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
         database.nonTransactionalCommand("""
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
             ON CONFLICT ON CONSTRAINT brukerklikk_pkey

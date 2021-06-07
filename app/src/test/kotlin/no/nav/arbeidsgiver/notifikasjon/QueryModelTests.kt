@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
@@ -11,9 +12,7 @@ import java.util.*
 
 class QueryModelTests : DescribeSpec({
     val database = testDatabase()
-    val queryModel = QueryModel(database)
-
-    listener(PostgresTestListener(database))
+    val queryModel = QueryModelImpl(database)
 
     describe("QueryModel") {
         describe("#oppdaterModellEtterBeskjedOpprettet()") {

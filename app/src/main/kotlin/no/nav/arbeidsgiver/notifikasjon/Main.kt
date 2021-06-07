@@ -24,7 +24,7 @@ object Main {
                 try {
                     val database = Database.openDatabase()
                     Health.subsystemReady[Subsystem.DATABASE] = true
-                    QueryModel(database)
+                    QueryModelImpl(database)
                 } catch (e: Exception) {
                     Health.subsystemAlive[Subsystem.DATABASE] = false
                     throw e

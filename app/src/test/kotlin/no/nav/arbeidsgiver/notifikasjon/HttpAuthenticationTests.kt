@@ -3,7 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.http.*
-import io.mockk.mockk
+import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
+import no.nav.arbeidsgiver.notifikasjon.util.ktorTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.post
 
 class HttpAuthenticationTests: DescribeSpec({
     val engine = ktorTestServer()

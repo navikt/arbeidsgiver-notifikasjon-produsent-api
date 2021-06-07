@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.slett
+import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -12,8 +13,7 @@ import kotlin.time.toJavaDuration
 @ExperimentalTime
 class SlettHendelseTests : DescribeSpec({
 
-    val embeddedKafka = EmbeddedKafkaTestListener()
-    listener(embeddedKafka)
+    val embeddedKafka = embeddedKafka()
     val producer = embeddedKafka.newProducer()
     val consumer = embeddedKafka.newConsumer()
 

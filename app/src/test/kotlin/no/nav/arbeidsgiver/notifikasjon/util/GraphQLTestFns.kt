@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.util
 
 import com.fasterxml.jackson.module.kotlin.convertValue
 import io.ktor.http.*

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.executable
 
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
