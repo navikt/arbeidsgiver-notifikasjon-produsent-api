@@ -101,37 +101,29 @@ input NaermesteLederMottakerInput {
     virksomhetsnummer: String!
 }
 
+union NyBeskjedResultat =
+    | NyBeskjedVellykket
+    | UgyldigMerkelapp
+    | UgyldigMottaker
 
-"""
-Resultatet av nyBeskjed-mutationen er enten vellykket eller ikke.
-
-Hvis den er vellykket:
-- id er ikke null
-- errors er en tom liste
-
-Hvis den ikke er vellykket:
-- id er null
-- errors er ikke tom
-"""
-type NyBeskjedResultat {
-    id: ID
-    errors: [MutationError!]!
-}
-
-interface MutationError {
-    feilmelding: String!
+type NyBeskjedVellykket {
+    id: ID!
 }
 
 """
 Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.
 """
-type UgyldigMerkelapp implements MutationError {
+type UgyldigMerkelapp implements Error {
     feilmelding: String!
 }
 
 """
 Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.
 """
-type UgyldigMottaker implements MutationError {
+type UgyldigMottaker implements Error {
+    feilmelding: String!
+}
+
+interface Error {
     feilmelding: String!
 }

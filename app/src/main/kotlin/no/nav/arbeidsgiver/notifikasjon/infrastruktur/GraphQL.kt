@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
+import org.slf4j.LoggerFactory
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
     objectMapper.convertValue(this.getArgument(name))
@@ -35,10 +36,18 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(fieldName: String, fetcher: susp
     }
 }
 
+object GraphQLLogger {
+    val log = logger()
+}
+
 inline fun <reified T : Any> RuntimeWiring.Builder.resolveSubtypes() {
+    GraphQLLogger.log.info("SubtypeResolver registered for ${T::class.simpleName}")
     type(T::class.simpleName) {
         it.typeResolver { env ->
-            env.schema.getObjectType(env.getObject<T>().javaClass.simpleName)
+            val name = env.getObject<T>().javaClass.simpleName
+            val objType = env.schema.getObjectType(name)
+            GraphQLLogger.log.info("Resolved $name to $objType")
+            objType
         }
     }
 }

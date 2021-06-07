@@ -95,10 +95,9 @@ class ProdusentApiTests : DescribeSpec({
                             }
                             opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                         }) {
-                            id
-                            errors {
-                                __typename
-                                feilmelding
+                            __typename
+                            ... on NyBeskjedVellykket {
+                                id
                             }
                         }
                     }
@@ -114,8 +113,8 @@ class ProdusentApiTests : DescribeSpec({
             }
 
             it("respons inneholder forventet data") {
-                val nyBeskjed = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
-                nyBeskjed.id shouldNot beNull()
+                val nyBeskjed = response.getTypedContent<ProdusentAPI.NyBeskjedResultat>("nyBeskjed")
+                nyBeskjed should beOfType<ProdusentAPI.NyBeskjedVellykket>()
             }
 
             it("sends message to kafka") {
@@ -124,7 +123,7 @@ class ProdusentApiTests : DescribeSpec({
                 val value = poll.last().value()
                 value should beOfType<Hendelse.BeskjedOpprettet>()
                 val event = value as Hendelse.BeskjedOpprettet
-                val nyBeskjed = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
+                val nyBeskjed = response.getTypedContent<ProdusentAPI.NyBeskjedVellykket>("nyBeskjed")
                 event.id shouldBe nyBeskjed.id
                 event.lenke shouldBe "https://foo.bar"
                 event.tekst shouldBe "hello world"
@@ -156,9 +155,8 @@ class ProdusentApiTests : DescribeSpec({
                                 }
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                             }) {
-                                id
-                                errors {
-                                    __typename
+                                __typename
+                                ... on Error {
                                     feilmelding
                                 }
                             }
@@ -167,14 +165,11 @@ class ProdusentApiTests : DescribeSpec({
                 )
 
                 context("response inneholder forventet data") {
-                    val resultat = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
-                    it("id er null") {
-                        resultat.id shouldBe null
-                    }
+                    val resultat = response.getTypedContent<ProdusentAPI.NyBeskjedResultat>("nyBeskjed")
                     it("errors har forklarende feilmelding") {
-                        resultat.errors shouldHaveSize 1
-                        resultat.errors.first() should beOfType<ProdusentAPI.MutationError.UgyldigMerkelapp>()
-                        resultat.errors.first().feilmelding shouldContain merkelapp
+                        resultat should beOfType<ProdusentAPI.Error.UgyldigMerkelapp>()
+                        resultat as ProdusentAPI.Error.UgyldigMerkelapp
+                        resultat.feilmelding shouldContain merkelapp
                     }
                 }
             }
@@ -202,9 +197,8 @@ class ProdusentApiTests : DescribeSpec({
                                 }
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                             }) {
-                                id
-                                errors {
-                                    __typename
+                                __typename
+                                ... on Error {
                                     feilmelding
                                 }
                             }
@@ -213,15 +207,12 @@ class ProdusentApiTests : DescribeSpec({
                 )
 
                 context("response inneholder forventet data") {
-                    val resultat = response.getTypedContent<ProdusentAPI.BeskjedResultat>("nyBeskjed")
-                    it("id er null") {
-                        resultat.id shouldBe null
-                    }
+                    val resultat = response.getTypedContent<ProdusentAPI.NyBeskjedResultat>("nyBeskjed")
                     it("errors har forklarende feilmelding") {
-                        resultat.errors shouldHaveSize 1
-                        resultat.errors.first() should beOfType<ProdusentAPI.MutationError.UgyldigMottaker>()
-                        resultat.errors.first().feilmelding shouldContain mottaker.serviceCode
-                        resultat.errors.first().feilmelding shouldContain mottaker.serviceEdition
+                        resultat should beOfType<ProdusentAPI.Error.UgyldigMottaker>()
+                        resultat as ProdusentAPI.Error.UgyldigMottaker
+                        resultat.feilmelding shouldContain mottaker.serviceCode
+                        resultat.feilmelding shouldContain mottaker.serviceEdition
                     }
                 }
             }
@@ -244,11 +235,7 @@ class ProdusentApiTests : DescribeSpec({
                                 }
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                             }) {
-                                id
-                                errors {
-                                    __typename
-                                    feilmelding
-                                }
+                                __typename
                             }
                         }
                     """.trimIndent()
@@ -275,7 +262,7 @@ class ProdusentApiTests : DescribeSpec({
                             }
                             opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                         }) {
-                            id
+                            __typename
                         }
                     }
                 """.trimIndent()
@@ -285,7 +272,7 @@ class ProdusentApiTests : DescribeSpec({
             response.status() shouldBe HttpStatusCode.OK
         }
 
-        it("response inneholder ikke feil") {
+        it("Feil pga ingen mottaker-felt oppgitt") {
             response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
         }
     }
@@ -313,7 +300,10 @@ class ProdusentApiTests : DescribeSpec({
                             }
                             opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                         }) {
-                            id
+                            __typename
+                            ... on NyBeskjedVellykket {
+                                id
+                            }
                         }
                     }
                 """.trimIndent()

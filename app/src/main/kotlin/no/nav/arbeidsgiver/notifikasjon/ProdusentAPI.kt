@@ -85,24 +85,27 @@ object ProdusentAPI {
         }
     }
 
-    data class BeskjedResultat(
-        val id: UUID? = null,
-        val errors: List<MutationError> = emptyList()
-    )
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed interface NyBeskjedResultat
+
+    @JsonTypeName("NyBeskjedVellykket")
+    data class NyBeskjedVellykket(
+        val id: UUID
+    ) : NyBeskjedResultat
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
-    sealed class MutationError {
+    sealed class Error {
         abstract val feilmelding: String
 
         @JsonTypeName("UgyldigMerkelapp")
         data class UgyldigMerkelapp(
             override val feilmelding: String
-        ) : MutationError()
+        ) : Error(), NyBeskjedResultat
 
         @JsonTypeName("UgyldigMottaker")
         data class UgyldigMottaker(
             override val feilmelding: String
-        ) : MutationError()
+        ) : Error(), NyBeskjedResultat
     }
 
     fun newGraphQL(
@@ -114,27 +117,23 @@ object ProdusentAPI {
 
             scalar(Scalars.ISO8601DateTime)
 
-            resolveSubtypes<MutationError>()
+            resolveSubtypes<Error>()
+            resolveSubtypes<NyBeskjedResultat>()
 
             wire("Query") {
-                dataFetcher("ping") {
-                    "pong"
-                }
-
                 dataFetcher("whoami") {
                     it.getContext<Context>().produsentid
                 }
             }
 
             wire("Mutation") {
-                coDataFetcher("nyBeskjed")  { env ->
+                coDataFetcher("nyBeskjed") { env ->
                     val nyBeskjed = env.getTypedArgument<BeskjedInput>("nyBeskjed")
                     val context = env.getContext<Context>()
                     val produsentDefinisjon = produsentRegister.finn(context.produsentid)
-                    val errors = mutableListOf<MutationError>()
 
                     if (!produsentDefinisjon.kanSendeTil(nyBeskjed.mottaker.tilDomene())) {
-                        errors += MutationError.UgyldigMottaker("""
+                        return@coDataFetcher Error.UgyldigMottaker("""
                                 | Ugyldig mottaker '${nyBeskjed.mottaker}' for produsent '${produsentDefinisjon.id}'. 
                                 | Gyldige mottakere er: ${produsentDefinisjon.tillatteMottakere}
                                 """.trimMargin()
@@ -142,21 +141,17 @@ object ProdusentAPI {
                     }
 
                     if (!produsentDefinisjon.kanSendeTil(nyBeskjed.merkelapp)) {
-                        errors += MutationError.UgyldigMerkelapp("""
+                        return@coDataFetcher Error.UgyldigMerkelapp("""
                                 | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentDefinisjon.id}'. 
                                 | Gyldige merkelapper er: ${produsentDefinisjon.tillatteMerkelapper}
                                 """.trimMargin()
                         )
                     }
 
-                    if (errors.isNotEmpty()) {
-                        return@coDataFetcher BeskjedResultat(errors = errors)
-                    }
-
                     val id = UUID.randomUUID()
                     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
                     kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
-                    return@coDataFetcher BeskjedResultat(id)
+                    return@coDataFetcher NyBeskjedVellykket(id)
                 }
             }
         }
