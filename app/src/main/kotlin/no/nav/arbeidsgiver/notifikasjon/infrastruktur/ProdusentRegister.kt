@@ -56,7 +56,12 @@ data class ServicecodeDefinisjon(
     }
 }
 
-object ProdusentRegister {
+interface ProdusentRegister {
+    fun finn(subject: String): ProdusentDefinisjon
+    fun validateAll()
+}
+
+object ProdusentRegisterImpl : ProdusentRegister {
     private val REGISTER: Map<String, ProdusentDefinisjon> = listOf(
         ProdusentDefinisjon(
             id = "someproducer",
@@ -83,11 +88,13 @@ object ProdusentRegister {
         )
     ).associateBy { it.id }
 
-    fun finn(subject: String): ProdusentDefinisjon {
+    override fun finn(subject: String): ProdusentDefinisjon {
         val produsent = REGISTER.getOrDefault(subject, ProdusentDefinisjon(subject))
         validate(produsent)
         return produsent
     }
+
+    override fun validateAll() = REGISTER.values.forEach(this::validate)
 
     private fun validate(produsentDefinisjon: ProdusentDefinisjon) {
         produsentDefinisjon.mottakere.forEach {
@@ -98,8 +105,6 @@ object ProdusentRegister {
             }
         }
     }
-
-    fun validateAll() = REGISTER.values.forEach(this::validate)
 }
 
 object MottakerRegister {

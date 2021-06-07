@@ -105,7 +105,7 @@ object ProdusentAPI {
 
     fun newGraphQL(
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer(),
-        produsentRegister: ProdusentRegister = ProdusentRegister
+        produsentRegister: ProdusentRegister = ProdusentRegisterImpl
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphqls") {
             directive("Validate", ValidateDirective)
