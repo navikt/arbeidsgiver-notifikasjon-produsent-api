@@ -80,7 +80,7 @@ object BrukerAPI {
                                 opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
                                 id = queryBeskjed.id,
                                 virksomhet = Virksomhet(when (queryBeskjed.mottaker) {
-                                    is FodselsnummerMottaker -> queryBeskjed.mottaker.virksomhetsnummer
+                                    is NærmesteLederMottaker -> queryBeskjed.mottaker.virksomhetsnummer
                                     is AltinnMottaker -> queryBeskjed.mottaker.virksomhetsnummer
                                 }),
                                 brukerKlikk = BrukerKlikk(

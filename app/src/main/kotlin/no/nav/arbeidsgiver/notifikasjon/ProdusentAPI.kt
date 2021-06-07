@@ -15,40 +15,42 @@ object ProdusentAPI {
         override val coroutineScope: CoroutineScope
     ): WithCoroutineScope
 
-    data class FnrmottakerInput(
-        val fodselsnummer: String,
+    data class NaermesteLederMottakerInput(
+        val naermesteLederFnr: String,
+        val ansattFnr: String,
         val virksomhetsnummer: String
     ) {
         fun tilDomene(): Mottaker =
-            FodselsnummerMottaker(
-                fodselsnummer = fodselsnummer,
+            NærmesteLederMottaker(
+                naermesteLederFnr = naermesteLederFnr,
+                ansattFnr = ansattFnr,
                 virksomhetsnummer = virksomhetsnummer
             )
     }
 
-    data class AltinnmottakerInput(
-        val altinntjenesteKode: String,
-        val altinntjenesteVersjon: String,
+    data class AltinnMottakerInput(
+        val serviceCode: String,
+        val serviceEdition: String,
         val virksomhetsnummer: String,
     ) {
         fun tilDomene(): Mottaker =
             AltinnMottaker(
-                altinntjenesteKode = altinntjenesteKode,
-                altinntjenesteVersjon = altinntjenesteVersjon,
+                serviceCode = serviceCode,
+                serviceEdition = serviceEdition,
                 virksomhetsnummer = virksomhetsnummer
             )
     }
 
     data class MottakerInput(
-        val altinn: AltinnmottakerInput?,
-        val fnr: FnrmottakerInput?
+        val altinn: AltinnMottakerInput?,
+        val naermesteLeder: NaermesteLederMottakerInput?
     ) {
 
         fun tilDomene(): Mottaker {
-            return if (altinn != null && fnr == null) {
+            return if (altinn != null && naermesteLeder == null) {
                 altinn.tilDomene()
-            } else if (fnr != null && altinn == null) {
-                fnr.tilDomene()
+            } else if (naermesteLeder != null && altinn == null) {
+                naermesteLeder.tilDomene()
             } else {
                 throw IllegalArgumentException("Ugyldig mottaker")
             }
@@ -76,7 +78,7 @@ object ProdusentAPI {
                 mottaker = mottaker,
                 opprettetTidspunkt = opprettetTidspunkt,
                 virksomhetsnummer = when (mottaker) {
-                    is FodselsnummerMottaker -> mottaker.virksomhetsnummer
+                    is NærmesteLederMottaker -> mottaker.virksomhetsnummer
                     is AltinnMottaker -> mottaker.virksomhetsnummer
                 }
             )
@@ -131,18 +133,18 @@ object ProdusentAPI {
                     val produsentDefinisjon = produsentRegister.finn(context.produsentid)
                     val errors = mutableListOf<MutationError>()
 
-                    if (!produsentDefinisjon.harTilgangTil(nyBeskjed.mottaker.tilDomene())) {
+                    if (!produsentDefinisjon.kanSendeTil(nyBeskjed.mottaker.tilDomene())) {
                         errors += MutationError.UgyldigMottaker("""
                                 | Ugyldig mottaker '${nyBeskjed.mottaker}' for produsent '${produsentDefinisjon.id}'. 
-                                | Gyldige mottakere er: ${produsentDefinisjon.mottakere}
+                                | Gyldige mottakere er: ${produsentDefinisjon.tillatteMottakere}
                                 """.trimMargin()
                         )
                     }
 
-                    if (!produsentDefinisjon.harTilgangTil(nyBeskjed.merkelapp)) {
+                    if (!produsentDefinisjon.kanSendeTil(nyBeskjed.merkelapp)) {
                         errors += MutationError.UgyldigMerkelapp("""
                                 | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentDefinisjon.id}'. 
-                                | Gyldige merkelapper er: ${produsentDefinisjon.merkelapper}
+                                | Gyldige merkelapper er: ${produsentDefinisjon.tillatteMerkelapper}
                                 """.trimMargin()
                         )
                     }

@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import db.migration.OS
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AuthConfigs
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.VÅRE_TJENESTER
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -10,11 +10,11 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     Main.main(
         httpPort = 8081,
         brukerAutentisering = listOf(
-            AuthConfigs.FAKEDINGS_BRUKER,
+            HttpAuthProviders.FAKEDINGS_BRUKER,
             LOCALHOST_BRUKER_AUTHENTICATION,
         ),
         produsentAutentisering = listOf(
-            AuthConfigs.FAKEDINGS_PRODUSENT,
+            HttpAuthProviders.FAKEDINGS_PRODUSENT,
             LOCALHOST_PRODUSENT_AUTHENTICATION,
         ),
         altinn = object: Altinn {

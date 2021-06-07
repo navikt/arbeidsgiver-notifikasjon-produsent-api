@@ -1,76 +1,76 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonTypeName
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import java.util.*
 
 typealias Merkelapp = String
 
-data class ProdusentDefinisjon(
+data class Produsent(
     val id: String,
-    val merkelapper: List<Merkelapp> = emptyList(),
-    val mottakere: List<MottakerDefinisjon> = emptyList()
+    val tillatteMerkelapper: List<Merkelapp> = emptyList(),
+    val tillatteMottakere: List<MottakerDefinisjon> = emptyList()
 ) {
-    fun harTilgangTil(merkelapp: String): Boolean {
-        return merkelapper.contains(merkelapp)
+    fun kanSendeTil(merkelapp: Merkelapp): Boolean {
+        return tillatteMerkelapper.contains(merkelapp)
     }
 
-    fun harTilgangTil(mottaker: Mottaker): Boolean {
-        return when (mottaker) {
-            is AltinnMottaker -> mottakere.filterIsInstance<ServicecodeDefinisjon>().any {
-                mottaker.altinntjenesteKode == it.code
-                        && mottaker.altinntjenesteVersjon == it.version
-            }
-            else -> true // TODO: fnr mottaker validering er ikke implementert enda
+    fun kanSendeTil(mottaker: Mottaker): Boolean =
+        tillatteMottakere.any { tillatMottaker ->
+            tillatMottaker.akseptererMottaker(mottaker)
         }
-
-    }
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-sealed class MottakerDefinisjon
+sealed class MottakerDefinisjon {
+    abstract fun akseptererMottaker(mottaker: Mottaker): Boolean
+}
 
-@JsonTypeName("altinn")
 data class ServicecodeDefinisjon(
     val code: String,
     val version: String,
     val description: String? = null
 ) : MottakerDefinisjon() {
+    override fun akseptererMottaker(mottaker: Mottaker): Boolean =
+        when (mottaker) {
+            is AltinnMottaker ->
+                mottaker.serviceCode == code && mottaker.serviceEdition == version
+            else -> false
+        }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as ServicecodeDefinisjon
-
-        if (code != other.code) return false
-        if (version != other.version) return false
-
-        return true
+        return other is ServicecodeDefinisjon
+                && this.code == other.code
+                && this.version == other.version
     }
 
-    override fun hashCode(): Int {
-        var result = code.hashCode()
-        result = 31 * result + version.hashCode()
-        return result
-    }
+    override fun hashCode(): Int = Objects.hash(code, version)
+}
+
+object NærmesteLederDefinisjon : MottakerDefinisjon() {
+    override fun akseptererMottaker(mottaker: Mottaker): Boolean =
+        when (mottaker) {
+            is NærmesteLederMottaker -> true
+            else -> false
+        }
 }
 
 interface ProdusentRegister {
-    fun finn(subject: String): ProdusentDefinisjon
+    fun finn(subject: String): Produsent
     fun validateAll()
 }
 
 object ProdusentRegisterImpl : ProdusentRegister {
-    private val REGISTER: Map<String, ProdusentDefinisjon> = listOf(
-        ProdusentDefinisjon(
+    private val REGISTER: Map<String, Produsent> = listOf(
+        Produsent(
             id = "someproducer",
-            merkelapper = listOf(
+            tillatteMerkelapper = listOf(
                 "tiltak",
                 "sykemeldte",
                 "rekruttering"
             ),
-            mottakere = listOf(
+            tillatteMottakere = listOf(
                 ServicecodeDefinisjon(code = "5216", version = "1"),
                 ServicecodeDefinisjon(code = "5212", version = "1"),
                 ServicecodeDefinisjon(code = "5384", version = "1"),
@@ -84,24 +84,23 @@ object ProdusentRegisterImpl : ProdusentRegister {
                 ServicecodeDefinisjon(code = "3403", version = "2"),
                 ServicecodeDefinisjon(code = "5078", version = "1"),
                 ServicecodeDefinisjon(code = "5278", version = "1"),
+                NærmesteLederDefinisjon,
             )
         )
     ).associateBy { it.id }
 
-    override fun finn(subject: String): ProdusentDefinisjon {
-        val produsent = REGISTER.getOrDefault(subject, ProdusentDefinisjon(subject))
+    override fun finn(subject: String): Produsent {
+        val produsent = REGISTER.getOrDefault(subject, Produsent(subject))
         validate(produsent)
         return produsent
     }
 
     override fun validateAll() = REGISTER.values.forEach(this::validate)
 
-    private fun validate(produsentDefinisjon: ProdusentDefinisjon) {
-        produsentDefinisjon.mottakere.forEach {
-            when (it) {
-                is ServicecodeDefinisjon -> check(MottakerRegister.erDefinert(it)) {
-                    "Ugyldig mottaker $it for produsent $produsentDefinisjon"
-                }
+    private fun validate(produsent: Produsent) {
+        produsent.tillatteMottakere.forEach {
+            check(MottakerRegister.erDefinert(it)) {
+                "Ugyldig mottaker $it for produsent $produsent"
             }
         }
     }
@@ -129,6 +128,9 @@ object MottakerRegister {
             return REGISTER.filterIsInstance<ServicecodeDefinisjon>()
         }
 
-    fun erDefinert(servicecodeDefinisjon: ServicecodeDefinisjon): Boolean =
-        servicecodeDefinisjoner.contains(servicecodeDefinisjon)
+    fun erDefinert(mottakerDefinisjon: MottakerDefinisjon): Boolean =
+        when (mottakerDefinisjon) {
+            is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
+            is NærmesteLederDefinisjon -> true
+        }
 }

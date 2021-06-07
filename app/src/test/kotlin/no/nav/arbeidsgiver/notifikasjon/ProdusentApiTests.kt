@@ -8,6 +8,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldContainIgnoringCase
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.ktor.server.testing.*
@@ -34,17 +35,21 @@ fun TestApplicationEngine.produsentApi(req: String): TestApplicationResponse {
 }
 
 val produsentDefinisjoner = listOf(
-    ProdusentDefinisjon(
+    Produsent(
         id = "someproducer",
-        merkelapper = listOf("tag"),
-        mottakere = listOf(ServicecodeDefinisjon(code = "5441", version = "1"))
+        tillatteMerkelapper = listOf("tag"),
+        tillatteMottakere = listOf(
+            ServicecodeDefinisjon(code = "5441", version = "1"),
+            NærmesteLederDefinisjon,
+        )
     )
 ).associateBy { it.id }
+
 val mockProdusentRegister: ProdusentRegister = mockk() {
     every {
         finn(any())
     } answers {
-        produsentDefinisjoner.getOrDefault(firstArg(), ProdusentDefinisjon(firstArg()))
+        produsentDefinisjoner.getOrDefault(firstArg(), Produsent(firstArg()))
     }
 }
 
@@ -82,8 +87,9 @@ class ProdusentApiTests : DescribeSpec({
                             merkelapp: "tag",
                             eksternId: "heu",
                             mottaker: {
-                                fnr: {
-                                    fodselsnummer: "12345678910",
+                                naermesteLeder: {
+                                    naermesteLederFnr: "12345678910",
+                                    ansattFnr: "321"
                                     virksomhetsnummer: "42"
                                 } 
                             }
@@ -123,8 +129,9 @@ class ProdusentApiTests : DescribeSpec({
                 event.lenke shouldBe "https://foo.bar"
                 event.tekst shouldBe "hello world"
                 event.merkelapp shouldBe "tag"
-                event.mottaker shouldBe FodselsnummerMottaker(
-                    fodselsnummer = "12345678910",
+                event.mottaker shouldBe NærmesteLederMottaker(
+                    naermesteLederFnr = "12345678910",
+                    ansattFnr = "321",
                     virksomhetsnummer = "42"
                 )
                 event.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
@@ -141,8 +148,9 @@ class ProdusentApiTests : DescribeSpec({
                                 merkelapp: "$merkelapp",
                                 eksternId: "heu",
                                 mottaker: {
-                                    fnr: {
-                                        fodselsnummer: "12345678910",
+                                    naermesteLeder: {
+                                        naermesteLederFnr: "12345678910",
+                                        ansattFnr: "321234"
                                         virksomhetsnummer: "42"
                                     } 
                                 }
@@ -173,8 +181,8 @@ class ProdusentApiTests : DescribeSpec({
 
             context("når produsent mangler tilgang til mottaker") {
                 val mottaker = AltinnMottaker(
-                    altinntjenesteKode = "1337",
-                    altinntjenesteVersjon = "3",
+                    serviceCode = "1337",
+                    serviceEdition = "3",
                     virksomhetsnummer = "42"
                 )
                 val response = engine.produsentApi(
@@ -187,8 +195,8 @@ class ProdusentApiTests : DescribeSpec({
                                 eksternId: "heu",
                                 mottaker: {
                                     altinn: {
-                                        altinntjenesteKode: "${mottaker.altinntjenesteKode}",
-                                        altinntjenesteVersjon: "${mottaker.altinntjenesteVersjon}"
+                                        serviceCode: "${mottaker.serviceCode}",
+                                        serviceEdition: "${mottaker.serviceEdition}"
                                         virksomhetsnummer: "${mottaker.virksomhetsnummer}"
                                     } 
                                 }
@@ -212,8 +220,8 @@ class ProdusentApiTests : DescribeSpec({
                     it("errors har forklarende feilmelding") {
                         resultat.errors shouldHaveSize 1
                         resultat.errors.first() should beOfType<ProdusentAPI.MutationError.UgyldigMottaker>()
-                        resultat.errors.first().feilmelding shouldContain mottaker.altinntjenesteKode
-                        resultat.errors.first().feilmelding shouldContain mottaker.altinntjenesteVersjon
+                        resultat.errors.first().feilmelding shouldContain mottaker.serviceCode
+                        resultat.errors.first().feilmelding shouldContain mottaker.serviceEdition
                     }
                 }
             }
@@ -228,8 +236,9 @@ class ProdusentApiTests : DescribeSpec({
                                 merkelapp: "tag",
                                 eksternId: "heu",
                                 mottaker: {
-                                    fnr: {
-                                        fodselsnummer: "12345678910",
+                                    naermesteLeder: {
+                                        naermesteLederFnr: "12345678910",
+                                        ansattFnr: "3213"
                                         virksomhetsnummer: "42"
                                     } 
                                 }
@@ -250,6 +259,72 @@ class ProdusentApiTests : DescribeSpec({
                     errors.first().message shouldContain "felt 'tekst' overstiger max antall tegn. antall=301, max=300"
                 }
             }
+        }
+    }
+
+    context("Mutation.nyBeskjed med ingen mottaker") {
+        val response = engine.produsentApi(
+            """
+                    mutation {
+                        nyBeskjed(nyBeskjed: {
+                            lenke: "https://foo.bar",
+                            tekst: "hello world",
+                            merkelapp: "tag",
+                            eksternId: "heu",
+                            mottaker: {
+                            }
+                            opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                        }) {
+                            id
+                        }
+                    }
+                """.trimIndent()
+        )
+
+        it("status is 200 OK") {
+            response.status() shouldBe HttpStatusCode.OK
+        }
+
+        it("response inneholder ikke feil") {
+            response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+        }
+    }
+
+    context("Mutation.nyBeskjed med to mottakere") {
+        val response = engine.produsentApi(
+            """
+                    mutation {
+                        nyBeskjed(nyBeskjed: {
+                            lenke: "https://foo.bar",
+                            tekst: "hello world",
+                            merkelapp: "tag",
+                            eksternId: "heu",
+                            mottaker: {
+                                altinn: {
+                                    serviceCode: "1234"
+                                    serviceEdition: "321"
+                                    virksomhetsnummer: "123456789"
+                                }
+                                naermesteLeder: {
+                                    naermesteLederFnr: "00112233344"
+                                    ansattFnr: "11223344455"
+                                    virksomhetsnummer: "123456789"
+                                }
+                            }
+                            opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                        }) {
+                            id
+                        }
+                    }
+                """.trimIndent()
+        )
+
+        it("status is 200 OK") {
+            response.status() shouldBe HttpStatusCode.OK
+        }
+
+        it("response inneholder ikke feil") {
+            response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
         }
     }
 })

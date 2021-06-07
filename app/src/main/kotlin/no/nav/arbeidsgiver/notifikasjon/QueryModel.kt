@@ -74,8 +74,8 @@ class QueryModel(
                 klikk.notifikasjonsid = noti.id
                 and klikk.fnr = ?
             where (
-                            mottaker ->> '@type' = 'fodselsnummer'
-                    and mottaker ->> 'fodselsnummer' = ?
+                            mottaker ->> '@type' = 'naermesteLeder'
+                    and mottaker ->> 'naermesteLederFnr' = ?
                 )
                or (
                             mottaker ->> '@type' = 'altinn'

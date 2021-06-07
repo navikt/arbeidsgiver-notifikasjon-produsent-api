@@ -73,17 +73,17 @@ object Main {
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     val brukerAutentisering = mutableListOf(
-        AuthConfigs.LOGIN_SERVICE,
-        AuthConfigs.TOKEN_X,
+        HttpAuthProviders.LOGIN_SERVICE,
+        HttpAuthProviders.TOKEN_X,
     )
 
     val produsentAutentisering = mutableListOf(
-        AuthConfigs.AZURE_AD,
+        HttpAuthProviders.AZURE_AD,
     )
 
     if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
-        brukerAutentisering.add(AuthConfigs.FAKEDINGS_BRUKER)
-        produsentAutentisering.add(AuthConfigs.FAKEDINGS_PRODUSENT)
+        brukerAutentisering.add(HttpAuthProviders.FAKEDINGS_BRUKER)
+        produsentAutentisering.add(HttpAuthProviders.FAKEDINGS_PRODUSENT)
     }
 
     Main.main(

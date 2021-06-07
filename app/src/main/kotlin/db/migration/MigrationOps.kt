@@ -23,14 +23,17 @@ object MigrationOps {
 
 object OS {
     val log = logger()
+
     var cwd : String by Delegates.observable("") {
             _, old, new ->
         log.warn("cwd changed: $old -> $new")
     }
+
     var kafkaPropertiesFile : String by Delegates.observable("/kafka.properties") {
             _, old, new ->
         log.warn("kafkaPropertiesFile changed: $old -> $new")
     }
+
     fun exec(cmd: String) {
         log.info("exec: $cwd$cmd")
         val proc = Runtime.getRuntime().exec("$cwd$cmd")
@@ -40,6 +43,7 @@ object OS {
             throw Error("process exited with error: ${String(proc.errorStream.readAllBytes())}")
         }
     }
+
     fun setupLocal() {
         cwd = ".kafka-cli/bin/"
         kafkaPropertiesFile = ".kafka-cli/kafka.properties"

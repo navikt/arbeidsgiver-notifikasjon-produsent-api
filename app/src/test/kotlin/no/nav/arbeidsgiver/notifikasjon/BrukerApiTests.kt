@@ -44,7 +44,7 @@ class BrukerApiTests : DescribeSpec({
                 grupperingsid = "",
                 lenke = "",
                 eksternId = "",
-                mottaker = FodselsnummerMottaker("00000000000", "43"),
+                mottaker = NærmesteLederMottaker("00000000000", "321", "43"),
                 opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
                 id = uuid,
                 klikketPaa = false
