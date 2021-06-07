@@ -22,7 +22,7 @@ object ProdusentAPI {
     ) {
         fun tilDomene(): Mottaker =
             NærmesteLederMottaker(
-                nærmesteLederFnr = naermesteLederFnr,
+                naermesteLederFnr = naermesteLederFnr,
                 ansattFnr = ansattFnr,
                 virksomhetsnummer = virksomhetsnummer
             )
@@ -35,8 +35,8 @@ object ProdusentAPI {
     ) {
         fun tilDomene(): Mottaker =
             AltinnMottaker(
-                altinntjenesteKode = serviceCode,
-                altinntjenesteVersjon = serviceEdition,
+                serviceCode = serviceCode,
+                serviceEdition = serviceEdition,
                 virksomhetsnummer = virksomhetsnummer
             )
     }
@@ -107,7 +107,7 @@ object ProdusentAPI {
 
     fun newGraphQL(
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer(),
-        produsentRegister: ProdusentRegister = ProdusentRegister
+        produsentRegister: ProdusentRegister = ProdusentRegisterImpl
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphqls") {
             directive("Validate", ValidateDirective)

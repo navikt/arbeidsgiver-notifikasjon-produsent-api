@@ -12,7 +12,6 @@ data class Produsent(
     val tillatteMerkelapper: List<Merkelapp> = emptyList(),
     val tillatteMottakere: List<MottakerDefinisjon> = emptyList()
 ) {
-
     fun kanSendeTil(merkelapp: Merkelapp): Boolean {
         return tillatteMerkelapper.contains(merkelapp)
     }
@@ -20,7 +19,7 @@ data class Produsent(
     fun kanSendeTil(mottaker: Mottaker): Boolean =
         tillatteMottakere.any { tillatMottaker ->
             tillatMottaker.akseptererMottaker(mottaker)
-    }
+        }
 }
 
 sealed class MottakerDefinisjon {
@@ -35,7 +34,7 @@ data class ServicecodeDefinisjon(
     override fun akseptererMottaker(mottaker: Mottaker): Boolean =
         when (mottaker) {
             is AltinnMottaker ->
-                mottaker.altinntjenesteKode == code && mottaker.altinntjenesteVersjon == version
+                mottaker.serviceCode == code && mottaker.serviceEdition == version
             else -> false
         }
 
@@ -57,7 +56,12 @@ object NærmesteLederDefinisjon : MottakerDefinisjon() {
         }
 }
 
-object ProdusentRegister {
+interface ProdusentRegister {
+    fun finn(subject: String): Produsent
+    fun validateAll()
+}
+
+object ProdusentRegisterImpl : ProdusentRegister {
     private val REGISTER: Map<String, Produsent> = listOf(
         Produsent(
             id = "someproducer",
@@ -85,23 +89,21 @@ object ProdusentRegister {
         )
     ).associateBy { it.id }
 
-    fun finn(subject: String): Produsent {
+    override fun finn(subject: String): Produsent {
         val produsent = REGISTER.getOrDefault(subject, Produsent(subject))
         validate(produsent)
         return produsent
     }
 
+    override fun validateAll() = REGISTER.values.forEach(this::validate)
+
     private fun validate(produsent: Produsent) {
         produsent.tillatteMottakere.forEach {
-            when (it) {
-                is ServicecodeDefinisjon -> check(MottakerRegister.erDefinert(it)) {
-                    "Ugyldig mottaker $it for produsent $produsent"
-                }
+            check(MottakerRegister.erDefinert(it)) {
+                "Ugyldig mottaker $it for produsent $produsent"
             }
         }
     }
-
-    fun validateAll() = REGISTER.values.forEach(this::validate)
 }
 
 object MottakerRegister {
@@ -131,5 +133,4 @@ object MottakerRegister {
             is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
             is NærmesteLederDefinisjon -> true
         }
-    }
 }

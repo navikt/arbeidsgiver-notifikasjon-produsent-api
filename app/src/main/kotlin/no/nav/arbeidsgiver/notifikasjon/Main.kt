@@ -31,7 +31,7 @@ object Main {
                 }
             }
             launch {
-                ProdusentRegister.validateAll()
+                ProdusentRegisterImpl.validateAll()
             }
 
             launch {

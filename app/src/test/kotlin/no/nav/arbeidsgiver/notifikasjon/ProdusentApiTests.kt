@@ -38,9 +38,13 @@ val produsentDefinisjoner = listOf(
     Produsent(
         id = "someproducer",
         tillatteMerkelapper = listOf("tag"),
-        tillatteMottakere = listOf(ServicecodeDefinisjon(code = "5441", version = "1"))
+        tillatteMottakere = listOf(
+            ServicecodeDefinisjon(code = "5441", version = "1"),
+            NærmesteLederDefinisjon,
+        )
     )
 ).associateBy { it.id }
+
 val mockProdusentRegister: ProdusentRegister = mockk() {
     every {
         finn(any())
@@ -126,7 +130,7 @@ class ProdusentApiTests : DescribeSpec({
                 event.tekst shouldBe "hello world"
                 event.merkelapp shouldBe "tag"
                 event.mottaker shouldBe NærmesteLederMottaker(
-                    nærmesteLederFnr = "12345678910",
+                    naermesteLederFnr = "12345678910",
                     ansattFnr = "321",
                     virksomhetsnummer = "42"
                 )
@@ -177,8 +181,8 @@ class ProdusentApiTests : DescribeSpec({
 
             context("når produsent mangler tilgang til mottaker") {
                 val mottaker = AltinnMottaker(
-                    altinntjenesteKode = "1337",
-                    altinntjenesteVersjon = "3",
+                    serviceCode = "1337",
+                    serviceEdition = "3",
                     virksomhetsnummer = "42"
                 )
                 val response = engine.produsentApi(
@@ -191,8 +195,8 @@ class ProdusentApiTests : DescribeSpec({
                                 eksternId: "heu",
                                 mottaker: {
                                     altinn: {
-                                        altinntjenesteKode: "${mottaker.altinntjenesteKode}",
-                                        altinntjenesteVersjon: "${mottaker.altinntjenesteVersjon}"
+                                        serviceCode: "${mottaker.serviceCode}",
+                                        serviceEdition: "${mottaker.serviceEdition}"
                                         virksomhetsnummer: "${mottaker.virksomhetsnummer}"
                                     } 
                                 }
@@ -216,8 +220,8 @@ class ProdusentApiTests : DescribeSpec({
                     it("errors har forklarende feilmelding") {
                         resultat.errors shouldHaveSize 1
                         resultat.errors.first() should beOfType<ProdusentAPI.MutationError.UgyldigMottaker>()
-                        resultat.errors.first().feilmelding shouldContain mottaker.altinntjenesteKode
-                        resultat.errors.first().feilmelding shouldContain mottaker.altinntjenesteVersjon
+                        resultat.errors.first().feilmelding shouldContain mottaker.serviceCode
+                        resultat.errors.first().feilmelding shouldContain mottaker.serviceEdition
                     }
                 }
             }

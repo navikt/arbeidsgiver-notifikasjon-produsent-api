@@ -39,16 +39,16 @@ sealed class Hendelse {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class Mottaker
 
-@JsonTypeName("nærmesteLeder")
+@JsonTypeName("naermesteLeder")
 data class NærmesteLederMottaker (
-    val nærmesteLederFnr: String,
+    val naermesteLederFnr: String,
     val ansattFnr: String,
     val virksomhetsnummer: String
 ) : Mottaker()
 
 @JsonTypeName("altinn")
 data class AltinnMottaker(
-    val altinntjenesteKode: String,
-    val altinntjenesteVersjon: String,
+    val serviceCode: String,
+    val serviceEdition: String,
     val virksomhetsnummer: String,
 ): Mottaker()

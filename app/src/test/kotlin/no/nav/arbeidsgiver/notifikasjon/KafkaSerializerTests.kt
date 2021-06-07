@@ -22,8 +22,8 @@ class KafkaSerializerTests : DescribeSpec({
                 merkelapp = "merkelappen",
                 id = uuid,
                 mottaker = AltinnMottaker(
-                    altinntjenesteKode = "1234",
-                    altinntjenesteVersjon = "1",
+                    serviceCode = "1234",
+                    serviceEdition = "1",
                     virksomhetsnummer = virksomhetsnummer
                 ),
                 lenke = "https://foop.no",
