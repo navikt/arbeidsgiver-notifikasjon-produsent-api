@@ -1,28 +1,19 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import db.migration.MigrationOps
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
-import io.mockk.every
-import io.mockk.mockkObject
-import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
 class QueryModelTests : DescribeSpec({
-    val dataSource = runBlocking {
-        mockkObject(MigrationOps)
-        every { MigrationOps.resetOffsetsToEarliest() } returns Unit
-        Database.openDatabase()
-    }
-    val queryModel = QueryModel(dataSource)
+    val database = testDatabase()
+    val queryModel = QueryModel(database)
 
-    listener(PostgresTestListener(dataSource))
+    listener(PostgresTestListener(database))
 
     describe("QueryModel") {
         describe("#oppdaterModellEtterBeskjedOpprettet()") {

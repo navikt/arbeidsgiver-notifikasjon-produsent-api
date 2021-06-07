@@ -1,25 +1,21 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import db.migration.OS
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Brreg
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.BrregEnhet
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
-class BrukerKlikkGraphQL_QueryModell_Integrasjon: DescribeSpec({
+class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
 
     val altinn = object : Altinn {
         override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
     }
     val brreg: Brreg = mockk()
-    val database = runBlocking { Database.openDatabase() }
+    val database = testDatabase()
     val queryModel = QueryModel(database)
     listener(PostgresTestListener(database))
 
