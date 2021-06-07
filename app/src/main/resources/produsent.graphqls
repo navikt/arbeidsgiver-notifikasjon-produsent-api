@@ -26,45 +26,28 @@ type Mutation {
     Opprett en ny beskjed.
     """
     nyBeskjed(nyBeskjed: NyBeskjedInput! @Validate): NyBeskjedResultat!
+
+    """
+    Opprett en ny oppgave.
+    """
+    nyOppgave(nyOppgave: NyOppgaveInput! @Validate): NyOppgaveResultat!
 }
 
 input NyBeskjedInput {
-    """
-    Hvem som skal se notifikasjonen.
-    """
     mottaker: MottakerInput!
+    notifikasjon: NotifikasjonInput!
+    metadata: MetadataInput!
+}
 
-    """
-    Merkelapp for beskjeden. Er typisk navnet på ytelse eller lignende. Den vises til brukeren.
-
-    Hva du kan oppgi som merkelapp er bestemt av produsent-registeret.
-    """
-    merkelapp: String!
-
-    """
-    Teksten som vises til brukeren.
-    """
-    tekst: String! @MaxLength(max: 300)
-
-    """
-    Lenken som brukeren føres til hvis de klikker på beskjeden.
-    """
-    lenke: String!
-
-    """
-    """
-    eksternId: String!
-
-    """
-    """
-    opprettetTidspunkt: ISO8601DateTime
-
-    """
-    """
-    grupperingsid: String
+input NyOppgaveInput {
+    mottaker: MottakerInput!
+    notifikasjon: NotifikasjonInput!
+    metadata: MetadataInput!
 }
 
 """
+Hvem som skal se notifikasjonen.
+
 Du kan spesifisere mottaker av notifikasjoner på forskjellige måter. Du skal bruke nøyaktig ett av feltene.
 
 Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer som input.
@@ -101,12 +84,57 @@ input NaermesteLederMottakerInput {
     virksomhetsnummer: String!
 }
 
+
+"""
+"""
+input NotifikasjonInput {
+    """
+    Merkelapp for beskjeden. Er typisk navnet på ytelse eller lignende. Den vises til brukeren.
+
+    Hva du kan oppgi som merkelapp er bestemt av produsent-registeret.
+    """
+    merkelapp: String!
+
+    """
+    Teksten som vises til brukeren.
+    """
+    tekst: String! @MaxLength(max: 300)
+
+    """
+    Lenken som brukeren føres til hvis de klikker på beskjeden.
+    """
+    lenke: String!
+}
+
+input MetadataInput {
+    """
+    """
+    eksternId: String!
+
+    """
+    """
+    opprettetTidspunkt: ISO8601DateTime
+
+    """
+    """
+    grupperingsid: String
+}
+
+union NyOppgaveResultat =
+    | NyOppgaveVellykket
+    | UgyldigMerkelapp
+    | UgyldigMottaker
+
 union NyBeskjedResultat =
     | NyBeskjedVellykket
     | UgyldigMerkelapp
     | UgyldigMottaker
 
 type NyBeskjedVellykket {
+    id: ID!
+}
+
+type NyOppgaveVellykket {
     id: ID!
 }
 
