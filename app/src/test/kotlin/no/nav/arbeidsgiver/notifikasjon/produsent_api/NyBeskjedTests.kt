@@ -42,10 +42,6 @@ class NyBeskjedTests : DescribeSpec({
             """
                     mutation {
                         nyBeskjed(nyBeskjed: {
-                            lenke: "https://foo.bar",
-                            tekst: "hello world",
-                            merkelapp: "tag",
-                            eksternId: "heu",
                             mottaker: {
                                 naermesteLeder: {
                                     naermesteLederFnr: "12345678910",
@@ -53,7 +49,15 @@ class NyBeskjedTests : DescribeSpec({
                                     virksomhetsnummer: "42"
                                 } 
                             }
-                            opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            notifikasjon: {
+                                lenke: "https://foo.bar",
+                                tekst: "hello world",
+                                merkelapp: "tag",
+                            }
+                            metadata: {
+                                eksternId: "heu",
+                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            }
                         }) {
                             __typename
                             ... on NyBeskjedVellykket {

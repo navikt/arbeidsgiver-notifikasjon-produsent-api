@@ -39,18 +39,22 @@ class TilgangsstyringTests : DescribeSpec({
                 """
                         mutation {
                             nyBeskjed(nyBeskjed: {
-                                lenke: "https://foo.bar",
-                                tekst: "hello world",
-                                merkelapp: "$merkelapp",
-                                eksternId: "heu",
                                 mottaker: {
                                     naermesteLeder: {
-                                        naermesteLederFnr: "12345678910",
+                                        naermesteLederFnr: "12345678910"
                                         ansattFnr: "321234"
                                         virksomhetsnummer: "42"
                                     } 
                                 }
-                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                notifikasjon: {
+                                    lenke: "https://foo.bar"
+                                    tekst: "hello world"
+                                    merkelapp: "$merkelapp"
+                                }
+                                metadata: {
+                                    eksternId: "heu"
+                                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                }
                             }) {
                                 __typename
                                 ... on Error {
@@ -79,10 +83,6 @@ class TilgangsstyringTests : DescribeSpec({
                 """
                         mutation {
                             nyBeskjed(nyBeskjed: {
-                                lenke: "https://foo.bar",
-                                tekst: "hello world",
-                                merkelapp: "tag",
-                                eksternId: "heu",
                                 mottaker: {
                                     altinn: {
                                         serviceCode: "${mottaker.serviceCode}",
@@ -90,7 +90,15 @@ class TilgangsstyringTests : DescribeSpec({
                                         virksomhetsnummer: "${mottaker.virksomhetsnummer}"
                                     } 
                                 }
-                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                notifikasjon: {
+                                    lenke: "https://foo.bar"
+                                    tekst: "hello world"
+                                    merkelapp: "tag"
+                                }
+                                metadata: {
+                                    eksternId: "heu"
+                                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                }
                             }) {
                                 __typename
                                 ... on Error {

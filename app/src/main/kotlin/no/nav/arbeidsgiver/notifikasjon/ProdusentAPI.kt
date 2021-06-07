@@ -57,26 +57,34 @@ object ProdusentAPI {
         }
     }
 
-    data class BeskjedInput(
+    data class Notifikasjon(
         val merkelapp: String,
         val tekst: String,
-        val grupperingsid: String?,
         val lenke: String,
+    )
+
+    data class Metadata(
+        val grupperingsid: String?,
         val eksternId: String,
+        val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
+    )
+
+    data class BeskjedInput(
         val mottaker: MottakerInput,
-        val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now()
+        val notifikasjon: Notifikasjon,
+        val metadata: Metadata,
     ) {
         fun tilDomene(id: UUID): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.BeskjedOpprettet(
                 id = id,
-                merkelapp = merkelapp,
-                tekst = tekst,
-                grupperingsid = grupperingsid,
-                lenke = lenke,
-                eksternId = eksternId,
+                merkelapp = notifikasjon.merkelapp,
+                tekst = notifikasjon.tekst,
+                grupperingsid = metadata.grupperingsid,
+                lenke = notifikasjon.lenke,
+                eksternId = metadata.eksternId,
                 mottaker = mottaker,
-                opprettetTidspunkt = opprettetTidspunkt,
+                opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = when (mottaker) {
                     is NærmesteLederMottaker -> mottaker.virksomhetsnummer
                     is AltinnMottaker -> mottaker.virksomhetsnummer
@@ -87,6 +95,9 @@ object ProdusentAPI {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface NyBeskjedResultat
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed interface NyOppgaveResultat
 
     @JsonTypeName("NyBeskjedVellykket")
     data class NyBeskjedVellykket(
@@ -119,6 +130,7 @@ object ProdusentAPI {
 
             resolveSubtypes<Error>()
             resolveSubtypes<NyBeskjedResultat>()
+            resolveSubtypes<NyOppgaveResultat>()
 
             wire("Query") {
                 dataFetcher("whoami") {
@@ -140,9 +152,9 @@ object ProdusentAPI {
                         )
                     }
 
-                    if (!produsentDefinisjon.kanSendeTil(nyBeskjed.merkelapp)) {
+                    if (!produsentDefinisjon.kanSendeTil(nyBeskjed.notifikasjon.merkelapp)) {
                         return@coDataFetcher Error.UgyldigMerkelapp("""
-                                | Ugyldig merkelapp '${nyBeskjed.merkelapp}' for produsent '${produsentDefinisjon.id}'. 
+                                | Ugyldig merkelapp '${nyBeskjed.notifikasjon.merkelapp}' for produsent '${produsentDefinisjon.id}'. 
                                 | Gyldige merkelapper er: ${produsentDefinisjon.tillatteMerkelapper}
                                 """.trimMargin()
                         )

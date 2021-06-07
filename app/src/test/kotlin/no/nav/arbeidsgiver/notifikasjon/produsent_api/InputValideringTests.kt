@@ -37,10 +37,6 @@ class InputValideringTests : DescribeSpec({
                 """
                         mutation {
                             nyBeskjed(nyBeskjed: {
-                                lenke: "https://foo.bar",
-                                tekst: "${"x".repeat(301)}",
-                                merkelapp: "tag",
-                                eksternId: "heu",
                                 mottaker: {
                                     naermesteLeder: {
                                         naermesteLederFnr: "12345678910",
@@ -48,7 +44,15 @@ class InputValideringTests : DescribeSpec({
                                         virksomhetsnummer: "42"
                                     } 
                                 }
-                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                notifikasjon: {
+                                    lenke: "https://foo.bar"
+                                    tekst: "${"x".repeat(301)}"
+                                    merkelapp: "tag"
+                                }
+                                metadata: {
+                                    eksternId: "heu"
+                                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                }
                             }) {
                                 __typename
                             }
@@ -68,13 +72,17 @@ class InputValideringTests : DescribeSpec({
             """
                     mutation {
                         nyBeskjed(nyBeskjed: {
-                            lenke: "https://foo.bar",
-                            tekst: "hello world",
-                            merkelapp: "tag",
-                            eksternId: "heu",
                             mottaker: {
                             }
-                            opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            notifikasjon: {
+                                lenke: "https://foo.bar"
+                                tekst: "hello world"
+                                merkelapp: "tag"
+                            }
+                            metadata: {
+                                eksternId: "heu"
+                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            }
                         }) {
                             __typename
                         }
@@ -92,10 +100,6 @@ class InputValideringTests : DescribeSpec({
             """
                     mutation {
                         nyBeskjed(nyBeskjed: {
-                            lenke: "https://foo.bar",
-                            tekst: "hello world",
-                            merkelapp: "tag",
-                            eksternId: "heu",
                             mottaker: {
                                 altinn: {
                                     serviceCode: "1234"
@@ -108,7 +112,15 @@ class InputValideringTests : DescribeSpec({
                                     virksomhetsnummer: "123456789"
                                 }
                             }
-                            opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            notifikasjon: {
+                                lenke: "https://foo.bar"
+                                tekst: "hello world"
+                                merkelapp: "tag"
+                            }
+                            metadata: {
+                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                eksternId: "heu"
+                            }
                         }) {
                             __typename
                             ... on NyBeskjedVellykket {
