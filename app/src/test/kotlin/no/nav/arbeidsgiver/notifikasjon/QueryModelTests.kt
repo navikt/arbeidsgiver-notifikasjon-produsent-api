@@ -44,7 +44,7 @@ class QueryModelTests : DescribeSpec({
                             mottaker.naermesteLederFnr,
                             emptyList()
                         )
-                    notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(
+                    notifikasjoner shouldHaveSingleElement QueryModel.Beskjed(
                         merkelapp = "foo",
                         eksternId = "42",
                         mottaker = mottaker,
@@ -70,7 +70,7 @@ class QueryModelTests : DescribeSpec({
                                 mottaker.naermesteLederFnr,
                                 emptyList()
                             )
-                        notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(
+                        notifikasjoner shouldHaveSingleElement QueryModel.Beskjed(
                             merkelapp = "foo",
                             eksternId = "42",
                             mottaker = mottaker,
@@ -99,7 +99,7 @@ class QueryModelTests : DescribeSpec({
                                 mottaker.naermesteLederFnr,
                                 emptyList()
                             )
-                        notifikasjoner shouldHaveSingleElement QueryModel.QueryBeskjed(
+                        notifikasjoner shouldHaveSingleElement QueryModel.Beskjed(
                             merkelapp = "foo",
                             eksternId = "42",
                             mottaker = mottaker,

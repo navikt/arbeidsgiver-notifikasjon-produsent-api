@@ -15,6 +15,54 @@ object ProdusentAPI {
         override val coroutineScope: CoroutineScope
     ): WithCoroutineScope
 
+    data class NyBeskjedInput(
+        val mottaker: MottakerInput,
+        val notifikasjon: Notifikasjon,
+        val metadata: Metadata,
+    ) {
+        fun tilDomene(id: UUID): Hendelse.BeskjedOpprettet {
+            val mottaker = mottaker.tilDomene()
+            return Hendelse.BeskjedOpprettet(
+                id = id,
+                merkelapp = notifikasjon.merkelapp,
+                tekst = notifikasjon.tekst,
+                grupperingsid = metadata.grupperingsid,
+                lenke = notifikasjon.lenke,
+                eksternId = metadata.eksternId,
+                mottaker = mottaker,
+                opprettetTidspunkt = metadata.opprettetTidspunkt,
+                virksomhetsnummer = when (mottaker) {
+                    is NærmesteLederMottaker -> mottaker.virksomhetsnummer
+                    is AltinnMottaker -> mottaker.virksomhetsnummer
+                }
+            )
+        }
+    }
+
+    data class NyOppgaveInput(
+        val mottaker: MottakerInput,
+        val notifikasjon: Notifikasjon,
+        val metadata: Metadata,
+    ) {
+        fun tilDomene(id: UUID): Hendelse.OppgaveOpprettet {
+            val mottaker = mottaker.tilDomene()
+            return Hendelse.OppgaveOpprettet(
+                id = id,
+                merkelapp = notifikasjon.merkelapp,
+                tekst = notifikasjon.tekst,
+                grupperingsid = metadata.grupperingsid,
+                lenke = notifikasjon.lenke,
+                eksternId = metadata.eksternId,
+                mottaker = mottaker,
+                opprettetTidspunkt = metadata.opprettetTidspunkt,
+                virksomhetsnummer = when (mottaker) {
+                    is NærmesteLederMottaker -> mottaker.virksomhetsnummer
+                    is AltinnMottaker -> mottaker.virksomhetsnummer
+                }
+            )
+        }
+    }
+
     data class NaermesteLederMottakerInput(
         val naermesteLederFnr: String,
         val ansattFnr: String,
@@ -69,30 +117,6 @@ object ProdusentAPI {
         val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
     )
 
-    data class BeskjedInput(
-        val mottaker: MottakerInput,
-        val notifikasjon: Notifikasjon,
-        val metadata: Metadata,
-    ) {
-        fun tilDomene(id: UUID): Hendelse.BeskjedOpprettet {
-            val mottaker = mottaker.tilDomene()
-            return Hendelse.BeskjedOpprettet(
-                id = id,
-                merkelapp = notifikasjon.merkelapp,
-                tekst = notifikasjon.tekst,
-                grupperingsid = metadata.grupperingsid,
-                lenke = notifikasjon.lenke,
-                eksternId = metadata.eksternId,
-                mottaker = mottaker,
-                opprettetTidspunkt = metadata.opprettetTidspunkt,
-                virksomhetsnummer = when (mottaker) {
-                    is NærmesteLederMottaker -> mottaker.virksomhetsnummer
-                    is AltinnMottaker -> mottaker.virksomhetsnummer
-                }
-            )
-        }
-    }
-
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface NyBeskjedResultat
 
@@ -104,6 +128,11 @@ object ProdusentAPI {
         val id: UUID
     ) : NyBeskjedResultat
 
+    @JsonTypeName("NyOppgaveVellykket")
+    data class NyOppgaveVellykket(
+        val id: UUID
+    ) : NyOppgaveResultat
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class Error {
         abstract val feilmelding: String
@@ -111,12 +140,12 @@ object ProdusentAPI {
         @JsonTypeName("UgyldigMerkelapp")
         data class UgyldigMerkelapp(
             override val feilmelding: String
-        ) : Error(), NyBeskjedResultat
+        ) : Error(), NyBeskjedResultat, NyOppgaveResultat
 
         @JsonTypeName("UgyldigMottaker")
         data class UgyldigMottaker(
             override val feilmelding: String
-        ) : Error(), NyBeskjedResultat
+        ) : Error(), NyBeskjedResultat, NyOppgaveResultat
     }
 
     fun newGraphQL(
@@ -139,33 +168,58 @@ object ProdusentAPI {
             }
 
             wire("Mutation") {
-                coDataFetcher("nyBeskjed") { env ->
-                    val nyBeskjed = env.getTypedArgument<BeskjedInput>("nyBeskjed")
+                coDataFetcher<NyBeskjedResultat>("nyBeskjed") { env ->
+                    val nyBeskjed = env.getTypedArgument<NyBeskjedInput>("nyBeskjed")
                     val context = env.getContext<Context>()
-                    val produsentDefinisjon = produsentRegister.finn(context.produsentid)
+                    val produsent = produsentRegister.finn(context.produsentid)
 
-                    if (!produsentDefinisjon.kanSendeTil(nyBeskjed.mottaker.tilDomene())) {
-                        return@coDataFetcher Error.UgyldigMottaker("""
-                                | Ugyldig mottaker '${nyBeskjed.mottaker}' for produsent '${produsentDefinisjon.id}'. 
-                                | Gyldige mottakere er: ${produsentDefinisjon.tillatteMottakere}
-                                """.trimMargin()
-                        )
-                    }
-
-                    if (!produsentDefinisjon.kanSendeTil(nyBeskjed.notifikasjon.merkelapp)) {
-                        return@coDataFetcher Error.UgyldigMerkelapp("""
-                                | Ugyldig merkelapp '${nyBeskjed.notifikasjon.merkelapp}' for produsent '${produsentDefinisjon.id}'. 
-                                | Gyldige merkelapper er: ${produsentDefinisjon.tillatteMerkelapper}
-                                """.trimMargin()
-                        )
-                    }
+                    tilgangsstyrMottaker(produsent, nyBeskjed.mottaker.tilDomene())
+                        ?.let { return@coDataFetcher it }
+                    tilgangsstyrMerkelapp(produsent, nyBeskjed.notifikasjon.merkelapp)
+                        ?.let { return@coDataFetcher it }
 
                     val id = UUID.randomUUID()
                     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
                     kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
                     return@coDataFetcher NyBeskjedVellykket(id)
                 }
+
+                coDataFetcher<NyOppgaveResultat>("nyOppgave") { env ->
+                    val nyOppgave = env.getTypedArgument<NyOppgaveInput>("nyOppgave")
+                    val context = env.getContext<Context>()
+                    val produsent = produsentRegister.finn(context.produsentid)
+
+                    tilgangsstyrMottaker(produsent, nyOppgave.mottaker.tilDomene())
+                        ?.let { return@coDataFetcher it }
+                    tilgangsstyrMerkelapp(produsent, nyOppgave.notifikasjon.merkelapp)
+                        ?.let { return@coDataFetcher it }
+
+                    val id = UUID.randomUUID()
+                    log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
+                    kafkaProducer.oppgaveOpprettet(nyOppgave.tilDomene(id))
+                    return@coDataFetcher NyOppgaveVellykket(id)
+                }
             }
         }
     )
+
+    private fun tilgangsstyrMerkelapp(produsent: Produsent, merkelapp: Merkelapp): Error.UgyldigMerkelapp? =
+        if (produsent.kanSendeTil(merkelapp))
+            null
+        else
+            Error.UgyldigMerkelapp("""
+                | Ugyldig merkelapp '${merkelapp}' for produsent '${produsent.id}'. 
+                | Gyldige merkelapper er: ${produsent.tillatteMerkelapper}
+                """.trimMargin()
+            )
+
+    private fun tilgangsstyrMottaker(produsent: Produsent, mottaker: Mottaker): Error.UgyldigMottaker? =
+        if (produsent.kanSendeTil(mottaker))
+            null
+        else
+            Error.UgyldigMottaker("""
+                | Ugyldig mottaker '${mottaker}' for produsent '${produsent.id}'. 
+                | Gyldige mottakere er: ${produsent.tillatteMottakere}
+                """.trimMargin()
+            )
 }

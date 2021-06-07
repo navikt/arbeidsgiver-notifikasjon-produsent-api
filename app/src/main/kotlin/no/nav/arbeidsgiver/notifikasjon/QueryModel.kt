@@ -18,7 +18,7 @@ class QueryModel(
         val eksternId: String,
     )
 
-    data class QueryBeskjed(
+    data class Beskjed(
         val merkelapp: String,
         val tekst: String,
         val grupperingsid: String? = null,
@@ -30,8 +30,33 @@ class QueryModel(
         val klikketPaa: Boolean
     )
 
-    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryBeskjed =
-        QueryBeskjed(
+    data class Oppgave(
+        val merkelapp: String,
+        val tekst: String,
+        val grupperingsid: String? = null,
+        val lenke: String,
+        val eksternId: String,
+        val mottaker: Mottaker,
+        val opprettetTidspunkt: OffsetDateTime,
+        val id: UUID,
+        val klikketPaa: Boolean
+    )
+
+    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): Beskjed =
+        Beskjed(
+            id = this.id,
+            merkelapp = this.merkelapp,
+            tekst = this.tekst,
+            grupperingsid = this.grupperingsid,
+            lenke = this.lenke,
+            eksternId = this.eksternId,
+            mottaker = this.mottaker,
+            opprettetTidspunkt = this.opprettetTidspunkt,
+            klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
+        )
+
+    private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): Oppgave =
+        Oppgave(
             id = this.id,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
@@ -54,7 +79,7 @@ class QueryModel(
     suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<Tilgang>
-    ): List<QueryBeskjed> = timer.coRecord {
+    ): List<Beskjed> = timer.coRecord {
         val tilgangerJsonB = tilganger.joinToString {
             "'${
                 objectMapper.writeValueAsString(
@@ -68,25 +93,27 @@ class QueryModel(
         }
 
         database.runNonTransactionalQuery("""
-            select noti.*, klikk.notifikasjonsid is not null as klikketPaa
-            from notifikasjon as noti
+            select 
+                n.*, 
+                klikk.notifikasjonsid is not null as klikketPaa
+            from notifikasjon as n
             left outer join brukerklikk as klikk on
-                klikk.notifikasjonsid = noti.id
+                klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
             where (
-                            mottaker ->> '@type' = 'naermesteLeder'
-                    and mottaker ->> 'naermesteLederFnr' = ?
-                )
-               or (
-                            mottaker ->> '@type' = 'altinn'
-                    and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[]))
+                mottaker ->> '@type' = 'naermesteLeder'
+                and mottaker ->> 'naermesteLederFnr' = ?
+            ) or (
+                mottaker ->> '@type' = 'altinn'
+                and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[])
+            )
             order by opprettet_tidspunkt desc
             limit 200
         """, {
             string(fnr)
             string(fnr)
         }) {
-            QueryBeskjed(
+            Beskjed(
                 merkelapp = getString("merkelapp"),
                 tekst = getString("tekst"),
                 grupperingsid = getString("grupperingsid"),
@@ -113,6 +140,10 @@ class QueryModel(
         when (hendelse) {
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
+            is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is Hendelse.SlettHendelse -> {
+                /* TODO: oppdatere modell? Kaskade-sletting? */
+            }
         }
     }
 
@@ -175,6 +206,58 @@ class QueryModel(
             """) {
                 uuid(beskjedOpprettet.id)
                 string(beskjedOpprettet.virksomhetsnummer)
+            }
+        }
+    }
+
+    suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
+        val rollbackHandler = { ex: Exception ->
+            if (ex is PSQLException && PSQLState.UNIQUE_VIOLATION.state == ex.sqlState) {
+                log.error("forsøk på å endre eksisterende beskjed")
+            }
+            /* TODO: ikke kast exception, hvis vi er sikker på at dette er en duplikat (at-least-once). */
+            throw ex
+        }
+
+        val koordinat = Koordinat(
+            mottaker = oppgaveOpprettet.mottaker,
+            merkelapp = oppgaveOpprettet.merkelapp,
+            eksternId = oppgaveOpprettet.eksternId
+        )
+
+        val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
+
+        database.transaction(rollbackHandler) {
+            executeCommand("""
+                insert into notifikasjon(
+                    koordinat,
+                    id,
+                    merkelapp,
+                    tekst,
+                    grupperingsid,
+                    lenke,
+                    ekstern_id,
+                    opprettet_tidspunkt,
+                    mottaker
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?::json);
+            """) {
+                string(koordinat.toString())
+                uuid(nyBeskjed.id)
+                string(nyBeskjed.merkelapp)
+                string(nyBeskjed.tekst)
+                nullableString(nyBeskjed.grupperingsid)
+                string(nyBeskjed.lenke)
+                string(nyBeskjed.eksternId)
+                timestamptz(nyBeskjed.opprettetTidspunkt)
+                string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
+            }
+
+            executeCommand("""
+                INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
+            """) {
+                uuid(oppgaveOpprettet.id)
+                string(oppgaveOpprettet.virksomhetsnummer)
             }
         }
     }
