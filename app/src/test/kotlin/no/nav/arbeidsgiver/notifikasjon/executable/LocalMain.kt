@@ -1,9 +1,13 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.executable
 
 import db.migration.OS
+import no.nav.arbeidsgiver.notifikasjon.Main
+import no.nav.arbeidsgiver.notifikasjon.QueryModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.VÅRE_TJENESTER
+import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_BRUKER_AUTHENTICATION
+import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_PRODUSENT_AUTHENTICATION
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     OS.setupLocal()

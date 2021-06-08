@@ -8,24 +8,18 @@ import io.kotest.matchers.shouldNot
 import io.ktor.http.*
 import io.mockk.coEvery
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Brreg
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.BrregEnhet
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class BrukerApiTests : DescribeSpec({
-    val altinn = object : Altinn {
-        override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
-    }
-    val brreg: Brreg = mockk()
-    val queryModel: QueryModel = mockk()
+    val queryModel: QueryModelImpl = mockk()
 
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = altinn,
-            brreg = brreg,
+            altinn = AltinnStub(),
+            brreg = BrregStub("43" to "el virksomhete"),
             queryModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = mockk()
         ),
@@ -52,9 +46,6 @@ class BrukerApiTests : DescribeSpec({
             coEvery {
                 queryModel.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed)
-            coEvery {
-                brreg.hentEnhet("43")
-            } returns BrregEnhet("43", "el virksomhete")
             val response = engine.brukerApi(
                 """
                     {

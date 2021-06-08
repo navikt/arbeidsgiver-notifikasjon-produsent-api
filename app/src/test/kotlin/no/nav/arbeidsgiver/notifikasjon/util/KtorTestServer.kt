@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.util
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
@@ -9,6 +9,8 @@ import io.ktor.http.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
+import no.nav.arbeidsgiver.notifikasjon.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 
 fun Spec.ktorTestServer(

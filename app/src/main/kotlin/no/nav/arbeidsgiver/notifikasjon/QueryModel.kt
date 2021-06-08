@@ -7,15 +7,11 @@ import org.postgresql.util.PSQLState
 import java.time.OffsetDateTime
 import java.util.*
 
-class QueryModel(
-    private val database: Database
-) {
-    private val log = logger()
-
-    data class Koordinat(
-        val mottaker: Mottaker,
-        val merkelapp: String,
-        val eksternId: String,
+interface QueryModel {
+    data class Tilgang(
+        val virksomhet: String,
+        val servicecode: String,
+        val serviceedition: String,
     )
 
     data class Beskjed(
@@ -42,44 +38,56 @@ class QueryModel(
         val klikketPaa: Boolean
     )
 
-    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): Beskjed =
-        Beskjed(
-            id = this.id,
-            merkelapp = this.merkelapp,
-            tekst = this.tekst,
-            grupperingsid = this.grupperingsid,
-            lenke = this.lenke,
-            eksternId = this.eksternId,
-            mottaker = this.mottaker,
-            opprettetTidspunkt = this.opprettetTidspunkt,
-            klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
-        )
+    suspend fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<Beskjed>
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
+    suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
+    suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket)
+}
 
-    private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): Oppgave =
-        Oppgave(
-            id = this.id,
-            merkelapp = this.merkelapp,
-            tekst = this.tekst,
-            grupperingsid = this.grupperingsid,
-            lenke = this.lenke,
-            eksternId = this.eksternId,
-            mottaker = this.mottaker,
-            opprettetTidspunkt = this.opprettetTidspunkt,
-            klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
-        )
+class QueryModelImpl(
+    private val database: Database
+) : QueryModel {
+    private val log = logger()
 
-    data class Tilgang(
-        val virksomhet: String,
-        val servicecode: String,
-        val serviceedition: String,
+    data class Koordinat(
+        val mottaker: Mottaker,
+        val merkelapp: String,
+        val eksternId: String,
     )
+
+    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryModel.Beskjed =
+        QueryModel.Beskjed(
+            id = this.id,
+            merkelapp = this.merkelapp,
+            tekst = this.tekst,
+            grupperingsid = this.grupperingsid,
+            lenke = this.lenke,
+            eksternId = this.eksternId,
+            mottaker = this.mottaker,
+            opprettetTidspunkt = this.opprettetTidspunkt,
+            klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
+        )
+
+    private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): QueryModel.Oppgave =
+        QueryModel.Oppgave(
+            id = this.id,
+            merkelapp = this.merkelapp,
+            tekst = this.tekst,
+            grupperingsid = this.grupperingsid,
+            lenke = this.lenke,
+            eksternId = this.eksternId,
+            mottaker = this.mottaker,
+            opprettetTidspunkt = this.opprettetTidspunkt,
+            klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
+        )
+
 
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
-    suspend fun hentNotifikasjoner(
+    override suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Collection<Tilgang>
-    ): List<Beskjed> = timer.coRecord {
+        tilganger: Collection<QueryModel.Tilgang>
+    ): List<QueryModel.Beskjed> = timer.coRecord {
         val tilgangerJsonB = tilganger.joinToString {
             "'${
                 objectMapper.writeValueAsString(
@@ -113,7 +121,7 @@ class QueryModel(
             string(fnr)
             string(fnr)
         }) {
-            Beskjed(
+            QueryModel.Beskjed(
                 merkelapp = getString("merkelapp"),
                 tekst = getString("tekst"),
                 grupperingsid = getString("grupperingsid"),
@@ -127,7 +135,7 @@ class QueryModel(
         }
     }
 
-    suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
+    override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
             database.runNonTransactionalQuery("""
                 SELECT virksomhetsnummer FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ? LIMIT 1
             """, {
@@ -136,7 +144,7 @@ class QueryModel(
                 getString("virksomhetsnummer")!!
             }.getOrNull(0)
 
-    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         when (hendelse) {
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
@@ -147,7 +155,7 @@ class QueryModel(
         }
     }
 
-    suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
+    override suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
         database.nonTransactionalCommand("""
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
             ON CONFLICT ON CONSTRAINT brukerklikk_pkey

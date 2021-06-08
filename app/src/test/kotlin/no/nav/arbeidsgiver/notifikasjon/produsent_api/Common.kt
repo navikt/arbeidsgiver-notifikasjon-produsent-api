@@ -3,10 +3,10 @@ package no.nav.arbeidsgiver.notifikasjon.produsent_api
 import io.ktor.server.testing.*
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.PRODUSENT_HOST
-import no.nav.arbeidsgiver.notifikasjon.TOKENDINGS_TOKEN
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.post
+import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
+import no.nav.arbeidsgiver.notifikasjon.util.TOKENDINGS_TOKEN
+import no.nav.arbeidsgiver.notifikasjon.util.post
 
 fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResponse {
     return post(
@@ -33,7 +33,7 @@ val produsentDefinisjoner = listOf(
     )
 ).associateBy { it.id }
 
-val mockProdusentRegister: ProdusentRegister = mockk() {
+val mockProdusentRegister: ProdusentRegister = mockk {
     every {
         finn(any())
     } answers {

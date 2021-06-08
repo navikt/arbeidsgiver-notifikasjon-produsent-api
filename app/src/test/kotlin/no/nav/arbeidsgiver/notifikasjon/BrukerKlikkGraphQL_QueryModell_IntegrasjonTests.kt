@@ -3,26 +3,19 @@ package no.nav.arbeidsgiver.notifikasjon
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Brreg
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
-
-    val altinn = object : Altinn {
-        override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
-    }
-    val brreg: Brreg = mockk()
     val database = testDatabase()
-    val queryModel = QueryModel(database)
-    listener(PostgresTestListener(database))
+    val queryModel = QueryModelImpl(database)
 
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = altinn,
-            brreg = brreg,
+            altinn = AltinnStub(),
+            brreg = BrregStub(),
             queryModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = mockk()
         ),

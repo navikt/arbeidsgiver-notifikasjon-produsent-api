@@ -8,7 +8,7 @@ import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -17,17 +17,12 @@ import kotlin.time.toJavaDuration
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class NyBeskjedTests : DescribeSpec({
-    val altinn = object : Altinn {
-        override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
-    }
-    val brreg: Brreg = mockk()
+    val embeddedKafka = embeddedKafka()
 
-    val embeddedKafka = EmbeddedKafkaTestListener()
-    listener(embeddedKafka)
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = altinn,
-            brreg = brreg,
+            altinn = AltinnStub(),
+            brreg = BrregStub(),
             queryModelFuture = mockk(),
             kafkaProducer = mockk()
         ),
