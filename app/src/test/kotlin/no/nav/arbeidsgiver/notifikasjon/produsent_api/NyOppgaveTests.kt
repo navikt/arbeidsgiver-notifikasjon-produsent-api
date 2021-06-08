@@ -9,6 +9,10 @@ import io.ktor.http.*
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
+import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorTestServer
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -22,8 +26,7 @@ class NyOppgaveTests : DescribeSpec({
     }
     val brreg: Brreg = mockk()
 
-    val embeddedKafka = EmbeddedKafkaTestListener()
-    listener(embeddedKafka)
+    val embeddedKafka = embeddedKafka()
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
