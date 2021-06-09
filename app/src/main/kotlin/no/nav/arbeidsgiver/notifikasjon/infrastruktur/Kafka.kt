@@ -181,6 +181,10 @@ suspend fun CoroutineProducer<KafkaKey, Hendelse>.beskjedOpprettet(beskjed: Hend
     sendHendelse(beskjed.id.toString(), beskjed)
 }
 
+suspend fun CoroutineProducer<KafkaKey, Hendelse>.oppgaveOpprettet(oppgave: Hendelse.OppgaveOpprettet) {
+    sendHendelse(oppgave.id.toString(), oppgave)
+}
+
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.brukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
     sendHendelse(UUID.randomUUID().toString(), brukerKlikket)
 }

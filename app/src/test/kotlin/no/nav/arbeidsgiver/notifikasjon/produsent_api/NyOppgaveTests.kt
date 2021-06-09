@@ -8,7 +8,11 @@ import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
+import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorTestServer
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -16,13 +20,17 @@ import kotlin.time.toJavaDuration
 
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
-class NyBeskjedTests : DescribeSpec({
-    val embeddedKafka = embeddedKafka()
+class NyOppgaveTests : DescribeSpec({
+    val altinn = object : Altinn {
+        override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
+    }
+    val brreg: Brreg = mockk()
 
+    val embeddedKafka = embeddedKafka()
     val engine = ktorTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = AltinnStub(),
-            brreg = BrregStub(),
+            altinn = altinn,
+            brreg = brreg,
             queryModelFuture = mockk(),
             kafkaProducer = mockk()
         ),
@@ -36,7 +44,7 @@ class NyBeskjedTests : DescribeSpec({
         val response = engine.produsentApi(
             """
                     mutation {
-                        nyBeskjed(nyBeskjed: {
+                        nyOppgave(nyOppgave: {
                             mottaker: {
                                 naermesteLeder: {
                                     naermesteLederFnr: "12345678910",
@@ -55,7 +63,7 @@ class NyBeskjedTests : DescribeSpec({
                             }
                         }) {
                             __typename
-                            ... on NyBeskjedVellykket {
+                            ... on NyOppgaveVellykket {
                                 id
                             }
                         }
@@ -72,18 +80,18 @@ class NyBeskjedTests : DescribeSpec({
         }
 
         it("respons inneholder forventet data") {
-            val nyBeskjed = response.getTypedContent<ProdusentAPI.NyBeskjedResultat>("nyBeskjed")
-            nyBeskjed should beOfType<ProdusentAPI.NyBeskjedVellykket>()
+            val nyOppgave = response.getTypedContent<ProdusentAPI.NyOppgaveResultat>("nyOppgave")
+            nyOppgave should beOfType<ProdusentAPI.NyOppgaveVellykket>()
         }
 
         it("sends message to kafka") {
             val consumer = embeddedKafka.newConsumer()
             val poll = consumer.poll(seconds(5).toJavaDuration())
             val value = poll.last().value()
-            value should beOfType<Hendelse.BeskjedOpprettet>()
-            val event = value as Hendelse.BeskjedOpprettet
-            val nyBeskjed = response.getTypedContent<ProdusentAPI.NyBeskjedVellykket>("nyBeskjed")
-            event.id shouldBe nyBeskjed.id
+            value should beOfType<Hendelse.OppgaveOpprettet>()
+            val event = value as Hendelse.OppgaveOpprettet
+            val nyOppgave = response.getTypedContent<ProdusentAPI.NyOppgaveVellykket>("nyOppgave")
+            event.id shouldBe nyOppgave.id
             event.lenke shouldBe "https://foo.bar"
             event.tekst shouldBe "hello world"
             event.merkelapp shouldBe "tag"
