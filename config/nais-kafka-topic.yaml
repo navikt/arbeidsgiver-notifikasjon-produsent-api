@@ -2,9 +2,9 @@ apiVersion: kafka.nais.io/v1
 kind: Topic
 metadata:
   name: notifikasjon
-  namespace: arbeidsgiver
+  namespace: fager
   labels:
-    team: arbeidsgiver
+    team: fager
   annotations:
     kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
 spec:
@@ -16,6 +16,6 @@ spec:
     retentionBytes: -1
     retentionHours: -1
   acl:
-    - team: arbeidsgiver
-      application: notifikasjon-produsent-api
+    - application: notifikasjon-produsent-api
+      team: fager
       access: readwrite
