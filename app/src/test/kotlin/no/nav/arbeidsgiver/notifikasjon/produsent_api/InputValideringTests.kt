@@ -58,11 +58,10 @@ class InputValideringTests : DescribeSpec({
                 errors.first().message shouldContain "felt 'tekst' overstiger max antall tegn. antall=301, max=300"
             }
         }
-    }
 
-    context("Mutation.nyBeskjed med ingen mottaker") {
-        val response = engine.produsentApi(
-            """
+        context("Mutation.nyBeskjed med ingen mottaker") {
+            val response = engine.produsentApi(
+                """
                     mutation {
                         nyBeskjed(nyBeskjed: {
                             lenke: "https://foo.bar",
@@ -77,16 +76,16 @@ class InputValideringTests : DescribeSpec({
                         }
                     }
                 """.trimIndent()
-        )
+            )
 
-        it("Feil pga ingen mottaker-felt oppgitt") {
-            response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+            it("Feil pga ingen mottaker-felt oppgitt") {
+                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+            }
         }
-    }
 
-    context("Mutation.nyBeskjed med to mottakere") {
-        val response = engine.produsentApi(
-            """
+        context("Mutation.nyBeskjed med to mottakere") {
+            val response = engine.produsentApi(
+                """
                     mutation {
                         nyBeskjed(nyBeskjed: {
                             lenke: "https://foo.bar",
@@ -114,10 +113,40 @@ class InputValideringTests : DescribeSpec({
                         }
                     }
                 """.trimIndent()
-        )
+            )
 
-        it("response inneholder ikke feil") {
-            response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+            it("Feil pga to mottaker-felt oppgitt") {
+                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+            }
+        }
+
+        context("når tekst inneholder fødselsnummer") {
+            val response = engine.produsentApi(
+                """
+                    mutation {
+                        nyBeskjed(nyBeskjed: {
+                            lenke: "https://foo.bar",
+                            tekst: "${"1".repeat(11)}",
+                            merkelapp: "tag",
+                            eksternId: "heuer",
+                            mottaker: {
+                                naermesteLeder: {
+                                    naermesteLederFnr: "12345678910",
+                                    ansattFnr: "3213"
+                                    virksomhetsnummer: "42"
+                                } 
+                            }
+                            opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                        }) {
+                            __typename
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("feil pga identifiserende data i tekst") {
+                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tekst' kan ikke inneholde identifiserende data"
+            }
         }
     }
 })

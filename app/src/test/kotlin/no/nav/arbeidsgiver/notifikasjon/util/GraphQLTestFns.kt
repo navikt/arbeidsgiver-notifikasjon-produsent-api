@@ -45,4 +45,8 @@ fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
     return if (errors == null) emptyList() else objectMapper.convertValue(errors)
 }
 
+fun TestApplicationResponse.getFirstGraphqlError(): GraphQLError {
+    return getGraphqlErrors().first()
+}
+
 
