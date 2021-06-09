@@ -2,10 +2,9 @@ apiVersion: nais.io/v1alpha1
 kind: Application
 metadata:
   name: notifikasjon-produsent-api
-  namespace: arbeidsgiver
+  namespace: fager
   labels:
-    team: arbeidsgiver
-    subteam: msa
+    team: fager
 spec:
   image: {{image}}
   ingresses:
