@@ -1,6 +1,8 @@
 create table notifikasjon
 (
     koordinat           text primary key,
+    type                text not null,
+    tilstand            text not null,
     id                  uuid  not null,
     merkelapp           text  not null,
     tekst               text  not null,
