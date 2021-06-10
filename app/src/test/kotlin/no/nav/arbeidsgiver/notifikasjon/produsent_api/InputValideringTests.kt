@@ -137,10 +137,11 @@ class InputValideringTests : DescribeSpec({
                 """
                     mutation {
                         nyBeskjed(nyBeskjed: {
-                            lenke: "https://foo.bar",
-                            tekst: "${"1".repeat(11)}",
-                            merkelapp: "tag",
-                            eksternId: "heuer",
+                            notifikasjon: {
+                                lenke: "https://foo.bar",
+                                tekst: "${"1".repeat(11)}",
+                                merkelapp: "tag",
+                            }
                             mottaker: {
                                 naermesteLeder: {
                                     naermesteLederFnr: "12345678910",
@@ -148,7 +149,10 @@ class InputValideringTests : DescribeSpec({
                                     virksomhetsnummer: "42"
                                 } 
                             }
-                            opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            metadata: {
+                                eksternId: "heuer",
+                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                            }
                         }) {
                             __typename
                         }
