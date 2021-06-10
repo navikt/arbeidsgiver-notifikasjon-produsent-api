@@ -73,6 +73,7 @@ class ValueDeserializer : JsonDeserializer<Hendelse>(Hendelse::class.java)
 
 private val COMMON_PROPERTIES = mapOf(
     CommonProp.BOOTSTRAP_SERVERS_CONFIG to (getenv("KAFKA_BROKERS") ?: "localhost:9092"),
+    CommonProp.RETRY_BACKOFF_MS_CONFIG to "500",
     CommonProp.RECONNECT_BACKOFF_MS_CONFIG to "500",
     CommonProp.RECONNECT_BACKOFF_MAX_MS_CONFIG to "5000",
 )
