@@ -1,16 +1,26 @@
 type Query {
-    ping: String
     notifikasjoner: [Notifikasjon!]!
     whoami: String
 }
 
-union Notifikasjon = Beskjed | Dummy
+union Notifikasjon = Beskjed | Oppgave
 
 scalar ISO8601DateTime
 
+type Oppgave {
+    brukerKlikk: BrukerKlikk!
+    merkelapp: String!
+    tekst: String!
+    lenke: String!
+    opprettetTidspunkt: ISO8601DateTime!
+    id: ID!
+    virksomhet: Virksomhet!
+}
+
 type Beskjed {
     brukerKlikk: BrukerKlikk!
-    merkelapp: String! tekst: String!
+    merkelapp: String!
+    tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
     id: ID!

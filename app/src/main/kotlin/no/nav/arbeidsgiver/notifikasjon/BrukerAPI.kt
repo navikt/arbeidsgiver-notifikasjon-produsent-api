@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
@@ -18,7 +19,14 @@ object BrukerAPI {
         override val coroutineScope: CoroutineScope
     ): WithCoroutineScope
 
+    interface WithVirksomhet {
+        val virksomhet: Virksomhet
+    }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class Notifikasjon {
+
+        @JsonTypeName("Beskjed")
         data class Beskjed(
             val merkelapp: String,
             val tekst: String,
@@ -26,9 +34,10 @@ object BrukerAPI {
             val opprettetTidspunkt: OffsetDateTime,
             val id: UUID,
             val brukerKlikk: BrukerKlikk,
-            val virksomhet: Virksomhet,
-        ) : Notifikasjon()
+            override val virksomhet: Virksomhet,
+        ) : Notifikasjon(), WithVirksomhet
 
+        @JsonTypeName("Oppgave")
         data class Oppgave(
             val merkelapp: String,
             val tekst: String,
@@ -36,8 +45,8 @@ object BrukerAPI {
             val opprettetTidspunkt: OffsetDateTime,
             val id: UUID,
             val brukerKlikk: BrukerKlikk,
-            val virksomhet: Virksomhet,
-        ) : Notifikasjon()
+            override val virksomhet: Virksomhet,
+        ) : Notifikasjon(), WithVirksomhet
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -72,8 +81,8 @@ object BrukerAPI {
             resolveSubtypes<NotifikasjonKlikketPaaResultat>()
 
             wire("Query") {
-                dataFetcher("ping") {
-                    "pong"
+                dataFetcher("whoami") {
+                    it.getContext<Context>().fnr
                 }
 
                 coDataFetcher("notifikasjoner") { env ->
@@ -120,24 +129,30 @@ object BrukerAPI {
                         }
                 }
 
-                wire("Beskjed") {
-                    coDataFetcher("virksomhet") { env ->
-                        val source = env.getSource<Notifikasjon.Beskjed>()
-                        if (env.selectionSet.contains("Virksomhet.navn")) {
-                            brreg.hentEnhet(source.virksomhet.virksomhetsnummer).let { it ->
-                                Virksomhet(
-                                    virksomhetsnummer = it.organisasjonsnummer,
-                                    navn = it.navn
-                                )
-                            }
-                        } else {
-                            source.virksomhet
+                suspend fun <T: WithVirksomhet> fetchVirksomhet(env: DataFetchingEnvironment): Virksomhet {
+                    val source = env.getSource<T>()
+                    return if (env.selectionSet.contains("Virksomhet.navn")) {
+                        brreg.hentEnhet(source.virksomhet.virksomhetsnummer).let { enhet ->
+                            Virksomhet(
+                                virksomhetsnummer = enhet.organisasjonsnummer,
+                                navn = enhet.navn
+                            )
                         }
+                    } else {
+                        source.virksomhet
                     }
                 }
 
-                dataFetcher("whoami") {
-                    it.getContext<Context>().fnr
+                wire("Oppgave") {
+                    coDataFetcher("virksomhet") { env ->
+                        fetchVirksomhet<Notifikasjon.Oppgave>(env)
+                    }
+                }
+
+                wire("Beskjed") {
+                    coDataFetcher("virksomhet") { env ->
+                        fetchVirksomhet<Notifikasjon.Beskjed>(env)
+                    }
                 }
             }
 
