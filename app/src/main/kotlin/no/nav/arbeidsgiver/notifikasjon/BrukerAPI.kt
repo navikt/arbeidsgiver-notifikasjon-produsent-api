@@ -28,6 +28,16 @@ object BrukerAPI {
             val brukerKlikk: BrukerKlikk,
             val virksomhet: Virksomhet,
         ) : Notifikasjon()
+
+        data class Oppgave(
+            val merkelapp: String,
+            val tekst: String,
+            val lenke: String,
+            val opprettetTidspunkt: OffsetDateTime,
+            val id: UUID,
+            val brukerKlikk: BrukerKlikk,
+            val virksomhet: Virksomhet,
+        ) : Notifikasjon()
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -72,22 +82,41 @@ object BrukerAPI {
 
                     return@coDataFetcher queryModelFuture.await()
                         .hentNotifikasjoner(context.fnr, tilganger)
-                        .map { queryBeskjed ->
-                            Notifikasjon.Beskjed(
-                                merkelapp = queryBeskjed.merkelapp,
-                                tekst = queryBeskjed.tekst,
-                                lenke = queryBeskjed.lenke,
-                                opprettetTidspunkt = queryBeskjed.opprettetTidspunkt,
-                                id = queryBeskjed.id,
-                                virksomhet = Virksomhet(when (queryBeskjed.mottaker) {
-                                    is NærmesteLederMottaker -> queryBeskjed.mottaker.virksomhetsnummer
-                                    is AltinnMottaker -> queryBeskjed.mottaker.virksomhetsnummer
-                                }),
-                                brukerKlikk = BrukerKlikk(
-                                    id = "${context.fnr}-${queryBeskjed.id}",
-                                    klikketPaa = queryBeskjed.klikketPaa
-                                )
-                            )
+                        .map { notifikasjon ->
+                            when (notifikasjon) {
+                                is QueryModel.Beskjed ->
+                                    Notifikasjon.Beskjed(
+                                        merkelapp = notifikasjon.merkelapp,
+                                        tekst = notifikasjon.tekst,
+                                        lenke = notifikasjon.lenke,
+                                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                        id = notifikasjon.id,
+                                        virksomhet = Virksomhet(when (notifikasjon.mottaker) {
+                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                        }),
+                                        brukerKlikk = BrukerKlikk(
+                                            id = "${context.fnr}-${notifikasjon.id}",
+                                            klikketPaa = notifikasjon.klikketPaa
+                                        )
+                                    )
+                                is QueryModel.Oppgave ->
+                                    Notifikasjon.Oppgave(
+                                        merkelapp = notifikasjon.merkelapp,
+                                        tekst = notifikasjon.tekst,
+                                        lenke = notifikasjon.lenke,
+                                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                        id = notifikasjon.id,
+                                        virksomhet = Virksomhet(when (notifikasjon.mottaker) {
+                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                        }),
+                                        brukerKlikk = BrukerKlikk(
+                                            id = "${context.fnr}-${notifikasjon.id}",
+                                            klikketPaa = notifikasjon.klikketPaa
+                                        )
+                                    )
+                            }
                         }
                 }
 

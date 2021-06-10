@@ -14,6 +14,8 @@ interface QueryModel {
         val serviceedition: String,
     )
 
+    sealed class Notifikasjon
+
     data class Beskjed(
         val merkelapp: String,
         val tekst: String,
@@ -24,7 +26,7 @@ interface QueryModel {
         val opprettetTidspunkt: OffsetDateTime,
         val id: UUID,
         val klikketPaa: Boolean
-    )
+    ) : Notifikasjon()
 
     data class Oppgave(
         val merkelapp: String,
@@ -35,10 +37,16 @@ interface QueryModel {
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
         val id: UUID,
-        val klikketPaa: Boolean
-    )
+        val klikketPaa: Boolean,
+        val tilstand: Tilstand,
+    ) : Notifikasjon() {
+        @Suppress("unused") /* leses fra database */
+        enum class Tilstand {
+            NY
+        }
+    }
 
-    suspend fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<Beskjed>
+    suspend fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<Notifikasjon>
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
     suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket)
@@ -78,6 +86,7 @@ class QueryModelImpl(
             eksternId = this.eksternId,
             mottaker = this.mottaker,
             opprettetTidspunkt = this.opprettetTidspunkt,
+            tilstand = QueryModel.Oppgave.Tilstand.NY,
             klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
         )
 
@@ -87,7 +96,7 @@ class QueryModelImpl(
     override suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<QueryModel.Tilgang>
-    ): List<QueryModel.Beskjed> = timer.coRecord {
+    ): List<QueryModel.Notifikasjon> = timer.coRecord {
         val tilgangerJsonB = tilganger.joinToString {
             "'${
                 objectMapper.writeValueAsString(
@@ -121,17 +130,33 @@ class QueryModelImpl(
             string(fnr)
             string(fnr)
         }) {
-            QueryModel.Beskjed(
-                merkelapp = getString("merkelapp"),
-                tekst = getString("tekst"),
-                grupperingsid = getString("grupperingsid"),
-                lenke = getString("lenke"),
-                eksternId = getString("ekstern_id"),
-                mottaker = objectMapper.readValue(getString("mottaker")),
-                opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                id = getObject("id", UUID::class.java),
-                klikketPaa = getBoolean("klikketPaa")
-            )
+            when (val type = getString("type")) {
+                "BESKJED" -> QueryModel.Beskjed(
+                    merkelapp = getString("merkelapp"),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    mottaker = objectMapper.readValue(getString("mottaker")),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getObject("id", UUID::class.java),
+                    klikketPaa = getBoolean("klikketPaa")
+                )
+                "OPPGAVE" -> QueryModel.Oppgave(
+                    merkelapp = getString("merkelapp"),
+                    tilstand = QueryModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    mottaker = objectMapper.readValue(getString("mottaker")),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getObject("id", UUID::class.java),
+                    klikketPaa = getBoolean("klikketPaa")
+                )
+                else ->
+                    throw Exception("Ukjent notifikasjonstype '$type'")
+            }
         }
     }
 
@@ -186,6 +211,8 @@ class QueryModelImpl(
         database.transaction(rollbackHandler) {
             executeCommand("""
                 insert into notifikasjon(
+                    type,
+                    tilstand,
                     koordinat,
                     id,
                     merkelapp,
@@ -196,7 +223,7 @@ class QueryModelImpl(
                     opprettet_tidspunkt,
                     mottaker
                 )
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?::json);
+                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?, ?::json);
             """) {
                 string(koordinat.toString())
                 uuid(nyBeskjed.id)
@@ -238,6 +265,8 @@ class QueryModelImpl(
         database.transaction(rollbackHandler) {
             executeCommand("""
                 insert into notifikasjon(
+                    type,
+                    tilstand,
                     koordinat,
                     id,
                     merkelapp,
@@ -248,7 +277,7 @@ class QueryModelImpl(
                     opprettet_tidspunkt,
                     mottaker
                 )
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?::json);
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?, ?::json);
             """) {
                 string(koordinat.toString())
                 uuid(nyBeskjed.id)
