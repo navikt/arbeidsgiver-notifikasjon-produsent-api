@@ -160,7 +160,7 @@ value class CoroutineProducerImpl<K, V>(
     }
 }
 
-const val TOPIC = "arbeidsgiver.notifikasjon"
+const val TOPIC = "fager.notifikasjon"
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.sendHendelse(key: KafkaKey, value: Hendelse) {
     send(
         ProducerRecord(
