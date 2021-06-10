@@ -1,5 +1,6 @@
 directive @Validate on ARGUMENT_DEFINITION
 directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION
+directive @NonIdentifying on INPUT_FIELD_DEFINITION
 directive @ExactlyOneFieldGiven on INPUT_OBJECT
 
 """
@@ -98,7 +99,7 @@ input NotifikasjonInput {
     """
     Teksten som vises til brukeren.
     """
-    tekst: String! @MaxLength(max: 300)
+    tekst: String! @MaxLength(max: 300) @NonIdentifying
 
     """
     Lenken som brukeren føres til hvis de klikker på beskjeden.

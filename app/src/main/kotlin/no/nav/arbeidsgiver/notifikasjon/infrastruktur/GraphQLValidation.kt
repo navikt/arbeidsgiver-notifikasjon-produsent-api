@@ -113,6 +113,18 @@ private val FIELD_VALIDATORS = listOf<ValidatorBuilder<GraphQLInputObjectField>>
                 }
             }
         }
+    },
+    object : ValidatorBuilder<GraphQLInputObjectField> {
+        override val name = "NonIdentifying"
+
+        override fun createValidator(directive: GraphQLDirective, obj: GraphQLInputObjectField): Validator {
+            return { value ->
+                val valueStr = value as String?
+                if (valueStr != null && valueStr.contains(Regex("""\d{11}"""))) {
+                    throw ValideringsFeil("felt '${obj.name}' kan ikke inneholde identifiserende data")
+                }
+            }
+        }
     }
 ).associateBy { it.name }
 
