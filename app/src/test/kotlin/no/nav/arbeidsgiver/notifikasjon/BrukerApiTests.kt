@@ -32,7 +32,7 @@ class BrukerApiTests : DescribeSpec({
         context("Query.notifikasjoner") {
             val uuid = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130003")
 
-            val beskjed = QueryModel.QueryBeskjed(
+            val beskjed = QueryModel.Beskjed(
                 merkelapp = "foo",
                 tekst = "",
                 grupperingsid = "",

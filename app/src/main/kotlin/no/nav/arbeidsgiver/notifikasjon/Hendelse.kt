@@ -22,6 +22,20 @@ sealed class Hendelse {
         val opprettetTidspunkt: OffsetDateTime
     ): Hendelse()
 
+    @JsonTypeName("OppgaveOpprettet")
+    data class OppgaveOpprettet(
+        override val virksomhetsnummer: String,
+        val merkelapp: String,
+        val eksternId: String,
+        val mottaker: Mottaker,
+        val id: UUID,
+        val tekst: String,
+        val grupperingsid: String? = null,
+        val lenke: String,
+        val opprettetTidspunkt: OffsetDateTime
+    ): Hendelse()
+
+
     @JsonTypeName("BrukerKlikket")
     data class BrukerKlikket(
         override val virksomhetsnummer: String,

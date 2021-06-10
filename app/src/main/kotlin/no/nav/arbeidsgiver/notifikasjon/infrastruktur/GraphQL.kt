@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
-import org.slf4j.LoggerFactory
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
     objectMapper.convertValue(this.getArgument(name))
@@ -73,6 +72,10 @@ data class GraphQLRequest(
     val operationName: String? = null,
     val variables: Map<String, String>? = null,
 )
+
+interface TypedDataFetcher<T> {
+    suspend fun fetch(env: DataFetchingEnvironment): T
+}
 
 class TypedGraphQL<T : WithCoroutineScope>(
     private val graphQL: GraphQL

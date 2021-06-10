@@ -73,6 +73,7 @@ class ValueDeserializer : JsonDeserializer<Hendelse>(Hendelse::class.java)
 
 private val COMMON_PROPERTIES = mapOf(
     CommonProp.BOOTSTRAP_SERVERS_CONFIG to (getenv("KAFKA_BROKERS") ?: "localhost:9092"),
+    CommonProp.RETRY_BACKOFF_MS_CONFIG to "500",
     CommonProp.RECONNECT_BACKOFF_MS_CONFIG to "500",
     CommonProp.RECONNECT_BACKOFF_MAX_MS_CONFIG to "5000",
 )
@@ -179,6 +180,10 @@ suspend fun CoroutineProducer<KafkaKey, Hendelse>.slett(value: Hendelse.SlettHen
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.beskjedOpprettet(beskjed: Hendelse.BeskjedOpprettet) {
     sendHendelse(beskjed.id.toString(), beskjed)
+}
+
+suspend fun CoroutineProducer<KafkaKey, Hendelse>.oppgaveOpprettet(oppgave: Hendelse.OppgaveOpprettet) {
+    sendHendelse(oppgave.id.toString(), oppgave)
 }
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.brukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
