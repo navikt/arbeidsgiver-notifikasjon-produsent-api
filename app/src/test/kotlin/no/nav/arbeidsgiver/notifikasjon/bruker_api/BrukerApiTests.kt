@@ -89,6 +89,7 @@ class BrukerApiTests : DescribeSpec({
                                     klikketPaa 
                                 }
                                 lenke
+                                tilstand
                                 tekst
                                 merkelapp
                                 opprettetTidspunkt
