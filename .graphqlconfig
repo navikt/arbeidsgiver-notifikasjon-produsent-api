@@ -4,7 +4,7 @@
   "extensions": {
     "endpoints": {
       "bruker-api": {
-        "url": "http://localhost:8080/api/graphql",
+        "url": "http://localhost:8081/api/graphql",
         "headers": {
           "host": "ag-notifikasjon-bruker-api.nav.no",
           "user-agent": "JS GraphQL",
@@ -13,7 +13,7 @@
         "introspect": false
       },
       "produsent-api": {
-        "url": "http://localhost:8080/api/graphql",
+        "url": "http://localhost:8081/api/graphql",
         "headers": {
           "host": "ag-notifikasjon-produsent-api.nav.no",
           "user-agent": "JS GraphQL",
