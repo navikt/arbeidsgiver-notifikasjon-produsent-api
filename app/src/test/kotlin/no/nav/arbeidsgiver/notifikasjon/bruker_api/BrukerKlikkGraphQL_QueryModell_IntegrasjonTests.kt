@@ -1,8 +1,9 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
+import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
