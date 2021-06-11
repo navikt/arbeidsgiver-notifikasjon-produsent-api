@@ -7,7 +7,7 @@ open class BrregStub(
     val finnNavn: (String) -> String? = { "ARBEIDS- OG VELFERDSETATEN" }
 ) : Brreg {
 
-    constructor(vararg mapping: Pair<String, String>) : this(mapping.toMap()::get)
+    constructor(first: Pair<String, String>, vararg mapping: Pair<String, String>) : this((listOf(first) + mapping.toList()).toMap()::get)
 
     override suspend fun hentEnhet(orgnr: String): BrregEnhet =
         finnNavn(orgnr)?.let { navn ->

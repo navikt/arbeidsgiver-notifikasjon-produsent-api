@@ -9,12 +9,17 @@ scalar ISO8601DateTime
 
 type Oppgave {
     brukerKlikk: BrukerKlikk!
+    tilstand: OppgaveTilstand
     merkelapp: String!
     tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
     id: ID!
     virksomhet: Virksomhet!
+}
+
+enum OppgaveTilstand {
+    NY
 }
 
 type Beskjed {
@@ -45,8 +50,4 @@ type BrukerKlikk {
 
 type UgyldigId {
     feilmelding: String!
-}
-
-type Dummy {
-    dummy: String
 }

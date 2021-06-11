@@ -5,6 +5,8 @@ directive @ExactlyOneFieldGiven on INPUT_OBJECT
 
 """
 DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
+
+Er representert som String.
 """
 scalar ISO8601DateTime
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
+import no.nav.arbeidsgiver.notifikasjon.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -42,11 +43,23 @@ object BrukerAPI {
             val merkelapp: String,
             val tekst: String,
             val lenke: String,
+            val tilstand: Tilstand,
             val opprettetTidspunkt: OffsetDateTime,
             val id: UUID,
             val brukerKlikk: BrukerKlikk,
             override val virksomhet: Virksomhet,
-        ) : Notifikasjon(), WithVirksomhet
+        ) : Notifikasjon(), WithVirksomhet {
+            enum class Tilstand {
+                NY;
+
+                companion object {
+                    fun QueryModel.Oppgave.Tilstand.tilBrukerAPI(): Tilstand = when (this) {
+                        QueryModel.Oppgave.Tilstand.NY -> NY
+                    }
+
+                }
+            }
+        }
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -114,6 +127,7 @@ object BrukerAPI {
                                         merkelapp = notifikasjon.merkelapp,
                                         tekst = notifikasjon.tekst,
                                         lenke = notifikasjon.lenke,
+                                        tilstand = notifikasjon.tilstand.tilBrukerAPI(),
                                         opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                         id = notifikasjon.id,
                                         virksomhet = Virksomhet(when (notifikasjon.mottaker) {

@@ -44,9 +44,7 @@ inline fun <reified T : Any> RuntimeWiring.Builder.resolveSubtypes() {
     type(T::class.simpleName) {
         it.typeResolver { env ->
             val name = env.getObject<T>().javaClass.simpleName
-            val objType = env.schema.getObjectType(name)
-            GraphQLLogger.log.info("Resolved $name to $objType")
-            objType
+            env.schema.getObjectType(name)
         }
     }
 }
@@ -72,10 +70,6 @@ data class GraphQLRequest(
     val operationName: String? = null,
     val variables: Map<String, String>? = null,
 )
-
-interface TypedDataFetcher<T> {
-    suspend fun fetch(env: DataFetchingEnvironment): T
-}
 
 class TypedGraphQL<T : WithCoroutineScope>(
     private val graphQL: GraphQL
