@@ -1,3 +1,8 @@
+"""
+Denne dokumentasjonen er skrev i "du/dere"-form, hvor du/dere er produsenter, og "vi" er
+notifikasjons-plattformen.
+"""
+
 directive @Validate on ARGUMENT_DEFINITION
 directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION
 directive @NonIdentifying on INPUT_FIELD_DEFINITION
@@ -34,6 +39,43 @@ type Mutation {
     Opprett en ny oppgave.
     """
     nyOppgave(nyOppgave: NyOppgaveInput! @Validate): NyOppgaveResultat!
+
+    """
+    Marker en oppgave (identifisert ved id) som utført.
+    """
+    oppgaveUtfoert(
+        """
+        ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
+        """
+        id: ID!
+    ): OppgaveUtfoertResultat!
+
+    """
+    Marker en oppgave (identifisert ved ekstern id) som utført.
+    """
+    oppgaveUtfoertByEksternId(
+        """
+        Merkelapp som oppgaven er registrert med.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+        """
+        eksternId: ID!
+    ): OppgaveUtfoertResultat!
+}
+
+union OppgaveUtfoertResultat =
+    | OppgaveUtfoertVellykket
+    | UgyldigMerkelapp
+    | UkjentNotifikasjon
+
+type OppgaveUtfoertVellykket {
+    """
+    ID-en til oppgaven du oppdaterte.
+    """
+    id: ID!
 }
 
 input NyBeskjedInput {
@@ -86,7 +128,6 @@ input NaermesteLederMottakerInput {
     ansattFnr: String!
     virksomhetsnummer: String!
 }
-
 
 """
 """
@@ -152,6 +193,17 @@ type UgyldigMerkelapp implements Error {
 Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.
 """
 type UgyldigMottaker implements Error {
+    feilmelding: String!
+}
+
+"""
+Denne feilen returneres dersom du prøver å referere til en notifikasjon
+som ikke eksisterer.
+
+Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
+av "eventual consistency" i systemet vårt.
+"""
+type UkjentNotifikasjon implements Error {
     feilmelding: String!
 }
 

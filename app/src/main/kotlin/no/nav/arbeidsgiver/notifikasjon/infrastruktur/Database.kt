@@ -26,13 +26,13 @@ class Database private constructor(
         private val log = logger()
 
         private val DEFAULT_HIKARI_CONFIG = HikariConfig().apply {
-            val host = System.getenv("DB_HOST") ?: "localhost"
-            val port = System.getenv("DB_PORT") ?: "5432"
-            val db = System.getenv("DB_DATABASE") ?: "postgres"
+            val host = System.getenv("DB_BRUKER_HOST") ?: "localhost"
+            val port = System.getenv("DB_BRUKER_PORT") ?: "5432"
+            val db = System.getenv("DB_BRUKER_DATABASE") ?: "postgres"
 
             jdbcUrl = "jdbc:postgresql://$host:$port/$db"
-            username = System.getenv("DB_USERNAME") ?: "postgres"
-            password = System.getenv("DB_PASSWORD") ?: "postgres"
+            username = System.getenv("DB_BRUKER_USERNAME") ?: "postgres"
+            password = System.getenv("DB_BRUKER_PASSWORD") ?: "postgres"
             driverClassName = "org.postgresql.Driver"
             metricsTrackerFactory = PrometheusMetricsTrackerFactory()
             minimumIdle = 1

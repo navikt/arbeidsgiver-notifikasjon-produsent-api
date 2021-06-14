@@ -36,8 +36,10 @@ spec:
         diskAutoresize: true
         highAvailability: false
         databases:
-          - name: ag-notifikasjon-query
-            envVarPrefix: DB
+          - name: notifikasjon-model-bruker
+            envVarPrefix: DB_BRUKER
+          - name: notifikasjon-model-produsent
+            envVarPrefix: DB_PRODUSENT
   accessPolicy:
     outbound:
       rules:
