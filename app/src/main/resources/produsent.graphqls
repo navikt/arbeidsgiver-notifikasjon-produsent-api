@@ -40,43 +40,43 @@ type Mutation {
     """
     nyOppgave(nyOppgave: NyOppgaveInput! @Validate): NyOppgaveResultat!
 
-    """
-    Marker en oppgave (identifisert ved id) som utført.
-    """
-    oppgaveUtfoert(
-        """
-        ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
-        """
-        id: ID!
-    ): OppgaveUtfoertResultat!
-
-    """
-    Marker en oppgave (identifisert ved ekstern id) som utført.
-    """
-    oppgaveUtfoertByEksternId(
-        """
-        Merkelapp som oppgaven er registrert med.
-        """
-        merkelapp: String!,
-
-        """
-        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
-        """
-        eksternId: ID!
-    ): OppgaveUtfoertResultat!
+#    """
+#    Marker en oppgave (identifisert ved id) som utført.
+#    """
+#    oppgaveUtfoert(
+#        """
+#        ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
+#        """
+#        id: ID!
+#    ): OppgaveUtfoertResultat!
+#
+#    """
+#    Marker en oppgave (identifisert ved ekstern id) som utført.
+#    """
+#    oppgaveUtfoertByEksternId(
+#        """
+#        Merkelapp som oppgaven er registrert med.
+#        """
+#        merkelapp: String!,
+#
+#        """
+#        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+#        """
+#        eksternId: ID!
+#    ): OppgaveUtfoertResultat!
 }
 
-union OppgaveUtfoertResultat =
-    | OppgaveUtfoertVellykket
-    | UgyldigMerkelapp
-    | UkjentNotifikasjon
-
-type OppgaveUtfoertVellykket {
-    """
-    ID-en til oppgaven du oppdaterte.
-    """
-    id: ID!
-}
+#union OppgaveUtfoertResultat =
+#    | OppgaveUtfoertVellykket
+#    | UgyldigMerkelapp
+#    | UkjentNotifikasjon
+#
+#type OppgaveUtfoertVellykket {
+#    """
+#    ID-en til oppgaven du oppdaterte.
+#    """
+#    id: ID!
+#}
 
 input NyBeskjedInput {
     mottaker: MottakerInput!
@@ -196,16 +196,16 @@ type UgyldigMottaker implements Error {
     feilmelding: String!
 }
 
-"""
-Denne feilen returneres dersom du prøver å referere til en notifikasjon
-som ikke eksisterer.
-
-Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
-av "eventual consistency" i systemet vårt.
-"""
-type UkjentNotifikasjon implements Error {
-    feilmelding: String!
-}
+#"""
+#Denne feilen returneres dersom du prøver å referere til en notifikasjon
+#som ikke eksisterer.
+#
+#Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
+#av "eventual consistency" i systemet vårt.
+#"""
+#type UkjentNotifikasjon implements Error {
+#    feilmelding: String!
+#}
 
 interface Error {
     feilmelding: String!
