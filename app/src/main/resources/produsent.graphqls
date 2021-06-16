@@ -1,7 +1,6 @@
-"""
-Denne dokumentasjonen er skrev i "du/dere"-form, hvor du/dere er produsenter, og "vi" er
-notifikasjons-plattformen.
-"""
+# Denne dokumentasjonen er skrev i "du/dere"-form, hvor du/dere er produsenter, og "vi" er
+# notifikasjons-plattformen.
+
 
 directive @Validate on ARGUMENT_DEFINITION
 directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION
@@ -15,6 +14,13 @@ Er representert som String.
 """
 scalar ISO8601DateTime
 
+scalar NotifikasjonCursor
+
+enum OppgaveTilstand {
+    NY
+    # UTFOERT
+}
+
 """
 Dette er roten som alle forespørsler starter fra.
 """
@@ -23,7 +29,120 @@ type Query {
     Egnet for feilsøking. Forteller hvem du er autentisert som.
     """
     whoami: String
+
+#    """
+#    Vi bruker det Connections-patternet for paginering. Se
+#    (Connection-standaren)[https://relay.dev/graphql/connections.htm] for mer
+#    informasjon.
+#
+#    Hvis man bruker filters, må de gjentas når man bruker cursor eller ikke?
+#    Eller hvis filter på opprinnelig og cursor-kall er forskjellig.
+#    """
+#    mineNotifikasjoner(
+#        first: Int
+#        after: String
+#        merkelapp: String
+#    ): NotifikasjonConnection!
 }
+
+#type NotifikasjonConnection {
+#    edges: [NotifikasjonEdge!]!
+#    pageInfo: PageInfo!
+#}
+#
+#type NotifikasjonEdge {
+#    node: Notifikasjon!
+#    cursor: String!
+#}
+#
+#type PageInfo {
+#    hasPreviousPage: Boolean!
+#    hasNextPage: Boolean!
+#    startCursor: String!
+#    endCursor: String!
+#}
+#
+#union Notifikasjon = Beskjed | Oppgave
+#
+#type Oppgave {
+#    mottaker: Mottaker!
+#    metadata: Metadata!
+#    oppgave: OppgaveData!
+#}
+#
+#type Beskjed {
+#    mottaker: Mottaker!
+#    metadata: Metadata!
+#    beskjed: BeskjedData!
+#}
+#
+#union Mottaker =
+#    | AltinnMottaker
+#    | NaermesteLederMottaker
+#
+#type AltinnMottaker {
+#    serviceCode: String!
+#    serviceEdition: String!
+#    virksomhetsnummer: String!
+#}
+#
+#type NaermesteLederMottaker {
+#    naermesteLederFnr: String!
+#    ansattFnr: String!
+#    virksomhetsnummer: String!
+#}
+#
+#type OppgaveData {
+#    tilstand: OppgaveTilstand
+#
+#    """
+#    Merkelapp for beskjeden. Er typisk navnet på ytelse eller lignende. Den vises til brukeren.
+#    """
+#    merkelapp: String!
+#
+#    """
+#    Teksten som vises til brukeren.
+#    """
+#    tekst: String!
+#
+#    """
+#    Lenken som brukeren føres til hvis de klikker på beskjeden.
+#    """
+#    lenke: String!
+#}
+#
+#type BeskjedData {
+#    """
+#    Merkelapp for beskjeden. Er typisk navnet på ytelse eller lignende. Den vises til brukeren.
+#    """
+#    merkelapp: String!
+#
+#    """
+#    Teksten som vises til brukeren.
+#    """
+#    tekst: String!
+#
+#    """
+#    Lenken som brukeren føres til hvis de klikker på beskjeden.
+#    """
+#    lenke: String!
+#}
+#
+#type Metadata {
+#    id: ID!
+#
+#    """
+#    """
+#    eksternId: String!
+#
+#    """
+#    """
+#    opprettetTidspunkt: ISO8601DateTime
+#
+#    """
+#    """
+#    grupperingsid: String
+#}
 
 """
 Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
@@ -66,17 +185,17 @@ type Mutation {
 #    ): OppgaveUtfoertResultat!
 }
 
-#union OppgaveUtfoertResultat =
-#    | OppgaveUtfoertVellykket
-#    | UgyldigMerkelapp
+union OppgaveUtfoertResultat =
+    | OppgaveUtfoertVellykket
+    | UgyldigMerkelapp
 #    | UkjentNotifikasjon
-#
-#type OppgaveUtfoertVellykket {
-#    """
-#    ID-en til oppgaven du oppdaterte.
-#    """
-#    id: ID!
-#}
+
+type OppgaveUtfoertVellykket {
+    """
+    ID-en til oppgaven du oppdaterte.
+    """
+    id: ID!
+}
 
 input NyBeskjedInput {
     mottaker: MottakerInput!
