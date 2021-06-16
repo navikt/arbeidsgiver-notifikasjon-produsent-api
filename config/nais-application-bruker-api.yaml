@@ -1,0 +1,49 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: notifikasjon-bruker-api
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{image}}
+  ingresses:
+    - https://ag-notifikasjon-bruker-api.dev.nav.no/
+  liveness:
+    path: /internal/alive
+  readiness:
+    path: /internal/ready
+  replicas:
+    min: 4
+    max: 8
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  tokenx:
+    enabled: true
+  kafka:
+    pool: nav-dev
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_12
+        tier: db-custom-1-3840
+        diskSize: 20
+        diskAutoresize: true
+        highAvailability: false
+        databases:
+          - name: bruker-model
+            envVarPrefix: DB
+  accessPolicy:
+    outbound:
+      rules:
+        - application: altinn-rettigheter-proxy
+      external:
+        - host: fakedings.dev-gcp.nais.io # fakedings login
+        - host: arbeidsgiver.dev.nav.no # ???
+        - host: navtestb2c.b2clogin.com # for login service
+  env:
+    - name: JAVA_OPTS
+      value: -Dno.nav.app=bruker-api -Dio.ktor.development=true
+  envFrom:
+    - secret: notifikasjon-bruker-api-secrets
+    - configmap: loginservice-idporten

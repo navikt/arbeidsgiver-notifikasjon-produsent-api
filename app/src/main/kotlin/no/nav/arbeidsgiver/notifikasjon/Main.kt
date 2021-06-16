@@ -22,7 +22,7 @@ object Main {
         runBlocking(Dispatchers.Default) {
             val queryModelAsync = async {
                 try {
-                    val database = Database.openDatabase()
+                    val database = Database.openDatabase("bruker_model")
                     Health.subsystemReady[Subsystem.DATABASE] = true
                     QueryModelImpl(database)
                 } catch (e: Exception) {

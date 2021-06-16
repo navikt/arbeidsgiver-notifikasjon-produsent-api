@@ -47,7 +47,8 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+    volumes:
+      - ./local-db-init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   database-data:

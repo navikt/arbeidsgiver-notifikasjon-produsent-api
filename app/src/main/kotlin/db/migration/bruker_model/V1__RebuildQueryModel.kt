@@ -1,5 +1,6 @@
-package db.migration
+package db.migration.bruker_model
 
+import db.migration.MigrationOps
 import org.flywaydb.core.api.migration.BaseJavaMigration
 import org.flywaydb.core.api.migration.Context
 

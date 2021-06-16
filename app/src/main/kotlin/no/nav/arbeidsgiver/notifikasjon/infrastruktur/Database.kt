@@ -15,34 +15,49 @@ import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.util.*
 
+data class NaisDBConfig(
+    val host: String = System.getenv("DB_HOST") ?: "localhost",
+    val port: String = System.getenv("DB_PORT") ?: "5432",
+    val database: String = System.getenv("DB_DATABASE") ?: "postgres",
+    val username: String = System.getenv("DB_USERNAME") ?: "postgres",
+    val password: String = System.getenv("DB_PASSWORD") ?: "postgres",
+) {
+    val jdbcUrl: String
+        get() = "jdbc:postgresql://$host:$port/$database"
+}
+
+
+
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
  * takes care of of cleaning up all resources, and where it's clear whether you
  * are running a single command or a transaction.
  */
 class Database private constructor(
+    private val name: String,
     private val dataSource: NonBlockingDataSource
 ) {
     companion object {
         private val log = logger()
 
-        private val DEFAULT_HIKARI_CONFIG = HikariConfig().apply {
-            val host = System.getenv("DB_BRUKER_HOST") ?: "localhost"
-            val port = System.getenv("DB_BRUKER_PORT") ?: "5432"
-            val db = System.getenv("DB_BRUKER_DATABASE") ?: "postgres"
-
-            jdbcUrl = "jdbc:postgresql://$host:$port/$db"
-            username = System.getenv("DB_BRUKER_USERNAME") ?: "postgres"
-            password = System.getenv("DB_BRUKER_PASSWORD") ?: "postgres"
-            driverClassName = "org.postgresql.Driver"
-            metricsTrackerFactory = PrometheusMetricsTrackerFactory()
-            minimumIdle = 1
-            maximumPoolSize = 2
-            connectionTimeout = 10000
-            idleTimeout = 10001
-            maxLifetime = 30001
+        private fun NaisDBConfig.hikariConfig(): HikariConfig {
+            val config = this
+            return HikariConfig().apply {
+                jdbcUrl = config.jdbcUrl
+                username = config.username
+                password = config.password
+                driverClassName = "org.postgresql.Driver"
+                metricsTrackerFactory = PrometheusMetricsTrackerFactory()
+                minimumIdle = 1
+                maximumPoolSize = 2
+                connectionTimeout = 10000
+                idleTimeout = 10001
+                maxLifetime = 30001
+            }
         }
 
-        suspend fun openDatabase(hikariConfig: HikariConfig = DEFAULT_HIKARI_CONFIG): Database {
+        suspend fun openDatabase(name: String, config: NaisDBConfig = NaisDBConfig()): Database {
+            val hikariConfig = config.hikariConfig()
+
             /* When the application runs in kubernetes and connects to the
              * database throught a cloudsql-proxy sidecar, we might be
              * ready to connect to the the database before the sidecare
@@ -53,10 +68,10 @@ class Database private constructor(
             }
 
             val dataSource = NonBlockingDataSource(HikariDataSource(hikariConfig))
-            dataSource.withFlyway {
+            dataSource.withFlyway(name) {
                 migrate()
             }
-            return Database(dataSource)
+            return Database(name, dataSource)
         }
 
         private suspend fun HikariConfig.connectionPossible(): Boolean {
@@ -115,7 +130,7 @@ class Database private constructor(
         }
 
     suspend fun withFlyway(body: Flyway.() -> Unit) {
-        dataSource.withFlyway(body)
+        dataSource.withFlyway(name, body)
     }
 
 }

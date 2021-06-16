@@ -13,7 +13,7 @@ fun TestConfiguration.testDatabase(): Database =
     runBlocking {
         mockkObject(MigrationOps)
         every { MigrationOps.resetOffsetsToEarliest() } returns Unit
-        Database.openDatabase()
+        Database.openDatabase("bruker_model")
     }
         .also { listener(PostgresTestListener(it)) }
 

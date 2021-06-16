@@ -16,9 +16,10 @@ class NonBlockingDataSource(
             }
         }
 
-    suspend fun withFlyway(body: Flyway.() -> Unit) {
+    suspend fun withFlyway(name: String, body: Flyway.() -> Unit) {
         withContext(Dispatchers.IO) {
             Flyway.configure()
+                .locations("db/migration/$name")
                 .dataSource(dataSource)
                 .load()
                 .body()

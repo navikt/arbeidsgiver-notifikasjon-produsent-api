@@ -9,7 +9,6 @@ spec:
   image: {{image}}
   ingresses:
     - https://ag-notifikasjon-produsent-api.dev.nav.no/
-    - https://ag-notifikasjon-bruker-api.dev.nav.no/
   liveness:
     path: /internal/alive
   readiness:
@@ -24,8 +23,6 @@ spec:
     application:
       enabled: true
       tenant: trygdeetaten.no
-  tokenx:
-    enabled: true
   kafka:
     pool: nav-dev
   gcp:
@@ -36,21 +33,15 @@ spec:
         diskAutoresize: true
         highAvailability: false
         databases:
-          - name: notifikasjon-model-bruker
-            envVarPrefix: DB_BRUKER
-          - name: notifikasjon-model-produsent
-            envVarPrefix: DB_PRODUSENT
+          - name: produsent-model
+            envVarPrefix: DB
   accessPolicy:
     outbound:
-      rules:
-        - application: altinn-rettigheter-proxy
       external:
         - host: fakedings.dev-gcp.nais.io
         - host: arbeidsgiver.dev.nav.no
-        - host: navtestb2c.b2clogin.com
   env:
     - name: JAVA_OPTS
-      value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dio.ktor.development=true
+      value: -Dno.nav.app=produsent-api -Dio.ktor.development=true
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
-    - configmap: loginservice-idporten
