@@ -243,7 +243,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>no.nav.arbeidsgiver.notifikasjon.Main</mainClass>
+                            <mainClass>no.nav.arbeidsgiver.notifikasjon.MainKt</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
