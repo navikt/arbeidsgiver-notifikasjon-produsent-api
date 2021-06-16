@@ -22,7 +22,7 @@ jobs:
           - 5432:5432
     steps:
       - uses: actions/checkout@v1
-      - run: PGPASSWORD=postgres psql -U postgres -p postgres -h postgres -f ./local-db-init.sql
+      - run: PGPASSWORD=postgres psql -U postgres -h postgres -f ./local-db-init.sql
       - uses: actions/setup-java@v1
         with:
           java-version: '15.x'
