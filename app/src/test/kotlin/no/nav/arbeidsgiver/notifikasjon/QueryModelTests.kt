@@ -4,15 +4,17 @@ import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
-class QueryModelTests : DescribeSpec({
+class BrukerModelTests : DescribeSpec({
     val database = testDatabase()
-    val queryModel = QueryModelImpl(database)
+    val queryModel = BrukerModelImpl(database)
 
     describe("QueryModel") {
         describe("#oppdaterModellEtterBeskjedOpprettet()") {
@@ -43,7 +45,7 @@ class QueryModelTests : DescribeSpec({
                             mottaker.naermesteLederFnr,
                             emptyList()
                         )
-                    notifikasjoner shouldHaveSingleElement QueryModel.Beskjed(
+                    notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                         merkelapp = "foo",
                         eksternId = "42",
                         mottaker = mottaker,
@@ -69,7 +71,7 @@ class QueryModelTests : DescribeSpec({
                                 mottaker.naermesteLederFnr,
                                 emptyList()
                             )
-                        notifikasjoner shouldHaveSingleElement QueryModel.Beskjed(
+                        notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                             merkelapp = "foo",
                             eksternId = "42",
                             mottaker = mottaker,
@@ -98,7 +100,7 @@ class QueryModelTests : DescribeSpec({
                                 mottaker.naermesteLederFnr,
                                 emptyList()
                             )
-                        notifikasjoner shouldHaveSingleElement QueryModel.Beskjed(
+                        notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                             merkelapp = "foo",
                             eksternId = "42",
                             mottaker = mottaker,

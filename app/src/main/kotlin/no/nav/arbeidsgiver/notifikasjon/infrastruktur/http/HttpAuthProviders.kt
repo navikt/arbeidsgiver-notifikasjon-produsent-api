@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
 import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.interfaces.Verification
@@ -11,6 +11,8 @@ import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.routing.*
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.UnavailableInProduction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -188,16 +190,16 @@ data class AuthorizationServerMetaData(
     val id_token_signing_alg_values_supported: List<String>? = null,
 )
 
-fun Authentication.Configuration.configureProviders(prefix: String, providers: Iterable<JWTAuthentication>) {
+fun Authentication.Configuration.configureProviders(providers: Iterable<JWTAuthentication>) {
     for ((name, config) in providers) {
-        jwt(name = "$prefix-${name}") {
+        jwt(name = name) {
             config()
         }
     }
 }
 
-fun Route.authenticate(prefix: String, providers: Iterable<JWTAuthentication>, body: Route.() -> Unit) {
-    val names = providers.map { "$prefix-${it.name}" }
+fun Route.authenticate(providers: Iterable<JWTAuthentication>, body: Route.() -> Unit) {
+    val names = providers.map { it.name }
     authenticate(*names.toTypedArray()) {
         body()
     }

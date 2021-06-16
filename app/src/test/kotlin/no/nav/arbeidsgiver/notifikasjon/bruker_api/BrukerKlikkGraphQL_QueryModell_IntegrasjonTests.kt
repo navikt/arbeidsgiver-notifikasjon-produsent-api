@@ -3,7 +3,10 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -11,16 +14,13 @@ import java.util.concurrent.CompletableFuture
 
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val database = testDatabase()
-    val queryModel = QueryModelImpl(database)
+    val queryModel = BrukerModelImpl(database)
 
-    val engine = ktorTestServer(
+    val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
             brreg = BrregStub(),
-            queryModelFuture = CompletableFuture.completedFuture(queryModel),
-            kafkaProducer = mockk()
-        ),
-        produsentGraphQL = ProdusentAPI.newGraphQL(
+            brukerModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = mockk()
         )
     )

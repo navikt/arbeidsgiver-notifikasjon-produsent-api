@@ -9,12 +9,31 @@ import io.ktor.http.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.TypedGraphQL
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 
-fun Spec.ktorTestServer(
+fun Spec.ktorBrukerTestServer(
     brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
+    environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
+): TestApplicationEngine {
+    val engine = TestApplicationEngine(
+        environment = ApplicationEngineEnvironmentBuilder().build(environment)
+    )
+    listener(KtorTestListener(engine) {
+        httpServerSetup(
+            authProviders = listOf(LOCALHOST_BRUKER_AUTHENTICATION),
+            extractContext = extractBrukerContext,
+            graphql = brukerGraphQL,
+        )
+    })
+    return engine
+}
+
+fun Spec.ktorProdusentTestServer(
     produsentGraphQL: TypedGraphQL<ProdusentAPI.Context> = mockk(),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
@@ -23,10 +42,9 @@ fun Spec.ktorTestServer(
     )
     listener(KtorTestListener(engine) {
         httpServerSetup(
-            brukerAutentisering = listOf(LOCALHOST_BRUKER_AUTHENTICATION),
-            produsentAutentisering = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
-            brukerGraphQL = brukerGraphQL,
-            produsentGraphQL = produsentGraphQL
+            authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
+            extractContext = extractProdusentContext,
+            graphql = produsentGraphQL
         )
     })
     return engine

@@ -19,3 +19,6 @@ spec:
     - application: notifikasjon-produsent-api
       team: fager
       access: readwrite
+    - application: notifikasjon-bruker-api
+      team: fager
+      access: readwrite

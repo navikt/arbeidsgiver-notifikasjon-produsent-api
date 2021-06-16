@@ -6,12 +6,11 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
 import io.ktor.http.*
-import io.netty.handler.codec.http.HttpHeaders.addHeader
 import no.nav.arbeidsgiver.notifikasjon.util.get
-import no.nav.arbeidsgiver.notifikasjon.util.ktorTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 
 class CorrelationIdTests : DescribeSpec({
-    val engine = ktorTestServer()
+    val engine = ktorBrukerTestServer()
 
     describe("correlation id handling") {
         context("when no callid given") {

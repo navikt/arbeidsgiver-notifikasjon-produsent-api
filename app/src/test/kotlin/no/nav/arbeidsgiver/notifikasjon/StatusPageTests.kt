@@ -12,13 +12,13 @@ import io.ktor.routing.*
 import io.ktor.server.testing.*
 import io.mockk.spyk
 import io.mockk.verify
-import no.nav.arbeidsgiver.notifikasjon.util.ktorTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import org.slf4j.LoggerFactory
 
 
 class StatusPageTests : DescribeSpec({
     val spiedOnLogger = spyk(LoggerFactory.getLogger("KtorTestApplicationLogger"))
-    val engine = ktorTestServer(
+    val engine = ktorBrukerTestServer(
         environment = {
             log = spiedOnLogger
         }

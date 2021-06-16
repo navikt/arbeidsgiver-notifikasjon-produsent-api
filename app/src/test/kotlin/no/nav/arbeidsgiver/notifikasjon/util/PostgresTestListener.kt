@@ -7,14 +7,14 @@ import io.kotest.core.spec.Spec
 import io.mockk.every
 import io.mockk.mockkObject
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.brukerModelDatabaseConfig
+import no.nav.arbeidsgiver.notifikasjon.BrukerMain
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 
 fun TestConfiguration.testDatabase(): Database =
     runBlocking {
         mockkObject(MigrationOps)
         every { MigrationOps.resetOffsetsToEarliest() } returns Unit
-        Database.openDatabase(brukerModelDatabaseConfig)
+        Database.openDatabase(BrukerMain.databaseConfig)
     }
         .also { listener(PostgresTestListener(it)) }
 

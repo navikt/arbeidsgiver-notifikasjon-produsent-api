@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import io.ktor.application.*
@@ -10,24 +10,51 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.util.pipeline.*
 import io.micrometer.core.instrument.binder.jvm.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
-import no.nav.arbeidsgiver.notifikasjon.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
-fun Application.httpServerSetup(
-    brukerAutentisering: List<JWTAuthentication>,
-    produsentAutentisering: List<JWTAuthentication>,
-    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context>,
-    brukerGraphQL: TypedGraphQL<BrukerAPI.Context>,
+val extractBrukerContext = fun PipelineContext<Unit, ApplicationCall>.(): BrukerAPI.Context {
+    val principal = call.principal<BrukerPrincipal>()!!
+    val authHeader = call.request.authorization()!!.removePrefix("Bearer ")
+    return BrukerAPI.Context(
+        fnr = principal.fnr,
+        authHeader,
+        coroutineScope = this
+    )
+}
+
+val extractProdusentContext = fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
+    val principal = call.principal<ProdusentPrincipal>()!!
+    return ProdusentAPI.Context(
+        produsentid = principal.subject,
+        coroutineScope = this
+    )
+}
+
+private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1)
+    .produceMetrics("internal-http")
+    .asCoroutineDispatcher()
+
+private val graphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16)
+    .produceMetrics("graphql-workers")
+    .asCoroutineDispatcher()
+
+fun <T : WithCoroutineScope> Application.httpServerSetup(
+    authProviders: List<JWTAuthentication>,
+    extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
+    graphql: TypedGraphQL<T>,
 ) {
 
     install(CORS) {
@@ -117,111 +144,52 @@ fun Application.httpServerSetup(
     }
 
     install(Authentication) {
-        configureProviders("produsent", produsentAutentisering)
-        configureProviders("bruker", brukerAutentisering)
+        configureProviders(authProviders)
     }
 
     routing {
         trace { application.log.trace(it.buildText()) }
+
+        authenticate(authProviders) {
+            route("api") {
+                post("graphql") {
+                    withContext(this.coroutineContext + graphQLDispatcher) {
+                        val context = extractContext()
+                        val request = call.receive<GraphQLRequest>()
+                        val result = graphql.execute(request, context)
+                        call.respond(result)
+                    }
+                }
+            }
+        }
+
+        get("ide") {
+            call.respondBytes(graphiqlHTML, ContentType.Text.Html)
+        }
+
         route("internal") {
-            internal()
-        }
-
-        host("""ag-notifikasjon-produsent-api\..*""".toRegex()) {
-            authenticate("produsent", produsentAutentisering) {
-                route("api") {
-                    produsentGraphQL(produsentGraphQL)
+            get("alive") {
+                if (Health.alive) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
                 }
             }
-            ide()
-        }
 
-        host("""ag-notifikasjon-bruker-api\..*""".toRegex()) {
-            authenticate("bruker", brukerAutentisering) {
-                route("api") {
-                    brukerGraphQL(brukerGraphQL)
+            get("ready") {
+                if (Health.ready) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
                 }
             }
-            ide()
+
+            get("metrics") {
+                withContext(this.coroutineContext + metricsDispatcher) {
+                    call.respond(Health.meterRegistry.scrape())
+                }
+            }
         }
-    }
-}
-
-
-private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1)
-    .produceMetrics("internal-http")
-    .asCoroutineDispatcher()
-
-fun Route.internal() {
-    get("alive") {
-        if (Health.alive) {
-            call.respond(HttpStatusCode.OK)
-        } else {
-            call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
-        }
-    }
-
-    get("ready") {
-        if (Health.ready) {
-            call.respond(HttpStatusCode.OK)
-        } else {
-            call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
-        }
-    }
-
-    get("metrics") {
-        withContext(this.coroutineContext + metricsDispatcher) {
-            call.respond(Health.meterRegistry.scrape())
-        }
-    }
-}
-
-val brukerGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16)
-    .produceMetrics("bruker-graphql")
-    .asCoroutineDispatcher()
-
-fun Route.brukerGraphQL(
-    graphQL: TypedGraphQL<BrukerAPI.Context>
-) {
-    post("graphql") {
-        withContext(this.coroutineContext + brukerGraphQLDispatcher) {
-            val token = call.principal<BrukerPrincipal>()!!
-            val authHeader = call.request.authorization()!!.removePrefix("Bearer ") //TODO skal veksles inn hos tokenX når altinnproxy kan validere et slikt token
-            val request = call.receive<GraphQLRequest>()
-            val context = BrukerAPI.Context(
-                fnr = token.fnr,
-                authHeader,
-                coroutineScope = this
-            )
-            val result = graphQL.executeAsync(request, context)
-            call.respond(result)
-        }
-    }
-}
-
-private val produsentGraphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(16)
-    .produceMetrics("produsent-graphql")
-    .asCoroutineDispatcher()
-
-fun Route.produsentGraphQL(
-    graphQL: TypedGraphQL<ProdusentAPI.Context>
-) {
-    post("graphql") {
-        withContext(this.coroutineContext + produsentGraphQLDispatcher) {
-            val context = ProdusentAPI.Context(
-                produsentid = call.principal<ProdusentPrincipal>()!!.subject,
-                coroutineScope = this
-            )
-            val request = call.receive<GraphQLRequest>()
-            val result = graphQL.execute(request, context)
-            call.respond(result)
-        }
-    }
-}
-
-fun Route.ide() {
-    get("ide") {
-        call.respondBytes(graphiqlHTML, ContentType.Text.Html)
     }
 }
 

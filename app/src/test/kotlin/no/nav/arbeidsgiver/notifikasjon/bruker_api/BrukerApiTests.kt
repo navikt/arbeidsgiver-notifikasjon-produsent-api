@@ -9,22 +9,22 @@ import io.ktor.http.*
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class BrukerApiTests : DescribeSpec({
-    val queryModel: QueryModelImpl = mockk()
+    val queryModel: BrukerModelImpl = mockk()
 
-    val engine = ktorTestServer(
+    val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
             brreg = BrregStub("43" to "el virksomhete"),
-            queryModelFuture = CompletableFuture.completedFuture(queryModel),
-            kafkaProducer = mockk()
-        ),
-        produsentGraphQL = ProdusentAPI.newGraphQL(
+            brukerModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = mockk()
         )
     )
@@ -32,7 +32,7 @@ class BrukerApiTests : DescribeSpec({
     describe("graphql bruker-api") {
         context("Query.notifikasjoner") {
 
-            val beskjed = QueryModel.Beskjed(
+            val beskjed = BrukerModel.Beskjed(
                 merkelapp = "foo",
                 tekst = "",
                 grupperingsid = "",
@@ -44,8 +44,8 @@ class BrukerApiTests : DescribeSpec({
                 klikketPaa = false
             )
 
-            val oppgave = QueryModel.Oppgave(
-                tilstand = QueryModel.Oppgave.Tilstand.NY,
+            val oppgave = BrukerModel.Oppgave(
+                tilstand = BrukerModel.Oppgave.Tilstand.NY,
                 merkelapp = "foo",
                 tekst = "",
                 grupperingsid = "",

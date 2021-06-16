@@ -1,28 +1,23 @@
 package no.nav.arbeidsgiver.notifikasjon.executable
 
 import db.migration.OS
-import no.nav.arbeidsgiver.notifikasjon.Main
-import no.nav.arbeidsgiver.notifikasjon.QueryModel.Tilgang
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpAuthProviders
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
+import no.nav.arbeidsgiver.notifikasjon.BrukerMain
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.VÅRE_TJENESTER
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.BrregStub
 import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_BRUKER_AUTHENTICATION
-import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_PRODUSENT_AUTHENTICATION
 
+/* Bruker API */
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     OS.setupLocal()
-    Main.main(
-        httpPort = 8081,
-        brukerAutentisering = listOf(
+    BrukerMain.main(
+        httpPort = 8082,
+        authProviders = listOf(
             HttpAuthProviders.FAKEDINGS_BRUKER,
             LOCALHOST_BRUKER_AUTHENTICATION,
         ),
-        produsentAutentisering = listOf(
-            HttpAuthProviders.FAKEDINGS_PRODUSENT,
-            LOCALHOST_PRODUSENT_AUTHENTICATION,
-        ),
-
         brreg = BrregStub(),
         altinn = AltinnStub { _, _ ->
             val alleOrgnr = listOf(

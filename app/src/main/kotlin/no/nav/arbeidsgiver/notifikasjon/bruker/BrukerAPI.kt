@@ -1,11 +1,14 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
-import no.nav.arbeidsgiver.notifikasjon.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -53,8 +56,8 @@ object BrukerAPI {
                 NY;
 
                 companion object {
-                    fun QueryModel.Oppgave.Tilstand.tilBrukerAPI(): Tilstand = when (this) {
-                        QueryModel.Oppgave.Tilstand.NY -> NY
+                    fun BrukerModel.Oppgave.Tilstand.tilBrukerAPI(): Tilstand = when (this) {
+                        BrukerModel.Oppgave.Tilstand.NY -> NY
                     }
 
                 }
@@ -84,7 +87,7 @@ object BrukerAPI {
     fun createBrukerGraphQL(
         altinn: Altinn,
         brreg: Brreg,
-        queryModelFuture: CompletableFuture<QueryModel>,
+        brukerModelFuture: CompletableFuture<BrukerModel>,
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse>
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphqls") {
@@ -102,27 +105,29 @@ object BrukerAPI {
                     val context = env.getContext<Context>()
                     val tilganger = altinn.hentAlleTilganger(context.fnr, context.token)
 
-                    return@coDataFetcher queryModelFuture.await()
+                    return@coDataFetcher brukerModelFuture.await()
                         .hentNotifikasjoner(context.fnr, tilganger)
                         .map { notifikasjon ->
                             when (notifikasjon) {
-                                is QueryModel.Beskjed ->
+                                is BrukerModel.Beskjed ->
                                     Notifikasjon.Beskjed(
                                         merkelapp = notifikasjon.merkelapp,
                                         tekst = notifikasjon.tekst,
                                         lenke = notifikasjon.lenke,
                                         opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                         id = notifikasjon.id,
-                                        virksomhet = Virksomhet(when (notifikasjon.mottaker) {
-                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                        }),
+                                        virksomhet = Virksomhet(
+                                            when (notifikasjon.mottaker) {
+                                                is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                                is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                            }
+                                        ),
                                         brukerKlikk = BrukerKlikk(
                                             id = "${context.fnr}-${notifikasjon.id}",
                                             klikketPaa = notifikasjon.klikketPaa
                                         )
                                     )
-                                is QueryModel.Oppgave ->
+                                is BrukerModel.Oppgave ->
                                     Notifikasjon.Oppgave(
                                         merkelapp = notifikasjon.merkelapp,
                                         tekst = notifikasjon.tekst,
@@ -130,10 +135,12 @@ object BrukerAPI {
                                         tilstand = notifikasjon.tilstand.tilBrukerAPI(),
                                         opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                         id = notifikasjon.id,
-                                        virksomhet = Virksomhet(when (notifikasjon.mottaker) {
-                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                        }),
+                                        virksomhet = Virksomhet(
+                                            when (notifikasjon.mottaker) {
+                                                is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                                is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                            }
+                                        ),
                                         brukerKlikk = BrukerKlikk(
                                             id = "${context.fnr}-${notifikasjon.id}",
                                             klikketPaa = notifikasjon.klikketPaa
@@ -174,7 +181,7 @@ object BrukerAPI {
                 coDataFetcher("notifikasjonKlikketPaa") { env ->
                     val context = env.getContext<Context>()
                     val notifikasjonsid = env.getTypedArgument<UUID>("id")
-                    val queryModel = queryModelFuture.await()
+                    val queryModel = brukerModelFuture.await()
 
                     val virksomhetsnummer = queryModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
                         ?: return@coDataFetcher UgyldigId("")

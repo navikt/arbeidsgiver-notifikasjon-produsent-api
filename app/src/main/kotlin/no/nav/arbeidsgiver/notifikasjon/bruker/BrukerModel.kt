@@ -1,13 +1,16 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
 import java.time.OffsetDateTime
 import java.util.*
 
-interface QueryModel {
+interface BrukerModel {
     data class Tilgang(
         val virksomhet: String,
         val servicecode: String,
@@ -52,9 +55,9 @@ interface QueryModel {
     suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket)
 }
 
-class QueryModelImpl(
+class BrukerModelImpl(
     private val database: Database
-) : QueryModel {
+) : BrukerModel {
     private val log = logger()
 
     data class Koordinat(
@@ -63,8 +66,8 @@ class QueryModelImpl(
         val eksternId: String,
     )
 
-    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): QueryModel.Beskjed =
-        QueryModel.Beskjed(
+    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): BrukerModel.Beskjed =
+        BrukerModel.Beskjed(
             id = this.id,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
@@ -76,8 +79,8 @@ class QueryModelImpl(
             klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
         )
 
-    private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): QueryModel.Oppgave =
-        QueryModel.Oppgave(
+    private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): BrukerModel.Oppgave =
+        BrukerModel.Oppgave(
             id = this.id,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
@@ -86,7 +89,7 @@ class QueryModelImpl(
             eksternId = this.eksternId,
             mottaker = this.mottaker,
             opprettetTidspunkt = this.opprettetTidspunkt,
-            tilstand = QueryModel.Oppgave.Tilstand.NY,
+            tilstand = BrukerModel.Oppgave.Tilstand.NY,
             klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
         )
 
@@ -95,8 +98,8 @@ class QueryModelImpl(
 
     override suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Collection<QueryModel.Tilgang>
-    ): List<QueryModel.Notifikasjon> = timer.coRecord {
+        tilganger: Collection<BrukerModel.Tilgang>
+    ): List<BrukerModel.Notifikasjon> = timer.coRecord {
         val tilgangerJsonB = tilganger.joinToString {
             "'${
                 objectMapper.writeValueAsString(
@@ -131,7 +134,7 @@ class QueryModelImpl(
             string(fnr)
         }) {
             when (val type = getString("type")) {
-                "BESKJED" -> QueryModel.Beskjed(
+                "BESKJED" -> BrukerModel.Beskjed(
                     merkelapp = getString("merkelapp"),
                     tekst = getString("tekst"),
                     grupperingsid = getString("grupperingsid"),
@@ -142,9 +145,9 @@ class QueryModelImpl(
                     id = getObject("id", UUID::class.java),
                     klikketPaa = getBoolean("klikketPaa")
                 )
-                "OPPGAVE" -> QueryModel.Oppgave(
+                "OPPGAVE" -> BrukerModel.Oppgave(
                     merkelapp = getString("merkelapp"),
-                    tilstand = QueryModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
+                    tilstand = BrukerModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
                     tekst = getString("tekst"),
                     grupperingsid = getString("grupperingsid"),
                     lenke = getString("lenke"),

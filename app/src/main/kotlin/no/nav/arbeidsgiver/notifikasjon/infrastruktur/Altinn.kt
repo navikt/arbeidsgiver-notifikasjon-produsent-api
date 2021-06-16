@@ -11,11 +11,11 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningTok
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
-import no.nav.arbeidsgiver.notifikasjon.QueryModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
 
 interface Altinn {
-    suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<QueryModel.Tilgang>
+    suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<BrukerModel.Tilgang>
 }
 
 val VÅRE_TJENESTER = MottakerRegister.servicecodeDefinisjoner
@@ -41,7 +41,7 @@ object AltinnImpl : Altinn {
         )
     )
 
-    override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<QueryModel.Tilgang> =
+    override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<BrukerModel.Tilgang> =
         timer.coRecord {
             coroutineScope {
                 val alleTilganger = VÅRE_TJENESTER.map {
@@ -59,7 +59,7 @@ object AltinnImpl : Altinn {
         serviceCode: String,
         serviceEdition: String,
         selvbetjeningsToken: String,
-    ): List<QueryModel.Tilgang> {
+    ): List<BrukerModel.Tilgang> {
         val reporteeList = try {
             klient.hentOrganisasjoner(
                 SelvbetjeningToken(selvbetjeningsToken),
@@ -86,7 +86,7 @@ object AltinnImpl : Altinn {
                 }
             }
             .map {
-                QueryModel.Tilgang(
+                BrukerModel.Tilgang(
                     virksomhet = it.organizationNumber!!,
                     servicecode = serviceCode,
                     serviceedition = serviceEdition

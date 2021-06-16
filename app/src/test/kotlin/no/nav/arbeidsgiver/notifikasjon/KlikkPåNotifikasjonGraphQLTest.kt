@@ -9,23 +9,24 @@ import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
-    val queryModel: QueryModelImpl = mockk(relaxed = true)
+    val queryModel: BrukerModelImpl = mockk(relaxed = true)
     val kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = mockk()
 
-    val engine = ktorTestServer(
+    val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
             brreg = BrregStub(),
-            queryModelFuture = CompletableFuture.completedFuture(queryModel),
+            brukerModelFuture = CompletableFuture.completedFuture(queryModel),
             kafkaProducer = kafkaProducer
         ),
-        produsentGraphQL = mockk()
     )
 
     mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::brukerKlikket)

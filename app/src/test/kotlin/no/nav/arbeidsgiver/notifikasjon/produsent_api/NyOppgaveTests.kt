@@ -6,13 +6,9 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
-import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorTestServer
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -21,19 +17,8 @@ import kotlin.time.toJavaDuration
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class NyOppgaveTests : DescribeSpec({
-    val altinn = object : Altinn {
-        override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String) = listOf<QueryModel.Tilgang>()
-    }
-    val brreg: Brreg = mockk()
-
     val embeddedKafka = embeddedKafka()
-    val engine = ktorTestServer(
-        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = altinn,
-            brreg = brreg,
-            queryModelFuture = mockk(),
-            kafkaProducer = mockk()
-        ),
+    val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = embeddedKafka.newProducer(),
             produsentRegister = mockProdusentRegister

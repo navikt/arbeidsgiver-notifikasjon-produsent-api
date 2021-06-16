@@ -6,22 +6,14 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
-import no.nav.arbeidsgiver.notifikasjon.util.BrregStub
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorTestServer
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import kotlin.time.ExperimentalTime
 
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class TilgangsstyringTests : DescribeSpec({
-    val engine = ktorTestServer(
-        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = AltinnStub(),
-            brreg = BrregStub(),
-            queryModelFuture = mockk(),
-            kafkaProducer = mockk()
-        ),
+    val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
             produsentRegister = mockProdusentRegister

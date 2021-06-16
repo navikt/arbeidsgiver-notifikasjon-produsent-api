@@ -1,8 +1,12 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import kotlinx.coroutines.CoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -207,7 +211,8 @@ object ProdusentAPI {
         if (produsent.kanSendeTil(merkelapp))
             null
         else
-            Error.UgyldigMerkelapp("""
+            Error.UgyldigMerkelapp(
+                """
                 | Ugyldig merkelapp '${merkelapp}' for produsent '${produsent.id}'. 
                 | Gyldige merkelapper er: ${produsent.tillatteMerkelapper}
                 """.trimMargin()
@@ -217,7 +222,8 @@ object ProdusentAPI {
         if (produsent.kanSendeTil(mottaker))
             null
         else
-            Error.UgyldigMottaker("""
+            Error.UgyldigMottaker(
+                """
                 | Ugyldig mottaker '${mottaker}' for produsent '${produsent.id}'. 
                 | Gyldige mottakere er: ${produsent.tillatteMottakere}
                 """.trimMargin()

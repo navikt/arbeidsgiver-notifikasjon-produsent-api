@@ -15,8 +15,6 @@ import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.util.*
 
-
-
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
  * takes care of of cleaning up all resources, and where it's clear whether you
  * are running a single command or a transaction.
