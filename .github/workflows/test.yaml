@@ -20,8 +20,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-        volumes:
-          - ./local-db-init.sql:/docker-entrypoint-initdb.d/init.sql
     steps:
       - uses: actions/checkout@v1
       - run: PGPASSWORD=postgres psql -U postgres -p postgres -h postgres -f ./local-db-init.sql
