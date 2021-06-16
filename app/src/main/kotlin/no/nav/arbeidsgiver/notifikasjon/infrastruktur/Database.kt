@@ -15,17 +15,6 @@ import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.util.*
 
-data class NaisDBConfig(
-    val host: String = System.getenv("DB_HOST") ?: "localhost",
-    val port: String = System.getenv("DB_PORT") ?: "5432",
-    val database: String = System.getenv("DB_DATABASE") ?: "postgres",
-    val username: String = System.getenv("DB_USERNAME") ?: "postgres",
-    val password: String = System.getenv("DB_PASSWORD") ?: "postgres",
-) {
-    val jdbcUrl: String
-        get() = "jdbc:postgresql://$host:$port/$database"
-}
-
 
 
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
@@ -33,13 +22,25 @@ data class NaisDBConfig(
  * are running a single command or a transaction.
  */
 class Database private constructor(
-    private val name: String,
+    private val config: Config,
     private val dataSource: NonBlockingDataSource
 ) {
+    data class Config(
+        val host: String,
+        val port: String,
+        val database: String,
+        val username: String,
+        val password: String,
+        val migrationLocations: String,
+    ) {
+        val jdbcUrl: String
+            get() = "jdbc:postgresql://$host:$port/$database"
+    }
+
     companion object {
         private val log = logger()
 
-        private fun NaisDBConfig.hikariConfig(): HikariConfig {
+        private fun Config.asHikariConfig(): HikariConfig {
             val config = this
             return HikariConfig().apply {
                 jdbcUrl = config.jdbcUrl
@@ -55,8 +56,8 @@ class Database private constructor(
             }
         }
 
-        suspend fun openDatabase(name: String, config: NaisDBConfig = NaisDBConfig()): Database {
-            val hikariConfig = config.hikariConfig()
+        suspend fun openDatabase(config: Config): Database {
+            val hikariConfig = config.asHikariConfig()
 
             /* When the application runs in kubernetes and connects to the
              * database throught a cloudsql-proxy sidecar, we might be
@@ -68,10 +69,10 @@ class Database private constructor(
             }
 
             val dataSource = NonBlockingDataSource(HikariDataSource(hikariConfig))
-            dataSource.withFlyway(name) {
+            dataSource.withFlyway(config.migrationLocations) {
                 migrate()
             }
-            return Database(name, dataSource)
+            return Database(config, dataSource)
         }
 
         private suspend fun HikariConfig.connectionPossible(): Boolean {
@@ -130,7 +131,7 @@ class Database private constructor(
         }
 
     suspend fun withFlyway(body: Flyway.() -> Unit) {
-        dataSource.withFlyway(name, body)
+        dataSource.withFlyway(config.migrationLocations, body)
     }
 
 }

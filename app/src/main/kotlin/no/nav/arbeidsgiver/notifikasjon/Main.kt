@@ -9,6 +9,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 
+val brukerModelDatabaseConfig = Database.Config(
+    host = System.getenv("DB_HOST") ?: "localhost",
+    port = System.getenv("DB_PORT") ?: "5432",
+    username = System.getenv("DB_USERNAME") ?: "postgres",
+    password = System.getenv("DB_PASSWORD") ?: "postgres",
+    database = System.getenv("DB_DATABASE") ?: "bruker-model",
+    migrationLocations = "db/migration/bruker_model",
+)
+
 object Main {
     val log = logger()
 
@@ -22,7 +31,7 @@ object Main {
         runBlocking(Dispatchers.Default) {
             val queryModelAsync = async {
                 try {
-                    val database = Database.openDatabase("bruker_model")
+                    val database = Database.openDatabase(brukerModelDatabaseConfig)
                     Health.subsystemReady[Subsystem.DATABASE] = true
                     QueryModelImpl(database)
                 } catch (e: Exception) {
