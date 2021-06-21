@@ -53,13 +53,14 @@ object BrukerAPI {
             override val virksomhet: Virksomhet,
         ) : Notifikasjon(), WithVirksomhet {
             enum class Tilstand {
-                NY;
+                NY,
+                UTFOERT;
 
                 companion object {
                     fun BrukerModel.Oppgave.Tilstand.tilBrukerAPI(): Tilstand = when (this) {
                         BrukerModel.Oppgave.Tilstand.NY -> NY
+                        BrukerModel.Oppgave.Tilstand.UTFOERT -> UTFOERT
                     }
-
                 }
             }
         }
@@ -194,7 +195,7 @@ object BrukerAPI {
 
                     kafkaProducer.brukerKlikket(hendelse)
 
-                    queryModel.oppdaterModellEtterBrukerKlikket(hendelse)
+                    queryModel.oppdaterModellEtterHendelse(hendelse)
 
                     BrukerKlikk(
                         id = "${context.fnr}-${hendelse.notifikasjonsId}",

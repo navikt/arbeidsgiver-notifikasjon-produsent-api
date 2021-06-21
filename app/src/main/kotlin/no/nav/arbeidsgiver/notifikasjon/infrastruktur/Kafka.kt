@@ -94,6 +94,7 @@ private val PRODUCER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
     ProducerProp.VALUE_SERIALIZER_CLASS_CONFIG to ValueSerializer::class.java.canonicalName,
     ProducerProp.PARTITIONER_CLASS_CONFIG to OrgnrPartitioner::class.java.canonicalName,
     ProducerProp.MAX_BLOCK_MS_CONFIG to 5_000,
+    ProducerProp.ACKS_CONFIG to "all",
 )
 
 val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
@@ -101,7 +102,6 @@ val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
     ConsumerProp.VALUE_DESERIALIZER_CLASS_CONFIG to ValueDeserializer::class.java.canonicalName,
 
     ConsumerProp.AUTO_OFFSET_RESET_CONFIG to "earliest",
-    ConsumerProp.GROUP_ID_CONFIG to "query-model-builder",
     ConsumerProp.MAX_POLL_RECORDS_CONFIG to 50,
     ConsumerProp.MAX_POLL_INTERVAL_MS_CONFIG to Int.MAX_VALUE,
     ConsumerProp.ENABLE_AUTO_COMMIT_CONFIG to "false"
@@ -184,6 +184,10 @@ suspend fun CoroutineProducer<KafkaKey, Hendelse>.beskjedOpprettet(beskjed: Hend
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.oppgaveOpprettet(oppgave: Hendelse.OppgaveOpprettet) {
     sendHendelse(oppgave.id.toString(), oppgave)
+}
+
+suspend fun CoroutineProducer<KafkaKey, Hendelse>.oppgaveUtført(oppgaveUtført: Hendelse.OppgaveUtført) {
+    sendHendelse(UUID.randomUUID().toString(), oppgaveUtført)
 }
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.brukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {

@@ -13,106 +13,107 @@ import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
 class BrukerModelTests : DescribeSpec({
-    val database = testDatabase()
+    val database = testDatabase(BrukerMain.databaseConfig)
     val queryModel = BrukerModelImpl(database)
 
-    describe("QueryModel") {
-        describe("#oppdaterModellEtterBeskjedOpprettet()") {
-            context("når event er BeskjedOpprettet") {
-                val uuid = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
-                val mottaker = NærmesteLederMottaker(
-                    naermesteLederFnr = "314",
-                    ansattFnr = "33314",
-                    virksomhetsnummer = "1337"
-                )
-                val event = Hendelse.BeskjedOpprettet(
+    describe("Beskjed opprettet i BrukerModel") {
+        val uuid = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
+        val mottaker = NærmesteLederMottaker(
+            naermesteLederFnr = "314",
+            ansattFnr = "33314",
+            virksomhetsnummer = "1337"
+        )
+        val event = Hendelse.BeskjedOpprettet(
+            merkelapp = "foo",
+            eksternId = "42",
+            mottaker = mottaker,
+            id = uuid,
+            tekst = "teste",
+            grupperingsid = "gr1",
+            lenke = "foo.no/bar",
+            opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS),
+            virksomhetsnummer = mottaker.virksomhetsnummer
+        )
+
+        context("happy path") {
+            queryModel.oppdaterModellEtterHendelse(event)
+
+            it("opprettes beskjed i databasen") {
+                val notifikasjoner =
+                    queryModel.hentNotifikasjoner(
+                        mottaker.naermesteLederFnr,
+                        emptyList()
+                    )
+                notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
                     eksternId = "42",
                     mottaker = mottaker,
-                    id = uuid,
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",
-                    opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS),
-                    virksomhetsnummer = mottaker.virksomhetsnummer
+                    opprettetTidspunkt = event.opprettetTidspunkt,
+                    id = uuid,
+                    klikketPaa = false
                 )
+            }
+        }
+        /* Ignorert: oppdateringen av modellen er veldig følsom på potensielt dupliserte meldinger. Når
+        * den greier å detektere duplikater, skal den ikke kaste exception. */
+        xcontext("duplikat av beskjed sendes") {
+            queryModel.oppdaterModellEtterHendelse(event)
 
-                queryModel.oppdaterModellEtterBeskjedOpprettet(event)
+            shouldNotThrowAny {
+                queryModel.oppdaterModellEtterHendelse(event)
+            }
 
-                it("opprettes beskjed i databasen") {
-                    val notifikasjoner =
-                        queryModel.hentNotifikasjoner(
-                            mottaker.naermesteLederFnr,
-                            emptyList()
-                        )
-                    notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
-                        merkelapp = "foo",
-                        eksternId = "42",
-                        mottaker = mottaker,
-                        tekst = "teste",
-                        grupperingsid = "gr1",
-                        lenke = "foo.no/bar",
-                        opprettetTidspunkt = event.opprettetTidspunkt,
-                        id = uuid,
-                        klikketPaa = false
+            it("beskjeden er uendret i databasen") {
+                val notifikasjoner =
+                    queryModel.hentNotifikasjoner(
+                        mottaker.naermesteLederFnr,
+                        emptyList()
                     )
-                }
+                notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
+                    merkelapp = "foo",
+                    eksternId = "42",
+                    mottaker = mottaker,
+                    tekst = "teste",
+                    grupperingsid = "gr1",
+                    lenke = "foo.no/bar",
+                    opprettetTidspunkt = event.opprettetTidspunkt,
+                    id = uuid,
+                    klikketPaa = false
+                )
+            }
+        }
 
-                /* Ignorert: oppdateringen av modellen er veldig følsom på potensielt dupliserte meldinger. Når
-                * den greier å detektere duplikater, skal den ikke kaste exception. */
-                xcontext("duplikat av beskjed sendes") {
-                    shouldNotThrowAny {
-                        queryModel.oppdaterModellEtterBeskjedOpprettet(event)
-                    }
+        context("modifikasjon av beskjeden sendes") {
+            queryModel.oppdaterModellEtterHendelse(event)
 
-                    it("beskjeden er uendret i databasen") {
-                        val notifikasjoner =
-                            queryModel.hentNotifikasjoner(
-                                mottaker.naermesteLederFnr,
-                                emptyList()
-                            )
-                        notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
-                            merkelapp = "foo",
-                            eksternId = "42",
-                            mottaker = mottaker,
-                            tekst = "teste",
-                            grupperingsid = "gr1",
-                            lenke = "foo.no/bar",
-                            opprettetTidspunkt = event.opprettetTidspunkt,
-                            id = uuid,
-                            klikketPaa = false
-                        )
-                    }
-                }
+            val modifisertEvent = event.copy(
+                tekst = event.tekst + "noe annet"
+            )
 
-                context("modifikasjon av beskjeden sendes") {
-                    val modifisertEvent = event.copy(
-                        tekst = event.tekst + "noe annet"
+            shouldThrowAny {
+                queryModel.oppdaterModellEtterHendelse(modifisertEvent)
+            }
+
+            it("beskjeden er fortsatt uendret i databasen") {
+                val notifikasjoner =
+                    queryModel.hentNotifikasjoner(
+                        mottaker.naermesteLederFnr,
+                        emptyList()
                     )
-
-                    shouldThrowAny {
-                        queryModel.oppdaterModellEtterBeskjedOpprettet(modifisertEvent)
-                    }
-
-                    it("beskjeden er fortsatt uendret i databasen") {
-                        val notifikasjoner =
-                            queryModel.hentNotifikasjoner(
-                                mottaker.naermesteLederFnr,
-                                emptyList()
-                            )
-                        notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
-                            merkelapp = "foo",
-                            eksternId = "42",
-                            mottaker = mottaker,
-                            tekst = "teste",
-                            grupperingsid = "gr1",
-                            lenke = "foo.no/bar",
-                            opprettetTidspunkt = event.opprettetTidspunkt,
-                            id = uuid,
-                            klikketPaa = false
-                        )
-                    }
-                }
+                notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
+                    merkelapp = "foo",
+                    eksternId = "42",
+                    mottaker = mottaker,
+                    tekst = "teste",
+                    grupperingsid = "gr1",
+                    lenke = "foo.no/bar",
+                    opprettetTidspunkt = event.opprettetTidspunkt,
+                    id = uuid,
+                    klikketPaa = false
+                )
             }
         }
     }

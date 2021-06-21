@@ -14,7 +14,7 @@ Er representert som String.
 """
 scalar ISO8601DateTime
 
-scalar NotifikasjonCursor
+# scalar NotifikasjonCursor
 
 enum OppgaveTilstand {
     NY
@@ -159,16 +159,16 @@ type Mutation {
     """
     nyOppgave(nyOppgave: NyOppgaveInput! @Validate): NyOppgaveResultat!
 
-#    """
-#    Marker en oppgave (identifisert ved id) som utført.
-#    """
-#    oppgaveUtfoert(
-#        """
-#        ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
-#        """
-#        id: ID!
-#    ): OppgaveUtfoertResultat!
-#
+    """
+    Marker en oppgave (identifisert ved id) som utført.
+    """
+    oppgaveUtfoert(
+        """
+        ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
+        """
+        id: ID!
+    ): OppgaveUtfoertResultat!
+
 #    """
 #    Marker en oppgave (identifisert ved ekstern id) som utført.
 #    """
@@ -188,7 +188,7 @@ type Mutation {
 union OppgaveUtfoertResultat =
     | OppgaveUtfoertVellykket
     | UgyldigMerkelapp
-#    | UkjentNotifikasjon
+    | NotifikasjonFinnesIkke
 
 type OppgaveUtfoertVellykket {
     """
@@ -315,16 +315,16 @@ type UgyldigMottaker implements Error {
     feilmelding: String!
 }
 
-#"""
-#Denne feilen returneres dersom du prøver å referere til en notifikasjon
-#som ikke eksisterer.
-#
-#Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
-#av "eventual consistency" i systemet vårt.
-#"""
-#type UkjentNotifikasjon implements Error {
-#    feilmelding: String!
-#}
+"""
+Denne feilen returneres dersom du prøver å referere til en notifikasjon
+som ikke eksisterer.
+
+Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
+av "eventual consistency" i systemet vårt.
+"""
+type NotifikasjonFinnesIkke implements Error {
+    feilmelding: String!
+}
 
 interface Error {
     feilmelding: String!

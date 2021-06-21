@@ -6,10 +6,12 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
+import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
+import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.toJavaDuration
@@ -22,7 +24,8 @@ class NyBeskjedTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = embeddedKafka.newProducer(),
-            produsentRegister = mockProdusentRegister
+            produsentRegister = mockProdusentRegister,
+            produsentModelFuture = CompletableFuture.completedFuture(mockk())
         )
     )
 

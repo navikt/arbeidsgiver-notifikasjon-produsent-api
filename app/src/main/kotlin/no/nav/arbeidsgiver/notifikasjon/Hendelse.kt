@@ -35,6 +35,12 @@ sealed class Hendelse {
         val opprettetTidspunkt: OffsetDateTime
     ): Hendelse()
 
+    @JsonTypeName("OppgaveUtfoert")
+    data class OppgaveUtført(
+        override val virksomhetsnummer: String,
+        val id: UUID,
+    ): Hendelse()
+
 
     @JsonTypeName("BrukerKlikket")
     data class BrukerKlikket(
@@ -66,3 +72,9 @@ data class AltinnMottaker(
     val serviceEdition: String,
     val virksomhetsnummer: String,
 ): Mottaker()
+
+val Mottaker.virksomhetsnummer: String
+    get() = when (this){
+        is NærmesteLederMottaker -> this.virksomhetsnummer
+        is AltinnMottaker -> this.virksomhetsnummer
+    }

@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
+import org.apache.kafka.clients.consumer.ConsumerConfig
 
 
 object BrukerMain {
@@ -62,7 +63,9 @@ object BrukerMain {
                 if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
                     log.info("KafkaConsumer er deaktivert.")
                 } else {
-                    val kafkaConsumer = createKafkaConsumer()
+                    val kafkaConsumer = createKafkaConsumer {
+                        put(ConsumerConfig.GROUP_ID_CONFIG, "bruker-model-builder")
+                    }
                     val queryModel = brukerModelAsync.await()
 
                     kafkaConsumer.forEachEvent { event ->

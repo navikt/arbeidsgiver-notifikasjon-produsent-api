@@ -1,0 +1,126 @@
+package no.nav.arbeidsgiver.notifikasjon.produsent_api
+
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
+import io.mockk.*
+import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.CoroutineProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.oppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import java.time.OffsetDateTime
+import java.util.*
+import java.util.concurrent.CompletableFuture
+
+
+class OppgaveUtførtTests: DescribeSpec({
+    val database = testDatabase(ProdusentMain.databaseConfig)
+    val produsentModel = ProdusentModelImpl(database)
+    val kafkaProducer = mockk<CoroutineProducer<KafkaKey, Hendelse>>(relaxed = true)
+
+    mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::oppgaveUtført)
+    coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any()) } returns Unit
+
+    afterSpec {
+        unmockkAll()
+    }
+
+    val engine = ktorProdusentTestServer(
+        produsentGraphQL = ProdusentAPI.newGraphQL(
+            kafkaProducer = kafkaProducer,
+            produsentRegister = mockProdusentRegister,
+            produsentModelFuture = CompletableFuture.completedFuture(produsentModel)
+        )
+    )
+
+
+    describe("OppgaveUtført-oppførsel") {
+        val virksomhetsnummer = "123"
+        val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
+        val merkelapp = "tag"
+        val eksternId = "123"
+        val mottaker = AltinnMottaker(
+            virksomhetsnummer = virksomhetsnummer,
+            serviceCode = "1",
+            serviceEdition = "1"
+        )
+        val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
+
+        context("Eksisterende oppgave blir utført") {
+            val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottaker = mottaker,
+                id =  uuid,
+                tekst = "test",
+                grupperingsid = null,
+                lenke = "https://nav.no",
+                opprettetTidspunkt = opprettetTidspunkt
+            )
+
+            produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
+
+            val response = engine.produsentApi("""
+                mutation {
+                    oppgaveUtfoert(id: "$uuid") {
+                        __typename
+                        ... on OppgaveUtfoertVellykket {
+                            id
+                        }
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+            """.trimIndent())
+
+            it("returnerer tilbake id-en") {
+                val vellykket = response.getTypedContent<ProdusentAPI.OppgaveUtfoertVellykket>("oppgaveUtfoert")
+                vellykket.id shouldBe uuid
+            }
+
+            it("har sendt melding til kafka") {
+                coVerify {
+                    any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any())
+                }
+            }
+
+            it("har utført-status i modellen") {
+                val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
+                oppgave.tilstand shouldBe ProdusentModel.Oppgave.Tilstand.UTFOERT
+            }
+        }
+
+        context("Oppgave mangler") {
+            val response = engine.produsentApi("""
+                mutation {
+                    oppgaveUtfoert(id: "$uuid") {
+                        __typename
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+            """.trimIndent())
+
+            it("returnerer feilmelding") {
+                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
+            }
+        }
+
+        context("Oppgave med feil merkelapp") {
+        }
+
+        context("Er ikke oppgave, men beskjed") {
+        }
+    }
+})

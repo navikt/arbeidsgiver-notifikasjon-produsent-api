@@ -5,6 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
 import java.time.OffsetDateTime
@@ -45,26 +46,20 @@ interface BrukerModel {
     ) : Notifikasjon() {
         @Suppress("unused") /* leses fra database */
         enum class Tilstand {
-            NY
+            NY,
+            UTFOERT
         }
     }
 
     suspend fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<Notifikasjon>
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
-    suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket)
 }
 
 class BrukerModelImpl(
     private val database: Database
 ) : BrukerModel {
     private val log = logger()
-
-    data class Koordinat(
-        val mottaker: Mottaker,
-        val merkelapp: String,
-        val eksternId: String,
-    )
 
     private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): BrukerModel.Beskjed =
         BrukerModel.Beskjed(
@@ -173,17 +168,28 @@ class BrukerModelImpl(
             }.getOrNull(0)
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
-        when (hendelse) {
+        val ignored: Unit = when (hendelse) {
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is Hendelse.OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
             is Hendelse.SlettHendelse -> {
                 /* TODO: oppdatere modell? Kaskade-sletting? */
             }
         }
     }
 
-    override suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
+    private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
+        database.nonTransactionalCommand("""
+            UPDATE notifikasjon
+            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
+            WHERE id = ?
+        """) {
+            uuid(utførtHendelse.id)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
         database.nonTransactionalCommand("""
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
             ON CONFLICT ON CONSTRAINT brukerklikk_pkey
@@ -194,7 +200,7 @@ class BrukerModelImpl(
         }
     }
 
-    suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
+    private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
         val rollbackHandler = { ex: Exception ->
             if (ex is PSQLException && PSQLState.UNIQUE_VIOLATION.state == ex.sqlState) {
                 log.error("forsøk på å endre eksisterende beskjed")
@@ -203,12 +209,6 @@ class BrukerModelImpl(
             throw ex
         }
 
-        val koordinat = Koordinat(
-            mottaker = beskjedOpprettet.mottaker,
-            merkelapp = beskjedOpprettet.merkelapp,
-            eksternId = beskjedOpprettet.eksternId
-        )
-
         val nyBeskjed = beskjedOpprettet.tilQueryDomene()
 
         database.transaction(rollbackHandler) {
@@ -216,7 +216,6 @@ class BrukerModelImpl(
                 insert into notifikasjon(
                     type,
                     tilstand,
-                    koordinat,
                     id,
                     merkelapp,
                     tekst,
@@ -226,9 +225,8 @@ class BrukerModelImpl(
                     opprettet_tidspunkt,
                     mottaker
                 )
-                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?, ?::json);
+                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
             """) {
-                string(koordinat.toString())
                 uuid(nyBeskjed.id)
                 string(nyBeskjed.merkelapp)
                 string(nyBeskjed.tekst)
@@ -248,7 +246,7 @@ class BrukerModelImpl(
         }
     }
 
-    suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
+    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
         val rollbackHandler = { ex: Exception ->
             if (ex is PSQLException && PSQLState.UNIQUE_VIOLATION.state == ex.sqlState) {
                 log.error("forsøk på å endre eksisterende beskjed")
@@ -257,12 +255,6 @@ class BrukerModelImpl(
             throw ex
         }
 
-        val koordinat = Koordinat(
-            mottaker = oppgaveOpprettet.mottaker,
-            merkelapp = oppgaveOpprettet.merkelapp,
-            eksternId = oppgaveOpprettet.eksternId
-        )
-
         val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
 
         database.transaction(rollbackHandler) {
@@ -270,7 +262,6 @@ class BrukerModelImpl(
                 insert into notifikasjon(
                     type,
                     tilstand,
-                    koordinat,
                     id,
                     merkelapp,
                     tekst,
@@ -280,9 +271,8 @@ class BrukerModelImpl(
                     opprettet_tidspunkt,
                     mottaker
                 )
-                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?, ?::json);
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
             """) {
-                string(koordinat.toString())
                 uuid(nyBeskjed.id)
                 string(nyBeskjed.merkelapp)
                 string(nyBeskjed.tekst)

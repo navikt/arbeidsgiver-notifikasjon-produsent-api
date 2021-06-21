@@ -4,6 +4,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
@@ -13,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentConte
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
+import org.apache.kafka.clients.consumer.ConsumerConfig
 
 object ProdusentMain {
     val log = logger()
@@ -58,7 +60,18 @@ object ProdusentMain {
             }
 
             launch {
-                produsentModelAsync.await()
+                if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
+                    log.info("KafkaConsumer er deaktivert.")
+                } else {
+                    val kafkaConsumer = createKafkaConsumer {
+                        put(ConsumerConfig.GROUP_ID_CONFIG, "produsent-model-builder")
+                    }
+                    val produsentModel = produsentModelAsync.await()
+
+                    kafkaConsumer.forEachEvent { event ->
+                        produsentModel.oppdaterModellEtterHendelse(event)
+                    }
+                }
             }
 
             launch {
@@ -70,7 +83,10 @@ object ProdusentMain {
                     httpServerSetup(
                         authProviders = authProviders,
                         extractContext = extractProdusentContext,
-                        graphql = ProdusentAPI.newGraphQL(createKafkaProducer()),
+                        graphql = ProdusentAPI.newGraphQL(
+                            produsentModelFuture = produsentModelAsync.asCompletableFuture(),
+                            kafkaProducer = createKafkaProducer()
+                        ),
                     )
                 }
                 httpServer.start(wait = true)

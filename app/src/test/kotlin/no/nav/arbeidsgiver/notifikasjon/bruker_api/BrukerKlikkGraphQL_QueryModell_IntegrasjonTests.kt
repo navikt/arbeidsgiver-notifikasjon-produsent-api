@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
+import no.nav.arbeidsgiver.notifikasjon.BrukerMain
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
@@ -13,7 +14,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
-    val database = testDatabase()
+    val database = testDatabase(BrukerMain.databaseConfig)
     val queryModel = BrukerModelImpl(database)
 
     val engine = ktorBrukerTestServer(
@@ -40,7 +41,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             tekst = "",
             lenke = "",
         )
-        queryModel.oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet)
+        queryModel.oppdaterModellEtterHendelse(beskjedOpprettet)
 
         /* sjekk at beskjed ikke er klikket på */
         val response = engine.brukerApi("""
@@ -68,7 +69,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             notifikasjonsId = uuid
         )
 
-        queryModel.oppdaterModellEtterBrukerKlikket(brukerKlikket)
+        queryModel.oppdaterModellEtterHendelse(brukerKlikket)
 
         /* sjekk at beskjed ikke er klikket på */
         val responseEtterKlikk = engine.brukerApi("""

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
@@ -9,6 +9,7 @@ import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.*
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
@@ -37,7 +38,6 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     }
 
     describe("bruker-api: rapporterer om at notifikasjon er klikket på") {
-
         context("uklikket-notifikasjon eksisterer for bruker") {
             val id = UUID.fromString("09d5a598-b31a-11eb-8529-0242ac130003")
             coEvery { queryModel.virksomhetsnummerForNotifikasjon(id) } returns "1234"
@@ -96,7 +96,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
 
             it("Database oppdaters") {
                 coVerify {
-                    queryModel.oppdaterModellEtterBrukerKlikket(
+                    queryModel.oppdaterModellEtterHendelse(
                         withArg(brukerKlikketMatcher)
                     )
                 }

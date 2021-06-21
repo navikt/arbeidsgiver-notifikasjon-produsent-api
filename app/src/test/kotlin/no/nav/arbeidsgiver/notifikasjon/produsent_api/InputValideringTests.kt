@@ -7,6 +7,7 @@ import io.kotest.matchers.string.shouldContainIgnoringCase
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.util.*
+import java.util.concurrent.CompletableFuture
 import kotlin.time.ExperimentalTime
 
 @Suppress("NAME_SHADOWING")
@@ -15,7 +16,8 @@ class InputValideringTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
-            produsentRegister = mockProdusentRegister
+            produsentRegister = mockProdusentRegister,
+            produsentModelFuture = CompletableFuture.completedFuture(mockk())
         )
     )
 

@@ -2,14 +2,14 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import kotlinx.coroutines.future.await
+import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 object ProdusentAPI {
     private val log = logger()
@@ -127,6 +127,14 @@ object ProdusentAPI {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface NyOppgaveResultat
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed interface OppgaveUtfoertResultat
+
+    @JsonTypeName("OppgaveUtfoertVellykket")
+    data class OppgaveUtfoertVellykket(
+        val id: UUID
+    ) : OppgaveUtfoertResultat
+
     @JsonTypeName("NyBeskjedVellykket")
     data class NyBeskjedVellykket(
         val id: UUID
@@ -144,17 +152,23 @@ object ProdusentAPI {
         @JsonTypeName("UgyldigMerkelapp")
         data class UgyldigMerkelapp(
             override val feilmelding: String
-        ) : Error(), NyBeskjedResultat, NyOppgaveResultat
+        ) : Error(), NyBeskjedResultat, NyOppgaveResultat, OppgaveUtfoertResultat
 
         @JsonTypeName("UgyldigMottaker")
         data class UgyldigMottaker(
             override val feilmelding: String
         ) : Error(), NyBeskjedResultat, NyOppgaveResultat
+
+        @JsonTypeName("NotifikasjonFinnesIkke")
+        data class NotifikasjonFinnesIkke(
+            override val feilmelding: String
+        ) : Error(), OppgaveUtfoertResultat
     }
 
     fun newGraphQL(
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer(),
-        produsentRegister: ProdusentRegister = ProdusentRegisterImpl
+        produsentRegister: ProdusentRegister = ProdusentRegisterImpl,
+        produsentModelFuture: CompletableFuture<ProdusentModel>,
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphqls") {
             directive("Validate", ValidateDirective)
@@ -164,6 +178,7 @@ object ProdusentAPI {
             resolveSubtypes<Error>()
             resolveSubtypes<NyBeskjedResultat>()
             resolveSubtypes<NyOppgaveResultat>()
+            resolveSubtypes<OppgaveUtfoertResultat>()
 
             wire("Query") {
                 dataFetcher("whoami") {
@@ -174,8 +189,7 @@ object ProdusentAPI {
             wire("Mutation") {
                 coDataFetcher<NyBeskjedResultat>("nyBeskjed") { env ->
                     val nyBeskjed = env.getTypedArgument<NyBeskjedInput>("nyBeskjed")
-                    val context = env.getContext<Context>()
-                    val produsent = produsentRegister.finn(context.produsentid)
+                    val produsent = env.hentProdusent(produsentRegister)
 
                     tilgangsstyrMottaker(produsent, nyBeskjed.mottaker.tilDomene())
                         ?.let { return@coDataFetcher it }
@@ -190,8 +204,7 @@ object ProdusentAPI {
 
                 coDataFetcher<NyOppgaveResultat>("nyOppgave") { env ->
                     val nyOppgave = env.getTypedArgument<NyOppgaveInput>("nyOppgave")
-                    val context = env.getContext<Context>()
-                    val produsent = produsentRegister.finn(context.produsentid)
+                    val produsent = env.hentProdusent(produsentRegister)
 
                     tilgangsstyrMottaker(produsent, nyOppgave.mottaker.tilDomene())
                         ?.let { return@coDataFetcher it }
@@ -202,6 +215,33 @@ object ProdusentAPI {
                     log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
                     kafkaProducer.oppgaveOpprettet(nyOppgave.tilDomene(id))
                     return@coDataFetcher NyOppgaveVellykket(id)
+                }
+
+                coDataFetcher<OppgaveUtfoertResultat>("oppgaveUtfoert") { env ->
+                    val produsentModel = produsentModelFuture.await()
+                    val id = env.getTypedArgument<UUID>("id")
+                    val notifikasjon = produsentModel.hentNotifikasjon(id)
+                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Oppgave med id $id finnes ikke")
+
+                    if (notifikasjon !is ProdusentModel.Oppgave) {
+                        return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id er ikke en oppgave")
+                    }
+
+                    val produsent = env.hentProdusent(produsentRegister)
+
+                   tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
+                       ?.let { return@coDataFetcher it }
+
+                    val utførtHendelse = Hendelse.OppgaveUtført(
+                        id = id,
+                        virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
+                    )
+
+                    kafkaProducer.oppgaveUtført(utførtHendelse)
+
+                    produsentModel.oppdaterModellEtterHendelse(utførtHendelse)
+
+                    return@coDataFetcher OppgaveUtfoertVellykket(id)
                 }
             }
         }
@@ -228,4 +268,9 @@ object ProdusentAPI {
                 | Gyldige mottakere er: ${produsent.tillatteMottakere}
                 """.trimMargin()
             )
+}
+
+fun DataFetchingEnvironment.hentProdusent(produsentRegister: ProdusentRegister): Produsent {
+    val context = this.getContext<ProdusentAPI.Context>()
+    return produsentRegister.finn(context.produsentid)
 }
