@@ -29,6 +29,9 @@ inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T 
         val tree = objectMapper.readTree(this.content!!)
         logger().info("content: $tree")
         val node = tree.get("data").at(name.ensurePrefix("/"))
+        if (node.isNull || node.isMissingNode) {
+            throw Exception("content.data does not contain element '$name' content: $tree")
+        }
         return objectMapper.convertValue(node)
     } else {
         throw Exception("Got errors $errors")

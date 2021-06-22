@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import org.postgresql.util.PSQLException
 import org.postgresql.util.PSQLState
+import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -38,7 +39,8 @@ interface ProdusentModel {
         val tilstand: Tilstand,
     ) : Notifikasjon() {
 
-        @Suppress("unused") /* leses fra database */
+        @Suppress("unused")
+        /* leses fra database */
         enum class Tilstand {
             NY,
             UTFOERT,
@@ -46,12 +48,13 @@ interface ProdusentModel {
     }
 
     suspend fun hentNotifikasjon(id: UUID): Notifikasjon?
+    suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): Notifikasjon?
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
 }
 
 class ProdusentModelImpl(
     private val database: Database
-): ProdusentModel {
+) : ProdusentModel {
     val log = logger()
 
     private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): ProdusentModel.Beskjed =
@@ -80,9 +83,25 @@ class ProdusentModelImpl(
         )
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? {
-        val result = database.runNonTransactionalQuery(""" select * from notifikasjon where id = ? """, {
-            uuid(id)
-        }) {
+        return database.runNonTransactionalQuery(
+            """ select * from notifikasjon where id = ? """, {
+                uuid(id)
+            }, resultSetTilNotifikasjon
+        ).firstOrNull()
+    }
+
+    override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? {
+        return database.runNonTransactionalQuery(
+            """ select * from notifikasjon where ekstern_id = ? and merkelapp = ? """, {
+                string(eksternId)
+                string(merkelapp)
+            },
+            resultSetTilNotifikasjon
+        ).firstOrNull()
+    }
+
+    val resultSetTilNotifikasjon: ResultSet.() -> ProdusentModel.Notifikasjon =
+        {
             when (val type = getString("type")) {
                 "BESKJED" -> ProdusentModel.Beskjed(
                     merkelapp = getString("merkelapp"),
@@ -109,8 +128,6 @@ class ProdusentModelImpl(
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
-        return result.firstOrNull()
-    }
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignored: Unit = when (hendelse) {
@@ -125,11 +142,13 @@ class ProdusentModelImpl(
     }
 
     private suspend fun oppdatertModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
-        database.nonTransactionalCommand("""
+        database.nonTransactionalCommand(
+            """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
             WHERE id = ?
-        """) {
+        """
+        ) {
             uuid(utførtHendelse.id)
         }
     }
@@ -147,7 +166,8 @@ class ProdusentModelImpl(
         val nyBeskjed = beskjedOpprettet.tilQueryDomene()
 
         database.transaction(rollbackHandler) {
-            executeCommand("""
+            executeCommand(
+                """
                 insert into notifikasjon(
                     type,
                     tilstand,
@@ -161,7 +181,8 @@ class ProdusentModelImpl(
                     mottaker
                 )
                 values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
-            """) {
+            """
+            ) {
                 uuid(nyBeskjed.id)
                 string(nyBeskjed.merkelapp)
                 string(nyBeskjed.tekst)
@@ -186,7 +207,8 @@ class ProdusentModelImpl(
         val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
 
         database.transaction(rollbackHandler) {
-            executeCommand("""
+            executeCommand(
+                """
                 insert into notifikasjon(
                     type,
                     tilstand,
@@ -200,7 +222,8 @@ class ProdusentModelImpl(
                     mottaker
                 )
                 values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
-            """) {
+            """
+            ) {
                 uuid(nyBeskjed.id)
                 string(nyBeskjed.merkelapp)
                 string(nyBeskjed.tekst)

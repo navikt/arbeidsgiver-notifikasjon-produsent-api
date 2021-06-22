@@ -187,7 +187,7 @@ object ProdusentAPI {
             }
 
             wire("Mutation") {
-                coDataFetcher<NyBeskjedResultat>("nyBeskjed") { env ->
+                coDataFetcher("nyBeskjed") { env ->
                     val nyBeskjed = env.getTypedArgument<NyBeskjedInput>("nyBeskjed")
                     val produsent = env.hentProdusent(produsentRegister)
 
@@ -202,7 +202,7 @@ object ProdusentAPI {
                     return@coDataFetcher NyBeskjedVellykket(id)
                 }
 
-                coDataFetcher<NyOppgaveResultat>("nyOppgave") { env ->
+                coDataFetcher("nyOppgave") { env ->
                     val nyOppgave = env.getTypedArgument<NyOppgaveInput>("nyOppgave")
                     val produsent = env.hentProdusent(produsentRegister)
 
@@ -217,7 +217,7 @@ object ProdusentAPI {
                     return@coDataFetcher NyOppgaveVellykket(id)
                 }
 
-                coDataFetcher<OppgaveUtfoertResultat>("oppgaveUtfoert") { env ->
+                coDataFetcher("oppgaveUtfoert") { env ->
                     val produsentModel = produsentModelFuture.await()
                     val id = env.getTypedArgument<UUID>("id")
                     val notifikasjon = produsentModel.hentNotifikasjon(id)
@@ -238,10 +238,34 @@ object ProdusentAPI {
                     )
 
                     kafkaProducer.oppgaveUtført(utførtHendelse)
-
                     produsentModel.oppdaterModellEtterHendelse(utførtHendelse)
-
                     return@coDataFetcher OppgaveUtfoertVellykket(id)
+                }
+
+                coDataFetcher("oppgaveUtfoertByEksternId") { env ->
+                    val produsentModel = produsentModelFuture.await()
+                    val eksternId = env.getTypedArgument<String>("eksternId")
+                    val merkelapp = env.getTypedArgument<String>("merkelapp")
+                    val notifikasjon = produsentModel.hentNotifikasjon(eksternId, merkelapp)
+                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Oppgave med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
+
+                    if (notifikasjon !is ProdusentModel.Oppgave) {
+                        return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp er ikke en oppgave")
+                    }
+
+                    val produsent = env.hentProdusent(produsentRegister)
+
+                   tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
+                       ?.let { return@coDataFetcher it }
+
+                    val utførtHendelse = Hendelse.OppgaveUtført(
+                        id = notifikasjon.id,
+                        virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
+                    )
+
+                    kafkaProducer.oppgaveUtført(utførtHendelse)
+                    produsentModel.oppdaterModellEtterHendelse(utførtHendelse)
+                    return@coDataFetcher OppgaveUtfoertVellykket(notifikasjon.id)
                 }
             }
         }

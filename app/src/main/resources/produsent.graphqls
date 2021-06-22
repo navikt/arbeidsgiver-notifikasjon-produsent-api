@@ -169,20 +169,20 @@ type Mutation {
         id: ID!
     ): OppgaveUtfoertResultat!
 
-#    """
-#    Marker en oppgave (identifisert ved ekstern id) som utført.
-#    """
-#    oppgaveUtfoertByEksternId(
-#        """
-#        Merkelapp som oppgaven er registrert med.
-#        """
-#        merkelapp: String!,
-#
-#        """
-#        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
-#        """
-#        eksternId: ID!
-#    ): OppgaveUtfoertResultat!
+    """
+    Marker en oppgave (identifisert ved ekstern id) som utført.
+    """
+    oppgaveUtfoertByEksternId(
+        """
+        Merkelapp som oppgaven er registrert med.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+        """
+        eksternId: ID!
+    ): OppgaveUtfoertResultat!
 }
 
 union OppgaveUtfoertResultat =
