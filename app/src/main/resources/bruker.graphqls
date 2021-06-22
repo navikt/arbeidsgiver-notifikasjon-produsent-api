@@ -20,6 +20,7 @@ type Oppgave {
 
 enum OppgaveTilstand {
     NY
+    UTFOERT
 }
 
 type Beskjed {

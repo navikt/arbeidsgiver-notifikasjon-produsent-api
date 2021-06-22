@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture
 class OppgaveUtførtTests: DescribeSpec({
     val database = testDatabase(ProdusentMain.databaseConfig)
     val produsentModel = ProdusentModelImpl(database)
-    val kafkaProducer = mockk<CoroutineProducer<KafkaKey, Hendelse>>(relaxed = true)
+    val kafkaProducer = mockk<CoroutineProducer<KafkaKey, Hendelse>>()
 
     mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::oppgaveUtført)
     coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any()) } returns Unit
@@ -62,7 +62,6 @@ class OppgaveUtførtTests: DescribeSpec({
                 mottaker = mottaker,
                 id =  uuid,
                 tekst = "test",
-                grupperingsid = null,
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
             )
@@ -118,9 +117,63 @@ class OppgaveUtførtTests: DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp") {
+            val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = "feil merkelapp",
+                eksternId = eksternId,
+                mottaker = mottaker,
+                id =  uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = opprettetTidspunkt
+            )
+
+            produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
+
+            val response = engine.produsentApi("""
+                mutation {
+                    oppgaveUtfoert(id: "$uuid") {
+                        __typename
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+            """.trimIndent())
+
+            it("returnerer feilmelding") {
+                response.getTypedContent<ProdusentAPI.Error.UgyldigMerkelapp>("oppgaveUtfoert")
+            }
         }
 
         context("Er ikke oppgave, men beskjed") {
+            val beskjedOpprettet = Hendelse.BeskjedOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottaker = mottaker,
+                id =  uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = opprettetTidspunkt
+            )
+
+            produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
+
+            val response = engine.produsentApi("""
+                mutation {
+                    oppgaveUtfoert(id: "$uuid") {
+                        __typename
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+            """.trimIndent())
+
+            it("returnerer feilmelding") {
+                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
+            }
         }
     }
 })
