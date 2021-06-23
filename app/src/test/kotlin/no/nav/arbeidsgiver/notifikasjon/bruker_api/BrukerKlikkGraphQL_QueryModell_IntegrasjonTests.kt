@@ -44,7 +44,9 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         queryModel.oppdaterModellEtterHendelse(beskjedOpprettet)
 
         /* sjekk at beskjed ikke er klikket på */
-        val response = engine.brukerApi("""
+        val response = engine.brukerApi(
+            //language=GraphQL
+            """
             {
                 notifikasjoner {
                     ...on Beskjed {
@@ -54,7 +56,8 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
                     }
                 }
             }
-        """)
+            """
+        )
 
         val klikkMarkørFørKlikk = response.getTypedContent<Boolean>("/notifikasjoner/0/brukerKlikk/klikketPaa")
 
@@ -72,7 +75,9 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         queryModel.oppdaterModellEtterHendelse(brukerKlikket)
 
         /* sjekk at beskjed ikke er klikket på */
-        val responseEtterKlikk = engine.brukerApi("""
+        val responseEtterKlikk = engine.brukerApi(
+            //language=GraphQL
+            """
             {
                 notifikasjoner {
                     ...on Beskjed {
@@ -82,7 +87,8 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
                     }
                 }
             }
-        """)
+            """
+        )
         val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/0/brukerKlikk/klikketPaa")
 
         it("notifikasjon er klikket på") {

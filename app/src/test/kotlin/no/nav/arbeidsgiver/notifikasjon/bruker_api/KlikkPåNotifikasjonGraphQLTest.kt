@@ -41,22 +41,24 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
         context("uklikket-notifikasjon eksisterer for bruker") {
             val id = UUID.fromString("09d5a598-b31a-11eb-8529-0242ac130003")
             coEvery { queryModel.virksomhetsnummerForNotifikasjon(id) } returns "1234"
-            val query = """
-                    mutation {
-                        notifikasjonKlikketPaa(id: "$id") {
-                            __typename
-                            ... on BrukerKlikk {
-                                id
-                                klikketPaa
-                            }
-                        }
-                    }
-                """.trimIndent()
 
             val httpResponse = engine.post(
                 "/api/graphql",
                 host = BRUKER_HOST,
-                jsonBody = GraphQLRequest(query),
+                jsonBody = GraphQLRequest(
+                    //language=GraphQL
+                    """
+                        mutation {
+                            notifikasjonKlikketPaa(id: "$id") {
+                                __typename
+                                ... on BrukerKlikk {
+                                    id
+                                    klikketPaa
+                                }
+                            }
+                        }
+                    """.trimIndent()
+                ),
                 accept = "application/json",
                 authorization = "Bearer $SELVBETJENING_TOKEN"
             )

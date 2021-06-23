@@ -21,7 +21,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 
-class OppgaveUtførtTests: DescribeSpec({
+class OppgaveUtførtTests : DescribeSpec({
     val database = testDatabase(ProdusentMain.databaseConfig)
     val produsentModel = ProdusentModelImpl(database)
     val kafkaProducer = mockk<CoroutineProducer<KafkaKey, Hendelse>>()
@@ -60,7 +60,7 @@ class OppgaveUtførtTests: DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id =  uuid,
+                id = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -68,7 +68,9 @@ class OppgaveUtførtTests: DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoert(id: "$uuid") {
                         __typename
@@ -80,7 +82,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer tilbake id-en") {
                 val vellykket = response.getTypedContent<ProdusentAPI.OppgaveUtfoertVellykket>("oppgaveUtfoert")
@@ -100,7 +103,9 @@ class OppgaveUtførtTests: DescribeSpec({
         }
 
         context("Oppgave mangler") {
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoert(id: "$uuid") {
                         __typename
@@ -109,7 +114,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer feilmelding") {
                 response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
@@ -122,7 +128,7 @@ class OppgaveUtførtTests: DescribeSpec({
                 merkelapp = "feil merkelapp",
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id =  uuid,
+                id = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -130,7 +136,9 @@ class OppgaveUtførtTests: DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoert(id: "$uuid") {
                         __typename
@@ -139,7 +147,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer feilmelding") {
                 response.getTypedContent<ProdusentAPI.Error.UgyldigMerkelapp>("oppgaveUtfoert")
@@ -152,7 +161,7 @@ class OppgaveUtførtTests: DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id =  uuid,
+                id = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -160,7 +169,9 @@ class OppgaveUtførtTests: DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
 
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoert(id: "$uuid") {
                         __typename
@@ -169,7 +180,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer feilmelding") {
                 response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
@@ -195,7 +207,7 @@ class OppgaveUtførtTests: DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id =  uuid,
+                id = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -203,7 +215,9 @@ class OppgaveUtførtTests: DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
                         __typename
@@ -215,7 +229,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer tilbake id-en") {
                 val vellykket = response.getTypedContent<ProdusentAPI.OppgaveUtfoertVellykket>("oppgaveUtfoertByEksternId")
@@ -235,7 +250,9 @@ class OppgaveUtførtTests: DescribeSpec({
         }
 
         context("Oppgave mangler") {
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
                         __typename
@@ -244,7 +261,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer feilmelding") {
                 response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
@@ -257,7 +275,7 @@ class OppgaveUtførtTests: DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id =  uuid,
+                id = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -265,7 +283,9 @@ class OppgaveUtførtTests: DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "nope$merkelapp") {
                         __typename
@@ -274,7 +294,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer feilmelding") {
                 response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
@@ -287,7 +308,7 @@ class OppgaveUtførtTests: DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id =  uuid,
+                id = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -295,7 +316,9 @@ class OppgaveUtførtTests: DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "nope$eksternId", merkelapp: "$merkelapp") {
                         __typename
@@ -304,7 +327,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer feilmelding") {
                 response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
@@ -317,7 +341,7 @@ class OppgaveUtførtTests: DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id =  uuid,
+                id = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -325,7 +349,9 @@ class OppgaveUtførtTests: DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
 
-            val response = engine.produsentApi("""
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
                         __typename
@@ -334,7 +360,8 @@ class OppgaveUtførtTests: DescribeSpec({
                         }
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             it("returnerer feilmelding") {
                 response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
