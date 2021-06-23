@@ -34,6 +34,10 @@ spec:
           - name: bruker-model
             envVarPrefix: DB
   accessPolicy:
+    inbound:
+      rules:
+        - application: ditt-nav-arbeidsgiver
+          namespace: arbeidsgiver
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
