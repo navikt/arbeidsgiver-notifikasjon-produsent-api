@@ -10,14 +10,24 @@
 
     <properties>
         <kotlin.version>1.5.10</kotlin.version>
-        <ktor.version>1.5.4</ktor.version>
-        <kotest.version>4.4.3</kotest.version>
+        <ktor.version>1.6.0</ktor.version>
+        <kotest.version>4.6.0</kotest.version>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <jvm.version>15</jvm.version>
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency> <!-- altinn-rettigheter-proxy-klient includes old version (1.3.x) -->
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-reflect</artifactId>
+                <version>${kotlin.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -151,9 +161,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.kotest</groupId>
+            <groupId>io.kotest.extensions</groupId>
             <artifactId>kotest-assertions-ktor</artifactId>
-            <version>${kotest.version}</version>
+            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
