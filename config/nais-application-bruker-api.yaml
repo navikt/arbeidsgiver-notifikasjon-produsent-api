@@ -41,6 +41,7 @@ spec:
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
+          namespace: arbeidsgiver
       external:
         - host: fakedings.dev-gcp.nais.io # fakedings login
         - host: arbeidsgiver.dev.nav.no # ???
