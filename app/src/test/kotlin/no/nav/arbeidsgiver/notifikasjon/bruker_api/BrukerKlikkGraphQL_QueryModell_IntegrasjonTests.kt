@@ -17,23 +17,27 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val database = testDatabase(BrukerMain.databaseConfig)
     val queryModel = BrukerModelImpl(database)
 
+    val fnr = "00000000000"
+    val ansattFnr = "12344321"
+    val virksomhetsnummer = "1234"
+    val mottaker = NærmesteLederMottaker(fnr, ansattFnr, virksomhetsnummer)
+
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
             brreg = BrregStub(),
             brukerModelFuture = CompletableFuture.completedFuture(queryModel),
-            kafkaProducer = mockk()
+            kafkaProducer = mockk(),
+            nærmesteLederService = NærmesteLederServiceStub(mottaker)
         )
     )
 
     describe("Brukerklikk-oppførsel") {
         val uuid = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130003")
-        val fnr = "00000000000"
-        val virksomhetsnummer = "1234"
 
         val beskjedOpprettet = Hendelse.BeskjedOpprettet(
             virksomhetsnummer = virksomhetsnummer,
-            mottaker = NærmesteLederMottaker(fnr, "", virksomhetsnummer),
+            mottaker = mottaker,
             opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
             id = uuid,
             merkelapp = "",

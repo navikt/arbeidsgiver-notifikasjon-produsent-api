@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import org.postgresql.util.PSQLException
@@ -51,7 +52,7 @@ interface BrukerModel {
         }
     }
 
-    suspend fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>): List<Notifikasjon>
+    suspend fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>, ansatte: List<NærmesteLederService.NærmesteLederFor>): List<Notifikasjon>
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
 }
@@ -88,12 +89,19 @@ class BrukerModelImpl(
             klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
         )
 
+    val BrukerModel.Notifikasjon.mottaker: Mottaker
+        get() = when (this) {
+            is BrukerModel.Oppgave -> this.mottaker
+            is BrukerModel.Beskjed -> this.mottaker
+        }
+
 
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
     override suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Collection<BrukerModel.Tilgang>
+        tilganger: Collection<BrukerModel.Tilgang>,
+        ansatte: List<NærmesteLederService.NærmesteLederFor>
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
         val tilgangerJsonB = tilganger.joinToString {
             "'${
@@ -107,7 +115,9 @@ class BrukerModelImpl(
             }'"
         }
 
-        database.runNonTransactionalQuery("""
+        val ansatteLookupTable = ansatte.toSet()
+
+        val notifikasjoner = database.runNonTransactionalQuery("""
             select 
                 n.*, 
                 klikk.notifikasjonsid is not null as klikketPaa
@@ -156,6 +166,19 @@ class BrukerModelImpl(
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
+
+        notifikasjoner
+            .filter { notifikasjon ->
+                when (val mottaker = notifikasjon.mottaker) {
+                    is NærmesteLederMottaker ->
+                        ansatteLookupTable.contains(
+                            NærmesteLederService.NærmesteLederFor(
+                            ansattFnr = mottaker.ansattFnr,
+                            virksomhetsnummer = mottaker.virksomhetsnummer
+                        ))
+                    else -> true
+                }
+            }
     }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
@@ -168,6 +191,7 @@ class BrukerModelImpl(
             }.getOrNull(0)
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         val ignored: Unit = when (hendelse) {
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)

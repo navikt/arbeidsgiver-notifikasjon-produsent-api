@@ -87,7 +87,8 @@ object BrukerMain {
                             altinn = altinn,
                             brreg = brreg,
                             brukerModelFuture = brukerModelAsync.asCompletableFuture(),
-                            kafkaProducer = createKafkaProducer()
+                            kafkaProducer = createKafkaProducer(),
+                            nærmesteLederService = NærmesteLederServiceImpl()
                         ),
                     )
                 }

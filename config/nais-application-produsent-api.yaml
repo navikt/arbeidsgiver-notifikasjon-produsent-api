@@ -42,6 +42,6 @@ spec:
         - host: arbeidsgiver.dev.nav.no
   env:
     - name: JAVA_OPTS
-      value: -Dno.nav.app=produsent-api -Dio.ktor.development=true
+      value: -Dio.ktor.development=true
   envFrom:
     - secret: notifikasjon-produsent-api-secrets

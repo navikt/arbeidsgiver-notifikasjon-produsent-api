@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
@@ -89,7 +91,8 @@ object BrukerAPI {
         altinn: Altinn,
         brreg: Brreg,
         brukerModelFuture: CompletableFuture<BrukerModel>,
-        kafkaProducer: CoroutineProducer<KafkaKey, Hendelse>
+        kafkaProducer: CoroutineProducer<KafkaKey, Hendelse>,
+        nærmesteLederService: NærmesteLederService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphqls") {
             scalar(Scalars.ISO8601DateTime)
@@ -104,51 +107,54 @@ object BrukerAPI {
 
                 coDataFetcher("notifikasjoner") { env ->
                     val context = env.getContext<Context>()
-                    val tilganger = altinn.hentAlleTilganger(context.fnr, context.token)
+                    coroutineScope {
+                        val tilganger = async { altinn.hentAlleTilganger(context.fnr, context.token) }
+                        val ansatte = async { nærmesteLederService.hentAnsatte(context.token) }
 
-                    return@coDataFetcher brukerModelFuture.await()
-                        .hentNotifikasjoner(context.fnr, tilganger)
-                        .map { notifikasjon ->
-                            when (notifikasjon) {
-                                is BrukerModel.Beskjed ->
-                                    Notifikasjon.Beskjed(
-                                        merkelapp = notifikasjon.merkelapp,
-                                        tekst = notifikasjon.tekst,
-                                        lenke = notifikasjon.lenke,
-                                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                        id = notifikasjon.id,
-                                        virksomhet = Virksomhet(
-                                            when (notifikasjon.mottaker) {
-                                                is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                                is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                            }
-                                        ),
-                                        brukerKlikk = BrukerKlikk(
-                                            id = "${context.fnr}-${notifikasjon.id}",
-                                            klikketPaa = notifikasjon.klikketPaa
+                        return@coroutineScope brukerModelFuture.await()
+                            .hentNotifikasjoner(context.fnr, tilganger.await(), ansatte.await())
+                            .map { notifikasjon ->
+                                when (notifikasjon) {
+                                    is BrukerModel.Beskjed ->
+                                        Notifikasjon.Beskjed(
+                                            merkelapp = notifikasjon.merkelapp,
+                                            tekst = notifikasjon.tekst,
+                                            lenke = notifikasjon.lenke,
+                                            opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                            id = notifikasjon.id,
+                                            virksomhet = Virksomhet(
+                                                when (notifikasjon.mottaker) {
+                                                    is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                                    is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                                }
+                                            ),
+                                            brukerKlikk = BrukerKlikk(
+                                                id = "${context.fnr}-${notifikasjon.id}",
+                                                klikketPaa = notifikasjon.klikketPaa
+                                            )
                                         )
-                                    )
-                                is BrukerModel.Oppgave ->
-                                    Notifikasjon.Oppgave(
-                                        merkelapp = notifikasjon.merkelapp,
-                                        tekst = notifikasjon.tekst,
-                                        lenke = notifikasjon.lenke,
-                                        tilstand = notifikasjon.tilstand.tilBrukerAPI(),
-                                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                        id = notifikasjon.id,
-                                        virksomhet = Virksomhet(
-                                            when (notifikasjon.mottaker) {
-                                                is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                                is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                            }
-                                        ),
-                                        brukerKlikk = BrukerKlikk(
-                                            id = "${context.fnr}-${notifikasjon.id}",
-                                            klikketPaa = notifikasjon.klikketPaa
+                                    is BrukerModel.Oppgave ->
+                                        Notifikasjon.Oppgave(
+                                            merkelapp = notifikasjon.merkelapp,
+                                            tekst = notifikasjon.tekst,
+                                            lenke = notifikasjon.lenke,
+                                            tilstand = notifikasjon.tilstand.tilBrukerAPI(),
+                                            opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                            id = notifikasjon.id,
+                                            virksomhet = Virksomhet(
+                                                when (notifikasjon.mottaker) {
+                                                    is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                                    is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                                }
+                                            ),
+                                            brukerKlikk = BrukerKlikk(
+                                                id = "${context.fnr}-${notifikasjon.id}",
+                                                klikketPaa = notifikasjon.klikketPaa
+                                            )
                                         )
-                                    )
+                                }
                             }
-                        }
+                    }
                 }
 
                 suspend fun <T: WithVirksomhet> fetchVirksomhet(env: DataFetchingEnvironment): Virksomhet {

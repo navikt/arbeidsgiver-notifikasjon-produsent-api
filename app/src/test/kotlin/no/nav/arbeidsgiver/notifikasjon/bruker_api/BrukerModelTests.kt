@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NærmesteLederService
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
@@ -26,6 +27,10 @@ class BrukerModelTests : DescribeSpec({
             ansattFnr = "33314",
             virksomhetsnummer = "1337"
         )
+        val ansatte = listOf(NærmesteLederService.NærmesteLederFor(
+            ansattFnr = mottaker.ansattFnr,
+            virksomhetsnummer = mottaker.virksomhetsnummer,
+        ))
         val event = Hendelse.BeskjedOpprettet(
             merkelapp = "foo",
             eksternId = "42",
@@ -45,7 +50,8 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        emptyList()
+                        emptyList(),
+                        ansatte,
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
@@ -73,7 +79,8 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        emptyList()
+                        emptyList(),
+                        ansatte
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
@@ -104,7 +111,8 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        emptyList()
+                        emptyList(),
+                        ansatte
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",

@@ -46,9 +46,12 @@ spec:
         - host: fakedings.dev-gcp.nais.io # fakedings login
         - host: arbeidsgiver.dev.nav.no # ???
         - host: navtestb2c.b2clogin.com # for login service
+        - host: narmesteleder.dev.nav.no
   env:
     - name: JAVA_OPTS
-      value: -Dno.nav.app=bruker-api -Dio.ktor.development=true
+      value: -Dio.ktor.development=true
+    - name: NARMESTELEDER_API_ENDPOINT
+      value: https://narmesteleder.dev.nav.no/arbeidsgiver/ansatte?status=ACTIVE
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
     - configmap: loginservice-idporten

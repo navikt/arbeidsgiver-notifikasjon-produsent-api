@@ -26,7 +26,8 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
             altinn = AltinnStub(),
             brreg = BrregStub(),
             brukerModelFuture = CompletableFuture.completedFuture(queryModel),
-            kafkaProducer = kafkaProducer
+            kafkaProducer = kafkaProducer,
+            nærmesteLederService = NærmesteLederServiceStub()
         ),
     )
 
