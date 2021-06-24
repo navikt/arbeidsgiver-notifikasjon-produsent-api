@@ -4,7 +4,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.mockserver.MockServerListener
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.BrregImpl
 import org.mockserver.client.MockServerClient
 import org.mockserver.model.HttpRequest
 import org.mockserver.model.HttpResponse
@@ -84,19 +83,27 @@ class BrregTests : DescribeSpec({
     val host = "localhost"
     val port = 1111
     val brreg = BrregImpl("http://$host:$port")
-
-    describe("Brreg#hentEnhet") {
-        MockServerClient(host, port).`when`(
+    val mockServerClient = MockServerClient(host, port)
+    fun mockBrregResponse(
+        withContentType: HttpResponse?
+    ) {
+        mockServerClient.reset()
+        mockServerClient.`when`(
             HttpRequest.request()
                 .withMethod("GET")
                 .withPath("/enhetsregisteret/api/enheter/$orgnr")
         ).respond(
-            HttpResponse.response()
-                .withBody(enhetJson, Charsets.UTF_8)
-                .withContentType(MediaType.APPLICATION_JSON)
+            withContentType
         )
+    }
 
+    describe("Brreg#hentEnhet") {
         context("når enhet finnes") {
+            mockBrregResponse(
+                HttpResponse.response()
+                    .withBody(enhetJson, Charsets.UTF_8)
+                    .withContentType(MediaType.APPLICATION_JSON)
+            )
             val enhet = brreg.hentEnhet(orgnr)
 
 
@@ -110,6 +117,15 @@ class BrregTests : DescribeSpec({
                 it("enhet er samme instans") {
                     enhet2 shouldBeSameInstanceAs enhet
                 }
+            }
+        }
+        context("når enhet ikke finnes") {
+            mockBrregResponse(HttpResponse.notFoundResponse())
+            brreg.cache.clear()
+            val enhet = brreg.hentEnhet(orgnr)
+
+            it("inneholder ikke navn på enhet") {
+                enhet.navn shouldBe ""
             }
         }
     }

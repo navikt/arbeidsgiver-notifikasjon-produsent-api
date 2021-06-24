@@ -2,9 +2,12 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import java.time.LocalDateTime
 import java.util.*
 
@@ -27,9 +30,16 @@ class BrregImpl(
         install(JsonFeature) {
             serializer = JacksonSerializer()
         }
+        expectSuccess = false
     }
-    private val cache = SimpleLRUCache<String, BrregEnhet>(100_000) {
-        httpClient.get("$baseUrl/enhetsregisteret/api/enheter/$it")
+    val cache = SimpleLRUCache<String, BrregEnhet>(100_000) {
+        val response: HttpResponse = httpClient.get("$baseUrl/enhetsregisteret/api/enheter/$it")
+        if (response.status.isSuccess()) {
+            response.receive()
+        } else {
+            logger().warn("kunne ikke finne navn for virksomhet. kall til brreg feilet: ${response.status} ${response.readText()}")
+            BrregEnhet(it, "")
+        }
     }
 
     override suspend fun hentEnhet(orgnr: String): BrregEnhet =
@@ -64,6 +74,10 @@ class SimpleLRUCache<K, V>(val maxCapacity : Int, val loader: suspend (K) -> V) 
 
     suspend fun get(key: K) : V {
         return get(key) { loader(key) }
+    }
+
+    fun clear() {
+        cache.clear()
     }
 }
 
