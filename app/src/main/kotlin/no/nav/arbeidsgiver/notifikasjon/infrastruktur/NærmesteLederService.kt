@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonRootName
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
@@ -17,16 +18,8 @@ interface NærmesteLederService {
 }
 
 class NærmesteLederServiceImpl(
-    private val tokenExchangeClient: TokenExchangeClient = TokenExchangeClientImpl(),
-    baseUrl: String = "narmesteleder.teamsykmelding",
+    private val url: String = System.getenv("NARMESTELEDER_API_ENDPOINT")
 ) : NærmesteLederService {
-    private val log = logger()
-
-    private val url = URLBuilder()
-        .takeFrom(baseUrl)
-        .pathComponents("arbeidsgiver", "v2", "ansatte")
-        .build()
-
     private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer()
@@ -45,18 +38,6 @@ class NærmesteLederServiceImpl(
     )
 
     override suspend fun hentAnsatte(token: String): List<NærmesteLederService.NærmesteLederFor> {
-        /* TODO: Introduce temporary fall-back so dev is not broken if bugs. */
-        return try {
-            hentAnsatteImpl(
-                tokenExchangeClient.exchangeToken(token, "dev-gcp:teamsykmelding:narmesteleder")
-            )
-        } catch (e: Exception) {
-            log.error("henting (tokenx) av nærmeste leders ansatte feilet. Fallback til loginservice.", e)
-            hentAnsatteImpl(token)
-        }
-    }
-
-    private suspend fun hentAnsatteImpl(token: String): List<NærmesteLederService.NærmesteLederFor> {
         return httpClient.get<Ansatte>(url) {
             header(HttpHeaders.Authorization, "Bearer $token")
         }.ansatte.map {

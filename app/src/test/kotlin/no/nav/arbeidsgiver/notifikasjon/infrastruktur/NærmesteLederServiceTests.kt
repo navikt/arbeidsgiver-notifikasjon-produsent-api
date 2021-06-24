@@ -4,7 +4,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.mockserver.MockServerListener
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.arbeidsgiver.notifikasjon.util.TokenExchangeClientStub
 import org.mockserver.client.MockServerClient
 import org.mockserver.model.HttpRequest
 import org.mockserver.model.HttpResponse
@@ -17,12 +16,9 @@ class NærmesteLederServiceTests : DescribeSpec({
 
     val host = "localhost"
     val port = 1111
-    val path = "/arbeidsgiver/v2/ansatte"
+    val url = "/api"
     val token = "j.r.r.token"
-    val service = NærmesteLederServiceImpl(
-        tokenExchangeClient = TokenExchangeClientStub(),
-        baseUrl = "http://$host:$port"
-    )
+    val service = NærmesteLederServiceImpl("http://$host:$port/api")
     val mockServerClient = MockServerClient(host, port)
 
     describe("NærmesteLederService#hentAnsatte") {
@@ -31,7 +27,7 @@ class NærmesteLederServiceTests : DescribeSpec({
             mockServerClient.`when`(
                 HttpRequest.request()
                     .withMethod("GET")
-                    .withPath(path)
+                    .withPath(url)
             ).respond(
                 HttpResponse.response()
                     .withBody(responseBody, Charsets.UTF_8)
