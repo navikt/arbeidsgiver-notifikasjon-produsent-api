@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.mockserver.MockServerListener

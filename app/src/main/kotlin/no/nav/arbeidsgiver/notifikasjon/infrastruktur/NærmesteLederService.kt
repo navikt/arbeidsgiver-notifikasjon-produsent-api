@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonRootName
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
@@ -27,14 +28,19 @@ class NærmesteLederServiceImpl(
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class Ansatte(
+        val ansatte: List<Ansatt>
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class Ansatt(
         val fnr: String,
         val orgnummer: String
     )
 
     override suspend fun hentAnsatte(token: String): List<NærmesteLederService.NærmesteLederFor> {
-        return httpClient.get<List<Ansatte>>(url) {
+        return httpClient.get<Ansatte>(url) {
             header(HttpHeaders.Authorization, "Bearer $token")
-        }.map {
+        }.ansatte.map {
             NærmesteLederService.NærmesteLederFor(
                 ansattFnr = it.fnr,
                 virksomhetsnummer = it.orgnummer, /* Team sykmelding har bekreftet at orgnummer alltid er til underenhet. */
