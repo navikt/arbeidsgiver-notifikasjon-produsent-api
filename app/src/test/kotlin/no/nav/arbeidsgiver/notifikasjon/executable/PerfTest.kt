@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.executable
 
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -15,8 +16,8 @@ import kotlin.system.measureTimeMillis
 
 fun main() = runBlocking {
     client.use {
-        //nyBeskjed(20_000, Api.PRODUSENT_GCP)
-        hentNotifikasjoner(5000, Api.BRUKER_GCP)
+        nyBeskjed(10, Api.PRODUSENT_GCP)
+        //hentNotifikasjoner(1, Api.BRUKER_GCP)
     }
 }
 val client = HttpClient(Apache) {
@@ -30,7 +31,7 @@ val client = HttpClient(Apache) {
     }
 }
 const val selvbetjeningToken =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MjAwNDUxMjcsIm5iZiI6MTYyMDA0MTUyNywidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoidXFLUU1FeDlDQmF5aDAyLVc5cFFOYzFDdnJmZmVBampsaHVuNkpMVTVLVSIsImlhdCI6MTYyMDA0MTUyNywiYXV0aF90aW1lIjoxNjIwMDQxNTI2LCJqdGkiOiJ0bkNna0VBZkZjb1N6VWxyTjlSNDBpbF9aTUdPX2VZdFh5djJscGthTlA4IiwiYXRfaGFzaCI6IjZZY3hNSzdBR2FUMVc5VlhXYnpNMEEifQ.YU37kso7tRCldQCpzlBOORkF5g6ioSFX_aYKWMQ1dQTm3KEoGsEMeugByDoUbg4PfDkukufNElxeLnlTBIDgqNT6zEfEmON9kROlLfLTKg2szj8dhiBNurJS5qCI3LGnGX3ckBFIib6SgvOqDGqTqrsgrhc9k0Pbomzle-RgWNJw_Ofl_cl8fIb3h8ccFbj-8MjiG19FOvhZM5pXRlQSsicOKUzHOlN6Qzj3CYY6WwqfuvNMpdJJ6jLgPPS5cmO_4-_h8303qVHXsXegUrKsFHd4HVdJi3HiwMhEhd6Sj2rKkzJGzke89e0jvHWbmLRIwcNFy75Rqg6bphQf_hbL2g"
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MjQ0NTIwMTgsIm5iZiI6MTYyNDQ0ODQxOCwidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoiTDlCaVlsMlNYVGVVNm1zckpuZUFwN05DUk9qcFZKQ09QRVNZWk9fQ2IwcyIsImlhdCI6MTYyNDQ0ODQxOCwiYXV0aF90aW1lIjoxNjI0NDQ4NDE3LCJqdGkiOiJSQ3praU1fQmhaajZtRVFvTWk1YjBMV1d6Z3hlSTFWVzkzRExaZGctOUpnIiwiYXRfaGFzaCI6IlRVN24xNnBVVElRR0ZVdUgzdUE5a1EifQ.cVxMow7vGKi_w4jsxtr3XVDfz9i1uQw7fH6KdRSU4R8ahtONaGiiBstXw6Ega1PLJ2NPN1bb5p2Bi9BsdTiXxbtjLIquS1pHC3UgQOeEBx3YOdgfjiPOXWjXYqGciIBWbzjjKRvGkYysICPudrL0YDVMmsPIY90-KclQRbaoSPMnRosmwoF_VEK5PJ8EWpePTzDMwD-W2oR2yQ-0SaX8d4K8Rqzwrz-1aKU4hPVgBYxd4eLapdDS39xEU-l1v3j8zCXp67Vvmq6XJdat6H9IJ9_Ok7fU9E62zjbHliMETe3If53aS8-YXJevI0S1qxH4wROJud0d1595U5yqDFEhjA"
 
 val tokenDingsToken : String = runBlocking {
     client.post<HttpResponse>("https://fakedings.dev-gcp.nais.io/fake/custom") {
@@ -90,7 +91,8 @@ suspend fun concurrentWithStats(
 }
 
 enum class Api(val url: String) {
-    LOCAL("http://localhost:8080/api/graphql"),
+    BRUKER_LOCAL("http://localhost:8082/api/graphql"),
+    PRODUSENT_LOCAL("http://localhost:8081/api/graphql"),
     BRUKER_GCP("https://ag-notifikasjon-bruker-api.dev.nav.no/api/graphql"),
     PRODUSENT_GCP("https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql"),
 }
@@ -102,23 +104,24 @@ suspend fun hentNotifikasjoner(count: Int, api: Api = Api.BRUKER_GCP) {
             headers {
                 append(HttpHeaders.ContentType, "application/json")
                 append(HttpHeaders.Authorization, "Bearer $selvbetjeningToken")
-                if (api == Api.LOCAL) {
-                    append(HttpHeaders.Host, "ag-notifikasjon-bruker-api.nav.no")
-                }
             }
 
+            //language=GraphQL
+            val query = """
+                    {
+                         notifikasjoner {
+                             ...on Beskjed {
+                                 lenke
+                                 tekst
+                                 merkelapp
+                                 opprettetTidspunkt
+                             }
+                         }
+                     }
+            """.trimIndent()
             body = """{
-                    | "query": "{
-                    |     notifikasjoner {
-                    |         ...on Beskjed {
-                    |             lenke
-                    |             tekst
-                    |             merkelapp
-                    |             opprettetTidspunkt
-                    |         }
-                    |     }
-                    | }"
-                    |}""".trimMarginAndNewline()
+                     "query": "$query"
+                    }""".trimMarginAndNewline()
         }
     }
 }
@@ -138,34 +141,37 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
             headers {
                 append(HttpHeaders.ContentType, "application/json")
                 append(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
-                if (api == Api.LOCAL) {
-                    append(HttpHeaders.Host, "ag-notifikasjon-produsent-api.nav.no")
-                }
             }
 
             body = """{
-                    | "query": "mutation {
-                    |      nyBeskjed(nyBeskjed: {
-                    |          lenke: \"https://min-side-arbeidsgiver.dev.nav.no/min-side-arbeidsgiver/?bedrift=$virksomhet\",
-                    |          tekst: \"Du kan nå søke om Lønnstilskudd. Følg lenken for å finne ut mer.\",
-                    |          merkelapp: \"tiltak\",
-                    |          mottaker: {
-                    |              altinn: {
-                    |                  altinntjenesteKode: \"$tjenesteKode\",
-                    |                  altinntjenesteVersjon: \"$tjenesteVersjon\",
-                    |                  virksomhetsnummer: \"$virksomhet\"
-                    |              }
-                    |          },
-                    |          eksternId: \"$run-${eksterIder.next()}\"
-                    |      }) {
-                    |          id
-                    |          errors {
-                    |              __typename
-                    |              feilmelding
-                    |          }
-                    |      }
-                    | }"
-                    |}""".trimMarginAndNewline()
+                     "query": "mutation {
+                          nyBeskjed(nyBeskjed: {
+                              notifikasjon: {
+                                lenke: \"https://min-side-arbeidsgiver.dev.nav.no/min-side-arbeidsgiver/?bedrift=$virksomhet\",
+                                tekst: \"Du kan nå søke om Lønnstilskudd. Følg lenken for å finne ut mer.\",
+                                merkelapp: \"tiltak\",
+                              }
+                              mottaker: {
+                                  altinn: {
+                                      serviceCode: \"$tjenesteKode\",
+                                      serviceEdition: \"$tjenesteVersjon\",
+                                      virksomhetsnummer: \"$virksomhet\"
+                                  }
+                              },
+                              metadata: {
+                                eksternId: \"$run-${eksterIder.next()}\"
+                              }
+                          }) {
+                              __typename
+                              ... on NyBeskjedVellykket {
+                                id
+                              }
+                              ... on Error {
+                                feilmelding
+                              }
+                          }
+                     }"
+                    }""".trimMarginAndNewline()
         }
     }
 }
