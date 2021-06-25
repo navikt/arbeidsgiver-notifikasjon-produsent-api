@@ -18,7 +18,7 @@ interface NærmesteLederService {
 
 class NærmesteLederServiceImpl(
     private val tokenExchangeClient: TokenExchangeClient = TokenExchangeClientImpl(),
-    baseUrl: String = "narmesteleder.teamsykmelding",
+    baseUrl: String = "https://narmesteleder.dev.nav.no",
 ) : NærmesteLederService {
     private val log = logger()
 
