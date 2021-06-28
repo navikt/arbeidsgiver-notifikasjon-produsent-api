@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import graphql.relay.*
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
@@ -17,12 +18,12 @@ object ProdusentAPI {
     data class Context(
         val produsentid: String,
         override val coroutineScope: CoroutineScope
-    ): WithCoroutineScope
+    ) : WithCoroutineScope
 
     data class NyBeskjedInput(
         val mottaker: MottakerInput,
-        val notifikasjon: Notifikasjon,
-        val metadata: Metadata,
+        val notifikasjon: NotifikasjonData,
+        val metadata: MetadataInput,
     ) {
         fun tilDomene(id: UUID): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
@@ -36,8 +37,8 @@ object ProdusentAPI {
                 mottaker = mottaker,
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = when (mottaker) {
-                    is NærmesteLederMottaker -> mottaker.virksomhetsnummer
-                    is AltinnMottaker -> mottaker.virksomhetsnummer
+                    is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> mottaker.virksomhetsnummer
+                    is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> mottaker.virksomhetsnummer
                 }
             )
         }
@@ -45,8 +46,8 @@ object ProdusentAPI {
 
     data class NyOppgaveInput(
         val mottaker: MottakerInput,
-        val notifikasjon: Notifikasjon,
-        val metadata: Metadata,
+        val notifikasjon: NotifikasjonData,
+        val metadata: MetadataInput,
     ) {
         fun tilDomene(id: UUID): Hendelse.OppgaveOpprettet {
             val mottaker = mottaker.tilDomene()
@@ -60,8 +61,8 @@ object ProdusentAPI {
                 mottaker = mottaker,
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = when (mottaker) {
-                    is NærmesteLederMottaker -> mottaker.virksomhetsnummer
-                    is AltinnMottaker -> mottaker.virksomhetsnummer
+                    is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> mottaker.virksomhetsnummer
+                    is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> mottaker.virksomhetsnummer
                 }
             )
         }
@@ -72,8 +73,8 @@ object ProdusentAPI {
         val ansattFnr: String,
         val virksomhetsnummer: String
     ) {
-        fun tilDomene(): Mottaker =
-            NærmesteLederMottaker(
+        fun tilDomene(): no.nav.arbeidsgiver.notifikasjon.Mottaker =
+            no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker(
                 naermesteLederFnr = naermesteLederFnr,
                 ansattFnr = ansattFnr,
                 virksomhetsnummer = virksomhetsnummer
@@ -85,8 +86,8 @@ object ProdusentAPI {
         val serviceEdition: String,
         val virksomhetsnummer: String,
     ) {
-        fun tilDomene(): Mottaker =
-            AltinnMottaker(
+        fun tilDomene(): no.nav.arbeidsgiver.notifikasjon.Mottaker =
+            no.nav.arbeidsgiver.notifikasjon.AltinnMottaker(
                 serviceCode = serviceCode,
                 serviceEdition = serviceEdition,
                 virksomhetsnummer = virksomhetsnummer
@@ -98,7 +99,7 @@ object ProdusentAPI {
         val naermesteLeder: NaermesteLederMottakerInput?
     ) {
 
-        fun tilDomene(): Mottaker {
+        fun tilDomene(): no.nav.arbeidsgiver.notifikasjon.Mottaker {
             return if (altinn != null && naermesteLeder == null) {
                 altinn.tilDomene()
             } else if (naermesteLeder != null && altinn == null) {
@@ -109,13 +110,13 @@ object ProdusentAPI {
         }
     }
 
-    data class Notifikasjon(
+    data class NotifikasjonData(
         val merkelapp: String,
         val tekst: String,
         val lenke: String,
     )
 
-    data class Metadata(
+    data class MetadataInput(
         val grupperingsid: String?,
         val eksternId: String,
         val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
@@ -129,6 +130,9 @@ object ProdusentAPI {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface OppgaveUtfoertResultat
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed interface MineNotifikasjonerResultat
 
     @JsonTypeName("OppgaveUtfoertVellykket")
     data class OppgaveUtfoertVellykket(
@@ -152,7 +156,7 @@ object ProdusentAPI {
         @JsonTypeName("UgyldigMerkelapp")
         data class UgyldigMerkelapp(
             override val feilmelding: String
-        ) : Error(), NyBeskjedResultat, NyOppgaveResultat, OppgaveUtfoertResultat
+        ) : Error(), NyBeskjedResultat, NyOppgaveResultat, OppgaveUtfoertResultat, MineNotifikasjonerResultat
 
         @JsonTypeName("UgyldigMottaker")
         data class UgyldigMottaker(
@@ -164,6 +168,113 @@ object ProdusentAPI {
             override val feilmelding: String
         ) : Error(), OppgaveUtfoertResultat
     }
+
+    @JsonTypeName("NotifikasjonConnection")
+    data class NotifikasjonConnection(
+        val edges: List<Edge<Notifikasjon>>,
+        val pageInfo: PageInfo
+    ) : MineNotifikasjonerResultat
+
+    data class PageInfo(
+        val endCursor: String,
+        val hasNextPage: Boolean
+    ) {
+        companion object {
+            fun from(relay: graphql.relay.PageInfo): PageInfo {
+                return PageInfo(relay.endCursor.value, relay.isHasNextPage)
+            }
+        }
+    }
+
+    data class Edge<T>(
+        val cursor: String,
+        val node: T
+    ) {
+        companion object {
+            fun <T> from(relay: graphql.relay.Edge<T>): Edge<T> {
+                return Edge(relay.cursor.value, relay.node)
+            }
+        }
+    }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed class Notifikasjon {
+        @JsonTypeName("Beskjed")
+        data class Beskjed(
+            val mottaker: Mottaker,
+            val metadata: Metadata,
+            val beskjed: BeskjedData,
+        ) : Notifikasjon()
+
+        @JsonTypeName("Oppgave")
+        data class Oppgave(
+            val mottaker: Mottaker,
+            val metadata: Metadata,
+            val oppgave: OppgaveData,
+        ) : Notifikasjon() {
+            enum class Tilstand {
+                NY,
+                UTFOERT;
+            }
+        }
+    }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed class Mottaker {
+        companion object {
+            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.Mottaker): Mottaker {
+                return when (domene) {
+                    is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> AltinnMottaker(
+                        serviceCode = domene.serviceCode,
+                        serviceEdition = domene.serviceEdition,
+                        virksomhetsnummer = domene.virksomhetsnummer
+                    )
+                    is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> NærmesteLederMottaker(
+                        naermesteLederFnr = domene.naermesteLederFnr,
+                        ansattFnr = domene.ansattFnr,
+                        virksomhetsnummer = domene.virksomhetsnummer,
+                    )
+                }
+            }
+        }
+    }
+
+    @JsonTypeName("NaermesteLederMottaker")
+    data class NærmesteLederMottaker(
+        val naermesteLederFnr: String,
+        val ansattFnr: String,
+        val virksomhetsnummer: String
+    ) : Mottaker()
+
+    @JsonTypeName("AltinnMottaker")
+    data class AltinnMottaker(
+        val serviceCode: String,
+        val serviceEdition: String,
+        val virksomhetsnummer: String,
+    ) : Mottaker()
+
+    @JsonTypeName("Metadata")
+    data class Metadata(
+        val id: UUID,
+        val grupperingsid: String?,
+        val eksternId: String,
+        val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
+    )
+
+    @JsonTypeName("OppgaveData")
+    data class OppgaveData(
+        val tilstand: Notifikasjon.Oppgave.Tilstand,
+        val merkelapp: String,
+        val tekst: String,
+        val lenke: String,
+    )
+
+    @JsonTypeName("BeskjedData")
+    data class BeskjedData(
+        val merkelapp: String,
+        val tekst: String,
+        val lenke: String,
+    )
 
     fun newGraphQL(
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer(),
@@ -179,10 +290,64 @@ object ProdusentAPI {
             resolveSubtypes<NyBeskjedResultat>()
             resolveSubtypes<NyOppgaveResultat>()
             resolveSubtypes<OppgaveUtfoertResultat>()
+            resolveSubtypes<MineNotifikasjonerResultat>()
+            resolveSubtypes<Notifikasjon>()
+            resolveSubtypes<Mottaker>()
 
             wire("Query") {
                 dataFetcher("whoami") {
                     it.getContext<Context>().produsentid
+                }
+
+                coDataFetcher("mineNotifikasjoner") { env ->
+                    val merkelapp = env.getArgument<String>("merkelapp")
+                    val produsent = env.hentProdusent(produsentRegister)
+
+                    tilgangsstyrMerkelapp(produsent, merkelapp)?.let { return@coDataFetcher it }
+
+                    return@coDataFetcher produsentModelFuture.await()
+                        .finnNotifikasjoner(merkelapp)
+                        .map { notifikasjon ->
+                            when (notifikasjon) {
+                                is ProdusentModel.Beskjed ->
+                                    Notifikasjon.Beskjed(
+                                        metadata = Metadata(
+                                            id = notifikasjon.id,
+                                            grupperingsid = notifikasjon.grupperingsid,
+                                            eksternId = notifikasjon.eksternId,
+                                            opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                        ),
+                                        mottaker = Mottaker.fraDomene(notifikasjon.mottaker),
+                                        beskjed = BeskjedData(
+                                            merkelapp = notifikasjon.merkelapp,
+                                            tekst = notifikasjon.tekst,
+                                            lenke = notifikasjon.lenke,
+                                        )
+                                    )
+                                is ProdusentModel.Oppgave ->
+                                    Notifikasjon.Oppgave(
+                                        metadata = Metadata(
+                                            id = notifikasjon.id,
+                                            grupperingsid = notifikasjon.grupperingsid,
+                                            eksternId = notifikasjon.eksternId,
+                                            opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                        ),
+                                        mottaker = Mottaker.fraDomene(notifikasjon.mottaker),
+                                        oppgave = OppgaveData(
+                                            tilstand = enumValueOf(notifikasjon.tilstand.name),
+                                            merkelapp = notifikasjon.merkelapp,
+                                            tekst = notifikasjon.tekst,
+                                            lenke = notifikasjon.lenke,
+                                        )
+                                    )
+                            }
+                        }.let { list ->
+                            val connection = SimpleListConnection(list).get(env)
+                            NotifikasjonConnection(
+                                connection.edges.map { Edge.from(it) },
+                                PageInfo.from(connection.pageInfo)
+                            )
+                        }
                 }
             }
 
@@ -229,8 +394,8 @@ object ProdusentAPI {
 
                     val produsent = env.hentProdusent(produsentRegister)
 
-                   tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
-                       ?.let { return@coDataFetcher it }
+                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
+                        ?.let { return@coDataFetcher it }
 
                     val utførtHendelse = Hendelse.OppgaveUtført(
                         id = id,
@@ -255,8 +420,8 @@ object ProdusentAPI {
 
                     val produsent = env.hentProdusent(produsentRegister)
 
-                   tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
-                       ?.let { return@coDataFetcher it }
+                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
+                        ?.let { return@coDataFetcher it }
 
                     val utførtHendelse = Hendelse.OppgaveUtført(
                         id = notifikasjon.id,
@@ -282,7 +447,7 @@ object ProdusentAPI {
                 """.trimMargin()
             )
 
-    private fun tilgangsstyrMottaker(produsent: Produsent, mottaker: Mottaker): Error.UgyldigMottaker? =
+    private fun tilgangsstyrMottaker(produsent: Produsent, mottaker: no.nav.arbeidsgiver.notifikasjon.Mottaker): Error.UgyldigMottaker? =
         if (produsent.kanSendeTil(mottaker))
             null
         else
