@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.annotation.JsonValue
 import graphql.relay.*
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
@@ -10,6 +11,8 @@ import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.*
+import java.util.Base64.getDecoder
+import java.util.Base64.getEncoder
 import java.util.concurrent.CompletableFuture
 
 object ProdusentAPI {
@@ -169,33 +172,85 @@ object ProdusentAPI {
         ) : Error(), OppgaveUtfoertResultat
     }
 
+    data class Cursor(
+        @get:JsonValue val value: String
+    ) {
+        operator fun compareTo(other: Cursor): Int = offset.compareTo(other.offset)
+        operator fun plus(increment: Int): Cursor = of(offset + increment)
+
+        val next: Cursor
+            get() = this + 1
+
+        private val offset: Int
+            get() = Integer.parseInt(
+                String(
+                    getDecoder().decode(value)
+                ).replace(PREFIX, "")
+            )
+
+        companion object {
+            const val PREFIX = "cur"
+
+            fun of(offset: Int) : Cursor {
+                return Cursor(
+                    getEncoder().encodeToString(
+                        "$PREFIX$offset".toByteArray()
+                    )
+                )
+            }
+
+            fun empty() : Cursor {
+                return of(0)
+            }
+        }
+    }
+
+    open class Connection<T>(
+        open val edges: List<Edge<T>>,
+        open val pageInfo: PageInfo
+    ) {
+        companion object {
+            private fun <T> empty() : Connection<T> {
+                return Connection(emptyList(), PageInfo(Cursor.empty(), false))
+            }
+            fun <T> create(data: List<T>, env: DataFetchingEnvironment) : Connection<T> {
+                if (data.isEmpty()) {
+                    return empty()
+                }
+
+                val first = env.getArgumentOrDefault("first", data.size)
+                val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
+                val cursorSeq = generateSequence(after) { after + 1 }.iterator()
+                val edges = data.map {
+                    Edge(cursorSeq.next(), it)
+                }.subList(0, first)
+                val pageInfo = PageInfo(
+                    edges.last().cursor,
+                    edges.last().cursor >= after.plus(first)
+                )
+
+                return Connection(edges, pageInfo)
+            }
+        }
+    }
+
     @JsonTypeName("NotifikasjonConnection")
     data class NotifikasjonConnection(
-        val edges: List<Edge<Notifikasjon>>,
-        val pageInfo: PageInfo
-    ) : MineNotifikasjonerResultat
+        override val edges: List<Edge<Notifikasjon>>,
+        override val pageInfo: PageInfo
+    ) : MineNotifikasjonerResultat, Connection<Notifikasjon>(edges, pageInfo)
 
+    @JsonTypeName("PageInfo")
     data class PageInfo(
-        val endCursor: String,
+        val endCursor: Cursor,
         val hasNextPage: Boolean
-    ) {
-        companion object {
-            fun from(relay: graphql.relay.PageInfo): PageInfo {
-                return PageInfo(relay.endCursor.value, relay.isHasNextPage)
-            }
-        }
-    }
+    )
 
+    @JsonTypeName("Edge")
     data class Edge<T>(
-        val cursor: String,
+        val cursor: Cursor,
         val node: T
-    ) {
-        companion object {
-            fun <T> from(relay: graphql.relay.Edge<T>): Edge<T> {
-                return Edge(relay.cursor.value, relay.node)
-            }
-        }
-    }
+    )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class Notifikasjon {
@@ -341,12 +396,9 @@ object ProdusentAPI {
                                         )
                                     )
                             }
-                        }.let { list ->
-                            val connection = SimpleListConnection(list).get(env)
-                            NotifikasjonConnection(
-                                connection.edges.map { Edge.from(it) },
-                                PageInfo.from(connection.pageInfo)
-                            )
+                        }.let {
+                            val connection = Connection.create(it, env)
+                            NotifikasjonConnection(connection.edges, connection.pageInfo)
                         }
                 }
             }
