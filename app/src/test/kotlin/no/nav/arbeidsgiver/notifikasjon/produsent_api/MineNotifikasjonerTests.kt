@@ -169,6 +169,93 @@ class MineNotifikasjonerTests : DescribeSpec({
                 response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
             }
         }
+        context("henter alle med angitt paginering") {
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
+                    query {
+                        mineNotifikasjoner(merkelapp: "tag", first: 1) {
+                            __typename
+                            ... on NotifikasjonConnection {
+                                __typename
+                                pageInfo {
+                                    hasNextPage
+                                    endCursor
+                                }
+                                edges {
+                                    cursor
+                                    node {
+                                      __typename
+                                      ... on Beskjed {
+                                        mottaker {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
+                                        metadata {
+                                            __typename
+                                            id
+                                            eksternId
+                                            grupperingsid
+                                        }
+                                        beskjed {
+                                            __typename
+                                            lenke
+                                            merkelapp
+                                            tekst
+                                        }
+                                      }
+                                      ... on Oppgave {
+                                      mottaker {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
+                                        metadata {
+                                            __typename
+                                            id
+                                            eksternId
+                                            grupperingsid
+                                        }
+                                        oppgave {
+                                            __typename
+                                            lenke
+                                            merkelapp
+                                            tekst
+                                            tilstand
+                                        }
+                                      }
+                                    }
+                                }
+                                
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                val connection = response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
+                connection.edges.size shouldBe 1
+                connection.pageInfo.hasNextPage shouldBe true
+            }
+        }
 
     }
 })

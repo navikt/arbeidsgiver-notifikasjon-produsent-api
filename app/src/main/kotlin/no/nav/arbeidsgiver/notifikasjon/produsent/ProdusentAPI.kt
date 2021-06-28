@@ -181,7 +181,7 @@ object ProdusentAPI {
         val next: Cursor
             get() = this + 1
 
-        private val offset: Int
+        val offset: Int
             get() = Integer.parseInt(
                 String(
                     getDecoder().decode(value)
@@ -220,9 +220,9 @@ object ProdusentAPI {
 
                 val first = env.getArgumentOrDefault("first", data.size)
                 val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
-                val cursorSeq = generateSequence(after) { after + 1 }.iterator()
+                val cursors = generateSequence(after.next) { it.next }.iterator()
                 val edges = data.map {
-                    Edge(cursorSeq.next(), it)
+                    Edge(cursors.next(), it)
                 }.subList(0, first)
                 val pageInfo = PageInfo(
                     edges.last().cursor,
@@ -356,12 +356,14 @@ object ProdusentAPI {
 
                 coDataFetcher("mineNotifikasjoner") { env ->
                     val merkelapp = env.getArgument<String>("merkelapp")
+                    val first = env.getArgumentOrDefault("first", 200)
+                    val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
                     val produsent = env.hentProdusent(produsentRegister)
 
                     tilgangsstyrMerkelapp(produsent, merkelapp)?.let { return@coDataFetcher it }
 
                     return@coDataFetcher produsentModelFuture.await()
-                        .finnNotifikasjoner(merkelapp)
+                        .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
                         .map { notifikasjon ->
                             when (notifikasjon) {
                                 is ProdusentModel.Beskjed ->

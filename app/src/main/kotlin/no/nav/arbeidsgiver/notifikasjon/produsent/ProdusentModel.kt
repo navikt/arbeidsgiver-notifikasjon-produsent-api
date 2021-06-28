@@ -50,7 +50,7 @@ interface ProdusentModel {
     suspend fun hentNotifikasjon(id: UUID): Notifikasjon?
     suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): Notifikasjon?
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
-    suspend fun finnNotifikasjoner(merkelapp: String): List<Notifikasjon>
+    suspend fun finnNotifikasjoner(merkelapp: String, antall: Int, offset: Int): List<Notifikasjon>
 }
 
 class ProdusentModelImpl(
@@ -142,10 +142,14 @@ class ProdusentModelImpl(
         }
     }
 
-    override suspend fun finnNotifikasjoner(merkelapp: String): List<ProdusentModel.Notifikasjon> {
+    override suspend fun finnNotifikasjoner(merkelapp: String, antall: Int, offset: Int): List<ProdusentModel.Notifikasjon> {
         return database.runNonTransactionalQuery(
             // language=PostgreSQL
-            """ select * from notifikasjon where merkelapp = ? """, {
+            """ select * from notifikasjon 
+                  where merkelapp = ? 
+                  limit $antall
+                  offset $offset
+            """.trimMargin(), {
                 string(merkelapp)
             },
             resultSetTilNotifikasjon
