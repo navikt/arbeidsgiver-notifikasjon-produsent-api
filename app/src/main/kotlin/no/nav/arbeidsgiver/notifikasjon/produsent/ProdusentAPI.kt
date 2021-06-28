@@ -176,6 +176,7 @@ object ProdusentAPI {
     ) {
         operator fun compareTo(other: Cursor): Int = offset.compareTo(other.offset)
         operator fun plus(increment: Int): Cursor = of(offset + increment)
+        override fun toString(): String = value
 
         val next: Cursor
             get() = this + 1
