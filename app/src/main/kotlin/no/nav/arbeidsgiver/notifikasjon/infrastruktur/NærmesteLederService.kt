@@ -13,7 +13,7 @@ interface NærmesteLederService {
         val virksomhetsnummer: String,
     )
 
-    suspend fun hentAnsatte(token: String): List<NærmesteLederFor>
+    suspend fun hentAnsatte(userToken: String): List<NærmesteLederFor>
 }
 
 class NærmesteLederServiceImpl(
@@ -44,21 +44,11 @@ class NærmesteLederServiceImpl(
         val orgnummer: String
     )
 
-    override suspend fun hentAnsatte(token: String): List<NærmesteLederService.NærmesteLederFor> {
-        /* TODO: Introduce temporary fall-back so dev is not broken if bugs. */
-        return try {
-            hentAnsatteImpl(
-                tokenExchangeClient.exchangeToken(token, "dev-gcp:teamsykmelding:narmesteleder")
-            )
-        } catch (e: Exception) {
-            log.error("henting (tokenx) av nærmeste leders ansatte feilet. Fallback til loginservice.", e)
-            hentAnsatteImpl(token)
-        }
-    }
+    override suspend fun hentAnsatte(userToken: String): List<NærmesteLederService.NærmesteLederFor> {
+        val onBehalfToken = tokenExchangeClient.exchangeToken(userToken, "dev-gcp:teamsykmelding:narmesteleder")
 
-    private suspend fun hentAnsatteImpl(token: String): List<NærmesteLederService.NærmesteLederFor> {
         return httpClient.get<Ansatte>(url) {
-            header(HttpHeaders.Authorization, "Bearer $token")
+            header(HttpHeaders.Authorization, "Bearer $onBehalfToken")
         }.ansatte.map {
             NærmesteLederService.NærmesteLederFor(
                 ansattFnr = it.fnr,
@@ -66,4 +56,5 @@ class NærmesteLederServiceImpl(
             )
         }
     }
+
 }

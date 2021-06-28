@@ -25,7 +25,7 @@ class NærmesteLederServiceStub(
             .toTypedArray()
     )
 
-    override suspend fun hentAnsatte(token: String): List<NærmesteLederFor> {
+    override suspend fun hentAnsatte(userToken: String): List<NærmesteLederFor> {
         return ansatte
     }
 }
