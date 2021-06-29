@@ -6,6 +6,7 @@ directive @Validate on ARGUMENT_DEFINITION
 directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION
 directive @NonIdentifying on INPUT_FIELD_DEFINITION
 directive @ExactlyOneFieldGiven on INPUT_OBJECT
+directive @MaxSize(max: Int) on ARGUMENT_DEFINITION
 
 """
 DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
@@ -39,7 +40,7 @@ type Query {
     Eller hvis filter på opprinnelig og cursor-kall er forskjellig.
     """
     mineNotifikasjoner(
-        first: Int
+        first: Int @Validate @MaxSize(max: 10000)
         after: String
         merkelapp: String
     ): MineNotifikasjonerResultat!

@@ -163,6 +163,28 @@ class InputValideringTests : DescribeSpec({
                 response.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tekst' kan ikke inneholde identifiserende data"
             }
         }
+
+        context("Query.mineNotifikasjoner når produsent ber om for mange merkelapper") {
+            val response = engine.produsentApi(
+                //language=GraphQL
+                """
+                    query {
+                        mineNotifikasjoner(merkelapp: "tag", first: 10001) {
+                            __typename
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("errors har forklarende feilmelding") {
+                val errors = response.getGraphqlErrors()
+                errors shouldHaveSize 1
+                errors.first().message shouldContain "verdi på felt 'first' overstiger max. verdi=10001, max=10000"
+            }
+        }
     }
 })
 

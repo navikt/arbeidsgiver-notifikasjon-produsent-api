@@ -13,7 +13,7 @@ object ValidateDirective : SchemaDirectiveWiring {
     /* Find all validation annotations for this argument. */
     override fun onArgument(environment: SchemaDirectiveWiringEnvironment<GraphQLArgument>): GraphQLArgument {
         val argument = environment.element
-        val validator = argument.type.createValidator()
+        val validator = argument.type.createValidator(argument.directives)
             ?: return argument
         val dataFetcher = environment.codeRegistry.getDataFetcher(
             environment.fieldsContainer,
@@ -29,11 +29,11 @@ object ValidateDirective : SchemaDirectiveWiring {
         return argument
     }
 
-    private fun GraphQLInputType.createValidator(): Validator? =
+    private fun GraphQLInputType.createValidator(directives: List<GraphQLDirective> = emptyList()): Validator? =
         when (this) {
             is GraphQLNonNull -> this.createValidator()
             is GraphQLInputObjectType -> this.createValidator()
-            is GraphQLScalarType -> null
+            is GraphQLScalarType -> this.createValidator(directives)
             else -> throw Error("Unexpected graphql type ${this.javaClass.canonicalName}")
         }
 
@@ -91,6 +91,24 @@ object ValidateDirective : SchemaDirectiveWiring {
             }
         }
     }
+
+    private fun GraphQLScalarType.createValidator(directives: List<GraphQLDirective>): Validator? {
+        val validators = directives.filterNot { it.name == "Validate" }.map { directive ->
+            SCALAR_VALIDATORS[directive.name]
+                ?.createValidator(directive, this)
+                ?: throw Error("Unknown directive '${directive.name}' to validate")
+        }
+
+        if (validators.isEmpty()) {
+            return null
+        } else {
+            return { value ->
+                for (validator in validators) {
+                    validator(value)
+                }
+            }
+        }
+    }
 }
 
 private typealias Validator = (Any?) -> Unit
@@ -100,7 +118,7 @@ interface ValidatorBuilder<T> {
     fun createValidator(directive: GraphQLDirective, obj: T): Validator
 }
 
-private val FIELD_VALIDATORS = listOf<ValidatorBuilder<GraphQLInputObjectField>>(
+private val FIELD_VALIDATORS = listOf(
     object : ValidatorBuilder<GraphQLInputObjectField> {
         override val name = "MaxLength"
 
@@ -135,7 +153,7 @@ private val OBJECT_VALIDATORS = listOf<ValidatorBuilder<GraphQLInputObjectType>>
         override fun createValidator(directive: GraphQLDirective, obj: GraphQLInputObjectType): Validator {
             val fieldNames = obj.fields.map { it.name }.toSet()
             return { value ->
-                value as Map<String, Any?>
+                value as Map<*, *>
                 val fieldsGiven = value.filter {
                     fieldNames.contains(it.key) && it.value != null
                 }
@@ -143,6 +161,21 @@ private val OBJECT_VALIDATORS = listOf<ValidatorBuilder<GraphQLInputObjectType>>
                     1 -> Unit
                     0 -> throw ValideringsFeil("Nøyaktig ett felt skal være satt. (Ingen felt er satt)")
                     else -> throw ValideringsFeil("Nøyaktig ett felt skal være satt. (${fieldsGiven.keys.joinToString(", ")} er gitt)")
+                }
+            }
+        }
+    }
+).associateBy { it.name }
+private val SCALAR_VALIDATORS = listOf<ValidatorBuilder<GraphQLScalarType>>(
+    object : ValidatorBuilder<GraphQLScalarType> {
+        override val name = "MaxSize"
+
+        override fun createValidator(directive: GraphQLDirective, obj: GraphQLScalarType): Validator {
+            val max = directive.getArgument("max").value as Int
+            return { value ->
+                val intValue = value as Int?
+                if (intValue != null && intValue > max) {
+                    throw ValideringsFeil("verdi på felt '${obj.name}' overstiger max. verdi=${intValue}, max=$max")
                 }
             }
         }
