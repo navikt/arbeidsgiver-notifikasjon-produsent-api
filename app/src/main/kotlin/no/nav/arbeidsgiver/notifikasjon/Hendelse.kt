@@ -41,6 +41,13 @@ sealed class Hendelse {
         val id: UUID,
     ): Hendelse()
 
+    @JsonTypeName("SoftDelete")
+    data class SoftDelete(
+        override val virksomhetsnummer: String,
+        val id: UUID,
+        val deletedAt: OffsetDateTime,
+    ): Hendelse()
+
 
     @JsonTypeName("BrukerKlikket")
     data class BrukerKlikket(

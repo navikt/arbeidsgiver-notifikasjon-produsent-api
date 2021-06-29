@@ -25,7 +25,6 @@ class InputValideringTests : DescribeSpec({
         context("når tekst er over 300 tegn") {
             val msg = "x".repeat(301)
             val response = engine.produsentApi(
-                //language=GraphQL
                 """
                         mutation {
                             nyBeskjed(nyBeskjed: {
@@ -60,7 +59,6 @@ class InputValideringTests : DescribeSpec({
 
         context("Mutation.nyBeskjed med ingen mottaker") {
             val response = engine.produsentApi(
-                //language=GraphQL
                 """
                     mutation {
                         nyBeskjed(nyBeskjed: {
@@ -89,7 +87,6 @@ class InputValideringTests : DescribeSpec({
 
         context("Mutation.nyBeskjed med to mottakere") {
             val response = engine.produsentApi(
-                //language=GraphQL
                 """
                     mutation {
                         nyBeskjed(nyBeskjed: {
@@ -132,7 +129,6 @@ class InputValideringTests : DescribeSpec({
         context("når tekst inneholder fødselsnummer") {
             val fnr = "1".repeat(11)
             val response = engine.produsentApi(
-                //language=GraphQL
                 """
                     mutation {
                         nyBeskjed(nyBeskjed: {

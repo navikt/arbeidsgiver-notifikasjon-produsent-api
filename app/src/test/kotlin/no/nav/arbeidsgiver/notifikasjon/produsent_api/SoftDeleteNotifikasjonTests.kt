@@ -2,17 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.CoroutineProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.oppgaveUtført
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.*
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -21,13 +17,13 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 
-class OppgaveUtførtTests : DescribeSpec({
+class SoftDeleteNotifikasjonTests : DescribeSpec({
     val database = testDatabase(ProdusentMain.databaseConfig)
     val produsentModel = ProdusentModelImpl(database)
     val kafkaProducer = mockk<CoroutineProducer<KafkaKey, Hendelse>>()
 
-    mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::oppgaveUtført)
-    coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any()) } returns Unit
+    mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::softDelete)
+    coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().softDelete(any()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -42,7 +38,7 @@ class OppgaveUtførtTests : DescribeSpec({
     )
 
 
-    describe("OppgaveUtført-oppførsel") {
+    describe("SoftDelete-oppførsel") {
         val virksomhetsnummer = "123"
         val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
         val merkelapp = "tag"
@@ -71,9 +67,9 @@ class OppgaveUtførtTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    oppgaveUtfoert(id: "$uuid") {
+                    softDeleteNotifikasjon(id: "$uuid") {
                         __typename
-                        ... on OppgaveUtfoertVellykket {
+                        ... on SoftDeleteNotifikasjonVellykket {
                             id
                         }
                         ... on Error {
@@ -85,19 +81,111 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer tilbake id-en") {
-                val vellykket = response.getTypedContent<ProdusentAPI.OppgaveUtfoertVellykket>("oppgaveUtfoert")
+                val vellykket =
+                    response.getTypedContent<ProdusentAPI.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjon")
                 vellykket.id shouldBe uuid
             }
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any())
+                    any<CoroutineProducer<KafkaKey, Hendelse>>().softDelete(any())
                 }
             }
 
-            it("har utført-status i modellen") {
-                val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
-                oppgave.tilstand shouldBe ProdusentModel.Oppgave.Tilstand.UTFOERT
+            it("har slettet-status i modellen") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid)!!
+                notifikasjon.deletedAt shouldNotBe null
+            }
+
+
+            it("mineNotifikasjoner rapporterer som softDeleted") {
+                val response = engine.produsentApi("""
+                        query {
+                            mineNotifikasjoner(merkelapp: "$merkelapp") {
+                            __typename
+                            ... on NotifikasjonConnection {
+                                __typename
+                                pageInfo {
+                                    hasNextPage
+                                    endCursor
+                                }
+                                edges {
+                                    cursor
+                                    node {
+                                      __typename
+                                      ... on Beskjed {
+                                        mottaker {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
+                                        metadata {
+                                            __typename
+                                            id
+                                            eksternId
+                                            grupperingsid
+                                            softDeleted
+                                            softDeletedAt
+                                        }
+                                        beskjed {
+                                            __typename
+                                            lenke
+                                            merkelapp
+                                            tekst
+                                        }
+                                      }
+                                      ... on Oppgave {
+                                      mottaker {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
+                                        metadata {
+                                            __typename
+                                            id
+                                            eksternId
+                                            grupperingsid
+                                            softDeleted
+                                            softDeletedAt
+                                        }
+                                        oppgave {
+                                            __typename
+                                            lenke
+                                            merkelapp
+                                            tekst
+                                            tilstand
+                                        }
+                                      }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    """
+                )
+               val slettetNotifikasjon = response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
+                    .edges
+                    .map { it.node }
+                    .find { it.id == uuid } !!
+
+                slettetNotifikasjon.metadata.softDeleted shouldBe true
+                slettetNotifikasjon.metadata.softDeletedAt shouldNotBe null
             }
         }
 
@@ -105,7 +193,7 @@ class OppgaveUtførtTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    oppgaveUtfoert(id: "$uuid") {
+                    softDeleteNotifikasjon(id: "$uuid") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -116,7 +204,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
+                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("softDeleteNotifikasjon")
             }
         }
 
@@ -137,7 +225,7 @@ class OppgaveUtførtTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    oppgaveUtfoert(id: "$uuid") {
+                    softDeleteNotifikasjon(id: "$uuid") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -148,44 +236,12 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.UgyldigMerkelapp>("oppgaveUtfoert")
-            }
-        }
-
-        context("Er ikke oppgave, men beskjed") {
-            val beskjedOpprettet = Hendelse.BeskjedOpprettet(
-                virksomhetsnummer = "1",
-                merkelapp = merkelapp,
-                eksternId = eksternId,
-                mottaker = mottaker,
-                id = uuid,
-                tekst = "test",
-                lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
-            )
-
-            produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
-
-            val response = engine.produsentApi(
-                """
-                mutation {
-                    oppgaveUtfoert(id: "$uuid") {
-                        __typename
-                        ... on Error {
-                            feilmelding
-                        }
-                    }
-                }
-                """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
+                response.getTypedContent<ProdusentAPI.Error.UgyldigMerkelapp>("softDeleteNotifikasjon")
             }
         }
     }
 
-    describe("oppgaveUtfoertByEksternId-oppførsel") {
+    describe("softDeleteNotifikasjonByEksternId-oppførsel") {
         val virksomhetsnummer = "123"
         val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
         val merkelapp = "tag"
@@ -214,9 +270,9 @@ class OppgaveUtførtTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
+                    softDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
                         __typename
-                        ... on OppgaveUtfoertVellykket {
+                        ... on SoftDeleteNotifikasjonVellykket {
                             id
                         }
                         ... on Error {
@@ -228,19 +284,19 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer tilbake id-en") {
-                val vellykket = response.getTypedContent<ProdusentAPI.OppgaveUtfoertVellykket>("oppgaveUtfoertByEksternId")
+                val vellykket = response.getTypedContent<ProdusentAPI.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjonByEksternId")
                 vellykket.id shouldBe uuid
             }
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any())
+                    any<CoroutineProducer<KafkaKey, Hendelse>>().softDelete(any())
                 }
             }
 
             it("har utført-status i modellen") {
-                val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
-                oppgave.tilstand shouldBe ProdusentModel.Oppgave.Tilstand.UTFOERT
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid)!!
+                notifikasjon.deletedAt shouldNotBe null
             }
         }
 
@@ -248,7 +304,7 @@ class OppgaveUtførtTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
+                    softDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -259,7 +315,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("softDeleteNotifikasjonByEksternId")
             }
         }
 
@@ -280,7 +336,7 @@ class OppgaveUtførtTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "nope$merkelapp") {
+                    softDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "nope$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -291,7 +347,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("softDeleteNotifikasjonByEksternId")
             }
         }
 
@@ -312,7 +368,7 @@ class OppgaveUtførtTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    oppgaveUtfoertByEksternId(eksternId: "nope$eksternId", merkelapp: "$merkelapp") {
+                    softDeleteNotifikasjonByEksternId(eksternId: "nope$eksternId", merkelapp: "$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -323,39 +379,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
-            }
-        }
-
-        context("Er ikke oppgave, men beskjed") {
-            val beskjedOpprettet = Hendelse.BeskjedOpprettet(
-                virksomhetsnummer = "1",
-                merkelapp = merkelapp,
-                eksternId = eksternId,
-                mottaker = mottaker,
-                id = uuid,
-                tekst = "test",
-                lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
-            )
-
-            produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
-
-            val response = engine.produsentApi(
-                """
-                mutation {
-                    oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
-                        __typename
-                        ... on Error {
-                            feilmelding
-                        }
-                    }
-                }
-                """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("softDeleteNotifikasjonByEksternId")
             }
         }
     }

@@ -66,7 +66,6 @@ class MineNotifikasjonerTests : DescribeSpec({
     describe("mineNotifikasjoner") {
         context("produsent mangler tilgang til merkelapp") {
             val response = engine.produsentApi(
-                //language=GraphQL
                 """
                     query {
                         mineNotifikasjoner(merkelapp: "foo") {
@@ -86,7 +85,6 @@ class MineNotifikasjonerTests : DescribeSpec({
 
         context("henter alle med default paginering") {
             val response = engine.produsentApi(
-                //language=GraphQL
                 """
                     query {
                         mineNotifikasjoner(merkelapp: "tag") {
@@ -171,7 +169,6 @@ class MineNotifikasjonerTests : DescribeSpec({
         }
         context("henter alle med angitt paginering") {
             val response = engine.produsentApi(
-                //language=GraphQL
                 """
                     query {
                         mineNotifikasjoner(merkelapp: "tag", first: 1) {
@@ -232,6 +229,8 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             id
                                             eksternId
                                             grupperingsid
+                                            softDeleted
+                                            softDeletedAt
                                         }
                                         oppgave {
                                             __typename
@@ -256,7 +255,6 @@ class MineNotifikasjonerTests : DescribeSpec({
                 connection.pageInfo.hasNextPage shouldBe true
             }
         }
-
     }
 })
 

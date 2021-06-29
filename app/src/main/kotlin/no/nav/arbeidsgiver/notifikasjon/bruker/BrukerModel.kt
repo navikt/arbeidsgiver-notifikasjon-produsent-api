@@ -19,7 +19,9 @@ interface BrukerModel {
         val serviceedition: String,
     )
 
-    sealed class Notifikasjon
+    sealed interface Notifikasjon {
+        val id: UUID
+    }
 
     data class Beskjed(
         val merkelapp: String,
@@ -29,9 +31,9 @@ interface BrukerModel {
         val eksternId: String,
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
-        val id: UUID,
+        override val id: UUID,
         val klikketPaa: Boolean
-    ) : Notifikasjon()
+    ) : Notifikasjon
 
     data class Oppgave(
         val merkelapp: String,
@@ -41,10 +43,10 @@ interface BrukerModel {
         val eksternId: String,
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
-        val id: UUID,
+        override val id: UUID,
         val klikketPaa: Boolean,
         val tilstand: Tilstand,
-    ) : Notifikasjon() {
+    ) : Notifikasjon {
         @Suppress("unused") /* leses fra database */
         enum class Tilstand {
             NY,
@@ -117,7 +119,8 @@ class BrukerModelImpl(
 
         val ansatteLookupTable = ansatte.toSet()
 
-        val notifikasjoner = database.runNonTransactionalQuery("""
+        val notifikasjoner = database.runNonTransactionalQuery(
+            """
             select 
                 n.*, 
                 klikk.notifikasjonsid is not null as klikketPaa
@@ -182,7 +185,8 @@ class BrukerModelImpl(
     }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
-            database.runNonTransactionalQuery("""
+            database.runNonTransactionalQuery(
+                """
                 SELECT virksomhetsnummer FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ? LIMIT 1
             """, {
                 uuid(notifikasjonsid)
@@ -197,14 +201,34 @@ class BrukerModelImpl(
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is Hendelse.OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
+            is Hendelse.SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
             is Hendelse.SlettHendelse -> {
                 /* TODO: oppdatere modell? Kaskade-sletting? */
             }
         }
     }
 
+    private suspend fun oppdaterModellEtterSoftDelete(softDelete: Hendelse.SoftDelete) {
+        database.transaction({
+            throw Error("SoftDelete", it)
+        }) {
+            executeCommand(""" DELETE FROM notifikasjon WHERE id = ?;""") {
+                uuid(softDelete.id)
+            }
+
+            executeCommand("""DELETE FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ?;""") {
+                uuid(softDelete.id)
+            }
+
+            executeCommand("""DELETE FROM brukerklikk WHERE notifikasjonsid = ?;""") {
+                uuid(softDelete.id)
+            }
+        }
+    }
+
     private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
-        database.nonTransactionalCommand("""
+        database.nonTransactionalCommand(
+            """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
             WHERE id = ?
@@ -214,7 +238,8 @@ class BrukerModelImpl(
     }
 
     private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
-        database.nonTransactionalCommand("""
+        database.nonTransactionalCommand(
+            """
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
             ON CONFLICT ON CONSTRAINT brukerklikk_pkey
             DO NOTHING
@@ -236,7 +261,8 @@ class BrukerModelImpl(
         val nyBeskjed = beskjedOpprettet.tilQueryDomene()
 
         database.transaction(rollbackHandler) {
-            executeCommand("""
+            executeCommand(
+                """
                 insert into notifikasjon(
                     type,
                     tilstand,
@@ -261,7 +287,8 @@ class BrukerModelImpl(
                 string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
             }
 
-            executeCommand("""
+            executeCommand(
+                """
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
             """) {
                 uuid(beskjedOpprettet.id)
@@ -282,7 +309,8 @@ class BrukerModelImpl(
         val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
 
         database.transaction(rollbackHandler) {
-            executeCommand("""
+            executeCommand(
+                """
                 insert into notifikasjon(
                     type,
                     tilstand,
@@ -307,7 +335,8 @@ class BrukerModelImpl(
                 string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
             }
 
-            executeCommand("""
+            executeCommand(
+                """
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
             """) {
                 uuid(oppgaveOpprettet.id)

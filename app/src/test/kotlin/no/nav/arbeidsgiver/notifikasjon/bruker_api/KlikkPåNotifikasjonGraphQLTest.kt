@@ -48,7 +48,6 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
                 "/api/graphql",
                 host = BRUKER_HOST,
                 jsonBody = GraphQLRequest(
-                    //language=GraphQL
                     """
                         mutation {
                             notifikasjonKlikketPaa(id: "$id") {

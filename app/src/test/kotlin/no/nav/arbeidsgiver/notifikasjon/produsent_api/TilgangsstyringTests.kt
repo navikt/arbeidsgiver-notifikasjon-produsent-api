@@ -27,7 +27,6 @@ class TilgangsstyringTests : DescribeSpec({
         context("når produsent mangler tilgang til merkelapp") {
             val merkelapp = "foo-bar"
             val resultat = engine.produsentApi(
-                //language=GraphQL
                 """
                         mutation {
                             nyBeskjed(nyBeskjed: {
@@ -72,7 +71,6 @@ class TilgangsstyringTests : DescribeSpec({
             )
 
             val resultat = engine.produsentApi(
-                //language=GraphQL
                 """
                         mutation {
                             nyBeskjed(nyBeskjed: {

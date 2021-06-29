@@ -15,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import org.intellij.lang.annotations.Language
 
 fun Spec.ktorBrukerTestServer(
     brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
@@ -211,6 +212,8 @@ fun TestApplicationEngine.brukerApi(req: GraphQLRequest): TestApplicationRespons
     )
 }
 
-fun TestApplicationEngine.brukerApi(req: String): TestApplicationResponse {
+fun TestApplicationEngine.brukerApi(
+    @Language("GraphQL") req: String
+): TestApplicationResponse {
     return brukerApi(GraphQLRequest(req))
 }

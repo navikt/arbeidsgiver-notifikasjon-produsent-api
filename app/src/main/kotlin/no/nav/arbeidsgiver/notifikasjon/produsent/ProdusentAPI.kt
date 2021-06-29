@@ -134,10 +134,18 @@ object ProdusentAPI {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface MineNotifikasjonerResultat
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed interface SoftDeleteNotifikasjonResultat
+
     @JsonTypeName("OppgaveUtfoertVellykket")
     data class OppgaveUtfoertVellykket(
         val id: UUID
     ) : OppgaveUtfoertResultat
+
+    @JsonTypeName("SoftDeleteNotifikasjonVellykket")
+    data class SoftDeleteNotifikasjonVellykket(
+        val id: UUID
+    ) : SoftDeleteNotifikasjonResultat
 
     @JsonTypeName("NyBeskjedVellykket")
     data class NyBeskjedVellykket(
@@ -156,7 +164,13 @@ object ProdusentAPI {
         @JsonTypeName("UgyldigMerkelapp")
         data class UgyldigMerkelapp(
             override val feilmelding: String
-        ) : Error(), NyBeskjedResultat, NyOppgaveResultat, OppgaveUtfoertResultat, MineNotifikasjonerResultat
+        ) :
+            Error(),
+            NyBeskjedResultat,
+            NyOppgaveResultat,
+            OppgaveUtfoertResultat,
+            MineNotifikasjonerResultat,
+            SoftDeleteNotifikasjonResultat
 
         @JsonTypeName("UgyldigMottaker")
         data class UgyldigMottaker(
@@ -166,7 +180,10 @@ object ProdusentAPI {
         @JsonTypeName("NotifikasjonFinnesIkke")
         data class NotifikasjonFinnesIkke(
             override val feilmelding: String
-        ) : Error(), OppgaveUtfoertResultat
+        ) :
+            Error(),
+            OppgaveUtfoertResultat,
+            SoftDeleteNotifikasjonResultat
     }
 
 
@@ -192,6 +209,7 @@ object ProdusentAPI {
                             grupperingsid = beskjed.grupperingsid,
                             eksternId = beskjed.eksternId,
                             opprettetTidspunkt = beskjed.opprettetTidspunkt,
+                            softDeletedAt = beskjed.deletedAt,
                         ),
                         mottaker = Mottaker.fraDomene(beskjed.mottaker),
                         beskjed = BeskjedData(
@@ -224,6 +242,7 @@ object ProdusentAPI {
                             grupperingsid = oppgave.grupperingsid,
                             eksternId = oppgave.eksternId,
                             opprettetTidspunkt = oppgave.opprettetTidspunkt,
+                            softDeletedAt = oppgave.deletedAt
                         ),
                         mottaker = Mottaker.fraDomene(oppgave.mottaker),
                         oppgave = OppgaveData(
@@ -299,7 +318,11 @@ object ProdusentAPI {
         val grupperingsid: String?,
         val eksternId: String,
         val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
-    )
+        val softDeletedAt: OffsetDateTime?,
+    ) {
+        val softDeleted: Boolean
+            get() = softDeletedAt != null
+    }
 
     @JsonTypeName("OppgaveData")
     data class OppgaveData(
@@ -331,6 +354,7 @@ object ProdusentAPI {
             resolveSubtypes<NyOppgaveResultat>()
             resolveSubtypes<OppgaveUtfoertResultat>()
             resolveSubtypes<MineNotifikasjonerResultat>()
+            resolveSubtypes<SoftDeleteNotifikasjonResultat>()
             resolveSubtypes<Notifikasjon>()
             resolveSubtypes<Mottaker>()
 
@@ -435,6 +459,51 @@ object ProdusentAPI {
                     produsentModel.oppdaterModellEtterHendelse(utførtHendelse)
                     return@coDataFetcher OppgaveUtfoertVellykket(notifikasjon.id)
                 }
+
+                coDataFetcher("softDeleteNotifikasjon") { env ->
+                    val produsentModel = produsentModelFuture.await()
+                    val id = env.getTypedArgument<UUID>("id")
+                    val notifikasjon = produsentModel.hentNotifikasjon(id)
+                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
+
+                    val produsent = env.hentProdusent(produsentRegister)
+
+                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
+                        ?.let { return@coDataFetcher it }
+
+                    val softDelete = Hendelse.SoftDelete(
+                        id = id,
+                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                        deletedAt = OffsetDateTime.now()
+                    )
+
+                    kafkaProducer.softDelete(softDelete)
+                    produsentModel.oppdaterModellEtterHendelse(softDelete)
+                    return@coDataFetcher SoftDeleteNotifikasjonVellykket(id)
+                }
+
+                coDataFetcher("softDeleteNotifikasjonByEksternId") { env ->
+                    val produsentModel = produsentModelFuture.await()
+                    val eksternId = env.getTypedArgument<String>("eksternId")
+                    val merkelapp = env.getTypedArgument<String>("merkelapp")
+                    val notifikasjon = produsentModel.hentNotifikasjon(eksternId, merkelapp)
+                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
+
+                    val produsent = env.hentProdusent(produsentRegister)
+
+                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
+                        ?.let { return@coDataFetcher it }
+
+                    val softDelete = Hendelse.SoftDelete(
+                        id = notifikasjon.id,
+                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                        deletedAt = OffsetDateTime.now()
+                    )
+
+                    kafkaProducer.softDelete(softDelete)
+                    produsentModel.oppdaterModellEtterHendelse(softDelete)
+                    return@coDataFetcher SoftDeleteNotifikasjonVellykket(notifikasjon.id)
+                }
             }
         }
     )
@@ -469,3 +538,18 @@ fun DataFetchingEnvironment.hentProdusent(produsentRegister: ProdusentRegister):
     val context = this.getContext<ProdusentAPI.Context>()
     return produsentRegister.finn(context.produsentid)
 }
+
+val ProdusentModel.Notifikasjon.virksomhetsnummer: String
+    get() = when (this) {
+        is ProdusentModel.Oppgave -> this.mottaker.virksomhetsnummer
+        is ProdusentModel.Beskjed -> this.mottaker.virksomhetsnummer
+    }
+
+val ProdusentAPI.Notifikasjon.metadata: ProdusentAPI.Metadata
+    get() = when (this) {
+        is ProdusentAPI.Notifikasjon.Beskjed -> this.metadata
+        is ProdusentAPI.Notifikasjon.Oppgave -> this.metadata
+    }
+
+val ProdusentAPI.Notifikasjon.id: UUID
+    get() = this.metadata.id

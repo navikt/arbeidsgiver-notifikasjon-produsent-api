@@ -190,6 +190,10 @@ suspend fun CoroutineProducer<KafkaKey, Hendelse>.oppgaveUtført(oppgaveUtført:
     sendHendelse(UUID.randomUUID().toString(), oppgaveUtført)
 }
 
+suspend fun CoroutineProducer<KafkaKey, Hendelse>.softDelete(softDelete: Hendelse.SoftDelete) {
+    sendHendelse(UUID.randomUUID().toString(), softDelete)
+}
+
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.brukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
     sendHendelse(UUID.randomUUID().toString(), brukerKlikket)
 }

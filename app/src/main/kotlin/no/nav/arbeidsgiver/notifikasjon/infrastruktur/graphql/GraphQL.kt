@@ -12,6 +12,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import org.intellij.lang.annotations.Language
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
     objectMapper.convertValue(this.getArgument(name))
@@ -68,7 +69,7 @@ fun createGraphQL(
 }
 
 data class GraphQLRequest(
-    val query: String,
+    @Language("GraphQL") val query: String,
     val operationName: String? = null,
     val variables: Map<String, String>? = null,
 )

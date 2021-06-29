@@ -8,6 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
 import org.flywaydb.core.Flyway
+import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -93,7 +94,7 @@ class Database private constructor(
     }
 
     suspend fun <T> runNonTransactionalQuery(
-        sql: String,
+        @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> =
@@ -102,7 +103,7 @@ class Database private constructor(
         }
 
     suspend fun nonTransactionalCommand(
-        sql: String,
+        @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int = dataSource.withConnection {
         Transaction(this).executeCommand(sql, setup)
@@ -140,7 +141,7 @@ value class Transaction(
     private val connection: Connection
 ) {
     fun <T> runQuery(
-        sql: String,
+        @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> {
@@ -159,7 +160,7 @@ value class Transaction(
     }
 
     fun executeCommand(
-        sql: String,
+        @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int {
         return connection

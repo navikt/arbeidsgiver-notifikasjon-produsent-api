@@ -63,7 +63,6 @@ class BrukerApiTests : DescribeSpec({
             } returns listOf(beskjed, oppgave)
 
             val response = engine.brukerApi(
-                //language=GraphQL
                 """
                     {
                         notifikasjoner {

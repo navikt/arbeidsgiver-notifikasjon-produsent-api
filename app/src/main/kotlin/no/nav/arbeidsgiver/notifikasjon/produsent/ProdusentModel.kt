@@ -14,30 +14,36 @@ import java.util.*
 
 interface ProdusentModel {
 
-    sealed class Notifikasjon
+    sealed interface Notifikasjon {
+        val id: UUID
+        val merkelapp: String
+        val deletedAt: OffsetDateTime?
+    }
 
     data class Beskjed(
-        val merkelapp: String,
+        override val id: UUID,
+        override val merkelapp: String,
+        override val deletedAt: OffsetDateTime?,
         val tekst: String,
         val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
-        val id: UUID,
-    ) : Notifikasjon()
+    ) : Notifikasjon
 
     data class Oppgave(
-        val merkelapp: String,
+        override val id: UUID,
+        override val merkelapp: String,
+        override val deletedAt: OffsetDateTime?,
         val tekst: String,
         val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
-        val id: UUID,
         val tilstand: Tilstand,
-    ) : Notifikasjon() {
+    ) : Notifikasjon {
 
         @Suppress("unused")
         /* leses fra database */
@@ -68,6 +74,7 @@ class ProdusentModelImpl(
             eksternId = this.eksternId,
             mottaker = this.mottaker,
             opprettetTidspunkt = this.opprettetTidspunkt,
+            deletedAt = null,
         )
 
     private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): ProdusentModel.Oppgave =
@@ -81,6 +88,7 @@ class ProdusentModelImpl(
             mottaker = this.mottaker,
             opprettetTidspunkt = this.opprettetTidspunkt,
             tilstand = ProdusentModel.Oppgave.Tilstand.NY,
+            deletedAt = null,
         )
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? {
@@ -113,6 +121,7 @@ class ProdusentModelImpl(
                     mottaker = objectMapper.readValue(getString("mottaker")),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getObject("id", UUID::class.java),
+                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                 )
                 "OPPGAVE" -> ProdusentModel.Oppgave(
                     merkelapp = getString("merkelapp"),
@@ -124,6 +133,7 @@ class ProdusentModelImpl(
                     mottaker = objectMapper.readValue(getString("mottaker")),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getObject("id", UUID::class.java),
+                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                 )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
@@ -136,15 +146,28 @@ class ProdusentModelImpl(
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is Hendelse.OppgaveUtført -> oppdatertModellEtterOppgaveUtført(hendelse)
             is Hendelse.BrukerKlikket -> /* Ignorer */ Unit
+            is Hendelse.SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
             is Hendelse.SlettHendelse -> {
                 /* TODO: oppdatere modell? Kaskade-sletting? */
             }
         }
     }
 
+    private suspend fun oppdaterModellEtterSoftDelete(softDelete: Hendelse.SoftDelete) {
+        database.nonTransactionalCommand(
+        """
+            UPDATE notifikasjon
+            SET deleted_at = ? 
+            WHERE id = ?
+            """
+        ) {
+            timestamptz(softDelete.deletedAt)
+            uuid(softDelete.id)
+        }
+    }
+
     override suspend fun finnNotifikasjoner(merkelapp: String, antall: Int, offset: Int): List<ProdusentModel.Notifikasjon> {
         return database.runNonTransactionalQuery(
-            // language=PostgreSQL
             """ select * from notifikasjon 
                   where merkelapp = ? 
                   limit $antall

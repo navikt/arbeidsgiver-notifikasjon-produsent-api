@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.TOKENDINGS_TOKEN
 import no.nav.arbeidsgiver.notifikasjon.util.post
+import org.intellij.lang.annotations.Language
 
 fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResponse {
     return post(
@@ -19,7 +20,9 @@ fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResp
     )
 }
 
-fun TestApplicationEngine.produsentApi(req: String): TestApplicationResponse {
+fun TestApplicationEngine.produsentApi(
+    @Language("GraphQL") req: String
+): TestApplicationResponse {
     return produsentApi(GraphQLRequest(req))
 }
 

@@ -49,7 +49,6 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
 
         /* sjekk at beskjed ikke er klikket på */
         val response = engine.brukerApi(
-            //language=GraphQL
             """
             {
                 notifikasjoner {
@@ -80,7 +79,6 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
 
         /* sjekk at beskjed ikke er klikket på */
         val responseEtterKlikk = engine.brukerApi(
-            //language=GraphQL
             """
             {
                 notifikasjoner {

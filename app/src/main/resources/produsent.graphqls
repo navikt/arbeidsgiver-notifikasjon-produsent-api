@@ -144,6 +144,10 @@ type Metadata {
     """
     """
     grupperingsid: String
+
+    softDeleted: Boolean!
+
+    softDeletedAt: ISO8601DateTime
 }
 
 """
@@ -185,6 +189,35 @@ type Mutation {
         """
         eksternId: ID!
     ): OppgaveUtfoertResultat!
+
+
+    """
+    Skriv noe veldig bra.
+    """
+    softDeleteNotifikasjon(id: ID!): SoftDeleteNotifikasjonResultat!
+    softDeleteNotifikasjonByEksternId(
+        """
+        Merkelapp som oppgaven er registrert med.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+        """
+        eksternId: ID!
+    ): SoftDeleteNotifikasjonResultat!
+}
+
+union SoftDeleteNotifikasjonResultat =
+    | SoftDeleteNotifikasjonVellykket
+    | UgyldigMerkelapp
+    | NotifikasjonFinnesIkke
+
+type SoftDeleteNotifikasjonVellykket {
+    """
+    ID-en til oppgaven du "soft-delete"-et.
+    """
+    id: ID!
 }
 
 union OppgaveUtfoertResultat =

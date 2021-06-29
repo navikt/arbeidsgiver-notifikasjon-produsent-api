@@ -31,7 +31,6 @@ class NyBeskjedTests : DescribeSpec({
 
     describe("produsent-api happy path") {
         val response = engine.produsentApi(
-            //language=GraphQL
             """
                     mutation {
                         nyBeskjed(nyBeskjed: {
