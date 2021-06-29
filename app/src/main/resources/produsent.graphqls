@@ -192,17 +192,28 @@ type Mutation {
 
 
     """
-    Skriv noe veldig bra.
+    Markerer en notifikasjon som slettet (soft delete).
+
+    Notifikasjonen vil forsvinne helt for mottakeren: de vil ikke kunne se den på
+    noen som helst måte — som om notifikasjonen aldri eksisterte.
+
+    For dere (produsenter), så kan dere fortsatt se notifikasjonen i listen over deres notifikasjoner.
+
+    Advarsel: det er ikke mulig å angre på denne operasjonen.
     """
     softDeleteNotifikasjon(id: ID!): SoftDeleteNotifikasjonResultat!
+
+    """
+    Se dokumentasjon for `softDeleteNotifikasjon(id)`.
+    """
     softDeleteNotifikasjonByEksternId(
         """
-        Merkelapp som oppgaven er registrert med.
+        Merkelappen som dere ga oss da dere opprettet notifikasjonen.
         """
         merkelapp: String!,
 
         """
-        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+        ID-en som dere ga oss da dere opprettet notifikasjonen.
         """
         eksternId: ID!
     ): SoftDeleteNotifikasjonResultat!
