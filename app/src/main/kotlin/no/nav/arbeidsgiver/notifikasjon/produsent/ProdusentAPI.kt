@@ -13,6 +13,8 @@ import java.util.*
 import java.util.Base64.getDecoder
 import java.util.Base64.getEncoder
 import java.util.concurrent.CompletableFuture
+import kotlin.reflect.full.createInstance
+import kotlin.reflect.full.primaryConstructor
 
 object ProdusentAPI {
     private val log = logger()
@@ -209,6 +211,8 @@ object ProdusentAPI {
         open val edges: List<Edge<T>>,
         open val pageInfo: PageInfo
     ) {
+        // naiv implementasjon som antar constructor. bør finne en bedre måte å lage konkrete subklasser
+        inline fun <reified I : Connection<T>> ofType() = I::class.primaryConstructor?.call(edges, pageInfo)
         companion object {
             private fun <T> empty() : Connection<T> {
                 return Connection(emptyList(), PageInfo(Cursor.empty(), false))
@@ -399,8 +403,8 @@ object ProdusentAPI {
                                     )
                             }
                         }.let {
-                            val connection = Connection.create(it, env)
-                            NotifikasjonConnection(connection.edges, connection.pageInfo)
+                            // TODO: finn en bedre måte å gjøre dette på?
+                            Connection.create(it, env).ofType<NotifikasjonConnection>()
                         }
                 }
             }
