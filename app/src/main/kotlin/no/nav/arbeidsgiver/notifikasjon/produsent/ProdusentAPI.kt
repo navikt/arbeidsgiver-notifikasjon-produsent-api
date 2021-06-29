@@ -13,8 +13,6 @@ import java.util.*
 import java.util.Base64.getDecoder
 import java.util.Base64.getEncoder
 import java.util.concurrent.CompletableFuture
-import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.primaryConstructor
 
 object ProdusentAPI {
     private val log = logger()
