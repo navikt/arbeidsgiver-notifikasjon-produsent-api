@@ -191,7 +191,7 @@ object ProdusentAPI {
         companion object {
             const val PREFIX = "cur"
 
-            fun of(offset: Int) : Cursor {
+            fun of(offset: Int): Cursor {
                 return Cursor(
                     getEncoder().encodeToString(
                         "$PREFIX$offset".toByteArray()
@@ -199,7 +199,7 @@ object ProdusentAPI {
                 )
             }
 
-            fun empty() : Cursor {
+            fun empty(): Cursor {
                 return of(0)
             }
         }
@@ -211,7 +211,7 @@ object ProdusentAPI {
                 data: List<T>,
                 env: DataFetchingEnvironment,
                 factory: (edges: List<Edge<T>>, pageInfo: PageInfo) -> I
-            ) : I {
+            ): I {
                 if (data.isEmpty()) {
                     return factory(emptyList(), PageInfo(Cursor.empty(), false))
                 }
@@ -257,7 +257,26 @@ object ProdusentAPI {
             val mottaker: Mottaker,
             val metadata: Metadata,
             val beskjed: BeskjedData,
-        ) : Notifikasjon()
+        ) : Notifikasjon() {
+            companion object {
+                fun fraDomene(beskjed: ProdusentModel.Beskjed): Beskjed {
+                    return Beskjed(
+                        metadata = Metadata(
+                            id = beskjed.id,
+                            grupperingsid = beskjed.grupperingsid,
+                            eksternId = beskjed.eksternId,
+                            opprettetTidspunkt = beskjed.opprettetTidspunkt,
+                        ),
+                        mottaker = Mottaker.fraDomene(beskjed.mottaker),
+                        beskjed = BeskjedData(
+                            merkelapp = beskjed.merkelapp,
+                            tekst = beskjed.tekst,
+                            lenke = beskjed.lenke,
+                        )
+                    )
+                }
+            }
+        }
 
         @JsonTypeName("Oppgave")
         data class Oppgave(
@@ -269,6 +288,35 @@ object ProdusentAPI {
                 NY,
                 UTFOERT;
             }
+
+            companion object {
+                fun fraDomene(oppgave: ProdusentModel.Oppgave): Oppgave {
+                    return Oppgave(
+                        metadata = Metadata(
+                            id = oppgave.id,
+                            grupperingsid = oppgave.grupperingsid,
+                            eksternId = oppgave.eksternId,
+                            opprettetTidspunkt = oppgave.opprettetTidspunkt,
+                        ),
+                        mottaker = Mottaker.fraDomene(oppgave.mottaker),
+                        oppgave = OppgaveData(
+                            tilstand = enumValueOf(oppgave.tilstand.name),
+                            merkelapp = oppgave.merkelapp,
+                            tekst = oppgave.tekst,
+                            lenke = oppgave.lenke,
+                        )
+                    )
+                }
+            }
+        }
+
+        companion object {
+            fun fraDomene(notifikasjon: ProdusentModel.Notifikasjon): Notifikasjon {
+                return when (notifikasjon) {
+                    is ProdusentModel.Beskjed -> Beskjed.fraDomene(notifikasjon)
+                    is ProdusentModel.Oppgave -> Oppgave.fraDomene(notifikasjon)
+                }
+            }
         }
     }
 
@@ -277,16 +325,8 @@ object ProdusentAPI {
         companion object {
             fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.Mottaker): Mottaker {
                 return when (domene) {
-                    is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> AltinnMottaker(
-                        serviceCode = domene.serviceCode,
-                        serviceEdition = domene.serviceEdition,
-                        virksomhetsnummer = domene.virksomhetsnummer
-                    )
-                    is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> NærmesteLederMottaker(
-                        naermesteLederFnr = domene.naermesteLederFnr,
-                        ansattFnr = domene.ansattFnr,
-                        virksomhetsnummer = domene.virksomhetsnummer,
-                    )
+                    is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> AltinnMottaker.fraDomene(domene)
+                    is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> NærmesteLederMottaker.fraDomene(domene)
                 }
             }
         }
@@ -297,14 +337,34 @@ object ProdusentAPI {
         val naermesteLederFnr: String,
         val ansattFnr: String,
         val virksomhetsnummer: String
-    ) : Mottaker()
+    ) : Mottaker() {
+        companion object {
+            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker): NærmesteLederMottaker {
+                return NærmesteLederMottaker(
+                    naermesteLederFnr = domene.naermesteLederFnr,
+                    ansattFnr = domene.ansattFnr,
+                    virksomhetsnummer = domene.virksomhetsnummer,
+                )
+            }
+        }
+    }
 
     @JsonTypeName("AltinnMottaker")
     data class AltinnMottaker(
         val serviceCode: String,
         val serviceEdition: String,
         val virksomhetsnummer: String,
-    ) : Mottaker()
+    ) : Mottaker() {
+        companion object {
+            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.AltinnMottaker): AltinnMottaker {
+                return AltinnMottaker(
+                    serviceCode = domene.serviceCode,
+                    serviceEdition = domene.serviceEdition,
+                    virksomhetsnummer = domene.virksomhetsnummer
+                )
+            }
+        }
+    }
 
     @JsonTypeName("Metadata")
     data class Metadata(
@@ -362,43 +422,8 @@ object ProdusentAPI {
 
                     return@coDataFetcher produsentModelFuture.await()
                         .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
-                        .map { notifikasjon ->
-                            when (notifikasjon) {
-                                is ProdusentModel.Beskjed ->
-                                    Notifikasjon.Beskjed(
-                                        metadata = Metadata(
-                                            id = notifikasjon.id,
-                                            grupperingsid = notifikasjon.grupperingsid,
-                                            eksternId = notifikasjon.eksternId,
-                                            opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                        ),
-                                        mottaker = Mottaker.fraDomene(notifikasjon.mottaker),
-                                        beskjed = BeskjedData(
-                                            merkelapp = notifikasjon.merkelapp,
-                                            tekst = notifikasjon.tekst,
-                                            lenke = notifikasjon.lenke,
-                                        )
-                                    )
-                                is ProdusentModel.Oppgave ->
-                                    Notifikasjon.Oppgave(
-                                        metadata = Metadata(
-                                            id = notifikasjon.id,
-                                            grupperingsid = notifikasjon.grupperingsid,
-                                            eksternId = notifikasjon.eksternId,
-                                            opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                        ),
-                                        mottaker = Mottaker.fraDomene(notifikasjon.mottaker),
-                                        oppgave = OppgaveData(
-                                            tilstand = enumValueOf(notifikasjon.tilstand.name),
-                                            merkelapp = notifikasjon.merkelapp,
-                                            tekst = notifikasjon.tekst,
-                                            lenke = notifikasjon.lenke,
-                                        )
-                                    )
-                            }
-                        }.let {
-                            Connection.create(it, env, ::NotifikasjonConnection)
-                        }
+                        .map(Notifikasjon::fraDomene)
+                        .let { Connection.create(it, env, ::NotifikasjonConnection) }
                 }
             }
 
@@ -498,7 +523,10 @@ object ProdusentAPI {
                 """.trimMargin()
             )
 
-    private fun tilgangsstyrMottaker(produsent: Produsent, mottaker: no.nav.arbeidsgiver.notifikasjon.Mottaker): Error.UgyldigMottaker? =
+    private fun tilgangsstyrMottaker(
+        produsent: Produsent,
+        mottaker: no.nav.arbeidsgiver.notifikasjon.Mottaker
+    ): Error.UgyldigMottaker? =
         if (produsent.kanSendeTil(mottaker))
             null
         else
