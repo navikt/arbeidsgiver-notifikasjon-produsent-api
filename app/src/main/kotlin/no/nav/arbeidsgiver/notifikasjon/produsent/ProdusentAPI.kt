@@ -207,19 +207,15 @@ object ProdusentAPI {
         }
     }
 
-    open class Connection<T>(
-        open val edges: List<Edge<T>>,
-        open val pageInfo: PageInfo
-    ) {
-        // naiv implementasjon som antar constructor. bør finne en bedre måte å lage konkrete subklasser
-        inline fun <reified I : Connection<T>> ofType() = I::class.primaryConstructor?.call(edges, pageInfo)
+    interface Connection<T> {
         companion object {
-            private fun <T> empty() : Connection<T> {
-                return Connection(emptyList(), PageInfo(Cursor.empty(), false))
-            }
-            fun <T> create(data: List<T>, env: DataFetchingEnvironment) : Connection<T> {
+            fun <T, I : Connection<T>> create(
+                data: List<T>,
+                env: DataFetchingEnvironment,
+                factory: (edges: List<Edge<T>>, pageInfo: PageInfo) -> I
+            ) : I {
                 if (data.isEmpty()) {
-                    return empty()
+                    return factory(emptyList(), PageInfo(Cursor.empty(), false))
                 }
 
                 val first = env.getArgumentOrDefault("first", data.size)
@@ -233,16 +229,16 @@ object ProdusentAPI {
                     edges.last().cursor >= after.plus(first)
                 )
 
-                return Connection(edges, pageInfo)
+                return factory(edges, pageInfo)
             }
         }
     }
 
     @JsonTypeName("NotifikasjonConnection")
     data class NotifikasjonConnection(
-        override val edges: List<Edge<Notifikasjon>>,
-        override val pageInfo: PageInfo
-    ) : MineNotifikasjonerResultat, Connection<Notifikasjon>(edges, pageInfo)
+        val edges: List<Edge<Notifikasjon>>,
+        val pageInfo: PageInfo
+    ) : MineNotifikasjonerResultat, Connection<Notifikasjon>
 
     @JsonTypeName("PageInfo")
     data class PageInfo(
@@ -403,8 +399,7 @@ object ProdusentAPI {
                                     )
                             }
                         }.let {
-                            // TODO: finn en bedre måte å gjøre dette på?
-                            Connection.create(it, env).ofType<NotifikasjonConnection>()
+                            Connection.create(it, env, ::NotifikasjonConnection)
                         }
                 }
             }
