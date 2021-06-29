@@ -20,6 +20,9 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.Executors

@@ -4,6 +4,7 @@ import io.ktor.server.testing.*
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.TOKENDINGS_TOKEN
 import no.nav.arbeidsgiver.notifikasjon.util.post

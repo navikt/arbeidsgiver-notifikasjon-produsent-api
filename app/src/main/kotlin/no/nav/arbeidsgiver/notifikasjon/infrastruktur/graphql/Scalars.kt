@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
 import graphql.language.StringValue
 import graphql.schema.Coercing
