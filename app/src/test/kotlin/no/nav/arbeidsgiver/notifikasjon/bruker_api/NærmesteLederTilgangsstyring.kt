@@ -5,11 +5,9 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NærmesteLederService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NærmesteLederService.NærmesteLederFor
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
@@ -27,7 +25,6 @@ class NærmesteLederTilgangsstyring: DescribeSpec({
         val nærmesteLeder = "1".repeat(11)
         val annenNærmesteLeder = "2".repeat(11)
         val ansatt1 = "3".repeat(11)
-        val ansatt2 = "4".repeat(11)
 
         val mottaker1 = NærmesteLederMottaker(
             naermesteLederFnr = nærmesteLeder,

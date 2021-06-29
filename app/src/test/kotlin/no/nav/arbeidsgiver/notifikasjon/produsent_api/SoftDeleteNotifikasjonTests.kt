@@ -14,7 +14,6 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 
 class SoftDeleteNotifikasjonTests : DescribeSpec({
@@ -33,7 +32,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = kafkaProducer,
             produsentRegister = mockProdusentRegister,
-            produsentModelFuture = CompletableFuture.completedFuture(produsentModel)
+            produsentModel = produsentModel
         )
     )
 

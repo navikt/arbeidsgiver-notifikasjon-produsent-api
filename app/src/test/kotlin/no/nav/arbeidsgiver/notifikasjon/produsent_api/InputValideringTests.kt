@@ -6,8 +6,8 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldContainIgnoringCase
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.util.*
-import java.util.concurrent.CompletableFuture
+import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
+import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import kotlin.time.ExperimentalTime
 
 @Suppress("NAME_SHADOWING")
@@ -17,7 +17,7 @@ class InputValideringTests : DescribeSpec({
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
             produsentRegister = mockProdusentRegister,
-            produsentModelFuture = CompletableFuture.completedFuture(mockk())
+            produsentModel = mockk()
         )
     )
 

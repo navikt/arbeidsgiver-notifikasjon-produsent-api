@@ -8,7 +8,6 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.CoroutineProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.brukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.oppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -18,7 +17,6 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 
 class OppgaveUtførtTests : DescribeSpec({
@@ -37,7 +35,7 @@ class OppgaveUtførtTests : DescribeSpec({
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = kafkaProducer,
             produsentRegister = mockProdusentRegister,
-            produsentModelFuture = CompletableFuture.completedFuture(produsentModel)
+            produsentModel = produsentModel
         )
     )
 

@@ -4,7 +4,6 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
@@ -74,6 +73,16 @@ object BrukerMain {
                 }
             }
 
+            val graphql = async {
+                BrukerAPI.createBrukerGraphQL(
+                    altinn = altinn,
+                    brreg = brreg,
+                    brukerModel = brukerModelAsync.await(),
+                    kafkaProducer = createKafkaProducer(),
+                    nærmesteLederService = NærmesteLederServiceImpl()
+                )
+            }
+
             launch {
                 val httpServer = embeddedServer(Netty, port = httpPort, configure = {
                     connectionGroupSize = 16
@@ -83,13 +92,7 @@ object BrukerMain {
                     httpServerSetup(
                         authProviders = authProviders,
                         extractContext = extractBrukerContext,
-                        graphql = BrukerAPI.createBrukerGraphQL(
-                            altinn = altinn,
-                            brreg = brreg,
-                            brukerModelFuture = brukerModelAsync.asCompletableFuture(),
-                            kafkaProducer = createKafkaProducer(),
-                            nærmesteLederService = NærmesteLederServiceImpl()
-                        ),
+                        graphql = graphql,
                     )
                 }
                 httpServer.start(wait = true)

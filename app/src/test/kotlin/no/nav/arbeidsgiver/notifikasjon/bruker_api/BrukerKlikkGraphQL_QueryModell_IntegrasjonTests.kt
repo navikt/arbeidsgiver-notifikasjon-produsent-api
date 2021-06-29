@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val database = testDatabase(BrukerMain.databaseConfig)
@@ -26,7 +25,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
             brreg = BrregStub(),
-            brukerModelFuture = CompletableFuture.completedFuture(queryModel),
+            brukerModel = queryModel,
             kafkaProducer = mockk(),
             nærmesteLederService = NærmesteLederServiceStub(mottaker)
         )

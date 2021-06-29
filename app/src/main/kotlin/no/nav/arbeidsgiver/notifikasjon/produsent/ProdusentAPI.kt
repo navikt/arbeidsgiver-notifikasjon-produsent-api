@@ -4,13 +4,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.await
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 object ProdusentAPI {
     private val log = logger()
@@ -36,10 +34,7 @@ object ProdusentAPI {
                 eksternId = metadata.eksternId,
                 mottaker = mottaker,
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
-                virksomhetsnummer = when (mottaker) {
-                    is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> mottaker.virksomhetsnummer
-                    is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> mottaker.virksomhetsnummer
-                }
+                virksomhetsnummer = mottaker.virksomhetsnummer,
             )
         }
     }
@@ -60,10 +55,7 @@ object ProdusentAPI {
                 eksternId = metadata.eksternId,
                 mottaker = mottaker,
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
-                virksomhetsnummer = when (mottaker) {
-                    is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> mottaker.virksomhetsnummer
-                    is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> mottaker.virksomhetsnummer
-                }
+                virksomhetsnummer = mottaker.virksomhetsnummer
             )
         }
     }
@@ -342,7 +334,7 @@ object ProdusentAPI {
     fun newGraphQL(
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer(),
         produsentRegister: ProdusentRegister = ProdusentRegisterImpl,
-        produsentModelFuture: CompletableFuture<ProdusentModel>,
+        produsentModel: ProdusentModel,
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphqls") {
             directive("Validate", ValidateDirective)
@@ -371,7 +363,7 @@ object ProdusentAPI {
 
                     tilgangsstyrMerkelapp(produsent, merkelapp)?.let { return@coDataFetcher it }
 
-                    return@coDataFetcher produsentModelFuture.await()
+                    return@coDataFetcher produsentModel
                         .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
                         .map(Notifikasjon::fraDomene)
                         .let { Connection.create(it, env, ::NotifikasjonConnection) }
@@ -410,7 +402,6 @@ object ProdusentAPI {
                 }
 
                 coDataFetcher("oppgaveUtfoert") { env ->
-                    val produsentModel = produsentModelFuture.await()
                     val id = env.getTypedArgument<UUID>("id")
                     val notifikasjon = produsentModel.hentNotifikasjon(id)
                         ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Oppgave med id $id finnes ikke")
@@ -435,7 +426,6 @@ object ProdusentAPI {
                 }
 
                 coDataFetcher("oppgaveUtfoertByEksternId") { env ->
-                    val produsentModel = produsentModelFuture.await()
                     val eksternId = env.getTypedArgument<String>("eksternId")
                     val merkelapp = env.getTypedArgument<String>("merkelapp")
                     val notifikasjon = produsentModel.hentNotifikasjon(eksternId, merkelapp)
@@ -461,7 +451,6 @@ object ProdusentAPI {
                 }
 
                 coDataFetcher("softDeleteNotifikasjon") { env ->
-                    val produsentModel = produsentModelFuture.await()
                     val id = env.getTypedArgument<UUID>("id")
                     val notifikasjon = produsentModel.hentNotifikasjon(id)
                         ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
@@ -483,7 +472,6 @@ object ProdusentAPI {
                 }
 
                 coDataFetcher("softDeleteNotifikasjonByEksternId") { env ->
-                    val produsentModel = produsentModelFuture.await()
                     val eksternId = env.getTypedArgument<String>("eksternId")
                     val merkelapp = env.getTypedArgument<String>("merkelapp")
                     val notifikasjon = produsentModel.hentNotifikasjon(eksternId, merkelapp)

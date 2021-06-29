@@ -4,7 +4,6 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
@@ -74,6 +73,13 @@ object ProdusentMain {
                 }
             }
 
+            val graphql = async {
+                ProdusentAPI.newGraphQL(
+                    produsentModel = produsentModelAsync.await(),
+                    kafkaProducer = createKafkaProducer()
+                )
+            }
+
             launch {
                 val httpServer = embeddedServer(Netty, port = httpPort, configure = {
                     connectionGroupSize = 16
@@ -83,10 +89,7 @@ object ProdusentMain {
                     httpServerSetup(
                         authProviders = authProviders,
                         extractContext = extractProdusentContext,
-                        graphql = ProdusentAPI.newGraphQL(
-                            produsentModelFuture = produsentModelAsync.asCompletableFuture(),
-                            kafkaProducer = createKafkaProducer()
-                        ),
+                        graphql = graphql
                     )
                 }
                 httpServer.start(wait = true)

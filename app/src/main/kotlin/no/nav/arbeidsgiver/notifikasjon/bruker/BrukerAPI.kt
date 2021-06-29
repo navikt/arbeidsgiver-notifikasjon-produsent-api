@@ -6,7 +6,6 @@ import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.future.await
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
@@ -15,7 +14,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 object BrukerAPI {
     private val log = logger()
@@ -91,7 +89,7 @@ object BrukerAPI {
     fun createBrukerGraphQL(
         altinn: Altinn,
         brreg: Brreg,
-        brukerModelFuture: CompletableFuture<BrukerModel>,
+        brukerModel: BrukerModel,
         kafkaProducer: CoroutineProducer<KafkaKey, Hendelse>,
         nærmesteLederService: NærmesteLederService,
     ) = TypedGraphQL<Context>(
@@ -112,7 +110,7 @@ object BrukerAPI {
                         val tilganger = async { altinn.hentAlleTilganger(context.fnr, context.token) }
                         val ansatte = async { nærmesteLederService.hentAnsatte(context.token) }
 
-                        return@coroutineScope brukerModelFuture.await()
+                        return@coroutineScope brukerModel
                             .hentNotifikasjoner(context.fnr, tilganger.await(), ansatte.await())
                             .map { notifikasjon ->
                                 when (notifikasjon) {
@@ -189,9 +187,8 @@ object BrukerAPI {
                 coDataFetcher("notifikasjonKlikketPaa") { env ->
                     val context = env.getContext<Context>()
                     val notifikasjonsid = env.getTypedArgument<UUID>("id")
-                    val queryModel = brukerModelFuture.await()
 
-                    val virksomhetsnummer = queryModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
+                    val virksomhetsnummer = brukerModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
                         ?: return@coDataFetcher UgyldigId("")
 
                     val hendelse = Hendelse.BrukerKlikket(
@@ -202,7 +199,7 @@ object BrukerAPI {
 
                     kafkaProducer.brukerKlikket(hendelse)
 
-                    queryModel.oppdaterModellEtterHendelse(hendelse)
+                    brukerModel.oppdaterModellEtterHendelse(hendelse)
 
                     BrukerKlikk(
                         id = "${context.fnr}-${hendelse.notifikasjonsId}",

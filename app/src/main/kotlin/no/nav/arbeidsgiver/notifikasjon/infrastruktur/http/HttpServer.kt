@@ -15,6 +15,7 @@ import io.micrometer.core.instrument.binder.jvm.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
@@ -57,7 +58,7 @@ private val graphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1
 fun <T : WithCoroutineScope> Application.httpServerSetup(
     authProviders: List<JWTAuthentication>,
     extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
-    graphql: TypedGraphQL<T>,
+    graphql: Deferred<TypedGraphQL<T>>,
 ) {
 
     install(CORS) {
@@ -159,7 +160,7 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
                     withContext(this.coroutineContext + graphQLDispatcher) {
                         val context = extractContext()
                         val request = call.receive<GraphQLRequest>()
-                        val result = graphql.execute(request, context)
+                        val result = graphql.await().execute(request, context)
                         call.respond(result)
                     }
                 }

@@ -16,7 +16,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     val queryModel: BrukerModelImpl = mockk(relaxed = true)
@@ -26,7 +25,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
             brreg = BrregStub(),
-            brukerModelFuture = CompletableFuture.completedFuture(queryModel),
+            brukerModel = queryModel,
             kafkaProducer = kafkaProducer,
             nærmesteLederService = NærmesteLederServiceStub()
         ),

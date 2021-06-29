@@ -15,7 +15,6 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 class BrukerApiTests : DescribeSpec({
     val queryModel: BrukerModelImpl = mockk()
@@ -24,7 +23,7 @@ class BrukerApiTests : DescribeSpec({
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
             brreg = BrregStub("43" to "el virksomhete"),
-            brukerModelFuture = CompletableFuture.completedFuture(queryModel),
+            brukerModel = queryModel,
             kafkaProducer = mockk(),
             nærmesteLederService = NærmesteLederServiceStub(),
         )

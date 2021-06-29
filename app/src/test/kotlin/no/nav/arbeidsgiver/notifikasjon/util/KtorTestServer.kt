@@ -9,6 +9,7 @@ import io.ktor.http.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
@@ -28,7 +29,7 @@ fun Spec.ktorBrukerTestServer(
         httpServerSetup(
             authProviders = listOf(LOCALHOST_BRUKER_AUTHENTICATION),
             extractContext = extractBrukerContext,
-            graphql = brukerGraphQL,
+            graphql = CompletableDeferred(brukerGraphQL),
         )
     })
     return engine
@@ -45,7 +46,7 @@ fun Spec.ktorProdusentTestServer(
         httpServerSetup(
             authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
             extractContext = extractProdusentContext,
-            graphql = produsentGraphQL
+            graphql = CompletableDeferred(produsentGraphQL)
         )
     })
     return engine

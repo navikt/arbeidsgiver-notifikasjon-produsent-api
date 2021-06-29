@@ -1,19 +1,18 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.collections.beEmpty
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.beOfType
-import io.ktor.http.*
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import kotlin.time.ExperimentalTime
 
 @Suppress("NAME_SHADOWING")
@@ -25,7 +24,7 @@ class MineNotifikasjonerTests : DescribeSpec({
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
             produsentRegister = mockProdusentRegister,
-            produsentModelFuture = CompletableFuture.completedFuture(produsentModel)
+            produsentModel = produsentModel
         )
     )
     val virksomhetsnummer = "123"
