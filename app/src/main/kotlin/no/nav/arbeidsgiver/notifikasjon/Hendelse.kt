@@ -20,7 +20,7 @@ sealed class Hendelse {
         val grupperingsid: String? = null,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime
-    ): Hendelse()
+    ) : Hendelse()
 
     @JsonTypeName("OppgaveOpprettet")
     data class OppgaveOpprettet(
@@ -33,41 +33,42 @@ sealed class Hendelse {
         val grupperingsid: String? = null,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime
-    ): Hendelse()
+    ) : Hendelse()
 
     @JsonTypeName("OppgaveUtfoert")
     data class OppgaveUtført(
         override val virksomhetsnummer: String,
         val id: UUID,
-    ): Hendelse()
+    ) : Hendelse()
 
     @JsonTypeName("SoftDelete")
     data class SoftDelete(
         override val virksomhetsnummer: String,
         val id: UUID,
         val deletedAt: OffsetDateTime,
-    ): Hendelse()
+    ) : Hendelse()
 
+    @JsonTypeName("HardDelete")
+    data class HardDelete(
+        override val virksomhetsnummer: String,
+        val id: UUID,
+        val deletedAt: OffsetDateTime,
+    ) : Hendelse()
 
     @JsonTypeName("BrukerKlikket")
     data class BrukerKlikket(
         override val virksomhetsnummer: String,
         val fnr: String,
         val notifikasjonsId: UUID
-    ): Hendelse()
+    ) : Hendelse()
 
-    @JsonTypeName("SlettHendelse")
-    data class SlettHendelse(
-        val notifikasjonsId: UUID,
-        override val virksomhetsnummer: String
-    ): Hendelse()
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class Mottaker
 
 @JsonTypeName("naermesteLeder")
-data class NærmesteLederMottaker (
+data class NærmesteLederMottaker(
     val naermesteLederFnr: String,
     val ansattFnr: String,
     val virksomhetsnummer: String
@@ -78,10 +79,10 @@ data class AltinnMottaker(
     val serviceCode: String,
     val serviceEdition: String,
     val virksomhetsnummer: String,
-): Mottaker()
+) : Mottaker()
 
 val Mottaker.virksomhetsnummer: String
-    get() = when (this){
+    get() = when (this) {
         is NærmesteLederMottaker -> this.virksomhetsnummer
         is AltinnMottaker -> this.virksomhetsnummer
     }

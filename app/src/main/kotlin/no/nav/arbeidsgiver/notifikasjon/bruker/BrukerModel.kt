@@ -47,14 +47,20 @@ interface BrukerModel {
         val klikketPaa: Boolean,
         val tilstand: Tilstand,
     ) : Notifikasjon {
-        @Suppress("unused") /* leses fra database */
+        @Suppress("unused")
+        /* leses fra database */
         enum class Tilstand {
             NY,
             UTFOERT
         }
     }
 
-    suspend fun hentNotifikasjoner(fnr: String, tilganger: Collection<Tilgang>, ansatte: List<NærmesteLederService.NærmesteLederFor>): List<Notifikasjon>
+    suspend fun hentNotifikasjoner(
+        fnr: String,
+        tilganger: Collection<Tilgang>,
+        ansatte: List<NærmesteLederService.NærmesteLederFor>
+    ): List<Notifikasjon>
+
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
 }
@@ -138,9 +144,9 @@ class BrukerModelImpl(
             order by opprettet_tidspunkt desc
             limit 200
         """, {
-            string(fnr)
-            string(fnr)
-        }) {
+                string(fnr)
+                string(fnr)
+            }) {
             when (val type = getString("type")) {
                 "BESKJED" -> BrukerModel.Beskjed(
                     merkelapp = getString("merkelapp"),
@@ -176,23 +182,24 @@ class BrukerModelImpl(
                     is NærmesteLederMottaker ->
                         ansatteLookupTable.contains(
                             NærmesteLederService.NærmesteLederFor(
-                            ansattFnr = mottaker.ansattFnr,
-                            virksomhetsnummer = mottaker.virksomhetsnummer
-                        ))
+                                ansattFnr = mottaker.ansattFnr,
+                                virksomhetsnummer = mottaker.virksomhetsnummer
+                            )
+                        )
                     else -> true
                 }
             }
     }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
-            database.runNonTransactionalQuery(
-                """
+        database.runNonTransactionalQuery(
+            """
                 SELECT virksomhetsnummer FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ? LIMIT 1
             """, {
                 uuid(notifikasjonsid)
             }) {
-                getString("virksomhetsnummer")!!
-            }.getOrNull(0)
+            getString("virksomhetsnummer")!!
+        }.getOrNull(0)
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
@@ -201,27 +208,25 @@ class BrukerModelImpl(
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is Hendelse.OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
-            is Hendelse.SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
-            is Hendelse.SlettHendelse -> {
-                /* TODO: oppdatere modell? Kaskade-sletting? */
-            }
+            is Hendelse.SoftDelete -> oppdaterModellEtterDelete(hendelse.id)
+            is Hendelse.HardDelete -> oppdaterModellEtterDelete(hendelse.id)
         }
     }
 
-    private suspend fun oppdaterModellEtterSoftDelete(softDelete: Hendelse.SoftDelete) {
+    private suspend fun oppdaterModellEtterDelete(hendelsesId: UUID) {
         database.transaction({
-            throw Error("SoftDelete", it)
+            throw Error("Delete", it)
         }) {
             executeCommand(""" DELETE FROM notifikasjon WHERE id = ?;""") {
-                uuid(softDelete.id)
+                uuid(hendelsesId)
             }
 
             executeCommand("""DELETE FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ?;""") {
-                uuid(softDelete.id)
+                uuid(hendelsesId)
             }
 
             executeCommand("""DELETE FROM brukerklikk WHERE notifikasjonsid = ?;""") {
-                uuid(softDelete.id)
+                uuid(hendelsesId)
             }
         }
     }
@@ -232,7 +237,8 @@ class BrukerModelImpl(
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
             WHERE id = ?
-        """) {
+        """
+        ) {
             uuid(utførtHendelse.id)
         }
     }
@@ -243,7 +249,8 @@ class BrukerModelImpl(
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
             ON CONFLICT ON CONSTRAINT brukerklikk_pkey
             DO NOTHING
-        """) {
+        """
+        ) {
             string(brukerKlikket.fnr)
             uuid(brukerKlikket.notifikasjonsId)
         }
@@ -276,7 +283,8 @@ class BrukerModelImpl(
                     mottaker
                 )
                 values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
-            """) {
+            """
+            ) {
                 uuid(nyBeskjed.id)
                 string(nyBeskjed.merkelapp)
                 string(nyBeskjed.tekst)
@@ -290,7 +298,8 @@ class BrukerModelImpl(
             executeCommand(
                 """
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
-            """) {
+            """
+            ) {
                 uuid(beskjedOpprettet.id)
                 string(beskjedOpprettet.virksomhetsnummer)
             }
@@ -324,7 +333,8 @@ class BrukerModelImpl(
                     mottaker
                 )
                 values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
-            """) {
+            """
+            ) {
                 uuid(nyBeskjed.id)
                 string(nyBeskjed.merkelapp)
                 string(nyBeskjed.tekst)
@@ -338,7 +348,8 @@ class BrukerModelImpl(
             executeCommand(
                 """
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
-            """) {
+            """
+            ) {
                 uuid(oppgaveOpprettet.id)
                 string(oppgaveOpprettet.virksomhetsnummer)
             }

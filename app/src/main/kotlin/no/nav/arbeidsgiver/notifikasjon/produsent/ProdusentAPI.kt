@@ -129,6 +129,9 @@ object ProdusentAPI {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface SoftDeleteNotifikasjonResultat
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed interface HardDeleteNotifikasjonResultat
+
     @JsonTypeName("OppgaveUtfoertVellykket")
     data class OppgaveUtfoertVellykket(
         val id: UUID
@@ -138,6 +141,11 @@ object ProdusentAPI {
     data class SoftDeleteNotifikasjonVellykket(
         val id: UUID
     ) : SoftDeleteNotifikasjonResultat
+
+    @JsonTypeName("HardDeleteNotifikasjonVellykket")
+    data class HardDeleteNotifikasjonVellykket(
+        val id: UUID
+    ) : HardDeleteNotifikasjonResultat
 
     @JsonTypeName("NyBeskjedVellykket")
     data class NyBeskjedVellykket(
@@ -162,7 +170,8 @@ object ProdusentAPI {
             NyOppgaveResultat,
             OppgaveUtfoertResultat,
             MineNotifikasjonerResultat,
-            SoftDeleteNotifikasjonResultat
+            SoftDeleteNotifikasjonResultat,
+            HardDeleteNotifikasjonResultat
 
         @JsonTypeName("UgyldigMottaker")
         data class UgyldigMottaker(
@@ -175,7 +184,8 @@ object ProdusentAPI {
         ) :
             Error(),
             OppgaveUtfoertResultat,
-            SoftDeleteNotifikasjonResultat
+            SoftDeleteNotifikasjonResultat,
+            HardDeleteNotifikasjonResultat
     }
 
 
@@ -347,6 +357,7 @@ object ProdusentAPI {
             resolveSubtypes<OppgaveUtfoertResultat>()
             resolveSubtypes<MineNotifikasjonerResultat>()
             resolveSubtypes<SoftDeleteNotifikasjonResultat>()
+            resolveSubtypes<HardDeleteNotifikasjonResultat>()
             resolveSubtypes<Notifikasjon>()
             resolveSubtypes<Mottaker>()
 
@@ -491,6 +502,48 @@ object ProdusentAPI {
                     kafkaProducer.softDelete(softDelete)
                     produsentModel.oppdaterModellEtterHendelse(softDelete)
                     return@coDataFetcher SoftDeleteNotifikasjonVellykket(notifikasjon.id)
+                }
+                coDataFetcher("hardDeleteNotifikasjon") { env ->
+                    val id = env.getTypedArgument<UUID>("id")
+                    val notifikasjon = produsentModel.hentNotifikasjon(id)
+                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
+
+                    val produsent = env.hentProdusent(produsentRegister)
+
+                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
+                        ?.let { return@coDataFetcher it }
+
+                    val hardDelete = Hendelse.HardDelete(
+                        id = id,
+                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                        deletedAt = OffsetDateTime.now()
+                    )
+
+                    kafkaProducer.hardDelete(hardDelete)
+                    produsentModel.oppdaterModellEtterHendelse(hardDelete)
+                    return@coDataFetcher HardDeleteNotifikasjonVellykket(id)
+                }
+
+                coDataFetcher("hardDeleteNotifikasjonByEksternId") { env ->
+                    val eksternId = env.getTypedArgument<String>("eksternId")
+                    val merkelapp = env.getTypedArgument<String>("merkelapp")
+                    val notifikasjon = produsentModel.hentNotifikasjon(eksternId, merkelapp)
+                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
+
+                    val produsent = env.hentProdusent(produsentRegister)
+
+                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
+                        ?.let { return@coDataFetcher it }
+
+                    val hardDelete = Hendelse.HardDelete(
+                        id = notifikasjon.id,
+                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                        deletedAt = OffsetDateTime.now()
+                    )
+
+                    kafkaProducer.hardDelete(hardDelete)
+                    produsentModel.oppdaterModellEtterHendelse(hardDelete)
+                    return@coDataFetcher HardDeleteNotifikasjonVellykket(notifikasjon.id)
                 }
             }
         }

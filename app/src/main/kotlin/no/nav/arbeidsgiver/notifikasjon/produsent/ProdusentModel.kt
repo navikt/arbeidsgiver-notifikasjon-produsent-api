@@ -147,15 +147,24 @@ class ProdusentModelImpl(
             is Hendelse.OppgaveUtført -> oppdatertModellEtterOppgaveUtført(hendelse)
             is Hendelse.BrukerKlikket -> /* Ignorer */ Unit
             is Hendelse.SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
-            is Hendelse.SlettHendelse -> {
-                /* TODO: oppdatere modell? Kaskade-sletting? */
-            }
+            is Hendelse.HardDelete -> oppdaterModellEtterHardDelete(hendelse)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
+        database.nonTransactionalCommand(
+            """
+            DELETE FROM notifikasjon 
+            WHERE id = ?
+            """
+        ) {
+            uuid(hardDelete.id)
         }
     }
 
     private suspend fun oppdaterModellEtterSoftDelete(softDelete: Hendelse.SoftDelete) {
         database.nonTransactionalCommand(
-        """
+            """
             UPDATE notifikasjon
             SET deleted_at = ? 
             WHERE id = ?
@@ -166,7 +175,11 @@ class ProdusentModelImpl(
         }
     }
 
-    override suspend fun finnNotifikasjoner(merkelapp: String, antall: Int, offset: Int): List<ProdusentModel.Notifikasjon> {
+    override suspend fun finnNotifikasjoner(
+        merkelapp: String,
+        antall: Int,
+        offset: Int
+    ): List<ProdusentModel.Notifikasjon> {
         return database.runNonTransactionalQuery(
             """ select * from notifikasjon 
                   where merkelapp = ? 

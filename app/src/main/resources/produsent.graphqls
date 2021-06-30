@@ -217,6 +217,29 @@ type Mutation {
         """
         eksternId: ID!
     ): SoftDeleteNotifikasjonResultat!
+
+    """
+    Sletter en notifikasjon og tilhørende data helt fra databasen og kafka.
+    Formålet er å støtte juridiske krav om sletting i henhold til personvern.
+
+    Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
+    """
+    hardDeleteNotifikasjon(id: ID!): HardDeleteNotifikasjonResultat!
+
+    """
+    Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
+    """
+    hardDeleteNotifikasjonByEksternId(
+        """
+        Merkelappen som dere ga oss da dere opprettet notifikasjonen.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som dere ga oss da dere opprettet notifikasjonen.
+        """
+        eksternId: ID!
+    ): HardDeleteNotifikasjonResultat!
 }
 
 union SoftDeleteNotifikasjonResultat =
@@ -230,6 +253,19 @@ type SoftDeleteNotifikasjonVellykket {
     """
     id: ID!
 }
+
+union HardDeleteNotifikasjonResultat =
+    | HardDeleteNotifikasjonVellykket
+    | UgyldigMerkelapp
+    | NotifikasjonFinnesIkke
+
+type HardDeleteNotifikasjonVellykket {
+    """
+    ID-en til oppgaven du "hard-delete"-et.
+    """
+    id: ID!
+}
+
 
 union OppgaveUtfoertResultat =
     | OppgaveUtfoertVellykket

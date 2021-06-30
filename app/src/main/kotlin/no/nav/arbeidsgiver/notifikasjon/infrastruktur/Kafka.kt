@@ -29,7 +29,7 @@ import org.apache.kafka.common.config.SslConfigs as SSLProp
 
 typealias KafkaKey = String
 
-class OrgnrPartitioner: Partitioner {
+class OrgnrPartitioner : Partitioner {
     companion object {
         fun partitionForOrgnr(orgnr: String, numPartitions: Int): Int =
             Utils.toPositive(Utils.murmur2(orgnr.toByteArray())) % numPartitions
@@ -62,7 +62,7 @@ interface JsonSerializer<T> : Serializer<T> {
     }
 }
 
-abstract class JsonDeserializer<T>(private val clazz: Class<T>): Deserializer<T> {
+abstract class JsonDeserializer<T>(private val clazz: Class<T>) : Deserializer<T> {
     override fun deserialize(topic: String?, data: ByteArray?): T {
         return objectMapper.readValue(data, clazz)
     }
@@ -171,12 +171,12 @@ suspend fun CoroutineProducer<KafkaKey, Hendelse>.sendHendelse(key: KafkaKey, va
     )
 }
 
-suspend fun CoroutineProducer<KafkaKey, Hendelse>.slett(value: Hendelse.SlettHendelse) {
-    tombstone(value.notifikasjonsId.toString()) {
-        // TODO: bedre måte å hente partisjon fra underliggende producer?
-        partitionForOrgnr(value.virksomhetsnummer, partitionsFor(TOPIC).size)
-    }
-}
+//suspend fun CoroutineProducer<KafkaKey, Hendelse>.slett(value: Hendelse.SlettHendelse) {
+//    tombstone(value.notifikasjonsId.toString()) {
+//        // TODO: bedre måte å hente partisjon fra underliggende producer?
+//        partitionForOrgnr(value.virksomhetsnummer, partitionsFor(TOPIC).size)
+//    }
+//}
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.beskjedOpprettet(beskjed: Hendelse.BeskjedOpprettet) {
     sendHendelse(beskjed.id.toString(), beskjed)
@@ -192,6 +192,10 @@ suspend fun CoroutineProducer<KafkaKey, Hendelse>.oppgaveUtført(oppgaveUtført:
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.softDelete(softDelete: Hendelse.SoftDelete) {
     sendHendelse(UUID.randomUUID().toString(), softDelete)
+}
+
+suspend fun CoroutineProducer<KafkaKey, Hendelse>.hardDelete(hardDelete: Hendelse.HardDelete) {
+    sendHendelse(UUID.randomUUID().toString(), hardDelete)
 }
 
 suspend fun CoroutineProducer<KafkaKey, Hendelse>.brukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
@@ -212,7 +216,7 @@ fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
 
 class CoroutineConsumerImpl<K, V>(
     private val consumer: Consumer<K, V>
-): CoroutineConsumer<K, V> {
+) : CoroutineConsumer<K, V> {
     private val log = logger()
 
     private val retriesPerPartition = ConcurrentHashMap<Int, AtomicInteger>()
@@ -268,7 +272,8 @@ class CoroutineConsumerImpl<K, V>(
                 } catch (e: Exception) {
                     val attempt = retries.incrementAndGet()
                     val backoffMillis = 1000L * 2.toThePowerOf(attempt)
-                    log.error("exception while processing {}. attempt={}. backoff={}.",
+                    log.error(
+                        "exception while processing {}. attempt={}. backoff={}.",
                         record.loggableToString(),
                         attempt,
                         Duration.ofMillis(backoffMillis),
