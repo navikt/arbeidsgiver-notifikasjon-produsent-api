@@ -6,9 +6,9 @@ import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.CoroutineProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.oppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
@@ -22,10 +22,10 @@ import java.util.*
 class OppgaveUtførtTests : DescribeSpec({
     val database = testDatabase(ProdusentMain.databaseConfig)
     val produsentModel = ProdusentModelImpl(database)
-    val kafkaProducer = mockk<CoroutineProducer<KafkaKey, Hendelse>>()
+    val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
-    mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::oppgaveUtført)
-    coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any()) } returns Unit
+    mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.OppgaveUtført>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -89,7 +89,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.OppgaveUtført>())
                 }
             }
 
@@ -232,7 +232,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineProducer<KafkaKey, Hendelse>>().oppgaveUtført(any())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.OppgaveUtført>())
                 }
             }
 

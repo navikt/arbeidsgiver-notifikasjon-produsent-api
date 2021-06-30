@@ -12,6 +12,9 @@ import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -90,7 +93,7 @@ object BrukerAPI {
         altinn: Altinn,
         brreg: Brreg,
         brukerModel: BrukerModel,
-        kafkaProducer: CoroutineProducer<KafkaKey, Hendelse>,
+        kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
         nærmesteLederService: NærmesteLederService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphqls") {
@@ -197,7 +200,7 @@ object BrukerAPI {
                         virksomhetsnummer = virksomhetsnummer
                     )
 
-                    kafkaProducer.brukerKlikket(hendelse)
+                    kafkaProducer.sendHendelse(hendelse)
 
                     brukerModel.oppdaterModellEtterHendelse(hendelse)
 

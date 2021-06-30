@@ -8,6 +8,9 @@ import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.*
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
@@ -20,10 +23,10 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
     val database = testDatabase(ProdusentMain.databaseConfig)
     val produsentModel = ProdusentModelImpl(database)
-    val kafkaProducer = mockk<CoroutineProducer<KafkaKey, Hendelse>>()
+    val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
-    mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::softDelete)
-    coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().softDelete(any()) } returns Unit
+    mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.SoftDelete>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -95,7 +98,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineProducer<KafkaKey, Hendelse>>().softDelete(any())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.SoftDelete>())
                 }
             }
 
@@ -274,7 +277,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineProducer<KafkaKey, Hendelse>>().softDelete(any())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.SoftDelete>())
                 }
             }
 

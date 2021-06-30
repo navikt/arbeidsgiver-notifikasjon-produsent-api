@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -342,7 +343,7 @@ object ProdusentAPI {
     )
 
     fun newGraphQL(
-        kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = createKafkaProducer(),
+        kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = createKafkaProducer(),
         produsentRegister: ProdusentRegister = ProdusentRegisterImpl,
         produsentModel: ProdusentModel,
     ) = TypedGraphQL<Context>(
@@ -352,14 +353,15 @@ object ProdusentAPI {
             scalar(Scalars.ISO8601DateTime)
 
             resolveSubtypes<Error>()
+            resolveSubtypes<Notifikasjon>()
+            resolveSubtypes<Mottaker>()
+
             resolveSubtypes<NyBeskjedResultat>()
             resolveSubtypes<NyOppgaveResultat>()
             resolveSubtypes<OppgaveUtfoertResultat>()
             resolveSubtypes<MineNotifikasjonerResultat>()
             resolveSubtypes<SoftDeleteNotifikasjonResultat>()
             resolveSubtypes<HardDeleteNotifikasjonResultat>()
-            resolveSubtypes<Notifikasjon>()
-            resolveSubtypes<Mottaker>()
 
             wire("Query") {
                 dataFetcher("whoami") {
@@ -393,7 +395,7 @@ object ProdusentAPI {
 
                     val id = UUID.randomUUID()
                     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
-                    kafkaProducer.beskjedOpprettet(nyBeskjed.tilDomene(id))
+                    kafkaProducer.sendHendelseMedKey(id, nyBeskjed.tilDomene(id))
                     return@coDataFetcher NyBeskjedVellykket(id)
                 }
 
@@ -408,7 +410,7 @@ object ProdusentAPI {
 
                     val id = UUID.randomUUID()
                     log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
-                    kafkaProducer.oppgaveOpprettet(nyOppgave.tilDomene(id))
+                    kafkaProducer.sendHendelseMedKey(id, nyOppgave.tilDomene(id))
                     return@coDataFetcher NyOppgaveVellykket(id)
                 }
 
@@ -431,7 +433,7 @@ object ProdusentAPI {
                         virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
                     )
 
-                    kafkaProducer.oppgaveUtført(utførtHendelse)
+                    kafkaProducer.sendHendelse(utførtHendelse)
                     produsentModel.oppdaterModellEtterHendelse(utførtHendelse)
                     return@coDataFetcher OppgaveUtfoertVellykket(id)
                 }
@@ -456,7 +458,7 @@ object ProdusentAPI {
                         virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
                     )
 
-                    kafkaProducer.oppgaveUtført(utførtHendelse)
+                    kafkaProducer.sendHendelse(utførtHendelse)
                     produsentModel.oppdaterModellEtterHendelse(utførtHendelse)
                     return@coDataFetcher OppgaveUtfoertVellykket(notifikasjon.id)
                 }
@@ -477,7 +479,7 @@ object ProdusentAPI {
                         deletedAt = OffsetDateTime.now()
                     )
 
-                    kafkaProducer.softDelete(softDelete)
+                    kafkaProducer.sendHendelse(softDelete)
                     produsentModel.oppdaterModellEtterHendelse(softDelete)
                     return@coDataFetcher SoftDeleteNotifikasjonVellykket(id)
                 }
@@ -499,7 +501,7 @@ object ProdusentAPI {
                         deletedAt = OffsetDateTime.now()
                     )
 
-                    kafkaProducer.softDelete(softDelete)
+                    kafkaProducer.sendHendelse(softDelete)
                     produsentModel.oppdaterModellEtterHendelse(softDelete)
                     return@coDataFetcher SoftDeleteNotifikasjonVellykket(notifikasjon.id)
                 }
@@ -519,7 +521,7 @@ object ProdusentAPI {
                         deletedAt = OffsetDateTime.now()
                     )
 
-                    kafkaProducer.hardDelete(hardDelete)
+                    kafkaProducer.sendHendelse(hardDelete)
                     produsentModel.oppdaterModellEtterHendelse(hardDelete)
                     return@coDataFetcher HardDeleteNotifikasjonVellykket(id)
                 }
@@ -541,7 +543,7 @@ object ProdusentAPI {
                         deletedAt = OffsetDateTime.now()
                     )
 
-                    kafkaProducer.hardDelete(hardDelete)
+                    kafkaProducer.sendHendelse(hardDelete)
                     produsentModel.oppdaterModellEtterHendelse(hardDelete)
                     return@coDataFetcher HardDeleteNotifikasjonVellykket(notifikasjon.id)
                 }

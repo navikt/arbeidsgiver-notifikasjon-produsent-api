@@ -1,6 +1,6 @@
 package db.migration
 
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.CONSUMER_PROPERTIES
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CONSUMER_PROPERTIES
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig

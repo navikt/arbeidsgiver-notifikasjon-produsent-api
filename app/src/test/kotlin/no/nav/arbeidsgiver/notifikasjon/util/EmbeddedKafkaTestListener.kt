@@ -5,23 +5,19 @@ import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
 import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import no.nav.common.KafkaEnvironment
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.producer.Producer
-import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.reflect.KProperty
 
 fun TestConfiguration.embeddedKafka(): EmbeddedKafka =
     EmbeddedKafkaTestListener()
         .also{ listener(it) }
 
 interface EmbeddedKafka {
-    fun newConsumer(): CoroutineConsumer<KafkaKey, Hendelse>
-    fun newProducer(): CoroutineProducer<KafkaKey, Hendelse>
+    fun newConsumer(): CoroutineKafkaConsumer<KafkaKey, Hendelse>
+    fun newProducer(): CoroutineKafkaProducer<KafkaKey, Hendelse>
 }
 
 class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {

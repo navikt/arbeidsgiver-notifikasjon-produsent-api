@@ -14,12 +14,15 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
 class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
     val queryModel: BrukerModelImpl = mockk(relaxed = true)
-    val kafkaProducer: CoroutineProducer<KafkaKey, Hendelse> = mockk()
+    val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = mockk()
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
@@ -31,8 +34,8 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
         ),
     )
 
-    mockkStatic(CoroutineProducer<KafkaKey, Hendelse>::brukerKlikket)
-    coEvery { any<CoroutineProducer<KafkaKey, Hendelse>>().brukerKlikket(any()) } returns Unit
+    mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(any<Hendelse.BrukerKlikket>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -90,7 +93,7 @@ class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
 
             it("Event produseres på kafka") {
                 coVerify {
-                    any<CoroutineProducer<KafkaKey, Hendelse>>().brukerKlikket(
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(
                         withArg(brukerKlikketMatcher)
                     )
                 }

@@ -2,8 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ValueDeserializer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ValueSerializer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.ValueDeserializer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.ValueSerializer
 import java.time.OffsetDateTime
 import java.util.*
 

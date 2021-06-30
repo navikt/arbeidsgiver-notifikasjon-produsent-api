@@ -13,6 +13,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 
 
