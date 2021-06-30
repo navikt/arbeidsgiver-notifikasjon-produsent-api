@@ -45,7 +45,7 @@ object BrukerMain {
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         altinn: Altinn = AltinnImpl,
-        brreg: Brreg = BrregImpl(),
+        enhetsregisteret: Enhetsregisteret = EnhetsregisteretImpl(),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
@@ -78,7 +78,7 @@ object BrukerMain {
             val graphql = async {
                 BrukerAPI.createBrukerGraphQL(
                     altinn = altinn,
-                    brreg = brreg,
+                    enhetsregisteret = enhetsregisteret,
                     brukerModel = brukerModelAsync.await(),
                     kafkaProducer = createKafkaProducer(),
                     nærmesteLederService = NærmesteLederServiceImpl()

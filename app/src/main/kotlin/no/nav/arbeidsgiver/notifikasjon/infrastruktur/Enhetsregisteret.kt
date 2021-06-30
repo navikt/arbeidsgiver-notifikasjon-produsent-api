@@ -11,38 +11,41 @@ import io.ktor.http.*
 import java.time.LocalDateTime
 import java.util.*
 
-interface Brreg {
-    suspend fun hentEnhet(orgnr: String): BrregEnhet
+interface Enhetsregisteret {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class Enhet(
+        val organisasjonsnummer: String,
+        val navn: String,
+    )
+
+    suspend fun hentEnhet(orgnr: String): Enhet
 }
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class BrregEnhet(
-    val organisasjonsnummer: String,
-    val navn: String,
-)
-
-class BrregImpl(
+class EnhetsregisteretImpl(
     private val baseUrl : String = "https://data.brreg.no"
-) : Brreg {
+) : Enhetsregisteret {
     val log = logger()
+
     private val timer = Health.meterRegistry.timer("brreg_hent_organisasjon")
+
     private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer()
         }
         expectSuccess = false
     }
-    val cache = SimpleLRUCache<String, BrregEnhet>(100_000) {
-        val response: HttpResponse = httpClient.get("$baseUrl/enhetsregisteret/api/enheter/$it")
+
+    val cache = SimpleLRUCache<String, Enhetsregisteret.Enhet>(100_000) { orgnr ->
+        val response: HttpResponse = httpClient.get("$baseUrl/enhetsregisteret/api/enheter/$orgnr")
         if (response.status.isSuccess()) {
             response.receive()
         } else {
             logger().warn("kunne ikke finne navn for virksomhet. kall til brreg feilet: ${response.status} ${response.readText()}")
-            BrregEnhet(it, "")
+            Enhetsregisteret.Enhet(orgnr, "")
         }
     }
 
-    override suspend fun hentEnhet(orgnr: String): BrregEnhet =
+    override suspend fun hentEnhet(orgnr: String): Enhetsregisteret.Enhet =
         timer.coRecord {
             cache.get(orgnr)
         }

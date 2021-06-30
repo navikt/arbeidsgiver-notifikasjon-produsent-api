@@ -91,7 +91,7 @@ object BrukerAPI {
 
     fun createBrukerGraphQL(
         altinn: Altinn,
-        brreg: Brreg,
+        enhetsregisteret: Enhetsregisteret,
         brukerModel: BrukerModel,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
         nærmesteLederService: NærmesteLederService,
@@ -162,7 +162,7 @@ object BrukerAPI {
                 suspend fun <T: WithVirksomhet> fetchVirksomhet(env: DataFetchingEnvironment): Virksomhet {
                     val source = env.getSource<T>()
                     return if (env.selectionSet.contains("Virksomhet.navn")) {
-                        brreg.hentEnhet(source.virksomhet.virksomhetsnummer).let { enhet ->
+                        enhetsregisteret.hentEnhet(source.virksomhet.virksomhetsnummer).let { enhet ->
                             Virksomhet(
                                 virksomhetsnummer = enhet.organisasjonsnummer,
                                 navn = enhet.navn

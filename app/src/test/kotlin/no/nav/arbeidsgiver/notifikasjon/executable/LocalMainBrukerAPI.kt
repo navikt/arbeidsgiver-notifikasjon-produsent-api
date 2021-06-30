@@ -6,7 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.BrukerMain
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.VÅRE_TJENESTER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
-import no.nav.arbeidsgiver.notifikasjon.util.BrregStub
+import no.nav.arbeidsgiver.notifikasjon.util.EnhetsregisteretStub
 import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_BRUKER_AUTHENTICATION
 
 /* Bruker API */
@@ -18,7 +18,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             HttpAuthProviders.FAKEDINGS_BRUKER,
             LOCALHOST_BRUKER_AUTHENTICATION,
         ),
-        brreg = BrregStub(),
+        enhetsregisteret = EnhetsregisteretStub(),
         altinn = AltinnStub { _, _ ->
             val alleOrgnr = listOf(
                 "811076732",
