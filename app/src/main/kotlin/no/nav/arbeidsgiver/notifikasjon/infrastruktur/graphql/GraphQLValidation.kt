@@ -13,7 +13,7 @@ object ValidateDirective : SchemaDirectiveWiring {
     /* Find all validation annotations for this argument. */
     override fun onArgument(environment: SchemaDirectiveWiringEnvironment<GraphQLArgument>): GraphQLArgument {
         val argument = environment.element
-        val validator = argument.type.createValidator()
+        val validator = argument.createValidator()
             ?: return argument
         val dataFetcher = environment.codeRegistry.getDataFetcher(
             environment.fieldsContainer,
@@ -29,16 +29,32 @@ object ValidateDirective : SchemaDirectiveWiring {
         return argument
     }
 
-    private fun GraphQLInputType.createValidator(): Validator? =
+    private fun GraphQLArgument.createValidator(): Validator? {
+        val path = listOf("argument '${this.name}'")
+        val argumentValidator: Validator? = this.directives
+            .filter { it.name != "Validate" }
+            .map { directive ->
+            VALIDATORS[directive.name]
+                ?.createValidator(path, directive, this.type)
+                ?: throw Error("Unknown validation directive ${directive.name}")
+        }
+            .andAll()
+
+        val nestedValidators = this.type.createValidator(path)
+
+        return argumentValidator and nestedValidators
+    }
+
+    private fun GraphQLInputType.createValidator(path: Path): Validator? =
         when (this) {
-            is GraphQLNonNull -> this.createValidator()
-            is GraphQLInputObjectType -> this.createValidator()
+            is GraphQLNonNull -> this.createValidator(path)
+            is GraphQLInputObjectType -> this.createValidator(path)
             is GraphQLScalarType -> null
-            else -> throw Error("Unexpected graphql type ${this.javaClass.canonicalName}")
+            else -> throw Error("Unexpected graphql type ${this.javaClass.canonicalName} in ${path.joinToString(", ")}")
         }
 
-    private fun GraphQLNonNull.createValidator(): Validator? =
-        (this.wrappedType as GraphQLInputType).createValidator()
+    private fun GraphQLNonNull.createValidator(path: Path): Validator? =
+        (this.wrappedType as GraphQLInputType).createValidator(path)
             ?.let { validate ->
                 { value ->
                     if (value != null) {
@@ -47,36 +63,27 @@ object ValidateDirective : SchemaDirectiveWiring {
                 }
             }
 
-    private fun GraphQLInputObjectType.createValidator(): Validator? {
+    private fun GraphQLInputObjectType.createValidator(path: Path): Validator? {
+        val extendedPath = path + listOf("object type '${this.name}'")
         val objectValidators = this.directives.map { directive ->
-            OBJECT_VALIDATORS[directive.name]
-                ?.createValidator(directive, this)
+            VALIDATORS[directive.name]
+                ?.createValidator(extendedPath, directive, this)
                 ?: throw Error("Unknown directive '${directive.name}' to validate")
         }
-        val fieldValidators = this.fields.mapNotNull { it.createValidator() }
+        val fieldValidators = this.fields.mapNotNull { it.createValidator(path) }
 
-        if (objectValidators.isEmpty() && fieldValidators.isEmpty()) {
-            return null
-        } else {
-            return { value ->
-                for (validator in objectValidators) {
-                    validator(value)
-                }
-                for (validator in fieldValidators) {
-                    validator(value)
-                }
-            }
-        }
+        return (fieldValidators + objectValidators).andAll()
     }
 
-    private fun GraphQLInputObjectField.createValidator(): Validator? {
+    private fun GraphQLInputObjectField.createValidator(path: Path): Validator? {
+        val extendedPath = path + listOf("field '${this.name}'")
         val validators = this.directives.map { directive ->
-            FIELD_VALIDATORS[directive.name]
-                ?.createValidator(directive, this)
+            VALIDATORS[directive.name]
+                ?.createValidator(extendedPath, directive, this.type)
                 ?: throw Error("Unknown directive '${directive.name}' to validate")
         }
 
-        val otherValidators = type.createValidator()
+        val otherValidators = type.createValidator(extendedPath)
 
         if (validators.isEmpty() && otherValidators == null) {
             return null
@@ -95,45 +102,76 @@ object ValidateDirective : SchemaDirectiveWiring {
 
 private typealias Validator = (Any?) -> Unit
 
-interface ValidatorBuilder<T> {
+private typealias Path = List<String>
+private fun Path.asString() = this.joinToString(", ")
+
+private infix fun Validator?.and(other: Validator?): Validator? =
+    if (this == null && other == null)
+        null
+    else
+        { value ->
+            if (this != null) {
+                this(value)
+            }
+            if (other != null) {
+                other(value)
+            }
+        }
+
+private fun List<Validator?>?.andAll(): Validator? =
+    this.orEmpty()
+        .fold(initial = null, operation = Validator?::and)
+
+interface ValueValidator {
     val name: String
-    fun createValidator(directive: GraphQLDirective, obj: T): Validator
+    fun createValidator(path: List<String>, directive: GraphQLDirective, type: GraphQLType): Validator
 }
 
-private val FIELD_VALIDATORS = listOf<ValidatorBuilder<GraphQLInputObjectField>>(
-    object : ValidatorBuilder<GraphQLInputObjectField> {
-        override val name = "MaxLength"
+private val VALIDATORS = listOf(
+    object : ValueValidator {
+        override val name = "MaxValue"
 
-        override fun createValidator(directive: GraphQLDirective, obj: GraphQLInputObjectField): Validator {
-            val max = directive.getArgument("max").value as Int
+        override fun createValidator(path: Path, directive: GraphQLDirective, type: GraphQLType): Validator {
+            val upToIncluding = directive.getArgument("upToIncluding").value as Int
             return { value ->
-                val valueStr = value as String?
-                if (valueStr != null && valueStr.length > max) {
-                    throw ValideringsFeil("verdi på felt '${obj.name}' overstiger max antall tegn. antall=${valueStr.length}, max=$max")
+                val valueInt = value as Int?
+                if (valueInt != null && valueInt > upToIncluding) {
+                    throw ValideringsFeil("${path.asString()}: verdien overstiger maks antall tegn: verdi=${valueInt}, upToIncluding=${upToIncluding}.")
                 }
             }
         }
     },
-    object : ValidatorBuilder<GraphQLInputObjectField> {
-        override val name = "NonIdentifying"
+    object : ValueValidator {
+        override val name = "MaxLength"
 
-        override fun createValidator(directive: GraphQLDirective, obj: GraphQLInputObjectField): Validator {
+        override fun createValidator(path: Path, directive: GraphQLDirective, type: GraphQLType): Validator {
+            val max = directive.getArgument("max").value as Int
             return { value ->
                 val valueStr = value as String?
-                if (valueStr != null && valueStr.contains(Regex("""\d{11}"""))) {
-                    throw ValideringsFeil("felt '${obj.name}' kan ikke inneholde identifiserende data")
+                if (valueStr != null && valueStr.length > max) {
+                    throw ValideringsFeil("${path.asString()}: verdien overstiger maks antall tegn, antall=${valueStr.length}, maks=$max.")
                 }
             }
         }
-    }
-).associateBy { it.name }
+    },
+    object : ValueValidator {
+        override val name = "NonIdentifying"
 
-private val OBJECT_VALIDATORS = listOf<ValidatorBuilder<GraphQLInputObjectType>>(
-    object : ValidatorBuilder<GraphQLInputObjectType> {
+        override fun createValidator(path: Path, directive: GraphQLDirective, type: GraphQLType): Validator {
+            return { value ->
+                val valueStr = value as String?
+                if (valueStr != null && valueStr.contains(Regex("""\d{11}"""))) {
+                    throw ValideringsFeil("${path.asString()}: verdien inneholder uønsket data: personnummer (11 siffer)")
+                }
+            }
+        }
+    },
+    object : ValueValidator {
         override val name = "ExactlyOneFieldGiven"
 
-        override fun createValidator(directive: GraphQLDirective, obj: GraphQLInputObjectType): Validator {
-            val fieldNames = obj.fields.map { it.name }.toSet()
+        override fun createValidator(path: Path, directive: GraphQLDirective, type: GraphQLType): Validator {
+            type as GraphQLInputObjectType
+            val fieldNames = type.fields.map { it.name }.toSet()
             return { value ->
                 value as Map<String, Any?>
                 val fieldsGiven = value.filter {
@@ -141,14 +179,13 @@ private val OBJECT_VALIDATORS = listOf<ValidatorBuilder<GraphQLInputObjectType>>
                 }
                 when (fieldsGiven.size) {
                     1 -> Unit
-                    0 -> throw ValideringsFeil("Nøyaktig ett felt skal være satt. (Ingen felt er satt)")
-                    else -> throw ValideringsFeil("Nøyaktig ett felt skal være satt. (${fieldsGiven.keys.joinToString(", ")} er gitt)")
+                    0 -> throw ValideringsFeil("${path.asString()}: nøyaktig ett felt skal være satt. (Ingen felt er satt)")
+                    else -> throw ValideringsFeil("${path.asString()}: nøyaktig ett felt skal være satt. (${fieldsGiven.keys.joinToString(", ")} er gitt)")
                 }
             }
         }
     }
 ).associateBy { it.name }
-
 
 /**
  * lånt fra https://github.com/graphql-java/graphql-java/issues/1022#issuecomment-723369519

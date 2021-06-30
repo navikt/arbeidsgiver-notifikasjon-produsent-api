@@ -53,7 +53,8 @@ class InputValideringTests : DescribeSpec({
             it("errors har forklarende feilmelding") {
                 val errors = response.getGraphqlErrors()
                 errors shouldHaveSize 1
-                errors.first().message shouldContain "felt 'tekst' overstiger max antall tegn. antall=301, max=300"
+                errors.first().message shouldContain "maks antall tegn"
+                errors.first().message shouldContain "antall=301, maks=300"
             }
         }
 
@@ -156,7 +157,7 @@ class InputValideringTests : DescribeSpec({
             )
 
             it("feil pga identifiserende data i tekst") {
-                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tekst' kan ikke inneholde identifiserende data"
+                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
             }
         }
     }
