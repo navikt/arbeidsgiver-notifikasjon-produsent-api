@@ -357,7 +357,7 @@ object ProdusentAPI {
 
                 coDataFetcher("mineNotifikasjoner") { env ->
                     val merkelapp = env.getArgument<String>("merkelapp")
-                    val first = env.getArgumentOrDefault("first", 200)
+                    val first = env.getArgumentOrDefault("first", 1000)
                     val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
                     val produsent = env.hentProdusent(produsentRegister)
 
