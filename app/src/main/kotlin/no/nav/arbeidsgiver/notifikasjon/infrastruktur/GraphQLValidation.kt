@@ -13,7 +13,7 @@ object ValidateDirective : SchemaDirectiveWiring {
     /* Find all validation annotations for this argument. */
     override fun onArgument(environment: SchemaDirectiveWiringEnvironment<GraphQLArgument>): GraphQLArgument {
         val argument = environment.element
-        val validator = argument.type.createValidator(argument.directives)
+        val validator = argument.type.createValidator(argument)
             ?: return argument
         val dataFetcher = environment.codeRegistry.getDataFetcher(
             environment.fieldsContainer,
@@ -29,16 +29,16 @@ object ValidateDirective : SchemaDirectiveWiring {
         return argument
     }
 
-    private fun GraphQLInputType.createValidator(directives: List<GraphQLDirective> = emptyList()): Validator? =
+    private fun GraphQLInputType.createValidator(argument: GraphQLArgument): Validator? =
         when (this) {
-            is GraphQLNonNull -> this.createValidator()
-            is GraphQLInputObjectType -> this.createValidator()
-            is GraphQLScalarType -> this.createValidator(directives)
+            is GraphQLNonNull -> this.createValidator(argument)
+            is GraphQLInputObjectType -> this.createValidator(argument)
+            is GraphQLScalarType -> this.createValidator(argument)
             else -> throw Error("Unexpected graphql type ${this.javaClass.canonicalName}")
         }
 
-    private fun GraphQLNonNull.createValidator(): Validator? =
-        (this.wrappedType as GraphQLInputType).createValidator()
+    private fun GraphQLNonNull.createValidator(argument: GraphQLArgument): Validator? =
+        (this.wrappedType as GraphQLInputType).createValidator(argument)
             ?.let { validate ->
                 { value ->
                     if (value != null) {
@@ -47,13 +47,13 @@ object ValidateDirective : SchemaDirectiveWiring {
                 }
             }
 
-    private fun GraphQLInputObjectType.createValidator(): Validator? {
+    private fun GraphQLInputObjectType.createValidator(argument: GraphQLArgument): Validator? {
         val objectValidators = this.directives.map { directive ->
             OBJECT_VALIDATORS[directive.name]
                 ?.createValidator(directive, this)
                 ?: throw Error("Unknown directive '${directive.name}' to validate")
         }
-        val fieldValidators = this.fields.mapNotNull { it.createValidator() }
+        val fieldValidators = this.fields.mapNotNull { it.createValidator(argument) }
 
         if (objectValidators.isEmpty() && fieldValidators.isEmpty()) {
             return null
@@ -69,20 +69,20 @@ object ValidateDirective : SchemaDirectiveWiring {
         }
     }
 
-    private fun GraphQLInputObjectField.createValidator(): Validator? {
+    private fun GraphQLInputObjectField.createValidator(argument: GraphQLArgument): Validator? {
         val validators = this.directives.map { directive ->
             FIELD_VALIDATORS[directive.name]
                 ?.createValidator(directive, this)
                 ?: throw Error("Unknown directive '${directive.name}' to validate")
         }
 
-        val otherValidators = type.createValidator()
+        val otherValidators = type.createValidator(argument)
 
         if (validators.isEmpty() && otherValidators == null) {
             return null
         } else {
             return { objectValue ->
-                objectValue as Map<String, Any?>
+                objectValue as Map<*, *>
                 val fieldValue = objectValue[name]
                 validators.forEach { validator ->
                     validator(fieldValue)
@@ -92,8 +92,8 @@ object ValidateDirective : SchemaDirectiveWiring {
         }
     }
 
-    private fun GraphQLScalarType.createValidator(directives: List<GraphQLDirective>): Validator? {
-        val validators = directives.filterNot { it.name == "Validate" }.map { directive ->
+    private fun GraphQLScalarType.createValidator(argument: GraphQLArgument): Validator? {
+        val validators = argument.directives.filterNot { it.name == "Validate" }.map { directive ->
             SCALAR_VALIDATORS[directive.name]
                 ?.createValidator(directive, this)
                 ?: throw Error("Unknown directive '${directive.name}' to validate")
