@@ -14,6 +14,6 @@ class KafkaReaperServiceImpl(
 ) : KafkaReaperService {
 
     override fun håndterHendelse(hendelse: Hendelse) {
-        TODO("Ikke implementert")
+        throw RuntimeException("TODO: Ikke implementert")
     }
 }

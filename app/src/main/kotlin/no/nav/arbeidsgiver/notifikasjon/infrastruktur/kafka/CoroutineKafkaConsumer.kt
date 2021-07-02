@@ -87,7 +87,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
                     log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)
                     return@currentRecord
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     val attempt = retries.incrementAndGet()
                     val backoffMillis = 1000L * 2.toThePowerOf(attempt)
                     log.error(

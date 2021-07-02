@@ -67,7 +67,7 @@ object HttpAuthProviders {
                     val fnrClaim = when {
                         idp.matches(loginserviceIssuer) ->  "sub"
                         idp.matches(idportenIssuer) -> "pid"
-                        else -> throw Error("Ukjent idp i TokenX-token")
+                        else -> throw RuntimeException("Ukjent idp i TokenX-token")
                     }
                     BrukerPrincipal(
                         fnr = it.payload.getClaim(fnrClaim).asString()

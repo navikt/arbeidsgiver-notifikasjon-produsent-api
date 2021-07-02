@@ -215,7 +215,7 @@ class BrukerModelImpl(
 
     private suspend fun oppdaterModellEtterDelete(hendelsesId: UUID) {
         database.transaction({
-            throw Error("Delete", it)
+            throw RuntimeException("Delete", it)
         }) {
             executeCommand(""" DELETE FROM notifikasjon WHERE id = ?;""") {
                 uuid(hendelsesId)
