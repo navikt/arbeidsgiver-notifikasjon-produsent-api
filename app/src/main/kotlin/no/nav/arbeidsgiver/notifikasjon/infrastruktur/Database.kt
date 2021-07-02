@@ -132,9 +132,7 @@ class Database private constructor(
     suspend fun withFlyway(body: Flyway.() -> Unit) {
         dataSource.withFlyway(config.migrationLocations, body)
     }
-
 }
-
 
 @JvmInline
 value class Transaction(

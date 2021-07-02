@@ -9,8 +9,9 @@ object Main {
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     when (val navn = System.getenv("NAIS_APP_NAME")) {
-        "notifikasjon-produsent-api" -> ProdusentMain.main()
-        "notifikasjon-bruker-api" -> BrukerMain.main()
+        "notifikasjon-produsent-api" -> Produsent.main()
+        "notifikasjon-bruker-api" -> Bruker.main()
+        "notifikasjon-kafka-reaper" -> KafkaReaper.main()
         else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
     }
 }

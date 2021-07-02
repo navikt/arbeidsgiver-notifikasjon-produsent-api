@@ -15,7 +15,7 @@ import java.util.*
 
 class NærmesteLederTilgangsstyring: DescribeSpec({
 
-    val database = testDatabase(BrukerMain.databaseConfig)
+    val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerModelImpl(database)
 
     describe("Tilgangsstyring av nærmeste leder") {

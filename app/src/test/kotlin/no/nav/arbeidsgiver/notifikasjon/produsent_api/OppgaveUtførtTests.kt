@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
+import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
@@ -20,7 +20,7 @@ import java.util.*
 
 
 class OppgaveUtførtTests : DescribeSpec({
-    val database = testDatabase(ProdusentMain.databaseConfig)
+    val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentModelImpl(database)
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 

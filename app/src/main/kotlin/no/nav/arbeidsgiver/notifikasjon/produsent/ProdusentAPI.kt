@@ -6,6 +6,7 @@ import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import java.time.OffsetDateTime

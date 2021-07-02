@@ -6,7 +6,7 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
+import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
@@ -21,7 +21,7 @@ import java.util.*
 // Legg til en test for sletting av én av flere rader i database
 
 class HardDeleteNotifikasjonTests : DescribeSpec({
-    val database = testDatabase(ProdusentMain.databaseConfig)
+    val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentModelImpl(database)
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 

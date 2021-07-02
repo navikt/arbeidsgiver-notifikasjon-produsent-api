@@ -55,19 +55,7 @@ private val graphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1
     .produceMetrics("graphql-workers")
     .asCoroutineDispatcher()
 
-fun <T : WithCoroutineScope> Application.httpServerSetup(
-    authProviders: List<JWTAuthentication>,
-    extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
-    graphql: Deferred<TypedGraphQL<T>>,
-) {
-
-    install(CORS) {
-        /* TODO: log when reject */
-        allowNonSimpleContentTypes = true
-        host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
-        host("localhost:3000")
-    }
-
+fun Application.installMetrics() {
     install(MicrometerMetrics) {
         registry = Health.meterRegistry
         distributionStatisticConfig = DistributionStatisticConfig.Builder()
@@ -82,6 +70,22 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
             LogbackMetrics()
         )
     }
+}
+
+fun <T : WithCoroutineScope> Application.httpServerSetup(
+    authProviders: List<JWTAuthentication>,
+    extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
+    graphql: Deferred<TypedGraphQL<T>>,
+) {
+
+    install(CORS) {
+        /* TODO: log when reject */
+        allowNonSimpleContentTypes = true
+        host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
+        host("localhost:3000")
+    }
+
+    installMetrics()
 
     install(CallId) {
         retrieveFromHeader(HttpHeaders.XRequestId)
@@ -171,27 +175,31 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
             call.respondBytes(graphiqlHTML, ContentType.Text.Html)
         }
 
-        route("internal") {
-            get("alive") {
-                if (Health.alive) {
-                    call.respond(HttpStatusCode.OK)
-                } else {
-                    call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
-                }
-            }
+        internalRoutes()
+    }
+}
 
-            get("ready") {
-                if (Health.ready) {
-                    call.respond(HttpStatusCode.OK)
-                } else {
-                    call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
-                }
+fun Route.internalRoutes() {
+    route("internal") {
+        get("alive") {
+            if (Health.alive) {
+                call.respond(HttpStatusCode.OK)
+            } else {
+                call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
             }
+        }
 
-            get("metrics") {
-                withContext(this.coroutineContext + metricsDispatcher) {
-                    call.respond(Health.meterRegistry.scrape())
-                }
+        get("ready") {
+            if (Health.ready) {
+                call.respond(HttpStatusCode.OK)
+            } else {
+                call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
+            }
+        }
+
+        get("metrics") {
+            withContext(this.coroutineContext + metricsDispatcher) {
+                call.respond(Health.meterRegistry.scrape())
             }
         }
     }

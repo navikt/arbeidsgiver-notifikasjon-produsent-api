@@ -18,7 +18,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 
 
-object BrukerMain {
+object Bruker {
     val log = logger()
 
     val databaseConfig = Database.Config(

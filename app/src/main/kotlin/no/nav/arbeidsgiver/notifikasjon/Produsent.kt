@@ -17,7 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
 import org.apache.kafka.clients.consumer.ConsumerConfig
 
-object ProdusentMain {
+object Produsent {
     val log = logger()
 
     val databaseConfig = Database.Config(

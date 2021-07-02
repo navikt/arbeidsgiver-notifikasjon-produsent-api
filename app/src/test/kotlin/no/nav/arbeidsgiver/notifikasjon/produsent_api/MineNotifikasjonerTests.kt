@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.ProdusentMain
+import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
@@ -18,7 +18,7 @@ import kotlin.time.ExperimentalTime
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class MineNotifikasjonerTests : DescribeSpec({
-    val database = testDatabase(ProdusentMain.databaseConfig)
+    val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentModelImpl(database)
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(

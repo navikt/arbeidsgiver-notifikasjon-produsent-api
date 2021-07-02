@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.BrukerMain
+import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
@@ -13,7 +13,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
-    val database = testDatabase(BrukerMain.databaseConfig)
+    val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerModelImpl(database)
 
     val fnr = "00000000000"

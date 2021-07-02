@@ -18,4 +18,4 @@ jobs:
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
-          RESOURCE: config/nais-application-bruker-api.yaml,config/nais-application-produsent-api.yaml
+          RESOURCE: config/nais-application-bruker-api.yaml,config/nais-application-produsent-api.yaml,config/nais-application-kafka-reaper.yaml

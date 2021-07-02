@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
-import no.nav.arbeidsgiver.notifikasjon.BrukerMain
+import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
@@ -14,7 +14,7 @@ import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
 class HardDeleteTests : DescribeSpec({
-    val database = testDatabase(BrukerMain.databaseConfig)
+    val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerModelImpl(database)
 
     describe("HardDelete av notifikasjon") {
