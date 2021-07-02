@@ -7,15 +7,22 @@ import java.util.*
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class Hendelse {
+    /* Identifikator for denne hendelsen. */
+    abstract val hendelseId: UUID
+
+    /* Identifikator som grupperer hendelser sammen om en notifikasjon. */
+    abstract val notifikasjonId: UUID
+
     abstract val virksomhetsnummer: String
 
     @JsonTypeName("BeskjedOpprettet")
     data class BeskjedOpprettet(
         override val virksomhetsnummer: String,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
         val merkelapp: String,
         val eksternId: String,
         val mottaker: Mottaker,
-        val id: UUID,
         val tekst: String,
         val grupperingsid: String? = null,
         val lenke: String,
@@ -25,10 +32,11 @@ sealed class Hendelse {
     @JsonTypeName("OppgaveOpprettet")
     data class OppgaveOpprettet(
         override val virksomhetsnummer: String,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
         val merkelapp: String,
         val eksternId: String,
         val mottaker: Mottaker,
-        val id: UUID,
         val tekst: String,
         val grupperingsid: String? = null,
         val lenke: String,
@@ -38,30 +46,33 @@ sealed class Hendelse {
     @JsonTypeName("OppgaveUtfoert")
     data class OppgaveUtført(
         override val virksomhetsnummer: String,
-        val id: UUID,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
     ) : Hendelse()
 
     @JsonTypeName("SoftDelete")
     data class SoftDelete(
         override val virksomhetsnummer: String,
-        val id: UUID,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
         val deletedAt: OffsetDateTime,
     ) : Hendelse()
 
     @JsonTypeName("HardDelete")
     data class HardDelete(
         override val virksomhetsnummer: String,
-        val id: UUID,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
         val deletedAt: OffsetDateTime,
     ) : Hendelse()
 
     @JsonTypeName("BrukerKlikket")
     data class BrukerKlikket(
         override val virksomhetsnummer: String,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
         val fnr: String,
-        val notifikasjonsId: UUID
     ) : Hendelse()
-
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)

@@ -36,25 +36,29 @@ class MineNotifikasjonerTests : DescribeSpec({
     )
 
     beforeContainer {
+        val uuid = UUID.randomUUID()
         produsentModel.oppdaterModellEtterHendelse(
             Hendelse.OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = "1",
                 mottaker = mottaker,
-                id = UUID.randomUUID(),
+                hendelseId = uuid,
+                notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
             )
         )
+        val uuid2 = UUID.randomUUID()
         produsentModel.oppdaterModellEtterHendelse(
             Hendelse.BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = "2",
                 mottaker = mottaker,
-                id = UUID.randomUUID(),
+                hendelseId = uuid2,
+                notifikasjonId = uuid2,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")

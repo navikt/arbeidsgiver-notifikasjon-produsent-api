@@ -72,7 +72,7 @@ class BrukerModelImpl(
 
     private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): BrukerModel.Beskjed =
         BrukerModel.Beskjed(
-            id = this.id,
+            id = this.hendelseId,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
             grupperingsid = this.grupperingsid,
@@ -85,7 +85,7 @@ class BrukerModelImpl(
 
     private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): BrukerModel.Oppgave =
         BrukerModel.Oppgave(
-            id = this.id,
+            id = this.hendelseId,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
             grupperingsid = this.grupperingsid,
@@ -208,8 +208,8 @@ class BrukerModelImpl(
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is Hendelse.OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
-            is Hendelse.SoftDelete -> oppdaterModellEtterDelete(hendelse.id)
-            is Hendelse.HardDelete -> oppdaterModellEtterDelete(hendelse.id)
+            is Hendelse.SoftDelete -> oppdaterModellEtterDelete(hendelse.notifikasjonId)
+            is Hendelse.HardDelete -> oppdaterModellEtterDelete(hendelse.notifikasjonId)
         }
     }
 
@@ -239,7 +239,7 @@ class BrukerModelImpl(
             WHERE id = ?
         """
         ) {
-            uuid(utførtHendelse.id)
+            uuid(utførtHendelse.notifikasjonId)
         }
     }
 
@@ -252,7 +252,7 @@ class BrukerModelImpl(
         """
         ) {
             string(brukerKlikket.fnr)
-            uuid(brukerKlikket.notifikasjonsId)
+            uuid(brukerKlikket.notifikasjonId)
         }
     }
 
@@ -300,7 +300,7 @@ class BrukerModelImpl(
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
             """
             ) {
-                uuid(beskjedOpprettet.id)
+                uuid(beskjedOpprettet.notifikasjonId)
                 string(beskjedOpprettet.virksomhetsnummer)
             }
         }
@@ -350,7 +350,7 @@ class BrukerModelImpl(
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
             """
             ) {
-                uuid(oppgaveOpprettet.id)
+                uuid(oppgaveOpprettet.notifikasjonId)
                 string(oppgaveOpprettet.virksomhetsnummer)
             }
         }

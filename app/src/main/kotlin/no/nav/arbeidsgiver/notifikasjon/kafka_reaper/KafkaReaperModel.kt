@@ -2,22 +2,99 @@ package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import java.time.OffsetDateTime
+import java.util.*
 
 interface KafkaReaperModel {
-    fun oppdaterModellEtterHendelse(hendelse: Hendelse)
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
+    suspend fun erSlettet(notifikasjonId: UUID): Boolean
+    suspend fun alleRelaterteHendelser(notifikasjonId: UUID): List<UUID>
+    suspend fun fjernRelasjon(hendelseId: UUID)
 }
 
 class KafkaReaperModelImpl(
-    database: Database
+    val database: Database
 ) : KafkaReaperModel {
-    override fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
-        val ignore: Unit = when (hendelse) {
-            is Hendelse.SoftDelete -> Unit
-            is Hendelse.HardDelete -> Unit
-            is Hendelse.OppgaveUtført -> Unit
-            is Hendelse.BrukerKlikket -> Unit
-            is Hendelse.BeskjedOpprettet -> Unit
-            is Hendelse.OppgaveOpprettet -> Unit
+    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+        database.transaction({}) {
+            executeCommand("""
+                INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
+                VALUES (?, ?)
+                ON CONFLICT DO NOTHING
+            """) {
+                uuid(hendelse.notifikasjonId)
+                timestamptz(OffsetDateTime.now())
+            }
+
+            executeCommand("""
+                INSERT INTO notifikasjon_hendelse_relasjon
+                (
+                    hendelse_id,
+                    notifikasjon_id,
+                    hendelse_type
+                ) 
+                VALUES 
+                (
+                    ?,
+                    ?,
+                    ?
+                )
+                ON CONFLICT DO NOTHING
+            """
+            ) {
+                uuid(hendelse.hendelseId)
+                uuid(hendelse.notifikasjonId)
+                string(hendelse.typeNavn)
+            }
         }
     }
+
+    override suspend fun alleRelaterteHendelser(notifikasjonId: UUID): List<UUID> {
+        return database.runNonTransactionalQuery(
+            """
+                SELECT hendelse_id FROM notifikasjon_hendelse_relasjon
+                WHERE notifikasjon_id = ?
+            """,
+            {
+                uuid(notifikasjonId)
+            }
+        ) {
+            getObject("hendelse_id", UUID::class.java)
+        }
+    }
+
+    override suspend fun erSlettet(notifikasjonId: UUID): Boolean {
+        return database.runNonTransactionalQuery(
+            """
+                SELECT *
+                FROM deleted_notifikasjon
+                WHERE notifikasjon_id = ?
+            """,
+            {
+                uuid(notifikasjonId)
+            }
+        ) {
+        }
+            .isNotEmpty()
+    }
+
+    override suspend fun fjernRelasjon(hendelseId: UUID) {
+        database.nonTransactionalCommand(
+            """
+                DELETE FROM notifikasjon_hendelse_relasjon
+                WHERE hendelse_id = ?
+            """
+        ) {
+            uuid(hendelseId)
+        }
+    }
+}
+
+val Hendelse.typeNavn: String get() = when (this) {
+    is Hendelse.SoftDelete -> "SoftDelete"
+    is Hendelse.HardDelete -> "HardDelete"
+    is Hendelse.OppgaveUtført -> "OppgaveUtført"
+    is Hendelse.BrukerKlikket -> "BrukerKlikket"
+    is Hendelse.BeskjedOpprettet -> "BeskjedOpprettet"
+    is Hendelse.OppgaveOpprettet -> "OppgaveOpprettet"
 }

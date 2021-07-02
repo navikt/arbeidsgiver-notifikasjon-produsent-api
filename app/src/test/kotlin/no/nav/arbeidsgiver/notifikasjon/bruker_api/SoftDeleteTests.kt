@@ -36,7 +36,8 @@ class SoftDeleteTests : DescribeSpec({
             merkelapp = "foo",
             eksternId = id.toString(),
             mottaker = mottaker,
-            id = id,
+            hendelseId = id,
+            notifikasjonId = id,
             tekst = "teste",
             grupperingsid = "gr1",
             lenke = "foo.no/bar",
@@ -45,7 +46,8 @@ class SoftDeleteTests : DescribeSpec({
         )
 
         val softDeleteEvent = Hendelse.SoftDelete(
-            id = uuid1,
+            hendelseId = UUID.randomUUID(),
+            notifikasjonId = uuid1,
             virksomhetsnummer = mottaker.virksomhetsnummer,
             deletedAt = OffsetDateTime.MAX,
         )

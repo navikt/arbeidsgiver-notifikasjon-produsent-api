@@ -28,7 +28,8 @@ object ProdusentAPI {
         fun tilDomene(id: UUID): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.BeskjedOpprettet(
-                id = id,
+                hendelseId = id,
+                notifikasjonId = id,
                 merkelapp = notifikasjon.merkelapp,
                 tekst = notifikasjon.tekst,
                 grupperingsid = metadata.grupperingsid,
@@ -49,7 +50,8 @@ object ProdusentAPI {
         fun tilDomene(id: UUID): Hendelse.OppgaveOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.OppgaveOpprettet(
-                id = id,
+                hendelseId = id,
+                notifikasjonId = id,
                 merkelapp = notifikasjon.merkelapp,
                 tekst = notifikasjon.tekst,
                 grupperingsid = metadata.grupperingsid,
@@ -430,7 +432,8 @@ object ProdusentAPI {
                         ?.let { return@coDataFetcher it }
 
                     val utførtHendelse = Hendelse.OppgaveUtført(
-                        id = id,
+                        hendelseId = UUID.randomUUID(),
+                        notifikasjonId = id,
                         virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
                     )
 
@@ -455,7 +458,8 @@ object ProdusentAPI {
                         ?.let { return@coDataFetcher it }
 
                     val utførtHendelse = Hendelse.OppgaveUtført(
-                        id = notifikasjon.id,
+                        hendelseId = UUID.randomUUID(),
+                        notifikasjonId = notifikasjon.id,
                         virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
                     )
 
@@ -475,7 +479,8 @@ object ProdusentAPI {
                         ?.let { return@coDataFetcher it }
 
                     val softDelete = Hendelse.SoftDelete(
-                        id = id,
+                        hendelseId = UUID.randomUUID(),
+                        notifikasjonId = id,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                         deletedAt = OffsetDateTime.now()
                     )
@@ -497,7 +502,8 @@ object ProdusentAPI {
                         ?.let { return@coDataFetcher it }
 
                     val softDelete = Hendelse.SoftDelete(
-                        id = notifikasjon.id,
+                        hendelseId = UUID.randomUUID(),
+                        notifikasjonId = notifikasjon.id,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                         deletedAt = OffsetDateTime.now()
                     )
@@ -517,7 +523,8 @@ object ProdusentAPI {
                         ?.let { return@coDataFetcher it }
 
                     val hardDelete = Hendelse.HardDelete(
-                        id = id,
+                        hendelseId = UUID.randomUUID(),
+                        notifikasjonId = id,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                         deletedAt = OffsetDateTime.now()
                     )
@@ -539,7 +546,8 @@ object ProdusentAPI {
                         ?.let { return@coDataFetcher it }
 
                     val hardDelete = Hendelse.HardDelete(
-                        id = notifikasjon.id,
+                        hendelseId = UUID.randomUUID(),
+                        notifikasjonId = notifikasjon.id,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                         deletedAt = OffsetDateTime.now()
                     )

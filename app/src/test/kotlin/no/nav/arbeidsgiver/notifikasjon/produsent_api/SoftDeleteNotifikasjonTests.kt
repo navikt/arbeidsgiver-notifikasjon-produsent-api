@@ -58,12 +58,17 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         merkelapp = merkelapp,
         eksternId = eksternId,
         mottaker = mottaker,
-        id = uuid,
+        hendelseId = uuid,
+        notifikasjonId = uuid,
         tekst = "test",
         lenke = "https://nav.no",
         opprettetTidspunkt = opprettetTidspunkt
     )
-    val oppgaveOpprettet2 = oppgaveOpprettet.copy(eksternId = eksternId2, id = uuid2)
+    val oppgaveOpprettet2 = oppgaveOpprettet.copy(
+        eksternId = eksternId2,
+        hendelseId = uuid2,
+        notifikasjonId = uuid2,
+    )
 
     describe("SoftDelete-oppførsel") {
 

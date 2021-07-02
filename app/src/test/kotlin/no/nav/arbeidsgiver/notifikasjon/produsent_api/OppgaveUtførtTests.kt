@@ -58,7 +58,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id = uuid,
+                hendelseId = uuid,
+                notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -124,7 +125,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 merkelapp = "feil merkelapp",
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id = uuid,
+                hendelseId = uuid,
+                notifikasjonId= uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -156,7 +158,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id = uuid,
+                hendelseId = uuid,
+                notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -201,7 +204,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id = uuid,
+                hendelseId = uuid,
+                notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -267,7 +271,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id = uuid,
+                hendelseId = uuid,
+                notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -299,7 +304,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id = uuid,
+                hendelseId = uuid,
+                notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt
@@ -331,7 +337,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 merkelapp = merkelapp,
                 eksternId = eksternId,
                 mottaker = mottaker,
-                id = uuid,
+                hendelseId = uuid,
+                notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt

@@ -5,15 +5,41 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProduc
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 
 interface KafkaReaperService {
-    fun håndterHendelse(hendelse: Hendelse)
+    suspend fun håndterHendelse(hendelse: Hendelse)
 }
 
 class KafkaReaperServiceImpl(
-    kafkaReaperModel: KafkaReaperModel,
-    kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>
+    private val kafkaReaperModel: KafkaReaperModel,
+    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>
 ) : KafkaReaperService {
 
-    override fun håndterHendelse(hendelse: Hendelse) {
-        throw RuntimeException("TODO: Ikke implementert")
+    override suspend fun håndterHendelse(hendelse: Hendelse) {
+        kafkaReaperModel.oppdaterModellEtterHendelse(hendelse)
+
+        when (hendelse) {
+            is Hendelse.HardDelete -> {
+                for (relatertHendelseId in kafkaReaperModel.alleRelaterteHendelser(hendelse.notifikasjonId)) {
+                    kafkaProducer.tombstone(
+                        key = relatertHendelseId.toString(),
+                        orgnr = hendelse.virksomhetsnummer
+                    )
+                    kafkaReaperModel.fjernRelasjon(relatertHendelseId)
+                }
+            }
+
+            is Hendelse.SoftDelete,
+            is Hendelse.BeskjedOpprettet,
+            is Hendelse.OppgaveOpprettet,
+            is Hendelse.BrukerKlikket,
+            is Hendelse.OppgaveUtført -> {
+                if (kafkaReaperModel.erSlettet(hendelse.notifikasjonId)) {
+                    kafkaProducer.tombstone(
+                        key = hendelse.hendelseId.toString(),
+                        orgnr = hendelse.virksomhetsnummer
+                    )
+                    kafkaReaperModel.fjernRelasjon(hendelse.hendelseId)
+                }
+            }
+        }
     }
 }

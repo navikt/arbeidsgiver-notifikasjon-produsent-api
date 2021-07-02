@@ -81,8 +81,12 @@ class CoroutineKafkaConsumerImpl<K, V>(
             val retries = retriesForPartition(partition.partition())
             records.records(partition).forEach currentRecord@{ record ->
                 try {
+                    val recordValue = record.value()
+                    if (recordValue == null) {
+                        log.info("skipping tombstoned event key=${record.loggableToString()}")
+                    }
                     log.info("processing {}", record.loggableToString())
-                    body(record.value())
+                    body(recordValue)
                     consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)

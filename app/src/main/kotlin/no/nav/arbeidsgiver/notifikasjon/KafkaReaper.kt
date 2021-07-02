@@ -51,15 +51,13 @@ object KafkaReaper {
                         put(ConsumerConfig.GROUP_ID_CONFIG, "reaper-model-builder")
                     }
 
-                    val reaperModel = reaperModelAsync.await()
-
-                    val reaperService = KafkaReaperServiceImpl(
-                        reaperModel,
+                    val kafkaReaperService = KafkaReaperServiceImpl(
+                        reaperModelAsync.await(),
                         createKafkaProducer()
                     )
 
                     kafkaConsumer.forEachEvent { hendelse ->
-                        reaperService.håndterHendelse(hendelse)
+                        kafkaReaperService.håndterHendelse(hendelse)
                     }
                 }
             }

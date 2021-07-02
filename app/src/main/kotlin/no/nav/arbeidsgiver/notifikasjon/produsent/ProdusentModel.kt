@@ -66,7 +66,7 @@ class ProdusentModelImpl(
 
     private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): ProdusentModel.Beskjed =
         ProdusentModel.Beskjed(
-            id = this.id,
+            id = this.notifikasjonId,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
             grupperingsid = this.grupperingsid,
@@ -79,7 +79,7 @@ class ProdusentModelImpl(
 
     private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): ProdusentModel.Oppgave =
         ProdusentModel.Oppgave(
-            id = this.id,
+            id = this.notifikasjonId,
             merkelapp = this.merkelapp,
             tekst = this.tekst,
             grupperingsid = this.grupperingsid,
@@ -158,7 +158,7 @@ class ProdusentModelImpl(
             WHERE id = ?
             """
         ) {
-            uuid(hardDelete.id)
+            uuid(hardDelete.notifikasjonId)
         }
     }
 
@@ -171,7 +171,7 @@ class ProdusentModelImpl(
             """
         ) {
             timestamptz(softDelete.deletedAt)
-            uuid(softDelete.id)
+            uuid(softDelete.notifikasjonId)
         }
     }
 
@@ -200,7 +200,7 @@ class ProdusentModelImpl(
             WHERE id = ?
         """
         ) {
-            uuid(utførtHendelse.id)
+            uuid(utførtHendelse.notifikasjonId)
         }
     }
 

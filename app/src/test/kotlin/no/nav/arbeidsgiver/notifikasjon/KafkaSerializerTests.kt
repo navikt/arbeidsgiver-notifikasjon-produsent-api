@@ -20,7 +20,8 @@ class KafkaSerializerTests : DescribeSpec({
             val b = Hendelse.BeskjedOpprettet(
                 tekst = "hallo",
                 merkelapp = "merkelappen",
-                id = uuid,
+                hendelseId = uuid,
+                notifikasjonId = uuid,
                 mottaker = AltinnMottaker(
                     serviceCode = "1234",
                     serviceEdition = "1",

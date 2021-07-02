@@ -195,7 +195,8 @@ object BrukerAPI {
                         ?: return@coDataFetcher UgyldigId("")
 
                     val hendelse = Hendelse.BrukerKlikket(
-                        notifikasjonsId = notifikasjonsid,
+                        hendelseId = UUID.randomUUID(),
+                        notifikasjonId = notifikasjonsid,
                         fnr = context.fnr,
                         virksomhetsnummer = virksomhetsnummer
                     )
@@ -205,7 +206,7 @@ object BrukerAPI {
                     brukerModel.oppdaterModellEtterHendelse(hendelse)
 
                     BrukerKlikk(
-                        id = "${context.fnr}-${hendelse.notifikasjonsId}",
+                        id = "${context.fnr}-${hendelse.notifikasjonId}",
                         klikketPaa = true
                     )
                 }

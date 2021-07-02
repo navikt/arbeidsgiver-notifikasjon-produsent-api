@@ -83,7 +83,7 @@ class NyBeskjedTests : DescribeSpec({
             value should beOfType<Hendelse.BeskjedOpprettet>()
             val event = value as Hendelse.BeskjedOpprettet
             val nyBeskjed = response.getTypedContent<ProdusentAPI.NyBeskjedVellykket>("nyBeskjed")
-            event.id shouldBe nyBeskjed.id
+            event.notifikasjonId shouldBe nyBeskjed.id
             event.lenke shouldBe "https://foo.bar"
             event.tekst shouldBe "hello world"
             event.merkelapp shouldBe "tag"

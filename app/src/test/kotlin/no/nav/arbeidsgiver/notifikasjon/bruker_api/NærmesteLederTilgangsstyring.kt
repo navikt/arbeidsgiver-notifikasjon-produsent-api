@@ -71,7 +71,7 @@ class NærmesteLederTilgangsstyring: DescribeSpec({
             val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, listOf(), ansatte(mottaker1))
             notifikasjoner shouldHaveSize 1
             val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
-            beskjed.id shouldBe beskjed1.id
+            beskjed.id shouldBe beskjed1.notifikasjonId
         }
 
         it("""
@@ -86,7 +86,7 @@ class NærmesteLederTilgangsstyring: DescribeSpec({
             )
             notifikasjoner shouldHaveSize 1
             val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
-            beskjed.id shouldBe beskjed3.id
+            beskjed.id shouldBe beskjed3.notifikasjonId
         }
     }
 })
@@ -107,7 +107,8 @@ fun beskjedOpprettet(mottaker: Mottaker, id: UUID, eksternId: String) = Hendelse
     merkelapp = "",
     eksternId = eksternId,
     mottaker = mottaker,
-    id = id,
+    hendelseId = id,
+    notifikasjonId = id,
     tekst = "test",
     lenke = "https://nav.no",
     opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),

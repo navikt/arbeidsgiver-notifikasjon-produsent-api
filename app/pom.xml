@@ -12,7 +12,7 @@
         <kotlin.version>1.5.10</kotlin.version>
         <ktor.version>1.6.0</ktor.version>
         <kotest.version>4.6.0</kotest.version>
-        <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+        <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
         <jvm.version>15</jvm.version>
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>

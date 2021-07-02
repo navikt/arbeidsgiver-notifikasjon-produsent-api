@@ -67,7 +67,7 @@ value class CoroutineKafkaProducerImpl<K, V>(
 suspend fun CoroutineKafkaProducer<KafkaKey, Hendelse>.sendHendelse(
     hendelse: Hendelse
 ) {
-    this.sendHendelseMedKey(UUID.randomUUID(), hendelse)
+    this.sendHendelseMedKey(hendelse.hendelseId, hendelse)
 }
 
 suspend fun CoroutineKafkaProducer<KafkaKey, Hendelse>.sendHendelseMedKey(

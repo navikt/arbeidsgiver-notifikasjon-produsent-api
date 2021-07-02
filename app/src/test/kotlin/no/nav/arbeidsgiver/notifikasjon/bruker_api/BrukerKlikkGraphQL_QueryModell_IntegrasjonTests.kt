@@ -38,7 +38,8 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             virksomhetsnummer = virksomhetsnummer,
             mottaker = mottaker,
             opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-            id = uuid,
+            hendelseId = uuid,
+            notifikasjonId = uuid,
             merkelapp = "",
             eksternId = "",
             tekst = "",
@@ -71,7 +72,8 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         val brukerKlikket = Hendelse.BrukerKlikket(
             virksomhetsnummer = virksomhetsnummer,
             fnr = fnr,
-            notifikasjonsId = uuid
+            hendelseId = UUID.randomUUID(),
+            notifikasjonId = uuid
         )
 
         queryModel.oppdaterModellEtterHendelse(brukerKlikket)
