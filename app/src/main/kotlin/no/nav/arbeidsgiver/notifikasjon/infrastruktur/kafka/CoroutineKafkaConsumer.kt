@@ -3,7 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -92,7 +93,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
                     log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)
                     return@currentRecord
-                } catch (e: RuntimeException) {
+                } catch (e: Exception) {
                     val attempt = retries.incrementAndGet()
                     val backoffMillis = 1000L * 2.toThePowerOf(attempt)
                     log.error(
