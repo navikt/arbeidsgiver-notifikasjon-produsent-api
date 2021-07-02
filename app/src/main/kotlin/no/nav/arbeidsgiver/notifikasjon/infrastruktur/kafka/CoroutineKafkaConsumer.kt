@@ -84,6 +84,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
                     val recordValue = record.value()
                     if (recordValue == null) {
                         log.info("skipping tombstoned event key=${record.loggableToString()}")
+                        return@currentRecord
                     }
                     log.info("processing {}", record.loggableToString())
                     body(recordValue)
