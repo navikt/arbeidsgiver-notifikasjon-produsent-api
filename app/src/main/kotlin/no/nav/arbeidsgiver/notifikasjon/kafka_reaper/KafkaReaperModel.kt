@@ -18,15 +18,6 @@ class KafkaReaperModelImpl(
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         database.transaction({}) {
             executeCommand("""
-                INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
-                VALUES (?, ?)
-                ON CONFLICT DO NOTHING
-            """) {
-                uuid(hendelse.notifikasjonId)
-                timestamptz(OffsetDateTime.now())
-            }
-
-            executeCommand("""
                 INSERT INTO notifikasjon_hendelse_relasjon
                 (
                     hendelse_id,
@@ -45,6 +36,18 @@ class KafkaReaperModelImpl(
                 uuid(hendelse.hendelseId)
                 uuid(hendelse.notifikasjonId)
                 string(hendelse.typeNavn)
+            }
+
+            if (hendelse is Hendelse.HardDelete) {
+                executeCommand(
+                    """
+                        INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
+                        VALUES (?, ?)
+                        ON CONFLICT DO NOTHING
+                    """) {
+                        uuid(hendelse.notifikasjonId)
+                        timestamptz(OffsetDateTime.now())
+                }
             }
         }
     }
