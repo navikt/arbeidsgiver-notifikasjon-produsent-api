@@ -37,7 +37,6 @@ spec:
     inbound:
       rules:
         - application: ditt-nav-arbeidsgiver
-          namespace: arbeidsgiver
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
