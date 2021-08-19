@@ -45,6 +45,7 @@ object Bruker {
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         altinn: Altinn = AltinnImpl,
+        nærmesteLederService: NærmesteLederService = NærmesteLederServiceImpl(),
         enhetsregisteret: Enhetsregisteret = EnhetsregisteretImpl(),
         httpPort: Int = 8080
     ) {
@@ -81,7 +82,7 @@ object Bruker {
                     enhetsregisteret = enhetsregisteret,
                     brukerModel = brukerModelAsync.await(),
                     kafkaProducer = createKafkaProducer(),
-                    nærmesteLederService = NærmesteLederServiceImpl()
+                    nærmesteLederService = nærmesteLederService
                 )
             }
 
