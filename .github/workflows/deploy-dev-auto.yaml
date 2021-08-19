@@ -1,6 +1,7 @@
 name: deploy dev auto
 on:
   workflow_run:
+    branches: [main]
     workflows: [build]
     types: [completed]
 
