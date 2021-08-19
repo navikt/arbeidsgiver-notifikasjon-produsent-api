@@ -64,39 +64,41 @@ class BrukerApiTests : DescribeSpec({
             val response = engine.brukerApi(
                 """
                     {
-                        notifikasjoner {
-                            __typename
-                            ...on Beskjed {
-                                brukerKlikk { 
-                                    __typename
+                        notifikasjoner{
+                            notifikasjoner {
+                                __typename
+                                ...on Beskjed {
+                                    brukerKlikk { 
+                                        __typename
+                                        id
+                                        klikketPaa 
+                                    }
+                                    lenke
+                                    tekst
+                                    merkelapp
+                                    opprettetTidspunkt
                                     id
-                                    klikketPaa 
+                                    virksomhet {
+                                        virksomhetsnummer
+                                        navn
+                                    }
                                 }
-                                lenke
-                                tekst
-                                merkelapp
-                                opprettetTidspunkt
-                                id
-                                virksomhet {
-                                    virksomhetsnummer
-                                    navn
-                                }
-                            }
-                            ...on Oppgave {
-                                brukerKlikk { 
-                                    __typename
+                                ...on Oppgave {
+                                    brukerKlikk { 
+                                        __typename
+                                        id
+                                        klikketPaa 
+                                    }
+                                    lenke
+                                    tilstand
+                                    tekst
+                                    merkelapp
+                                    opprettetTidspunkt
                                     id
-                                    klikketPaa 
-                                }
-                                lenke
-                                tilstand
-                                tekst
-                                merkelapp
-                                opprettetTidspunkt
-                                id
-                                virksomhet {
-                                    virksomhetsnummer
-                                    navn
+                                    virksomhet {
+                                        virksomhetsnummer
+                                        navn
+                                    }
                                 }
                             }
                         }
@@ -113,7 +115,7 @@ class BrukerApiTests : DescribeSpec({
             }
 
             it("response inneholder riktig data") {
-                response.getTypedContent<List<BrukerAPI.Notifikasjon>>("notifikasjoner").let {
+                response.getTypedContent<List<BrukerAPI.Notifikasjon>>("notifikasjoner/notifikasjoner").let {
                     it shouldNot beEmpty()
                     val returnedBeskjed = it[0] as BrukerAPI.Notifikasjon.Beskjed
                     returnedBeskjed.merkelapp shouldBe beskjed.merkelapp
