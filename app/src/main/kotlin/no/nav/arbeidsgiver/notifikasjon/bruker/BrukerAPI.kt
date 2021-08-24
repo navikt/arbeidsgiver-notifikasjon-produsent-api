@@ -25,7 +25,7 @@ object BrukerAPI {
         val fnr: String,
         val token: String,
         override val coroutineScope: CoroutineScope
-    ): WithCoroutineScope
+    ) : WithCoroutineScope
 
     interface WithVirksomhet {
         val virksomhet: Virksomhet
@@ -79,6 +79,13 @@ object BrukerAPI {
         val klikketPaa: Boolean
     ) : NotifikasjonKlikketPaaResultat()
 
+    @JsonTypeName("NotifikasjonerResultat")
+    data class NotifikasjonerResultat(
+        val notifikasjoner: List<Notifikasjon>,
+        val feilAltinn: Boolean,
+        val feilDigiSyfo: Boolean
+    )
+
     @JsonTypeName("UgyldigId")
     data class UgyldigId(
         val feilmelding: String
@@ -110,11 +117,29 @@ object BrukerAPI {
                 coDataFetcher("notifikasjoner") { env ->
                     val context = env.getContext<Context>()
                     coroutineScope {
-                        val tilganger = async { altinn.hentAlleTilganger(context.fnr, context.token) }
-                        val ansatte = async { nærmesteLederService.hentAnsatte(context.token) }
+                        val tilganger = async {
+                            try {
+                                altinn.hentAlleTilganger(context.fnr, context.token)
+                            } catch (e: Exception) {
+                                log.error("Henting av Altinn-tilganger feilet", e)
+                                null
+                            }
 
-                        return@coroutineScope brukerModel
-                            .hentNotifikasjoner(context.fnr, tilganger.await(), ansatte.await())
+                        }
+                        val ansatte = async {
+                            try{
+                                nærmesteLederService.hentAnsatte(context.token)
+                            } catch (e: Exception) {
+                                log.error("Henting av DigiSyfo-tilganger feilet", e)
+                                null
+                            }
+                        }
+
+                        val notifikasjoner = brukerModel
+                            .hentNotifikasjoner(
+                                context.fnr,
+                                tilganger.await().orEmpty(),
+                                ansatte.await().orEmpty())
                             .map { notifikasjon ->
                                 when (notifikasjon) {
                                     is BrukerModel.Beskjed ->
@@ -156,10 +181,15 @@ object BrukerAPI {
                                         )
                                 }
                             }
+                        return@coroutineScope NotifikasjonerResultat(
+                            notifikasjoner,
+                            feilAltinn = tilganger.await() == null,
+                            feilDigiSyfo = ansatte.await() == null
+                        )
                     }
                 }
 
-                suspend fun <T: WithVirksomhet> fetchVirksomhet(env: DataFetchingEnvironment): Virksomhet {
+                suspend fun <T : WithVirksomhet> fetchVirksomhet(env: DataFetchingEnvironment): Virksomhet {
                     val source = env.getSource<T>()
                     return if (env.selectionSet.contains("Virksomhet.navn")) {
                         enhetsregisteret.hentEnhet(source.virksomhet.virksomhetsnummer).let { enhet ->

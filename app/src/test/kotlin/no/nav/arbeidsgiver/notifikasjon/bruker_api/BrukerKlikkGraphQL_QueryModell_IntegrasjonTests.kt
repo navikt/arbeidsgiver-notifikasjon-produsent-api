@@ -51,10 +51,12 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         val response = engine.brukerApi(
             """
             {
-                notifikasjoner {
-                    ...on Beskjed {
-                        brukerKlikk {
-                            klikketPaa
+                notifikasjoner{
+                    notifikasjoner {
+                        ...on Beskjed {
+                            brukerKlikk {
+                                klikketPaa
+                            }
                         }
                     }
                 }
@@ -62,7 +64,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             """
         )
 
-        val klikkMarkørFørKlikk = response.getTypedContent<Boolean>("/notifikasjoner/0/brukerKlikk/klikketPaa")
+        val klikkMarkørFørKlikk = response.getTypedContent<Boolean>("/notifikasjoner/notifikasjoner/0/brukerKlikk/klikketPaa")
 
         it("notifikasjon er ikke klikket på") {
             klikkMarkørFørKlikk shouldBe false
@@ -82,17 +84,19 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         val responseEtterKlikk = engine.brukerApi(
             """
             {
-                notifikasjoner {
-                    ...on Beskjed {
-                        brukerKlikk {
-                            klikketPaa
+                notifikasjoner{
+                    notifikasjoner {
+                        ...on Beskjed {
+                            brukerKlikk {
+                                klikketPaa
+                            }
                         }
                     }
                 }
             }
             """
         )
-        val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/0/brukerKlikk/klikketPaa")
+        val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/notifikasjoner/0/brukerKlikk/klikketPaa")
 
         it("notifikasjon er klikket på") {
             klikkMarkørEtterKlikk shouldBe true

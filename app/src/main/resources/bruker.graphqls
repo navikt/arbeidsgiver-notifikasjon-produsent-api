@@ -1,8 +1,12 @@
 type Query {
-    notifikasjoner: [Notifikasjon!]!
+    notifikasjoner: NotifikasjonerResultat!
     whoami: String
 }
-
+type NotifikasjonerResultat {
+    notifikasjoner: [Notifikasjon!]!
+    feilAltinn: Boolean!
+    feilDigiSyfo: Boolean!
+}
 union Notifikasjon = Beskjed | Oppgave
 
 scalar ISO8601DateTime
