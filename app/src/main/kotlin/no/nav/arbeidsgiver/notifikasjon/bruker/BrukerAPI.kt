@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
+import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -104,6 +105,7 @@ object BrukerAPI {
         nærmesteLederService: NærmesteLederService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphqls") {
+
             scalar(Scalars.ISO8601DateTime)
 
             resolveSubtypes<Notifikasjon>()
@@ -114,133 +116,158 @@ object BrukerAPI {
                     it.getContext<Context>().fnr
                 }
 
-                coDataFetcher("notifikasjoner") { env ->
-                    val context = env.getContext<Context>()
-                    coroutineScope {
-                        val tilganger = async {
-                            try {
-                                altinn.hentAlleTilganger(context.fnr, context.token)
-                            } catch (e: Exception) {
-                                log.error("Henting av Altinn-tilganger feilet", e)
-                                null
-                            }
-
-                        }
-                        val ansatte = async {
-                            try{
-                                nærmesteLederService.hentAnsatte(context.token)
-                            } catch (e: Exception) {
-                                log.error("Henting av DigiSyfo-tilganger feilet", e)
-                                null
-                            }
-                        }
-
-                        val notifikasjoner = brukerModel
-                            .hentNotifikasjoner(
-                                context.fnr,
-                                tilganger.await().orEmpty(),
-                                ansatte.await().orEmpty())
-                            .map { notifikasjon ->
-                                when (notifikasjon) {
-                                    is BrukerModel.Beskjed ->
-                                        Notifikasjon.Beskjed(
-                                            merkelapp = notifikasjon.merkelapp,
-                                            tekst = notifikasjon.tekst,
-                                            lenke = notifikasjon.lenke,
-                                            opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                            id = notifikasjon.id,
-                                            virksomhet = Virksomhet(
-                                                when (notifikasjon.mottaker) {
-                                                    is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                                    is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                                }
-                                            ),
-                                            brukerKlikk = BrukerKlikk(
-                                                id = "${context.fnr}-${notifikasjon.id}",
-                                                klikketPaa = notifikasjon.klikketPaa
-                                            )
-                                        )
-                                    is BrukerModel.Oppgave ->
-                                        Notifikasjon.Oppgave(
-                                            merkelapp = notifikasjon.merkelapp,
-                                            tekst = notifikasjon.tekst,
-                                            lenke = notifikasjon.lenke,
-                                            tilstand = notifikasjon.tilstand.tilBrukerAPI(),
-                                            opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                            id = notifikasjon.id,
-                                            virksomhet = Virksomhet(
-                                                when (notifikasjon.mottaker) {
-                                                    is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                                    is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                                }
-                                            ),
-                                            brukerKlikk = BrukerKlikk(
-                                                id = "${context.fnr}-${notifikasjon.id}",
-                                                klikketPaa = notifikasjon.klikketPaa
-                                            )
-                                        )
-                                }
-                            }
-                        return@coroutineScope NotifikasjonerResultat(
-                            notifikasjoner,
-                            feilAltinn = tilganger.await() == null,
-                            feilDigiSyfo = ansatte.await() == null
-                        )
-                    }
-                }
-
-                suspend fun <T : WithVirksomhet> fetchVirksomhet(env: DataFetchingEnvironment): Virksomhet {
-                    val source = env.getSource<T>()
-                    return if (env.selectionSet.contains("Virksomhet.navn")) {
-                        enhetsregisteret.hentEnhet(source.virksomhet.virksomhetsnummer).let { enhet ->
-                            Virksomhet(
-                                virksomhetsnummer = enhet.organisasjonsnummer,
-                                navn = enhet.navn
-                            )
-                        }
-                    } else {
-                        source.virksomhet
-                    }
-                }
+                queryNotifikasjoner(
+                    altinn = altinn,
+                    nærmesteLederService = nærmesteLederService,
+                    brukerModel = brukerModel
+                )
 
                 wire("Oppgave") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Notifikasjon.Oppgave>(env)
+                        fetchVirksomhet<Notifikasjon.Oppgave>(enhetsregisteret, env)
                     }
                 }
 
                 wire("Beskjed") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Notifikasjon.Beskjed>(env)
+                        fetchVirksomhet<Notifikasjon.Beskjed>(enhetsregisteret, env)
                     }
                 }
             }
 
             wire("Mutation") {
-                coDataFetcher("notifikasjonKlikketPaa") { env ->
-                    val context = env.getContext<Context>()
-                    val notifikasjonsid = env.getTypedArgument<UUID>("id")
-
-                    val virksomhetsnummer = brukerModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
-                        ?: return@coDataFetcher UgyldigId("")
-
-                    val hendelse = Hendelse.BrukerKlikket(
-                        hendelseId = UUID.randomUUID(),
-                        notifikasjonId = notifikasjonsid,
-                        fnr = context.fnr,
-                        virksomhetsnummer = virksomhetsnummer
-                    )
-
-                    kafkaProducer.sendHendelse(hendelse)
-
-                    brukerModel.oppdaterModellEtterHendelse(hendelse)
-
-                    BrukerKlikk(
-                        id = "${context.fnr}-${hendelse.notifikasjonId}",
-                        klikketPaa = true
-                    )
-                }
+                mutationBrukerKlikketPa(
+                    brukerModel = brukerModel,
+                    kafkaProducer = kafkaProducer,
+                )
             }
         }
     )
+
+    fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
+        altinn: Altinn,
+        nærmesteLederService: NærmesteLederService,
+        brukerModel: BrukerModel
+    ) {
+        coDataFetcher("notifikasjoner") { env ->
+            val context = env.getContext<Context>()
+            coroutineScope {
+                val tilganger = async {
+                    try {
+                        altinn.hentAlleTilganger(context.fnr, context.token)
+                    } catch (e: Exception) {
+                        log.error("Henting av Altinn-tilganger feilet", e)
+                        null
+                    }
+
+                }
+                val ansatte = async {
+                    try{
+                        nærmesteLederService.hentAnsatte(context.token)
+                    } catch (e: Exception) {
+                        log.error("Henting av DigiSyfo-tilganger feilet", e)
+                        null
+                    }
+                }
+
+                val notifikasjoner = brukerModel
+                    .hentNotifikasjoner(
+                        context.fnr,
+                        tilganger.await().orEmpty(),
+                        ansatte.await().orEmpty())
+                    .map { notifikasjon ->
+                        when (notifikasjon) {
+                            is BrukerModel.Beskjed ->
+                                Notifikasjon.Beskjed(
+                                    merkelapp = notifikasjon.merkelapp,
+                                    tekst = notifikasjon.tekst,
+                                    lenke = notifikasjon.lenke,
+                                    opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                    id = notifikasjon.id,
+                                    virksomhet = Virksomhet(
+                                        when (notifikasjon.mottaker) {
+                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                        }
+                                    ),
+                                    brukerKlikk = BrukerKlikk(
+                                        id = "${context.fnr}-${notifikasjon.id}",
+                                        klikketPaa = notifikasjon.klikketPaa
+                                    )
+                                )
+                            is BrukerModel.Oppgave ->
+                                Notifikasjon.Oppgave(
+                                    merkelapp = notifikasjon.merkelapp,
+                                    tekst = notifikasjon.tekst,
+                                    lenke = notifikasjon.lenke,
+                                    tilstand = notifikasjon.tilstand.tilBrukerAPI(),
+                                    opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                    id = notifikasjon.id,
+                                    virksomhet = Virksomhet(
+                                        when (notifikasjon.mottaker) {
+                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
+                                        }
+                                    ),
+                                    brukerKlikk = BrukerKlikk(
+                                        id = "${context.fnr}-${notifikasjon.id}",
+                                        klikketPaa = notifikasjon.klikketPaa
+                                    )
+                                )
+                        }
+                    }
+                return@coroutineScope NotifikasjonerResultat(
+                    notifikasjoner,
+                    feilAltinn = tilganger.await() == null,
+                    feilDigiSyfo = ansatte.await() == null
+                )
+            }
+        }
+    }
+
+    fun TypeRuntimeWiring.Builder.mutationBrukerKlikketPa(
+        brukerModel: BrukerModel,
+        kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+    ) {
+        coDataFetcher("notifikasjonKlikketPaa") { env ->
+            val context = env.getContext<Context>()
+            val notifikasjonsid = env.getTypedArgument<UUID>("id")
+
+            val virksomhetsnummer = brukerModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
+                ?: return@coDataFetcher UgyldigId("")
+
+            val hendelse = Hendelse.BrukerKlikket(
+                hendelseId = UUID.randomUUID(),
+                notifikasjonId = notifikasjonsid,
+                fnr = context.fnr,
+                virksomhetsnummer = virksomhetsnummer
+            )
+
+            kafkaProducer.sendHendelse(hendelse)
+
+            brukerModel.oppdaterModellEtterHendelse(hendelse)
+
+            BrukerKlikk(
+                id = "${context.fnr}-${hendelse.notifikasjonId}",
+                klikketPaa = true
+            )
+        }
+    }
+
+    suspend fun <T : WithVirksomhet> fetchVirksomhet(
+        enhetsregisteret: Enhetsregisteret,
+        env: DataFetchingEnvironment
+    ): Virksomhet {
+        val source = env.getSource<T>()
+        return if (env.selectionSet.contains("Virksomhet.navn")) {
+            enhetsregisteret.hentEnhet(source.virksomhet.virksomhetsnummer).let { enhet ->
+                Virksomhet(
+                    virksomhetsnummer = enhet.organisasjonsnummer,
+                    navn = enhet.navn
+                )
+            }
+        } else {
+            source.virksomhet
+        }
+    }
 }
