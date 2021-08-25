@@ -1,2 +1,7 @@
-title: Notifikasjoner for arbeidsgivere – dokumentasjon
-description: Teknisk dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.
+title: Notifikasjoner for arbeidsgivere
+description: Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.
+url: "https://navikt.github.io"
+baseurl: "/arbeidsgiver-notifikasjon-produsent-api"
+
+theme: minima
+
