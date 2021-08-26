@@ -32,7 +32,7 @@ Bjella med notifikasjoner er en egen NPM-pakke som hvert enkelt team i tilegg ka
 ## Sånn funker det 
 
 
-### Beskjed
+__Beskjed__
 
 Dette er en typisk informasjonsmelding til arbeidsgiver. Denne krever ikke nødvendigvis noe mer handling fra arbeidsgiver. For eksempel, «Vi har mottat en søknad...». 
 
@@ -42,7 +42,7 @@ Dette er en typisk informasjonsmelding til arbeidsgiver. Denne krever ikke nødv
 
 
 
-### Oppgave
+__Oppgave__
 
 Oppgave brukes når du trenger at arbeidsgiver skal gjøre en konkret handling. For eksempel «Du må godkjenne avtalen innen...» Du som produsent må holde styr på når oppgaven er fullført. Arbeidsgiver vil da se oppgaven som utført. 
 
@@ -50,17 +50,18 @@ Oppgave brukes når du trenger at arbeidsgiver skal gjøre en konkret handling. 
 
 
 
-### Hva med varsler på e-post eller SMS?
+__Hva med varsler på e-post eller SMS?__
+
 Vi støtter ikke varsel på SMS eller e-post (men håper å støtte det i fremtiden). 
 
-### Hvor lenge vises oppgaver og beskjeder i bjella?
+__Hvor lenge vises oppgaver og beskjeder i bjella?__
 
-I utgangspunkt kommer oppgaver og beskjeder vises i bjella til dere som produsent sletter Kafka loggerne med hjelp av vårt API for sletting, se  [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/) . Vi jobber med funkationalitet der produsenten vid opprettelse av en nofikasjon kan definere hvor lenge den skal vises i bjella og hvor lenge loggerne skal lagres i loggerne. 
+Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere forsatt har tilgang så se dem og notfikasjonen ikke er slettet fra loggerne. Dere som produsent må derfor vurdere hvor lenge notfikasjonen bør vises og utføre sletting med hjelp av vårt API for sletting, se  [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/). Vi jobber med funksjonalitet der produsenten vid opprettelse av en nofikasjon kan definere hvor lenge den skal vises i bjella og hvor lenge loggerne skal lagres. 
 
 ## Tilgangstyring av mottakere 
 Du kan spesifisere mottakerene av notifikasjonen på to måter: basert på Altinn-tilgang og digisyfos nærmeste leder. Det er viktig å spesifisere mottaker riktig, så eventuelle personopplysninger kun vises til de med tjenestelig behov. Har dere behov for en annen måte å spesifisere mottakere på, så kontakt oss!
 
-### Altinn-tilgang
+__Altinn-tilgang__
 
 Du kan sende en notifikasjon til alle med en gitt Altinn-tilgang (servicecode og serviceedition) i en virksomhet. Du må da oppgi:
 
@@ -70,7 +71,7 @@ Du kan sende en notifikasjon til alle med en gitt Altinn-tilgang (servicecode og
 
 Hver gang en arbeidsgiver logger inn i en NAV-tjeneste, vil vi sjekke hvilke tilganger de har, og vise de notifikasjonene de har tilgang til.
 
-### Dine sykemeldte
+__Dine sykemeldte__
 
 Vi bruker digisyfo nærmeste leder konsept. 
 
