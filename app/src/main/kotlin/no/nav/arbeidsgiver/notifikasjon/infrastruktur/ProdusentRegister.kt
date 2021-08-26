@@ -1,14 +1,18 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import java.util.*
 
 typealias Merkelapp = String
+typealias AppName = String
+typealias ClientId = String
+
 
 data class Produsent(
-    val id: String,
+    val accessPolicy: List<AppName>,
     val tillatteMerkelapper: List<Merkelapp> = emptyList(),
     val tillatteMottakere: List<MottakerDefinisjon> = emptyList()
 ) {
@@ -56,15 +60,28 @@ object NærmesteLederDefinisjon : MottakerDefinisjon() {
         }
 }
 
+object PreAuthorizedApps {
+    data class Elem(
+        val name: AppName,
+        val clientId: ClientId
+    )
+
+    val json = System.getenv("AZURE_APP_PRE_AUTHORIZED_APPS")!!
+    val map = objectMapper
+        .readValue<List<Elem>>(json)
+}
+
 interface ProdusentRegister {
     fun finn(subject: String): Produsent
     fun validateAll()
 }
 
 object ProdusentRegisterImpl : ProdusentRegister {
-    private val REGISTER: Map<String, Produsent> = listOf(
+    private val REGISTER: List<Produsent> = listOf(
         Produsent(
-            id = "someproducer",
+            accessPolicy = listOf(
+                "dev-gcp:fager:test-produsent"
+            ),
             tillatteMerkelapper = listOf(
                 "tiltak",
                 "sykemeldte",
@@ -87,15 +104,27 @@ object ProdusentRegisterImpl : ProdusentRegister {
                 NærmesteLederDefinisjon,
             )
         )
-    ).associateBy { it.id }
+    )
 
-    override fun finn(subject: String): Produsent {
-        val produsent = REGISTER.getOrDefault(subject, Produsent(subject))
-        validate(produsent)
-        return produsent
+
+    private val clientIdToProdusent: Map<ClientId, Produsent> = PreAuthorizedApps.map
+        .flatMap { elem ->
+            val produsent = REGISTER.find {
+                it.accessPolicy.contains(elem.name)
+            } ?: return@flatMap listOf()
+            listOf(Pair(elem.clientId, produsent))
+        }
+        .toMap()
+
+    private val noopProdusent = Produsent(
+            accessPolicy = listOf()
+        )
+
+    override fun finn(subject: ClientId): Produsent {
+        return clientIdToProdusent.getOrDefault(subject, noopProdusent)
     }
 
-    override fun validateAll() = REGISTER.values.forEach(this::validate)
+    override fun validateAll() = REGISTER.forEach(this::validate)
 
     private fun validate(produsent: Produsent) {
         produsent.tillatteMottakere.forEach {

@@ -1,8 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
 import io.ktor.server.testing.*
-import io.mockk.every
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
@@ -26,22 +24,19 @@ fun TestApplicationEngine.produsentApi(
     return produsentApi(GraphQLRequest(req))
 }
 
-val produsentDefinisjoner = listOf(
-    Produsent(
-        id = "someproducer",
-        tillatteMerkelapper = listOf("tag"),
-        tillatteMottakere = listOf(
-            ServicecodeDefinisjon(code = "5441", version = "1"),
-            NærmesteLederDefinisjon,
+val mockProdusentRegister: ProdusentRegister = object: ProdusentRegister {
+    override fun finn(subject: String): Produsent {
+        return Produsent(
+            accessPolicy = listOf("someproducer"),
+            tillatteMerkelapper = listOf("tag"),
+            tillatteMottakere = listOf(
+                ServicecodeDefinisjon(code = "5441", version = "1"),
+                NærmesteLederDefinisjon,
+            )
         )
-    )
-).associateBy { it.id }
+    }
 
-val mockProdusentRegister: ProdusentRegister = mockk {
-    every {
-        finn(any())
-    } answers {
-        produsentDefinisjoner.getOrDefault(firstArg(), Produsent(firstArg()))
+    override fun validateAll() {
     }
 }
 

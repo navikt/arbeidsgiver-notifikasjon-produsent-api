@@ -566,7 +566,7 @@ object ProdusentAPI {
         else
             Error.UgyldigMerkelapp(
                 """
-                | Ugyldig merkelapp '${merkelapp}' for produsent '${produsent.id}'. 
+                | Ugyldig merkelapp '${merkelapp}'.
                 | Gyldige merkelapper er: ${produsent.tillatteMerkelapper}
                 """.trimMargin()
             )
@@ -580,7 +580,7 @@ object ProdusentAPI {
         else
             Error.UgyldigMottaker(
                 """
-                | Ugyldig mottaker '${mottaker}' for produsent '${produsent.id}'. 
+                | Ugyldig mottaker '${mottaker}'. 
                 | Gyldige mottakere er: ${produsent.tillatteMottakere}
                 """.trimMargin()
             )
