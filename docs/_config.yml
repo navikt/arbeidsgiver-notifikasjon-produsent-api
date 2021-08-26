@@ -5,8 +5,8 @@ baseurl: "/arbeidsgiver-notifikasjon-produsent-api"
 
 header_pages:
   - index.md
+  - teknisk.md
   - api.md
-  - graphql.md
   - vilkaar.md
 
 theme: minima
