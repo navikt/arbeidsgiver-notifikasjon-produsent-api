@@ -1,7 +1,7 @@
-# Notifikasjoner for arbeidsgivere #
+# Notifikasjoner for arbeidsgivere
 Notfikasjoner for arbeidsgivere gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker sende notifkasjoner om på notifkasjonsplatformen. Se hvordan det ser ut på [testversjonen i labs](https://arbeidsgiver.labs.nais.io/min-side-arbeidsgiver/?) . 
 
-## Hvilket problem skal vi løse? ##
+## Hvilket problem skal vi løse? 
 
 - __For arbedsgivere:__
 Arbeidsgivere må gå rundt og lete på mange sted for å få kontroll på hva de må gjøre og hva som skjer med saken deres. I tilegg kan arbeidsgiverne ha mange forskjellig virksomheter å holde koll på. Dette skaper en usikkerhet og onødvendig merarbeide for arbeidgsiver som ofte har en travel hverdag. 
@@ -9,7 +9,7 @@ Arbeidsgivere må gå rundt og lete på mange sted for å få kontroll på hva d
 - __Internt i NAV:__
 Tidligere har Min side - arbeidgsiver integrert mot API:er for å kunne vise at noe krever arbeidsgivers oppmerksomhet på en vis tjeneste. Dette har viset seg vare vanskelig å vedlikeholde da API:er endres og dataen blir upålitilig. De enkelte teamene føler lite eierskap til hva som vises på Min side - arbeidsgiver og teamet vårt blir fort en flaskehals. 
 
-## Oppgaver og beskjeder ##
+## Oppgaver og beskjeder 
 Oppgaver og beskjeder vil være synlig for arbeidsgivere som er logget inn i NAV sine tjenester. Vi støtter ikke varsel på SMS eller e-post (men håper å støtte det i fremtiden). Når det finns nye beskjeder eller oppgaver har bjella en rød sirkel med et tall som viser hvor mange. 
 
 
@@ -25,7 +25,7 @@ Bjella med notifikasjoner er en egen NPM-pakke som hvert enkelt team i tilegg ka
 
 
 
-## Sånn funker det ##
+## Sånn funker det 
 
 
 __Beskjed__
@@ -51,7 +51,7 @@ Vi støtter ikke varsel på SMS eller e-post (men håper å støtte det i fremti
 
 
 
-## Tilgangstyring av mottakere ##
+## Tilgangstyring av mottakere 
 Du kan spesifisere mottakerene av notifikasjonen på to måter: basert på Altinn-tilgang og digisyfos nærmeste leder. Det er viktig å spesifisere mottaker riktig, så eventuelle personopplysninger kun vises til de med tjenestelig behov. Har dere behov for en annen måte å spesifisere mottakere på, så kontakt oss!
 
 __Altinn-tilgang__
@@ -68,7 +68,7 @@ __Dine sykemeldte__
 
 Vi bruker digisyfo nærmeste leder konsept. 
 
-## Hvordan komme i gang? ##
+## Hvordan komme i gang? 
 - Bruksvilkår: Bli kjent med deres ansvar som produsent og signere [bruksvilkårene](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/bruksvilk%C3%A5r/) 
 
 - [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/) for notifikasjoner til arbeidsgivere
