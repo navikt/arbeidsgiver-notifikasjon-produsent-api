@@ -3,6 +3,15 @@ description: Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgiv
 url: "https://navikt.github.io"
 baseurl: "/arbeidsgiver-notifikasjon-produsent-api"
 
+header_pages:
+  - index.md
+  - api.md
+  - graphql.md
+  - vilkaar.md
+
 theme: minima
 
 markdown: CommonMarkGhPages
+
+commonmark:
+  extensions: ["table"]

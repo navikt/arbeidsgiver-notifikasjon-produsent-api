@@ -1,4 +1,8 @@
-# Notifikasjoner for arbeidsgivere
+---
+layout: page
+title: Introduksjon
+permalink: /
+---
 Notfikasjoner for arbeidsgivere gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker sende notifkasjoner om på notifkasjonsplatformen. Se hvordan det ser ut på [testversjonen i labs](https://arbeidsgiver.labs.nais.io/min-side-arbeidsgiver/?) . 
 
 ## Hvilket problem skal vi løse? 
