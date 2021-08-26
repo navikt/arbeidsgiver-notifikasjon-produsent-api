@@ -33,7 +33,7 @@ type Query {
 
     """
     Vi bruker det Connections-patternet for paginering. Se
-    (Connection-standaren)[https://relay.dev/graphql/connections.htm] for mer
+    [Connection-standaren](https://relay.dev/graphql/connections.htm) for mer
     informasjon.
 
     Hvis man bruker filters, må de gjentas når man bruker cursor eller ikke?

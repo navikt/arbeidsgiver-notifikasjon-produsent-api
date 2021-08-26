@@ -350,7 +350,7 @@ object ProdusentAPI {
         produsentRegister: ProdusentRegister = ProdusentRegisterImpl,
         produsentModel: ProdusentModel,
     ) = TypedGraphQL<Context>(
-        createGraphQL("/produsent.graphqls") {
+        createGraphQL("/produsent.graphql") {
             directive("Validate", ValidateDirective)
 
             scalar(Scalars.ISO8601DateTime)

@@ -104,7 +104,7 @@ object BrukerAPI {
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
         nærmesteLederService: NærmesteLederService,
     ) = TypedGraphQL<Context>(
-        createGraphQL("/bruker.graphqls") {
+        createGraphQL("/bruker.graphql") {
 
             scalar(Scalars.ISO8601DateTime)
 

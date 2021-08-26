@@ -5,3 +5,4 @@ baseurl: "/arbeidsgiver-notifikasjon-produsent-api"
 
 theme: minima
 
+markdown: CommonMarkGhPages
