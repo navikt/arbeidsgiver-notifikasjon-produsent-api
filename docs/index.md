@@ -75,8 +75,10 @@ Hver gang en arbeidsgiver logger inn i en NAV-tjeneste, vil vi sjekke hvilke til
 Vi bruker digisyfo nærmeste leder konsept. 
 
 ## Hvordan komme i gang? 
-- Bruksvilkår: Bli kjent med deres ansvar som produsent og signere [bruksvilkårene](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/bruksvilk%C3%A5r/) 
+- Bruksvilkår: Bli kjent med deres ansvar som produsent og signer [bruksvilkårene](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/bruksvilk%C3%A5r/) .
 
-- [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/) for notifikasjoner til arbeidsgivere
+- [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/) for notifikasjoner til arbeidsgivere.
+
+- Har du spørsmål? Kontakt oss på slack: [#team-fager](https://nav-it.slack.com/archives/C01V9FFEHEK).
 
 
