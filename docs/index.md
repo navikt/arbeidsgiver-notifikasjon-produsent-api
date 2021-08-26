@@ -20,7 +20,7 @@ Oppgaver og beskjeder vil være synlig for arbeidsgivere som er logget inn i NAV
 ![Bjella på Min side -arbeidsgiver viser at nye notifikasjoner kommet med rød cirkel og antall](images/Bjella%20collapsed.png)
 
 
-Når arbeidsgiver trykker på bjella kan de se oppgaver og beskjeder på tvers av virksomheter. Fet skrift på meldingen betyr at brukern ikke trykket på lenken. 
+Når arbeidsgiver trykker på bjella kan de se oppgaver og beskjeder på tvers av virksomheter. 
 
 ![Når man trykker på bjella ekspandere notfikasjonerne ut](images/Bjella%20expanded.png)
 
@@ -58,6 +58,13 @@ __Hvor lenge vises notifikasjonen for mottakere og lagres i loggene?__
 
 Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere fortsatt har tilgang å se dem og notifikasjonen ikke er slettet. Dere som produsent må derfor vurdere hvor lenge notifikasjonen bør vises for mottakeren og lagres i loggene. Dere utfør sletting med hjelp av våre API:er for sletting, se [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/). Vi jobber med funksjonalitet der produsenten vid opprettelse av en notifikasjon kan definere hvor lenge den skal vises for mottakeren og hvor lenge loggene skal lagres.
 
+__Hva vises i notifikasjonen?__
+
+Merkelapp bestems av produsenten og skal gjøre det tydelig for mottaker hvilken domene notfifikasjonen er om. T ex sykemeldte eller tiltak. Fet skrift på meldingen betyr at brukern ikke klikket på lenken. 
+
+Utført oppgave vises med grå ikon i tilegg til teksten "oppgave utført". Beroende av hvordan dere valgt å spesifisere mottakere kan det vare flere i virksomheten som mottat samme oppgave. Oppgaven kan derfor være utført av en annen person en den brukeren som ser "oppgave utført". 
+
+![](images/forklaring.png)
 
 ## Tilgangstyring av mottakere 
 Du kan spesifisere mottakerene av notifikasjonen på to måter: basert på Altinn-tilgang og digisyfos nærmeste leder. Det er viktig å spesifisere mottaker riktig, så eventuelle personopplysninger kun vises til de med tjenestelig behov. Har dere behov for en annen måte å spesifisere mottakere på, så kontakt oss!
