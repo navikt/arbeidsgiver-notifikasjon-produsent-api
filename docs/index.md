@@ -60,7 +60,7 @@ Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere fortsatt har tilgan
 
 __Hva vises i notifikasjonen?__
 
-Merkelapp bestems av produsenten og skal gjøre det tydelig for mottaker hvilken domene notfifikasjonen er om. T ex sykemeldte eller tiltak. Fet skrift på meldingen betyr at brukern ikke klikket på lenken. Hvilken virksomhet notfikasjonen gjelder vises også. 
+Merkelapp bestems av produsenten og skal gjøre det tydelig for mottaker hvilken domene notfifikasjonen er om. T ex sykemeldte eller tiltak. Fet skrift på meldingen betyr at brukern ikke klikket på lenken. Hvilken virksomhet notifikasjonen gjelder vises også. 
 
 Utført oppgave vises med grå ikon i tilegg til teksten "oppgave utført". Beroende av hvordan dere valgt å spesifisere mottakere kan det vare flere i virksomheten som mottat samme oppgave. Oppgaven kan derfor være utført av en annen person en den brukeren som ser "oppgave utført". 
 
