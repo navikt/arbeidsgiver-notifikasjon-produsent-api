@@ -56,7 +56,7 @@ Vi støtter ikke varsel på SMS eller e-post (men håper å støtte det i fremti
 
 __Hvor lenge vises oppgaver og beskjeder i bjella?__
 
-Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere fortsatt har tilgang å se dem og notfikasjonen ikke er slettet. Dere som produsent må derfor vurdere hvor lenge notfikasjonen bør vises for mottakeren og lagres i loggerne. Dere utfør sletting med hjelp av våre API for sletting, se  [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/). Vi jobber med funksjonalitet der produsenten vid opprettelse av en nofikasjon kan definere hvor lenge den skal vises for mottakeren og hvor lenge loggene skal lagres. 
+Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere fortsatt har tilgang å se dem og notfikasjonen ikke er slettet. Dere som produsent må derfor vurdere hvor lenge notfikasjonen bør vises for mottakeren og lagres i loggerne. Dere utfør sletting med hjelp av våre API:er for sletting, se  [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/). Vi jobber med funksjonalitet der produsenten vid opprettelse av en nofikasjon kan definere hvor lenge den skal vises for mottakeren og hvor lenge loggene skal lagres. 
 
 ## Tilgangstyring av mottakere 
 Du kan spesifisere mottakerene av notifikasjonen på to måter: basert på Altinn-tilgang og digisyfos nærmeste leder. Det er viktig å spesifisere mottaker riktig, så eventuelle personopplysninger kun vises til de med tjenestelig behov. Har dere behov for en annen måte å spesifisere mottakere på, så kontakt oss!
