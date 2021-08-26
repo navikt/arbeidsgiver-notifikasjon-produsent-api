@@ -1,4 +1,4 @@
-# Notifikasjoner for arbeidsgivere #
+
 Notfikasjoner for arbeidsgivere gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker sende notifkasjoner om på notifkasjonsplatformen. 
 
 ## Hvilket problem skal vi løse? ##
