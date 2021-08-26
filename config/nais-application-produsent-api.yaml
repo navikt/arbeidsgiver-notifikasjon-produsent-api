@@ -40,6 +40,9 @@ spec:
       external:
         - host: fakedings.dev-gcp.nais.io
         - host: arbeidsgiver.dev.nav.no
+    inbound:
+      rules:
+        - application: notifikasjon-test-produsent
   env:
     - name: JAVA_OPTS
       value: -Dio.ktor.development=true
