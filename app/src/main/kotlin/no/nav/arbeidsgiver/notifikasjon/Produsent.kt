@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentConte
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegisterImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
 import org.apache.kafka.clients.consumer.ConsumerConfig

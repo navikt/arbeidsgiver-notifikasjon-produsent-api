@@ -1,9 +1,10 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import java.util.*
 
 typealias Merkelapp = String
@@ -76,40 +77,13 @@ interface ProdusentRegister {
     fun validateAll()
 }
 
-object ProdusentRegisterImpl : ProdusentRegister {
-    private val REGISTER: List<Produsent> = listOf(
-        Produsent(
-            accessPolicy = listOf(
-                "dev-gcp:fager:test-produsent"
-            ),
-            tillatteMerkelapper = listOf(
-                "tiltak",
-                "sykemeldte",
-                "rekruttering"
-            ),
-            tillatteMottakere = listOf(
-                ServicecodeDefinisjon(code = "5216", version = "1"),
-                ServicecodeDefinisjon(code = "5212", version = "1"),
-                ServicecodeDefinisjon(code = "5384", version = "1"),
-                ServicecodeDefinisjon(code = "5159", version = "1"),
-                ServicecodeDefinisjon(code = "4936", version = "1"),
-                ServicecodeDefinisjon(code = "5332", version = "2"),
-                ServicecodeDefinisjon(code = "5332", version = "1"),
-                ServicecodeDefinisjon(code = "5441", version = "1"),
-                ServicecodeDefinisjon(code = "5516", version = "1"),
-                ServicecodeDefinisjon(code = "5516", version = "2"),
-                ServicecodeDefinisjon(code = "3403", version = "2"),
-                ServicecodeDefinisjon(code = "5078", version = "1"),
-                ServicecodeDefinisjon(code = "5278", version = "1"),
-                NærmesteLederDefinisjon,
-            )
-        )
-    )
-
+class ProdusentRegisterImpl(
+    private val produsenter: List<Produsent>
+) : ProdusentRegister {
 
     private val clientIdToProdusent: Map<ClientId, Produsent> = PreAuthorizedApps.map
         .flatMap { elem ->
-            val produsent = REGISTER.find {
+            val produsent = produsenter.find {
                 it.accessPolicy.contains(elem.name)
             } ?: return@flatMap listOf()
             listOf(Pair(elem.clientId, produsent))
@@ -117,14 +91,14 @@ object ProdusentRegisterImpl : ProdusentRegister {
         .toMap()
 
     private val noopProdusent = Produsent(
-            accessPolicy = listOf()
-        )
+        accessPolicy = listOf()
+    )
 
     override fun finn(subject: ClientId): Produsent {
         return clientIdToProdusent.getOrDefault(subject, noopProdusent)
     }
 
-    override fun validateAll() = REGISTER.forEach(this::validate)
+    override fun validateAll() = produsenter.forEach(this::validate)
 
     private fun validate(produsent: Produsent) {
         produsent.tillatteMottakere.forEach {
@@ -136,25 +110,9 @@ object ProdusentRegisterImpl : ProdusentRegister {
 }
 
 object MottakerRegister {
-    private val REGISTER: List<MottakerDefinisjon> = listOf(
-        ServicecodeDefinisjon(code = "5216", version = "1", description = "Mentortilskudd"),
-        ServicecodeDefinisjon(code = "5212", version = "1", description = "Inkluderingstilskudd"),
-        ServicecodeDefinisjon(code = "5384", version = "1", description = "Ekspertbistand"),
-        ServicecodeDefinisjon(code = "5159", version = "1", description = "Lønnstilskudd"),
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
-        ServicecodeDefinisjon(code = "5332", version = "2", description = "Arbeidstrening"),
-        ServicecodeDefinisjon(code = "5332", version = "1", description = "Arbeidstrening"),
-        ServicecodeDefinisjon(code = "5441", version = "1", description = "Arbeidsforhold"),
-        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
-        ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
-        ServicecodeDefinisjon(code = "3403", version = "2", description = "Sykfraværsstatistikk"),
-        ServicecodeDefinisjon(code = "5078", version = "1", description = "Rekruttering"),
-        ServicecodeDefinisjon(code = "5278", version = "1", description = "Tilskuddsbrev om NAV-tiltak"),
-    )
-
     val servicecodeDefinisjoner: List<ServicecodeDefinisjon>
         get() {
-            return REGISTER.filterIsInstance<ServicecodeDefinisjon>()
+            return MOTTAKER_REGISTER.filterIsInstance<ServicecodeDefinisjon>()
         }
 
     fun erDefinert(mottakerDefinisjon: MottakerDefinisjon): Boolean =

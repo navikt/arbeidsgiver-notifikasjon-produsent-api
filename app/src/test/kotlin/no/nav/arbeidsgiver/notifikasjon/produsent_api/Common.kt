@@ -1,8 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
 import io.ktor.server.testing.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.NærmesteLederDefinisjon
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.TOKENDINGS_TOKEN
 import no.nav.arbeidsgiver.notifikasjon.util.post
