@@ -11,7 +11,6 @@ typealias Merkelapp = String
 typealias AppName = String
 typealias ClientId = String
 
-
 data class Produsent(
     val accessPolicy: List<AppName>,
     val tillatteMerkelapper: List<Merkelapp> = emptyList(),
@@ -58,6 +57,19 @@ object NærmesteLederDefinisjon : MottakerDefinisjon() {
         when (mottaker) {
             is NærmesteLederMottaker -> true
             else -> false
+        }
+}
+
+object MottakerRegister {
+    val servicecodeDefinisjoner: List<ServicecodeDefinisjon>
+        get() {
+            return MOTTAKER_REGISTER.filterIsInstance<ServicecodeDefinisjon>()
+        }
+
+    fun erDefinert(mottakerDefinisjon: MottakerDefinisjon): Boolean =
+        when (mottakerDefinisjon) {
+            is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
+            is NærmesteLederDefinisjon -> true
         }
 }
 
@@ -109,15 +121,3 @@ class ProdusentRegisterImpl(
 
 }
 
-object MottakerRegister {
-    val servicecodeDefinisjoner: List<ServicecodeDefinisjon>
-        get() {
-            return MOTTAKER_REGISTER.filterIsInstance<ServicecodeDefinisjon>()
-        }
-
-    fun erDefinert(mottakerDefinisjon: MottakerDefinisjon): Boolean =
-        when (mottakerDefinisjon) {
-            is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
-            is NærmesteLederDefinisjon -> true
-        }
-}
