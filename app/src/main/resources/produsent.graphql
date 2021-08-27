@@ -17,8 +17,18 @@ scalar ISO8601DateTime
 
 # scalar NotifikasjonCursor
 
+"""
+Tilstanden til en oppgave.
+"""
 enum OppgaveTilstand {
+    """
+    En oppgave som kan utføres.
+    """
     NY
+
+    """
+    En oppgave som allerede er utført.
+    """
     UTFOERT
 }
 
@@ -36,11 +46,12 @@ type Query {
     [Connection-standaren](https://relay.dev/graphql/connections.htm) for mer
     informasjon.
 
-    Hvis man bruker filters, må de gjentas når man bruker cursor eller ikke?
-    Eller hvis filter på opprinnelig og cursor-kall er forskjellig.
+    Man må gjenta paremetere når man blar gjennom alle notifikasjonen.
     """
     mineNotifikasjoner(
+        "antall notifikasjoner du ønsker å hente"
         first: Int @Validate @MaxValue(upToIncluding: 10000)
+        "cursor til notifikasjonen du henter fra"
         after: String
         merkelapp: String
     ): MineNotifikasjonerResultat!
@@ -266,7 +277,6 @@ type HardDeleteNotifikasjonVellykket {
     """
     id: ID!
 }
-
 
 union OppgaveUtfoertResultat =
     | OppgaveUtfoertVellykket

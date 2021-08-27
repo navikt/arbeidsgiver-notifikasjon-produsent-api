@@ -111,20 +111,27 @@ Vi bruker det Connections-patternet for paginering. Se
 [Connection-standaren](https://relay.dev/graphql/connections.htm) for mer
 informasjon.
 
-Hvis man bruker filters, må de gjentas når man bruker cursor eller ikke?
-Eller hvis filter på opprinnelig og cursor-kall er forskjellig.
+Man må gjenta paremetere når man blar gjennom alle notifikasjonen.
 
 </td>
 </tr>
 <tr>
 <td colspan="2" align="right" valign="top">first</td>
 <td valign="top"><a href="#int">Int</a></td>
-<td></td>
+<td>
+
+antall notifikasjoner du ønsker å hente
+
+</td>
 </tr>
 <tr>
 <td colspan="2" align="right" valign="top">after</td>
 <td valign="top"><a href="#string">String</a></td>
-<td></td>
+<td>
+
+cursor til notifikasjonen du henter fra
+
+</td>
 </tr>
 <tr>
 <td colspan="2" align="right" valign="top">merkelapp</td>
@@ -1066,6 +1073,8 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 
 #### OppgaveTilstand
 
+Tilstanden til en oppgave.
+
 <table>
 <thead>
 <th align="left">Value</th>
@@ -1074,11 +1083,19 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 <tbody>
 <tr>
 <td valign="top"><strong>NY</strong></td>
-<td></td>
+<td>
+
+En oppgave som kan utføres.
+
+</td>
 </tr>
 <tr>
 <td valign="top"><strong>UTFOERT</strong></td>
-<td></td>
+<td>
+
+En oppgave som allerede er utført.
+
+</td>
 </tr>
 </tbody>
 </table>
