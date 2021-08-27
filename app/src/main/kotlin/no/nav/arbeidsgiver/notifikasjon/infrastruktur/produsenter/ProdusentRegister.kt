@@ -74,12 +74,21 @@ object PreAuthorizedApps {
 
 interface ProdusentRegister {
     fun finn(subject: String): Produsent
-    fun validateAll()
 }
 
 class ProdusentRegisterImpl(
     private val produsenter: List<Produsent>
 ) : ProdusentRegister {
+
+    init {
+        produsenter.forEach { produsent ->
+            produsent.tillatteMottakere.forEach {
+                check(MottakerRegister.erDefinert(it)) {
+                    "Ugyldig mottaker $it for produsent $produsent"
+                }
+            }
+        }
+    }
 
     private val clientIdToProdusent: Map<ClientId, Produsent> = PreAuthorizedApps.map
         .flatMap { elem ->
@@ -98,15 +107,6 @@ class ProdusentRegisterImpl(
         return clientIdToProdusent.getOrDefault(subject, noopProdusent)
     }
 
-    override fun validateAll() = produsenter.forEach(this::validate)
-
-    private fun validate(produsent: Produsent) {
-        produsent.tillatteMottakere.forEach {
-            check(MottakerRegister.erDefinert(it)) {
-                "Ugyldig mottaker $it for produsent $produsent"
-            }
-        }
-    }
 }
 
 object MottakerRegister {

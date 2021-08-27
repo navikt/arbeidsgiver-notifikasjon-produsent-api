@@ -6,12 +6,10 @@ import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegisterImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -350,7 +348,7 @@ object ProdusentAPI {
 
     fun newGraphQL(
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = createKafkaProducer(),
-        produsentRegister: ProdusentRegister = ProdusentRegisterImpl,
+        produsentRegister: ProdusentRegister = PRODUSENT_REGISTER,
         produsentModel: ProdusentModel,
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphql") {

@@ -38,8 +38,5 @@ val mockProdusentRegister: ProdusentRegister = object: ProdusentRegister {
             )
         )
     }
-
-    override fun validateAll() {
-    }
 }
 
