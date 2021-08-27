@@ -111,7 +111,7 @@ Vi bruker det Connections-patternet for paginering. Se
 [Connection-standaren](https://relay.dev/graphql/connections.htm) for mer
 informasjon.
 
-Man må gjenta paremetere når man blar gjennom alle notifikasjonen.
+Dere må gjenta paremetere når dere blar gjennom alle notifikasjonen.
 
 </td>
 </tr>
@@ -129,7 +129,7 @@ antall notifikasjoner du ønsker å hente
 <td valign="top"><a href="#string">String</a></td>
 <td>
 
-cursor til notifikasjonen du henter fra
+Cursor til notifikasjonen du henter fra. Cursor får du fra [NotifikasjonEdge](#notifikasjonedge).
 
 </td>
 </tr>

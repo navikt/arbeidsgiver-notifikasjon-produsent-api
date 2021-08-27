@@ -46,12 +46,12 @@ type Query {
     [Connection-standaren](https://relay.dev/graphql/connections.htm) for mer
     informasjon.
 
-    Man må gjenta paremetere når man blar gjennom alle notifikasjonen.
+    Dere må gjenta paremetere når dere blar gjennom alle notifikasjonen.
     """
     mineNotifikasjoner(
         "antall notifikasjoner du ønsker å hente"
         first: Int @Validate @MaxValue(upToIncluding: 10000)
-        "cursor til notifikasjonen du henter fra"
+        """Cursor til notifikasjonen du henter fra. Cursor får du fra [NotifikasjonEdge](#notifikasjonedge)."""
         after: String
         merkelapp: String
     ): MineNotifikasjonerResultat!
