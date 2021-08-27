@@ -5,11 +5,10 @@ permalink: /bruksvilkår/
 ---
 For at dere skal få tilgang til å produsere notifikasjoner, så må dere godta bruksvilkårene beskrevet under.
 
-# Bruksvilkår
 
-Dere, altså teamet som skal opprette notifikasjoner, har ansvar for de notifikasjonene dere oppretter.
+## Dere er ansvarlige for:
 
-Dere er ansvarlige for:
+* Dere, altså teamet som skal opprette notifikasjoner, har ansvar for de notifikasjonene dere oppretter.
 
 * At dere har behandlingsgrunnlag for å behandle de personopplysningene dere bruker i notifikasjonen (hvis dere bruker noen personopplysninger).
   
@@ -34,7 +33,7 @@ Vi fraråder i tillegg fra å bruke sensitive personopplysninger i notifikasjone
 
 
 
-Kontakt og oppfølging
+## Kontakt og oppfølging
 
 Vi oppfordrer dere til å ta og opprettholde kontakt med oss i alle steg i utviklingen når dere ønsker å integrere med notifikasjonsplattformen vår, bl.a. for at:
 

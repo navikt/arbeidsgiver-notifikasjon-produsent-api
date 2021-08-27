@@ -6,6 +6,24 @@ permalink: /api/
 
 Interaktiv demo av API [er tilgjengelig på labs.nais.io](https://notifikasjon-fake-produsent-api.labs.nais.io/).
 
+# Onboarding og tilganger
+
+For å få tilgang til API-et må teamet ditt godta [vilkårene](vilkaar.md), ved å registerer dere i repoet [navikt/arbeidsgiver-notifikasjon-produsenter](https://github.com/navikt/arbeidsgiver-notifikasjon-produsenter).
+Der er også tilgangsstyring spesifisert.
+
+# Autentisering
+Tjenesten deres må autentisere seg med Azure AD, type server–server, som [beskrevet i nais-dokumentasjonen](https://doc.nais.io/security/auth/azure-ad/).
+
+# Endepunkter for miljøer 
+
+miljø | url
+-----|------
+mock | https://notifikasjon-fake-produsent-api.labs.nais.io/api/graphql
+dev | https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql
+prod | tba
+
+## GraphQL Schema Types
+
 <!-- START graphql-markdown -->
 
 <details>
@@ -62,7 +80,7 @@ Interaktiv demo av API [er tilgjengelig på labs.nais.io](https://notifikasjon-f
 
 </details>
 
-## Query
+### Query
 Dette er roten som alle forespørsler starter fra.
 
 <table>
@@ -116,7 +134,7 @@ Eller hvis filter på opprinnelig og cursor-kall er forskjellig.
 </tbody>
 </table>
 
-## Mutation
+### Mutation
 Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
 å opprette nye ting.
 
@@ -298,9 +316,9 @@ ID-en som dere ga oss da dere opprettet notifikasjonen.
 </tbody>
 </table>
 
-## Objects
+### Objects
 
-### AltinnMottaker
+#### AltinnMottaker
 
 <table>
 <thead>
@@ -330,7 +348,7 @@ ID-en som dere ga oss da dere opprettet notifikasjonen.
 </tbody>
 </table>
 
-### Beskjed
+#### Beskjed
 
 <table>
 <thead>
@@ -360,7 +378,7 @@ ID-en som dere ga oss da dere opprettet notifikasjonen.
 </tbody>
 </table>
 
-### BeskjedData
+#### BeskjedData
 
 <table>
 <thead>
@@ -402,7 +420,7 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 </tbody>
 </table>
 
-### HardDeleteNotifikasjonVellykket
+#### HardDeleteNotifikasjonVellykket
 
 <table>
 <thead>
@@ -426,7 +444,7 @@ ID-en til oppgaven du "hard-delete"-et.
 </tbody>
 </table>
 
-### Metadata
+#### Metadata
 
 <table>
 <thead>
@@ -471,7 +489,7 @@ ID-en til oppgaven du "hard-delete"-et.
 </tbody>
 </table>
 
-### NaermesteLederMottaker
+#### NaermesteLederMottaker
 
 <table>
 <thead>
@@ -501,7 +519,7 @@ ID-en til oppgaven du "hard-delete"-et.
 </tbody>
 </table>
 
-### NotifikasjonConnection
+#### NotifikasjonConnection
 
 <table>
 <thead>
@@ -526,7 +544,7 @@ ID-en til oppgaven du "hard-delete"-et.
 </tbody>
 </table>
 
-### NotifikasjonEdge
+#### NotifikasjonEdge
 
 <table>
 <thead>
@@ -551,7 +569,7 @@ ID-en til oppgaven du "hard-delete"-et.
 </tbody>
 </table>
 
-### NotifikasjonFinnesIkke
+#### NotifikasjonFinnesIkke
 
 Denne feilen returneres dersom du prøver å referere til en notifikasjon
 som ikke eksisterer.
@@ -577,7 +595,7 @@ av "eventual consistency" i systemet vårt.
 </tbody>
 </table>
 
-### NyBeskjedVellykket
+#### NyBeskjedVellykket
 
 <table>
 <thead>
@@ -597,7 +615,7 @@ av "eventual consistency" i systemet vårt.
 </tbody>
 </table>
 
-### NyOppgaveVellykket
+#### NyOppgaveVellykket
 
 <table>
 <thead>
@@ -617,7 +635,7 @@ av "eventual consistency" i systemet vårt.
 </tbody>
 </table>
 
-### Oppgave
+#### Oppgave
 
 <table>
 <thead>
@@ -647,7 +665,7 @@ av "eventual consistency" i systemet vårt.
 </tbody>
 </table>
 
-### OppgaveData
+#### OppgaveData
 
 <table>
 <thead>
@@ -694,7 +712,7 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 </tbody>
 </table>
 
-### OppgaveUtfoertVellykket
+#### OppgaveUtfoertVellykket
 
 <table>
 <thead>
@@ -718,7 +736,7 @@ ID-en til oppgaven du oppdaterte.
 </tbody>
 </table>
 
-### PageInfo
+#### PageInfo
 
 <table>
 <thead>
@@ -743,7 +761,7 @@ ID-en til oppgaven du oppdaterte.
 </tbody>
 </table>
 
-### SoftDeleteNotifikasjonVellykket
+#### SoftDeleteNotifikasjonVellykket
 
 <table>
 <thead>
@@ -767,7 +785,7 @@ ID-en til oppgaven du "soft-delete"-et.
 </tbody>
 </table>
 
-### UgyldigMerkelapp
+#### UgyldigMerkelapp
 
 Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.
 
@@ -789,7 +807,7 @@ Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp so
 </tbody>
 </table>
 
-### UgyldigMottaker
+#### UgyldigMottaker
 
 Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.
 
@@ -811,9 +829,9 @@ Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som
 </tbody>
 </table>
 
-## Inputs
+### Inputs
 
-### AltinnMottakerInput
+#### AltinnMottakerInput
 
 Spesifiser mottaker ved hjelp av tilganger i Altinn. Enhver som har den gitte tilgangen vil
 kunne se notifikasjone.
@@ -849,7 +867,7 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 </tbody>
 </table>
 
-### MetadataInput
+#### MetadataInput
 
 <table>
 <thead>
@@ -878,7 +896,7 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 </tbody>
 </table>
 
-### MottakerInput
+#### MottakerInput
 
 Hvem som skal se notifikasjonen.
 
@@ -908,7 +926,7 @@ Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer
 </tbody>
 </table>
 
-### NaermesteLederMottakerInput
+#### NaermesteLederMottakerInput
 
 Spesifiser mottaker ved hjelp av fødselsnummer. Fødselsnummeret er det til nærmeste leder. Det er kun denne personen
 som potensielt kan se notifikasjonen. Det er videre en sjekk for å se om denne personen fortsatt er nærmeste leder
@@ -943,7 +961,7 @@ Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
 </tbody>
 </table>
 
-### NotifikasjonInput
+#### NotifikasjonInput
 
 <table>
 <thead>
@@ -986,7 +1004,7 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 </tbody>
 </table>
 
-### NyBeskjedInput
+#### NyBeskjedInput
 
 <table>
 <thead>
@@ -1015,7 +1033,7 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 </tbody>
 </table>
 
-### NyOppgaveInput
+#### NyOppgaveInput
 
 <table>
 <thead>
@@ -1044,9 +1062,9 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 </tbody>
 </table>
 
-## Enums
+### Enums
 
-### OppgaveTilstand
+#### OppgaveTilstand
 
 <table>
 <thead>
@@ -1065,35 +1083,35 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 </tbody>
 </table>
 
-## Scalars
+### Scalars
 
-### Boolean
+#### Boolean
 
 The `Boolean` scalar type represents `true` or `false`.
 
-### ID
+#### ID
 
 The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
 
-### ISO8601DateTime
+#### ISO8601DateTime
 
 DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
 
 Er representert som String.
 
-### Int
+#### Int
 
 The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
 
-### String
+#### String
 
 The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
 
 
-## Interfaces
+### Interfaces
 
 
-### Error
+#### Error
 
 <table>
 <thead>
@@ -1113,9 +1131,9 @@ The `String` scalar type represents textual data, represented as UTF-8 character
 </tbody>
 </table>
 
-## Unions
+### Unions
 
-### HardDeleteNotifikasjonResultat
+#### HardDeleteNotifikasjonResultat
 
 <table>
 <thead>
@@ -1142,7 +1160,7 @@ av "eventual consistency" i systemet vårt.</td>
 </tbody>
 </table>
 
-### MineNotifikasjonerResultat
+#### MineNotifikasjonerResultat
 
 <table>
 <thead>
@@ -1161,7 +1179,7 @@ av "eventual consistency" i systemet vårt.</td>
 </tbody>
 </table>
 
-### Mottaker
+#### Mottaker
 
 <table>
 <thead>
@@ -1180,7 +1198,7 @@ av "eventual consistency" i systemet vårt.</td>
 </tbody>
 </table>
 
-### Notifikasjon
+#### Notifikasjon
 
 <table>
 <thead>
@@ -1199,7 +1217,7 @@ av "eventual consistency" i systemet vårt.</td>
 </tbody>
 </table>
 
-### NyBeskjedResultat
+#### NyBeskjedResultat
 
 <table>
 <thead>
@@ -1222,7 +1240,7 @@ av "eventual consistency" i systemet vårt.</td>
 </tbody>
 </table>
 
-### NyOppgaveResultat
+#### NyOppgaveResultat
 
 <table>
 <thead>
@@ -1245,7 +1263,7 @@ av "eventual consistency" i systemet vårt.</td>
 </tbody>
 </table>
 
-### OppgaveUtfoertResultat
+#### OppgaveUtfoertResultat
 
 <table>
 <thead>
@@ -1272,7 +1290,7 @@ av "eventual consistency" i systemet vårt.</td>
 </tbody>
 </table>
 
-### SoftDeleteNotifikasjonResultat
+#### SoftDeleteNotifikasjonResultat
 
 <table>
 <thead>
