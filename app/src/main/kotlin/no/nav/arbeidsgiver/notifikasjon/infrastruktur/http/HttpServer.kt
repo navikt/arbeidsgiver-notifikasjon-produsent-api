@@ -81,8 +81,15 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
     install(CORS) {
         /* TODO: log when reject */
         allowNonSimpleContentTypes = true
-        host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
-        host("localhost:3000")
+        when (System.getenv("NAIS_CLUSTER_NAME")) {
+            "prod-gcp" -> {
+                host("arbeidsgiver.nav.no", schemes = listOf("https"))
+            }
+            "dev-gcp" -> {
+                host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
+                host("localhost:3000")
+            }
+        }
     }
 
     installMetrics()

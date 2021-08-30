@@ -34,7 +34,10 @@ object AltinnImpl : Altinn {
                     consumerId = "arbeidsgiver-arbeidsforhold-api",
                 ),
                 AltinnConfig(
-                    url = "https://api-gw-q1.oera.no/", //TODO finn riktig måte å fallbacke på i gcp
+                    url = basedOnEnv(
+                        prod = "https://api-gw.oera.no",
+                        other = "https://api-gw-q1.oera.no"
+                    ),
                     altinnApiKey = System.getenv("ALTINN_HEADER") ?: "default",
                     altinnApiGwApiKey = System.getenv("APIGW_HEADER") ?: "default",
                 )

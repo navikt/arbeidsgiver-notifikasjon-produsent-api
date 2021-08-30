@@ -1,5 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+
 val MOTTAKER_REGISTER: List<MottakerDefinisjon> = listOf(
     ServicecodeDefinisjon(code = "5216", version = "1", description = "Mentortilskudd"),
     ServicecodeDefinisjon(code = "5212", version = "1", description = "Inkluderingstilskudd"),
@@ -18,8 +20,9 @@ val MOTTAKER_REGISTER: List<MottakerDefinisjon> = listOf(
 
 val FAGER_TESTPRODUSENT =
     Produsent(
-        accessPolicy = listOf(
-            "dev-gcp:fager:test-produsent"
+        accessPolicy = basedOnEnv(
+            prod = listOf(),
+            other = listOf("dev-gcp:fager:test-produsent")
         ),
         tillatteMerkelapper = listOf(
             "tiltak",
@@ -46,8 +49,11 @@ val FAGER_TESTPRODUSENT =
 
 fun createProdusentRegister(): ProdusentRegister {
     return ProdusentRegisterImpl(
-        listOf(
-            FAGER_TESTPRODUSENT
+        basedOnEnv(
+            prod = listOf(),
+            other = listOf(
+                FAGER_TESTPRODUSENT
+            )
         )
     )
 }
