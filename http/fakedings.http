@@ -9,7 +9,7 @@ sub=someproducer&aud=produsent-api
 %}
 
 ###
-POST http://localhost:8080/api/graphql
+POST http://localhost:8081/api/graphql
 Content-Type: application/json
 Host: ag-notifikasjon-produsent-api.local
 Authorization: Bearer {{auth_token}}

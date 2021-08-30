@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_REGISTER
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegisterImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
@@ -44,6 +45,7 @@ object Produsent {
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         httpPort: Int = 8080,
+        produsentRegister: ProdusentRegister = PRODUSENT_REGISTER
     ) {
         runBlocking(Dispatchers.Default) {
             val produsentModelAsync = async {
@@ -75,7 +77,9 @@ object Produsent {
             val graphql = async {
                 ProdusentAPI.newGraphQL(
                     produsentModel = produsentModelAsync.await(),
-                    kafkaProducer = createKafkaProducer()
+                    kafkaProducer = createKafkaProducer(),
+                    produsentRegister = produsentRegister
+
                 )
             }
 

@@ -235,7 +235,8 @@ object ProdusentAPI {
             val metadata: Metadata,
             val oppgave: OppgaveData,
         ) : Notifikasjon() {
-            @Suppress("unused") /* Sendes til produsent */
+            @Suppress("unused")
+            /* Sendes til produsent */
             enum class Tilstand {
                 NY,
                 UTFOERT;
@@ -348,7 +349,7 @@ object ProdusentAPI {
 
     fun newGraphQL(
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = createKafkaProducer(),
-        produsentRegister: ProdusentRegister = PRODUSENT_REGISTER,
+        produsentRegister: ProdusentRegister,
         produsentModel: ProdusentModel,
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphql") {
