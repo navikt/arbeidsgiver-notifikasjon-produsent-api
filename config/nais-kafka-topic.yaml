@@ -5,13 +5,12 @@ metadata:
   namespace: fager
   labels:
     team: fager
-  annotations:
-    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
 spec:
-  pool: nav-dev
+  pool: {{{ pool }}}
   config:
     cleanupPolicy: compact
-    minimumInSyncReplicas: 1
+    replication: 3
+    minimumInSyncReplicas: 2
     partitions: 20
     retentionBytes: -1
     retentionHours: -1
