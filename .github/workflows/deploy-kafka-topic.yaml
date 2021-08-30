@@ -19,7 +19,7 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: config/nais-kafka-topic.yaml
           PRINT_PAYLOAD: true
-          POOL: nav-dev
+          VAR: pool=nav-dev
 
       - uses: nais/deploy/actions/deploy@v1
         env:
@@ -27,4 +27,4 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: config/nais-kafka-topic.yaml
           PRINT_PAYLOAD: true
-          POOL: nav-prod
+          VAR: pool=nav-prod
