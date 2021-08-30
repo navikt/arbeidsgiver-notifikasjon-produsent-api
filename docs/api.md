@@ -18,8 +18,8 @@ Tjenesten deres må autentisere seg med Azure AD, type server–server, som [bes
 
 miljø | url
 -----|------
-mock | https://notifikasjon-fake-produsent-api.labs.nais.io/api/graphql
-dev | https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql
+mock | `https://notifikasjon-fake-produsent-api.labs.nais.io/api/graphql`
+dev | `https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql`
 prod | tba
 
 ## GraphQL Schema Types
