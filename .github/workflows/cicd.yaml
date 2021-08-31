@@ -5,7 +5,7 @@ on:
 
 
 jobs:
-  cicd:
+  build:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -50,71 +50,19 @@ jobs:
           tags: ${{ github.sha }}
 
   deploy:
+    needs: [build]
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         cluster: [ dev-gcp, prod-gcp ]
         app: [ bruker-api, produsent-api, kafka-reaper ]
     steps:
-          - uses: nais/deploy/actions/deploy@v1
-            name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
-            if: github.ref == 'refs/heads/main'
-            env:
-              IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-              APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-              CLUSTER: ${{ matrix.cluster }}
-              RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
-
-#      - uses: nais/deploy/actions/deploy@v1
-#        name: "dev: deploy bruker-api"
-#        if: github.ref == 'refs/heads/main'
-#        env:
-#          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: dev-gcp
-#          RESOURCE: config/dev-gcp-bruker-api.yaml
-#
-#      - uses: nais/deploy/actions/deploy@v1
-#        name: "dev: deploy produsent-api"
-#        if: github.ref == 'refs/heads/main'
-#        env:
-#          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: dev-gcp
-#          RESOURCE: config/dev-gcp-produsent-api.yaml
-#
-#      - uses: nais/deploy/actions/deploy@v1
-#        name: "dev: deploy kafka reaper"
-#        if: github.ref == 'refs/heads/main'
-#        env:
-#          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: dev-gcp
-#          RESOURCE: config/dev-gcp-kafka-reaper.yaml
-#
-#      - uses: nais/deploy/actions/deploy@v1
-#        name: "prod: deploy bruker-api"
-#        if: github.ref == 'refs/heads/main'
-#        env:
-#          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: prod-gcp
-#          RESOURCE: config/prod-gcp-bruker-api.yaml
-#
-#      - uses: nais/deploy/actions/deploy@v1
-#        name: "prod: deploy produsent-api"
-#        if: github.ref == 'refs/heads/main'
-#        env:
-#          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: prod-gcp
-#          RESOURCE: config/prod-gcp-produsent-api.yaml
-#
-#      - uses: nais/deploy/actions/deploy@v1
-#        name: "prod: deploy kafka reaper"
-#        if: github.ref == 'refs/heads/main'
-#        env:
-#          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: prod-gcp
-#          RESOURCE: config/prod-gcp-kafka-reaper.yaml
+      - uses: actions/checkout@v1
+      - uses: nais/deploy/actions/deploy@v1
+        name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
+        if: github.ref == 'refs/heads/main'
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: ${{ matrix.cluster }}
+          RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
