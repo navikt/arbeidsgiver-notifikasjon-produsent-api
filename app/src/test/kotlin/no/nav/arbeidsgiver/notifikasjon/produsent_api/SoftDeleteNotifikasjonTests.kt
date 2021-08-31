@@ -1,3 +1,5 @@
+@file:Suppress("NAME_SHADOWING")
+
 package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
 import io.kotest.core.spec.style.DescribeSpec

@@ -18,9 +18,17 @@ interface NærmesteLederService {
 
 class NærmesteLederServiceImpl(
     private val tokenExchangeClient: TokenExchangeClient = TokenExchangeClientImpl(),
-    baseUrl: String = "https://narmesteleder.dev.nav.no",
+    baseUrl: String = basedOnEnv(
+        prod = "https://narmesteleder.nav.no",
+        other = "https://narmesteleder.dev.nav.no",
+    )
 ) : NærmesteLederService {
     private val log = logger()
+
+    private val targetAudience = basedOnEnv(
+        prod = "prod-gcp:teamsykmelding:narmesteleder",
+        other = "dev-gcp:teamsykmelding:narmesteleder"
+    )
 
     private val url = URLBuilder()
         .takeFrom(baseUrl)
@@ -45,7 +53,7 @@ class NærmesteLederServiceImpl(
     )
 
     override suspend fun hentAnsatte(userToken: String): List<NærmesteLederService.NærmesteLederFor> {
-        val onBehalfToken = tokenExchangeClient.exchangeToken(userToken, "dev-gcp:teamsykmelding:narmesteleder")
+        val onBehalfToken = tokenExchangeClient.exchangeToken(userToken, targetAudience)
 
         return httpClient.get<Ansatte>(url) {
             header(HttpHeaders.Authorization, "Bearer $onBehalfToken")
@@ -56,5 +64,4 @@ class NærmesteLederServiceImpl(
             )
         }
     }
-
 }

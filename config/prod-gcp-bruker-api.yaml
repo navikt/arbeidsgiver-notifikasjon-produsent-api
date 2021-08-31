@@ -8,28 +8,24 @@ metadata:
 spec:
   image: {{image}}
   ingresses:
-    - https://ag-notifikasjon-bruker-api.dev.nav.no/
+    - https://ag-notifikasjon-bruker-api.nav.no/
   liveness:
     path: /internal/alive
   readiness:
     path: /internal/ready
-  replicas:
-    min: 2
-    max: 8
   prometheus:
     enabled: true
     path: /internal/metrics
   tokenx:
     enabled: true
   kafka:
-    pool: nav-dev
+    pool: nav-prod
   gcp:
     sqlInstances:
       - type: POSTGRES_12
         tier: db-custom-1-3840
-        diskSize: 20
         diskAutoresize: true
-        highAvailability: false
+        highAvailability: true
         databases:
           - name: bruker-model
             envVarPrefix: DB
@@ -44,12 +40,7 @@ spec:
         - application: narmesteleder
           namespace: teamsykmelding
       external:
-        - host: fakedings.dev-gcp.nais.io # fakedings login
-        - host: arbeidsgiver.dev.nav.no # ???
-        - host: navtestb2c.b2clogin.com # for login service
-  env:
-    - name: JAVA_OPTS
-      value: -Dio.ktor.development=true
+        - host: https://navnob2c.b2clogin.com/ # loginservice
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
     - configmap: loginservice-idporten

@@ -30,17 +30,22 @@ object Bruker {
         migrationLocations = "db/migration/bruker_model",
     )
 
-    private val defaultAuthProviders = if (System.getenv("NAIS_CLUSTER_NAME") == "prod-gcp")
-        listOf(
-            HttpAuthProviders.LOGIN_SERVICE,
-            HttpAuthProviders.TOKEN_X,
-        )
-    else
-        listOf(
-            HttpAuthProviders.LOGIN_SERVICE,
-            HttpAuthProviders.TOKEN_X,
-            HttpAuthProviders.FAKEDINGS_BRUKER
-        )
+    private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
+        "prod-gcp" -> listOf(
+                HttpAuthProviders.LOGIN_SERVICE,
+                HttpAuthProviders.TOKEN_X,
+            )
+        null, "dev-gcp" -> listOf(
+                HttpAuthProviders.LOGIN_SERVICE,
+                HttpAuthProviders.TOKEN_X,
+                HttpAuthProviders.FAKEDINGS_BRUKER
+            )
+        else -> {
+            val msg = "ukjent NAIS_CLUSTER_NAME '$name'"
+            log.error(msg)
+            throw Error(msg)
+        }
+    }
 
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,

@@ -15,7 +15,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_REGISTER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegisterImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -32,15 +31,20 @@ object Produsent {
         migrationLocations = "db/migration/produsent_model",
     )
 
-    private val defaultAuthProviders = if (System.getenv("NAIS_CLUSTER_NAME") == "prod-gcp")
-        listOf(
+    private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
+        "prod-gcp" -> listOf(
             HttpAuthProviders.AZURE_AD,
         )
-    else
-        listOf(
+        null, "dev-gcp" -> listOf(
             HttpAuthProviders.AZURE_AD,
             HttpAuthProviders.FAKEDINGS_PRODUSENT
         )
+        else -> {
+            val msg = "ukjent NAIS_CLUSTER_NAME '$name'"
+            log.error(msg)
+            throw Error(msg)
+        }
+    }
 
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,

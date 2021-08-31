@@ -7,6 +7,12 @@ import kotlin.reflect.KProperty
 
 private val WHITESPACE = Regex("\\s+")
 
+fun <T>basedOnEnv(prod: T, other: T): T =
+    when (System.getenv("NAIS_CLUSTER_NAME")) {
+        "prod-gcp" -> prod
+        else -> other
+    }
+
 /** Removes all occurences of whitespace [ \t\n\x0B\f\r]. */
 fun String.removeAllWhitespace() =
     this.replace(WHITESPACE, "")

@@ -1,34 +1,42 @@
 apiVersion: nais.io/v1alpha1
 kind: Application
 metadata:
-  name: notifikasjon-kafka-reaper
+  name: notifikasjon-produsent-api
   namespace: fager
   labels:
     team: fager
 spec:
   image: {{image}}
+  ingresses:
+    - https://ag-notifikasjon-produsent-api.dev.nav.no/
   liveness:
     path: /internal/alive
   readiness:
     path: /internal/ready
   replicas:
-    min: 1
-    max: 2
+    min: 2
+    max: 8
   prometheus:
     enabled: true
     path: /internal/metrics
+  azure:
+    application:
+      enabled: true
   kafka:
     pool: nav-dev
   gcp:
     sqlInstances:
       - type: POSTGRES_12
-        tier: db-custom-1-3840
-        diskSize: 20
+        tier: db-f1-micro
         diskAutoresize: true
         highAvailability: false
         databases:
-          - name: kafka-reaper-model
+          - name: produsent-model
             envVarPrefix: DB
-  env:
-    - name: JAVA_OPTS
-      value: -Dio.ktor.development=true
+  accessPolicy:
+    outbound:
+      external:
+        - host: fakedings.dev-gcp.nais.io
+    inbound:
+      rules:
+        - application: notifikasjon-test-produsent
