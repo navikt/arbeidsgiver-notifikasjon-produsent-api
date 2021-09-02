@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import java.util.*
 
@@ -92,6 +93,8 @@ class ProdusentRegisterImpl(
     private val produsenter: List<Produsent>
 ) : ProdusentRegister {
 
+    val log = logger()
+
     init {
         produsenter.forEach { produsent ->
             produsent.tillatteMottakere.forEach {
@@ -116,7 +119,10 @@ class ProdusentRegisterImpl(
     )
 
     override fun finn(subject: ClientId): Produsent {
-        return clientIdToProdusent.getOrDefault(subject, noopProdusent)
+        return clientIdToProdusent.getOrElse(subject) {
+            log.warn("fant ikke produsent for clientId=$subject. produsenter=$clientIdToProdusent")
+            noopProdusent
+        }
     }
 
 }

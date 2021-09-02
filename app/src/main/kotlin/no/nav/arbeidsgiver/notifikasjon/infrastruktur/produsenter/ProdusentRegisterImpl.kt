@@ -21,8 +21,8 @@ val MOTTAKER_REGISTER: List<MottakerDefinisjon> = listOf(
 val FAGER_TESTPRODUSENT =
     Produsent(
         accessPolicy = basedOnEnv(
-            prod = listOf("prod-gcp:fager:test-produsent"),
-            other = listOf("dev-gcp:fager:test-produsent")
+            prod = listOf("prod-gcp:fager:notifikasjon-test-produsent"),
+            other = listOf("dev-gcp:fager:notifikasjon-test-produsent")
         ),
         tillatteMerkelapper = listOf(
             "fager",
