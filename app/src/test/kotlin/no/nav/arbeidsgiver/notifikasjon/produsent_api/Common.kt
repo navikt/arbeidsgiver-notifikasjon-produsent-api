@@ -28,7 +28,7 @@ fun TestApplicationEngine.produsentApi(
 }
 
 val mockProdusentRegister: ProdusentRegister = object: ProdusentRegister {
-    override fun finn(subject: String): Produsent {
+    override fun finn(produsentid: String): Produsent {
         return Produsent(
             accessPolicy = listOf("someproducer"),
             tillatteMerkelapper = listOf("tag"),

@@ -86,7 +86,7 @@ object PreAuthorizedApps {
 }
 
 interface ProdusentRegister {
-    fun finn(subject: String): Produsent
+    fun finn(produsentid: String): Produsent
 }
 
 class ProdusentRegisterImpl(
@@ -118,9 +118,9 @@ class ProdusentRegisterImpl(
         accessPolicy = listOf()
     )
 
-    override fun finn(subject: ClientId): Produsent {
-        return clientIdToProdusent.getOrElse(subject) {
-            log.warn("fant ikke produsent for clientId=$subject. produsenter=$clientIdToProdusent")
+    override fun finn(produsentid: ClientId): Produsent {
+        return clientIdToProdusent.getOrElse(produsentid) {
+            log.warn("fant ikke produsent for clientId=$produsentid. produsenter=$clientIdToProdusent")
             noopProdusent
         }
     }

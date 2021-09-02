@@ -19,7 +19,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             LOCALHOST_PRODUSENT_AUTHENTICATION,
         ),
         produsentRegister = object : ProdusentRegister {
-            override fun finn(subject: String): ProdusentDefinisjon {
+            override fun finn(produsentid: String): ProdusentDefinisjon {
                 return FAGER_TESTPRODUSENT
             }
         }

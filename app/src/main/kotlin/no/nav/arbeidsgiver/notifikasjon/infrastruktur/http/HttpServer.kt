@@ -42,7 +42,7 @@ val extractBrukerContext = fun PipelineContext<Unit, ApplicationCall>.(): Bruker
 val extractProdusentContext = fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
     val principal = call.principal<ProdusentPrincipal>()!!
     return ProdusentAPI.Context(
-        produsentid = principal.subject,
+        produsentid = principal.produsentid,
         coroutineScope = this
     )
 }

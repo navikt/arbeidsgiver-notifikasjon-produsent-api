@@ -107,7 +107,7 @@ val LOCALHOST_PRODUSENT_AUTHENTICATION = JWTAuthentication(
 
         validate {
             ProdusentPrincipal(
-                subject = it.payload.subject
+                produsentid = it.payload.getClaim("azp").asString()
             )
         }
     }
