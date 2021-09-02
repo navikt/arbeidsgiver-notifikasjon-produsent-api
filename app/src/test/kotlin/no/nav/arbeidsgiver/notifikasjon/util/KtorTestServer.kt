@@ -82,16 +82,24 @@ object LocalhostIssuer {
     fun issueToken(
         sub: String,
         audience: String,
+        azp: String? = null
     ): String =
         JWT.create().run {
             withIssuer(issuer)
             withSubject(sub)
             withAudience(audience)
+            if (azp != null) {
+                withClaim("azp", azp)
+            }
             sign(algorithm)
         }
 
     fun issueProdusentToken(sub: String = "someproducer") =
-        issueToken(sub, audience = produsentAudience)
+        issueToken(
+            sub,
+            audience = produsentAudience,
+            azp = sub
+        )
 
     fun issueBrukerToken(sub: String = "0".repeat(11)) =
         issueToken(sub, audience = brukerAudience)
