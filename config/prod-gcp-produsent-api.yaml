@@ -19,6 +19,10 @@ spec:
   prometheus:
     enabled: true
     path: /internal/metrics
+  accessPolicy:
+    inbound:
+      rules:
+        - application: notifikasjon-test-produsent
   azure:
     application:
       enabled: true
