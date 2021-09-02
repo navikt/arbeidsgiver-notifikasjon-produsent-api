@@ -21,36 +21,23 @@ val MOTTAKER_REGISTER: List<MottakerDefinisjon> = listOf(
 val FAGER_TESTPRODUSENT =
     Produsent(
         accessPolicy = basedOnEnv(
-            prod = listOf(),
+            prod = listOf("prod-gcp:fager:test-produsent"),
             other = listOf("dev-gcp:fager:test-produsent")
         ),
         tillatteMerkelapper = listOf(
-            "tiltak",
-            "sykemeldte",
-            "rekruttering"
+            "fager",
         ),
         tillatteMottakere = listOf(
-            ServicecodeDefinisjon(code = "5216", version = "1"),
-            ServicecodeDefinisjon(code = "5212", version = "1"),
-            ServicecodeDefinisjon(code = "5384", version = "1"),
-            ServicecodeDefinisjon(code = "5159", version = "1"),
             ServicecodeDefinisjon(code = "4936", version = "1"),
-            ServicecodeDefinisjon(code = "5332", version = "2"),
-            ServicecodeDefinisjon(code = "5332", version = "1"),
-            ServicecodeDefinisjon(code = "5441", version = "1"),
-            ServicecodeDefinisjon(code = "5516", version = "1"),
-            ServicecodeDefinisjon(code = "5516", version = "2"),
-            ServicecodeDefinisjon(code = "3403", version = "2"),
-            ServicecodeDefinisjon(code = "5078", version = "1"),
-            ServicecodeDefinisjon(code = "5278", version = "1"),
-            NærmesteLederDefinisjon,
         )
     )
 
 fun createProdusentRegister(): ProdusentRegister {
     return ProdusentRegisterImpl(
         basedOnEnv(
-            prod = listOf(),
+            prod = listOf(
+                FAGER_TESTPRODUSENT
+            ),
             other = listOf(
                 FAGER_TESTPRODUSENT
             )
