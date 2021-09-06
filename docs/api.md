@@ -35,6 +35,7 @@ prod | tba
     * [AltinnMottaker](#altinnmottaker)
     * [Beskjed](#beskjed)
     * [BeskjedData](#beskjeddata)
+    * [DuplikatEksternIdOgMerkelapp](#duplikateksternidogmerkelapp)
     * [HardDeleteNotifikasjonVellykket](#harddeletenotifikasjonvellykket)
     * [Metadata](#metadata)
     * [NaermesteLederMottaker](#naermesteledermottaker)
@@ -423,6 +424,28 @@ Teksten som vises til brukeren.
 Lenken som brukeren føres til hvis de klikker på beskjeden.
 
 </td>
+</tr>
+</tbody>
+</table>
+
+#### DuplikatEksternIdOgMerkelapp
+
+Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eksternId og merkelapp som allerede finnes
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>feilmelding</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -1254,6 +1277,10 @@ av "eventual consistency" i systemet vårt.</td>
 <td valign="top"><strong><a href="#ugyldigmottaker">UgyldigMottaker</a></strong></td>
 <td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.</td>
 </tr>
+<tr>
+<td valign="top"><strong><a href="#duplikateksternidogmerkelapp">DuplikatEksternIdOgMerkelapp</a></strong></td>
+<td valign="top">Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eksternId og merkelapp som allerede finnes</td>
+</tr>
 </tbody>
 </table>
 
@@ -1276,6 +1303,10 @@ av "eventual consistency" i systemet vårt.</td>
 <tr>
 <td valign="top"><strong><a href="#ugyldigmottaker">UgyldigMottaker</a></strong></td>
 <td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#duplikateksternidogmerkelapp">DuplikatEksternIdOgMerkelapp</a></strong></td>
+<td valign="top">Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eksternId og merkelapp som allerede finnes</td>
 </tr>
 </tbody>
 </table>

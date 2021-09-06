@@ -10,6 +10,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -183,6 +185,11 @@ object ProdusentAPI {
             override val feilmelding: String
         ) : Error(), NyBeskjedResultat, NyOppgaveResultat
 
+        @JsonTypeName("DuplikatEksternIdOgMerkelapp")
+        data class DuplikatEksternIdOgMerkelapp(
+            override val feilmelding: String
+        ) : Error(), NyBeskjedResultat, NyOppgaveResultat
+
         @JsonTypeName("NotifikasjonFinnesIkke")
         data class NotifikasjonFinnesIkke(
             override val feilmelding: String
@@ -350,7 +357,7 @@ object ProdusentAPI {
     fun newGraphQL(
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = createKafkaProducer(),
         produsentRegister: ProdusentRegister,
-        produsentModel: ProdusentModel,
+        produsentRepository: ProdusentRepository,
     ) = TypedGraphQL<Context>(
         createGraphQL("/produsent.graphql") {
             directive("Validate", ValidateDirective)
@@ -381,7 +388,7 @@ object ProdusentAPI {
 
                     tilgangsstyrMerkelapp(produsent, merkelapp)?.let { return@coDataFetcher it }
 
-                    return@coDataFetcher produsentModel
+                    return@coDataFetcher produsentRepository
                         .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
                         .map(Notifikasjon::fraDomene)
                         .let { Connection.create(it, env, ::NotifikasjonConnection) }
@@ -401,9 +408,26 @@ object ProdusentAPI {
                     val id = UUID.randomUUID()
                     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
                     val domeneNyBeskjed = nyBeskjed.tilDomene(id)
-                    kafkaProducer.sendHendelseMedKey(id, domeneNyBeskjed)
-                    produsentModel.oppdaterModellEtterHendelse(domeneNyBeskjed)
-                    return@coDataFetcher NyBeskjedVellykket(id)
+                    val eksisterende = produsentRepository.hentNotifikasjon(
+                        eksternId = domeneNyBeskjed.eksternId,
+                        merkelapp = domeneNyBeskjed.merkelapp
+                    )
+
+                    return@coDataFetcher when {
+                        eksisterende == null -> {
+                            kafkaProducer.sendHendelseMedKey(id, domeneNyBeskjed)
+                            produsentRepository.oppdaterModellEtterHendelse(domeneNyBeskjed)
+                             NyBeskjedVellykket(id)
+                        }
+                        eksisterende.erDuplikatAv(domeneNyBeskjed.tilProdusentModel()) -> {
+                            NyBeskjedVellykket(eksisterende.id)
+                        }
+                        else -> {
+                            Error.DuplikatEksternIdOgMerkelapp(
+                                "notifikasjon med angitt eksternId og merkelapp finnes fra før"
+                            )
+                        }
+                    }
                 }
 
                 coDataFetcher("nyOppgave") { env ->
@@ -417,15 +441,34 @@ object ProdusentAPI {
 
                     val id = UUID.randomUUID()
                     log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
-                    val nyOppgaveDomene = nyOppgave.tilDomene(id)
-                    kafkaProducer.sendHendelseMedKey(id, nyOppgaveDomene)
-                    produsentModel.oppdaterModellEtterHendelse(nyOppgaveDomene)
-                    return@coDataFetcher NyOppgaveVellykket(id)
+                    val domeneNyOppgave = nyOppgave.tilDomene(id)
+                    val eksisterende = produsentRepository.hentNotifikasjon(
+                        eksternId = domeneNyOppgave.eksternId,
+                        merkelapp = domeneNyOppgave.merkelapp
+                    )
+
+                    return@coDataFetcher when {
+                        eksisterende == null -> {
+                            kafkaProducer.sendHendelseMedKey(id, domeneNyOppgave)
+                            produsentRepository.oppdaterModellEtterHendelse(domeneNyOppgave)
+                            NyOppgaveVellykket(id)
+                        }
+                        eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) -> {
+                            NyOppgaveVellykket(eksisterende.id)
+                        }
+                        else -> {
+                            Error.DuplikatEksternIdOgMerkelapp(
+                                "notifikasjon med angitt eksternId og merkelapp finnes fra før"
+                            )
+                        }
+                    }
+
+
                 }
 
                 coDataFetcher("oppgaveUtfoert") { env ->
                     val id = env.getTypedArgument<UUID>("id")
-                    val notifikasjon = produsentModel.hentNotifikasjon(id)
+                    val notifikasjon = produsentRepository.hentNotifikasjon(id)
                         ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Oppgave med id $id finnes ikke")
 
                     if (notifikasjon !is ProdusentModel.Oppgave) {
@@ -444,14 +487,14 @@ object ProdusentAPI {
                     )
 
                     kafkaProducer.sendHendelse(utførtHendelse)
-                    produsentModel.oppdaterModellEtterHendelse(utførtHendelse)
+                    produsentRepository.oppdaterModellEtterHendelse(utførtHendelse)
                     return@coDataFetcher OppgaveUtfoertVellykket(id)
                 }
 
                 coDataFetcher("oppgaveUtfoertByEksternId") { env ->
                     val eksternId = env.getTypedArgument<String>("eksternId")
                     val merkelapp = env.getTypedArgument<String>("merkelapp")
-                    val notifikasjon = produsentModel.hentNotifikasjon(eksternId, merkelapp)
+                    val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
                         ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Oppgave med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
 
                     if (notifikasjon !is ProdusentModel.Oppgave) {
@@ -470,13 +513,13 @@ object ProdusentAPI {
                     )
 
                     kafkaProducer.sendHendelse(utførtHendelse)
-                    produsentModel.oppdaterModellEtterHendelse(utførtHendelse)
+                    produsentRepository.oppdaterModellEtterHendelse(utførtHendelse)
                     return@coDataFetcher OppgaveUtfoertVellykket(notifikasjon.id)
                 }
 
                 coDataFetcher("softDeleteNotifikasjon") { env ->
                     val id = env.getTypedArgument<UUID>("id")
-                    val notifikasjon = produsentModel.hentNotifikasjon(id)
+                    val notifikasjon = produsentRepository.hentNotifikasjon(id)
                         ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
 
                     val produsent = env.hentProdusent(produsentRegister)
@@ -492,14 +535,14 @@ object ProdusentAPI {
                     )
 
                     kafkaProducer.sendHendelse(softDelete)
-                    produsentModel.oppdaterModellEtterHendelse(softDelete)
+                    produsentRepository.oppdaterModellEtterHendelse(softDelete)
                     return@coDataFetcher SoftDeleteNotifikasjonVellykket(id)
                 }
 
                 coDataFetcher("softDeleteNotifikasjonByEksternId") { env ->
                     val eksternId = env.getTypedArgument<String>("eksternId")
                     val merkelapp = env.getTypedArgument<String>("merkelapp")
-                    val notifikasjon = produsentModel.hentNotifikasjon(eksternId, merkelapp)
+                    val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
                         ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
 
                     val produsent = env.hentProdusent(produsentRegister)
@@ -515,13 +558,13 @@ object ProdusentAPI {
                     )
 
                     kafkaProducer.sendHendelse(softDelete)
-                    produsentModel.oppdaterModellEtterHendelse(softDelete)
+                    produsentRepository.oppdaterModellEtterHendelse(softDelete)
                     return@coDataFetcher SoftDeleteNotifikasjonVellykket(notifikasjon.id)
                 }
 
                 coDataFetcher("hardDeleteNotifikasjon") { env ->
                     val id = env.getTypedArgument<UUID>("id")
-                    val notifikasjon = produsentModel.hentNotifikasjon(id)
+                    val notifikasjon = produsentRepository.hentNotifikasjon(id)
                         ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
 
                     val produsent = env.hentProdusent(produsentRegister)
@@ -537,14 +580,14 @@ object ProdusentAPI {
                     )
 
                     kafkaProducer.sendHendelse(hardDelete)
-                    produsentModel.oppdaterModellEtterHendelse(hardDelete)
+                    produsentRepository.oppdaterModellEtterHendelse(hardDelete)
                     return@coDataFetcher HardDeleteNotifikasjonVellykket(id)
                 }
 
                 coDataFetcher("hardDeleteNotifikasjonByEksternId") { env ->
                     val eksternId = env.getTypedArgument<String>("eksternId")
                     val merkelapp = env.getTypedArgument<String>("merkelapp")
-                    val notifikasjon = produsentModel.hentNotifikasjon(eksternId, merkelapp)
+                    val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
                         ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
 
                     val produsent = env.hentProdusent(produsentRegister)
@@ -560,7 +603,7 @@ object ProdusentAPI {
                     )
 
                     kafkaProducer.sendHendelse(hardDelete)
-                    produsentModel.oppdaterModellEtterHendelse(hardDelete)
+                    produsentRepository.oppdaterModellEtterHendelse(hardDelete)
                     return@coDataFetcher HardDeleteNotifikasjonVellykket(notifikasjon.id)
                 }
             }

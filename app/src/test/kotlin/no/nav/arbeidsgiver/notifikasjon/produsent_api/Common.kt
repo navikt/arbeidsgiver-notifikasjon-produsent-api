@@ -27,7 +27,7 @@ fun TestApplicationEngine.produsentApi(
     return produsentApi(GraphQLRequest(req))
 }
 
-val mockProdusentRegister: ProdusentRegister = object: ProdusentRegister {
+val stubProdusentRegister: ProdusentRegister = object: ProdusentRegister {
     override fun finn(produsentid: String): Produsent {
         return Produsent(
             accessPolicy = listOf("someproducer"),

@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
@@ -25,13 +26,14 @@ import kotlin.time.toJavaDuration
 @ExperimentalTime
 class NyBeskjedTests : DescribeSpec({
     val embeddedKafka = embeddedKafka()
-    val produsentModel = mockk<ProdusentModel>(relaxed = true)
+    val real = ProdusentModel.Oppgave::class
+    val produsentRepository = mockk<ProdusentRepository>(relaxed = true)
 
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = embeddedKafka.newProducer(),
-            produsentRegister = mockProdusentRegister,
-            produsentModel = produsentModel,
+            produsentRegister = stubProdusentRegister,
+            produsentRepository = produsentRepository,
         )
     )
 
@@ -100,7 +102,7 @@ class NyBeskjedTests : DescribeSpec({
 
         it("updates produsent modell") {
             coVerify {
-                produsentModel.oppdaterModellEtterHendelse(any())
+                produsentRepository.oppdaterModellEtterHendelse(any())
             }
         }
     }

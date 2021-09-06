@@ -16,7 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_REGISTER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import org.apache.kafka.clients.consumer.ConsumerConfig
 
 object Produsent {
@@ -56,7 +56,7 @@ object Produsent {
                 try {
                     val database = Database.openDatabase(databaseConfig)
                     Health.subsystemReady[Subsystem.DATABASE] = true
-                    ProdusentModelImpl(database)
+                    ProdusentRepositoryImpl(database)
                 } catch (e: Exception) {
                     Health.subsystemAlive[Subsystem.DATABASE] = false
                     throw e
@@ -80,7 +80,7 @@ object Produsent {
 
             val graphql = async {
                 ProdusentAPI.newGraphQL(
-                    produsentModel = produsentModelAsync.await(),
+                    produsentRepository = produsentModelAsync.await(),
                     kafkaProducer = createKafkaProducer(),
                     produsentRegister = produsentRegister
 

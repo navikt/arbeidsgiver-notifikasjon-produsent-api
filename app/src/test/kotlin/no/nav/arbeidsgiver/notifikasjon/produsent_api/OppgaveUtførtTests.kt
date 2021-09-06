@@ -11,7 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -21,7 +21,7 @@ import java.util.*
 
 class OppgaveUtførtTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentModelImpl(database)
+    val produsentModel = ProdusentRepositoryImpl(database)
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
@@ -34,8 +34,8 @@ class OppgaveUtførtTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = kafkaProducer,
-            produsentRegister = mockProdusentRegister,
-            produsentModel = produsentModel
+            produsentRegister = stubProdusentRegister,
+            produsentRepository = produsentModel
         )
     )
 

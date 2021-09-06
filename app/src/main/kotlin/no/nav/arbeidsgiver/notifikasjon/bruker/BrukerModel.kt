@@ -7,8 +7,6 @@ import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import org.postgresql.util.PSQLException
-import org.postgresql.util.PSQLState
 import java.time.OffsetDateTime
 import java.util.*
 
