@@ -110,7 +110,7 @@ class Database private constructor(
     }
 
     suspend fun <T> transaction(
-        rollback: (e: Exception) -> T,
+        rollback: (e: Exception) -> T = { throw it },
         body: Transaction.() -> T
     ): T =
         dataSource.withConnection {

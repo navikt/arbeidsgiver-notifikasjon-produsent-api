@@ -206,84 +206,64 @@ class ProdusentModelImpl(
 
 
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
-        val rollbackHandler = { ex: Exception ->
-            if (ex is PSQLException && PSQLState.UNIQUE_VIOLATION.state == ex.sqlState) {
-                log.error("forsøk på å endre eksisterende beskjed")
-            }
-            /* TODO: ikke kast exception, hvis vi er sikker på at dette er en duplikat (at-least-once). */
-            throw ex
-        }
-
-        val nyBeskjed = beskjedOpprettet.tilQueryDomene()
-
-        database.transaction(rollbackHandler) {
-            executeCommand(
-                """
-                insert into notifikasjon(
-                    type,
-                    tilstand,
-                    id,
-                    merkelapp,
-                    tekst,
-                    grupperingsid,
-                    lenke,
-                    ekstern_id,
-                    opprettet_tidspunkt,
-                    mottaker
-                )
-                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
+        database.nonTransactionalCommand(
             """
-            ) {
-                uuid(nyBeskjed.id)
-                string(nyBeskjed.merkelapp)
-                string(nyBeskjed.tekst)
-                nullableString(nyBeskjed.grupperingsid)
-                string(nyBeskjed.lenke)
-                string(nyBeskjed.eksternId)
-                timestamptz(nyBeskjed.opprettetTidspunkt)
-                string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
-            }
+            insert into notifikasjon(
+                type,
+                tilstand,
+                id,
+                merkelapp,
+                tekst,
+                grupperingsid,
+                lenke,
+                ekstern_id,
+                opprettet_tidspunkt,
+                mottaker
+            )
+            values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json)
+            on conflict on constraint notifikasjon_pkey do nothing;
+        """
+        ) {
+            val nyBeskjed = beskjedOpprettet.tilQueryDomene()
+            uuid(nyBeskjed.id)
+            string(nyBeskjed.merkelapp)
+            string(nyBeskjed.tekst)
+            nullableString(nyBeskjed.grupperingsid)
+            string(nyBeskjed.lenke)
+            string(nyBeskjed.eksternId)
+            timestamptz(nyBeskjed.opprettetTidspunkt)
+            string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
         }
     }
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
-        val rollbackHandler = { ex: Exception ->
-            if (ex is PSQLException && PSQLState.UNIQUE_VIOLATION.state == ex.sqlState) {
-                log.error("forsøk på å endre eksisterende beskjed")
-            }
-            /* TODO: ikke kast exception, hvis vi er sikker på at dette er en duplikat (at-least-once). */
-            throw ex
-        }
-
-        val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
-
-        database.transaction(rollbackHandler) {
-            executeCommand(
-                """
-                insert into notifikasjon(
-                    type,
-                    tilstand,
-                    id,
-                    merkelapp,
-                    tekst,
-                    grupperingsid,
-                    lenke,
-                    ekstern_id,
-                    opprettet_tidspunkt,
-                    mottaker
-                )
-                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
+        database.nonTransactionalCommand(
             """
-            ) {
-                uuid(nyBeskjed.id)
-                string(nyBeskjed.merkelapp)
-                string(nyBeskjed.tekst)
-                nullableString(nyBeskjed.grupperingsid)
-                string(nyBeskjed.lenke)
-                string(nyBeskjed.eksternId)
-                timestamptz(nyBeskjed.opprettetTidspunkt)
-                string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
-            }
+            insert into notifikasjon(
+                type,
+                tilstand,
+                id,
+                merkelapp,
+                tekst,
+                grupperingsid,
+                lenke,
+                ekstern_id,
+                opprettet_tidspunkt,
+                mottaker
+            )
+            values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json)
+            on conflict on constraint notifikasjon_pkey do nothing;
+        """
+        ) {
+            val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
+            uuid(nyBeskjed.id)
+            string(nyBeskjed.merkelapp)
+            string(nyBeskjed.tekst)
+            nullableString(nyBeskjed.grupperingsid)
+            string(nyBeskjed.lenke)
+            string(nyBeskjed.eksternId)
+            timestamptz(nyBeskjed.opprettetTidspunkt)
+            string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
         }
     }
 }

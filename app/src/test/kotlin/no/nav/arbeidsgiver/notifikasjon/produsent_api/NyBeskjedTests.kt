@@ -6,10 +6,12 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
+import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
@@ -23,12 +25,13 @@ import kotlin.time.toJavaDuration
 @ExperimentalTime
 class NyBeskjedTests : DescribeSpec({
     val embeddedKafka = embeddedKafka()
+    val produsentModel = mockk<ProdusentModel>(relaxed = true)
 
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = embeddedKafka.newProducer(),
             produsentRegister = mockProdusentRegister,
-            produsentModel = mockk()
+            produsentModel = produsentModel,
         )
     )
 
@@ -93,6 +96,12 @@ class NyBeskjedTests : DescribeSpec({
                 virksomhetsnummer = "42"
             )
             event.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
+        }
+
+        it("updates produsent modell") {
+            coVerify {
+                produsentModel.oppdaterModellEtterHendelse(any())
+            }
         }
     }
 })

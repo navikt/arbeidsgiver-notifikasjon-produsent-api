@@ -67,45 +67,12 @@ class BrukerModelTests : DescribeSpec({
                 )
             }
         }
-        /* Ignorert: oppdateringen av modellen er veldig følsom på potensielt dupliserte meldinger. Når
-        * den greier å detektere duplikater, skal den ikke kaste exception. */
-        xcontext("duplikat av beskjed sendes") {
+
+        context("notifikasjon mottas flere ganger (fra kafka f.eks.)") {
             queryModel.oppdaterModellEtterHendelse(event)
 
             shouldNotThrowAny {
                 queryModel.oppdaterModellEtterHendelse(event)
-            }
-
-            it("beskjeden er uendret i databasen") {
-                val notifikasjoner =
-                    queryModel.hentNotifikasjoner(
-                        mottaker.naermesteLederFnr,
-                        emptyList(),
-                        ansatte
-                    )
-                notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
-                    merkelapp = "foo",
-                    eksternId = "42",
-                    mottaker = mottaker,
-                    tekst = "teste",
-                    grupperingsid = "gr1",
-                    lenke = "foo.no/bar",
-                    opprettetTidspunkt = event.opprettetTidspunkt,
-                    id = uuid,
-                    klikketPaa = false
-                )
-            }
-        }
-
-        context("modifikasjon av beskjeden sendes") {
-            queryModel.oppdaterModellEtterHendelse(event)
-
-            val modifisertEvent = event.copy(
-                tekst = event.tekst + "noe annet"
-            )
-
-            shouldThrowAny {
-                queryModel.oppdaterModellEtterHendelse(modifisertEvent)
             }
 
             it("beskjeden er fortsatt uendret i databasen") {

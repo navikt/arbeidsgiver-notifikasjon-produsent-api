@@ -257,17 +257,9 @@ class BrukerModelImpl(
     }
 
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
-        val rollbackHandler = { ex: Exception ->
-            if (ex is PSQLException && PSQLState.UNIQUE_VIOLATION.state == ex.sqlState) {
-                log.error("forsøk på å endre eksisterende beskjed")
-            }
-            /* TODO: ikke kast exception, hvis vi er sikker på at dette er en duplikat (at-least-once). */
-            throw ex
-        }
-
         val nyBeskjed = beskjedOpprettet.tilQueryDomene()
 
-        database.transaction(rollbackHandler) {
+        database.transaction {
             executeCommand(
                 """
                 insert into notifikasjon(
@@ -282,7 +274,8 @@ class BrukerModelImpl(
                     opprettet_tidspunkt,
                     mottaker
                 )
-                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
+                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json)
+                on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
                 uuid(nyBeskjed.id)
@@ -298,6 +291,7 @@ class BrukerModelImpl(
             executeCommand(
                 """
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
+                ON CONFLICT ON CONSTRAINT notifikasjonsid_virksomhet_map_pkey DO NOTHING;
             """
             ) {
                 uuid(beskjedOpprettet.notifikasjonId)
@@ -307,17 +301,9 @@ class BrukerModelImpl(
     }
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
-        val rollbackHandler = { ex: Exception ->
-            if (ex is PSQLException && PSQLState.UNIQUE_VIOLATION.state == ex.sqlState) {
-                log.error("forsøk på å endre eksisterende beskjed")
-            }
-            /* TODO: ikke kast exception, hvis vi er sikker på at dette er en duplikat (at-least-once). */
-            throw ex
-        }
-
         val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
 
-        database.transaction(rollbackHandler) {
+        database.transaction {
             executeCommand(
                 """
                 insert into notifikasjon(
@@ -332,7 +318,8 @@ class BrukerModelImpl(
                     opprettet_tidspunkt,
                     mottaker
                 )
-                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json);
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json)
+                on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
                 uuid(nyBeskjed.id)
@@ -348,6 +335,7 @@ class BrukerModelImpl(
             executeCommand(
                 """
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
+                ON CONFLICT ON CONSTRAINT notifikasjonsid_virksomhet_map_pkey DO NOTHING;
             """
             ) {
                 uuid(oppgaveOpprettet.notifikasjonId)

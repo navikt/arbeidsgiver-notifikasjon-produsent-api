@@ -400,7 +400,9 @@ object ProdusentAPI {
 
                     val id = UUID.randomUUID()
                     log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
-                    kafkaProducer.sendHendelseMedKey(id, nyBeskjed.tilDomene(id))
+                    val domeneNyBeskjed = nyBeskjed.tilDomene(id)
+                    kafkaProducer.sendHendelseMedKey(id, domeneNyBeskjed)
+                    produsentModel.oppdaterModellEtterHendelse(domeneNyBeskjed)
                     return@coDataFetcher NyBeskjedVellykket(id)
                 }
 
@@ -415,7 +417,9 @@ object ProdusentAPI {
 
                     val id = UUID.randomUUID()
                     log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
-                    kafkaProducer.sendHendelseMedKey(id, nyOppgave.tilDomene(id))
+                    val nyOppgaveDomene = nyOppgave.tilDomene(id)
+                    kafkaProducer.sendHendelseMedKey(id, nyOppgaveDomene)
+                    produsentModel.oppdaterModellEtterHendelse(nyOppgaveDomene)
                     return@coDataFetcher NyOppgaveVellykket(id)
                 }
 
@@ -514,6 +518,7 @@ object ProdusentAPI {
                     produsentModel.oppdaterModellEtterHendelse(softDelete)
                     return@coDataFetcher SoftDeleteNotifikasjonVellykket(notifikasjon.id)
                 }
+
                 coDataFetcher("hardDeleteNotifikasjon") { env ->
                     val id = env.getTypedArgument<UUID>("id")
                     val notifikasjon = produsentModel.hentNotifikasjon(id)
