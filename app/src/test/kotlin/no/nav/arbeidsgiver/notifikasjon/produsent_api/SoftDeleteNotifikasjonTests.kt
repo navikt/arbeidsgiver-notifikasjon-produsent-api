@@ -24,7 +24,7 @@ import java.util.*
 class SoftDeleteNotifikasjonTests : DescribeSpec({
 
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentModelImpl(database)
+    val produsentModel = ProdusentRepositoryImpl(database)
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
@@ -37,8 +37,8 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = kafkaProducer,
-            produsentRegister = mockProdusentRegister,
-            produsentModel = produsentModel
+            produsentRegister = stubProdusentRegister,
+            produsentRepository = produsentModel
         )
     )
 

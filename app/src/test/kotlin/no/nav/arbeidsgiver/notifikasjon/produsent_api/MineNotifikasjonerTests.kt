@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModelImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -19,12 +19,12 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class MineNotifikasjonerTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentModelImpl(database)
+    val produsentModel = ProdusentRepositoryImpl(database)
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
-            produsentRegister = mockProdusentRegister,
-            produsentModel = produsentModel
+            produsentRegister = stubProdusentRegister,
+            produsentRepository = produsentModel
         )
     )
     val virksomhetsnummer = "123"

@@ -2,21 +2,20 @@ package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNot
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
-import io.mockk.coVerify
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
-import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
+import java.util.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.toJavaDuration
@@ -25,12 +24,15 @@ import kotlin.time.toJavaDuration
 @ExperimentalTime
 class NyOppgaveTests : DescribeSpec({
     val embeddedKafka = embeddedKafka()
-    val produsentModel = mockk<ProdusentModel>(relaxed = true)
+
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = embeddedKafka.newProducer(),
-            produsentRegister = mockProdusentRegister,
-            produsentModel = produsentModel,
+            produsentRegister = stubProdusentRegister,
+            produsentRepository = produsentRepository,
         )
     )
 
@@ -98,8 +100,9 @@ class NyOppgaveTests : DescribeSpec({
         }
 
         it("updates produsent modell") {
-            coVerify {
-                produsentModel.oppdaterModellEtterHendelse(any())
+            it("updates produsent modell") {
+                val id = response.getTypedContent<UUID>("nyOppgave/id")
+                produsentRepository.hentNotifikasjon(id) shouldNot beNull()
             }
         }
     }

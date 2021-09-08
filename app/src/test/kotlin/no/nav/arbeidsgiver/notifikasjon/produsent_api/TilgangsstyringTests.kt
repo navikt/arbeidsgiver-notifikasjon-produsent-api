@@ -17,8 +17,8 @@ class TilgangsstyringTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
-            produsentRegister = mockProdusentRegister,
-            produsentModel = mockk()
+            produsentRegister = stubProdusentRegister,
+            produsentRepository = mockk()
         )
     )
 
