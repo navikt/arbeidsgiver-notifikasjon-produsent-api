@@ -86,7 +86,7 @@ object PreAuthorizedApps {
 }
 
 interface ProdusentRegister {
-    fun finn(produsentid: String): Produsent
+    fun finn(produsentid: String): Produsent?
 }
 
 class ProdusentRegisterImpl(

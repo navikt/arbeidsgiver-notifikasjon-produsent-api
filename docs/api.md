@@ -51,6 +51,7 @@ prod | tba
     * [SoftDeleteNotifikasjonVellykket](#softdeletenotifikasjonvellykket)
     * [UgyldigMerkelapp](#ugyldigmerkelapp)
     * [UgyldigMottaker](#ugyldigmottaker)
+    * [UkjentProdusent](#ukjentprodusent)
   * [Inputs](#inputs)
     * [AltinnMottakerInput](#altinnmottakerinput)
     * [MetadataInput](#metadatainput)
@@ -859,6 +860,28 @@ Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som
 </tbody>
 </table>
 
+#### UkjentProdusent
+
+Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>feilmelding</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 ### Inputs
 
 #### AltinnMottakerInput
@@ -1197,6 +1220,10 @@ som ikke eksisterer.
 Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
 av "eventual consistency" i systemet vårt.</td>
 </tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
 </tbody>
 </table>
 
@@ -1215,6 +1242,10 @@ av "eventual consistency" i systemet vårt.</td>
 <tr>
 <td valign="top"><strong><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong></td>
 <td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
 </tr>
 </tbody>
 </table>
@@ -1281,6 +1312,10 @@ av "eventual consistency" i systemet vårt.</td>
 <td valign="top"><strong><a href="#duplikateksternidogmerkelapp">DuplikatEksternIdOgMerkelapp</a></strong></td>
 <td valign="top">Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eksternId og merkelapp som allerede finnes</td>
 </tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
 </tbody>
 </table>
 
@@ -1307,6 +1342,10 @@ av "eventual consistency" i systemet vårt.</td>
 <tr>
 <td valign="top"><strong><a href="#duplikateksternidogmerkelapp">DuplikatEksternIdOgMerkelapp</a></strong></td>
 <td valign="top">Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eksternId og merkelapp som allerede finnes</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
 </tr>
 </tbody>
 </table>
@@ -1335,6 +1374,10 @@ som ikke eksisterer.
 Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
 av "eventual consistency" i systemet vårt.</td>
 </tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
 </tbody>
 </table>
 
@@ -1361,6 +1404,10 @@ som ikke eksisterer.
 
 Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
 av "eventual consistency" i systemet vårt.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
 </tr>
 </tbody>
 </table>
