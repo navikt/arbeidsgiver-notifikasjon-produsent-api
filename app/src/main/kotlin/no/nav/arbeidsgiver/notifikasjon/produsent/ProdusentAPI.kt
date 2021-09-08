@@ -10,8 +10,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -164,6 +162,10 @@ object ProdusentAPI {
         val id: UUID
     ) : NyOppgaveResultat
 
+
+    /* utility interface */
+    sealed interface NyNotifikasjonError: NyBeskjedResultat, NyOppgaveResultat
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class Error {
         abstract val feilmelding: String
@@ -173,8 +175,21 @@ object ProdusentAPI {
             override val feilmelding: String
         ) :
             Error(),
+            NyNotifikasjonError,
             NyBeskjedResultat,
             NyOppgaveResultat,
+            OppgaveUtfoertResultat,
+            MineNotifikasjonerResultat,
+            SoftDeleteNotifikasjonResultat,
+            HardDeleteNotifikasjonResultat
+
+        @JsonTypeName("UkjentProdusent")
+        data class UkjentProdusent(
+            override val feilmelding: String
+        ) : Error(),
+            NyBeskjedResultat,
+            NyOppgaveResultat,
+            NyNotifikasjonError,
             OppgaveUtfoertResultat,
             MineNotifikasjonerResultat,
             SoftDeleteNotifikasjonResultat,
@@ -183,7 +198,7 @@ object ProdusentAPI {
         @JsonTypeName("UgyldigMottaker")
         data class UgyldigMottaker(
             override val feilmelding: String
-        ) : Error(), NyBeskjedResultat, NyOppgaveResultat
+        ) : Error(), NyBeskjedResultat, NyOppgaveResultat, NyNotifikasjonError
 
         @JsonTypeName("DuplikatEksternIdOgMerkelapp")
         data class DuplikatEksternIdOgMerkelapp(
@@ -358,287 +373,330 @@ object ProdusentAPI {
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = createKafkaProducer(),
         produsentRegister: ProdusentRegister,
         produsentRepository: ProdusentRepository,
-    ) = TypedGraphQL<Context>(
-        createGraphQL("/produsent.graphql") {
-            directive("Validate", ValidateDirective)
+    ): TypedGraphQL<Context> {
 
-            scalar(Scalars.ISO8601DateTime)
+        fun queryWhoami(env: DataFetchingEnvironment): String {
+            return env.getContext<Context>().produsentid
+        }
 
-            resolveSubtypes<Error>()
-            resolveSubtypes<Notifikasjon>()
-            resolveSubtypes<Mottaker>()
+        suspend fun queryMineNotifikasjoner(env: DataFetchingEnvironment): MineNotifikasjonerResultat {
+            val merkelapp = env.getArgument<String>("merkelapp")
+            val first = env.getArgumentOrDefault("first", 1000)
+            val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
+            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            tilgangsstyrMerkelapp(produsent, merkelapp) { error -> return error }
+            return produsentRepository
+                .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
+                .map(Notifikasjon::fraDomene)
+                .let { Connection.create(it, env, ::NotifikasjonConnection) }
+        }
 
-            resolveSubtypes<NyBeskjedResultat>()
-            resolveSubtypes<NyOppgaveResultat>()
-            resolveSubtypes<OppgaveUtfoertResultat>()
-            resolveSubtypes<MineNotifikasjonerResultat>()
-            resolveSubtypes<SoftDeleteNotifikasjonResultat>()
-            resolveSubtypes<HardDeleteNotifikasjonResultat>()
+        suspend fun mutationNyBeskjed(env: DataFetchingEnvironment): NyBeskjedResultat {
+            val nyBeskjed = env.getTypedArgument<NyBeskjedInput>("nyBeskjed")
 
-            wire("Query") {
-                dataFetcher("whoami") {
-                    it.getContext<Context>().produsentid
-                }
-
-                coDataFetcher("mineNotifikasjoner") { env ->
-                    val merkelapp = env.getArgument<String>("merkelapp")
-                    val first = env.getArgumentOrDefault("first", 1000)
-                    val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
-                    val produsent = env.hentProdusent(produsentRegister)
-
-                    tilgangsstyrMerkelapp(produsent, merkelapp)?.let { return@coDataFetcher it }
-
-                    return@coDataFetcher produsentRepository
-                        .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
-                        .map(Notifikasjon::fraDomene)
-                        .let { Connection.create(it, env, ::NotifikasjonConnection) }
-                }
+            tilgangsstyrNyNotifikasjon(
+                env,
+                produsentRegister,
+                nyBeskjed.mottaker.tilDomene(),
+                nyBeskjed.notifikasjon.merkelapp
+            ) { error ->
+                return error
             }
 
-            wire("Mutation") {
-                coDataFetcher("nyBeskjed") { env ->
-                    val nyBeskjed = env.getTypedArgument<NyBeskjedInput>("nyBeskjed")
-                    val produsent = env.hentProdusent(produsentRegister)
+            val id = UUID.randomUUID()
+            log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
+            val domeneNyBeskjed = nyBeskjed.tilDomene(id)
+            val eksisterende = produsentRepository.hentNotifikasjon(
+                eksternId = domeneNyBeskjed.eksternId,
+                merkelapp = domeneNyBeskjed.merkelapp
+            )
 
-                    tilgangsstyrMottaker(produsent, nyBeskjed.mottaker.tilDomene())
-                        ?.let { return@coDataFetcher it }
-                    tilgangsstyrMerkelapp(produsent, nyBeskjed.notifikasjon.merkelapp)
-                        ?.let { return@coDataFetcher it }
-
-                    val id = UUID.randomUUID()
-                    log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
-                    val domeneNyBeskjed = nyBeskjed.tilDomene(id)
-                    val eksisterende = produsentRepository.hentNotifikasjon(
-                        eksternId = domeneNyBeskjed.eksternId,
-                        merkelapp = domeneNyBeskjed.merkelapp
-                    )
-
-                    return@coDataFetcher when {
-                        eksisterende == null -> {
-                            kafkaProducer.sendHendelseMedKey(id, domeneNyBeskjed)
-                            produsentRepository.oppdaterModellEtterHendelse(domeneNyBeskjed)
-                             NyBeskjedVellykket(id)
-                        }
-                        eksisterende.erDuplikatAv(domeneNyBeskjed.tilProdusentModel()) -> {
-                            NyBeskjedVellykket(eksisterende.id)
-                        }
-                        else -> {
-                            Error.DuplikatEksternIdOgMerkelapp(
-                                "notifikasjon med angitt eksternId og merkelapp finnes fra før"
-                            )
-                        }
-                    }
+            return when {
+                eksisterende == null -> {
+                    kafkaProducer.sendHendelseMedKey(id, domeneNyBeskjed)
+                    produsentRepository.oppdaterModellEtterHendelse(domeneNyBeskjed)
+                    NyBeskjedVellykket(id)
                 }
-
-                coDataFetcher("nyOppgave") { env ->
-                    val nyOppgave = env.getTypedArgument<NyOppgaveInput>("nyOppgave")
-                    val produsent = env.hentProdusent(produsentRegister)
-
-                    tilgangsstyrMottaker(produsent, nyOppgave.mottaker.tilDomene())
-                        ?.let { return@coDataFetcher it }
-                    tilgangsstyrMerkelapp(produsent, nyOppgave.notifikasjon.merkelapp)
-                        ?.let { return@coDataFetcher it }
-
-                    val id = UUID.randomUUID()
-                    log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
-                    val domeneNyOppgave = nyOppgave.tilDomene(id)
-                    val eksisterende = produsentRepository.hentNotifikasjon(
-                        eksternId = domeneNyOppgave.eksternId,
-                        merkelapp = domeneNyOppgave.merkelapp
-                    )
-
-                    return@coDataFetcher when {
-                        eksisterende == null -> {
-                            kafkaProducer.sendHendelseMedKey(id, domeneNyOppgave)
-                            produsentRepository.oppdaterModellEtterHendelse(domeneNyOppgave)
-                            NyOppgaveVellykket(id)
-                        }
-                        eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) -> {
-                            NyOppgaveVellykket(eksisterende.id)
-                        }
-                        else -> {
-                            Error.DuplikatEksternIdOgMerkelapp(
-                                "notifikasjon med angitt eksternId og merkelapp finnes fra før"
-                            )
-                        }
-                    }
-
-
+                eksisterende.erDuplikatAv(domeneNyBeskjed.tilProdusentModel()) -> {
+                    NyBeskjedVellykket(eksisterende.id)
                 }
-
-                coDataFetcher("oppgaveUtfoert") { env ->
-                    val id = env.getTypedArgument<UUID>("id")
-                    val notifikasjon = produsentRepository.hentNotifikasjon(id)
-                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Oppgave med id $id finnes ikke")
-
-                    if (notifikasjon !is ProdusentModel.Oppgave) {
-                        return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id er ikke en oppgave")
-                    }
-
-                    val produsent = env.hentProdusent(produsentRegister)
-
-                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
-                        ?.let { return@coDataFetcher it }
-
-                    val utførtHendelse = Hendelse.OppgaveUtført(
-                        hendelseId = UUID.randomUUID(),
-                        notifikasjonId = id,
-                        virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
+                else -> {
+                    Error.DuplikatEksternIdOgMerkelapp(
+                        "notifikasjon med angitt eksternId og merkelapp finnes fra før"
                     )
-
-                    kafkaProducer.sendHendelse(utførtHendelse)
-                    produsentRepository.oppdaterModellEtterHendelse(utførtHendelse)
-                    return@coDataFetcher OppgaveUtfoertVellykket(id)
-                }
-
-                coDataFetcher("oppgaveUtfoertByEksternId") { env ->
-                    val eksternId = env.getTypedArgument<String>("eksternId")
-                    val merkelapp = env.getTypedArgument<String>("merkelapp")
-                    val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
-                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Oppgave med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
-
-                    if (notifikasjon !is ProdusentModel.Oppgave) {
-                        return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp er ikke en oppgave")
-                    }
-
-                    val produsent = env.hentProdusent(produsentRegister)
-
-                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
-                        ?.let { return@coDataFetcher it }
-
-                    val utførtHendelse = Hendelse.OppgaveUtført(
-                        hendelseId = UUID.randomUUID(),
-                        notifikasjonId = notifikasjon.id,
-                        virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
-                    )
-
-                    kafkaProducer.sendHendelse(utførtHendelse)
-                    produsentRepository.oppdaterModellEtterHendelse(utførtHendelse)
-                    return@coDataFetcher OppgaveUtfoertVellykket(notifikasjon.id)
-                }
-
-                coDataFetcher("softDeleteNotifikasjon") { env ->
-                    val id = env.getTypedArgument<UUID>("id")
-                    val notifikasjon = produsentRepository.hentNotifikasjon(id)
-                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
-
-                    val produsent = env.hentProdusent(produsentRegister)
-
-                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
-                        ?.let { return@coDataFetcher it }
-
-                    val softDelete = Hendelse.SoftDelete(
-                        hendelseId = UUID.randomUUID(),
-                        notifikasjonId = id,
-                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                        deletedAt = OffsetDateTime.now()
-                    )
-
-                    kafkaProducer.sendHendelse(softDelete)
-                    produsentRepository.oppdaterModellEtterHendelse(softDelete)
-                    return@coDataFetcher SoftDeleteNotifikasjonVellykket(id)
-                }
-
-                coDataFetcher("softDeleteNotifikasjonByEksternId") { env ->
-                    val eksternId = env.getTypedArgument<String>("eksternId")
-                    val merkelapp = env.getTypedArgument<String>("merkelapp")
-                    val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
-                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
-
-                    val produsent = env.hentProdusent(produsentRegister)
-
-                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
-                        ?.let { return@coDataFetcher it }
-
-                    val softDelete = Hendelse.SoftDelete(
-                        hendelseId = UUID.randomUUID(),
-                        notifikasjonId = notifikasjon.id,
-                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                        deletedAt = OffsetDateTime.now()
-                    )
-
-                    kafkaProducer.sendHendelse(softDelete)
-                    produsentRepository.oppdaterModellEtterHendelse(softDelete)
-                    return@coDataFetcher SoftDeleteNotifikasjonVellykket(notifikasjon.id)
-                }
-
-                coDataFetcher("hardDeleteNotifikasjon") { env ->
-                    val id = env.getTypedArgument<UUID>("id")
-                    val notifikasjon = produsentRepository.hentNotifikasjon(id)
-                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
-
-                    val produsent = env.hentProdusent(produsentRegister)
-
-                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
-                        ?.let { return@coDataFetcher it }
-
-                    val hardDelete = Hendelse.HardDelete(
-                        hendelseId = UUID.randomUUID(),
-                        notifikasjonId = id,
-                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                        deletedAt = OffsetDateTime.now()
-                    )
-
-                    kafkaProducer.sendHendelse(hardDelete)
-                    produsentRepository.oppdaterModellEtterHendelse(hardDelete)
-                    return@coDataFetcher HardDeleteNotifikasjonVellykket(id)
-                }
-
-                coDataFetcher("hardDeleteNotifikasjonByEksternId") { env ->
-                    val eksternId = env.getTypedArgument<String>("eksternId")
-                    val merkelapp = env.getTypedArgument<String>("merkelapp")
-                    val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
-                        ?: return@coDataFetcher Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
-
-                    val produsent = env.hentProdusent(produsentRegister)
-
-                    tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp)
-                        ?.let { return@coDataFetcher it }
-
-                    val hardDelete = Hendelse.HardDelete(
-                        hendelseId = UUID.randomUUID(),
-                        notifikasjonId = notifikasjon.id,
-                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                        deletedAt = OffsetDateTime.now()
-                    )
-
-                    kafkaProducer.sendHendelse(hardDelete)
-                    produsentRepository.oppdaterModellEtterHendelse(hardDelete)
-                    return@coDataFetcher HardDeleteNotifikasjonVellykket(notifikasjon.id)
                 }
             }
         }
-    )
 
-    private fun tilgangsstyrMerkelapp(produsent: Produsent, merkelapp: Merkelapp): Error.UgyldigMerkelapp? =
-        if (produsent.kanSendeTil(merkelapp))
-            null
-        else
-            Error.UgyldigMerkelapp(
-                """
-                | Ugyldig merkelapp '${merkelapp}'.
-                | Gyldige merkelapper er: ${produsent.tillatteMerkelapper}
-                """.trimMargin()
+        suspend fun mutationNyOppgave(env: DataFetchingEnvironment): NyOppgaveResultat {
+            val nyOppgave = env.getTypedArgument<NyOppgaveInput>("nyOppgave")
+            tilgangsstyrNyNotifikasjon(
+                env,
+                produsentRegister,
+                nyOppgave.mottaker.tilDomene(),
+                nyOppgave.notifikasjon.merkelapp
+            ) { error -> return error }
+
+            val id = UUID.randomUUID()
+            log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
+            val domeneNyOppgave = nyOppgave.tilDomene(id)
+            val eksisterende = produsentRepository.hentNotifikasjon(
+                eksternId = domeneNyOppgave.eksternId,
+                merkelapp = domeneNyOppgave.merkelapp
             )
 
-    private fun tilgangsstyrMottaker(
-        produsent: Produsent,
-        mottaker: no.nav.arbeidsgiver.notifikasjon.Mottaker
-    ): Error.UgyldigMottaker? =
-        if (produsent.kanSendeTil(mottaker))
-            null
-        else
-            Error.UgyldigMottaker(
-                """
-                | Ugyldig mottaker '${mottaker}'. 
-                | Gyldige mottakere er: ${produsent.tillatteMottakere}
-                """.trimMargin()
+            return when {
+                eksisterende == null -> {
+                    kafkaProducer.sendHendelseMedKey(id, domeneNyOppgave)
+                    produsentRepository.oppdaterModellEtterHendelse(domeneNyOppgave)
+                    NyOppgaveVellykket(id)
+                }
+                eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) -> {
+                    NyOppgaveVellykket(eksisterende.id)
+                }
+                else -> {
+                    Error.DuplikatEksternIdOgMerkelapp(
+                        "notifikasjon med angitt eksternId og merkelapp finnes fra før"
+                    )
+                }
+            }
+        }
+
+        suspend fun mutationOppgaveUtført(env: DataFetchingEnvironment): OppgaveUtfoertResultat {
+            val id = env.getTypedArgument<UUID>("id")
+            val notifikasjon = produsentRepository.hentNotifikasjon(id)
+                ?: return Error.NotifikasjonFinnesIkke("Oppgave med id $id finnes ikke")
+
+            if (notifikasjon !is ProdusentModel.Oppgave) {
+                return Error.NotifikasjonFinnesIkke("Notifikasjon med id $id er ikke en oppgave")
+            }
+
+            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+
+            tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+
+            val utførtHendelse = Hendelse.OppgaveUtført(
+                hendelseId = UUID.randomUUID(),
+                notifikasjonId = id,
+                virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
             )
+
+            kafkaProducer.sendHendelse(utførtHendelse)
+            produsentRepository.oppdaterModellEtterHendelse(utførtHendelse)
+            return OppgaveUtfoertVellykket(id)
+        }
+
+        suspend fun mutationOppgaveUtførtByEksternId(env: DataFetchingEnvironment): OppgaveUtfoertResultat {
+            val eksternId = env.getTypedArgument<String>("eksternId")
+            val merkelapp = env.getTypedArgument<String>("merkelapp")
+            val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
+                ?: return Error.NotifikasjonFinnesIkke("Oppgave med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
+
+            if (notifikasjon !is ProdusentModel.Oppgave) {
+                return Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp er ikke en oppgave")
+            }
+
+            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+
+            tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+
+            val utførtHendelse = Hendelse.OppgaveUtført(
+                hendelseId = UUID.randomUUID(),
+                notifikasjonId = notifikasjon.id,
+                virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
+            )
+
+            kafkaProducer.sendHendelse(utførtHendelse)
+            produsentRepository.oppdaterModellEtterHendelse(utførtHendelse)
+            return OppgaveUtfoertVellykket(notifikasjon.id)
+        }
+
+        suspend fun mutationSoftDelete(env: DataFetchingEnvironment): SoftDeleteNotifikasjonResultat {
+            val id = env.getTypedArgument<UUID>("id")
+            val notifikasjon = produsentRepository.hentNotifikasjon(id)
+                ?: return Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
+
+            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+
+            val softDelete = Hendelse.SoftDelete(
+                hendelseId = UUID.randomUUID(),
+                notifikasjonId = id,
+                virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                deletedAt = OffsetDateTime.now()
+            )
+
+            kafkaProducer.sendHendelse(softDelete)
+            produsentRepository.oppdaterModellEtterHendelse(softDelete)
+            return SoftDeleteNotifikasjonVellykket(id)
+        }
+
+        suspend fun mutationSoftDeleteNotifikasjonByEksternId(env: DataFetchingEnvironment): SoftDeleteNotifikasjonResultat {
+            val eksternId = env.getTypedArgument<String>("eksternId")
+            val merkelapp = env.getTypedArgument<String>("merkelapp")
+            val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
+                ?: return Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
+
+            val produsent = hentProdusent(env, produsentRegister) { error ->
+                return error
+            }
+
+            tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error ->
+                return error
+            }
+
+            val softDelete = Hendelse.SoftDelete(
+                hendelseId = UUID.randomUUID(),
+                notifikasjonId = notifikasjon.id,
+                virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                deletedAt = OffsetDateTime.now()
+            )
+
+            kafkaProducer.sendHendelse(softDelete)
+            produsentRepository.oppdaterModellEtterHendelse(softDelete)
+            return SoftDeleteNotifikasjonVellykket(notifikasjon.id)
+        }
+
+        suspend fun mutationHardDeleteNotifikasjon(env: DataFetchingEnvironment): HardDeleteNotifikasjonResultat {
+            val id = env.getTypedArgument<UUID>("id")
+            val notifikasjon = produsentRepository.hentNotifikasjon(id)
+                ?: return Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
+
+            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+
+            val hardDelete = Hendelse.HardDelete(
+                hendelseId = UUID.randomUUID(),
+                notifikasjonId = id,
+                virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                deletedAt = OffsetDateTime.now()
+            )
+
+            kafkaProducer.sendHendelse(hardDelete)
+            produsentRepository.oppdaterModellEtterHendelse(hardDelete)
+            return HardDeleteNotifikasjonVellykket(id)
+        }
+
+        suspend fun mutationHardDeleteNotifikasjonByEksternId(env: DataFetchingEnvironment): HardDeleteNotifikasjonResultat {
+            val eksternId = env.getTypedArgument<String>("eksternId")
+            val merkelapp = env.getTypedArgument<String>("merkelapp")
+            val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
+                ?: return Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
+
+            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+
+            tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+
+            val hardDelete = Hendelse.HardDelete(
+                hendelseId = UUID.randomUUID(),
+                notifikasjonId = notifikasjon.id,
+                virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                deletedAt = OffsetDateTime.now()
+            )
+
+            kafkaProducer.sendHendelse(hardDelete)
+            produsentRepository.oppdaterModellEtterHendelse(hardDelete)
+            return HardDeleteNotifikasjonVellykket(notifikasjon.id)
+        }
+
+        return TypedGraphQL(
+            createGraphQL("/produsent.graphql") {
+                directive("Validate", ValidateDirective)
+
+                scalar(Scalars.ISO8601DateTime)
+
+                resolveSubtypes<Error>()
+                resolveSubtypes<Notifikasjon>()
+                resolveSubtypes<Mottaker>()
+
+                resolveSubtypes<NyBeskjedResultat>()
+                resolveSubtypes<NyOppgaveResultat>()
+                resolveSubtypes<OppgaveUtfoertResultat>()
+                resolveSubtypes<MineNotifikasjonerResultat>()
+                resolveSubtypes<SoftDeleteNotifikasjonResultat>()
+                resolveSubtypes<HardDeleteNotifikasjonResultat>()
+
+                wire("Query") {
+                    dataFetcher("whoami", ::queryWhoami)
+                    coDataFetcher("mineNotifikasjoner", ::queryMineNotifikasjoner)
+                }
+
+                wire("Mutation") {
+                    coDataFetcher("nyBeskjed", ::mutationNyBeskjed)
+                    coDataFetcher("nyOppgave", ::mutationNyOppgave)
+                    coDataFetcher("oppgaveUtfoert", ::mutationOppgaveUtført)
+                    coDataFetcher("oppgaveUtfoertByEksternId", ::mutationOppgaveUtførtByEksternId)
+                    coDataFetcher("softDeleteNotifikasjon", ::mutationSoftDelete)
+                    coDataFetcher("softDeleteNotifikasjonByEksternId", ::mutationSoftDeleteNotifikasjonByEksternId)
+                    coDataFetcher("hardDeleteNotifikasjon", ::mutationHardDeleteNotifikasjon)
+                    coDataFetcher("hardDeleteNotifikasjonByEksternId", ::mutationHardDeleteNotifikasjonByEksternId)
+                }
+            }
+        )
+    }
 }
 
-fun DataFetchingEnvironment.hentProdusent(produsentRegister: ProdusentRegister): Produsent {
-    val context = this.getContext<ProdusentAPI.Context>()
-    return produsentRegister.finn(context.produsentid)
+private inline fun tilgangsstyrNyNotifikasjon(
+    env: DataFetchingEnvironment,
+    produsentRegister: ProdusentRegister,
+    mottaker: Mottaker,
+    merkelapp: String,
+    onError: (ProdusentAPI.NyNotifikasjonError) -> Nothing
+) {
+    val produsent = hentProdusent(env, produsentRegister) { error -> onError(error) }
+    tilgangsstyrMottaker(produsent, mottaker) { error -> onError(error) }
+    tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
+}
+
+private inline fun tilgangsstyrMerkelapp(
+    produsent: Produsent,
+    merkelapp: Merkelapp,
+    onError: (error: ProdusentAPI.Error.UgyldigMerkelapp) -> Nothing
+) {
+    if (!produsent.kanSendeTil(merkelapp)) {
+        onError(
+            ProdusentAPI.Error.UgyldigMerkelapp(
+                """
+                    | Ugyldig merkelapp '${merkelapp}'.
+                    | Gyldige merkelapper er: ${produsent.tillatteMerkelapper}
+                    """.trimMargin()
+            )
+        )
+    }
+}
+
+private inline fun tilgangsstyrMottaker(
+    produsent: Produsent,
+    mottaker: Mottaker,
+    onError: (error: ProdusentAPI.Error.UgyldigMottaker) -> Nothing
+) {
+    if (!produsent.kanSendeTil(mottaker)) {
+        onError(
+            ProdusentAPI.Error.UgyldigMottaker(
+                """
+                    | Ugyldig mottaker '${mottaker}'. 
+                    | Gyldige mottakere er: ${produsent.tillatteMottakere}
+                    """.trimMargin()
+            )
+        )
+    }
+}
+
+inline fun hentProdusent(
+    env: DataFetchingEnvironment,
+    produsentRegister: ProdusentRegister,
+    onMissing: (error: ProdusentAPI.Error.UkjentProdusent) -> Nothing
+): Produsent {
+    val context = env.getContext<ProdusentAPI.Context>()
+    val produsentid = context.produsentid
+    val produsent = produsentRegister.finn(produsentid)
+    if (produsent == null) {
+        onMissing(ProdusentAPI.Error.UkjentProdusent(
+            "Finner ikke produsent med id $produsentid"
+        ))
+    } else {
+        return produsent
+    }
 }
 
 val ProdusentModel.Notifikasjon.virksomhetsnummer: String

@@ -60,6 +60,7 @@ type Query {
 union MineNotifikasjonerResultat =
     | NotifikasjonConnection
     | UgyldigMerkelapp
+    | UkjentProdusent
 
 type NotifikasjonConnection {
     edges: [NotifikasjonEdge!]!
@@ -258,6 +259,7 @@ union SoftDeleteNotifikasjonResultat =
     | SoftDeleteNotifikasjonVellykket
     | UgyldigMerkelapp
     | NotifikasjonFinnesIkke
+    | UkjentProdusent
 
 type SoftDeleteNotifikasjonVellykket {
     """
@@ -270,6 +272,7 @@ union HardDeleteNotifikasjonResultat =
     | HardDeleteNotifikasjonVellykket
     | UgyldigMerkelapp
     | NotifikasjonFinnesIkke
+    | UkjentProdusent
 
 type HardDeleteNotifikasjonVellykket {
     """
@@ -282,6 +285,7 @@ union OppgaveUtfoertResultat =
     | OppgaveUtfoertVellykket
     | UgyldigMerkelapp
     | NotifikasjonFinnesIkke
+    | UkjentProdusent
 
 type OppgaveUtfoertVellykket {
     """
@@ -381,12 +385,14 @@ union NyOppgaveResultat =
     | UgyldigMerkelapp
     | UgyldigMottaker
     | DuplikatEksternIdOgMerkelapp
+    | UkjentProdusent
 
 union NyBeskjedResultat =
     | NyBeskjedVellykket
     | UgyldigMerkelapp
     | UgyldigMottaker
     | DuplikatEksternIdOgMerkelapp
+    | UkjentProdusent
 
 type NyBeskjedVellykket {
     id: ID!
@@ -407,6 +413,13 @@ type UgyldigMerkelapp implements Error {
 Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.
 """
 type UgyldigMottaker implements Error {
+    feilmelding: String!
+}
+
+"""
+Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.
+"""
+type UkjentProdusent implements Error {
     feilmelding: String!
 }
 
