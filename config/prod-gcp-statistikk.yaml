@@ -1,7 +1,7 @@
 apiVersion: nais.io/v1alpha1
 kind: Application
 metadata:
-  name: notifikasjon-abacus
+  name: notifikasjon-statistikk
   namespace: fager
   labels:
     team: fager
@@ -18,13 +18,13 @@ spec:
     enabled: true
     path: /internal/metrics
   kafka:
-    pool: nav-dev
+    pool: nav-prod
   gcp:
     sqlInstances:
       - type: POSTGRES_12
-        tier: db-f1-micro
+        tier: db-custom-1-3840
         diskAutoresize: true
-        highAvailability: false
+        highAvailability: true
         databases:
-          - name: abacus-model
+          - name: statistikk-model
             envVarPrefix: DB

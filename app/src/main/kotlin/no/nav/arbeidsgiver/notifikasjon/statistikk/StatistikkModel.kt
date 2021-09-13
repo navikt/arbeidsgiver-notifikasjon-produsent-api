@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.abacus
+package no.nav.arbeidsgiver.notifikasjon.statistikk
 
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
@@ -8,13 +8,13 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.security.MessageDigest
 import java.time.OffsetDateTime
 
-interface AbacusModel {
+interface StatistikkModel {
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
 }
 
-class AbacusModelImpl(
+class StatistikkModelImpl(
     val database: Database,
-) : AbacusModel {
+) : StatistikkModel {
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         when (hendelse) {
             is Hendelse.BeskjedOpprettet -> {

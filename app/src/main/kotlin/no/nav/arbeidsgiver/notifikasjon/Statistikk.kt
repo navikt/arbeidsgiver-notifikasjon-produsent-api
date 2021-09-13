@@ -7,8 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.abacus.AbacusModelImpl
-import no.nav.arbeidsgiver.notifikasjon.abacus.AbacusServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkModelImpl
+import no.nav.arbeidsgiver.notifikasjon.statistikk.AbacusServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
@@ -18,7 +18,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
 
-object Abacus {
+object Statistikk {
     val log = logger()
 
     val databaseConfig = Database.Config(
@@ -26,19 +26,19 @@ object Abacus {
         port = System.getenv("DB_PORT") ?: "5432",
         username = System.getenv("DB_USERNAME") ?: "postgres",
         password = System.getenv("DB_PASSWORD") ?: "postgres",
-        database = System.getenv("DB_DATABASE") ?: "abacus-model",
-        migrationLocations = "db/migration/abacus_model",
+        database = System.getenv("DB_DATABASE") ?: "statistikk-model",
+        migrationLocations = "db/migration/statistikk_model",
     )
 
     fun main(
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
-            val abacusModelAsync = async {
+            val statistikkModelAsync = async {
                 try {
                     val database = Database.openDatabase(databaseConfig)
                     Health.subsystemReady[Subsystem.DATABASE] = true
-                    AbacusModelImpl(database)
+                    StatistikkModelImpl(database)
                 } catch (e: Exception) {
                     Health.subsystemAlive[Subsystem.DATABASE] = false
                     throw e
@@ -50,15 +50,15 @@ object Abacus {
                     log.info("KafkaConsumer er deaktivert.")
                 } else {
                     val kafkaConsumer = createKafkaConsumer {
-                        put(ConsumerConfig.GROUP_ID_CONFIG, "abacus-model-builder")
+                        put(ConsumerConfig.GROUP_ID_CONFIG, "statistikk-model-builder")
                     }
 
-                    val abacusService = AbacusServiceImpl(
-                        abacusModelAsync.await()
+                    val statistikkService = AbacusServiceImpl(
+                        statistikkModelAsync.await()
                     )
 
                     kafkaConsumer.forEachEvent { hendelse ->
-                        abacusService.håndterHendelse(hendelse)
+                        statistikkService.håndterHendelse(hendelse)
                     }
                 }
             }

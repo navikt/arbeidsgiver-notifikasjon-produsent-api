@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         cluster: [ dev-gcp ]
-        app: [ bruker-api, produsent-api, kafka-reaper, abacus ]
+        app: [ bruker-api, produsent-api, kafka-reaper, statistikk ]
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1
