@@ -1,21 +1,17 @@
 package no.nav.arbeidsgiver.notifikasjon.statistikk
 
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.security.MessageDigest
-import java.time.OffsetDateTime
 
 interface StatistikkModel {
-    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
 }
 
 class StatistikkModelImpl(
     val database: Database,
 ) : StatistikkModel {
-    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         when (hendelse) {
             is Hendelse.BeskjedOpprettet -> {
                 database.nonTransactionalCommand(
@@ -48,7 +44,7 @@ class StatistikkModelImpl(
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
                     string(hendelse.tekst.toHash())
-                    timestamptz(hendelse.opprettetTidspunkt)
+                    timestamp_utc(hendelse.opprettetTidspunkt)
                 }
             }
             is Hendelse.OppgaveUtført -> {
@@ -59,7 +55,7 @@ class StatistikkModelImpl(
                         where notifikasjon_id = ?
                     """
                 ) {
-                    timestamptz(OffsetDateTime.now()) // TODO: propager fra header
+                    timestamp_utc(metadata.timestamp)
                     uuid(hendelse.notifikasjonId)
                 }
             }
@@ -74,7 +70,7 @@ class StatistikkModelImpl(
                 ) {
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.notifikasjonId)
-                    timestamptz(OffsetDateTime.now()) // TODO: propager fra header
+                    timestamp_utc(metadata.timestamp)
                 }
             }
             is Hendelse.SoftDelete -> {
@@ -85,7 +81,7 @@ class StatistikkModelImpl(
                         where notifikasjon_id = ?
                     """
                 ) {
-                    timestamptz(OffsetDateTime.now()) // TODO: propager fra header
+                    timestamp_utc(hendelse.deletedAt)
                     uuid(hendelse.notifikasjonId)
                 }
             }

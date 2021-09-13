@@ -57,8 +57,8 @@ object Statistikk {
                         statistikkModelAsync.await()
                     )
 
-                    kafkaConsumer.forEachEvent { hendelse ->
-                        statistikkService.håndterHendelse(hendelse)
+                    kafkaConsumer.forEachEvent { hendelse, metadata ->
+                        statistikkService.håndterHendelse(hendelse, metadata)
                     }
                 }
             }

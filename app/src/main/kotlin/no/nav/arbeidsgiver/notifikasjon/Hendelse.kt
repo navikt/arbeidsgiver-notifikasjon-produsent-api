@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -92,8 +93,14 @@ data class AltinnMottaker(
     val virksomhetsnummer: String,
 ) : Mottaker()
 
+
+
 val Mottaker.virksomhetsnummer: String
     get() = when (this) {
         is NærmesteLederMottaker -> this.virksomhetsnummer
         is AltinnMottaker -> this.virksomhetsnummer
     }
+
+data class HendelseMetadata(
+    val timestamp: Instant
+)

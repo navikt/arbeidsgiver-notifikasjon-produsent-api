@@ -5,16 +5,16 @@ create table notifikasjon_statistikk
     merkelapp              text not null,
     mottaker               text not null,
     checksum               text,
-    opprettet_tidspunkt    timestamptz,
-    utfoert_tidspunkt      timestamptz,
-    soft_deleted_tidspunkt timestamptz
+    opprettet_tidspunkt    timestamp,
+    utfoert_tidspunkt      timestamp,
+    soft_deleted_tidspunkt timestamp
 );
 
 create table notifikasjon_statistikk_klikk
 (
     hendelse_id           uuid not null primary key,
     notifikasjon_id       uuid not null,
-    klikket_paa_tidspunkt timestamptz
+    klikket_paa_tidspunkt timestamp
 );
 
 create index type_idx on notifikasjon_statistikk (hendelse_type);
