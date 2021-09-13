@@ -1,18 +1,23 @@
-CREATE TABLE notifikasjon_statistikk
+create table notifikasjon_statistikk
 (
-    id           serial,
-    hendelseId   uuid,
-    hendelseType text not null,
-    merkelapp    text not null,
-    mottaker     text not null,
-    checksum     text,
-    created      timestamptz,
-    updated      timestamptz,
-    deleted      timestamptz
+    notifikasjon_id        uuid not null primary key,
+    hendelse_type          text not null,
+    merkelapp              text not null,
+    mottaker               text not null,
+    checksum               text,
+    opprettet_tidspunkt    timestamptz,
+    utfoert_tidspunkt      timestamptz,
+    soft_deleted_tidspunkt timestamptz
 );
 
-CREATE INDEX type_idx ON notifikasjon_statistikk (hendelseType);
-CREATE INDEX merkelapp_idx ON notifikasjon_statistikk (merkelapp);
-CREATE INDEX mottaker_idx ON notifikasjon_statistikk (mottaker);
-CREATE INDEX checksum_idx ON notifikasjon_statistikk (checksum);
+create table notifikasjon_statistikk_klikk
+(
+    hendelse_id           uuid not null primary key,
+    notifikasjon_id       uuid not null,
+    klikket_paa_tidspunkt timestamptz
+);
 
+create index type_idx on notifikasjon_statistikk (hendelse_type);
+create index merkelapp_idx on notifikasjon_statistikk (merkelapp);
+create index mottaker_idx on notifikasjon_statistikk (mottaker);
+create index checksum_idx on notifikasjon_statistikk (checksum);

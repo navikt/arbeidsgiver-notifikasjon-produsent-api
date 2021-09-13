@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.security.MessageDigest
+import java.time.OffsetDateTime
 
 interface AbacusModel {
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -19,13 +20,13 @@ class AbacusModelImpl(
             is Hendelse.BeskjedOpprettet -> {
                 database.nonTransactionalCommand(
                     """
-                insert into notifikasjon_statistikk 
-                    (hendelseId, hendelseType, merkelapp, mottaker, checksum, tidspunkt)
-                values
-                    (?, ?, ?, ?, ?, ?)
+                    insert into notifikasjon_statistikk 
+                        (notifikasjon_id, hendelse_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                    values
+                        (?, ?, ?, ?, ?, ?)
                     """
                 ) {
-                    uuid(hendelse.hendelseId)
+                    uuid(hendelse.notifikasjonId)
                     string(hendelse.typeNavn)
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
@@ -36,13 +37,13 @@ class AbacusModelImpl(
             is Hendelse.OppgaveOpprettet -> {
                 database.nonTransactionalCommand(
                     """
-                insert into notifikasjon_statistikk 
-                    (hendelseId, hendelseType, merkelapp, mottaker, checksum, created)
-                values
+                    insert into notifikasjon_statistikk 
+                        (notifikasjon_id, hendelse_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                    values
                     (?, ?, ?, ?, ?, ?)
                     """
                 ) {
-                    uuid(hendelse.hendelseId)
+                    uuid(hendelse.notifikasjonId)
                     string(hendelse.typeNavn)
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
@@ -51,19 +52,45 @@ class AbacusModelImpl(
                 }
             }
             is Hendelse.OppgaveUtført -> {
-                // TODO:
-                //  hent eksisterende data fra modell
-                //  skriv ny rad med riktig type og sett oppdatert tidspunkt til "now"
+                database.nonTransactionalCommand(
+                    """
+                    update notifikasjon_statistikk 
+                        set utfoert_tidspunkt = ?
+                        where notifikasjon_id = ?
+                    """
+                ) {
+                    timestamptz(OffsetDateTime.now()) // TODO: propager fra header
+                    uuid(hendelse.notifikasjonId)
+                }
             }
             is Hendelse.BrukerKlikket -> {
-                // noop
+                database.nonTransactionalCommand(
+                    """
+                    insert into notifikasjon_statistikk_klikk 
+                        (hendelse_id, notifikasjon_id, klikket_paa_tidspunkt)
+                    values
+                    (?, ?, ?)
+                    """
+                ) {
+                    uuid(hendelse.hendelseId)
+                    uuid(hendelse.notifikasjonId)
+                    timestamptz(OffsetDateTime.now()) // TODO: propager fra header
+                }
             }
             is Hendelse.SoftDelete -> {
-                //
+                database.nonTransactionalCommand(
+                    """
+                    update notifikasjon_statistikk 
+                        set soft_deleted_tidspunkt = ?
+                        where notifikasjon_id = ?
+                    """
+                ) {
+                    timestamptz(OffsetDateTime.now()) // TODO: propager fra header
+                    uuid(hendelse.notifikasjonId)
+                }
             }
             is Hendelse.HardDelete -> {
-                // hva gjør vi her, skal vi slette alle stats relatert hendelsen?
-                // bør ikke være noe identifiserende i denne modulen/appen
+                // noop
             }
         }
     }
@@ -86,7 +113,7 @@ val Mottaker.typeNavn: String
     }
 
 
-fun String.toHash(alg: String = "SHA1"): String {
+fun String.toHash(alg: String = "MD5"): String {
     return MessageDigest
         .getInstance(alg)
         .digest(toByteArray())
