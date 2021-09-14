@@ -40,3 +40,7 @@ spec:
     inbound:
       rules:
         - application: notifikasjon-test-produsent
+
+        - application: tiltak-refusjon-api
+          namespace: arbeidsgiver
+          cluster: dev-gcp

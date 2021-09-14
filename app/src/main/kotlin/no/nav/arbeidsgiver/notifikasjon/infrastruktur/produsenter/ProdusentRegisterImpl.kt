@@ -32,14 +32,25 @@ val FAGER_TESTPRODUSENT =
         )
     )
 
+val ARBEIDSGIVER_TILTAK = Produsent(
+    accessPolicy = basedOnEnv(
+        prod = listOf(),
+        other = listOf("dev-gcp:arbeidsgiver:tiltak-refusjon-api")
+    ),
+    tillatteMerkelapper = listOf("Tiltak"),
+    tillatteMottakere = listOf(
+            ServicecodeDefinisjon(code = "4936", version = "1"),
+    )
+)
+
+
 fun createProdusentRegister(): ProdusentRegister {
     return ProdusentRegisterImpl(
         basedOnEnv(
-            prod = listOf(
-                FAGER_TESTPRODUSENT
-            ),
+            prod = listOf(),
             other = listOf(
-                FAGER_TESTPRODUSENT
+                FAGER_TESTPRODUSENT,
+                ARBEIDSGIVER_TILTAK
             )
         )
     )
