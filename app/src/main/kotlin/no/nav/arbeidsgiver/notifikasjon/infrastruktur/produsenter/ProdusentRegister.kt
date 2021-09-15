@@ -75,6 +75,8 @@ object MottakerRegister {
 }
 
 object PreAuthorizedApps {
+    private val log = logger()
+
     data class Elem(
         val name: AppName,
         val clientId: ClientId
@@ -83,6 +85,13 @@ object PreAuthorizedApps {
     val json = System.getenv("AZURE_APP_PRE_AUTHORIZED_APPS")!!
     val map = objectMapper
         .readValue<List<Elem>>(json)
+
+    init {
+        val prettyString = map.joinToString(separator = ";\n") {
+            "name: ${it.name} clientId: ${it.clientId}"
+        }
+        log.info("PreAuthorizedApps: {}", prettyString)
+    }
 }
 
 interface ProdusentRegister {
