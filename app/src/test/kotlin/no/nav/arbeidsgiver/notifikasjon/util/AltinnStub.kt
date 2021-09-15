@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.util
 
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 
 open class AltinnStub(
     val hentAlleTilgangerImpl: (String, String) -> List<BrukerModel.Tilgang> = { _, _ -> listOf() }
@@ -16,6 +17,10 @@ open class AltinnStub(
             }
     )
 
-    override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<BrukerModel.Tilgang> =
+    override suspend fun hentTilganger(
+        fnr: String,
+        selvbetjeningsToken: String,
+        tjenester: Iterable<ServicecodeDefinisjon>
+    ): List<BrukerModel.Tilgang> =
         hentAlleTilgangerImpl(fnr, selvbetjeningsToken)
 }
