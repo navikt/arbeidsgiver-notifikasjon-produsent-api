@@ -38,7 +38,7 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         prod = listOf(),
         other = listOf(
             "dev-gcp:arbeidsgiver:tiltak-refusjon-api",
-            "dev-fss:arbeidsgiver:tiltak-tiltaksgjennomforing-api",
+            "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
         )
     ),
     tillatteMerkelapper = listOf("Tiltak"),
