@@ -35,9 +35,12 @@ object Produsent {
         "prod-gcp" -> listOf(
             HttpAuthProviders.AZURE_AD,
         )
-        null, "dev-gcp" -> listOf(
+        "dev-gcp" -> listOf(
             HttpAuthProviders.AZURE_AD,
-            HttpAuthProviders.FAKEDINGS_PRODUSENT
+            HttpAuthProviders.FAKEDINGS_PRODUSENT,
+        )
+        null -> listOf(
+            HttpAuthProviders.FAKEDINGS_PRODUSENT,
         )
         else -> {
             val msg = "ukjent NAIS_CLUSTER_NAME '$name'"

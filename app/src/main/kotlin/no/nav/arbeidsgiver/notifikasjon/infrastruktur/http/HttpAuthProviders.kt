@@ -11,6 +11,7 @@ import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.routing.*
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AzurePreAuthorizedAppsImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.UnavailableInProduction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.net.URL
@@ -96,6 +97,8 @@ object HttpAuthProviders {
     }
 
     val AZURE_AD by lazy {
+        val preAuthorizedApps = AzurePreAuthorizedAppsImpl()
+
         JWTAuthentication(
             name = "azuread",
             config = {
@@ -106,7 +109,17 @@ object HttpAuthProviders {
                 )
 
                 validate {
-                    ProdusentPrincipal(produsentid = it.payload.getClaim("azp").asString())
+                    val azp = it.payload.getClaim("azp").asString() ?: run {
+                        log.error("AzureAD missing azp-claim")
+                        return@validate null
+                    }
+
+                    val appName = preAuthorizedApps.lookup(azp) ?: run {
+                        log.error("AzureAD, unknown azp=$azp")
+                        return@validate null
+                    }
+
+                    ProdusentPrincipal(produsentid = appName)
                 }
             }
         )
