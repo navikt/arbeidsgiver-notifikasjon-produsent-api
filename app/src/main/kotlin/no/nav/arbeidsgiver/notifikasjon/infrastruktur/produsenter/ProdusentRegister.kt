@@ -90,7 +90,7 @@ object PreAuthorizedApps {
         val prettyString = map.joinToString(separator = ";\n") {
             "name: ${it.name} clientId: ${it.clientId}"
         }
-        log.info("PreAuthorizedApps: {}", prettyString)
+        log.info("PreAuthorizedApps: \n{}", prettyString)
     }
 }
 
