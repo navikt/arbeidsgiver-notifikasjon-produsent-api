@@ -44,3 +44,7 @@ spec:
         - application: tiltak-refusjon-api
           namespace: arbeidsgiver
           cluster: dev-gcp
+
+        - application: tiltak-tiltaksgjennomforing-api
+          namespace: arbeidsgiver
+          cluster: dev-fss
