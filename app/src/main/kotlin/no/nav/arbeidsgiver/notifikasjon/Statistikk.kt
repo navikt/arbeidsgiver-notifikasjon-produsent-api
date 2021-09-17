@@ -70,11 +70,9 @@ object Statistikk {
             launch {
                 val statistikkService = statistikkServiceAsync.await()
                 while (true) {
-                    log.info("Updatere gagues")
                     statistikkService.updateGauges()
-                    log.info("Oppdatering vellykket")
-                    //delay(Duration.minutes(1))
-                    delay(Duration.seconds(5))
+                    log.info("gauge-oppdatering vellykket ")
+                    delay(Duration.minutes(1))
                 }
             }
 

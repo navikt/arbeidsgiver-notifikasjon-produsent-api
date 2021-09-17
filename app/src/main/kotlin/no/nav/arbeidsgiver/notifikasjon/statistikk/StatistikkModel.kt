@@ -7,9 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.security.MessageDigest
 
 /* potensielle målinger:
-- tid mellom oppgave ny -> utført
-  påvirker klikk hvor kort tid det er?
-- hvor lang tid har det gått før klikk?
+ * - hvor lang tid har det gått før klikk?
  */
 
 class StatistikkModel(
