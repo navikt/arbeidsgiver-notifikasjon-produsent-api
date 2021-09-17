@@ -11,7 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.EnhetsregisteretStub
 import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_BRUKER_AUTHENTICATION
 
-/* Bruker API */
+/* Statistikk */
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     OS.setupLocal()
     Statistikk.main(

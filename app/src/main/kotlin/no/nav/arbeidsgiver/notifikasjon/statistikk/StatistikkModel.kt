@@ -20,51 +20,51 @@ class StatistikkModel(
                     select
                         merkelapp,
                         mottaker,
-                        hendelse_type,
+                        notifikasjon_type,
                         (utfoert_tidspunkt - opprettet_tidspunkt) as alder_sekunder
                     from notifikasjon_statistikk
                 )
-                select merkelapp, mottaker, hendelse_type, '0-1H' as bucket, count(*) as antall
+                select merkelapp, mottaker, notifikasjon_type, '0-1H' as bucket, count(*) as antall
                     from alder_tabell
                     where alder_sekunder < interval '1 hour'
-                    group by (merkelapp, mottaker, hendelse_type)
+                    group by (merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, hendelse_type, '1H-1D' as bucket, count(*) as antall
+                select merkelapp, mottaker, notifikasjon_type, '1H-1D' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '1 hour' <= alder_sekunder and alder_sekunder < interval '1 day'
-                    group by (merkelapp, mottaker, hendelse_type)
+                    group by (merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, hendelse_type, '1D-3D' as bucket, count(*) as antall
+                select merkelapp, mottaker, notifikasjon_type, '1D-3D' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '1 day' <= alder_sekunder and alder_sekunder < interval '3 day'
-                    group by (merkelapp, mottaker, hendelse_type)
+                    group by (merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, hendelse_type, '3D-1W' as bucket, count(*) as antall
+                select merkelapp, mottaker, notifikasjon_type, '3D-1W' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '1 day' <= alder_sekunder and alder_sekunder < interval '1 week'
-                    group by (merkelapp, mottaker, hendelse_type)
+                    group by (merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, hendelse_type, '1W-2W' as bucket, count(*) as antall
+                select merkelapp, mottaker, notifikasjon_type, '1W-2W' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '1 week' <= alder_sekunder and alder_sekunder < interval '2 week'
-                    group by (merkelapp, mottaker, hendelse_type)
+                    group by (merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, hendelse_type, '2W-4W' as bucket, count(*) as antall
+                select merkelapp, mottaker, notifikasjon_type, '2W-4W' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '2 week' <= alder_sekunder and alder_sekunder < interval '4 week'
-                    group by (merkelapp, mottaker, hendelse_type)
+                    group by (merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, hendelse_type, 'infinity' as bucket, count(*) as antall
+                select merkelapp, mottaker, notifikasjon_type, 'infinity' as bucket, count(*) as antall
                     from alder_tabell
                     where alder_sekunder is null
-                    group by (merkelapp, mottaker, hendelse_type)
+                    group by (merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
                         "merkelapp", this.getString("merkelapp"),
                         "mottaker", this.getString("mottaker"),
-                        "hendelse_type", this.getString("hendelse_type"),
+                        "notifikasjon_type", this.getString("notifikasjon_type"),
                         "bucket", this.getString("bucket")
                     ),
                     this.getInt("antall")
@@ -79,18 +79,18 @@ class StatistikkModel(
                 select 
                     notifikasjon.merkelapp,
                     notifikasjon.mottaker,
-                    notifikasjon.hendelse_type,
+                    notifikasjon.notifikasjon_type,
                     count(*) as antall_klikk
                 from notifikasjon_statistikk as notifikasjon
                 inner join notifikasjon_statistikk_klikk klikk on notifikasjon.notifikasjon_id = klikk.notifikasjon_id
-                group by (merkelapp, mottaker, hendelse_type)
+                group by (merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
                         "merkelapp", this.getString("merkelapp"),
                         "mottaker", this.getString("mottaker"),
-                        "hendelse_type", this.getString("hendelse_type")
+                        "notifikasjon_type", this.getString("notifikasjon_type")
                     ),
                     this.getInt("antall_klikk")
                 )
@@ -104,17 +104,17 @@ class StatistikkModel(
                 select 
                     merkelapp,
                     mottaker,
-                    hendelse_type,
+                    notifikasjon_type,
                     count(distinct checksum) as antall_unike_tekster
                 from notifikasjon_statistikk
-                group by (merkelapp, mottaker, hendelse_type)
+                group by (merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
                         "merkelapp", this.getString("merkelapp"),
                         "mottaker", this.getString("mottaker"),
-                        "hendelse_type", this.getString("hendelse_type")
+                        "notifikasjon_type", this.getString("notifikasjon_type")
                     ),
                     this.getInt("antall_unike_tekster")
                 )
@@ -125,16 +125,16 @@ class StatistikkModel(
     suspend fun antallNotifikasjoner(): List<MultiGauge.Row<Number>> {
         return database.runNonTransactionalQuery(
             """
-                select merkelapp, mottaker, hendelse_type, count(*) as antall
+                select merkelapp, mottaker, notifikasjon_type, count(*) as antall
                 from notifikasjon_statistikk
-                group by (merkelapp, mottaker, hendelse_type)
+                group by (merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
                         "merkelapp", this.getString("merkelapp"),
                         "mottaker", this.getString("mottaker"),
-                        "hendelse_type", this.getString("hendelse_type")
+                        "notifikasjon_type", this.getString("notifikasjon_type")
                     ),
                     this.getInt("antall")
                 )
@@ -149,13 +149,12 @@ class StatistikkModel(
                 database.nonTransactionalCommand(
                     """
                     insert into notifikasjon_statistikk 
-                        (notifikasjon_id, hendelse_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                        (notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
                     values
-                        (?, ?, ?, ?, ?, ?)
+                        (?, 'beskjed', ?, ?, ?, ?)
                     """
                 ) {
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.typeNavn)
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
                     string(hendelse.tekst.toHash())
@@ -166,13 +165,12 @@ class StatistikkModel(
                 database.nonTransactionalCommand(
                     """
                     insert into notifikasjon_statistikk 
-                        (notifikasjon_id, hendelse_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                        (notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
                     values
-                    (?, ?, ?, ?, ?, ?)
+                    (?, 'oppgave', ?, ?, ?, ?)
                     """
                 ) {
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.typeNavn)
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
                     string(hendelse.tekst.toHash())
@@ -223,16 +221,6 @@ class StatistikkModel(
         }
     }
 }
-
-val Hendelse.typeNavn: String
-    get() = when (this) {
-        is Hendelse.SoftDelete -> "SoftDelete"
-        is Hendelse.HardDelete -> "HardDelete"
-        is Hendelse.OppgaveUtført -> "OppgaveUtført"
-        is Hendelse.BrukerKlikket -> "BrukerKlikket"
-        is Hendelse.BeskjedOpprettet -> "BeskjedOpprettet"
-        is Hendelse.OppgaveOpprettet -> "OppgaveOpprettet"
-    }
 
 val Mottaker.typeNavn: String
     get() = when (this) {

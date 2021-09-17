@@ -1,7 +1,7 @@
 create table notifikasjon_statistikk
 (
     notifikasjon_id        uuid not null primary key,
-    hendelse_type          text not null,
+    notifikasjon_type      text not null,
     merkelapp              text not null,
     mottaker               text not null,
     checksum               text,
@@ -17,7 +17,7 @@ create table notifikasjon_statistikk_klikk
     klikket_paa_tidspunkt timestamp
 );
 
-create index type_idx on notifikasjon_statistikk (hendelse_type);
+create index type_idx on notifikasjon_statistikk (notifikasjon_type);
 create index merkelapp_idx on notifikasjon_statistikk (merkelapp);
 create index mottaker_idx on notifikasjon_statistikk (mottaker);
 create index checksum_idx on notifikasjon_statistikk (checksum);
