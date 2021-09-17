@@ -142,7 +142,7 @@ val TOKENDINGS_TOKEN = LocalhostIssuer.issueProdusentToken()
 
 fun main() {
     println(SELVBETJENING_TOKEN)
-    println(TOKENDINGS_TOKEN)
+    //println(TOKENDINGS_TOKEN)
 }
 
 typealias RequestConfig = TestApplicationRequest.() -> Unit
