@@ -32,6 +32,7 @@ Et minimalt eksempel mot `https://ag-notifikasjon-produsent-api.dev.nav.no/api/g
 POST /api/graphql HTTP/1.1
 Host: ag-notifikasjon-produsent-api.dev.nav.no
 Authorization: Bearer ${AZURE_AD_BEARER_TOKEN}
+Content-type: application/json
 
 {
   "query": "whoami"
