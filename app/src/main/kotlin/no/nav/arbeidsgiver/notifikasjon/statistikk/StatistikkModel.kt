@@ -24,7 +24,7 @@ class StatistikkModel(
                         (utfoert_tidspunkt - opprettet_tidspunkt) as alder_sekunder
                     from notifikasjon_statistikk
                 )
-                select merkelapp, mottaker, hendelse_type, '0-1time' as bucket, count(*) as antall
+                select merkelapp, mottaker, hendelse_type, '0-1H' as bucket, count(*) as antall
                     from alder_tabell
                     where alder_sekunder < interval '1 hour'
                     group by (merkelapp, mottaker, hendelse_type)
