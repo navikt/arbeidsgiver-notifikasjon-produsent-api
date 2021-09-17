@@ -24,3 +24,6 @@ spec:
     - application: notifikasjon-kafka-reaper
       team: fager
       access: readwrite
+    - application: notifikasjon-statistikk
+      team: fager
+      access: read
