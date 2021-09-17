@@ -5,8 +5,6 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.util.*

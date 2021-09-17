@@ -1,0 +1,30 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: notifikasjon-statistikk
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{image}}
+  liveness:
+    path: /internal/alive
+  readiness:
+    path: /internal/ready
+  replicas:
+    min: 1
+    max: 2
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  kafka:
+    pool: nav-prod
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_12
+        tier: db-custom-1-3840
+        diskAutoresize: true
+        highAvailability: true
+        databases:
+          - name: statistikk-model
+            envVarPrefix: DB

@@ -6,12 +6,14 @@ import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import java.time.Duration
+import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -19,7 +21,14 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
 
 interface CoroutineKafkaConsumer<K, V> {
-    suspend fun forEachEvent(body: suspend (V) -> Unit)
+    suspend fun forEachEvent(body: suspend (V, HendelseMetadata) -> Unit)
+
+    suspend fun forEachEvent(body: suspend (V) -> Unit) {
+        forEachEvent { v: V, _: HendelseMetadata ->
+            body(v)
+        }
+    }
+
     suspend fun poll(timeout: Duration): ConsumerRecords<K, V>
 }
 
@@ -55,7 +64,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
             consumer.poll(timeout)
         }
 
-    override suspend fun forEachEvent(body: suspend (V) -> Unit) {
+    override suspend fun forEachEvent(body: suspend (V, HendelseMetadata) -> Unit) {
         while (true) {
             consumer.resume(resumeQueue.pollAll())
             val records = try {
@@ -72,7 +81,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
 
     private suspend fun forEachEvent(
         records: ConsumerRecords<K, V>,
-        body: suspend (V) -> Unit
+        body: suspend (V, HendelseMetadata) -> Unit
     ) {
         if (records.isEmpty) {
             return
@@ -88,7 +97,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
                         return@currentRecord
                     }
                     log.info("processing {}", record.loggableToString())
-                    body(recordValue)
+                    body(recordValue, HendelseMetadata(Instant.ofEpochMilli(record.timestamp())))
                     consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)

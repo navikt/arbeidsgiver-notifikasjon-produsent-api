@@ -13,7 +13,10 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.time.Instant
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
@@ -185,6 +188,16 @@ class ParameterSetters(
         preparedStatement.setObject(index++, value)
 
     fun timestamptz(value: OffsetDateTime) =
+        preparedStatement.setObject(index++, value)
+
+    fun timestamp_utc(value: OffsetDateTime) =
+        timestamp(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
+
+    fun timestamp_utc(value: Instant) {
+        timestamp(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
+    }
+
+    fun timestamp(value: LocalDateTime) =
         preparedStatement.setObject(index++, value)
 }
 
