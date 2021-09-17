@@ -19,8 +19,24 @@ Tjenesten deres må autentisere seg med Azure AD, type server–server, som [bes
 miljø | url
 -----|------
 mock | `https://notifikasjon-fake-produsent-api.labs.nais.io/api/graphql`
-dev | `https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql`
+dev | fra gcp: `https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql`, <br/> fra fss: `https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql`
 prod | tba
+
+
+# GraphQL over HTTP
+
+Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de offisielle anbefalingene: [https://graphql.org/learn/serving-over-http/](https://graphql.org/learn/serving-over-http/). 
+
+Et minimalt eksempel mot `https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql` (dev-miljøet) er:
+```http request
+POST /api/graphql HTTP/1.1
+Host: ag-notifikasjon-produsent-api.dev.nav.no
+Authorization: Bearer ${AZURE_AD_BEARER_TOKEN}
+
+{
+  "query": "whoami"
+}
+```
 
 ## GraphQL Schema Types
 
