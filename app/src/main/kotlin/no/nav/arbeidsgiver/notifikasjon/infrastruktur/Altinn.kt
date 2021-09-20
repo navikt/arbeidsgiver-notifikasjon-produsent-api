@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
@@ -72,12 +73,16 @@ object AltinnImpl : Altinn {
                 ServiceEdition(serviceEdition),
                 false
             )
+        } catch (error: AltinnException) {
+            if (error.proxyError.httpStatus == 400)
+                return emptyList()
+            else
+                throw error
         } catch (error: Exception) {
-            return when {
-                error.message?.contains("403") == true -> emptyList()
-                error.message?.contains("400") == true -> emptyList()
-                else -> throw error
-            }
+            if (error.message?.contains("403") == true)
+                return emptyList()
+            else
+                throw error
         }
 
         return reporteeList
