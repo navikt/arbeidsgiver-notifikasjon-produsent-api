@@ -42,12 +42,13 @@ val PRODUSENT_LIST = basedOnEnv(
     )
 )
 
-val PRODUSENT_REGISTER = ProdusentRegisterImpl(PRODUSENT_LIST)
+val PRODUSENT_REGISTER by lazy { ProdusentRegisterImpl(PRODUSENT_LIST) }
 
-val MOTTAKER_REGISTER: List<MottakerDefinisjon> =
+val MOTTAKER_REGISTER: List<MottakerDefinisjon> by lazy {
     PRODUSENT_LIST
         .flatMap { it.tillatteMottakere }
         .distinct()
+}
 
 //    ServicecodeDefinisjon(code = "5216", version = "1", description = "Mentortilskudd"),
 //    ServicecodeDefinisjon(code = "5212", version = "1", description = "Inkluderingstilskudd"),
