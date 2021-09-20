@@ -1,14 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.executable
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
 import kotlinx.coroutines.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.VÅRE_TJENESTER
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import java.lang.System.currentTimeMillis
 import java.time.Instant
 import kotlin.random.Random
@@ -129,7 +128,7 @@ suspend fun hentNotifikasjoner(count: Int, api: Api = Api.BRUKER_GCP) {
 suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
     val run = Instant.now()
     val eksterIder = generateSequence(1) { it + 1 }.iterator()
-    val tjenester = VÅRE_TJENESTER.asSequence().looping().iterator()
+    val tjenester = MottakerRegister.servicecodeDefinisjoner.asSequence().looping().iterator()
     val virksomhetsnummere = ("0123456789".map { it.toString().repeat(9) } + listOf("910825631"))
         .asSequence()
         .looping()

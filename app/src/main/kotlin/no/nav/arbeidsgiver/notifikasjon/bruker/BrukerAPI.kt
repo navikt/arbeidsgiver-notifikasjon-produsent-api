@@ -16,6 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -154,7 +155,11 @@ object BrukerAPI {
             coroutineScope {
                 val tilganger = async {
                     try {
-                        altinn.hentAlleTilganger(context.fnr, context.token)
+                        altinn.hentTilganger(
+                            context.fnr,
+                            context.token,
+                            MottakerRegister.servicecodeDefinisjoner
+                        )
                     } catch (e: Exception) {
                         log.error("Henting av Altinn-tilganger feilet", e)
                         null

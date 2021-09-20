@@ -12,14 +12,16 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
 
 interface Altinn {
-    suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<BrukerModel.Tilgang>
+    suspend fun hentTilganger(
+        fnr: String,
+        selvbetjeningsToken: String,
+        tjenester: Iterable<ServicecodeDefinisjon>
+    ): List<BrukerModel.Tilgang>
 }
-
-val VÅRE_TJENESTER = MottakerRegister.servicecodeDefinisjoner
 
 object AltinnImpl : Altinn {
     private val log = logger()
@@ -45,10 +47,14 @@ object AltinnImpl : Altinn {
         )
     )
 
-    override suspend fun hentAlleTilganger(fnr: String, selvbetjeningsToken: String): List<BrukerModel.Tilgang> =
+    override suspend fun hentTilganger(
+        fnr: String,
+        selvbetjeningsToken: String,
+        tjenester: Iterable<ServicecodeDefinisjon>
+    ): List<BrukerModel.Tilgang> =
         timer.coRecord {
             coroutineScope {
-                val alleTilganger = VÅRE_TJENESTER.map {
+                val alleTilganger = tjenester.map {
                     val (code, version) = it
                     async {
                         hentTilganger(fnr, code, version, selvbetjeningsToken)

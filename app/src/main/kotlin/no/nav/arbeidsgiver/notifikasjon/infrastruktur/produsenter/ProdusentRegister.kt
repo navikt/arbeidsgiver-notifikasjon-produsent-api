@@ -1,16 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AppName
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import java.util.*
 
 typealias Merkelapp = String
-typealias AppName = String
-typealias ClientId = String
 
 data class Produsent(
     val accessPolicy: List<AppName>,
@@ -74,32 +71,12 @@ object MottakerRegister {
         }
 }
 
-object PreAuthorizedApps {
-    private val log = logger()
-
-    data class Elem(
-        val name: AppName,
-        val clientId: ClientId
-    )
-
-    val json = System.getenv("AZURE_APP_PRE_AUTHORIZED_APPS")!!
-    val map = objectMapper
-        .readValue<List<Elem>>(json)
-
-    init {
-        val prettyString = map.joinToString(separator = ";\n") {
-            "name: ${it.name} clientId: ${it.clientId}"
-        }
-        log.info("PreAuthorizedApps: \n{}", prettyString)
-    }
-}
-
 interface ProdusentRegister {
-    fun finn(produsentid: String): Produsent?
+    fun finn(appName: String): Produsent?
 }
 
 class ProdusentRegisterImpl(
-    private val produsenter: List<Produsent>
+    produsenter: List<Produsent>
 ) : ProdusentRegister {
 
     val log = logger()
@@ -114,25 +91,21 @@ class ProdusentRegisterImpl(
         }
     }
 
-    private val clientIdToProdusent: Map<ClientId, Produsent> = PreAuthorizedApps.map
-        .flatMap { elem ->
-            val produsent = produsenter.find {
-                it.accessPolicy.contains(elem.name)
-            } ?: return@flatMap listOf()
-            listOf(Pair(elem.clientId, produsent))
-        }
-        .toMap()
+    private val produsenterByName: Map<AppName, Produsent> =
+        produsenter
+            .flatMap { produsent ->
+                produsent.accessPolicy.map { appNavn -> Pair(appNavn, produsent) }
+            }
+            .toMap()
 
-    private val noopProdusent = Produsent(
-        accessPolicy = listOf()
-    )
-
-    override fun finn(produsentid: ClientId): Produsent {
-        return clientIdToProdusent.getOrElse(produsentid) {
-            log.warn("fant ikke produsent for clientId=$produsentid. produsenter=$clientIdToProdusent")
-            noopProdusent
+    override fun finn(appName: AppName): Produsent? {
+        return produsenterByName[appName] ?: run {
+            log.error("""
+                |Fant ikke produsent for appName=$appName.
+                |Gyldige appName er: \n${produsenterByName.keys.joinToString(prefix = "| - ", postfix = "\n")}
+            """.trimMargin())
+            return null
         }
     }
-
 }
 

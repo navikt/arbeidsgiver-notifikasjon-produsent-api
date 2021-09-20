@@ -34,7 +34,7 @@ class FeilhåndteringTests : DescribeSpec({
         context("Feil Altinn, DigiSyfo ok") {
 
             coEvery {
-                altinn.hentAlleTilganger(any(), any())
+                altinn.hentTilganger(any(), any(), any())
             } throws RuntimeException("Mock failure")
 
             coEvery {
@@ -81,7 +81,7 @@ class FeilhåndteringTests : DescribeSpec({
             } returns listOf()
 
             coEvery {
-                altinn.hentAlleTilganger(any(), any())
+                altinn.hentTilganger(any(), any(), any())
             } returns listOf()
 
             val response = engine.brukerApi(
@@ -121,7 +121,7 @@ class FeilhåndteringTests : DescribeSpec({
             } returns listOf()
 
             coEvery {
-                altinn.hentAlleTilganger(any(), any())
+                altinn.hentTilganger(any(), any(), any())
             } throws RuntimeException("Mock failure")
 
             val response = engine.brukerApi(

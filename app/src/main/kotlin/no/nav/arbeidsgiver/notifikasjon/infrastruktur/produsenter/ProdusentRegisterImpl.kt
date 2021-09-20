@@ -52,17 +52,13 @@ val ARBEIDSGIVER_TILTAK = Produsent(
 )
 
 
-fun createProdusentRegister(): ProdusentRegister {
-    return ProdusentRegisterImpl(
-        basedOnEnv(
-            prod = listOf(),
-            other = listOf(
-                FAGER_TESTPRODUSENT,
-                ARBEIDSGIVER_TILTAK
-            )
+val PRODUSENT_REGISTER = ProdusentRegisterImpl(
+    basedOnEnv(
+        prod = listOf(),
+        other = listOf(
+            FAGER_TESTPRODUSENT,
+            ARBEIDSGIVER_TILTAK
         )
     )
-}
-
-val PRODUSENT_REGISTER by lazy { createProdusentRegister() }
+)
 
