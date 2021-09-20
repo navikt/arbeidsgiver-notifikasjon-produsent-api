@@ -73,10 +73,11 @@ object AltinnImpl : Altinn {
                 false
             )
         } catch (error: Exception) {
-            if (error.message?.contains("403") == true)
-                return emptyList()
-            else
-                throw error
+            return when {
+                error.message?.contains("403") == true -> emptyList()
+                error.message?.contains("400") == true -> emptyList()
+                else -> throw error
+            }
         }
 
         return reporteeList
