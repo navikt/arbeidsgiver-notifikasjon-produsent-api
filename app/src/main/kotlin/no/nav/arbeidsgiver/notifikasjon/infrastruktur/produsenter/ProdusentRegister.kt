@@ -40,11 +40,10 @@ data class ServicecodeDefinisjon(
             else -> false
         }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return other is ServicecodeDefinisjon
-                && this.code == other.code
-                && this.version == other.version
+    override fun equals(other: Any?): Boolean = when {
+        this === other -> true
+        other is ServicecodeDefinisjon -> this.code == other.code && this.version == other.version
+        else -> false
     }
 
     override fun hashCode(): Int = Objects.hash(code, version)
