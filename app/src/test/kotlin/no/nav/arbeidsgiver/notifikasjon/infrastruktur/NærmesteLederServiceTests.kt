@@ -39,6 +39,15 @@ class NærmesteLederServiceTests : DescribeSpec({
             )
         }
 
+        context("når tjeneste returnerer tom body") {
+            mockNærmestelederRespons("")
+
+            it("er tom liste") {
+                val ansatte = service.hentAnsatte(token)
+                ansatte shouldBe emptyList()
+            }
+        }
+
         context("når tjeneste returnerer ingen ansatte") {
             mockNærmestelederRespons("""{ "ansatte": [] }""")
             val ansatte = service.hentAnsatte(token)
