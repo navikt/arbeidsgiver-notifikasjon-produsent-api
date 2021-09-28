@@ -8,6 +8,7 @@ import no.altinn.services.serviceengine.notification._2010._10.INotificationAgen
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import org.apache.cxf.ext.logging.LoggingFeature
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
@@ -29,7 +30,7 @@ class AltinnVarselKlient(
 ) {
     private val wsclient = createServicePort(basedOnEnv(
         prod = "",
-        other = "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
+        other = "http://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
     ), INotificationAgencyExternalBasic::class.java)
 
     fun testEksternVarsel() {
@@ -155,4 +156,5 @@ fun <PORT_TYPE> createServicePort(
 ): PORT_TYPE = JaxWsProxyFactoryBean().apply {
     address = url
     serviceClass = clazz
+    features.add(LoggingFeature())
 }.create(clazz)
