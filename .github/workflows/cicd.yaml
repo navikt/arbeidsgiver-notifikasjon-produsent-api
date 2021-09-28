@@ -51,7 +51,7 @@ jobs:
         with:
           context: app
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
 
   deploy:
     needs: [build]
