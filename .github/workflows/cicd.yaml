@@ -51,7 +51,11 @@ jobs:
         with:
           context: app
           push: true
-          tags: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+          tags: |
+            ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
+          cache-from: type=registry,ref=${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
+          cache-to: type=inline
 
   deploy:
     needs: [build]
@@ -66,7 +70,7 @@ jobs:
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         if: github.ref == 'refs/heads/main'
         env:
-          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          IMAGE: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
