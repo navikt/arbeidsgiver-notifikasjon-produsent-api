@@ -41,6 +41,8 @@ type Query {
     """
     whoami: String
 
+    testEksternVarsel: String
+
     """
     Vi bruker det Connections-patternet for paginering. Se
     [Connection-standaren](https://relay.dev/graphql/connections.htm) for mer
