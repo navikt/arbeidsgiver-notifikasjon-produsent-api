@@ -25,8 +25,8 @@ import javax.xml.namespace.QName
  * [TransportType.EMAIL] støtter også html, det gjør ikke [TransportType.SMS]
  */
 class AltinnVarselKlient(
-    private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
-    private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
+    private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN")?:"",
+    private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD")?:"",
 ) {
     private val wsclient = createServicePort(basedOnEnv(
         prod = "",
@@ -77,81 +77,71 @@ fun StandaloneNotificationBEList.withEmail(
     mottaker: AltinnMottaker,
     tekst: String,
     tittel: String,
-): StandaloneNotificationBEList {
-    standaloneNotification.add(
-        StandaloneNotification().apply {
-            languageID = 1044
-            notificationType = ns("NotificationType", "TokenTextOnly")
-            reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
-            service = ns("Service", Service().apply {
-                serviceCode = mottaker.serviceCode
-                serviceEdition = mottaker.serviceEdition.toInt()
-            })
-            receiverEndPoints = ns("ReceiverEndPoints", ReceiverEndPointBEList().apply {
-                receiverEndPoint.add(
-                    ReceiverEndPoint().apply {
-                        transportType = ns("TransportType", TransportType.EMAIL)
-                    }
-                )
-            }
-            )
-            textTokens = ns("TextTokens", TextTokenSubstitutionBEList().apply {
-                textToken.add(
-                    TextToken().apply {
-                        tokenNum = 0
-                        tokenValue = ns("TokenValue", tittel)
-                    }
-                )
-                textToken.add(
-                    TextToken().apply {
-                        tokenNum = 1
-                        tokenValue = ns("TokenValue", tekst)
-                    }
-                )
-            })
-            fromAddress = ns("FromAddress", "ikke-svar@nav.no")
-        })
-    return this
+) : StandaloneNotificationBEList {
+    return withStandaloneNotification(
+        StandaloneNotification()
+            .withLanguageID(1044)
+            .withNotificationType(ns("NotificationType", "TokenTextOnly"))
+            .withReporteeNumber(ns("ReporteeNumber", mottaker.virksomhetsnummer))
+            .withService(ns(
+                "Service",
+                Service()
+                    .withServiceCode(mottaker.serviceCode)
+                    .withServiceEdition(mottaker.serviceEdition.toInt())))
+            .withReceiverEndPoints(ns(
+                "ReceiverEndPoints",
+                ReceiverEndPointBEList()
+                    .withReceiverEndPoint(
+                        ReceiverEndPoint()
+                            .withTransportType(ns("TransportType", TransportType.EMAIL)))
+            ))
+            .withTextTokens(ns(
+                "TextTokens",
+                TextTokenSubstitutionBEList().withTextToken(listOf(
+                    TextToken()
+                        .withTokenNum(0)
+                        .withTokenValue(ns("TokenValue", tittel)),
+                    TextToken()
+                        .withTokenNum(1)
+                        .withTokenValue(ns("TokenValue", tekst))
+                ))))
+            .withFromAddress(ns("FromAddress", "ikke-svar@nav.no"))
+    )
 }
 
 fun StandaloneNotificationBEList.withSms(
     mottaker: AltinnMottaker,
     tekst: String,
-): StandaloneNotificationBEList {
-    standaloneNotification.add(
-        StandaloneNotification().apply {
-            languageID = 1044
-            notificationType = ns("NotificationType", "TokenTextOnly")
-            reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
-            service = ns("Service", Service().apply {
-                serviceCode = mottaker.serviceCode
-                serviceEdition = mottaker.serviceEdition.toInt()
-            })
-            receiverEndPoints = ns("ReceiverEndPoints", ReceiverEndPointBEList().apply {
-                receiverEndPoint.add(
-                    ReceiverEndPoint().apply {
-                        transportType = ns("TransportType", TransportType.SMS)
-                    }
-                )
-            }
-            )
-            textTokens = ns("TextTokens", TextTokenSubstitutionBEList().apply {
-                textToken.add(
-                    TextToken().apply {
-                        tokenNum = 0
-                        tokenValue = ns("TokenValue", tekst)
-                    }
-                )
-                textToken.add(
-                    TextToken().apply {
-                        tokenNum = 1
-                        tokenValue = ns("TokenValue", "")
-                    }
-                )
-            })
-            useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
-        })
-    return this
+) : StandaloneNotificationBEList {
+    return withStandaloneNotification(
+        StandaloneNotification()
+            .withLanguageID(1044)
+            .withNotificationType(ns("NotificationType", "TokenTextOnly"))
+            .withReporteeNumber(ns("ReporteeNumber", mottaker.virksomhetsnummer))
+            .withService(ns(
+                "Service",
+                Service()
+                    .withServiceCode(mottaker.serviceCode)
+                    .withServiceEdition(mottaker.serviceEdition.toInt())))
+            .withReceiverEndPoints(ns(
+                "ReceiverEndPoints",
+                ReceiverEndPointBEList()
+                    .withReceiverEndPoint(
+                        ReceiverEndPoint()
+                            .withTransportType(ns("TransportType", TransportType.SMS)))
+            ))
+            .withTextTokens(ns(
+                "TextTokens",
+                TextTokenSubstitutionBEList().withTextToken(listOf(
+                    TextToken()
+                        .withTokenNum(0)
+                        .withTokenValue(ns("TokenValue", tekst)),
+                    TextToken()
+                        .withTokenNum(1)
+                        .withTokenValue(ns("TokenValue", ""))
+                ))))
+            .withUseServiceOwnerShortNameAsSenderOfSms(ns("UseServiceOwnerShortNameAsSenderOfSms", true)),
+    )
 }
 
 @Suppress("HttpUrlsUsage")
