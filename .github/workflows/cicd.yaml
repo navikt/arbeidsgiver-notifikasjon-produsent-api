@@ -39,15 +39,23 @@ jobs:
       - run: mvn -B package
         working-directory: app
 
-      - name: Build container image
-        uses: docker/build-push-action@v1
+      - name: Login to GitHub Package Repository
+        uses: docker/login-action@v1
         with:
-          path: app
-          username: ${{ secrets.GHCR_PUSH_USERNAME }}
-          password: ${{ secrets.GHCR_PUSH_TOKEN }}
           registry: ghcr.io
-          repository: ${{ github.repository }}
-          tags: ${{ github.sha }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build container image
+        uses: docker/build-push-action@v2
+        with:
+          context: app
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
+          cache-from: type=registry,ref=${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
+          cache-to: type=inline
 
   deploy:
     needs: [build]
@@ -62,7 +70,7 @@ jobs:
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         if: github.ref == 'refs/heads/main'
         env:
-          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          IMAGE: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
