@@ -7,6 +7,7 @@ import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2015._
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
@@ -23,11 +24,25 @@ import javax.xml.namespace.QName
  * [TransportType.EMAIL] støtter også html, det gjør ikke [TransportType.SMS]
  */
 class AltinnVarselKlient(
-    private val altinnEndPoint: String = "",// TODO: fra env (tt02 vs prod)
-    private val altinnBrukernavn: String = "",// TODO: fra secret
-    private val altinnPassord: String = "", // TODO: fra secret
+    private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN")?:"",
+    private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD")?:"",
 ) {
-    private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
+    private val wsclient = createServicePort(basedOnEnv(
+        prod = "",
+        other = "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
+    ), INotificationAgencyExternalBasic::class.java)
+
+    fun testEksternVarsel() {
+        sendSms(
+            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
+            "hallaisen, mctysen. dette er en test"
+        )
+        sendEpost(
+            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
+            tittel = "tjobing",
+            tekst = "<h1>hei</h1><br /> <p>Dette er en <strong>test!</strong>"
+        )
+    }
 
     fun sendSms(
         mottaker: AltinnMottaker,
