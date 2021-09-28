@@ -27,6 +27,7 @@ class AltinnVarselKlient(
     private val altinnBrukernavn: String = "",// TODO: fra secret
     private val altinnPassord: String = "", // TODO: fra secret
 ) {
+    private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
 
     fun sendSms(
         mottaker: AltinnMottaker,
@@ -53,10 +54,6 @@ class AltinnVarselKlient(
         } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
             throw Error("Feil fra altinn ved sending av notifikasjon: ${e.faultInfo}: ${e.message}", e)
         }
-    }
-
-    private val wsclient by lazy {
-        createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
     }
 }
 
