@@ -4,6 +4,8 @@ import jakarta.xml.bind.JAXBElement
 import jakarta.xml.ws.BindingProvider
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import java.net.URL
 import javax.xml.namespace.QName
 
 
@@ -21,6 +23,7 @@ class AltinnVarselKlient(
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
 ) {
+    val log = logger()
     private val wsdl = javaClass.getResource("/META-INF/wsdl/NotificationAgencyExternalBasic.svc.wsdl")!!
     private val wsclient = NotificationAgencyExternalBasicSF(wsdl).basicHttpBindingINotificationAgencyExternalBasic.apply {
         if (this is BindingProvider) {
@@ -67,7 +70,8 @@ class AltinnVarselKlient(
                 payload
             )
         } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
-            throw Error("Feil fra altinn ved sending av notifikasjon: ${e.faultInfo}: ${e.message}", e)
+            log.error("Feil fra altinn ved sending av notifikasjon: ${e.faultInfo}: ${e.message}", e)
+//            throw Error("Feil fra altinn ved sending av notifikasjon: ${e.faultInfo}: ${e.message}", e)
         }
     }
 }
