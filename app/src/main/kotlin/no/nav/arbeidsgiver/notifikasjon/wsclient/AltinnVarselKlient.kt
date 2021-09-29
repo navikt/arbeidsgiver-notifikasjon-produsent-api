@@ -88,11 +88,14 @@ fun BindingProvider.addRequestResponseLogging() {
             //val isRequest : Boolean = context[MessageContext.MESSAGE_OUTBOUND_PROPERTY] as Boolean
             val baos = ByteArrayOutputStream()
             context.message.writeTo(baos)
-            logger().info(String(baos.toByteArray()))
+            logger().info(String(baos.toByteArray()).replace(Regex("(systemUserName|systemPassword>)(.*)(</)"), "$1***$3"))
             return true
         }
 
-        override fun handleFault(context: SOAPMessageContext?): Boolean {
+        override fun handleFault(context: SOAPMessageContext): Boolean {
+            val baos = ByteArrayOutputStream()
+            context.message.writeTo(baos)
+            logger().info(String(baos.toByteArray()))
             return true
         }
 
@@ -136,13 +139,9 @@ fun StandaloneNotificationBEList.withEmail(
             textTokens = ns("TextTokens", TextTokenSubstitutionBEList().apply {
                 textToken = listOf(
                     TextToken().apply {
-                        tokenNum = 0
                         tokenValue = ns("TokenValue", tittel)
-                    }
-                )
-                textToken = listOf(
+                    },
                     TextToken().apply {
-                        tokenNum = 1
                         tokenValue = ns("TokenValue", tekst)
                     }
                 )
@@ -170,14 +169,7 @@ fun StandaloneNotificationBEList.withSms(
             textTokens = ns("TextTokens", TextTokenSubstitutionBEList().apply {
                 textToken = listOf(
                     TextToken().apply {
-                        tokenNum = 0
                         tokenValue = ns("TokenValue", tekst)
-                    }
-                )
-                textToken = listOf(
-                    TextToken().apply {
-                        tokenNum = 1
-                        tokenValue = ns("TokenValue", "")
                     }
                 )
             })
