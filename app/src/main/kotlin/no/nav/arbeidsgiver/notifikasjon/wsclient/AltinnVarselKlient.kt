@@ -70,10 +70,22 @@ class AltinnVarselKlient(
                 payload
             )
         } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
-            log.error("Feil fra altinn ved sending av notifikasjon: ${e.faultInfo}: ${e.message}", e)
+            log.error("Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}", e)
 //            throw Error("Feil fra altinn ved sending av notifikasjon: ${e.faultInfo}: ${e.message}", e)
         }
     }
+}
+
+fun AltinnFault.toLoggableString() {
+    """
+        altinnErrorMessage=${altinnErrorMessage}
+        altinnExtendedErrorMessage=${altinnExtendedErrorMessage}
+        altinnLocalizedErrorMessage=${altinnLocalizedErrorMessage}
+        errorGuid=${errorGuid}
+        errorID=${errorID}
+        userGuid=${userGuid}
+        userId=${userId}
+    """.trimIndent()
 }
 
 fun StandaloneNotificationBEList.withEmail(
