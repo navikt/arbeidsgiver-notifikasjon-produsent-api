@@ -76,8 +76,8 @@ class AltinnVarselKlient(
     }
 }
 
-fun AltinnFault.toLoggableString() {
-    """
+fun AltinnFault.toLoggableString() : String {
+    return """
         altinnErrorMessage=${altinnErrorMessage}
         altinnExtendedErrorMessage=${altinnExtendedErrorMessage}
         altinnLocalizedErrorMessage=${altinnLocalizedErrorMessage}
