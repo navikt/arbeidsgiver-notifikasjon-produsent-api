@@ -76,7 +76,7 @@ fun StandaloneNotificationBEList.withEmail(
     tekst: String,
     tittel: String,
 ): StandaloneNotificationBEList {
-    standaloneNotification.add(
+    standaloneNotification = listOf(
         StandaloneNotification().apply {
             withMottaker(mottaker)
             receiverEndPoints = ns("ReceiverEndPoints", ReceiverEndPointBEList().apply {

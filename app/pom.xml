@@ -93,6 +93,11 @@
             <artifactId>jaxws-rt</artifactId>
             <version>3.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.sun.org.apache.xml.internal</groupId>
+            <artifactId>resolver</artifactId>
+            <version>20050927</version>
+        </dependency>
 
         <!-- graphql -->
         <dependency>
@@ -228,6 +233,10 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <vmArgs>
+                        <vmArg>-Djavax.xml.accessExternalDTD=all</vmArg>
+                        <vmArg>-Djavax.xml.accessExternalSchema=all</vmArg>
+                    </vmArgs>
                     <wsdlDirectory>src/main/resources/wsdl</wsdlDirectory>
                     <packageName>no.nav.arbeidsgiver.notifikasjon.wsclient</packageName>
                     <sourceDestDir>src/main/java</sourceDestDir>
