@@ -233,11 +233,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <vmArgs>
-                        <vmArg>-Djavax.xml.accessExternalDTD=all</vmArg>
-                        <vmArg>-Djavax.xml.accessExternalSchema=all</vmArg>
-                    </vmArgs>
-                    <wsdlDirectory>src/main/resources/wsdl</wsdlDirectory>
+                    <wsdlDirectory>src/main/resources/META-INF/wsdl</wsdlDirectory>
                     <packageName>no.nav.arbeidsgiver.notifikasjon.wsclient</packageName>
                     <sourceDestDir>src/main/java</sourceDestDir>
                 </configuration>

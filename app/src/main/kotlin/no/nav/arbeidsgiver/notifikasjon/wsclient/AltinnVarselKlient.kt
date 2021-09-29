@@ -21,7 +21,7 @@ class AltinnVarselKlient(
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
 ) {
-    private val wsdl = javaClass.getResource("classpath:wsdl/NotificationAgencyExternalBasic.svc.wsdl")
+    private val wsdl = javaClass.getResource("/META-INF/wsdl/NotificationAgencyExternalBasic.svc.wsdl")!!
     private val wsclient = NotificationAgencyExternalBasicSF(wsdl).basicHttpBindingINotificationAgencyExternalBasic.apply {
         if (this is BindingProvider) {
             this.requestContext[BindingProvider.ENDPOINT_ADDRESS_PROPERTY] = basedOnEnv(
