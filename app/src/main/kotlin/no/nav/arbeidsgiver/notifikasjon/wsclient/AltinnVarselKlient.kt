@@ -41,14 +41,23 @@ class AltinnVarselKlient(
         }
 
     fun testEksternVarsel() {
-        sendSms(
-            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
-            "hallaisen, mctysen. dette er en test"
-        )
-        sendEpost(
-            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
-            tittel = "tjobing",
-            tekst = "<h1>hei</h1><br /> <p>Dette er en <strong>test!</strong>"
+        send(StandaloneNotificationBEList()
+            .withSms(
+                mottaker = AltinnMottaker(
+                    serviceCode = "4936",
+                    serviceEdition = "1",
+                    virksomhetsnummer = "910825526"),
+                tekst = "hallaisen, mctysen. dette er en test"
+            )
+            .withEmail(
+                mottaker = AltinnMottaker(
+                    serviceCode = "4936",
+                    serviceEdition = "1",
+                    virksomhetsnummer = "910825526"
+                ),
+                tekst = "<h1>hei</h1><br /> <p>Dette er en <strong>test!</strong>",
+                tittel = "tjobing",
+            )
         )
     }
 
@@ -88,7 +97,8 @@ fun BindingProvider.addRequestResponseLogging() {
             //val isRequest : Boolean = context[MessageContext.MESSAGE_OUTBOUND_PROPERTY] as Boolean
             val baos = ByteArrayOutputStream()
             context.message.writeTo(baos)
-            logger().info(String(baos.toByteArray()).replace(Regex("(systemUserName|systemPassword>)(.*)(</)"), "$1***$3"))
+            logger().info(String(baos.toByteArray()).replace(Regex("(systemUserName>|systemPassword>)(.*?)(</.+?:systemUserName>|</.+?:systemPassword)"),
+                "$1***$3"))
             return true
         }
 
@@ -125,7 +135,7 @@ fun StandaloneNotificationBEList.withEmail(
     tekst: String,
     tittel: String,
 ): StandaloneNotificationBEList {
-    standaloneNotification = listOf(
+    getStandaloneNotification().add(
         StandaloneNotification().apply {
             withMottaker(mottaker)
             receiverEndPoints = ns("ReceiverEndPoints", ReceiverEndPointBEList().apply {
@@ -134,8 +144,7 @@ fun StandaloneNotificationBEList.withEmail(
                         transportType = ns("TransportType", TransportType.EMAIL)
                     }
                 )
-            }
-            )
+            })
             textTokens = ns("TextTokens", TextTokenSubstitutionBEList().apply {
                 textToken = listOf(
                     TextToken().apply {
@@ -155,7 +164,7 @@ fun StandaloneNotificationBEList.withSms(
     mottaker: AltinnMottaker,
     tekst: String,
 ): StandaloneNotificationBEList {
-    standaloneNotification = listOf(
+    getStandaloneNotification().add(
         StandaloneNotification().apply {
             withMottaker(mottaker)
             receiverEndPoints = ns("ReceiverEndPoints", ReceiverEndPointBEList().apply {
@@ -164,8 +173,7 @@ fun StandaloneNotificationBEList.withSms(
                         transportType = ns("TransportType", TransportType.SMS)
                     }
                 )
-            }
-            )
+            })
             textTokens = ns("TextTokens", TextTokenSubstitutionBEList().apply {
                 textToken = listOf(
                     TextToken().apply {
