@@ -41,22 +41,21 @@ class AltinnVarselKlient(
         }
 
     fun testEksternVarsel() {
-        send(StandaloneNotificationBEList()
-            .withSms(
-                mottaker = AltinnMottaker(
-                    serviceCode = "4936",
-                    serviceEdition = "1",
-                    virksomhetsnummer = "910825526"),
-                tekst = "hallaisen, mctysen. dette er en test"
+        sendSms(
+            tekst = "hallaisen, mctysen. dette er en test",
+            mottaker = AltinnMottaker(
+                serviceCode = "4936",
+                serviceEdition = "1",
+                virksomhetsnummer = "910825526"
             )
-            .withEmail(
-                mottaker = AltinnMottaker(
-                    serviceCode = "4936",
-                    serviceEdition = "1",
-                    virksomhetsnummer = "910825526"
-                ),
-                tekst = "<h1>hei</h1><br /> <p>Dette er en <strong>test!</strong>",
-                tittel = "tjobing",
+        )
+        sendEpost(
+            tittel = "tjobing",
+            tekst = "<h1>hei</h1><br /> <p>Dette er en <strong>test!</strong>",
+            mottaker = AltinnMottaker(
+                serviceCode = "4936",
+                serviceEdition = "1",
+                virksomhetsnummer = "910825526"
             )
         )
     }
