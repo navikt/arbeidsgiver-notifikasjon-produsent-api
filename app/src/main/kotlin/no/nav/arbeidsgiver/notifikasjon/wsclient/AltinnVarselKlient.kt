@@ -2,10 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.wsclient
 
 import jakarta.xml.bind.JAXBElement
 import jakarta.xml.ws.BindingProvider
+import jakarta.xml.ws.handler.MessageContext
+import jakarta.xml.ws.handler.soap.SOAPHandler
+import jakarta.xml.ws.handler.soap.SOAPMessageContext
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import java.net.URL
+import java.io.ByteArrayOutputStream
 import javax.xml.namespace.QName
 
 
@@ -25,15 +28,17 @@ class AltinnVarselKlient(
 ) {
     val log = logger()
     private val wsdl = javaClass.getResource("/META-INF/wsdl/NotificationAgencyExternalBasic.svc.wsdl")!!
-    private val wsclient = NotificationAgencyExternalBasicSF(wsdl).basicHttpBindingINotificationAgencyExternalBasic.apply {
-        if (this is BindingProvider) {
-            this.requestContext[BindingProvider.ENDPOINT_ADDRESS_PROPERTY] = basedOnEnv(
-                prod = "",
-                other = "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
-//                other = "http://localhost:9000/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
-            )
+    private val wsclient =
+        NotificationAgencyExternalBasicSF(wsdl).basicHttpBindingINotificationAgencyExternalBasic.apply {
+            if (this is BindingProvider) {
+                this.requestContext[BindingProvider.ENDPOINT_ADDRESS_PROPERTY] = basedOnEnv(
+                    prod = "",
+                    other = "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
+//                    other = "http://localhost:9000/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
+                )
+                addRequestResponseLogging()
+            }
         }
-    }
 
     fun testEksternVarsel() {
         sendSms(
@@ -76,15 +81,39 @@ class AltinnVarselKlient(
     }
 }
 
-fun AltinnFault.toLoggableString() : String {
+fun BindingProvider.addRequestResponseLogging() {
+    val handlerChain = binding.handlerChain
+    handlerChain.add(object : SOAPHandler<SOAPMessageContext> {
+        override fun handleMessage(context: SOAPMessageContext): Boolean {
+            //val isRequest : Boolean = context[MessageContext.MESSAGE_OUTBOUND_PROPERTY] as Boolean
+            val baos = ByteArrayOutputStream()
+            context.message.writeTo(baos)
+            logger().info(String(baos.toByteArray()))
+            return true
+        }
+
+        override fun handleFault(context: SOAPMessageContext?): Boolean {
+            return true
+        }
+
+        override fun close(context: MessageContext?) {}
+
+        override fun getHeaders(): MutableSet<QName> {
+            return mutableSetOf()
+        }
+    })
+    binding.handlerChain = handlerChain
+}
+
+fun AltinnFault.toLoggableString(): String {
     return """
-        altinnErrorMessage=${altinnErrorMessage}
-        altinnExtendedErrorMessage=${altinnExtendedErrorMessage}
-        altinnLocalizedErrorMessage=${altinnLocalizedErrorMessage}
-        errorGuid=${errorGuid}
+        altinnErrorMessage=${altinnErrorMessage.value}
+        altinnExtendedErrorMessage=${altinnExtendedErrorMessage.value}
+        altinnLocalizedErrorMessage=${altinnLocalizedErrorMessage.value}
+        errorGuid=${errorGuid.value}
         errorID=${errorID}
-        userGuid=${userGuid}
-        userId=${userId}
+        userGuid=${userGuid.value}
+        userId=${userId.value}
     """.trimIndent()
 }
 
@@ -172,43 +201,3 @@ inline fun <reified T> ns(localpart: String, value: T): JAXBElement<T> {
     val ns = "http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10"
     return JAXBElement(QName(ns, localpart), T::class.java, value)
 }
-
-//
-//fun main() {
-//    Endpoint.publish(
-//        "http://localhost:9000/ServiceEngineExternal/NotificationAgencyExternalBasic.svc",
-//        @WebService(name = "INotificationAgencyExternalBasic", targetNamespace = "http://www.altinn.no/services/ServiceEngine/Notification/2010/10")
-//        object : INotificationAgencyExternalBasic {
-//            override fun test() {
-//                TODO("Not yet implemented")
-//            }
-//
-//            override fun sendStandaloneNotificationBasic(
-//                systemUserName: String?,
-//                systemPassword: String?,
-//                standaloneNotifications: StandaloneNotificationBEList?,
-//            ) {
-//                TODO("Not yet implemented")
-//            }
-//
-//            override fun sendStandaloneNotificationBasicV2(
-//                systemUserName: String?,
-//                systemPassword: String?,
-//                standaloneNotifications: StandaloneNotificationBEList?,
-//            ): String {
-//                TODO("Not yet implemented")
-//            }
-//
-//            @WebMethod(operationName = "SendStandaloneNotificationBasicV3", action = "http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV3")
-//            override fun sendStandaloneNotificationBasicV3(
-//                systemUserName: String?,
-//                systemPassword: String?,
-//                standaloneNotifications: StandaloneNotificationBEList?,
-//            ): SendNotificationResultList {
-//                TODO("Not yet implemented")
-//            }
-//        }
-//    )
-//
-//    AltinnVarselKlient().testEksternVarsel()
-//}
