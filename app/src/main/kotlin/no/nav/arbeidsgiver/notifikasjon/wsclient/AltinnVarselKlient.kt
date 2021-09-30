@@ -40,21 +40,23 @@ class AltinnVarselKlient(
     private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
 
     fun testEksternVarsel() {
-        sendSms(
-            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
-            "Dette er en test av ekstern varseltjeneste"
-        )
-        sendEpost(
-            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
-            tittel = "Dette er en test av ekstern varseltjeneste",
-            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
-        )
+//        sendSms(
+//            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
+//            "Dette er en test av ekstern varseltjeneste"
+//        )
+//        sendEpost(
+//            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
+//            tittel = "Dette er en test av ekstern varseltjeneste",
+//            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
+//        )
         sendSms(
             mobilnummer = "47239082",
+            virksomhetsnummer = "910825526",
             "Dette er en test av ekstern varseltjeneste"
         )
         sendEpost(
             epostadresse = "ken.gullaksen@nav.no",
+            virksomhetsnummer = "910825526",
             tittel = "Dette er en test av ekstern varseltjeneste",
             tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
         )
@@ -92,6 +94,7 @@ class AltinnVarselKlient(
 
     fun sendSms(
         mobilnummer: String,
+        virksomhetsnummer: String,
         tekst: String,
     ) {
         send(StandaloneNotificationBEList().withStandaloneNotification(
@@ -99,6 +102,7 @@ class AltinnVarselKlient(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
+                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
@@ -155,6 +159,7 @@ class AltinnVarselKlient(
     }
 
     fun sendEpost(
+        virksomhetsnummer: String,
         epostadresse: String,
         tittel: String,
         tekst: String,
@@ -164,6 +169,7 @@ class AltinnVarselKlient(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
+                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
