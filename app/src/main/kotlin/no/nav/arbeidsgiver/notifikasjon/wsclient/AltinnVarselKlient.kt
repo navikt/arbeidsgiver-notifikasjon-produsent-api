@@ -4,15 +4,18 @@ import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2015._06.Service
+import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
+import kotlin.math.log
 
 
 /**
@@ -33,6 +36,7 @@ class AltinnVarselKlient(
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
 ) {
+    val log = logger()
     private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
 
     fun testEksternVarsel() {
@@ -192,9 +196,21 @@ class AltinnVarselKlient(
                 payload
             )
         } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
-            throw Error("Feil fra altinn ved sending av notifikasjon: ${e.faultInfo}: ${e.message}", e)
+            log.error("Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}", e)
         }
     }
+}
+
+fun AltinnFault.toLoggableString(): String {
+    return """
+        altinnErrorMessage=${altinnErrorMessage.value}
+        altinnExtendedErrorMessage=${altinnExtendedErrorMessage.value}
+        altinnLocalizedErrorMessage=${altinnLocalizedErrorMessage.value}
+        errorGuid=${errorGuid.value}
+        errorID=${errorID}
+        userGuid=${userGuid.value}
+        userId=${userId.value}
+    """.trimIndent()
 }
 
 fun StandaloneNotification.setMottaker(mottaker: AltinnMottaker) {
@@ -215,6 +231,7 @@ fun <PORT_TYPE> createServicePort(
     url: String,
     clazz: Class<PORT_TYPE>,
 ): PORT_TYPE = JaxWsProxyFactoryBean().apply {
+    val log = logger()
     address = url
     serviceClass = clazz
     inInterceptors.add(LoggingInInterceptor().apply {
