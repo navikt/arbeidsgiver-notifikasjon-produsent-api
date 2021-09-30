@@ -83,8 +83,8 @@ class AltinnVarselKlient(
                 payload
             )
         } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
-            log.error("Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}", e)
-//            throw Error("Feil fra altinn ved sending av notifikasjon: ${e.faultInfo}: ${e.message}", e)
+            //log.error("Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}", e)
+            throw Error("Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}", e)
         }
     }
 }
@@ -96,8 +96,11 @@ fun BindingProvider.addRequestResponseLogging() {
             //val isRequest : Boolean = context[MessageContext.MESSAGE_OUTBOUND_PROPERTY] as Boolean
             val baos = ByteArrayOutputStream()
             context.message.writeTo(baos)
-            logger().info(String(baos.toByteArray()).replace(Regex("(systemUserName>|systemPassword>)(.*?)(</.+?:systemUserName>|</.+?:systemPassword)"),
-                "$1***$3"))
+            logger().info(
+                String(baos.toByteArray())
+                    .replace(Regex("(systemUserName>|systemPassword>)(.*?)(</.+?:systemUserName>|</.+?:systemPassword)"), "$1***$3")
+                    .replace(Regex("""(^|\W)\d{11}(?=$|\W)"""), "$1***********")
+            )
             return true
         }
 
