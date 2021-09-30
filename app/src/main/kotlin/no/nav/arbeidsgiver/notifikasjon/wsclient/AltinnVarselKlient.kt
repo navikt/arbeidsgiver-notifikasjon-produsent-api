@@ -38,12 +38,21 @@ class AltinnVarselKlient(
     fun testEksternVarsel() {
         sendSms(
             mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
-            "hallaisen, mctysen. dette er en test"
+            "Dette er en test av ekstern varseltjeneste"
         )
         sendEpost(
             mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
-            tittel = "tjobing",
-            tekst = "<h1>hei</h1><br /> <p>Dette er en <strong>test!</strong>"
+            tittel = "Dette er en test av ekstern varseltjeneste",
+            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
+        )
+        sendSms(
+            mobilnummer = "47239082",
+            "Dette er en test av ekstern varseltjeneste"
+        )
+        sendEpost(
+            epostadresse = "ken.gullaksen@nav.no",
+            tittel = "Dette er en test av ekstern varseltjeneste",
+            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
         )
     }
 
@@ -51,7 +60,60 @@ class AltinnVarselKlient(
         mottaker: AltinnMottaker,
         tekst: String,
     ) {
-        send(StandaloneNotificationBEList().withSms(mottaker, tekst))
+        send(StandaloneNotificationBEList().withStandaloneNotification(
+            StandaloneNotification().apply {
+                languageID = 1044
+                notificationType = ns("NotificationType", "TokenTextOnly")
+                setMottaker(mottaker)
+
+                receiverEndPoints = ns("ReceiverEndPoints",
+                    ReceiverEndPointBEList().withReceiverEndPoint(
+                        ReceiverEndPoint().apply {
+                            transportType = ns("TransportType", TransportType.SMS)
+                        }
+                    )
+                )
+
+                textTokens = ns("TextTokens",
+                    TextTokenSubstitutionBEList().withTextToken(
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", tekst)
+                        }
+                    )
+                )
+                useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
+            }
+        ))
+    }
+
+    fun sendSms(
+        mobilnummer: String,
+        tekst: String,
+    ) {
+        send(StandaloneNotificationBEList().withStandaloneNotification(
+            StandaloneNotification().apply {
+                languageID = 1044
+                notificationType = ns("NotificationType", "TokenTextOnly")
+
+                receiverEndPoints = ns("ReceiverEndPoints",
+                    ReceiverEndPointBEList().withReceiverEndPoint(
+                        ReceiverEndPoint().apply {
+                            transportType = ns("TransportType", TransportType.SMS)
+                            receiverAddress = ns("ReceiverAddress", mobilnummer)
+                        }
+                    )
+                )
+
+                textTokens = ns("TextTokens",
+                    TextTokenSubstitutionBEList().withTextToken(
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", tekst)
+                        }
+                    )
+                )
+                useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
+            }
+        ))
     }
 
     fun sendEpost(
@@ -59,7 +121,67 @@ class AltinnVarselKlient(
         tittel: String,
         tekst: String,
     ) {
-        send(StandaloneNotificationBEList().withEmail(mottaker, tekst, tittel))
+        send(StandaloneNotificationBEList().withStandaloneNotification(
+            StandaloneNotification().apply {
+                languageID = 1044
+                notificationType = ns("NotificationType", "TokenTextOnly")
+                setMottaker(mottaker)
+
+                receiverEndPoints = ns("ReceiverEndPoints",
+                    ReceiverEndPointBEList().withReceiverEndPoint(
+                        ReceiverEndPoint().apply {
+                            transportType = ns("TransportType", TransportType.EMAIL)
+                        }
+                    )
+                )
+
+                textTokens = ns("TextTokens",
+                    TextTokenSubstitutionBEList().withTextToken(
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", tittel)
+                        },
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", tekst)
+                        }
+                    )
+                )
+                fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+            }
+        ))
+    }
+
+    fun sendEpost(
+        epostadresse: String,
+        tittel: String,
+        tekst: String,
+    ) {
+        send(StandaloneNotificationBEList().withStandaloneNotification(
+            StandaloneNotification().apply {
+                languageID = 1044
+                notificationType = ns("NotificationType", "TokenTextOnly")
+
+                receiverEndPoints = ns("ReceiverEndPoints",
+                    ReceiverEndPointBEList().withReceiverEndPoint(
+                        ReceiverEndPoint().apply {
+                            transportType = ns("TransportType", TransportType.EMAIL)
+                            receiverAddress = ns("ReceiverAddress", epostadresse)
+                        }
+                    )
+                )
+
+                textTokens = ns("TextTokens",
+                    TextTokenSubstitutionBEList().withTextToken(
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", tittel)
+                        },
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", tekst)
+                        }
+                    )
+                )
+                fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+            }
+        ))
     }
 
     private fun send(payload: StandaloneNotificationBEList) {
@@ -75,69 +197,7 @@ class AltinnVarselKlient(
     }
 }
 
-fun StandaloneNotificationBEList.withEmail(
-    mottaker: AltinnMottaker,
-    tekst: String,
-    tittel: String,
-): StandaloneNotificationBEList {
-    return withStandaloneNotification(
-        StandaloneNotification().apply {
-            setMottaker(mottaker)
-
-            receiverEndPoints = ns("ReceiverEndPoints",
-                ReceiverEndPointBEList().withReceiverEndPoint(
-                    ReceiverEndPoint().apply {
-                        transportType = ns("TransportType", TransportType.EMAIL)
-                    }
-                )
-            )
-
-            textTokens = ns("TextTokens",
-                TextTokenSubstitutionBEList().withTextToken(
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", tittel)
-                    },
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", tekst)
-                    }
-                )
-            )
-            fromAddress = ns("FromAddress", "ikke-svar@nav.no")
-        }
-    )
-}
-
-fun StandaloneNotificationBEList.withSms(
-    mottaker: AltinnMottaker,
-    tekst: String,
-): StandaloneNotificationBEList {
-    return withStandaloneNotification(
-        StandaloneNotification().apply {
-            setMottaker(mottaker)
-
-            receiverEndPoints = ns("ReceiverEndPoints",
-                ReceiverEndPointBEList().withReceiverEndPoint(
-                    ReceiverEndPoint().apply {
-                        transportType = ns("TransportType", TransportType.SMS)
-                    }
-                )
-            )
-
-            textTokens = ns("TextTokens",
-                TextTokenSubstitutionBEList().withTextToken(
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", tekst)
-                    }
-                )
-            )
-            useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
-        }
-    )
-}
-
 fun StandaloneNotification.setMottaker(mottaker: AltinnMottaker) {
-    languageID = 1044
-    notificationType = ns("NotificationType", "TokenTextOnly")
     reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
     service = ns("Service", Service().apply {
         serviceCode = mottaker.serviceCode
