@@ -267,6 +267,7 @@
                     <archive>
                         <manifest>
                             <mainClass>no.nav.arbeidsgiver.notifikasjon.MainKt</mainClass>
+                            <addClasspath>true</addClasspath>
                         </manifest>
                     </archive>
                 </configuration>

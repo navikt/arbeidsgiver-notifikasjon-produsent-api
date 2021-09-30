@@ -8,6 +8,8 @@ import no.altinn.services.serviceengine.notification._2010._10.INotificationAgen
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import org.apache.cxf.ext.logging.LoggingInInterceptor
+import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
@@ -24,13 +26,14 @@ import javax.xml.namespace.QName
  * [TransportType.EMAIL] støtter også html, det gjør ikke [TransportType.SMS]
  */
 class AltinnVarselKlient(
-    private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN")?:"",
-    private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD")?:"",
-) {
-    private val wsclient = createServicePort(basedOnEnv(
+    altinnEndPoint: String = basedOnEnv(
         prod = "",
         other = "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
-    ), INotificationAgencyExternalBasic::class.java)
+    ),
+    private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
+    private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
+) {
+    private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
 
     fun testEksternVarsel() {
         sendSms(
@@ -76,71 +79,70 @@ fun StandaloneNotificationBEList.withEmail(
     mottaker: AltinnMottaker,
     tekst: String,
     tittel: String,
-) : StandaloneNotificationBEList {
+): StandaloneNotificationBEList {
     return withStandaloneNotification(
-        StandaloneNotification()
-            .withLanguageID(1044)
-            .withNotificationType(ns("NotificationType", "TokenTextOnly"))
-            .withReporteeNumber(ns("ReporteeNumber", mottaker.virksomhetsnummer))
-            .withService(ns(
-                "Service",
-                Service()
-                    .withServiceCode(mottaker.serviceCode)
-                    .withServiceEdition(mottaker.serviceEdition.toInt())))
-            .withReceiverEndPoints(ns(
-                "ReceiverEndPoints",
-                ReceiverEndPointBEList()
-                    .withReceiverEndPoint(
-                        ReceiverEndPoint()
-                            .withTransportType(ns("TransportType", TransportType.EMAIL)))
-            ))
-            .withTextTokens(ns(
-                "TextTokens",
-                TextTokenSubstitutionBEList().withTextToken(listOf(
-                    TextToken()
-                        .withTokenNum(0)
-                        .withTokenValue(ns("TokenValue", tittel)),
-                    TextToken()
-                        .withTokenNum(1)
-                        .withTokenValue(ns("TokenValue", tekst))
-                ))))
-            .withFromAddress(ns("FromAddress", "ikke-svar@nav.no"))
+        StandaloneNotification().apply {
+            setMottaker(mottaker)
+
+            receiverEndPoints = ns("ReceiverEndPoints",
+                ReceiverEndPointBEList().withReceiverEndPoint(
+                    ReceiverEndPoint().apply {
+                        transportType = ns("TransportType", TransportType.EMAIL)
+                    }
+                )
+            )
+
+            textTokens = ns("TextTokens",
+                TextTokenSubstitutionBEList().withTextToken(
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", tittel)
+                    },
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", tekst)
+                    }
+                )
+            )
+            fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+        }
     )
 }
 
 fun StandaloneNotificationBEList.withSms(
     mottaker: AltinnMottaker,
     tekst: String,
-) : StandaloneNotificationBEList {
+): StandaloneNotificationBEList {
     return withStandaloneNotification(
-        StandaloneNotification()
-            .withLanguageID(1044)
-            .withNotificationType(ns("NotificationType", "TokenTextOnly"))
-            .withReporteeNumber(ns("ReporteeNumber", mottaker.virksomhetsnummer))
-            .withService(ns(
-                "Service",
-                Service()
-                    .withServiceCode(mottaker.serviceCode)
-                    .withServiceEdition(mottaker.serviceEdition.toInt())))
-            .withReceiverEndPoints(ns(
-                "ReceiverEndPoints",
-                ReceiverEndPointBEList()
-                    .withReceiverEndPoint(
-                        ReceiverEndPoint()
-                            .withTransportType(ns("TransportType", TransportType.SMS)))
-            ))
-            .withTextTokens(ns(
-                "TextTokens",
-                TextTokenSubstitutionBEList().withTextToken(listOf(
-                    TextToken()
-                        .withTokenNum(0)
-                        .withTokenValue(ns("TokenValue", tekst)),
-                    TextToken()
-                        .withTokenNum(1)
-                        .withTokenValue(ns("TokenValue", ""))
-                ))))
-            .withUseServiceOwnerShortNameAsSenderOfSms(ns("UseServiceOwnerShortNameAsSenderOfSms", true)),
+        StandaloneNotification().apply {
+            setMottaker(mottaker)
+
+            receiverEndPoints = ns("ReceiverEndPoints",
+                ReceiverEndPointBEList().withReceiverEndPoint(
+                    ReceiverEndPoint().apply {
+                        transportType = ns("TransportType", TransportType.SMS)
+                    }
+                )
+            )
+
+            textTokens = ns("TextTokens",
+                TextTokenSubstitutionBEList().withTextToken(
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", tekst)
+                    }
+                )
+            )
+            useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
+        }
     )
+}
+
+fun StandaloneNotification.setMottaker(mottaker: AltinnMottaker) {
+    languageID = 1044
+    notificationType = ns("NotificationType", "TokenTextOnly")
+    reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
+    service = ns("Service", Service().apply {
+        serviceCode = mottaker.serviceCode
+        serviceEdition = mottaker.serviceEdition.toInt()
+    })
 }
 
 @Suppress("HttpUrlsUsage")
@@ -155,4 +157,10 @@ fun <PORT_TYPE> createServicePort(
 ): PORT_TYPE = JaxWsProxyFactoryBean().apply {
     address = url
     serviceClass = clazz
+    inInterceptors.add(LoggingInInterceptor().apply {
+        addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
+    })
+    outInterceptors.add(LoggingOutInterceptor().apply {
+        addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
+    })
 }.create(clazz)
