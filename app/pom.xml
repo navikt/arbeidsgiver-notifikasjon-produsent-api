@@ -108,6 +108,23 @@
             <artifactId>cxf-rt-transports-http</artifactId>
             <version>3.4.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-bindings-soap</artifactId>
+            <version>3.4.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-ws-security</artifactId>
+            <version>3.4.4</version>
+        </dependency>
+
+<!--        <dependency>-->
+<!--            &lt;!&ndash; trengs bare for å dra opp DummyServer lokalt &ndash;&gt;-->
+<!--            <groupId>org.apache.cxf</groupId>-->
+<!--            <artifactId>cxf-rt-transports-http-jetty</artifactId>-->
+<!--            <version>3.4.4</version>-->
+<!--        </dependency>-->
 
         <!-- graphql -->
         <dependency>
