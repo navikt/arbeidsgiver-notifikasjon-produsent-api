@@ -40,26 +40,33 @@ class AltinnVarselKlient(
     private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
 
     fun testEksternVarsel() {
-//        sendSms(
-//            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
-//            "Dette er en test av ekstern varseltjeneste"
-//        )
+//        funker
 //        sendEpost(
 //            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
 //            tittel = "Dette er en test av ekstern varseltjeneste",
 //            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
 //        )
+
+//        funker inte
+//        sendSms(
+//            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
+//            "Dette er en test av ekstern varseltjeneste"
+//        )
+
+//        funker
+//        sendEpost(
+//            epostadresse = "ken.gullaksen@nav.no",
+//            virksomhetsnummer = "910825526",
+//            tittel = "Dette er en test av ekstern varseltjeneste",
+//            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
+//        )
+
         sendSms(
             mobilnummer = "47239082",
             virksomhetsnummer = "910825526",
             "Dette er en test av ekstern varseltjeneste"
         )
-        sendEpost(
-            epostadresse = "ken.gullaksen@nav.no",
-            virksomhetsnummer = "910825526",
-            tittel = "Dette er en test av ekstern varseltjeneste",
-            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
-        )
+
     }
 
     fun sendSms(
@@ -84,6 +91,9 @@ class AltinnVarselKlient(
                     TextTokenSubstitutionBEList().withTextToken(
                         TextToken().apply {
                             tokenValue = ns("TokenValue", tekst)
+                        },
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", "")
                         }
                     )
                 )
@@ -116,6 +126,9 @@ class AltinnVarselKlient(
                     TextTokenSubstitutionBEList().withTextToken(
                         TextToken().apply {
                             tokenValue = ns("TokenValue", tekst)
+                        },
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", "")
                         }
                     )
                 )
