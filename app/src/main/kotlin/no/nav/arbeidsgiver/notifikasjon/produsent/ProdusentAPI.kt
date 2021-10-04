@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
-import no.nav.arbeidsgiver.notifikasjon.wsclient.AltinnVarselKlient
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -620,15 +619,6 @@ object ProdusentAPI {
 
                 wire("Query") {
                     dataFetcher("whoami", ::queryWhoami)
-                    dataFetcher(
-                        "testEksternVarsel", basedOnEnv(
-                            prod = DataFetcher { "noop" },
-                            other = DataFetcher {
-                                AltinnVarselKlient().testEksternVarsel()
-                                "done"
-                            }
-                        )
-                    )
                     coDataFetcher("mineNotifikasjoner", ::queryMineNotifikasjoner)
                 }
 

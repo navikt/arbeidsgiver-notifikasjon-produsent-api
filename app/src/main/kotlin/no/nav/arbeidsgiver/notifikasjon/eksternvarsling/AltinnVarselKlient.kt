@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.wsclient
+package no.nav.arbeidsgiver.notifikasjon.eksternvarsling
 
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
@@ -15,7 +15,6 @@ import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
-import kotlin.math.log
 
 
 /**
@@ -47,7 +46,7 @@ class AltinnVarselKlient(
 //            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
 //        )
 
-//        funker inte
+//        feiler når virksomhet ikke har sms adresse oppgitt i kofuvi selv om dette finnes på tjeneste
 //        sendSms(
 //            mottaker = AltinnMottaker(serviceCode = "4936", serviceEdition = "1", virksomhetsnummer = "910825526"),
 //            "Dette er en test av ekstern varseltjeneste"
@@ -61,11 +60,12 @@ class AltinnVarselKlient(
 //            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
 //        )
 
-        sendSms(
-            mobilnummer = "47239082",
-            virksomhetsnummer = "910825526",
-            "Dette er en test av ekstern varseltjeneste"
-        )
+        // funker
+//        sendSms(
+//            mobilnummer = "47239082",
+//            virksomhetsnummer = "910825526",
+//            "Dette er en test av ekstern varseltjeneste"
+//        )
 
     }
 
