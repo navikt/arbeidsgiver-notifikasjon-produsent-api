@@ -53,19 +53,19 @@ class AltinnVarselKlient(
 //        )
 
 //        funker
-        sendEpost(
-            epostadresse = "ken.gullaksen@nav.no",
-            virksomhetsnummer = "910825526",
-            tittel = "Dette er en test av ekstern varseltjeneste",
-            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
-        )
+//        sendEpost(
+//            epostadresse = "ken.gullaksen@nav.no",
+//            virksomhetsnummer = "910825526",
+//            tittel = "Dette er en test av ekstern varseltjeneste",
+//            tekst = "<h1>Obs</h1><br /> <p>Dette er en <strong>bare</strong> en test."
+//        )
 
-        // funker
-        sendSms(
-            mobilnummer = "47239082",
-            virksomhetsnummer = "910825526",
-            "Dette er en test av ekstern varseltjeneste"
-        )
+//        funker
+//        sendSms(
+//            mobilnummer = "47239082",
+//            virksomhetsnummer = "910825526",
+//            "Dette er en test av ekstern varseltjeneste"
+//        )
 
     }
 

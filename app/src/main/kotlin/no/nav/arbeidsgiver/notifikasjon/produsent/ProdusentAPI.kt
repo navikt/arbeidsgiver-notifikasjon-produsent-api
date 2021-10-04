@@ -620,15 +620,6 @@ object ProdusentAPI {
 
                 wire("Query") {
                     dataFetcher("whoami", ::queryWhoami)
-                    dataFetcher(
-                        "testEksternVarsel", basedOnEnv(
-                            prod = DataFetcher { "noop" },
-                            other = DataFetcher {
-                                AltinnVarselKlient().testEksternVarsel()
-                                "done"
-                            }
-                        )
-                    )
                     coDataFetcher("mineNotifikasjoner", ::queryMineNotifikasjoner)
                 }
 
