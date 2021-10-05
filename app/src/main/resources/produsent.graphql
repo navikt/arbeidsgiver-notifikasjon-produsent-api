@@ -298,12 +298,56 @@ input NyBeskjedInput {
     mottaker: MottakerInput!
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
+    eksternVarsel: [EksternVarsel!]! = []
 }
 
 input NyOppgaveInput {
     mottaker: MottakerInput!
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
+    eksternVarsel: [EksternVarsel!]! = []
+}
+
+input EksternVarsel @ExactlyOneFieldGiven {
+    sms: EksternVarselSms
+    epost: EksternVarselEpost
+}
+
+input EksternVarselSms {
+    mottaker: SmsMottaker!
+    smsTekst: String!
+}
+
+input EksternVarselEpost {
+    mottaker: EpostMottaker!
+    epostTittel: String!
+    epostHtmlBody: String!
+}
+
+input SmsMottaker @ExactlyOneFieldGiven {
+    kontaktinfo: SmsKontaktInfo
+    altinntjeneste: Altinntjeneste
+}
+
+input SmsKontaktInfo {
+    fnr: String!
+    tlf: String! # Validate regex ?
+}
+
+input EpostMottaker @ExactlyOneFieldGiven {
+    kontaktinfo: EpostKontaktInfo
+    altinntjeneste: Altinntjeneste
+}
+
+input EpostKontaktInfo {
+    fnr: String!
+    epostadresse: String!
+}
+
+input Altinntjeneste {
+    virksomhetsnummer: String!
+    serviceCode: String!
+    serviceCodeEdition: String!
 }
 
 """
