@@ -38,6 +38,7 @@ spec:
     outbound:
       external:
         - host: fakedings.dev-gcp.nais.io
+        - host: tt02.altinn.no
     inbound:
       rules:
         - application: notifikasjon-test-produsent
@@ -49,3 +50,5 @@ spec:
         - application: tiltaksgjennomforing-api
           namespace: arbeidsgiver
           cluster: dev-fss
+  envFrom:
+    - secret: altinn-basic-ws

@@ -1,5 +1,6 @@
 FROM navikt/java:15
-COPY target/*-jar-with-dependencies.jar app.jar
+COPY target/produsent-api/app.jar app.jar
+COPY target/produsent-api/lib lib
 
 USER root
 RUN apt-get install -y curl
