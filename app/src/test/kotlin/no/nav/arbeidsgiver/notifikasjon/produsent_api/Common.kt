@@ -2,10 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.NærmesteLederDefinisjon
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.TOKENDINGS_TOKEN
 import no.nav.arbeidsgiver.notifikasjon.util.post
@@ -22,19 +19,22 @@ fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResp
 }
 
 fun TestApplicationEngine.produsentApi(
-    @Language("GraphQL") req: String
+    @Language("GraphQL") req: String,
 ): TestApplicationResponse {
     return produsentApi(GraphQLRequest(req))
 }
 
-val stubProdusentRegister: ProdusentRegister = object: ProdusentRegister {
-    override fun finn(produsentid: String): Produsent {
+val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
+    override fun finn(appName: String): Produsent {
         return Produsent(
-            accessPolicy = listOf("someproducer"),
-            tillatteMerkelapper = listOf("tag"),
-            tillatteMottakere = listOf(
-                ServicecodeDefinisjon(code = "5441", version = "1"),
-                NærmesteLederDefinisjon,
+            appName,
+            ProdusentDefinisjon(
+                accessPolicy = listOf("someproducer"),
+                tillatteMerkelapper = listOf("tag"),
+                tillatteMottakere = listOf(
+                    ServicecodeDefinisjon(code = "5441", version = "1"),
+                    NærmesteLederDefinisjon,
+                )
             )
         )
     }
