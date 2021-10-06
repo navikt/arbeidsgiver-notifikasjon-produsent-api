@@ -83,12 +83,14 @@ type Oppgave {
     mottaker: Mottaker!
     metadata: Metadata!
     oppgave: OppgaveData!
+    eksternVarsel: [EksternVarsel!]!
 }
 
 type Beskjed {
     mottaker: Mottaker!
     metadata: Metadata!
     beskjed: BeskjedData!
+    eksternVarsel: [EksternVarsel!]!
 }
 
 union Mottaker =
@@ -162,6 +164,18 @@ type Metadata {
 
     softDeletedAt: ISO8601DateTime
 }
+
+type EksternVarsel {
+    id: ID!
+    status: EksternVarselStatus!
+}
+
+enum EksternVarselStatus {
+    NY
+    UTFORT
+    FEIL
+}
+
 
 """
 Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
@@ -298,48 +312,48 @@ input NyBeskjedInput {
     mottaker: MottakerInput!
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
-    eksternVarsel: [EksternVarsel!]! = []
+    eksternVarsel: [EksternVarselInput!]! = []
 }
 
 input NyOppgaveInput {
     mottaker: MottakerInput!
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
-    eksternVarsel: [EksternVarsel!]! = []
+    eksternVarsel: [EksternVarselInput!]! = []
 }
 
-input EksternVarsel @ExactlyOneFieldGiven {
-    sms: EksternVarselSms
-    epost: EksternVarselEpost
+input EksternVarselInput @ExactlyOneFieldGiven {
+    sms: EksternVarselSmsInput
+    epost: EksternVarselEpostInput
 }
 
-input EksternVarselSms {
-    mottaker: SmsMottaker!
+input EksternVarselSmsInput {
+    mottaker: SmsMottakerInput!
     smsTekst: String!
 }
 
-input EksternVarselEpost {
-    mottaker: EpostMottaker!
+input EksternVarselEpostInput {
+    mottaker: EpostMottakerInput!
     epostTittel: String!
     epostHtmlBody: String!
 }
 
-input SmsMottaker @ExactlyOneFieldGiven {
-    kontaktinfo: SmsKontaktInfo
+input SmsMottakerInput @ExactlyOneFieldGiven {
+    kontaktinfo: SmsKontaktInfoInput
     # altinntjeneste: Altinntjeneste
 }
 
-input SmsKontaktInfo {
+input SmsKontaktInfoInput {
     fnr: String!
     tlf: String! # Validate regex ?
 }
 
-input EpostMottaker @ExactlyOneFieldGiven {
-    kontaktinfo: EpostKontaktInfo
+input EpostMottakerInput @ExactlyOneFieldGiven {
+    kontaktinfo: EpostKontaktInfoInput
     # altinntjeneste: Altinntjeneste
 }
 
-input EpostKontaktInfo {
+input EpostKontaktInfoInput {
     fnr: String!
     epostadresse: String!
 }
@@ -440,10 +454,16 @@ union NyBeskjedResultat =
 
 type NyBeskjedVellykket {
     id: ID!
+    eksternVarsel: [NyEksternVarselResultat!]!
+}
+
+type NyEksternVarselResultat {
+    id: ID!
 }
 
 type NyOppgaveVellykket {
     id: ID!
+    eksternVarsel: [NyEksternVarselResultat!]!
 }
 
 """
