@@ -12,10 +12,6 @@ import ch.qos.logback.core.spi.ContextAware
 import ch.qos.logback.core.spi.ContextAwareBase
 import ch.qos.logback.core.spi.LifeCycle
 import net.logstash.logback.encoder.LogstashEncoder
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.MaskingAppender
-
-//import no.nav.common.log.MaskingAppender
-//import org.slf4j.LoggerFactory
 
 @Suppress("unused") /* see resources/META-INF/services/ch.qos.logback.classic.spi */
 class LogConfig : ContextAwareBase(), Configurator {
