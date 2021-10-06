@@ -31,7 +31,12 @@ Som nevnt over, så må dere avgjøre hva dere vil vise i notifikasjonen, basert
 
 Vi fraråder i tillegg fra å bruke sensitive personopplysninger i notifikasjonen.
 
-
+Ved bruk av varsling på sms og epost plikter man å forholde seg til gjeldende retningslinjer for varsling. Se dokument på [altinn](https://www.altinn.no/nyheter/retningslinjer-for-varsling-i-altinn/) og [revisjon og regnskap](https://www.revregn.no/i/2018/5/revisjon-5-18-565).
+  Spesielt relevant er følgende punkter:
+  * Angi hvor mottaker kan finne meldingen/vedtaket. Angi hva varselet gjelder.
+  * Taushetsplikt og personvern må ivaretas ved utsendelse av varsel. Sensitiv informasjon skal ikke oppgis i SMS eller e-post.
+  * Unngå dobbeltvarsling til både SMS og e-post. Bruk e-post dersom dette er oppgitt.
+Vi fraråder også bruk av lenker i SMS og e-post.
 
 ## Kontakt og oppfølging
 
