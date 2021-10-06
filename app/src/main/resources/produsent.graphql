@@ -326,7 +326,7 @@ input EksternVarselEpost {
 
 input SmsMottaker @ExactlyOneFieldGiven {
     kontaktinfo: SmsKontaktInfo
-    altinntjeneste: Altinntjeneste
+    # altinntjeneste: Altinntjeneste
 }
 
 input SmsKontaktInfo {
@@ -336,7 +336,7 @@ input SmsKontaktInfo {
 
 input EpostMottaker @ExactlyOneFieldGiven {
     kontaktinfo: EpostKontaktInfo
-    altinntjeneste: Altinntjeneste
+    # altinntjeneste: Altinntjeneste
 }
 
 input EpostKontaktInfo {
@@ -344,11 +344,11 @@ input EpostKontaktInfo {
     epostadresse: String!
 }
 
-input Altinntjeneste {
-    virksomhetsnummer: String!
-    serviceCode: String!
-    serviceCodeEdition: String!
-}
+# input Altinntjeneste {
+#     virksomhetsnummer: String!
+#     serviceCode: String!
+#     serviceCodeEdition: String!
+# }
 
 """
 Hvem som skal se notifikasjonen.
