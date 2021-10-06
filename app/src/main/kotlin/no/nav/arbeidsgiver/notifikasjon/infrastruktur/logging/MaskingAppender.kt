@@ -19,8 +19,9 @@ class MaskingAppender(
     }
 
     companion object {
+        private val FNR = Regex("""(^|\D)\d{11}(?=$|\D)""")
         fun mask(string: String?): String? {
-            return string?.replace("(^|\\W)\\d{11}(?=$|\\W)".toRegex(), "$1***********")
+            return string?.replace(FNR, "$1***********")
         }
     }
 }
