@@ -10,10 +10,12 @@ import java.util.*
 typealias Merkelapp = String
 
 data class Produsent(
+    val id: String,
     val accessPolicy: List<AppName>,
     val tillatteMerkelapper: List<Merkelapp> = emptyList(),
     val tillatteMottakere: List<MottakerDefinisjon> = emptyList()
 ) {
+
     fun kanSendeTil(merkelapp: Merkelapp): Boolean {
         return tillatteMerkelapper.contains(merkelapp)
     }

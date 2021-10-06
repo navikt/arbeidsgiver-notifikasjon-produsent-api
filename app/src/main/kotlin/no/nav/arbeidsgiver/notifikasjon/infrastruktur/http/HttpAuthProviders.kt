@@ -22,7 +22,7 @@ data class BrukerPrincipal(
 ) : Principal
 
 data class ProdusentPrincipal(
-    val produsentid: String,
+    val appName: String,
 ) : Principal
 
 data class JWTAuthentication(
@@ -119,7 +119,7 @@ object HttpAuthProviders {
                         return@validate null
                     }
 
-                    ProdusentPrincipal(produsentid = appName)
+                    ProdusentPrincipal(appName = appName)
                 }
             }
         )
@@ -156,7 +156,7 @@ object HttpAuthProviders {
 
                 validate {
                     ProdusentPrincipal(
-                        produsentid = it.payload.getClaim("azp").asString()
+                        appName = it.payload.getClaim("azp").asString()
                     )
                 }
             }

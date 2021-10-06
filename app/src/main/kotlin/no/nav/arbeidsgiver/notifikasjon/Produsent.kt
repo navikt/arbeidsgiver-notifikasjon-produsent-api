@@ -83,9 +83,8 @@ object Produsent {
 
             val graphql = async {
                 ProdusentAPI.newGraphQL(
-                    produsentRepository = produsentModelAsync.await(),
                     kafkaProducer = createKafkaProducer(),
-                    produsentRegister = produsentRegister
+                    produsentRepository = produsentModelAsync.await()
 
                 )
             }
@@ -98,7 +97,7 @@ object Produsent {
                 }) {
                     httpServerSetup(
                         authProviders = authProviders,
-                        extractContext = extractProdusentContext,
+                        extractContext = extractProdusentContext(produsentRegister),
                         graphql = graphql
                     )
                 }

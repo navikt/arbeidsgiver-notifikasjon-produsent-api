@@ -2,21 +2,22 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 
-val FAGER_TESTPRODUSENT =
-    Produsent(
-        accessPolicy = basedOnEnv(
-            prod = listOf("prod-gcp:fager:notifikasjon-test-produsent"),
-            other = listOf("dev-gcp:fager:notifikasjon-test-produsent")
-        ),
-        tillatteMerkelapper = listOf(
-            "fager",
-        ),
-        tillatteMottakere = listOf(
-            ServicecodeDefinisjon(code = "4936", version = "1"),
-        )
+val FAGER_TESTPRODUSENT = Produsent(
+    id = "fager",
+    accessPolicy = basedOnEnv(
+        prod = listOf("prod-gcp:fager:notifikasjon-test-produsent"),
+        other = listOf("dev-gcp:fager:notifikasjon-test-produsent")
+    ),
+    tillatteMerkelapper = listOf(
+        "fager",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1"),
     )
+)
 
 val ARBEIDSGIVER_TILTAK = Produsent(
+    id = "arbeidsgiver-tiltak",
     accessPolicy = basedOnEnv(
         prod = listOf(),
         other = listOf(

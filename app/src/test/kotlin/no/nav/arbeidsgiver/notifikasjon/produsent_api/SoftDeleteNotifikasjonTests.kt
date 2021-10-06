@@ -37,7 +37,6 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = kafkaProducer,
-            produsentRegister = stubProdusentRegister,
             produsentRepository = produsentModel
         )
     )

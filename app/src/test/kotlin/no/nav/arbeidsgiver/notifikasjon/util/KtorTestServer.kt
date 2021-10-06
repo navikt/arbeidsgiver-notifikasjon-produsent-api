@@ -16,6 +16,8 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.produsent_api.stubProdusentRegister
 import org.intellij.lang.annotations.Language
 
 fun Spec.ktorBrukerTestServer(
@@ -36,6 +38,7 @@ fun Spec.ktorBrukerTestServer(
 }
 
 fun Spec.ktorProdusentTestServer(
+    produsentRegister: ProdusentRegister = stubProdusentRegister,
     produsentGraphQL: TypedGraphQL<ProdusentAPI.Context> = mockk(),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
@@ -45,7 +48,7 @@ fun Spec.ktorProdusentTestServer(
     listener(KtorTestListener(engine) {
         httpServerSetup(
             authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
-            extractContext = extractProdusentContext,
+            extractContext = extractProdusentContext(produsentRegister),
             graphql = CompletableDeferred(produsentGraphQL)
         )
     })
@@ -115,7 +118,7 @@ val LOCALHOST_PRODUSENT_AUTHENTICATION = JWTAuthentication(
 
         validate {
             ProdusentPrincipal(
-                produsentid = it.payload.getClaim("azp").asString()
+                appName = it.payload.getClaim("azp").asString()
             )
         }
     }

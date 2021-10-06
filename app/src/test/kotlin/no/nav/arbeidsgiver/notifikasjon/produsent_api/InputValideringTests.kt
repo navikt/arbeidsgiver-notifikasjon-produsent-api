@@ -16,7 +16,6 @@ class InputValideringTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
-            produsentRegister = stubProdusentRegister,
             produsentRepository = mockk()
         )
     )

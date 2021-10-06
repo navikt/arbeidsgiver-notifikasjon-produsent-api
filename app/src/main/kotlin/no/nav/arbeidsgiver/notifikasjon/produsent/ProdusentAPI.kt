@@ -19,7 +19,8 @@ object ProdusentAPI {
     private val log = logger()
 
     data class Context(
-        val produsentid: String,
+        val appName: String,
+        val produsent: Produsent?,
         override val coroutineScope: CoroutineScope
     ) : WithCoroutineScope
 
@@ -373,19 +374,19 @@ object ProdusentAPI {
 
     fun newGraphQL(
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = createKafkaProducer(),
-        produsentRegister: ProdusentRegister,
         produsentRepository: ProdusentRepository,
     ): TypedGraphQL<Context> {
 
         fun queryWhoami(env: DataFetchingEnvironment): String {
-            return env.getContext<Context>().produsentid
+            // TODO: returner hele context objectet som struct
+            return env.getContext<Context>().appName
         }
 
         suspend fun queryMineNotifikasjoner(env: DataFetchingEnvironment): MineNotifikasjonerResultat {
             val merkelapp = env.getArgument<String>("merkelapp")
             val first = env.getArgumentOrDefault("first", 1000)
             val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
-            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            val produsent = hentProdusent(env) { error -> return error }
             tilgangsstyrMerkelapp(produsent, merkelapp) { error -> return error }
             return produsentRepository
                 .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
@@ -398,7 +399,6 @@ object ProdusentAPI {
 
             tilgangsstyrNyNotifikasjon(
                 env,
-                produsentRegister,
                 nyBeskjed.mottaker.tilDomene(),
                 nyBeskjed.notifikasjon.merkelapp
             ) { error ->
@@ -434,7 +434,6 @@ object ProdusentAPI {
             val nyOppgave = env.getTypedArgument<NyOppgaveInput>("nyOppgave")
             tilgangsstyrNyNotifikasjon(
                 env,
-                produsentRegister,
                 nyOppgave.mottaker.tilDomene(),
                 nyOppgave.notifikasjon.merkelapp
             ) { error -> return error }
@@ -473,7 +472,7 @@ object ProdusentAPI {
                 return Error.NotifikasjonFinnesIkke("Notifikasjon med id $id er ikke en oppgave")
             }
 
-            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            val produsent = hentProdusent(env) { error -> return error }
 
             tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
@@ -498,7 +497,7 @@ object ProdusentAPI {
                 return Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp er ikke en oppgave")
             }
 
-            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            val produsent = hentProdusent(env) { error -> return error }
 
             tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
@@ -518,7 +517,7 @@ object ProdusentAPI {
             val notifikasjon = produsentRepository.hentNotifikasjon(id)
                 ?: return Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
 
-            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            val produsent = hentProdusent(env) { error -> return error }
             tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
             val softDelete = Hendelse.SoftDelete(
@@ -539,7 +538,7 @@ object ProdusentAPI {
             val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
                 ?: return Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
 
-            val produsent = hentProdusent(env, produsentRegister) { error ->
+            val produsent = hentProdusent(env) { error ->
                 return error
             }
 
@@ -564,7 +563,7 @@ object ProdusentAPI {
             val notifikasjon = produsentRepository.hentNotifikasjon(id)
                 ?: return Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
 
-            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            val produsent = hentProdusent(env) { error -> return error }
             tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
             val hardDelete = Hendelse.HardDelete(
@@ -585,7 +584,7 @@ object ProdusentAPI {
             val notifikasjon = produsentRepository.hentNotifikasjon(eksternId, merkelapp)
                 ?: return Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
 
-            val produsent = hentProdusent(env, produsentRegister) { error -> return error }
+            val produsent = hentProdusent(env) { error -> return error }
 
             tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
@@ -640,12 +639,11 @@ object ProdusentAPI {
 
 private inline fun tilgangsstyrNyNotifikasjon(
     env: DataFetchingEnvironment,
-    produsentRegister: ProdusentRegister,
     mottaker: Mottaker,
     merkelapp: String,
     onError: (ProdusentAPI.NyNotifikasjonError) -> Nothing
 ) {
-    val produsent = hentProdusent(env, produsentRegister) { error -> onError(error) }
+    val produsent = hentProdusent(env) { error -> onError(error) }
     tilgangsstyrMottaker(produsent, mottaker) { error -> onError(error) }
     tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
 }
@@ -686,18 +684,15 @@ private inline fun tilgangsstyrMottaker(
 
 inline fun hentProdusent(
     env: DataFetchingEnvironment,
-    produsentRegister: ProdusentRegister,
     onMissing: (error: ProdusentAPI.Error.UkjentProdusent) -> Nothing
 ): Produsent {
     val context = env.getContext<ProdusentAPI.Context>()
-    val produsentid = context.produsentid
-    val produsent = produsentRegister.finn(produsentid)
-    if (produsent == null) {
+    if (context.produsent == null) {
         onMissing(ProdusentAPI.Error.UkjentProdusent(
-            "Finner ikke produsent med id $produsentid"
+            "Finner ikke produsent med id ${context.appName}"
         ))
     } else {
-        return produsent
+        return context.produsent
     }
 }
 
