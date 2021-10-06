@@ -23,7 +23,6 @@ class MineNotifikasjonerTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
-            produsentRegister = stubProdusentRegister,
             produsentRepository = produsentModel
         )
     )

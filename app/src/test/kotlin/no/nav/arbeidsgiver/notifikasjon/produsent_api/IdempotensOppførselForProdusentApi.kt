@@ -20,9 +20,8 @@ class IdempotensOppførselForProdusentApi : DescribeSpec({
 
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
-            produsentRepository = queryModel,
             kafkaProducer = mockk(relaxed = true),
-            produsentRegister = stubProdusentRegister
+            produsentRepository = queryModel
         )
     )
 

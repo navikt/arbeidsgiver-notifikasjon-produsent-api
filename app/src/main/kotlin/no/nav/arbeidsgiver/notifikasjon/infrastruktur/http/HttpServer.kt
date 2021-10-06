@@ -24,6 +24,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_REGISTER
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.Executors
@@ -39,12 +41,15 @@ val extractBrukerContext = fun PipelineContext<Unit, ApplicationCall>.(): Bruker
     )
 }
 
-val extractProdusentContext = fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
-    val principal = call.principal<ProdusentPrincipal>()!!
-    return ProdusentAPI.Context(
-        produsentid = principal.produsentid,
-        coroutineScope = this
-    )
+fun extractProdusentContext(produsentRegister: ProdusentRegister): PipelineContext<Unit, ApplicationCall>.() -> ProdusentAPI.Context {
+    return fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
+        val principal = call.principal<ProdusentPrincipal>()!!
+        return ProdusentAPI.Context(
+            appName = principal.appName,
+            produsent = produsentRegister.finn(principal.appName), // TODO: use interface
+            coroutineScope = this
+        )
+    }
 }
 
 private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1)

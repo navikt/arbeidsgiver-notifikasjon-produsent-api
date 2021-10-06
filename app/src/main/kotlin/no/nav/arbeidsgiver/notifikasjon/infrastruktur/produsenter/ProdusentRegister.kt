@@ -9,18 +9,12 @@ import java.util.*
 
 typealias Merkelapp = String
 
-data class ProdusentDefinisjon(
+data class Produsent(
+    val id: String,
     val accessPolicy: List<AppName>,
     val tillatteMerkelapper: List<Merkelapp> = emptyList(),
     val tillatteMottakere: List<MottakerDefinisjon> = emptyList()
-)
-
-data class Produsent(
-    val id: AppName,
-    val definisjon: ProdusentDefinisjon
 ) {
-    val tillatteMerkelapper by definisjon::tillatteMerkelapper
-    val tillatteMottakere by definisjon::tillatteMottakere
 
     fun kanSendeTil(merkelapp: Merkelapp): Boolean {
         return tillatteMerkelapper.contains(merkelapp)
@@ -83,7 +77,7 @@ interface ProdusentRegister {
 }
 
 class ProdusentRegisterImpl(
-    produsenter: List<ProdusentDefinisjon>
+    produsenter: List<Produsent>
 ) : ProdusentRegister {
 
     val log = logger()
@@ -100,8 +94,8 @@ class ProdusentRegisterImpl(
 
     private val produsenterByName: Map<AppName, Produsent> =
         produsenter
-            .flatMap { definisjon ->
-                definisjon.accessPolicy.map { appNavn -> Pair(appNavn, Produsent(appNavn, definisjon)) }
+            .flatMap { produsent ->
+                produsent.accessPolicy.map { appNavn -> Pair(appNavn, produsent) }
             }
             .toMap()
 

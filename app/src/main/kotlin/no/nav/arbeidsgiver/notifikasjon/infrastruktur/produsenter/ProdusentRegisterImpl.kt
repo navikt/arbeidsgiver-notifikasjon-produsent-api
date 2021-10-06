@@ -2,7 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 
-val FAGER_TESTPRODUSENT = ProdusentDefinisjon(
+val FAGER_TESTPRODUSENT = Produsent(
+    id = "fager",
     accessPolicy = basedOnEnv(
         prod = listOf("prod-gcp:fager:notifikasjon-test-produsent"),
         other = listOf("dev-gcp:fager:notifikasjon-test-produsent")
@@ -15,7 +16,8 @@ val FAGER_TESTPRODUSENT = ProdusentDefinisjon(
     )
 )
 
-val ARBEIDSGIVER_TILTAK = ProdusentDefinisjon(
+val ARBEIDSGIVER_TILTAK = Produsent(
+    id = "arbeidsgiver-tiltak",
     accessPolicy = basedOnEnv(
         prod = listOf(),
         other = listOf(

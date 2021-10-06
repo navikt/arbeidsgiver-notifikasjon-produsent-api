@@ -20,7 +20,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         ),
         produsentRegister = object : ProdusentRegister {
             override fun finn(appName: String): Produsent {
-                return Produsent(appName, FAGER_TESTPRODUSENT)
+                return FAGER_TESTPRODUSENT
             }
         }
     )

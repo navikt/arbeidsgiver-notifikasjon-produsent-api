@@ -27,14 +27,12 @@ fun TestApplicationEngine.produsentApi(
 val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
     override fun finn(appName: String): Produsent {
         return Produsent(
-            appName,
-            ProdusentDefinisjon(
-                accessPolicy = listOf("someproducer"),
-                tillatteMerkelapper = listOf("tag"),
-                tillatteMottakere = listOf(
-                    ServicecodeDefinisjon(code = "5441", version = "1"),
-                    NærmesteLederDefinisjon,
-                )
+            id = "someproducer",
+            accessPolicy = listOf("someproducer"),
+            tillatteMerkelapper = listOf("tag"),
+            tillatteMottakere = listOf(
+                ServicecodeDefinisjon(code = "5441", version = "1"),
+                NærmesteLederDefinisjon,
             )
         )
     }
