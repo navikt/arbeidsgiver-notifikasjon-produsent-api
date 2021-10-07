@@ -7,10 +7,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
+import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import org.slf4j.MDC
 
 interface NærmesteLederService {
     data class NærmesteLederFor(
@@ -43,6 +45,11 @@ class NærmesteLederServiceImpl(
     private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer()
+        }
+        defaultRequest {
+            MDC.get("x_correlation_id")?.let {
+                header("x_correlation_id", it)
+            }
         }
     }
 

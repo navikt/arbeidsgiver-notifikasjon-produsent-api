@@ -7,6 +7,7 @@ import io.ktor.auth.*
 import io.ktor.auth.jwt.*
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
+import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.routing.*
@@ -14,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AzurePreAuthorizedAppsImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.UnavailableInProduction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import org.slf4j.MDC
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -34,9 +36,14 @@ object HttpAuthProviders {
     val log = logger()
 
     val httpClient = HttpClient(Apache) {
-       install(JsonFeature) {
-           serializer = JacksonSerializer()
-       }
+        install(JsonFeature) {
+            serializer = JacksonSerializer()
+        }
+        defaultRequest {
+            MDC.get("x_correlation_id")?.let {
+                header("x_correlation_id", it)
+            }
+        }
     }
 
     private val idportenIssuer = Regex(
