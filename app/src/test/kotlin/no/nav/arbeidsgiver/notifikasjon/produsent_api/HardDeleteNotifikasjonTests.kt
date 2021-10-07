@@ -160,6 +160,9 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                         }
+                                        eksternVarsel {
+                                            id
+                                        }
                                       }
                                       ... on Oppgave {
                                       mottaker {
@@ -189,6 +192,9 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                             tilstand
+                                        }
+                                        eksternVarsel {
+                                            id
                                         }
                                       }
                                     }

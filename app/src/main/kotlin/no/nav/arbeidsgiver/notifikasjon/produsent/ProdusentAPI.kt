@@ -27,6 +27,7 @@ object ProdusentAPI {
         val mottaker: MottakerInput,
         val notifikasjon: NotifikasjonData,
         val metadata: MetadataInput,
+        val eksternVarsel: List<EksternVarselInput>,
     ) {
         fun tilDomene(id: UUID): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
@@ -49,6 +50,7 @@ object ProdusentAPI {
         val mottaker: MottakerInput,
         val notifikasjon: NotifikasjonData,
         val metadata: MetadataInput,
+        val eksternVarsel: List<EksternVarselInput>,
     ) {
         fun tilDomene(id: UUID): Hendelse.OppgaveOpprettet {
             val mottaker = mottaker.tilDomene()
@@ -66,6 +68,40 @@ object ProdusentAPI {
             )
         }
     }
+
+    data class EksternVarselInput(
+        val sms: EksternVarselSmsInput?,
+        val epost: EksternVarselEpostInput?,
+    )
+
+    data class EksternVarselSmsInput(
+        val mottaker: SmsMottakerInput,
+        val smsTekst: String
+    )
+
+    data class SmsMottakerInput(
+        val kontaktinfo: SmsKontaktinfoInput?
+    )
+
+    data class SmsKontaktinfoInput(
+        val fnr: String,
+        val tlf: String,
+    )
+
+    data class EksternVarselEpostInput(
+        val mottaker: EpostMottakerInput,
+        val epostTittel: String,
+        val epostBodyHtml: String,
+    )
+
+    data class EpostMottakerInput(
+        val kontaktinfo: EpostKontaktinfoInput?
+    )
+
+    data class EpostKontaktinfoInput(
+        val fnr: String,
+        val epost: String,
+    )
 
     data class NaermesteLederMottakerInput(
         val naermesteLederFnr: String,
@@ -156,14 +192,19 @@ object ProdusentAPI {
 
     @JsonTypeName("NyBeskjedVellykket")
     data class NyBeskjedVellykket(
-        val id: UUID
+        val id: UUID,
+        val eksternVarsel: List<NyEksternVarselResultat>
     ) : NyBeskjedResultat
 
     @JsonTypeName("NyOppgaveVellykket")
     data class NyOppgaveVellykket(
-        val id: UUID
+        val id: UUID,
+        val eksternVarsel: List<NyEksternVarselResultat>,
     ) : NyOppgaveResultat
 
+    data class NyEksternVarselResultat(
+        val id: UUID,
+    )
 
     /* utility interface */
     sealed interface NyNotifikasjonError: NyBeskjedResultat, NyOppgaveResultat
@@ -231,6 +272,7 @@ object ProdusentAPI {
             val mottaker: Mottaker,
             val metadata: Metadata,
             val beskjed: BeskjedData,
+            val eksternVarsel: List<EksternVarsel>,
         ) : Notifikasjon() {
             companion object {
                 fun fraDomene(beskjed: ProdusentModel.Beskjed): Beskjed {
@@ -247,7 +289,8 @@ object ProdusentAPI {
                             merkelapp = beskjed.merkelapp,
                             tekst = beskjed.tekst,
                             lenke = beskjed.lenke,
-                        )
+                        ),
+                        eksternVarsel = listOf(),
                     )
                 }
             }
@@ -258,6 +301,7 @@ object ProdusentAPI {
             val mottaker: Mottaker,
             val metadata: Metadata,
             val oppgave: OppgaveData,
+            val eksternVarsel: List<EksternVarsel>,
         ) : Notifikasjon() {
             @Suppress("unused")
             /* Sendes til produsent */
@@ -282,7 +326,8 @@ object ProdusentAPI {
                             merkelapp = oppgave.merkelapp,
                             tekst = oppgave.tekst,
                             lenke = oppgave.lenke,
-                        )
+                        ),
+                        eksternVarsel = listOf(),
                     )
                 }
             }
@@ -296,6 +341,17 @@ object ProdusentAPI {
                 }
             }
         }
+    }
+
+    data class EksternVarsel(
+        val id: UUID,
+        val status: EksternVarselStatus,
+    )
+
+    enum class EksternVarselStatus {
+        NY,
+        UTFOERT,
+        FEIL
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -417,10 +473,16 @@ object ProdusentAPI {
                 eksisterende == null -> {
                     kafkaProducer.sendHendelseMedKey(id, domeneNyBeskjed)
                     produsentRepository.oppdaterModellEtterHendelse(domeneNyBeskjed)
-                    NyBeskjedVellykket(id)
+                    NyBeskjedVellykket(
+                        id = id,
+                        eksternVarsel = listOf()
+                    )
                 }
                 eksisterende.erDuplikatAv(domeneNyBeskjed.tilProdusentModel()) -> {
-                    NyBeskjedVellykket(eksisterende.id)
+                    NyBeskjedVellykket(
+                        id = eksisterende.id,
+                        eksternVarsel = listOf()
+                    )
                 }
                 else -> {
                     Error.DuplikatEksternIdOgMerkelapp(
@@ -451,10 +513,16 @@ object ProdusentAPI {
                 eksisterende == null -> {
                     kafkaProducer.sendHendelseMedKey(id, domeneNyOppgave)
                     produsentRepository.oppdaterModellEtterHendelse(domeneNyOppgave)
-                    NyOppgaveVellykket(id)
+                    NyOppgaveVellykket(
+                        id = id,
+                        eksternVarsel = listOf()
+                    )
                 }
                 eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) -> {
-                    NyOppgaveVellykket(eksisterende.id)
+                    NyOppgaveVellykket(
+                        id = eksisterende.id,
+                        eksternVarsel = listOf()
+                    )
                 }
                 else -> {
                     Error.DuplikatEksternIdOgMerkelapp(
