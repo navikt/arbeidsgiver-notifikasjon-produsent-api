@@ -32,10 +32,8 @@ class TokenExchangeClientImpl(
         install(JsonFeature) {
             serializer = JacksonSerializer()
         }
-        defaultRequest {
-            MDC.get("x_correlation_id")?.let {
-                header("x_correlation_id", it)
-            }
+        install(PropagateFromMDCFeature) {
+            propagate("x_correlation_id")
         }
     }
 

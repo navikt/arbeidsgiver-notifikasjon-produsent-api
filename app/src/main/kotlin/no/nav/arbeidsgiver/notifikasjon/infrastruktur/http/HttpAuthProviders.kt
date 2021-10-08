@@ -13,6 +13,7 @@ import io.ktor.client.request.*
 import io.ktor.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AzurePreAuthorizedAppsImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.UnavailableInProduction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.slf4j.MDC
@@ -39,10 +40,8 @@ object HttpAuthProviders {
         install(JsonFeature) {
             serializer = JacksonSerializer()
         }
-        defaultRequest {
-            MDC.get("x_correlation_id")?.let {
-                header("x_correlation_id", it)
-            }
+        install(PropagateFromMDCFeature) {
+            propagate("x_correlation_id")
         }
     }
 
