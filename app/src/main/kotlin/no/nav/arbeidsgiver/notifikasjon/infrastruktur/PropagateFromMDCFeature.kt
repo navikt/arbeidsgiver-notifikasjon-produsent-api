@@ -2,28 +2,20 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import io.ktor.client.*
 import io.ktor.client.features.*
-import io.ktor.client.features.json.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.client.utils.*
-import io.ktor.http.*
 import io.ktor.util.*
-import io.ktor.utils.io.*
 import org.slf4j.MDC
 
-public val defaultKeys = emptyList<String>()
+val defaultKeys = emptyList<String>()
 
-public class PropagateFromMDCFeature internal constructor(
-    public val keysToPropagate: List<String>
+class PropagateFromMDCFeature internal constructor(
+    val keysToPropagate: List<String>
 ) {
-    internal constructor(config: Config) : this(
-        config.keysToPropagate
-    )
 
     /**
      * [PropagateFromMDCFeature] configuration that is used during installation
      */
-    public class Config {
+    class Config {
         /**
          * backing field
          */
@@ -33,7 +25,7 @@ public class PropagateFromMDCFeature internal constructor(
          *
          * Default value for [keysToPropagate] is [defaultKeys].
          */
-        public var keysToPropagate: List<String>
+        var keysToPropagate: List<String>
             set(value) {
                 require(value.isNotEmpty()) { "At least one key should be provided" }
 
@@ -45,7 +37,7 @@ public class PropagateFromMDCFeature internal constructor(
         /**
          * Adds key to propagate
          */
-        public fun propagate(vararg keys: String) {
+        fun propagate(vararg keys: String) {
             _keysToPropagate += keys
         }
     }
@@ -54,7 +46,7 @@ public class PropagateFromMDCFeature internal constructor(
      * Companion object for feature installation
      */
     @Suppress("EXPERIMENTAL_API_USAGE_FUTURE_ERROR")
-    public companion object Feature : HttpClientFeature<Config, PropagateFromMDCFeature> {
+    companion object Feature : HttpClientFeature<Config, PropagateFromMDCFeature> {
         override val key: AttributeKey<PropagateFromMDCFeature> = AttributeKey("PropagateFromMDCFeature")
 
         override fun prepare(block: Config.() -> Unit): PropagateFromMDCFeature {
