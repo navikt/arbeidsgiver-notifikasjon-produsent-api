@@ -7,7 +7,6 @@ import io.ktor.auth.*
 import io.ktor.auth.jwt.*
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
-import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.routing.*
@@ -16,7 +15,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AzurePreAuthorizedAppsImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.UnavailableInProduction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import org.slf4j.MDC
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
