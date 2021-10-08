@@ -32,6 +32,9 @@ class EnhetsregisteretImpl(
         install(JsonFeature) {
             serializer = JacksonSerializer()
         }
+        install(PropagateFromMDCFeature) {
+            propagate("x_correlation_id")
+        }
         expectSuccess = false
     }
 

@@ -12,6 +12,7 @@ import io.ktor.client.request.*
 import io.ktor.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AzurePreAuthorizedAppsImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.UnavailableInProduction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.net.URL
@@ -34,9 +35,12 @@ object HttpAuthProviders {
     val log = logger()
 
     val httpClient = HttpClient(Apache) {
-       install(JsonFeature) {
-           serializer = JacksonSerializer()
-       }
+        install(JsonFeature) {
+            serializer = JacksonSerializer()
+        }
+        install(PropagateFromMDCFeature) {
+            propagate("x_correlation_id")
+        }
     }
 
     private val idportenIssuer = Regex(

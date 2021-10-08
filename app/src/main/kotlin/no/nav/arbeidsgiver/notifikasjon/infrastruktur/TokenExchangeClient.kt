@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur;
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
@@ -29,6 +29,9 @@ class TokenExchangeClientImpl(
     private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer()
+        }
+        install(PropagateFromMDCFeature) {
+            propagate("x_correlation_id")
         }
     }
 
