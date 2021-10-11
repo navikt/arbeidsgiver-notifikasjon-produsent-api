@@ -2,16 +2,14 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
-import no.nav.arbeidsgiver.notifikasjon.eksternvarsling.AltinnVarselKlient
 import java.time.OffsetDateTime
 import java.util.*
 

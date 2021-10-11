@@ -12,7 +12,6 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import org.json.JSONObject
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.time.ExperimentalTime
