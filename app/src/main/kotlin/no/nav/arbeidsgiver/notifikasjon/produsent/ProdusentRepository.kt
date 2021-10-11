@@ -13,7 +13,12 @@ interface ProdusentRepository {
     suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon?
     suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon?
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
-    suspend fun finnNotifikasjoner(merkelapp: String, antall: Int, offset: Int): List<ProdusentModel.Notifikasjon>
+    suspend fun finnNotifikasjoner(
+        merkelapp: String,
+        grupperingsid: String?,
+        antall: Int,
+        offset: Int
+    ): List<ProdusentModel.Notifikasjon>
 }
 
 class ProdusentRepositoryImpl(
@@ -107,16 +112,19 @@ class ProdusentRepositoryImpl(
 
     override suspend fun finnNotifikasjoner(
         merkelapp: String,
+        grupperingsid: String?,
         antall: Int,
         offset: Int
     ): List<ProdusentModel.Notifikasjon> {
         return database.runNonTransactionalQuery(
             """ select * from notifikasjon 
                   where merkelapp = ? 
+                  ${grupperingsid?.let { "and grupperingsid = ?" }?:""} 
                   limit $antall
                   offset $offset
             """.trimMargin(), {
                 string(merkelapp)
+                grupperingsid?.let { string(grupperingsid) }
             },
             resultSetTilNotifikasjon
         )

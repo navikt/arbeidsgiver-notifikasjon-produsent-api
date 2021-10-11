@@ -384,12 +384,18 @@ object ProdusentAPI {
 
         suspend fun queryMineNotifikasjoner(env: DataFetchingEnvironment): MineNotifikasjonerResultat {
             val merkelapp = env.getArgument<String>("merkelapp")
+            val grupperingsid = env.getArgument<String>("grupperingsid")
             val first = env.getArgumentOrDefault("first", 1000)
             val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
             val produsent = hentProdusent(env) { error -> return error }
             tilgangsstyrMerkelapp(produsent, merkelapp) { error -> return error }
             return produsentRepository
-                .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
+                .finnNotifikasjoner(
+                    merkelapp = merkelapp,
+                    grupperingsid = grupperingsid,
+                    antall = first,
+                    offset = after.offset
+                )
                 .map(Notifikasjon::fraDomene)
                 .let { Connection.create(it, env, ::NotifikasjonConnection) }
         }
