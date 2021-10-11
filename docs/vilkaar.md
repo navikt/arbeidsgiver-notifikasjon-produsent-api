@@ -36,6 +36,7 @@ Ved bruk av varsling på sms og epost plikter man å forholde seg til gjeldende 
   * Angi hvor mottaker kan finne meldingen/vedtaket. Angi hva varselet gjelder.
   * Taushetsplikt og personvern må ivaretas ved utsendelse av varsel. Sensitiv informasjon skal ikke oppgis i SMS eller e-post.
   * Unngå dobbeltvarsling til både SMS og e-post. Bruk e-post dersom dette er oppgitt.
+
 Vi fraråder også bruk av lenker i SMS og e-post.
 
 ## Kontakt og oppfølging
