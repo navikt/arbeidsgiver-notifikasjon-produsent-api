@@ -250,7 +250,6 @@ fun <PORT_TYPE> createServicePort(
     url: String,
     clazz: Class<PORT_TYPE>,
 ): PORT_TYPE = JaxWsProxyFactoryBean().apply {
-    val log = logger()
     address = url
     serviceClass = clazz
     inInterceptors.add(LoggingInInterceptor().apply {

@@ -208,6 +208,8 @@ class BrukerModelImpl(
             is Hendelse.OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
             is Hendelse.SoftDelete -> oppdaterModellEtterDelete(hendelse.notifikasjonId)
             is Hendelse.HardDelete -> oppdaterModellEtterDelete(hendelse.notifikasjonId)
+            is Hendelse.EksterntVarselFeilet -> Unit
+            is Hendelse.EksterntVarselVellykket -> Unit
         }
     }
 
