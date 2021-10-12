@@ -78,6 +78,8 @@ class ProdusentRepositoryImpl(
             is Hendelse.BrukerKlikket -> /* Ignorer */ Unit
             is Hendelse.SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
             is Hendelse.HardDelete -> oppdaterModellEtterHardDelete(hendelse)
+            is Hendelse.EksterntVarselVellykket -> TODO()
+            is Hendelse.EksterntVarselFeilet -> TODO()
         }
     }
 

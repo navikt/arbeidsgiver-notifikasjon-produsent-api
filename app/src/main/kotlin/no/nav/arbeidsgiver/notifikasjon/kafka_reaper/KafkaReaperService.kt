@@ -16,7 +16,7 @@ class KafkaReaperServiceImpl(
     override suspend fun håndterHendelse(hendelse: Hendelse) {
         kafkaReaperModel.oppdaterModellEtterHendelse(hendelse)
 
-        when (hendelse) {
+        val ignored : Unit = when (hendelse) {
             is Hendelse.HardDelete -> {
                 for (relatertHendelseId in kafkaReaperModel.alleRelaterteHendelser(hendelse.notifikasjonId)) {
                     kafkaProducer.tombstone(
@@ -38,8 +38,10 @@ class KafkaReaperServiceImpl(
                         orgnr = hendelse.virksomhetsnummer
                     )
                     kafkaReaperModel.fjernRelasjon(hendelse.hendelseId)
-                }
+                } else Unit
             }
+            is Hendelse.EksterntVarselFeilet,
+            is Hendelse.EksterntVarselVellykket -> TODO()
         }
     }
 }

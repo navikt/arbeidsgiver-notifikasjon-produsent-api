@@ -2,8 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import java.time.Instant
-import java.time.OffsetDateTime
+import com.fasterxml.jackson.databind.JsonNode
+import java.time.*
 import java.util.*
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
@@ -27,7 +27,8 @@ sealed class Hendelse {
         val tekst: String,
         val grupperingsid: String? = null,
         val lenke: String,
-        val opprettetTidspunkt: OffsetDateTime
+        val opprettetTidspunkt: OffsetDateTime,
+        val eksterneVarsler: List<EksterntVarsel> = listOf()
     ) : Hendelse()
 
     @JsonTypeName("OppgaveOpprettet")
@@ -41,7 +42,8 @@ sealed class Hendelse {
         val tekst: String,
         val grupperingsid: String? = null,
         val lenke: String,
-        val opprettetTidspunkt: OffsetDateTime
+        val opprettetTidspunkt: OffsetDateTime,
+        val eksterneVarsler: List<EksterntVarsel> = listOf()
     ) : Hendelse()
 
     @JsonTypeName("OppgaveUtfoert")
@@ -74,6 +76,26 @@ sealed class Hendelse {
         override val hendelseId: UUID,
         val fnr: String,
     ) : Hendelse()
+
+    @JsonTypeName("EksterntVarselVellykket")
+    data class EksterntVarselVellykket(
+        override val virksomhetsnummer: String,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
+        val varselId: UUID,
+        val råRespons: JsonNode,
+    ) : Hendelse()
+
+    @JsonTypeName("EksterntVarselFeilet")
+    data class EksterntVarselFeilet(
+        override val virksomhetsnummer: String,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
+        val varselId: UUID,
+        val råRespons: JsonNode,
+        val altinnFeilkode: String,
+        val feilmelding: String,
+    ) : Hendelse()
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
@@ -93,7 +115,27 @@ data class AltinnMottaker(
     val virksomhetsnummer: String,
 ) : Mottaker()
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+sealed class EksterntVarsel
 
+@JsonTypeName("smsVarselKontaktinfo")
+data class SmsVarselKontaktinfo(
+    val varselId: UUID,
+    val tlfnr: String,
+    val fnr: String, //TODO finn et samlebegrp for fnr og orgnr
+    val smsTekst: String,
+    val sendeTidspunkt: LocalDateTime?
+) : EksterntVarsel()
+
+@JsonTypeName("epostVarselKontaktinfo")
+data class EpostVarsel(
+    val varselId: UUID,
+    val epostAddr: String,
+    val fnr: String, //TODO finn et samnlebegrp for fnr og orgnr
+    val tittel: String,
+    val htmlBody: String,
+    val sendeTidspunkt: LocalDateTime?
+) : EksterntVarsel()
 
 val Mottaker.virksomhetsnummer: String
     get() = when (this) {
