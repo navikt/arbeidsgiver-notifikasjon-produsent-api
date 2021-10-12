@@ -67,6 +67,36 @@ class MineNotifikasjonerTests : DescribeSpec({
                 grupperingsid = grupperingsid
             )
         )
+        val uuid3 = UUID.randomUUID()
+        produsentModel.oppdaterModellEtterHendelse(
+            Hendelse.BeskjedOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp + "noe annet",
+                eksternId = "3",
+                mottaker = mottaker,
+                hendelseId = uuid3,
+                notifikasjonId = uuid3,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+                grupperingsid = grupperingsid
+            )
+        )
+        val uuid4 = UUID.randomUUID()
+        produsentModel.oppdaterModellEtterHendelse(
+            Hendelse.BeskjedOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp + "2",
+                eksternId = "3",
+                mottaker = mottaker,
+                hendelseId = uuid4,
+                notifikasjonId = uuid4,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+                grupperingsid = grupperingsid
+            )
+        )
     }
 
     describe("mineNotifikasjoner") {
@@ -173,6 +203,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
             }
         }
+
         context("henter alle med angitt paginering") {
             val response = engine.produsentApi(
                 """
@@ -259,6 +290,95 @@ class MineNotifikasjonerTests : DescribeSpec({
                 val connection = response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
                 connection.edges.size shouldBe 1
                 connection.pageInfo.hasNextPage shouldBe true
+            }
+        }
+
+        context("når merkelapper=[] i filter") {
+            val response = engine.produsentApi(
+                """
+                    query {
+                        mineNotifikasjoner(merkelapper: []) {
+                            ... on NotifikasjonConnection {
+                                edges {
+                                    cursor
+                                }
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                val edges = response.getTypedContent<List<JsonNode>>("mineNotifikasjoner/edges")
+                edges.size shouldBe 0
+            }
+        }
+
+        context("når merkelapp(er) ikke er angitt i filter") {
+            val response = engine.produsentApi(
+                """
+                    query {
+                        mineNotifikasjoner {
+                            ... on NotifikasjonConnection {
+                                edges {
+                                    cursor
+                                }
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                val edges = response.getTypedContent<List<JsonNode>>("mineNotifikasjoner/edges")
+                edges.size shouldBe 3
+            }
+        }
+
+        context("når merkelapper er angitt i filter") {
+            val response = engine.produsentApi(
+                """
+                    query {
+                        mineNotifikasjoner(
+                            merkelapper: ["tag"]
+                        ) {
+                            ... on NotifikasjonConnection {
+                                edges {
+                                    cursor
+                                }
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                val edges = response.getTypedContent<List<JsonNode>>("mineNotifikasjoner/edges")
+                edges.size shouldBe 2
+            }
+        }
+
+        context("når forskjellige merkelapper er angitt i filter") {
+            val response = engine.produsentApi(
+                """
+                    query {
+                        mineNotifikasjoner(
+                            merkelapper: ["tag" "tag2"]
+                        ) {
+                            __typename
+                            ... on NotifikasjonConnection {
+                                edges {
+                                    cursor
+                                }
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                val edges = response.getTypedContent<List<JsonNode>>("mineNotifikasjoner/edges")
+                edges.size shouldBe 3
             }
         }
 
