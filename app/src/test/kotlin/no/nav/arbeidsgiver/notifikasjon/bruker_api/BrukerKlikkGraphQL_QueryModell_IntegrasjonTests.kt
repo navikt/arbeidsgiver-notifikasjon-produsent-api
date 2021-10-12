@@ -44,6 +44,8 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             eksternId = "",
             tekst = "",
             lenke = "",
+            kildeAppNavn = "",
+            produsentId = "",
         )
         queryModel.oppdaterModellEtterHendelse(beskjedOpprettet)
 
@@ -75,7 +77,9 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             virksomhetsnummer = virksomhetsnummer,
             fnr = fnr,
             hendelseId = UUID.randomUUID(),
-            notifikasjonId = uuid
+            notifikasjonId = uuid,
+            kildeAppNavn = "",
+            produsentId = null,
         )
 
         queryModel.oppdaterModellEtterHendelse(brukerKlikket)

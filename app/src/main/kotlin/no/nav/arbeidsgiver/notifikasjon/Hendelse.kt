@@ -16,11 +16,17 @@ sealed class Hendelse {
 
     abstract val virksomhetsnummer: String
 
+    abstract val produsentId: String?
+
+    abstract val kildeAppNavn: String
+
     @JsonTypeName("BeskjedOpprettet")
     data class BeskjedOpprettet(
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
         val merkelapp: String,
         val eksternId: String,
         val mottaker: Mottaker,
@@ -36,6 +42,8 @@ sealed class Hendelse {
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
         val merkelapp: String,
         val eksternId: String,
         val mottaker: Mottaker,
@@ -51,6 +59,8 @@ sealed class Hendelse {
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
     ) : Hendelse()
 
     @JsonTypeName("SoftDelete")
@@ -58,6 +68,8 @@ sealed class Hendelse {
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
         val deletedAt: OffsetDateTime,
     ) : Hendelse()
 
@@ -66,6 +78,8 @@ sealed class Hendelse {
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
         val deletedAt: OffsetDateTime,
     ) : Hendelse()
 
@@ -74,6 +88,8 @@ sealed class Hendelse {
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
+        override val produsentId: String?,
+        override val kildeAppNavn: String,
         val fnr: String,
     ) : Hendelse()
 
@@ -82,6 +98,8 @@ sealed class Hendelse {
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
         val varselId: UUID,
         val råRespons: JsonNode,
     ) : Hendelse()
@@ -91,6 +109,8 @@ sealed class Hendelse {
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
         val varselId: UUID,
         val råRespons: JsonNode,
         val altinnFeilkode: String,

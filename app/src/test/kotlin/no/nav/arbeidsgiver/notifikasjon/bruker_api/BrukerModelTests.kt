@@ -41,7 +41,9 @@ class BrukerModelTests : DescribeSpec({
             grupperingsid = "gr1",
             lenke = "foo.no/bar",
             opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS),
-            virksomhetsnummer = mottaker.virksomhetsnummer
+            virksomhetsnummer = mottaker.virksomhetsnummer,
+            kildeAppNavn = "",
+            produsentId = "",
         )
 
         context("happy path") {

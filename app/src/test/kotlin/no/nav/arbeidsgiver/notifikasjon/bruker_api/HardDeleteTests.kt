@@ -42,7 +42,9 @@ class HardDeleteTests : DescribeSpec({
             grupperingsid = "gr1",
             lenke = "foo.no/bar",
             opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS),
-            virksomhetsnummer = mottaker.virksomhetsnummer
+            virksomhetsnummer = mottaker.virksomhetsnummer,
+            kildeAppNavn = "",
+            produsentId = "",
         )
 
         val hardDeleteEvent = Hendelse.HardDelete(
@@ -50,6 +52,8 @@ class HardDeleteTests : DescribeSpec({
             notifikasjonId = uuid1,
             virksomhetsnummer = mottaker.virksomhetsnummer,
             deletedAt = OffsetDateTime.MAX,
+            kildeAppNavn = "",
+            produsentId = "",
         )
 
 

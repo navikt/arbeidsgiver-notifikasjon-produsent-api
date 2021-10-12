@@ -42,7 +42,9 @@ class SoftDeleteTests : DescribeSpec({
             grupperingsid = "gr1",
             lenke = "foo.no/bar",
             opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS),
-            virksomhetsnummer = mottaker.virksomhetsnummer
+            virksomhetsnummer = mottaker.virksomhetsnummer,
+            kildeAppNavn = "",
+            produsentId = "",
         )
 
         val softDeleteEvent = Hendelse.SoftDelete(
@@ -50,6 +52,8 @@ class SoftDeleteTests : DescribeSpec({
             notifikasjonId = uuid1,
             virksomhetsnummer = mottaker.virksomhetsnummer,
             deletedAt = OffsetDateTime.MAX,
+            kildeAppNavn = "",
+            produsentId = "",
         )
 
 
