@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
+import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -33,6 +34,7 @@ class MineNotifikasjonerTests : DescribeSpec({
         serviceCode = "1",
         serviceEdition = "1"
     )
+    val grupperingsid = "sak1"
 
     beforeContainer {
         val uuid = UUID.randomUUID()
@@ -46,7 +48,8 @@ class MineNotifikasjonerTests : DescribeSpec({
                 notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+                grupperingsid = grupperingsid
             )
         )
         val uuid2 = UUID.randomUUID()
@@ -60,7 +63,8 @@ class MineNotifikasjonerTests : DescribeSpec({
                 notifikasjonId = uuid2,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+                grupperingsid = grupperingsid
             )
         )
     }
@@ -255,6 +259,48 @@ class MineNotifikasjonerTests : DescribeSpec({
                 val connection = response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
                 connection.edges.size shouldBe 1
                 connection.pageInfo.hasNextPage shouldBe true
+            }
+        }
+
+        context("når grupperingsid er angitt i filter") {
+            val response = engine.produsentApi(
+                """
+                    query {
+                        mineNotifikasjoner(merkelapp: "tag", grupperingsid: "$grupperingsid") {
+                            ... on NotifikasjonConnection {
+                                edges {
+                                    cursor
+                                }
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                val edges = response.getTypedContent<List<JsonNode>>("mineNotifikasjoner/edges")
+                edges.size shouldBe 2
+            }
+        }
+
+        context("når feil grupperingsid er angitt i filter") {
+            val response = engine.produsentApi(
+                """
+                    query {
+                        mineNotifikasjoner(merkelapp: "tag", grupperingsid: "bogus") {
+                            ... on NotifikasjonConnection {
+                                edges {
+                                    cursor
+                                }
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                val edges = response.getTypedContent<List<JsonNode>>("mineNotifikasjoner/edges")
+                edges.size shouldBe 0
             }
         }
     }

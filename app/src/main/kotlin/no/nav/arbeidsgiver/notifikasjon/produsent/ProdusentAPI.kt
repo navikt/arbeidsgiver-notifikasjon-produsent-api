@@ -2,16 +2,14 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
-import no.nav.arbeidsgiver.notifikasjon.eksternvarsling.AltinnVarselKlient
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -384,12 +382,18 @@ object ProdusentAPI {
 
         suspend fun queryMineNotifikasjoner(env: DataFetchingEnvironment): MineNotifikasjonerResultat {
             val merkelapp = env.getArgument<String>("merkelapp")
+            val grupperingsid = env.getArgument<String>("grupperingsid")
             val first = env.getArgumentOrDefault("first", 1000)
             val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
             val produsent = hentProdusent(env) { error -> return error }
             tilgangsstyrMerkelapp(produsent, merkelapp) { error -> return error }
             return produsentRepository
-                .finnNotifikasjoner(merkelapp = merkelapp, antall = first, offset = after.offset)
+                .finnNotifikasjoner(
+                    merkelapp = merkelapp,
+                    grupperingsid = grupperingsid,
+                    antall = first,
+                    offset = after.offset
+                )
                 .map(Notifikasjon::fraDomene)
                 .let { Connection.create(it, env, ::NotifikasjonConnection) }
         }

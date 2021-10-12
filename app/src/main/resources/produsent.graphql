@@ -53,7 +53,8 @@ type Query {
         first: Int @Validate @MaxValue(upToIncluding: 10000)
         """Cursor til notifikasjonen du henter fra. Cursor får du fra [NotifikasjonEdge](#notifikasjonedge)."""
         after: String
-        merkelapp: String
+        merkelapp: String,
+        grupperingsid: String,
     ): MineNotifikasjonerResultat!
 }
 
