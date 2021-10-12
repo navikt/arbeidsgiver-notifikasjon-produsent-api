@@ -122,16 +122,16 @@ sealed class EksterntVarsel
 data class SmsVarselKontaktinfo(
     val varselId: UUID,
     val tlfnr: String,
-    val fnr: String, //TODO finn et samlebegrp for fnr og orgnr
+    val fnrEllerOrgnr: String,
     val smsTekst: String,
     val sendeTidspunkt: LocalDateTime?
 ) : EksterntVarsel()
 
 @JsonTypeName("epostVarselKontaktinfo")
-data class EpostVarsel(
+data class EpostVarselKontaktinfo(
     val varselId: UUID,
     val epostAddr: String,
-    val fnr: String, //TODO finn et samnlebegrp for fnr og orgnr
+    val fnrEllerOrgnr: String,
     val tittel: String,
     val htmlBody: String,
     val sendeTidspunkt: LocalDateTime?
