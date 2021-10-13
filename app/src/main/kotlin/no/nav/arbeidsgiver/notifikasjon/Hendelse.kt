@@ -18,8 +18,10 @@ sealed class Hendelse {
 
     abstract val virksomhetsnummer: String
 
+    //Identifikator for produsent slik som oppgitt i bruksvilkår
     abstract val produsentId: String?
 
+    //navn på app som har produsert hendelse
     abstract val kildeAppNavn: String
 
     @JsonTypeName("BeskjedOpprettet")
