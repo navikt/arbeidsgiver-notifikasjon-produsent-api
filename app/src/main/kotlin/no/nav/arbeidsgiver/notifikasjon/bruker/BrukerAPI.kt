@@ -23,7 +23,7 @@ import java.util.*
 object BrukerAPI {
     private val log = logger()
 
-    private val naisCliengtId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-bruker-api"
+    private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-bruker-api"
 
     data class Context(
         val fnr: String,
@@ -248,7 +248,7 @@ object BrukerAPI {
                 notifikasjonId = notifikasjonsid,
                 fnr = context.fnr,
                 virksomhetsnummer = virksomhetsnummer,
-                kildeAppNavn =  naisCliengtId
+                kildeAppNavn =  naisClientId
             )
 
             kafkaProducer.sendHendelse(hendelse)
