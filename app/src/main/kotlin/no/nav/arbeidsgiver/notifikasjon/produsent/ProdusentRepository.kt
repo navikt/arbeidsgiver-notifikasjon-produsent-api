@@ -14,7 +14,7 @@ interface ProdusentRepository {
     suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon?
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun finnNotifikasjoner(
-        merkelapp: String,
+        merkelapper: List<String>,
         grupperingsid: String?,
         antall: Int,
         offset: Int
@@ -113,19 +113,19 @@ class ProdusentRepositoryImpl(
     }
 
     override suspend fun finnNotifikasjoner(
-        merkelapp: String,
+        merkelapper: List<String>,
         grupperingsid: String?,
         antall: Int,
         offset: Int
     ): List<ProdusentModel.Notifikasjon> {
         return database.runNonTransactionalQuery(
             """ select * from notifikasjon 
-                  where merkelapp = ? 
+                  where merkelapp = any(?)
                   ${grupperingsid?.let { "and grupperingsid = ?" }?:""} 
                   limit $antall
                   offset $offset
             """.trimMargin(), {
-                string(merkelapp)
+                stringList(merkelapper)
                 grupperingsid?.let { string(grupperingsid) }
             },
             resultSetTilNotifikasjon

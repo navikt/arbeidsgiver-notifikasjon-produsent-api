@@ -381,15 +381,31 @@ object ProdusentAPI {
         }
 
         suspend fun queryMineNotifikasjoner(env: DataFetchingEnvironment): MineNotifikasjonerResultat {
-            val merkelapp = env.getArgument<String>("merkelapp")
+            val inputMerkelapp: String? = env.getArgument<String?>("merkelapp")
+            val inputMerkelapper: List<String>? = env.getArgument<List<String>?>("merkelapper")
             val grupperingsid = env.getArgument<String>("grupperingsid")
             val first = env.getArgumentOrDefault("first", 1000)
             val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
             val produsent = hentProdusent(env) { error -> return error }
-            tilgangsstyrMerkelapp(produsent, merkelapp) { error -> return error }
+
+            val merkelapper = when {
+                inputMerkelapp == null && inputMerkelapper == null ->
+                    produsent.tillatteMerkelapper
+                inputMerkelapp == null && inputMerkelapper != null ->
+                    inputMerkelapper
+                inputMerkelapp != null && inputMerkelapper == null ->
+                    listOf(inputMerkelapp)
+                else ->
+                    return Error.UgyldigMerkelapp("Kan ikke spesifiesere begge filtrene 'merkelapp' og 'merkelapper'")
+            }
+
+            for (merkelapp in merkelapper) {
+                tilgangsstyrMerkelapp(produsent, merkelapp) { error -> return error }
+            }
+
             return produsentRepository
                 .finnNotifikasjoner(
-                    merkelapp = merkelapp,
+                    merkelapper = merkelapper,
                     grupperingsid = grupperingsid,
                     antall = first,
                     offset = after.offset

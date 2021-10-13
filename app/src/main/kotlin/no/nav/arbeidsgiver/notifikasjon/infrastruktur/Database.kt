@@ -178,6 +178,15 @@ class ParameterSetters(
 ) {
     private var index = 1
 
+
+    fun stringList(value: List<String>) {
+        val array = preparedStatement.connection.createArrayOf(
+            "text",
+            value.toTypedArray()
+        )
+        preparedStatement.setArray(index++, array)
+    }
+
     fun string(value: String) =
         preparedStatement.setString(index++, value)
 

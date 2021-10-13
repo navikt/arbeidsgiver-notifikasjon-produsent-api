@@ -47,14 +47,24 @@ type Query {
     informasjon.
 
     Dere må gjenta paremetere når dere blar gjennom alle notifikasjonen.
+
+    Hvis verken `merkelapp` eller `merkelapper` er gitt, vil notifikasjoner
+    med alle dine merkelapper være med.
     """
     mineNotifikasjoner(
         "antall notifikasjoner du ønsker å hente"
         first: Int @Validate @MaxValue(upToIncluding: 10000)
+
         """Cursor til notifikasjonen du henter fra. Cursor får du fra [NotifikasjonEdge](#notifikasjonedge)."""
         after: String
-        merkelapp: String,
-        grupperingsid: String,
+
+        """Filtrer på merkelapp. Kan ikke brukes sammen med `merkelapper`."""
+        merkelapp: String
+
+        """Filtrer på merkelapper. Kan ikke brukes sammen med `merkelapp`."""
+        merkelapper: [String!]
+
+        grupperingsid: String
     ): MineNotifikasjonerResultat!
 }
 

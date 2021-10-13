@@ -29,7 +29,7 @@ val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
         return Produsent(
             id = "someproducer",
             accessPolicy = listOf("someproducer"),
-            tillatteMerkelapper = listOf("tag"),
+            tillatteMerkelapper = listOf("tag", "tag2"),
             tillatteMottakere = listOf(
                 ServicecodeDefinisjon(code = "5441", version = "1"),
                 NærmesteLederDefinisjon,
