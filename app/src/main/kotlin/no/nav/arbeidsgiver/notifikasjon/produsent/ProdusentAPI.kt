@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AppName
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
@@ -29,7 +27,7 @@ object ProdusentAPI {
         val notifikasjon: NotifikasjonData,
         val metadata: MetadataInput,
     ) {
-        fun tilDomene(id: UUID, produsentId:String, kildeAppNavn: String ): Hendelse.BeskjedOpprettet {
+        fun tilDomene(id: UUID, produsentId: String, kildeAppNavn: String): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.BeskjedOpprettet(
                 hendelseId = id,
@@ -53,7 +51,7 @@ object ProdusentAPI {
         val notifikasjon: NotifikasjonData,
         val metadata: MetadataInput,
     ) {
-        fun tilDomene(id: UUID, produsentId:String, kildeAppNavn: String ) : Hendelse.OppgaveOpprettet {
+        fun tilDomene(id: UUID, produsentId: String, kildeAppNavn: String): Hendelse.OppgaveOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.OppgaveOpprettet(
                 hendelseId = id,
@@ -171,7 +169,7 @@ object ProdusentAPI {
 
 
     /* utility interface */
-    sealed interface NyNotifikasjonError: NyBeskjedResultat, NyOppgaveResultat
+    sealed interface NyNotifikasjonError : NyBeskjedResultat, NyOppgaveResultat
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class Error {
@@ -418,7 +416,11 @@ object ProdusentAPI {
             val id = UUID.randomUUID()
             log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
             val produsent = hentProdusent(env) { error -> return error }
-            val domeneNyBeskjed = nyBeskjed.tilDomene(id = id, produsentId = produsent.id, kildeAppNavn = env.getContext<Context>().appName )
+            val domeneNyBeskjed = nyBeskjed.tilDomene(
+                id = id,
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
+            )
             val eksisterende = produsentRepository.hentNotifikasjon(
                 eksternId = domeneNyBeskjed.eksternId,
                 merkelapp = domeneNyBeskjed.merkelapp
@@ -452,7 +454,11 @@ object ProdusentAPI {
             val id = UUID.randomUUID()
             val produsent = hentProdusent(env) { error -> return error }
             log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
-            val domeneNyOppgave = nyOppgave.tilDomene(id = id, produsentId = produsent.id, kildeAppNavn = env.getContext<Context>().appName )
+            val domeneNyOppgave = nyOppgave.tilDomene(
+                id = id,
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
+            )
             val eksisterende = produsentRepository.hentNotifikasjon(
                 eksternId = domeneNyOppgave.eksternId,
                 merkelapp = domeneNyOppgave.merkelapp
@@ -712,9 +718,11 @@ inline fun hentProdusent(
 ): Produsent {
     val context = env.getContext<ProdusentAPI.Context>()
     if (context.produsent == null) {
-        onMissing(ProdusentAPI.Error.UkjentProdusent(
-            "Finner ikke produsent med id ${context.appName}"
-        ))
+        onMissing(
+            ProdusentAPI.Error.UkjentProdusent(
+                "Finner ikke produsent med id ${context.appName}"
+            )
+        )
     } else {
         return context.produsent
     }

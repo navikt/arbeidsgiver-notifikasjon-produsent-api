@@ -3,7 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonNode
-import java.time.*
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.util.*
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
