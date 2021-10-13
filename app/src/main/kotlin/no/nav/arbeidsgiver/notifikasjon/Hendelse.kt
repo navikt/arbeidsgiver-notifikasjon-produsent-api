@@ -90,7 +90,7 @@ sealed class Hendelse {
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
-        override val produsentId: String?,
+        override val produsentId: Nothing? = null,
         override val kildeAppNavn: String,
         val fnr: String,
     ) : Hendelse()

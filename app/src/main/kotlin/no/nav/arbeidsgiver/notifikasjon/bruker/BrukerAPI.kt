@@ -248,7 +248,6 @@ object BrukerAPI {
                 notifikasjonId = notifikasjonsid,
                 fnr = context.fnr,
                 virksomhetsnummer = virksomhetsnummer,
-                produsentId = null,
                 kildeAppNavn =  naisCliengtId
             )
 
