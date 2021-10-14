@@ -83,7 +83,9 @@ class MineNotifikasjonerTests : DescribeSpec({
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
-                grupperingsid = grupperingsid
+                grupperingsid = grupperingsid,
+                produsentId = "",
+                kildeAppNavn = ""
             )
         )
         val uuid4 = UUID.randomUUID()
@@ -98,7 +100,9 @@ class MineNotifikasjonerTests : DescribeSpec({
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
-                grupperingsid = grupperingsid
+                grupperingsid = grupperingsid,
+                produsentId = "",
+                kildeAppNavn = "",
             )
         )
     }
