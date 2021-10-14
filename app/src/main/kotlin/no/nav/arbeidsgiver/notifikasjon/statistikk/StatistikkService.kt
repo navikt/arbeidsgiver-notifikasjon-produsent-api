@@ -9,7 +9,7 @@ interface StatistikkService {
     suspend fun håndterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
 }
 
-class AbacusServiceImpl(
+class StatistikkServiceImpl(
     private val statistikkModel: StatistikkModel
 ) : StatistikkService {
 
@@ -29,6 +29,10 @@ class AbacusServiceImpl(
         .description("Antall utførte (med histogram)")
         .register(Health.meterRegistry)
 
+    private val antallVarsler = MultiGauge.builder("antall_varsler")
+        .description("Antall varsler")
+        .register(Health.meterRegistry)
+
     override suspend fun håndterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         statistikkModel.oppdaterModellEtterHendelse(hendelse, metadata)
     }
@@ -38,5 +42,6 @@ class AbacusServiceImpl(
         antallUnikeTekster.register(statistikkModel.antallUnikeTekster(), true)
         antallKlikk.register(statistikkModel.antallKlikk(), true)
         antallUtførte.register(statistikkModel.antallUtførteHistogram(), true)
+        antallVarsler.register(statistikkModel.antallVarsler(), true)
     }
 }
