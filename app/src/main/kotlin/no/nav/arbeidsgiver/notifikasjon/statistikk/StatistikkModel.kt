@@ -182,7 +182,7 @@ class StatistikkModel(
                         (?, ?, 'beskjed', ?, ?, ?, ?)
                     """
                 ) {
-                    nullableString(hendelse.produsentId)
+                    string(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
@@ -199,7 +199,7 @@ class StatistikkModel(
                     (?, ?, 'oppgave', ?, ?, ?, ?)
                     """
                 ) {
-                    nullableString(hendelse.produsentId)
+                    string(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
@@ -244,7 +244,7 @@ class StatistikkModel(
                 ) {
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.notifikasjonId)
-                    nullableString(hendelse.produsentId)
+                    string(hendelse.produsentId)
                 }
             }
             is Hendelse.EksterntVarselFeilet -> {
@@ -258,7 +258,7 @@ class StatistikkModel(
                 ) {
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.notifikasjonId)
-                    nullableString(hendelse.produsentId)
+                    string(hendelse.produsentId)
                 }
             }
             is Hendelse.SoftDelete -> {
