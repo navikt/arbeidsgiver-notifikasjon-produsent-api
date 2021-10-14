@@ -25,7 +25,13 @@ val ARBEIDSGIVER_TILTAK = Produsent(
             "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
         )
     ),
-    tillatteMerkelapper = listOf("Tiltak"),
+    tillatteMerkelapper = listOf(
+        "Tiltak",
+        "Lønnstilskudd",
+        "Mentor",
+        "Sommerjobb",
+        "Arbeidstrening"
+    ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
         ServicecodeDefinisjon(code = "5332", version = basedOnEnv(prod = "2", other = "1"), description = "Arbeidstrening"),
