@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.executable
+package no.nav.arbeidsgiver.notifikasjon.executable.statistikk
 
 import db.migration.OS
 import no.nav.arbeidsgiver.notifikasjon.Statistikk

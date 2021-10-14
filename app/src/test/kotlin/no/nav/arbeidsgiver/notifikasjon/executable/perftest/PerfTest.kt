@@ -1,4 +1,6 @@
-package no.nav.arbeidsgiver.notifikasjon.executable
+@file:Suppress("EXPERIMENTAL_API_USAGE_FUTURE_ERROR")
+
+package no.nav.arbeidsgiver.notifikasjon.executable.perftest
 
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
