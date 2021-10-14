@@ -30,7 +30,9 @@ class KafkaSerializerTests : DescribeSpec({
                 lenke = "https://foop.no",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T00:00:00.00Z"),
                 eksternId = "ekstern 1234h",
-                virksomhetsnummer = virksomhetsnummer
+                virksomhetsnummer = virksomhetsnummer,
+                kildeAppNavn = "",
+                produsentId = "",
             )
 
             it("serde preservers all values") {

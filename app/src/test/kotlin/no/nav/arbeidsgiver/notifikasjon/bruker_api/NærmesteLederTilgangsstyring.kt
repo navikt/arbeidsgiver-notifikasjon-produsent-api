@@ -112,4 +112,6 @@ fun beskjedOpprettet(mottaker: Mottaker, id: UUID, eksternId: String) = Hendelse
     tekst = "test",
     lenke = "https://nav.no",
     opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+    kildeAppNavn = "",
+    produsentId = "",
 )

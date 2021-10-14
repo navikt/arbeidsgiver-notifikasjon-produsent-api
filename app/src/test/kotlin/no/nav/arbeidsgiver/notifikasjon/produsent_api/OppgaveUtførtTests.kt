@@ -61,7 +61,9 @@ class OppgaveUtførtTests : DescribeSpec({
                 notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -128,7 +130,9 @@ class OppgaveUtførtTests : DescribeSpec({
                 notifikasjonId= uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -161,7 +165,9 @@ class OppgaveUtførtTests : DescribeSpec({
                 notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
@@ -207,7 +213,9 @@ class OppgaveUtførtTests : DescribeSpec({
                 notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -274,7 +282,9 @@ class OppgaveUtførtTests : DescribeSpec({
                 notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -307,7 +317,9 @@ class OppgaveUtførtTests : DescribeSpec({
                 notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -340,7 +352,9 @@ class OppgaveUtførtTests : DescribeSpec({
                 notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
-                opprettetTidspunkt = opprettetTidspunkt
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)

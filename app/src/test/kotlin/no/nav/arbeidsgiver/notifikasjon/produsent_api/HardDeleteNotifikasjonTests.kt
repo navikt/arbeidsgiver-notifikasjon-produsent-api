@@ -63,7 +63,9 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
         notifikasjonId = uuid,
         tekst = "test",
         lenke = "https://nav.no",
-        opprettetTidspunkt = opprettetTidspunkt
+        opprettetTidspunkt = opprettetTidspunkt,
+        kildeAppNavn = "",
+        produsentId = "",
     )
     val oppgaveOpprettet2 = oppgaveOpprettet.copy(
         eksternId = eksternId2,

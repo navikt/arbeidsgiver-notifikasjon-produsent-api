@@ -28,7 +28,7 @@ object ProdusentAPI {
         val metadata: MetadataInput,
         val eksternVarsel: List<EksternVarselInput>,
     ) {
-        fun tilDomene(id: UUID): Hendelse.BeskjedOpprettet {
+        fun tilDomene(id: UUID, produsentId: String, kildeAppNavn: String): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.BeskjedOpprettet(
                 hendelseId = id,
@@ -41,6 +41,8 @@ object ProdusentAPI {
                 mottaker = mottaker,
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = mottaker.virksomhetsnummer,
+                produsentId = produsentId,
+                kildeAppNavn = kildeAppNavn,
             )
         }
     }
@@ -51,7 +53,7 @@ object ProdusentAPI {
         val metadata: MetadataInput,
         val eksternVarsel: List<EksternVarselInput>,
     ) {
-        fun tilDomene(id: UUID): Hendelse.OppgaveOpprettet {
+        fun tilDomene(id: UUID, produsentId: String, kildeAppNavn: String): Hendelse.OppgaveOpprettet {
             val mottaker = mottaker.tilDomene()
             return Hendelse.OppgaveOpprettet(
                 hendelseId = id,
@@ -63,7 +65,9 @@ object ProdusentAPI {
                 eksternId = metadata.eksternId,
                 mottaker = mottaker,
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
-                virksomhetsnummer = mottaker.virksomhetsnummer
+                virksomhetsnummer = mottaker.virksomhetsnummer,
+                produsentId = produsentId,
+                kildeAppNavn = kildeAppNavn,
             )
         }
     }
@@ -206,7 +210,7 @@ object ProdusentAPI {
     )
 
     /* utility interface */
-    sealed interface NyNotifikasjonError: NyBeskjedResultat, NyOppgaveResultat
+    sealed interface NyNotifikasjonError : NyBeskjedResultat, NyOppgaveResultat
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class Error {
@@ -483,7 +487,12 @@ object ProdusentAPI {
 
             val id = UUID.randomUUID()
             log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
-            val domeneNyBeskjed = nyBeskjed.tilDomene(id)
+            val produsent = hentProdusent(env) { error -> return error }
+            val domeneNyBeskjed = nyBeskjed.tilDomene(
+                id = id,
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
+            )
             val eksisterende = produsentRepository.hentNotifikasjon(
                 eksternId = domeneNyBeskjed.eksternId,
                 merkelapp = domeneNyBeskjed.merkelapp
@@ -521,8 +530,13 @@ object ProdusentAPI {
             ) { error -> return error }
 
             val id = UUID.randomUUID()
+            val produsent = hentProdusent(env) { error -> return error }
             log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
-            val domeneNyOppgave = nyOppgave.tilDomene(id)
+            val domeneNyOppgave = nyOppgave.tilDomene(
+                id = id,
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
+            )
             val eksisterende = produsentRepository.hentNotifikasjon(
                 eksternId = domeneNyOppgave.eksternId,
                 merkelapp = domeneNyOppgave.merkelapp
@@ -567,7 +581,9 @@ object ProdusentAPI {
             val utførtHendelse = Hendelse.OppgaveUtført(
                 hendelseId = UUID.randomUUID(),
                 notifikasjonId = id,
-                virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
+                virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer,
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
             )
 
             kafkaProducer.sendHendelse(utførtHendelse)
@@ -592,7 +608,9 @@ object ProdusentAPI {
             val utførtHendelse = Hendelse.OppgaveUtført(
                 hendelseId = UUID.randomUUID(),
                 notifikasjonId = notifikasjon.id,
-                virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer
+                virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer,
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
             )
 
             kafkaProducer.sendHendelse(utførtHendelse)
@@ -612,7 +630,9 @@ object ProdusentAPI {
                 hendelseId = UUID.randomUUID(),
                 notifikasjonId = id,
                 virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                deletedAt = OffsetDateTime.now()
+                deletedAt = OffsetDateTime.now(),
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
             )
 
             kafkaProducer.sendHendelse(softDelete)
@@ -638,7 +658,9 @@ object ProdusentAPI {
                 hendelseId = UUID.randomUUID(),
                 notifikasjonId = notifikasjon.id,
                 virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                deletedAt = OffsetDateTime.now()
+                deletedAt = OffsetDateTime.now(),
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
             )
 
             kafkaProducer.sendHendelse(softDelete)
@@ -658,7 +680,9 @@ object ProdusentAPI {
                 hendelseId = UUID.randomUUID(),
                 notifikasjonId = id,
                 virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                deletedAt = OffsetDateTime.now()
+                deletedAt = OffsetDateTime.now(),
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
             )
 
             kafkaProducer.sendHendelse(hardDelete)
@@ -680,7 +704,9 @@ object ProdusentAPI {
                 hendelseId = UUID.randomUUID(),
                 notifikasjonId = notifikasjon.id,
                 virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                deletedAt = OffsetDateTime.now()
+                deletedAt = OffsetDateTime.now(),
+                produsentId = produsent.id,
+                kildeAppNavn = env.getContext<Context>().appName
             )
 
             kafkaProducer.sendHendelse(hardDelete)
@@ -776,9 +802,11 @@ inline fun hentProdusent(
 ): Produsent {
     val context = env.getContext<ProdusentAPI.Context>()
     if (context.produsent == null) {
-        onMissing(ProdusentAPI.Error.UkjentProdusent(
-            "Finner ikke produsent med id ${context.appName}"
-        ))
+        onMissing(
+            ProdusentAPI.Error.UkjentProdusent(
+                "Finner ikke produsent med id ${context.appName}"
+            )
+        )
     } else {
         return context.produsent
     }
