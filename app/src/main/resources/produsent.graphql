@@ -94,12 +94,14 @@ type Oppgave {
     mottaker: Mottaker!
     metadata: Metadata!
     oppgave: OppgaveData!
+    eksternVarsel: [EksternVarsel!]!
 }
 
 type Beskjed {
     mottaker: Mottaker!
     metadata: Metadata!
     beskjed: BeskjedData!
+    eksternVarsel: [EksternVarsel!]!
 }
 
 union Mottaker =
@@ -173,6 +175,18 @@ type Metadata {
 
     softDeletedAt: ISO8601DateTime
 }
+
+type EksternVarsel {
+    id: ID!
+    status: EksternVarselStatus!
+}
+
+enum EksternVarselStatus {
+    NY
+    UTFORT
+    FEIL
+}
+
 
 """
 Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
@@ -309,13 +323,57 @@ input NyBeskjedInput {
     mottaker: MottakerInput!
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
+    eksternVarsel: [EksternVarselInput!]! = []
 }
 
 input NyOppgaveInput {
     mottaker: MottakerInput!
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
+    eksternVarsel: [EksternVarselInput!]! = []
 }
+
+input EksternVarselInput @ExactlyOneFieldGiven {
+    sms: EksternVarselSmsInput
+    epost: EksternVarselEpostInput
+}
+
+input EksternVarselSmsInput {
+    mottaker: SmsMottakerInput!
+    smsTekst: String!
+}
+
+input EksternVarselEpostInput {
+    mottaker: EpostMottakerInput!
+    epostTittel: String!
+    epostHtmlBody: String!
+}
+
+input SmsMottakerInput @ExactlyOneFieldGiven {
+    kontaktinfo: SmsKontaktInfoInput
+    # altinntjeneste: Altinntjeneste
+}
+
+input SmsKontaktInfoInput {
+    fnr: String!
+    tlf: String! # Validate regex ?
+}
+
+input EpostMottakerInput @ExactlyOneFieldGiven {
+    kontaktinfo: EpostKontaktInfoInput
+    # altinntjeneste: Altinntjeneste
+}
+
+input EpostKontaktInfoInput {
+    fnr: String!
+    epostadresse: String!
+}
+
+# input Altinntjeneste {
+#     virksomhetsnummer: String!
+#     serviceCode: String!
+#     serviceCodeEdition: String!
+# }
 
 """
 Hvem som skal se notifikasjonen.
@@ -407,10 +465,16 @@ union NyBeskjedResultat =
 
 type NyBeskjedVellykket {
     id: ID!
+    eksternVarsel: [NyEksternVarselResultat!]!
+}
+
+type NyEksternVarselResultat {
+    id: ID!
 }
 
 type NyOppgaveVellykket {
     id: ID!
+    eksternVarsel: [NyEksternVarselResultat!]!
 }
 
 """

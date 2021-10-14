@@ -161,6 +161,9 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                         }
+                                        eksternVarsel {
+                                            id
+                                        }
                                       }
                                       ... on Oppgave {
                                       mottaker {
@@ -188,6 +191,9 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                             tilstand
+                                        }
+                                        eksternVarsel {
+                                            id
                                         }
                                       }
                                     }
@@ -246,6 +252,9 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                         }
+                                        eksternVarsel {
+                                            id
+                                        }
                                       }
                                       ... on Oppgave {
                                       mottaker {
@@ -275,6 +284,9 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                             tilstand
+                                        }
+                                        eksternVarsel {
+                                            id
                                         }
                                       }
                                     }
