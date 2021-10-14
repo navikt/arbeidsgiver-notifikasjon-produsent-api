@@ -124,7 +124,9 @@ data class SmsVarselKontaktinfo(
     val tlfnr: String,
     val fnrEllerOrgnr: String,
     val smsTekst: String,
-    val sendeTidspunkt: LocalDateTime?
+    val sendevindu: EksterntVarselSendingsvindu,
+    /* Kun gyldig hvis sendevindu er "SPESIFISERT" */
+    val sendeTidspunkt: LocalDateTime?,
 ) : EksterntVarsel()
 
 @JsonTypeName("epostVarselKontaktinfo")
@@ -134,8 +136,28 @@ data class EpostVarselKontaktinfo(
     val fnrEllerOrgnr: String,
     val tittel: String,
     val htmlBody: String,
-    val sendeTidspunkt: LocalDateTime?
+    val sendevindu: EksterntVarselSendingsvindu,
+    /* Kun gyldig hvis sendevindu er "SPESIFISERT" */
+    val sendeTidspunkt: LocalDateTime?,
 ) : EksterntVarsel()
+
+enum class EksterntVarselSendingsvindu {
+    /* Notifikasjonen sendes uten opphold fra vår side. Merk at underleverandører (Altinn) har eget vindu for utsendig
+     * av SMS, og vi vil ikke overstyre det.
+     **/
+    LØPENDE,
+
+    /* På dagtid mandag til lørdag, ikke søndag. Pr. nå 0800-1600. */
+    DAGTID_IKKE_SØNDAG,
+
+    /* Sendes så mottaker skal ha en reell mulighet for å kunne komme i kontakt med NKS/Arbeidsgivertelefonen.
+     * Varsler sendes også litt før NKS åpner. Slutter å sende varsler litt før NKS lukker, så
+     * mottaker har tid til å ringe. */
+    NKS_ÅPNINGSTID,
+
+    /* Varslingstidspunkt må spesifiseres i feltet "sendeTidspunkt". */
+    SPESIFISERT,
+}
 
 val Mottaker.virksomhetsnummer: String
     get() = when (this) {
