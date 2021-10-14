@@ -15,7 +15,7 @@ object MigrationOps {
                     "   --bootstrap-server ${CONSUMER_PROPERTIES[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]} " +
                     "   --command-config ${OS.kafkaPropertiesFile} " +
                     "   --group ${CONSUMER_PROPERTIES[ConsumerConfig.GROUP_ID_CONFIG]} " +
-                    "   --topic arbeidsgiver.notifikasjon " +
+                    "   --topic fager.notifikasjon " +
                     "   --reset-offsets --to-earliest --execute"
         )
     }
@@ -29,7 +29,7 @@ object OS {
         log.warn("cwd changed: $old -> $new")
     }
 
-    var kafkaPropertiesFile : String by Delegates.observable("/kafka.properties") {
+    var kafkaPropertiesFile : String by Delegates.observable("/tmp/kafka.properties") {
             _, old, new ->
         log.warn("kafkaPropertiesFile changed: $old -> $new")
     }
