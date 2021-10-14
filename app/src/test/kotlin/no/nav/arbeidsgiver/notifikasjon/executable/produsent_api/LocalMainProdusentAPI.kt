@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.executable
+package no.nav.arbeidsgiver.notifikasjon.executable.produsent_api
 
 import db.migration.OS
 import no.nav.arbeidsgiver.notifikasjon.Produsent as ProdusentMain

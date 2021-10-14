@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.executable
+package no.nav.arbeidsgiver.notifikasjon.executable.kafka_reaper
 
 import db.migration.OS
 import no.nav.arbeidsgiver.notifikasjon.KafkaReaper
