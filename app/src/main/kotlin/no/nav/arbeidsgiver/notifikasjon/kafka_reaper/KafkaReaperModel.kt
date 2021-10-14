@@ -100,6 +100,6 @@ val Hendelse.typeNavn: String get() = when (this) {
     is Hendelse.BrukerKlikket -> "BrukerKlikket"
     is Hendelse.BeskjedOpprettet -> "BeskjedOpprettet"
     is Hendelse.OppgaveOpprettet -> "OppgaveOpprettet"
-    is Hendelse.EksterntVarselVellykket -> TODO()
-    is Hendelse.EksterntVarselFeilet -> TODO()
+    is Hendelse.EksterntVarselVellykket -> "EksterntVarselVellykket"
+    is Hendelse.EksterntVarselFeilet -> "EksterntVarselFeilet"
 }
