@@ -31,7 +31,9 @@ class KafkaReaperServiceImpl(
             is Hendelse.BeskjedOpprettet,
             is Hendelse.OppgaveOpprettet,
             is Hendelse.BrukerKlikket,
-            is Hendelse.OppgaveUtført -> {
+            is Hendelse.OppgaveUtført,
+            is Hendelse.EksterntVarselFeilet,
+            is Hendelse.EksterntVarselVellykket -> {
                 if (kafkaReaperModel.erSlettet(hendelse.notifikasjonId)) {
                     kafkaProducer.tombstone(
                         key = hendelse.hendelseId.toString(),
@@ -40,8 +42,6 @@ class KafkaReaperServiceImpl(
                     kafkaReaperModel.fjernRelasjon(hendelse.hendelseId)
                 } else Unit
             }
-            is Hendelse.EksterntVarselFeilet,
-            is Hendelse.EksterntVarselVellykket -> TODO()
         }
     }
 }
