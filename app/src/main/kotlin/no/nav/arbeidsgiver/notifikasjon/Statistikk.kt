@@ -5,7 +5,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkModel
-import no.nav.arbeidsgiver.notifikasjon.statistikk.AbacusServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
@@ -46,7 +46,7 @@ object Statistikk {
             }
 
             val statistikkServiceAsync = async {
-                AbacusServiceImpl(
+                StatistikkServiceImpl(
                     statistikkModelAsync.await()
                 )
             }

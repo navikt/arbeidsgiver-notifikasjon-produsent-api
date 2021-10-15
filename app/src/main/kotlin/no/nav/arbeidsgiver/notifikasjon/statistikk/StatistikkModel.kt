@@ -18,50 +18,52 @@ class StatistikkModel(
             """
                 WITH alder_tabell AS (
                     select
+                        produsent_id, 
                         merkelapp,
                         mottaker,
                         notifikasjon_type,
                         (utfoert_tidspunkt - opprettet_tidspunkt) as alder_sekunder
                     from notifikasjon_statistikk
                 )
-                select merkelapp, mottaker, notifikasjon_type, '0-1H' as bucket, count(*) as antall
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, '0-1H' as bucket, count(*) as antall
                     from alder_tabell
                     where alder_sekunder < interval '1 hour'
-                    group by (merkelapp, mottaker, notifikasjon_type)
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, notifikasjon_type, '1H-1D' as bucket, count(*) as antall
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, '1H-1D' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '1 hour' <= alder_sekunder and alder_sekunder < interval '1 day'
-                    group by (merkelapp, mottaker, notifikasjon_type)
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, notifikasjon_type, '1D-3D' as bucket, count(*) as antall
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, '1D-3D' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '1 day' <= alder_sekunder and alder_sekunder < interval '3 day'
-                    group by (merkelapp, mottaker, notifikasjon_type)
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, notifikasjon_type, '3D-1W' as bucket, count(*) as antall
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, '3D-1W' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '1 day' <= alder_sekunder and alder_sekunder < interval '1 week'
-                    group by (merkelapp, mottaker, notifikasjon_type)
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, notifikasjon_type, '1W-2W' as bucket, count(*) as antall
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, '1W-2W' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '1 week' <= alder_sekunder and alder_sekunder < interval '2 week'
-                    group by (merkelapp, mottaker, notifikasjon_type)
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, notifikasjon_type, '2W-4W' as bucket, count(*) as antall
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, '2W-4W' as bucket, count(*) as antall
                     from alder_tabell
                     where interval '2 week' <= alder_sekunder and alder_sekunder < interval '4 week'
-                    group by (merkelapp, mottaker, notifikasjon_type)
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
                 union
-                select merkelapp, mottaker, notifikasjon_type, 'infinity' as bucket, count(*) as antall
+                select produsent_id,  merkelapp, mottaker, notifikasjon_type, 'infinity' as bucket, count(*) as antall
                     from alder_tabell
                     where alder_sekunder is null
-                    group by (merkelapp, mottaker, notifikasjon_type)
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
                         "merkelapp", this.getString("merkelapp"),
                         "mottaker", this.getString("mottaker"),
                         "notifikasjon_type", this.getString("notifikasjon_type"),
@@ -77,17 +79,19 @@ class StatistikkModel(
         return database.runNonTransactionalQuery(
             """
                 select 
+                    notifikasjon.produsent_id,
                     notifikasjon.merkelapp,
                     notifikasjon.mottaker,
                     notifikasjon.notifikasjon_type,
                     count(*) as antall_klikk
                 from notifikasjon_statistikk as notifikasjon
                 inner join notifikasjon_statistikk_klikk klikk on notifikasjon.notifikasjon_id = klikk.notifikasjon_id
-                group by (merkelapp, mottaker, notifikasjon_type)
+                group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
                         "merkelapp", this.getString("merkelapp"),
                         "mottaker", this.getString("mottaker"),
                         "notifikasjon_type", this.getString("notifikasjon_type")
@@ -102,16 +106,18 @@ class StatistikkModel(
         return database.runNonTransactionalQuery(
             """
                 select 
+                    produsent_id,
                     merkelapp,
                     mottaker,
                     notifikasjon_type,
                     count(distinct checksum) as antall_unike_tekster
                 from notifikasjon_statistikk
-                group by (merkelapp, mottaker, notifikasjon_type)
+                group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
                         "merkelapp", this.getString("merkelapp"),
                         "mottaker", this.getString("mottaker"),
                         "notifikasjon_type", this.getString("notifikasjon_type")
@@ -125,16 +131,38 @@ class StatistikkModel(
     suspend fun antallNotifikasjoner(): List<MultiGauge.Row<Number>> {
         return database.runNonTransactionalQuery(
             """
-                select merkelapp, mottaker, notifikasjon_type, count(*) as antall
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, count(*) as antall
                 from notifikasjon_statistikk
-                group by (merkelapp, mottaker, notifikasjon_type)
+                group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
                         "merkelapp", this.getString("merkelapp"),
                         "mottaker", this.getString("mottaker"),
                         "notifikasjon_type", this.getString("notifikasjon_type")
+                    ),
+                    this.getInt("antall")
+                )
+            }
+        )
+    }
+
+    suspend fun antallVarsler(): List<MultiGauge.Row<Number>> {
+        return database.runNonTransactionalQuery(
+            """
+                select varsel.produsent_id, merkelapp, status, count(*) as antall
+                from varsel_statistikk as varsel
+                inner join notifikasjon_statistikk notifikasjon on varsel.notifikasjon_id = notifikasjon.notifikasjon_id
+                group by (varsel.produsent_id, merkelapp, status)
+            """,
+            transform = {
+                MultiGauge.Row.of(
+                    Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
+                        "merkelapp", this.getString("merkelapp"),
+                        "status", this.getString("status")
                     ),
                     this.getInt("antall")
                 )
@@ -149,11 +177,12 @@ class StatistikkModel(
                 database.nonTransactionalCommand(
                     """
                     insert into notifikasjon_statistikk 
-                        (notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                        (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
                     values
-                        (?, 'beskjed', ?, ?, ?, ?)
+                        (?, ?, 'beskjed', ?, ?, ?, ?)
                     """
                 ) {
+                    string(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
@@ -165,11 +194,12 @@ class StatistikkModel(
                 database.nonTransactionalCommand(
                     """
                     insert into notifikasjon_statistikk 
-                        (notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                        (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
                     values
-                    (?, 'oppgave', ?, ?, ?, ?)
+                    (?, ?, 'oppgave', ?, ?, ?, ?)
                     """
                 ) {
+                    string(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.merkelapp)
                     string(hendelse.mottaker.typeNavn)
@@ -201,6 +231,34 @@ class StatistikkModel(
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.notifikasjonId)
                     timestamp_utc(metadata.timestamp)
+                }
+            }
+            is Hendelse.EksterntVarselVellykket -> {
+                database.nonTransactionalCommand(
+                    """
+                    insert into varsel_statistikk 
+                        (hendelse_id, notifikasjon_id, produsent_id, status)
+                    values
+                    (?, ?, ?, 'vellykket')
+                    """
+                ) {
+                    uuid(hendelse.hendelseId)
+                    uuid(hendelse.notifikasjonId)
+                    string(hendelse.produsentId)
+                }
+            }
+            is Hendelse.EksterntVarselFeilet -> {
+                database.nonTransactionalCommand(
+                    """
+                    insert into varsel_statistikk 
+                        (hendelse_id, notifikasjon_id, produsent_id, status)
+                    values
+                    (?, ?, ?, 'feilet')
+                    """
+                ) {
+                    uuid(hendelse.hendelseId)
+                    uuid(hendelse.notifikasjonId)
+                    string(hendelse.produsentId)
                 }
             }
             is Hendelse.SoftDelete -> {

@@ -13,7 +13,5 @@ ENV PATH="/opt/kafka/bin:${PATH}"
 
 COPY 99-create-kafka-properties.sh /init-scripts/
 RUN chmod +x /init-scripts/99-create-kafka-properties.sh
-RUN touch /kafka.properties
-RUN chown apprunner /kafka.properties
 
 USER apprunner
