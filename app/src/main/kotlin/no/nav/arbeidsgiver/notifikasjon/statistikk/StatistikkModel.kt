@@ -189,6 +189,38 @@ class StatistikkModel(
                     string(hendelse.tekst.toHash())
                     timestamptz(hendelse.opprettetTidspunkt)
                 }
+
+                if (hendelse.eksterneVarsler.isNotEmpty()) {
+                    database.nonTransactionalBatch( // batchCommand
+                        """
+                        insert into varsel_statistikk_bestilling 
+                            (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
+                        values
+                            (?, ?, ?, ?, ?)
+                        """
+                    ) {
+                        hendelse.eksterneVarsler.forEach { eksterntVarsel ->
+                            when (eksterntVarsel) {
+                                is EpostVarselKontaktinfo -> {
+                                    uuid(eksterntVarsel.varselId)
+                                    string("epost_kontaktinfo")
+                                    uuid(hendelse.notifikasjonId)
+                                    string(hendelse.produsentId)
+                                    string(eksterntVarsel.epostAddr)
+                                    addBatch()
+                                }
+                                is SmsVarselKontaktinfo -> {
+                                    uuid(eksterntVarsel.varselId)
+                                    string("sms_kontaktinfo")
+                                    uuid(hendelse.notifikasjonId)
+                                    string(hendelse.produsentId)
+                                    string(eksterntVarsel.tlfnr)
+                                    addBatch()
+                                }
+                            }
+                        }
+                    }
+                }
             }
             is Hendelse.OppgaveOpprettet -> {
                 database.nonTransactionalCommand(
@@ -205,6 +237,37 @@ class StatistikkModel(
                     string(hendelse.mottaker.typeNavn)
                     string(hendelse.tekst.toHash())
                     timestamp_utc(hendelse.opprettetTidspunkt)
+                }
+                if (hendelse.eksterneVarsler.isNotEmpty()) {
+                    database.nonTransactionalBatch( // batchCommand
+                        """
+                        insert into varsel_statistikk_bestilling 
+                            (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
+                        values
+                            (?, ?, ?, ?, ?)
+                        """
+                    ) {
+                        hendelse.eksterneVarsler.forEach { eksterntVarsel ->
+                            when (eksterntVarsel) {
+                                is EpostVarselKontaktinfo -> {
+                                    uuid(eksterntVarsel.varselId)
+                                    string("epost_kontaktinfo")
+                                    uuid(hendelse.notifikasjonId)
+                                    string(hendelse.produsentId)
+                                    string(eksterntVarsel.epostAddr)
+                                    addBatch()
+                                }
+                                is SmsVarselKontaktinfo -> {
+                                    uuid(eksterntVarsel.varselId)
+                                    string("sms_kontaktinfo")
+                                    uuid(hendelse.notifikasjonId)
+                                    string(hendelse.produsentId)
+                                    string(eksterntVarsel.tlfnr)
+                                    addBatch()
+                                }
+                            }
+                        }
+                    }
                 }
             }
             is Hendelse.OppgaveUtført -> {
