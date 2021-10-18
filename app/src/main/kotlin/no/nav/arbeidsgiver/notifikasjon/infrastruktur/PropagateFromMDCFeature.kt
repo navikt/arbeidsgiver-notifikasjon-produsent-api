@@ -6,10 +6,17 @@ import io.ktor.client.request.*
 import io.ktor.util.*
 import org.slf4j.MDC
 
-val defaultKeys = emptyList<String>()
+val defaultKeys = emptyList<PropagatedKey>()
+
+data class PropagatedKey(
+    val mdcKey: String,
+    val headerKey: String
+)
+
+infix fun String.asHeader(that: String): PropagatedKey = PropagatedKey(mdcKey = this, headerKey = that)
 
 class PropagateFromMDCFeature internal constructor(
-    val keysToPropagate: List<String>
+    val keysToPropagate: List<PropagatedKey>
 ) {
 
     /**
@@ -19,13 +26,13 @@ class PropagateFromMDCFeature internal constructor(
         /**
          * backing field
          */
-        private var _keysToPropagate: MutableList<String> = defaultKeys.toMutableList()
+        private var _keysToPropagate: MutableList<PropagatedKey> = defaultKeys.toMutableList()
         /**
          * list of keys to propagate from MDC to request header
          *
          * Default value for [keysToPropagate] is [defaultKeys].
          */
-        var keysToPropagate: List<String>
+        var keysToPropagate: List<PropagatedKey>
             set(value) {
                 require(value.isNotEmpty()) { "At least one key should be provided" }
 
@@ -38,6 +45,13 @@ class PropagateFromMDCFeature internal constructor(
          * Adds key to propagate
          */
         fun propagate(vararg keys: String) {
+            _keysToPropagate += keys.map { it asHeader it }
+        }
+
+        /**
+         * Adds key to propagate
+         */
+        fun propagate(vararg keys: PropagatedKey) {
             _keysToPropagate += keys
         }
     }
@@ -57,9 +71,9 @@ class PropagateFromMDCFeature internal constructor(
         override fun install(feature: PropagateFromMDCFeature, scope: HttpClient) {
             scope.requestPipeline.intercept(HttpRequestPipeline.Phases.State) {
                 feature.keysToPropagate.forEach { keyToPropagate ->
-                    MDC.get(keyToPropagate)?.let { mdcValue ->
-                        if (context.headers[keyToPropagate] == null) {
-                            context.headers.append(keyToPropagate, mdcValue)
+                    MDC.get(keyToPropagate.mdcKey)?.let { mdcValue ->
+                        if (context.headers[keyToPropagate.headerKey] == null) {
+                            context.headers.append(keyToPropagate.headerKey, mdcValue)
                         }
                     }
                 }

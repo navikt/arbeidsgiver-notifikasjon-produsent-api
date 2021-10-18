@@ -43,6 +43,7 @@ class NærmesteLederServiceImpl(
         }
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
+            propagate("x_correlation_id" asHeader "Nav-Callid")
         }
     }
 
