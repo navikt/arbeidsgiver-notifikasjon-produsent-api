@@ -145,18 +145,34 @@ class EksternVarslingRepository(
         }
     }
 
-    private fun lockRow(varselId: String) {
-        database.transaction {
-            executeCommand("""
-                UPDATE sms_varsel_kontaktinfo
-                SET 
-                    locked_at = CURRENT_TIMESTAMP,
-                    locked_by = ?,
-                    locked_until = CURRENT_TIMESTAMP + CAST (? AS INTERVAL)
-                WHERE varsel_id = ?
-            """) {
-                string(podName)
+    private suspend fun <T> Transaction.withLockedRow(varselId: UUID, body: Transaction.() -> T) {
+        val changedRows = executeCommand("""
+            UPDATE sms_varsel_kontaktinfo
+            SET 
+                /* locked = true */
+                locked_at = CURRENT_TIMESTAMP,
+                locked_by = ?,
+                locked_until = CURRENT_TIMESTAMP + CAST (? AS INTERVAL)
+            WHERE varsel_id = ? /* AND locked = false */
+        """) {
+            string(podName)
+            /* TODO: set the interval-type value. minutes? */
+            uuid(varselId)
+        }
+        if (changedRows >= 1) {
+            /* the row exists! */
+            body().also {
+                executeCommand("""
+                    UPDATE sms_varsel_kontaktinfo
+                    SET 
+                        /* locked = false */
+                    WHERE varsel_id = ?
+                """) {
+                    uuid(varselId)
+                }
             }
+        } else {
+            /* no matching row. */
         }
     }
 
