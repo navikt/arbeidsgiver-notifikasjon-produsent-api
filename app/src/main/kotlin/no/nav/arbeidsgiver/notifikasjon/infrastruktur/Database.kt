@@ -114,7 +114,7 @@ class Database private constructor(
 
     suspend fun <T> transaction(
         rollback: (e: Exception) -> T = { throw it },
-        body: Transaction.() -> T
+        body: suspend Transaction.() -> T
     ): T =
         dataSource.withConnection {
             val savedAutoCommit = autoCommit
@@ -207,6 +207,9 @@ class ParameterSetters(
     }
 
     fun timestamp(value: LocalDateTime) =
+        preparedStatement.setObject(index++, value)
+
+    fun nullableTimestamp(value: LocalDateTime?) =
         preparedStatement.setObject(index++, value)
 }
 

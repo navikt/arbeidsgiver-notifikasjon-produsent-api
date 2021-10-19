@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.eksternvarsling.EksternVarslingModel
+import no.nav.arbeidsgiver.notifikasjon.eksternvarsling.EksternVarslingRepository
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
@@ -38,7 +38,7 @@ object EksternVarsling {
                 try {
                     val database = Database.openDatabase(databaseConfig)
                     Health.subsystemReady[Subsystem.DATABASE] = true
-                    EksternVarslingModel(database)
+                    EksternVarslingRepository(database)
                 } catch (e: Exception) {
                     Health.subsystemAlive[Subsystem.DATABASE] = false
                     throw e
