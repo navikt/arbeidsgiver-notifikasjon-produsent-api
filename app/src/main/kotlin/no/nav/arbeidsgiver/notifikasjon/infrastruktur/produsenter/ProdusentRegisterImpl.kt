@@ -19,7 +19,9 @@ val FAGER_TESTPRODUSENT = Produsent(
 val ARBEIDSGIVER_TILTAK = Produsent(
     id = "arbeidsgiver-tiltak",
     accessPolicy = basedOnEnv(
-        prod = listOf(),
+        prod = listOf(
+            "prod-fss:arbeidsgiver:tiltaksgjennomforing-api",
+        ),
         other = listOf(
             "dev-gcp:arbeidsgiver:tiltak-refusjon-api",
             "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
@@ -30,7 +32,7 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         "Lønnstilskudd",
         "Mentor",
         "Sommerjobb",
-        "Arbeidstrening"
+        "Arbeidstrening",
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
@@ -42,10 +44,12 @@ val ARBEIDSGIVER_TILTAK = Produsent(
 )
 
 val PRODUSENT_LIST = basedOnEnv(
-    prod = listOf(),
+    prod = listOf(
+        ARBEIDSGIVER_TILTAK,
+    ),
     other = listOf(
         FAGER_TESTPRODUSENT,
-        ARBEIDSGIVER_TILTAK
+        ARBEIDSGIVER_TILTAK,
     )
 )
 
