@@ -104,8 +104,8 @@ object BrukerAPI {
         altinn: Altinn,
         enhetsregisteret: Enhetsregisteret,
         brukerModel: BrukerModel,
+        nærmesteLederModel: NærmesteLederModel,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
-        nærmesteLederService: NærmesteLederService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
 
@@ -121,7 +121,7 @@ object BrukerAPI {
 
                 queryNotifikasjoner(
                     altinn = altinn,
-                    nærmesteLederService = nærmesteLederService,
+                    nærmesteLederModel = nærmesteLederModel,
                     brukerModel = brukerModel
                 )
 
@@ -149,7 +149,7 @@ object BrukerAPI {
 
     fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
         altinn: Altinn,
-        nærmesteLederService: NærmesteLederService,
+        nærmesteLederModel: NærmesteLederModel,
         brukerModel: BrukerModel
     ) {
         coDataFetcher("notifikasjoner") { env ->
@@ -170,7 +170,7 @@ object BrukerAPI {
                 }
                 val ansatte = async {
                     try{
-                        nærmesteLederService.hentAnsatte(context.token)
+                        nærmesteLederModel.hentAnsatte(context.fnr)
                     } catch (e: Exception) {
                         log.error("Henting av DigiSyfo-tilganger feilet", e)
                         null

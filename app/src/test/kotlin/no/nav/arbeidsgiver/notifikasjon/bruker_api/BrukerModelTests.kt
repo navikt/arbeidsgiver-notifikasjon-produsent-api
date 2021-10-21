@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
-import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
 import no.nav.arbeidsgiver.notifikasjon.Bruker
@@ -9,7 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NærmesteLederService
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
@@ -27,7 +26,7 @@ class BrukerModelTests : DescribeSpec({
             ansattFnr = "33314",
             virksomhetsnummer = "1337"
         )
-        val ansatte = listOf(NærmesteLederService.NærmesteLederFor(
+        val ansatte = listOf(NærmesteLederModel.NærmesteLederFor(
             ansattFnr = mottaker.ansattFnr,
             virksomhetsnummer = mottaker.virksomhetsnummer,
         ))

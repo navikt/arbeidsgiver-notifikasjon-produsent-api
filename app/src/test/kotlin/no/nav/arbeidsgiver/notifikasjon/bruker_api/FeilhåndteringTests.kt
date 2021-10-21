@@ -10,15 +10,15 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NærmesteLederService
 import no.nav.arbeidsgiver.notifikasjon.util.*
 
 class FeilhåndteringTests : DescribeSpec({
     val queryModel: BrukerModelImpl = mockk()
 
     val altinn: Altinn = mockk()
-    val nærmestelederservice: NærmesteLederService = mockk()
+    val nærmesteLederModel: NærmesteLederModel = mockk()
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
@@ -26,7 +26,7 @@ class FeilhåndteringTests : DescribeSpec({
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
             brukerModel = queryModel,
             kafkaProducer = mockk(),
-            nærmesteLederService = nærmestelederservice,
+            nærmesteLederModel = nærmesteLederModel,
         )
     )
 
@@ -42,7 +42,7 @@ class FeilhåndteringTests : DescribeSpec({
             } returns listOf()
 
             coEvery {
-                nærmestelederservice.hentAnsatte(any())
+                nærmesteLederModel.hentAnsatte(any())
             } returns listOf()
 
             val response = engine.brukerApi(
@@ -73,7 +73,7 @@ class FeilhåndteringTests : DescribeSpec({
         context("Feil DigiSyfo, Altinn ok") {
 
             coEvery {
-                nærmestelederservice.hentAnsatte(any())
+                nærmesteLederModel.hentAnsatte(any())
             } throws RuntimeException("Mock failure")
 
             coEvery {
@@ -113,7 +113,7 @@ class FeilhåndteringTests : DescribeSpec({
         context("Feil DigiSyfo, feil Altinn") {
 
             coEvery {
-                nærmestelederservice.hentAnsatte(any())
+                nærmesteLederModel.hentAnsatte(any())
             } throws RuntimeException("Mock failure")
 
             coEvery {
