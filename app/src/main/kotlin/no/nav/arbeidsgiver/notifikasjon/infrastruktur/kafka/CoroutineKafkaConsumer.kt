@@ -38,13 +38,20 @@ private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
     }.toList()
 
 fun createKafkaConsumer(configure: Properties.() -> Unit = {}): CoroutineKafkaConsumer<KafkaKey, Hendelse> {
+    return createAndSubscribeKafkaConsumer(TOPIC, configure = configure)
+}
+
+fun <K, V> createAndSubscribeKafkaConsumer(
+    vararg topic: String,
+    configure: Properties.() -> Unit = {}
+): CoroutineKafkaConsumer<K, V> {
     val properties = Properties().apply {
         putAll(CONSUMER_PROPERTIES)
         configure()
     }
-    val kafkaConsumer = KafkaConsumer<KafkaKey, Hendelse>(properties)
+    val kafkaConsumer = KafkaConsumer<K, V>(properties)
     KafkaClientMetrics(kafkaConsumer).bindTo(Health.meterRegistry)
-    kafkaConsumer.subscribe(listOf(TOPIC))
+    kafkaConsumer.subscribe(topic.asList())
     return CoroutineKafkaConsumerImpl(kafkaConsumer)
 }
 

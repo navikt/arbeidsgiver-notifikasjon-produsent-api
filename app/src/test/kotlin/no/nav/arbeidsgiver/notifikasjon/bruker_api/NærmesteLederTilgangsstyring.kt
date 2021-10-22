@@ -8,7 +8,7 @@ import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NærmesteLederService.NærmesteLederFor
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NærmesteLederFor
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*

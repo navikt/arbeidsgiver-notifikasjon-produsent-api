@@ -1,9 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.executable.bruker_api
 
 import db.migration.OS
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.Bruker
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NærmesteLederService
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
@@ -20,11 +19,6 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             LOCALHOST_BRUKER_AUTHENTICATION,
         ),
         enhetsregisteret = EnhetsregisteretStub(),
-        nærmesteLederService = object : NærmesteLederService {
-            override suspend fun hentAnsatte(userToken: String): List<NærmesteLederService.NærmesteLederFor> {
-                return listOf()
-            }
-        },
         altinn = AltinnStub { _, _ ->
             val alleOrgnr = listOf(
                 "811076732",
