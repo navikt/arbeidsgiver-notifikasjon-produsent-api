@@ -102,7 +102,7 @@ object Bruker {
                     val nærmesteLederLeesahTopic = "teamsykmelding.syfo-narmesteleder-leesah"
                     val nærmesteLederKafkaConsumer = createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
                         putAll(mapOf(
-                            ConsumerConfig.GROUP_ID_CONFIG to "leesah-model-builder",
+                            ConsumerConfig.GROUP_ID_CONFIG to "notifikasjon-bruker-api-narmesteleder-model-builder",
                             ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
                         ))
                     }
