@@ -1,15 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.JsonDeserializer
 import java.time.LocalDate
-import java.time.OffsetDateTime
 import java.util.*
 
 interface NærmesteLederModel {
@@ -32,6 +26,8 @@ interface NærmesteLederModel {
         val ansattFnr: String,
         val virksomhetsnummer: String,
     )
+
+    class NarmesteLederLeesahDeserializer : JsonDeserializer<NarmesteLederLeesah>(NarmesteLederLeesah::class.java)
 
     suspend fun hentAnsatte(
         narmesteLederFnr: String,

@@ -8,7 +8,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesahDeserializer
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
@@ -99,8 +100,11 @@ object Bruker {
                     log.info("KafkaConsumer er deaktivert.")
                 } else {
                     val nærmesteLederLeesahTopic = "teamsykmelding.syfo-narmesteleder-leesah"
-                    val nærmesteLederKafkaConsumer = createAndSubscribeKafkaConsumer<String, NærmesteLederModel.NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
-                        put(ConsumerConfig.GROUP_ID_CONFIG, "leesah-model-builder")
+                    val nærmesteLederKafkaConsumer = createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
+                        putAll(mapOf(
+                            ConsumerConfig.GROUP_ID_CONFIG to "leesah-model-builder",
+                            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
+                        ))
                     }
                     val nærmesteLederModel = nærmesteLederModelAsync.await()
 
