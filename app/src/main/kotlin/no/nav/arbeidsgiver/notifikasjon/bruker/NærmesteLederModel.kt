@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.JsonDeserializer
 import java.time.LocalDate
@@ -27,14 +28,14 @@ interface NærmesteLederModel {
         val virksomhetsnummer: String,
     )
 
-    class NarmesteLederLeesahDeserializer : JsonDeserializer<NarmesteLederLeesah>(NarmesteLederLeesah::class.java)
-
     suspend fun hentAnsatte(
         narmesteLederFnr: String,
     ): List<NærmesteLederFor>
 
     suspend fun oppdaterModell(nærmesteLederLeesah: NarmesteLederLeesah)
 }
+
+class NarmesteLederLeesahDeserializer : JsonDeserializer<NarmesteLederLeesah>(NarmesteLederLeesah::class.java)
 
 class NærmesteLederModelImpl(
     private val database: Database,
@@ -56,7 +57,7 @@ class NærmesteLederModelImpl(
     }
 
 
-    override suspend fun oppdaterModell(nærmesteLederLeesah: NærmesteLederModel.NarmesteLederLeesah) {
+    override suspend fun oppdaterModell(nærmesteLederLeesah: NarmesteLederLeesah) {
         if (nærmesteLederLeesah.aktivTom != null) {
             database.nonTransactionalCommand(
                 """
