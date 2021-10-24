@@ -56,7 +56,7 @@ interface BrukerModel {
     suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<Tilgang>,
-        ansatte: List<NærmesteLederService.NærmesteLederFor>
+        ansatte: List<NærmesteLederModel.NærmesteLederFor>
     ): List<Notifikasjon>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -107,7 +107,7 @@ class BrukerModelImpl(
     override suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<BrukerModel.Tilgang>,
-        ansatte: List<NærmesteLederService.NærmesteLederFor>
+        ansatte: List<NærmesteLederModel.NærmesteLederFor>
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
         val tilgangerJsonB = tilganger.joinToString {
             "'${
@@ -179,7 +179,7 @@ class BrukerModelImpl(
                 when (val mottaker = notifikasjon.mottaker) {
                     is NærmesteLederMottaker ->
                         ansatteLookupTable.contains(
-                            NærmesteLederService.NærmesteLederFor(
+                            NærmesteLederModel.NærmesteLederFor(
                                 ansattFnr = mottaker.ansattFnr,
                                 virksomhetsnummer = mottaker.virksomhetsnummer
                             )

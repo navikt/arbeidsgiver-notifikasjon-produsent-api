@@ -6,7 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NærmesteLederService
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
@@ -27,7 +27,7 @@ class SoftDeleteTests : DescribeSpec({
             virksomhetsnummer = "1337"
         )
 
-        val ansatte = listOf(NærmesteLederService.NærmesteLederFor(
+        val ansatte = listOf(NærmesteLederModel.NærmesteLederFor(
             ansattFnr = mottaker.ansattFnr,
             virksomhetsnummer = mottaker.virksomhetsnummer,
         ))

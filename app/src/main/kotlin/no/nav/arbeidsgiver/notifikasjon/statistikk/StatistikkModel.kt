@@ -178,8 +178,8 @@ class StatistikkModel(
                     """
                     insert into notifikasjon_statistikk 
                         (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
-                    values
-                        (?, ?, 'beskjed', ?, ?, ?, ?)
+                    values (?, ?, 'beskjed', ?, ?, ?, ?)
+                    on conflict on constraint notifikasjon_statistikk_pkey do nothing;
                     """
                 ) {
                     string(hendelse.produsentId)
@@ -225,10 +225,17 @@ class StatistikkModel(
             is Hendelse.OppgaveOpprettet -> {
                 database.nonTransactionalCommand(
                     """
-                    insert into notifikasjon_statistikk 
-                        (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
-                    values
-                    (?, ?, 'oppgave', ?, ?, ?, ?)
+                    insert into notifikasjon_statistikk(
+                        produsent_id, 
+                        notifikasjon_id, 
+                        notifikasjon_type, 
+                        merkelapp, 
+                        mottaker, 
+                        checksum, 
+                        opprettet_tidspunkt
+                    ) 
+                    values (?, ?, 'oppgave', ?, ?, ?, ?)
+                    on conflict on constraint notifikasjon_statistikk_pkey do nothing;
                     """
                 ) {
                     string(hendelse.produsentId)
@@ -287,8 +294,8 @@ class StatistikkModel(
                     """
                     insert into notifikasjon_statistikk_klikk 
                         (hendelse_id, notifikasjon_id, klikket_paa_tidspunkt)
-                    values
-                    (?, ?, ?)
+                    values (?, ?, ?)
+                    on conflict on constraint notifikasjon_statistikk_klikk_pkey do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
@@ -299,10 +306,11 @@ class StatistikkModel(
             is Hendelse.EksterntVarselVellykket -> {
                 database.nonTransactionalCommand(
                     """
-                    insert into varsel_statistikk 
-                        (hendelse_id, notifikasjon_id, produsent_id, status)
-                    values
-                    (?, ?, ?, 'vellykket')
+                    insert into varsel_statistikk(
+                        hendelse_id, notifikasjon_id, produsent_id, status
+                    )
+                    values (?, ?, ?, 'vellykket')
+                    on conflict on constraint varsel_statistikk_pkey do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
@@ -313,10 +321,11 @@ class StatistikkModel(
             is Hendelse.EksterntVarselFeilet -> {
                 database.nonTransactionalCommand(
                     """
-                    insert into varsel_statistikk 
-                        (hendelse_id, notifikasjon_id, produsent_id, status)
-                    values
-                    (?, ?, ?, 'feilet')
+                    insert into varsel_statistikk(
+                        hendelse_id, notifikasjon_id, produsent_id, status
+                    )
+                    values (?, ?, ?, 'feilet')
+                    on conflict on constraint varsel_statistikk_pkey do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
