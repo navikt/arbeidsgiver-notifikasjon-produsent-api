@@ -33,5 +33,6 @@ delete from notifikasjon_statistikk;
 delete from notifikasjon_statistikk_klikk;
 
 alter table notifikasjon_statistikk rename to notifikasjon;
+alter index notifikasjon_statistikk_pkey rename to notifikasjon_pkey;
 alter table notifikasjon_statistikk_klikk rename to notifikasjon_klikk;
-
+alter index notifikasjon_statistikk_klikk_pkey rename to notifikasjon_klikk_pkey;
