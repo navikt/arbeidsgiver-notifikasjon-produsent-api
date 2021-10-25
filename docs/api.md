@@ -20,7 +20,7 @@ miljø | url
 -----|------
 mock | `https://notifikasjon-fake-produsent-api.labs.nais.io/api/graphql`
 dev | fra gcp: `https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql`, <br/> fra fss: `https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql`
-prod | tba
+prod | `https://ag-notifikasjon-produsent-api.intern.nav.no/api/graphql`
 
 
 # GraphQL over HTTP

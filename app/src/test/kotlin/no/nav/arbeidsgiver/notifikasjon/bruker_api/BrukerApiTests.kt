@@ -24,8 +24,8 @@ class BrukerApiTests : DescribeSpec({
             altinn = AltinnStub(),
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
             brukerModel = queryModel,
-            kafkaProducer = mockk(),
-            nærmesteLederService = NærmesteLederServiceStub(),
+            nærmesteLederModel = mockk(),
+            kafkaProducer = mockk()
         )
     )
 

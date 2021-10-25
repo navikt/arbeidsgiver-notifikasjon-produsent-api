@@ -8,6 +8,8 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -15,6 +17,7 @@ import java.util.*
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerModelImpl(database)
+    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     val fnr = "00000000000"
     val ansattFnr = "12344321"
@@ -27,7 +30,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             enhetsregisteret = EnhetsregisteretStub(),
             brukerModel = queryModel,
             kafkaProducer = mockk(),
-            nærmesteLederService = NærmesteLederServiceStub(mottaker)
+            nærmesteLederModel = nærmesteLederModel
         )
     )
 
@@ -48,6 +51,13 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             produsentId = "",
         )
         queryModel.oppdaterModellEtterHendelse(beskjedOpprettet)
+        nærmesteLederModel.oppdaterModell(NærmesteLederModel.NarmesteLederLeesah(
+            narmesteLederId = uuid,
+            fnr = mottaker.ansattFnr,
+            narmesteLederFnr = mottaker.naermesteLederFnr,
+            orgnummer = mottaker.virksomhetsnummer,
+            aktivTom = null
+        ))
 
         /* sjekk at beskjed ikke er klikket på */
         val response = engine.brukerApi(
