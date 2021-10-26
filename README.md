@@ -17,6 +17,16 @@ For at dette skal virke må man sende med riktig auth header (Authorization: Bea
 Du kan f.eks. sette opp mod-header plugin i chrome eller firefox.
 Bruk LocalhostIssuer til å lage tokens du kan bruke i header.
 
+## Deploy med reset og rebuild 
+obs: kun for ikke kritiske apps som f.eks statistikk.
+Scale ned replicaset: 
+`kubectl get replicaset`
+`kubectl scale --replicas=0 rs/notifikasjon-statistikk-879989859`
+deploy ny app:
+- med migrering som nullstiller database til ønsket tidspunkt eller helt.
+- med ny consumer-group-id postfix eller MigrationOps som setter bestemt offset.
+
+
 ## Ticks n' Trips
 
 * start lokal kafka cluster
