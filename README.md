@@ -21,7 +21,7 @@ Bruk LocalhostIssuer til å lage tokens du kan bruke i header.
 obs: kun for ikke kritiske apps som f.eks statistikk.
 Scale ned replicaset: 
 `kubectl get replicaset`
-`kubectl scale --replicas=0 rs/notifikasjon-statistikk-879989859`
+`kubectl scale --replicas=0 deployment/notifikasjon-statistikk`
 deploy ny app:
 - med migrering som nullstiller database til ønsket tidspunkt eller helt.
 - med ny consumer-group-id postfix eller MigrationOps som setter bestemt offset.
