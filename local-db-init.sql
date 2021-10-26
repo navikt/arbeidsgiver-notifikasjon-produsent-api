@@ -1,3 +1,5 @@
+CREATE ROLE cloudsqliamuser;
+
 CREATE DATABASE "bruker-model";
 GRANT ALL PRIVILEGES ON DATABASE "bruker-model" TO postgres;
 
