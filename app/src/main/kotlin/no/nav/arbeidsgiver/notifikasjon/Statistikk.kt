@@ -56,7 +56,7 @@ object Statistikk {
                     log.info("KafkaConsumer er deaktivert.")
                 } else {
                     val kafkaConsumer = createKafkaConsumer {
-                        put(ConsumerConfig.GROUP_ID_CONFIG, "statistikk-model-builder")
+                        put(ConsumerConfig.GROUP_ID_CONFIG, "statistikk-model-builder-1")
                     }
 
                     val statistikkService = statistikkServiceAsync.await()

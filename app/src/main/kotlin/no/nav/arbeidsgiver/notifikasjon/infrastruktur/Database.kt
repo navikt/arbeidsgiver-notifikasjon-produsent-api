@@ -112,6 +112,14 @@ class Database private constructor(
         Transaction(this).executeCommand(sql, setup)
     }
 
+    suspend fun <T> nonTransactionalBatch(
+        @Language("PostgreSQL") sql: String,
+        iterable: Iterable<T>,
+        setup: ParameterSetters.(it: T) -> Unit = {},
+    ): IntArray = dataSource.withConnection {
+        Transaction(this).executeBatch(sql, iterable, setup)
+    }
+
     suspend fun <T> transaction(
         rollback: (e: Exception) -> T = { throw it },
         body: Transaction.() -> T
@@ -171,6 +179,25 @@ value class Transaction(
                 preparedStatement.executeUpdate()
             }
     }
+
+    fun <T> executeBatch(
+        @Language("PostgreSQL") sql: String,
+        iterable: Iterable<T>,
+        setup: ParameterSetters.(it: T) -> Unit = {},
+    ): IntArray {
+        if (iterable.none()) {
+            return intArrayOf()
+        }
+        return connection
+            .prepareStatement(sql)
+            .use { preparedStatement ->
+                iterable.forEach {
+                    ParameterSetters(preparedStatement).setup(it)
+                    preparedStatement.addBatch()
+                }
+                preparedStatement.executeBatch()
+            }
+    }
 }
 
 class ParameterSetters(
@@ -208,5 +235,6 @@ class ParameterSetters(
 
     fun timestamp(value: LocalDateTime) =
         preparedStatement.setObject(index++, value)
+
 }
 

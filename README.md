@@ -17,6 +17,16 @@ For at dette skal virke må man sende med riktig auth header (Authorization: Bea
 Du kan f.eks. sette opp mod-header plugin i chrome eller firefox.
 Bruk LocalhostIssuer til å lage tokens du kan bruke i header.
 
+## Deploy med reset og rebuild 
+obs: kun for ikke kritiske apps som f.eks statistikk.
+Scale ned replicaset: 
+`kubectl get replicaset`
+`kubectl scale --replicas=0 deployment/notifikasjon-statistikk`
+deploy ny app:
+- med migrering som nullstiller database til ønsket tidspunkt eller helt.
+- med ny consumer-group-id postfix eller MigrationOps som setter bestemt offset.
+
+
 ## Ticks n' Trips
 
 * start lokal kafka cluster
@@ -28,40 +38,40 @@ Bruk LocalhostIssuer til å lage tokens du kan bruke i header.
 * vis broker version
   * `kafka-broker-api-versions --bootstrap-server localhost:9092 --version`
 * create topic
-  * `kafka-topics --zookeeper $ZK_HOSTS --create --topic arbeidsgiver.notifikasjon --partitions 3 --replication-factor 3`
+  * `kafka-topics --zookeeper $ZK_HOSTS --create --topic fager.notifikasjon --partitions 3 --replication-factor 3`
     * legg til `--if-not-exists` for å kun opprette dersom den ikke eksisterer fra før
 * list topics
   * `kafka-topics --zookeeper zookeeper:2181 --list` 
   * `kafka-topics --zookeeper zookeeper:2181 --list --exclude-internal`  
 * describe topic
-  * `kafka-topics --zookeeper zookeeper:2181 --topic arbeidsgiver.notifikasjon --describe`
+  * `kafka-topics --zookeeper zookeeper:2181 --topic fager.notifikasjon --describe`
 * juster opp antall partisjoner for topic
-  * `kafka-topics --zookeeper zookeeper:2181 --alter --topic arbeidsgiver.notifikasjon --partitions 5`
+  * `kafka-topics --zookeeper zookeeper:2181 --alter --topic fager.notifikasjon --partitions 5`
 * purge en topic (krever å sette retention lav, så vente, så slette retention)
-  * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --add-config retention.ms=1000`
+  * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name fager.notifikasjon --add-config retention.ms=1000`
   * _a few moments later_
-  * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --delete-config retention.ms`
+  * `kafka-configs --zookeeper zookeeper:2181 --alter --entity-type topics --entity-name fager.notifikasjon --delete-config retention.ms`
 * list config for en topic
-  * `kafka-configs --bootstrap-server localhost:9092 --describe --entity-type topics --entity-name arbeidsgiver.notifikasjon`
+  * `kafka-configs --bootstrap-server localhost:9092 --describe --entity-type topics --entity-name fager.notifikasjon`
 * endre config på en topic
-  * `kafka-configs --bootstrap-server localhost:9092 --alter --entity-type topics --entity-name arbeidsgiver.notifikasjon --add-config cleanup.policy=compact`
+  * `kafka-configs --bootstrap-server localhost:9092 --alter --entity-type topics --entity-name fager.notifikasjon --add-config cleanup.policy=compact`
 * delete topic
-  * `kafka-topics --zookeeper zookeeper:2181 --delete --topic arbeidsgiver.notifikasjon`
+  * `kafka-topics --zookeeper zookeeper:2181 --delete --topic fager.notifikasjon`
 * consume en topic og print til console (default from latest)
-  * `kafka-console-consumer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true`
+  * `kafka-console-consumer --bootstrap-server localhost:9092 --topic fager.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true`
   * _from the beginning_ (legg til `--from-beginning`)
-    * `kafka-console-consumer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true --from-beginning`
+    * `kafka-console-consumer --bootstrap-server localhost:9092 --topic fager.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true --from-beginning`
 * produce til en topic
-  * `kafka-console-producer --bootstrap-server localhost:9092 --topic arbeidsgiver.notifikasjon`
+  * `kafka-console-producer --bootstrap-server localhost:9092 --topic fager.notifikasjon`
 * delete messages from a topic
   * `kafka-delete-records.sh --bootstrap-server $KAFKA_BROKERS --offset-json-file delete-records.json`
 * inspect a consumer group
   * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --describe` 
 * adjust offset of a consumer group (requires group is inactive, i.e. no running consumers)
-  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon --reset-offsets --to-earlies --execute`
-  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon --shift-by 1 --execute`
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon --reset-offsets --to-earliest --execute`
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon --shift-by 1 --execute`
   * specify partition using `--topic topic:0,1,2`. e.g. reset offset for partition 14 to 5004:
-  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic arbeidsgiver.notifikasjon:14 --reset-offsets --to-offset 5004 --execute`
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon:14 --reset-offsets --to-offset 5004 --execute`
 
 ref:
 https://medium.com/@TimvanBaarsen/apache-kafka-cli-commands-cheat-sheet-a6f06eac01b
