@@ -96,7 +96,7 @@ class Database private constructor(
         }
     }
 
-    suspend fun <T> standaloneExecuteQuery(
+    suspend fun <T> nonTransactionalExecuteQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
@@ -105,14 +105,14 @@ class Database private constructor(
             Transaction(this).executeQuery(sql, setup, transform)
         }
 
-    suspend fun standaloneExecuteUpdate(
+    suspend fun nonTransactionalExecuteUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int = dataSource.withConnection {
         Transaction(this).executeUpdate(sql, setup)
     }
 
-    suspend fun <T> standaloneExecuteBatch(
+    suspend fun <T> nonTransactionalExecuteBatch(
         @Language("PostgreSQL") sql: String,
         iterable: Iterable<T>,
         setup: ParameterSetters.(it: T) -> Unit = {},

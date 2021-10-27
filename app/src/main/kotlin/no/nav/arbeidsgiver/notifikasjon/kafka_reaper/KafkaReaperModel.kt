@@ -53,7 +53,7 @@ class KafkaReaperModelImpl(
     }
 
     override suspend fun alleRelaterteHendelser(notifikasjonId: UUID): List<UUID> {
-        return database.standaloneExecuteQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 SELECT hendelse_id FROM notifikasjon_hendelse_relasjon
                 WHERE notifikasjon_id = ?
@@ -67,7 +67,7 @@ class KafkaReaperModelImpl(
     }
 
     override suspend fun erSlettet(notifikasjonId: UUID): Boolean {
-        return database.standaloneExecuteQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 SELECT *
                 FROM deleted_notifikasjon
@@ -82,7 +82,7 @@ class KafkaReaperModelImpl(
     }
 
     override suspend fun fjernRelasjon(hendelseId: UUID) {
-        database.standaloneExecuteUpdate(
+        database.nonTransactionalExecuteUpdate(
             """
                 DELETE FROM notifikasjon_hendelse_relasjon
                 WHERE hendelse_id = ?

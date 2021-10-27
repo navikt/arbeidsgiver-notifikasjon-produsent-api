@@ -123,7 +123,7 @@ class BrukerModelImpl(
 
         val ansatteLookupTable = ansatte.toSet()
 
-        val notifikasjoner = database.standaloneExecuteQuery(
+        val notifikasjoner = database.nonTransactionalExecuteQuery(
             """
             select 
                 n.*, 
@@ -190,7 +190,7 @@ class BrukerModelImpl(
     }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
-        database.standaloneExecuteQuery(
+        database.nonTransactionalExecuteQuery(
             """
                 SELECT virksomhetsnummer FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ? LIMIT 1
             """, {
@@ -232,7 +232,7 @@ class BrukerModelImpl(
     }
 
     private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
-        database.standaloneExecuteUpdate(
+        database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
@@ -244,7 +244,7 @@ class BrukerModelImpl(
     }
 
     private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
-        database.standaloneExecuteUpdate(
+        database.nonTransactionalExecuteUpdate(
             """
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
             ON CONFLICT ON CONSTRAINT brukerklikk_pkey

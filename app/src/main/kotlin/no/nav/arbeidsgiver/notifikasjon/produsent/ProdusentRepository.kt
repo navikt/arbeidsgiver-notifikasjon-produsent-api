@@ -27,7 +27,7 @@ class ProdusentRepositoryImpl(
     val log = logger()
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? {
-        return database.standaloneExecuteQuery(
+        return database.nonTransactionalExecuteQuery(
             """ select * from notifikasjon where id = ? """, {
                 uuid(id)
             }, resultSetTilNotifikasjon
@@ -35,7 +35,7 @@ class ProdusentRepositoryImpl(
     }
 
     override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? {
-        return database.standaloneExecuteQuery(
+        return database.nonTransactionalExecuteQuery(
             """ select * from notifikasjon where ekstern_id = ? and merkelapp = ? """, {
                 string(eksternId)
                 string(merkelapp)
@@ -89,7 +89,7 @@ class ProdusentRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
-        database.standaloneExecuteUpdate(
+        database.nonTransactionalExecuteUpdate(
             """
             DELETE FROM notifikasjon 
             WHERE id = ?
@@ -100,7 +100,7 @@ class ProdusentRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterSoftDelete(softDelete: Hendelse.SoftDelete) {
-        database.standaloneExecuteUpdate(
+        database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
             SET deleted_at = ? 
@@ -118,7 +118,7 @@ class ProdusentRepositoryImpl(
         antall: Int,
         offset: Int
     ): List<ProdusentModel.Notifikasjon> {
-        return database.standaloneExecuteQuery(
+        return database.nonTransactionalExecuteQuery(
             """ select * from notifikasjon 
                   where merkelapp = any(?)
                   ${grupperingsid?.let { "and grupperingsid = ?" }?:""} 
@@ -133,7 +133,7 @@ class ProdusentRepositoryImpl(
     }
 
     private suspend fun oppdatertModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
-        database.standaloneExecuteUpdate(
+        database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
@@ -146,7 +146,7 @@ class ProdusentRepositoryImpl(
 
 
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
-        database.standaloneExecuteUpdate(
+        database.nonTransactionalExecuteUpdate(
             """
             insert into notifikasjon(
                 type,
@@ -177,7 +177,7 @@ class ProdusentRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
-        database.standaloneExecuteUpdate(
+        database.nonTransactionalExecuteUpdate(
             """
             insert into notifikasjon(
                 type,
