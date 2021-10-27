@@ -8,7 +8,7 @@ Notfikasjoner for arbeidsgivere gjør det enkelt for arbeidsgivere å få med se
 ## Hvilket problem skal vi løse? 
 
 - __For arbedsgivere:__
-Arbeidsgivere må gå rundt og lete på mange sted for å få kontroll på hva de må gjøre og hva som skjer med saken deres. I tilegg kan arbeidsgiverne ha mange forskjellig virksomheter å holde koll på. Dette skaper en usikkerhet og onødvendig merarbeide for arbeidgsiver som ofte har en travel hverdag. 
+Arbeidsgivere må gå rundt og lete på mange steder for å få kontroll på hva de må gjøre og hva som skjer med saken deres. I tilegg kan arbeidsgiverne ha mange forskjellig virksomheter å holde koll på. Dette skaper en usikkerhet og onødvendig merarbeide for arbeidgsiver som ofte har en travel hverdag. 
 
 - __Internt i NAV:__
 Tidligere har Min side - arbeidgsiver integrert mot API-er for å kunne vise at noe krever arbeidsgivers oppmerksomhet på en vis tjeneste. Dette har viset seg vare vanskelig å vedlikeholde da API-er endres og dataen blir upålitilig. De enkelte teamene føler lite eierskap til hva som vises på Min side - arbeidsgiver og teamet vårt blir fort en flaskehals. 
