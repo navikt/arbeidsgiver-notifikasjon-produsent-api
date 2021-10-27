@@ -3,15 +3,15 @@ layout: page
 title: Introduksjon
 permalink: /
 ---
-Notfikasjoner for arbeidsgivere gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker sende notifkasjoner om på notifkasjonsplatformen. Se hvordan det ser ut på [testversjonen i labs](https://arbeidsgiver.labs.nais.io/min-side-arbeidsgiver/?) . 
+Notfikasjoner for arbeidsgivere gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker å sende notifkasjoner om på notifkasjonsplatformen. Se hvordan det ser ut på [testversjonen i labs](https://arbeidsgiver.labs.nais.io/min-side-arbeidsgiver/?) . 
 
 ## Hvilket problem skal vi løse? 
 
 - __For arbedsgivere:__
-Arbeidsgivere må gå rundt og lete på mange sted for å få kontroll på hva de må gjøre og hva som skjer med saken deres. I tilegg kan arbeidsgiverne ha mange forskjellig virksomheter å holde koll på. Dette skaper en usikkerhet og onødvendig merarbeide for arbeidgsiver som ofte har en travel hverdag. 
+Arbeidsgivere må gå rundt og lete på mange steder for å få kontroll på hva de må gjøre og hva som skjer med saken deres. I tilegg kan arbeidsgiverne ha mange forskjellig virksomheter å holde styr på. Dette skaper en usikkerhet og et unødvendig merarbeide for arbeidgsiver som ofte har en travel hverdag. 
 
 - __Internt i NAV:__
-Tidligere har Min side - arbeidgsiver integrert mot API-er for å kunne vise at noe krever arbeidsgivers oppmerksomhet på en vis tjeneste. Dette har viset seg vare vanskelig å vedlikeholde da API-er endres og dataen blir upålitilig. De enkelte teamene føler lite eierskap til hva som vises på Min side - arbeidsgiver og teamet vårt blir fort en flaskehals. 
+Tidligere har Min side - arbeidgsiver integrert mot API-er for å kunne vise at noe krever arbeidsgivers oppmerksomhet på en viss tjeneste. Dette har vist seg å være vanskelig å vedlikeholde, da API-er endres og dataen blir upålitilig. De enkelte teamene føler lite eierskap til hva som vises på Min side - arbeidsgiver og teamet vårt blir fort en flaskehals. 
 
 ## Oppgaver og beskjeder 
 Oppgaver og beskjeder vil være synlig for arbeidsgivere som er logget inn i NAV sine tjenester. Vi støtter ikke varsel på SMS eller e-post (men håper å støtte det i fremtiden). Når det finns nye beskjeder eller oppgaver har bjella en rød sirkel med et tall som viser hvor mange. 
@@ -25,7 +25,7 @@ Når arbeidsgiver trykker på bjella kan de se oppgaver og beskjeder på tvers a
 ![Når man trykker på bjella ekspandere notfikasjonerne ut](images/Bjella%20expanded.png)
 
 
-Bjella med notifikasjoner er en egen NPM-pakke som hvert enkelt team i tilegg kan plasere i bedriftsmenyn i sin applikasjon (eller direkte i applikasjon hvis dere ikke bruker bedriftsmenyn). Dette gjør det enklere for arbeidgsiver å kunne navigere mellom oppgaver og beskjeder i forskjellige applikasjoner uten å alltid må inom Min side - arbeidgsiver. 
+Bjella med notifikasjoner er en egen NPM-pakke som hvert enkelt team i tilegg kan plassere i bedriftsmenyen i sin applikasjon (eller direkte i applikasjonen hvis dere ikke bruker bedriftsmenyn). Dette gjør det enklere for arbeidgsiver å kunne navigere mellom oppgaver og beskjeder i forskjellige applikasjoner uten å alltid må inom Min side - arbeidgsiver. 
 
 
 
