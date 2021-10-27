@@ -50,58 +50,18 @@ class EksternVarslingRepository(
     }
 
     private fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: Hendelse.EksterntVarselFeilet) {
-        /* attempt to update DB state so it's like kafka? */
-        TODO()
+        TODO("oppdater database")
     }
 
     private fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: Hendelse.EksterntVarselVellykket) {
-        /* attempt to update DB state so it's like kafka? */
-        /* replay (med empty database) */
-        TODO()
+        TODO("oppdater database")
     }
 
-    /* TODO: skal vi håndtere at man tømmer database og null-stiller kafka consumer group?
-     * - forhindre re-sending ved å "detektere" at man ikke er ajour med kafka-strømmen.
-     *
-     * - basert på kafka-event-metadata, så kan vi se hvor "gammel" en hendelse er.
-     *
-     * 1. hvis sendingen ble produsert for lenge siden, marker, ikke send, vent på manuel intervention.
-     *   + enkelt system
-     *   + mulig å være vilkårlig presis
-     *   - manuelt, fare for menneskelig feil
-     *   - manuelt, kan gå med mye tid
-     *   - manuelt, kan være mye delay før avgjørelse blir tatt
-     *   - manuelt, kan være så mye jobb at vi ikke får prioritert det
-     *
-     * 2. hvis sendingen ble produsert for lenge siden, marker, ikke send.
-     *    ha en prosess, som automatisk gjør avgjørelsen.
-     *
-     *   + Vi sender i hvert fall ikke gamle ting.
-     *   - Vi får dobbletsending av nye ting.
-     *   - Heurestikk for å avgjøre om noe skal gjøres, som blir vanskeligere jo
-     *     nærmere i tid hendelsen ble sent. Ingen klar overgang fra "gamelt" til "nytt".
-     *
-     * 3. detekter rebuild. ikke prossesr jobs.
-     *  - (eldste kafka tid) - (sist lest kafka-tid)
-     *
-     * 4. oppgi snapshot (event id), og ikke utfør jobs før man er forbi den.
-     *   + utvetydig
-     *   + stopp-proessesering-logikk er enkel
-     *   - huske-hvor-man-stopper er vanskelig
-     *   - fungerer dårlig ved ikke-planlagt reset (id-en man venter til er ikke oppdatert)
-     *   - hvis man skal håndtere mister databasen, så må backup-offsettet være lagret utenfor db og kafka.
-     *   - vi må, på et eller annet vis, huske event-id-er. Per partisjon? Eller offset per partisjon?
-     *      sjekke logger
-     *      sjekke kafka-offsets fra gammel consumer group hvis man bytter consumer-group
-     */
 
     private fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
         /* "guarantees" complete sending. hard delete afterwards. */
         TODO()
     }
-
-    // TODO: huske å potensielt implementere cancel-event. jira?
-    // TODO: dokumentasjon for soft/hard delete: Stopper ikke sending av varsler.
 
     private suspend fun insertVarsler(varsler: List<EksterntVarsel>, produsentId: String, notifikasjonsId: UUID) {
         /* Rewrite to batch insert? */
@@ -146,7 +106,7 @@ class EksternVarslingRepository(
                 sendetidspunkt,
 
                 tilstand,
-                altinn_response,
+                altinn_response
             )
             VALUES 
             (
@@ -193,7 +153,7 @@ class EksternVarslingRepository(
                 sendetidspunkt,
 
                 tilstand,
-                altinn_response,
+                altinn_response
             )
             VALUES 
             (
@@ -223,12 +183,12 @@ class EksternVarslingRepository(
         }
     }
 
-
     data class ReleasedResource(
         val varselId: UUID,
         val lockedAt: LocalDateTime,
         val lockedBy: String
     )
+
     suspend fun releaseAbandonedLocks(): List<ReleasedResource> {
         return database.runNonTransactionalQuery("""
             UPDATE work_queue
@@ -237,7 +197,7 @@ class EksternVarslingRepository(
             RETURNING varsel_id, locked_by, locked_at
         """) {
             ReleasedResource(
-                varselId = getObject("varselId", UUID::class.java),
+                varselId = getObject("varsel_id", UUID::class.java),
                 lockedAt = getTimestamp("locked_at").toLocalDateTime(),
                 lockedBy = getString("locked_by"),
             )
