@@ -50,6 +50,10 @@ class EksternVarslingRepository(
     }
 
     private fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: Hendelse.EksterntVarselFeilet) {
+        database.nonTransactionalCommand("""
+        """, {}) {
+            Unit
+        }
         TODO("oppdater database")
     }
 
@@ -205,8 +209,8 @@ class EksternVarslingRepository(
     }
 
 
-    suspend fun findWork(): EksterntVarsel? {
-        return database.queryCommand("""
+    suspend fun findWork(): UUID? {
+        return database.runNonTransactionalQuery("""
                 UPDATE work_queue
                 SET locked = true,
                     locked_by = ?,
@@ -222,12 +226,12 @@ class EksternVarslingRepository(
                     )
                 RETURNING varsel_id
                     """,
-                inject = {
+                setup = {
                     string(podName)
                     // locked_until offset
 
                 },
-                extract = {
+                transform = {
                     getObject("varsel_id") as UUID
                 }
             )

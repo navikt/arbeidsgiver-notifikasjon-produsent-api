@@ -1,5 +1,5 @@
-
--- remember to add cloudsqliam stuff here.
+alter default privileges in schema public grant all on tables to cloudsqliamuser;
+grant all on all tables in schema public to cloudsqliamuser;
 
 create type varsel_type as enum ('SMS', 'EPOST');
 
@@ -33,3 +33,12 @@ create table work_queue
     locked_at timestamp null,
     locked_until timestamp null
 );
+
+create table work_queue_processing
+(
+    id int primary key default 0,
+    enabled boolean not null,
+    constraint at_most_one_row check (id = 0)
+);
+
+insert into work_queue_processing (enabled) values (true);
