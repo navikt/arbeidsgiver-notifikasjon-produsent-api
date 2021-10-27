@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.eksternvarsling
 
+import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
@@ -49,22 +50,44 @@ class EksternVarslingRepository(
         )
     }
 
-    private fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: Hendelse.EksterntVarselFeilet) {
+    private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: Hendelse.EksterntVarselFeilet) {
+        oppdaterUtfall(eksterntVarselFeilet.varselId, eksterntVarselFeilet.råRespons)
+    }
+
+    private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: Hendelse.EksterntVarselVellykket) {
+        oppdaterUtfall(eksterntVarselVellykket.varselId, eksterntVarselVellykket.råRespons)
+    }
+
+    private suspend fun oppdaterUtfall(varselId: UUID, råRespons: JsonNode) {
         database.nonTransactionalCommand("""
-        """, {}) {
-            Unit
+            update ekstern_varsel_kontaktinfo 
+            set 
+                altinn_response = ?::jsonb,
+                tilstand = '${VarselTilstand.KVITTERT}' 
+            where
+                varsel_id = ? 
+                and tilstand <> '${VarselTilstand.KVITTERT}'
+        """) {
+            jsonb(råRespons)
+            uuid(varselId)
         }
-        TODO("oppdater database")
     }
 
-    private fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: Hendelse.EksterntVarselVellykket) {
-        TODO("oppdater database")
+    private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
+        database.nonTransactionalCommand("""
+            update ekstern_varsel_kontaktinfo
+            set hard_deleted = true
+            where notifikasjon_id = ?
+        """) {
+            uuid(hardDelete.notifikasjonId)
+        }
     }
 
-
-    private fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
-        /* "guarantees" complete sending. hard delete afterwards. */
-        TODO()
+    suspend fun deleteCompletedVarsler() {
+        database.nonTransactionalCommand("""
+            delete from ekstern_varsel_kontaktinfo
+            where hard_deleted and tilstand = '${VarselTilstand.KVITTERT}'
+        """)
     }
 
     private suspend fun insertVarsler(varsler: List<EksterntVarsel>, produsentId: String, notifikasjonsId: UUID) {
@@ -144,7 +167,7 @@ class EksternVarslingRepository(
         produsentId: String,
     ) {
         executeCommand("""
-            INSERT INTO epost_varsel_kontaktinfo
+            INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
                 notifikasjon_id,
@@ -240,7 +263,7 @@ class EksternVarslingRepository(
 
     fun Transaction.returnJobToWorkQueue(varselId: UUID) {
         executeCommand("""
-            UPDATE job_queue
+            UPDATE work_queue
             SET locked = false
             WHERE varsel_id = ?
         """) {
@@ -250,7 +273,7 @@ class EksternVarslingRepository(
 
     fun Transaction.deleteJobFromWorkQueue(varselId: UUID) {
         executeCommand("""
-            DELETE FROM job_queue WHERE varsel_id = ?
+            DELETE FROM work_queue WHERE varsel_id = ?
         """) {
             uuid(varselId)
         }

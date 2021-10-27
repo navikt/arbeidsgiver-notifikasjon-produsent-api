@@ -12,6 +12,7 @@ create table ekstern_varsel_kontaktinfo
     sendevindu text not null,
     sendetidspunkt text null,
     varsel_type varsel_type not null,
+    hard_deleted bool not null,
 
     tlfnr text check (case when varsel_type = 'SMS' then tlfnr is not null else tlfnr is null end),
     sms_tekst text check (case when varsel_type = 'SMS' then sms_tekst is not null else sms_tekst is null end),
