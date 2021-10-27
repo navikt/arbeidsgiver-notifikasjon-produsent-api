@@ -96,23 +96,23 @@ class Database private constructor(
         }
     }
 
-    suspend fun <T> runNonTransactionalQuery(
+    suspend fun <T> standaloneExecuteQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> =
         dataSource.withConnection {
-            Transaction(this).runQuery(sql, setup, transform)
+            Transaction(this).executeQuery(sql, setup, transform)
         }
 
-    suspend fun nonTransactionalCommand(
+    suspend fun standaloneExecuteUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int = dataSource.withConnection {
-        Transaction(this).executeCommand(sql, setup)
+        Transaction(this).executeUpdate(sql, setup)
     }
 
-    suspend fun <T> nonTransactionalBatch(
+    suspend fun <T> standaloneExecuteBatch(
         @Language("PostgreSQL") sql: String,
         iterable: Iterable<T>,
         setup: ParameterSetters.(it: T) -> Unit = {},
@@ -149,7 +149,7 @@ class Database private constructor(
 value class Transaction(
     private val connection: Connection
 ) {
-    fun <T> runQuery(
+    fun <T> executeQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
@@ -168,7 +168,7 @@ value class Transaction(
             }
     }
 
-    fun executeCommand(
+    fun executeUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int {

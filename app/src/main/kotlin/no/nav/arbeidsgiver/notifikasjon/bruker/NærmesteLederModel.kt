@@ -42,7 +42,7 @@ class NærmesteLederModelImpl(
 ) : NærmesteLederModel {
 
     override suspend fun hentAnsatte(narmesteLederFnr: String): List<NærmesteLederModel.NærmesteLederFor> {
-        return database.runNonTransactionalQuery(
+        return database.standaloneExecuteQuery(
             """
             select * from naermeste_leder_kobling 
                 where naermeste_leder_fnr = ?
@@ -59,7 +59,7 @@ class NærmesteLederModelImpl(
 
     override suspend fun oppdaterModell(nærmesteLederLeesah: NarmesteLederLeesah) {
         if (nærmesteLederLeesah.aktivTom != null) {
-            database.nonTransactionalCommand(
+            database.standaloneExecuteUpdate(
                 """
                 delete from naermeste_leder_kobling where id = ?
             """
@@ -67,7 +67,7 @@ class NærmesteLederModelImpl(
                 uuid(nærmesteLederLeesah.narmesteLederId)
             }
         } else {
-            database.nonTransactionalCommand(
+            database.standaloneExecuteUpdate(
                 """
                 INSERT INTO naermeste_leder_kobling(id, fnr, naermeste_leder_fnr, orgnummer)
                 VALUES(?, ?, ?, ?) 

@@ -17,7 +17,7 @@ class KafkaReaperModelImpl(
 ) : KafkaReaperModel {
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         database.transaction({}) {
-            executeCommand("""
+            executeUpdate("""
                 INSERT INTO notifikasjon_hendelse_relasjon
                 (
                     hendelse_id,
@@ -39,7 +39,7 @@ class KafkaReaperModelImpl(
             }
 
             if (hendelse is Hendelse.HardDelete) {
-                executeCommand(
+                executeUpdate(
                     """
                         INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
                         VALUES (?, ?)
@@ -53,7 +53,7 @@ class KafkaReaperModelImpl(
     }
 
     override suspend fun alleRelaterteHendelser(notifikasjonId: UUID): List<UUID> {
-        return database.runNonTransactionalQuery(
+        return database.standaloneExecuteQuery(
             """
                 SELECT hendelse_id FROM notifikasjon_hendelse_relasjon
                 WHERE notifikasjon_id = ?
@@ -67,7 +67,7 @@ class KafkaReaperModelImpl(
     }
 
     override suspend fun erSlettet(notifikasjonId: UUID): Boolean {
-        return database.runNonTransactionalQuery(
+        return database.standaloneExecuteQuery(
             """
                 SELECT *
                 FROM deleted_notifikasjon
@@ -82,7 +82,7 @@ class KafkaReaperModelImpl(
     }
 
     override suspend fun fjernRelasjon(hendelseId: UUID) {
-        database.nonTransactionalCommand(
+        database.standaloneExecuteUpdate(
             """
                 DELETE FROM notifikasjon_hendelse_relasjon
                 WHERE hendelse_id = ?

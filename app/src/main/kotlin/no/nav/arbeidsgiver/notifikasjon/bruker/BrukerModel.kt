@@ -123,7 +123,7 @@ class BrukerModelImpl(
 
         val ansatteLookupTable = ansatte.toSet()
 
-        val notifikasjoner = database.runNonTransactionalQuery(
+        val notifikasjoner = database.standaloneExecuteQuery(
             """
             select 
                 n.*, 
@@ -190,7 +190,7 @@ class BrukerModelImpl(
     }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
-        database.runNonTransactionalQuery(
+        database.standaloneExecuteQuery(
             """
                 SELECT virksomhetsnummer FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ? LIMIT 1
             """, {
@@ -217,22 +217,22 @@ class BrukerModelImpl(
         database.transaction({
             throw RuntimeException("Delete", it)
         }) {
-            executeCommand(""" DELETE FROM notifikasjon WHERE id = ?;""") {
+            executeUpdate(""" DELETE FROM notifikasjon WHERE id = ?;""") {
                 uuid(hendelsesId)
             }
 
-            executeCommand("""DELETE FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ?;""") {
+            executeUpdate("""DELETE FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ?;""") {
                 uuid(hendelsesId)
             }
 
-            executeCommand("""DELETE FROM brukerklikk WHERE notifikasjonsid = ?;""") {
+            executeUpdate("""DELETE FROM brukerklikk WHERE notifikasjonsid = ?;""") {
                 uuid(hendelsesId)
             }
         }
     }
 
     private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
-        database.nonTransactionalCommand(
+        database.standaloneExecuteUpdate(
             """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
@@ -244,7 +244,7 @@ class BrukerModelImpl(
     }
 
     private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
-        database.nonTransactionalCommand(
+        database.standaloneExecuteUpdate(
             """
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
             ON CONFLICT ON CONSTRAINT brukerklikk_pkey
@@ -260,7 +260,7 @@ class BrukerModelImpl(
         val nyBeskjed = beskjedOpprettet.tilQueryDomene()
 
         database.transaction {
-            executeCommand(
+            executeUpdate(
                 """
                 insert into notifikasjon(
                     type,
@@ -288,7 +288,7 @@ class BrukerModelImpl(
                 string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
             }
 
-            executeCommand(
+            executeUpdate(
                 """
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
                 ON CONFLICT ON CONSTRAINT notifikasjonsid_virksomhet_map_pkey DO NOTHING;
@@ -304,7 +304,7 @@ class BrukerModelImpl(
         val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
 
         database.transaction {
-            executeCommand(
+            executeUpdate(
                 """
                 insert into notifikasjon(
                     type,
@@ -332,7 +332,7 @@ class BrukerModelImpl(
                 string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
             }
 
-            executeCommand(
+            executeUpdate(
                 """
                 INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
                 ON CONFLICT ON CONSTRAINT notifikasjonsid_virksomhet_map_pkey DO NOTHING;
