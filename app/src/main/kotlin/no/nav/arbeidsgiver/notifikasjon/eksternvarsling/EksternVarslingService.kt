@@ -10,22 +10,27 @@ class EksternVarslingService(
 ) {
     private val log = logger()
 
-    suspend fun automaticUnlockingLoop() {
+    suspend fun releaseAbandonedLocksLoop() {
         while (true) {
             try {
-                val released = eksternVarslingRepository.releaseTimedoutLocks()
+                val released = eksternVarslingRepository.releaseAbandonedLocks()
                 if (released.isNotEmpty()) {
-                    log.error("released ${released.size} rows. varselId=${released.joinToString(",")}")
+                    log.error(
+                        """
+                        Found ${released.size} abandoned jobs.
+                        Returning to job queue ${released.joinToString(", ")}.
+                        """.trimMargin()
+                    )
                 }
             } catch (e: Exception) {
-                log.error("error", e)
+                log.error("Releasing abandoned jobs failed with exception.", e)
             }
             delay(Duration.ofMinutes(10).toMillis())
         }
     }
 
-    fun sendVarsel()  {
-        val varsel = eksternVarslingRepository.finnOgLåsVarsel()
+    suspend fun sendVarsel()  {
+        val varsel = eksternVarslingRepository.findWork()
         /* get next varsel, and "lock" row */
         /* call altinn */
         /* publish result, update db? */

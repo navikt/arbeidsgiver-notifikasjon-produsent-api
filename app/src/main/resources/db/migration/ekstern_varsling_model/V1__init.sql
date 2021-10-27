@@ -1,3 +1,6 @@
+
+-- remember to add cloudsqliam stuff here.
+
 create type varsel_type as enum ('SMS', 'EPOST');
 
 create table ekstern_varsel_kontaktinfo
@@ -23,8 +26,13 @@ create table ekstern_varsel_kontaktinfo
         check (case when varsel_type = 'EPOST' then html_body is not null else html_body is null end),
 
     tilstand text not null,
-    altinn_response jsonb null,
+    altinn_response jsonb null
+);
 
+create table work_queue
+(
+    id bigserial primary key,
+    varsel_id uuid not null,
     locked bool not null,
     locked_by text null,
     locked_at timestamp null,

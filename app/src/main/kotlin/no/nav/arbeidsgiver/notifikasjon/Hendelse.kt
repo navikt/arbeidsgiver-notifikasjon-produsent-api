@@ -140,11 +140,13 @@ data class AltinnMottaker(
 ) : Mottaker()
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-sealed class EksterntVarsel
+sealed class EksterntVarsel {
+    abstract val varselId: UUID
+}
 
 @JsonTypeName("smsVarselKontaktinfo")
 data class SmsVarselKontaktinfo(
-    val varselId: UUID,
+    override val varselId: UUID,
     val tlfnr: String,
     val fnrEllerOrgnr: String,
     val smsTekst: String,
@@ -155,7 +157,7 @@ data class SmsVarselKontaktinfo(
 
 @JsonTypeName("epostVarselKontaktinfo")
 data class EpostVarselKontaktinfo(
-    val varselId: UUID,
+    override val varselId: UUID,
     val epostAddr: String,
     val fnrEllerOrgnr: String,
     val tittel: String,

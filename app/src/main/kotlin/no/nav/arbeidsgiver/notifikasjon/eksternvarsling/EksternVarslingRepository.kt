@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
+import java.time.LocalDateTime
 import java.util.*
 
 class EksternVarslingRepository(
@@ -21,7 +22,12 @@ class EksternVarslingRepository(
             is Hendelse.EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is Hendelse.EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is Hendelse.HardDelete -> oppdaterModellEtterHardDelete(hendelse)
-            is Hendelse.SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
+            is Hendelse.SoftDelete -> {
+                /* Garanterer sending (på samme måte som hard delete).
+                 * Vi har ikke noe behov for å huske at den er soft-deleted i denne modellen, så
+                 * dette er en noop.
+                 */
+            }
             is Hendelse.OppgaveUtført -> Unit
             is Hendelse.BrukerKlikket -> Unit
         }
@@ -50,34 +56,62 @@ class EksternVarslingRepository(
 
     private fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: Hendelse.EksterntVarselVellykket) {
         /* attempt to update DB state so it's like kafka? */
+        /* replay (med empty database) */
         TODO()
     }
+
+    /* TODO: skal vi håndtere at man tømmer database og null-stiller kafka consumer group?
+     * - forhindre re-sending ved å "detektere" at man ikke er ajour med kafka-strømmen.
+     *
+     * - basert på kafka-event-metadata, så kan vi se hvor "gammel" en hendelse er.
+     *
+     * 1. hvis sendingen ble produsert for lenge siden, marker, ikke send, vent på manuel intervention.
+     *   + enkelt system
+     *   + mulig å være vilkårlig presis
+     *   - manuelt, fare for menneskelig feil
+     *   - manuelt, kan gå med mye tid
+     *   - manuelt, kan være mye delay før avgjørelse blir tatt
+     *   - manuelt, kan være så mye jobb at vi ikke får prioritert det
+     *
+     * 2. hvis sendingen ble produsert for lenge siden, marker, ikke send.
+     *    ha en prosess, som automatisk gjør avgjørelsen.
+     *
+     *   + Vi sender i hvert fall ikke gamle ting.
+     *   - Vi får dobbletsending av nye ting.
+     *   - Heurestikk for å avgjøre om noe skal gjøres, som blir vanskeligere jo
+     *     nærmere i tid hendelsen ble sent. Ingen klar overgang fra "gamelt" til "nytt".
+     *
+     * 3. detekter rebuild. ikke prossesr jobs.
+     *  - (eldste kafka tid) - (sist lest kafka-tid)
+     *
+     * 4. oppgi snapshot (event id), og ikke utfør jobs før man er forbi den.
+     *   + utvetydig
+     *   + stopp-proessesering-logikk er enkel
+     *   - huske-hvor-man-stopper er vanskelig
+     *   - fungerer dårlig ved ikke-planlagt reset (id-en man venter til er ikke oppdatert)
+     *   - hvis man skal håndtere mister databasen, så må backup-offsettet være lagret utenfor db og kafka.
+     *   - vi må, på et eller annet vis, huske event-id-er. Per partisjon? Eller offset per partisjon?
+     *      sjekke logger
+     *      sjekke kafka-offsets fra gammel consumer group hvis man bytter consumer-group
+     */
 
     private fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
-        /* if notification already sent  {
-         *     delete
-         * } else {
-         *     cancel?
-         *     send when scheduled, and then delete?
-         * }
-         * */
+        /* "guarantees" complete sending. hard delete afterwards. */
         TODO()
     }
 
-    private fun oppdaterModellEtterSoftDelete(softDelete: Hendelse.SoftDelete) {
-        /* if notification  not sent yet {
-         *    cancel?
-         *    send when scheduled?
-         * }
-         */
-        TODO()
-    }
-
+    // TODO: huske å potensielt implementere cancel-event. jira?
+    // TODO: dokumentasjon for soft/hard delete: Stopper ikke sending av varsler.
 
     private suspend fun insertVarsler(varsler: List<EksterntVarsel>, produsentId: String, notifikasjonsId: UUID) {
         /* Rewrite to batch insert? */
         database.transaction {
             for (varsel in varsler) {
+                executeCommand("""
+                    insert into work_queue(varsel_id, locked) values (?, false);
+                """) {
+                    uuid(varsel.varselId)
+                }
                 when (varsel) {
                     is SmsVarselKontaktinfo -> insertSmsVarsel(
                         varsel = varsel,
@@ -113,10 +147,6 @@ class EksternVarslingRepository(
 
                 tilstand,
                 altinn_response,
-                
-                locked_at,
-                locked_by,
-                locked_until
             )
             VALUES 
             (
@@ -129,10 +159,7 @@ class EksternVarslingRepository(
                 ?, /* sendevindu */
                 ?, /* sendetidspunkt */
                 'NY', /* tilstand */
-                NULL, /* altinn_response */
-                NULL, /* locked_at */
-                NULL, /* locked_by */
-                NULL  /* locked_until */
+                NULL /* altinn_response */
             )
             ON CONFLICT (varsel_id) DO NOTHING;
         """) {
@@ -167,10 +194,6 @@ class EksternVarslingRepository(
 
                 tilstand,
                 altinn_response,
-                
-                locked_at,
-                locked_by,
-                locked_until
             )
             VALUES 
             (
@@ -184,10 +207,7 @@ class EksternVarslingRepository(
                 ?, /* sendevindu */
                 ?, /* sendetidspunkt */
                 'NY', /* tilstand */
-                NULL, /* altinn_response */
-                NULL, /* locked_at */
-                NULL, /* locked_by */
-                NULL  /* locked_until */
+                NULL /* altinn_response */
             )
             ON CONFLICT (varsel_id) DO NOTHING;
         """) {
@@ -204,79 +224,71 @@ class EksternVarslingRepository(
     }
 
 
-    suspend fun releaseTimedoutLocks(): List<UUID> {
-        val unlocked = database.nonTransactionalCommand("""
-            UPDATE ekstern_varsel_kontaktinfo
+    data class ReleasedResource(
+        val varselId: UUID,
+        val lockedAt: LocalDateTime,
+        val lockedBy: String
+    )
+    suspend fun releaseAbandonedLocks(): List<ReleasedResource> {
+        return database.runNonTransactionalQuery("""
+            UPDATE work_queue
             SET locked = false
-            WHERE locked = true
+            WHERE locked = true AND locked_until < CURRENT_TIMESTAMP
             RETURNING varsel_id, locked_by, locked_at
-        """)
-        return TODO("unlocked rows")
+        """) {
+            ReleasedResource(
+                varselId = getObject("varselId", UUID::class.java),
+                lockedAt = getTimestamp("locked_at").toLocalDateTime(),
+                lockedBy = getString("locked_by"),
+            )
+        }
     }
 
 
-    suspend fun finnOgLåsVarsel(): EksterntVarsel? {
-        database.transaction {
-            val varselId = runQuery("""
-                        SELECT varsel_id
-                        FROM sms_varsel_kontaktinfo 
+    suspend fun findWork(): EksterntVarsel? {
+        return database.queryCommand("""
+                UPDATE work_queue
+                SET locked = true,
+                    locked_by = ?,
+                    locked_at = CURRENT_TIMESTAMP,
+                    locked_until = CURRENT_TIMESTAMP + ?
+                WHERE 
+                    id = (
+                        SELECT id FROM work_queue 
                         WHERE 
                             locked = false
-                            AND tilstand = 'NY'
                         LIMIT 1
-                    """
-            ) {
-                getObject("varsel_id") as UUID
-            }
+                        FOR UPDATE SKIP LOCKED
+                    )
+                RETURNING varsel_id
+                    """,
+                inject = {
+                    string(podName)
+                    // locked_until offset
+
+                },
+                extract = {
+                    getObject("varsel_id") as UUID
+                }
+            )
                 .firstOrNull()
-                ?: return@transaction null
-
-            executeCommand("""
-                UPDATE sms_varsel_kontaktinfo
-                SET 
-                    locked = true,
-                    locked_at = CURRENT_TIMESTAMP,
-                    locked_by = ?,
-                    locked_until = CURRENT_TIMESTAMP + CAST (? AS INTERVAL)
-                WHERE varsel_id = ?
-                
-            """) {
-                string(podName)
-                TODO("locked_until offset")
-                uuid(varselId)
-            }
-
-            return@transaction varselId
-        }
     }
-    private suspend fun <T> Transaction.withLockedRow(varselId: UUID, body: Transaction.() -> T) {
-        val changedRows = executeCommand("""
-            UPDATE sms_varsel_kontaktinfo
-            SET 
-                /* locked = true */
-                locked_at = CURRENT_TIMESTAMP,
-                locked_by = ?,
-                locked_until = CURRENT_TIMESTAMP + CAST (? AS INTERVAL)
-            WHERE varsel_id = ? /* AND locked = false */
+
+    fun Transaction.returnJobToWorkQueue(varselId: UUID) {
+        executeCommand("""
+            UPDATE job_queue
+            SET locked = false
+            WHERE varsel_id = ?
         """) {
-            string(podName)
-            /* TODO: set the interval-type value. minutes? */
             uuid(varselId)
         }
-        if (changedRows >= 1) {
-            /* the row exists! */
-            body().also {
-                executeCommand("""
-                    UPDATE sms_varsel_kontaktinfo
-                    SET 
-                        /* locked = false */
-                    WHERE varsel_id = ?
-                """) {
-                    uuid(varselId)
-                }
-            }
-        } else {
-            /* no matching row. */
+    }
+
+    fun Transaction.deleteJobFromWorkQueue(varselId: UUID) {
+        executeCommand("""
+            DELETE FROM job_queue WHERE varsel_id = ?
+        """) {
+            uuid(varselId)
         }
     }
 }
