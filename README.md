@@ -26,6 +26,12 @@ deploy ny app:
 - med migrering som nullstiller database til ønsket tidspunkt eller helt.
 - med ny consumer-group-id postfix eller MigrationOps som setter bestemt offset.
 
+## Koble direkte til DEV databaser
+
+Du må ha være autentisert med `gcloud` og ha `cloud_sql_proxy` installert.
+
+Kjør `./cloudsql-connect.sh dev notifikasjon-bruker-api 5432` og postgres-databasen vil være tilgjengelig på 
+localhost:5432. Brukernavn er e-post-adressen din. Passord får du ved å kjøre `gcloud auth print-access-token`.
 
 ## Ticks n' Trips
 
