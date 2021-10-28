@@ -59,7 +59,7 @@ class EksternVarslingRepository(
     }
 
     private suspend fun oppdaterUtfall(varselId: UUID, råRespons: JsonNode) {
-        database.nonTransactionalCommand("""
+        database.nonTransactionalExecuteUpdate("""
             update ekstern_varsel_kontaktinfo 
             set 
                 altinn_response = ?::jsonb,
@@ -74,7 +74,7 @@ class EksternVarslingRepository(
     }
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
-        database.nonTransactionalCommand("""
+        database.nonTransactionalExecuteUpdate("""
             update ekstern_varsel_kontaktinfo
             set hard_deleted = true
             where notifikasjon_id = ?
@@ -84,7 +84,7 @@ class EksternVarslingRepository(
     }
 
     suspend fun deleteCompletedVarsler() {
-        database.nonTransactionalCommand("""
+        database.nonTransactionalExecuteUpdate("""
             delete from ekstern_varsel_kontaktinfo
             where hard_deleted and tilstand = '${VarselTilstand.KVITTERT}'
         """)
@@ -94,7 +94,7 @@ class EksternVarslingRepository(
         /* Rewrite to batch insert? */
         database.transaction {
             for (varsel in varsler) {
-                executeCommand("""
+                executeUpdate("""
                     insert into work_queue(varsel_id, locked) values (?, false);
                 """) {
                     uuid(varsel.varselId)
@@ -120,7 +120,7 @@ class EksternVarslingRepository(
         notifikasjonsId: UUID,
         produsentId: String,
     ) {
-        executeCommand("""
+        executeUpdate("""
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
@@ -166,7 +166,7 @@ class EksternVarslingRepository(
         notifikasjonsId: UUID,
         produsentId: String,
     ) {
-        executeCommand("""
+        executeUpdate("""
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
@@ -217,7 +217,7 @@ class EksternVarslingRepository(
     )
 
     suspend fun releaseAbandonedLocks(): List<ReleasedResource> {
-        return database.runNonTransactionalQuery("""
+        return database.nonTransactionalExecuteQuery("""
             UPDATE work_queue
             SET locked = false
             WHERE locked = true AND locked_until < CURRENT_TIMESTAMP
@@ -233,7 +233,7 @@ class EksternVarslingRepository(
 
 
     suspend fun findWork(): UUID? {
-        return database.runNonTransactionalQuery("""
+        return database.nonTransactionalExecuteQuery("""
                 UPDATE work_queue
                 SET locked = true,
                     locked_by = ?,
@@ -262,7 +262,7 @@ class EksternVarslingRepository(
     }
 
     fun Transaction.returnJobToWorkQueue(varselId: UUID) {
-        executeCommand("""
+        executeUpdate("""
             UPDATE work_queue
             SET locked = false
             WHERE varsel_id = ?
@@ -272,7 +272,7 @@ class EksternVarslingRepository(
     }
 
     fun Transaction.deleteJobFromWorkQueue(varselId: UUID) {
-        executeCommand("""
+        executeUpdate("""
             DELETE FROM work_queue WHERE varsel_id = ?
         """) {
             uuid(varselId)

@@ -14,7 +14,7 @@ class StatistikkModel(
     val database: Database,
 ) {
     suspend fun antallUtførteHistogram(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 WITH alder_tabell AS (
                     select
@@ -23,7 +23,7 @@ class StatistikkModel(
                         mottaker,
                         notifikasjon_type,
                         (utfoert_tidspunkt - opprettet_tidspunkt) as alder_sekunder
-                    from notifikasjon_statistikk
+                    from notifikasjon
                 )
                 select produsent_id, merkelapp, mottaker, notifikasjon_type, '0-1H' as bucket, count(*) as antall
                     from alder_tabell
@@ -76,7 +76,7 @@ class StatistikkModel(
     }
 
     suspend fun antallKlikk(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 select 
                     notifikasjon.produsent_id,
@@ -84,8 +84,8 @@ class StatistikkModel(
                     notifikasjon.mottaker,
                     notifikasjon.notifikasjon_type,
                     count(*) as antall_klikk
-                from notifikasjon_statistikk as notifikasjon
-                inner join notifikasjon_statistikk_klikk klikk on notifikasjon.notifikasjon_id = klikk.notifikasjon_id
+                from notifikasjon
+                inner join notifikasjon_klikk klikk on notifikasjon.notifikasjon_id = klikk.notifikasjon_id
                 group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
@@ -103,7 +103,7 @@ class StatistikkModel(
     }
 
     suspend fun antallUnikeTekster(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 select 
                     produsent_id,
@@ -111,7 +111,7 @@ class StatistikkModel(
                     mottaker,
                     notifikasjon_type,
                     count(distinct checksum) as antall_unike_tekster
-                from notifikasjon_statistikk
+                from notifikasjon
                 group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
@@ -129,10 +129,10 @@ class StatistikkModel(
     }
 
     suspend fun antallNotifikasjoner(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 select produsent_id, merkelapp, mottaker, notifikasjon_type, count(*) as antall
-                from notifikasjon_statistikk
+                from notifikasjon
                 group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
@@ -150,18 +150,20 @@ class StatistikkModel(
     }
 
     suspend fun antallVarsler(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
-                select varsel.produsent_id, merkelapp, status, count(*) as antall
-                from varsel_statistikk as varsel
-                inner join notifikasjon_statistikk notifikasjon on varsel.notifikasjon_id = notifikasjon.notifikasjon_id
-                group by (varsel.produsent_id, merkelapp, status)
+                select notifikasjon.produsent_id, merkelapp, varsel_type, coalesce(status, 'bestilt') as status, count(*) as antall
+                from varsel_bestilling as bestilling
+                         inner join notifikasjon on bestilling.notifikasjon_id = notifikasjon.notifikasjon_id
+                         left outer join varsel_resultat as resultat on resultat.varsel_id = bestilling.varsel_id
+                group by (notifikasjon.produsent_id, merkelapp, varsel_type, status)
             """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
                         "produsent_id", this.getString("produsent_id"),
                         "merkelapp", this.getString("merkelapp"),
+                        "varsel_type", this.getString("varsel_type"),
                         "status", this.getString("status")
                     ),
                     this.getInt("antall")
@@ -174,12 +176,12 @@ class StatistikkModel(
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         when (hendelse) {
             is Hendelse.BeskjedOpprettet -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
-                    insert into notifikasjon_statistikk 
+                    insert into notifikasjon 
                         (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
                     values (?, ?, 'beskjed', ?, ?, ?, ?)
-                    on conflict on constraint notifikasjon_statistikk_pkey do nothing;
+                    on conflict on constraint notifikasjon_pkey do nothing;
                     """
                 ) {
                     string(hendelse.produsentId)
@@ -189,11 +191,13 @@ class StatistikkModel(
                     string(hendelse.tekst.toHash())
                     timestamptz(hendelse.opprettetTidspunkt)
                 }
+
+                oppdaterVarselBestilling(hendelse, hendelse.produsentId, hendelse.eksterneVarsler)
             }
             is Hendelse.OppgaveOpprettet -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
-                    insert into notifikasjon_statistikk(
+                    insert into notifikasjon(
                         produsent_id, 
                         notifikasjon_id, 
                         notifikasjon_type, 
@@ -201,9 +205,10 @@ class StatistikkModel(
                         mottaker, 
                         checksum, 
                         opprettet_tidspunkt
-                    ) 
-                    values (?, ?, 'oppgave', ?, ?, ?, ?)
-                    on conflict on constraint notifikasjon_statistikk_pkey do nothing;
+                    )
+                    values
+                    (?, ?, 'oppgave', ?, ?, ?, ?)
+                    on conflict on constraint notifikasjon_pkey do nothing;
                     """
                 ) {
                     string(hendelse.produsentId)
@@ -213,11 +218,13 @@ class StatistikkModel(
                     string(hendelse.tekst.toHash())
                     timestamp_utc(hendelse.opprettetTidspunkt)
                 }
+
+                oppdaterVarselBestilling(hendelse, hendelse.produsentId, hendelse.eksterneVarsler)
             }
             is Hendelse.OppgaveUtført -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
-                    update notifikasjon_statistikk 
+                    update notifikasjon 
                         set utfoert_tidspunkt = ?
                         where notifikasjon_id = ?
                     """
@@ -227,12 +234,12 @@ class StatistikkModel(
                 }
             }
             is Hendelse.BrukerKlikket -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
-                    insert into notifikasjon_statistikk_klikk 
+                    insert into notifikasjon_klikk 
                         (hendelse_id, notifikasjon_id, klikket_paa_tidspunkt)
                     values (?, ?, ?)
-                    on conflict on constraint notifikasjon_statistikk_klikk_pkey do nothing;
+                    on conflict on constraint notifikasjon_klikk_pkey do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
@@ -241,39 +248,41 @@ class StatistikkModel(
                 }
             }
             is Hendelse.EksterntVarselVellykket -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
-                    insert into varsel_statistikk(
-                        hendelse_id, notifikasjon_id, produsent_id, status
-                    )
-                    values (?, ?, ?, 'vellykket')
-                    on conflict on constraint varsel_statistikk_pkey do nothing;
+                    insert into varsel_resultat 
+                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
+                    values
+                    (?, ?, ?, ?, 'vellykket')
+                    on conflict on constraint varsel_resultat_pkey do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
+                    uuid(hendelse.varselId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.produsentId)
                 }
             }
             is Hendelse.EksterntVarselFeilet -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
-                    insert into varsel_statistikk(
-                        hendelse_id, notifikasjon_id, produsent_id, status
-                    )
-                    values (?, ?, ?, 'feilet')
-                    on conflict on constraint varsel_statistikk_pkey do nothing;
+                    insert into varsel_resultat 
+                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
+                    values
+                    (?, ?, ?, ?, 'feilet')
+                    on conflict on constraint varsel_resultat_pkey do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
+                    uuid(hendelse.varselId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.produsentId)
                 }
             }
             is Hendelse.SoftDelete -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
-                    update notifikasjon_statistikk 
+                    update notifikasjon 
                         set soft_deleted_tidspunkt = ?
                         where notifikasjon_id = ?
                     """
@@ -284,6 +293,39 @@ class StatistikkModel(
             }
             is Hendelse.HardDelete -> {
                 // noop
+            }
+        }
+    }
+
+    private suspend fun oppdaterVarselBestilling(
+        hendelse: Hendelse,
+        produsentId: String,
+        iterable: List<EksterntVarsel>,
+    ) {
+        database.nonTransactionalExecuteBatch(
+            """
+                        insert into varsel_bestilling 
+                            (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
+                        values
+                            (?, ?, ?, ?, ?)
+                        """,
+            iterable
+        ) { eksterntVarsel ->
+            when (eksterntVarsel) {
+                is EpostVarselKontaktinfo -> {
+                    uuid(eksterntVarsel.varselId)
+                    string("epost_kontaktinfo")
+                    uuid(hendelse.notifikasjonId)
+                    string(produsentId)
+                    string(eksterntVarsel.epostAddr)
+                }
+                is SmsVarselKontaktinfo -> {
+                    uuid(eksterntVarsel.varselId)
+                    string("sms_kontaktinfo")
+                    uuid(hendelse.notifikasjonId)
+                    string(produsentId)
+                    string(eksterntVarsel.tlfnr)
+                }
             }
         }
     }
