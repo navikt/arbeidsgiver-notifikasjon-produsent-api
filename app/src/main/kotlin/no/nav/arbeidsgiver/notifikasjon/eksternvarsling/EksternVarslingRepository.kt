@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.eksternvarsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel
+import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilling
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
@@ -13,7 +13,6 @@ import java.util.*
 class EksternVarslingRepository(
     private val database: Database
 ) {
-
     private val podName = System.getenv("HOSTNAME") ?: "localhost"
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
@@ -63,16 +62,15 @@ class EksternVarslingRepository(
             update ekstern_varsel_kontaktinfo 
             set 
                 altinn_response = ?::jsonb,
-                tilstand = '${VarselTilstand.KVITTERT}' 
+                tilstand = '${EksterntVarselTilstand.KVITTERT}' 
             where
                 varsel_id = ? 
-                and tilstand <> '${VarselTilstand.KVITTERT}'
+                and tilstand <> '${EksterntVarselTilstand.KVITTERT}'
         """) {
             jsonb(råRespons)
             uuid(varselId)
         }
     }
-
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
         database.nonTransactionalExecuteUpdate("""
             update ekstern_varsel_kontaktinfo
@@ -83,14 +81,18 @@ class EksternVarslingRepository(
         }
     }
 
-    suspend fun deleteCompletedVarsler() {
+    suspend fun deleteScheduledHardDeletes() {
         database.nonTransactionalExecuteUpdate("""
             delete from ekstern_varsel_kontaktinfo
-            where hard_deleted and tilstand = '${VarselTilstand.KVITTERT}'
+            where hard_deleted and tilstand = '${EksterntVarselTilstand.KVITTERT}'
         """)
     }
 
-    private suspend fun insertVarsler(varsler: List<EksterntVarsel>, produsentId: String, notifikasjonsId: UUID) {
+    private suspend fun insertVarsler(
+        varsler: List<EksterntVarselBestilling>,
+        produsentId: String,
+        notifikasjonsId: UUID
+    ) {
         /* Rewrite to batch insert? */
         database.transaction {
             for (varsel in varsler) {
@@ -231,6 +233,20 @@ class EksternVarslingRepository(
         }
     }
 
+    suspend fun requeueAbandonedWork() {
+        database.nonTransactionalExecuteUpdate("""
+            --- todo
+            insert into work_queue (varsel_id, locked)
+            from 
+            (
+                select varsel_id from ekstern_varsel_kontaktinfo
+                where 
+                    tilstand <> '${EksterntVarselTilstand.UTFØRT}'
+                    and varsel_id not in (select varsel_id from work_queue)
+            )
+        """)
+    }
+
 
     suspend fun findWork(): UUID? {
         return database.nonTransactionalExecuteQuery("""
@@ -261,7 +277,18 @@ class EksternVarslingRepository(
                 .firstOrNull()
     }
 
-    fun Transaction.returnJobToWorkQueue(varselId: UUID) {
+    suspend fun findVarsel(varselId: UUID): EksterntVarsel? {
+        TODO()
+    }
+
+
+    suspend fun returnToWorkQueue(varselId: UUID) {
+        database.transaction {
+            returnToWorkQueue(varselId)
+        }
+    }
+
+    fun Transaction.returnToWorkQueue(varselId: UUID) {
         executeUpdate("""
             UPDATE work_queue
             SET locked = false
@@ -271,11 +298,47 @@ class EksternVarslingRepository(
         }
     }
 
-    fun Transaction.deleteJobFromWorkQueue(varselId: UUID) {
+    suspend fun deleteFromWorkQueue(varselId: UUID) {
+        database.transaction {
+            deleteFromWorkQueue(varselId)
+        }
+    }
+
+    fun Transaction.deleteFromWorkQueue(varselId: UUID) {
         executeUpdate("""
             DELETE FROM work_queue WHERE varsel_id = ?
         """) {
             uuid(varselId)
+        }
+    }
+
+    suspend fun storeAndDelete(v: EksterntVarsel.Kvittert) {
+
+    }
+    suspend fun storeAndRelease(v: EksterntVarsel.Utført) {
+        database.transaction {
+            executeUpdate(""" 
+                update ekstern_varsel_kontaktinfo
+                set 
+                    altinn_response = ?::jsonb,
+                    altinn_utfall = ?,
+                    altinn_feilmelding = ?,
+                    tilstand = '${EksterntVarselTilstand.UTFØRT}'
+                where varsel_id = ?
+            """) {
+                jsonb(TODO())
+                string(TODO())
+                string(TODO())
+                uuid(v.varselId)
+            }
+
+            executeUpdate(""" 
+                update work_queue
+                set locked = false
+                where varsel_id = ?
+            """) {
+                uuid(v.varselId)
+            }
         }
     }
 }
