@@ -486,7 +486,6 @@ object ProdusentAPI {
             }
 
             val id = UUID.randomUUID()
-            log.info("mottatt ny beskjed, id: $id, beskjed: $nyBeskjed")
             val produsent = hentProdusent(env) { error -> return error }
             val domeneNyBeskjed = nyBeskjed.tilDomene(
                 id = id,
@@ -498,8 +497,10 @@ object ProdusentAPI {
                 merkelapp = domeneNyBeskjed.merkelapp
             )
 
+
             return when {
                 eksisterende == null -> {
+                    log.info("oppretter ny beskjed med id $id")
                     kafkaProducer.sendHendelseMedKey(id, domeneNyBeskjed)
                     produsentRepository.oppdaterModellEtterHendelse(domeneNyBeskjed)
                     NyBeskjedVellykket(
@@ -508,6 +509,7 @@ object ProdusentAPI {
                     )
                 }
                 eksisterende.erDuplikatAv(domeneNyBeskjed.tilProdusentModel()) -> {
+                    log.info("duplisert opprettelse av beskjed med id ${eksisterende.id}")
                     NyBeskjedVellykket(
                         id = eksisterende.id,
                         eksternVarsel = listOf()
@@ -531,7 +533,6 @@ object ProdusentAPI {
 
             val id = UUID.randomUUID()
             val produsent = hentProdusent(env) { error -> return error }
-            log.info("mottatt ny oppgave, id: $id, oppgave: $nyOppgave")
             val domeneNyOppgave = nyOppgave.tilDomene(
                 id = id,
                 produsentId = produsent.id,
@@ -544,6 +545,7 @@ object ProdusentAPI {
 
             return when {
                 eksisterende == null -> {
+                    log.info("oppretter ny oppgave med id $id")
                     kafkaProducer.sendHendelseMedKey(id, domeneNyOppgave)
                     produsentRepository.oppdaterModellEtterHendelse(domeneNyOppgave)
                     NyOppgaveVellykket(
@@ -552,6 +554,7 @@ object ProdusentAPI {
                     )
                 }
                 eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) -> {
+                    log.info("duplisert opprettelse av oppgave med id ${eksisterende.id}")
                     NyOppgaveVellykket(
                         id = eksisterende.id,
                         eksternVarsel = listOf()
