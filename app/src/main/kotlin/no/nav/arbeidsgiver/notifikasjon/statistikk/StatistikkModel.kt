@@ -14,7 +14,7 @@ class StatistikkModel(
     val database: Database,
 ) {
     suspend fun antallUtførteHistogram(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 WITH alder_tabell AS (
                     select
@@ -76,7 +76,7 @@ class StatistikkModel(
     }
 
     suspend fun antallKlikk(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 select 
                     notifikasjon.produsent_id,
@@ -103,7 +103,7 @@ class StatistikkModel(
     }
 
     suspend fun antallUnikeTekster(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 select 
                     produsent_id,
@@ -129,7 +129,7 @@ class StatistikkModel(
     }
 
     suspend fun antallNotifikasjoner(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 select produsent_id, merkelapp, mottaker, notifikasjon_type, count(*) as antall
                 from notifikasjon
@@ -150,7 +150,7 @@ class StatistikkModel(
     }
 
     suspend fun antallVarsler(): List<MultiGauge.Row<Number>> {
-        return database.runNonTransactionalQuery(
+        return database.nonTransactionalExecuteQuery(
             """
                 select notifikasjon.produsent_id, merkelapp, varsel_type, coalesce(status, 'bestilt') as status, count(*) as antall
                 from varsel_bestilling as bestilling
@@ -176,7 +176,7 @@ class StatistikkModel(
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         when (hendelse) {
             is Hendelse.BeskjedOpprettet -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon 
                         (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
@@ -195,7 +195,7 @@ class StatistikkModel(
                 oppdaterVarselBestilling(hendelse, hendelse.produsentId, hendelse.eksterneVarsler)
             }
             is Hendelse.OppgaveOpprettet -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon(
                         produsent_id, 
@@ -222,7 +222,7 @@ class StatistikkModel(
                 oppdaterVarselBestilling(hendelse, hendelse.produsentId, hendelse.eksterneVarsler)
             }
             is Hendelse.OppgaveUtført -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
                     update notifikasjon 
                         set utfoert_tidspunkt = ?
@@ -234,7 +234,7 @@ class StatistikkModel(
                 }
             }
             is Hendelse.BrukerKlikket -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon_klikk 
                         (hendelse_id, notifikasjon_id, klikket_paa_tidspunkt)
@@ -248,7 +248,7 @@ class StatistikkModel(
                 }
             }
             is Hendelse.EksterntVarselVellykket -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
                     insert into varsel_resultat 
                         (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
@@ -264,7 +264,7 @@ class StatistikkModel(
                 }
             }
             is Hendelse.EksterntVarselFeilet -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
                     insert into varsel_resultat 
                         (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
@@ -280,7 +280,7 @@ class StatistikkModel(
                 }
             }
             is Hendelse.SoftDelete -> {
-                database.nonTransactionalCommand(
+                database.nonTransactionalExecuteUpdate(
                     """
                     update notifikasjon 
                         set soft_deleted_tidspunkt = ?
@@ -302,7 +302,7 @@ class StatistikkModel(
         produsentId: String,
         iterable: List<EksterntVarsel>,
     ) {
-        database.nonTransactionalBatch(
+        database.nonTransactionalExecuteBatch(
             """
                         insert into varsel_bestilling 
                             (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
