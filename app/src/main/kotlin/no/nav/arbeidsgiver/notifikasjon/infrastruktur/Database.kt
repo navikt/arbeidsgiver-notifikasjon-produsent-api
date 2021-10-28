@@ -101,42 +101,42 @@ class Database private constructor(
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> =
-        dataSource.withConnection {
-            Transaction(this).executeQuery(sql, setup, transform)
+        dataSource.withConnection { connection ->
+            Transaction(connection).executeQuery(sql, setup, transform)
         }
 
     suspend fun nonTransactionalExecuteUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
-    ): Int = dataSource.withConnection {
-        Transaction(this).executeUpdate(sql, setup)
+    ): Int = dataSource.withConnection { connection ->
+        Transaction(connection).executeUpdate(sql, setup)
     }
 
     suspend fun <T> nonTransactionalExecuteBatch(
         @Language("PostgreSQL") sql: String,
         iterable: Iterable<T>,
         setup: ParameterSetters.(it: T) -> Unit = {},
-    ): IntArray = dataSource.withConnection {
-        Transaction(this).executeBatch(sql, iterable, setup)
+    ): IntArray = dataSource.withConnection { connection ->
+        Transaction(connection).executeBatch(sql, iterable, setup)
     }
 
     suspend fun <T> transaction(
         rollback: (e: Exception) -> T = { throw it },
         body: Transaction.() -> T
     ): T =
-        dataSource.withConnection {
-            val savedAutoCommit = autoCommit
-            autoCommit = false
+        dataSource.withConnection { connection ->
+            val savedAutoCommit = connection.autoCommit
+            connection.autoCommit = false
 
             try {
-                val result = Transaction(this).body()
-                commit()
+                val result = Transaction(connection).body()
+                connection.commit()
                 result
             } catch (e: Exception) {
+                connection.rollback()
                 rollback(e)
             } finally {
-                autoCommit = savedAutoCommit
-                close()
+                connection.autoCommit = savedAutoCommit
             }
         }
 
