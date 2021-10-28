@@ -195,7 +195,10 @@ fun Route.internalRoutes() {
             if (Health.alive) {
                 call.respond(HttpStatusCode.OK)
             } else {
-                call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemAlive)
+                call.respond(
+                    HttpStatusCode.ServiceUnavailable,
+                    Health.subsystemAlive.toString()
+                )
             }
         }
 
@@ -203,7 +206,10 @@ fun Route.internalRoutes() {
             if (Health.ready) {
                 call.respond(HttpStatusCode.OK)
             } else {
-                call.respond(HttpStatusCode.ServiceUnavailable, Health.subsystemReady)
+                call.respond(
+                    HttpStatusCode.ServiceUnavailable,
+                    Health.subsystemReady.toString()
+                )
             }
         }
 
