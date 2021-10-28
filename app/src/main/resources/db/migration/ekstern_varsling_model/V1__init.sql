@@ -2,6 +2,7 @@ alter default privileges in schema public grant all on tables to cloudsqliamuser
 grant all on all tables in schema public to cloudsqliamuser;
 
 create type varsel_type as enum ('SMS', 'EPOST');
+create type status as enum ('OK', 'FEIL');
 
 create table ekstern_varsel_kontaktinfo
 (
@@ -22,6 +23,8 @@ create table ekstern_varsel_kontaktinfo
     html_body text check (case when varsel_type = 'EPOST' then html_body is not null else html_body is null end),
 
     tilstand text not null,
+
+    altinn_status status null,
     altinn_response jsonb null
 );
 

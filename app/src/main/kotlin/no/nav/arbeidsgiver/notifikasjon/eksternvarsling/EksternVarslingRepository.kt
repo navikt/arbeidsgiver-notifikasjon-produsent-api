@@ -315,6 +315,7 @@ class EksternVarslingRepository(
     suspend fun storeAndDelete(v: EksterntVarsel.Kvittert) {
 
     }
+
     suspend fun storeAndRelease(v: EksterntVarsel.Utført) {
         database.transaction {
             executeUpdate(""" 
