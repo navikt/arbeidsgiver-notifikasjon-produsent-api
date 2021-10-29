@@ -10,14 +10,14 @@ class NonBlockingDataSource(
     private val dataSource: DataSource
 ) {
     suspend fun <T> withConnection(body: suspend Connection.() -> T): T =
-        withContext(Dispatchers.IO) {
+        blockingIO {
             dataSource.connection.use { connection ->
                 body(connection)
             }
         }
 
     suspend fun withFlyway(locations: String, body: Flyway.() -> Unit) {
-        withContext(Dispatchers.IO) {
+        blockingIO {
             Flyway.configure()
                 .locations(locations)
                 .dataSource(dataSource)

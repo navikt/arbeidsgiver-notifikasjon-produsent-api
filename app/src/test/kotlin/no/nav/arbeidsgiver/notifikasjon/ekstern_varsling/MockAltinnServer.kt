@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.eksternvarsling
+package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import no.altinn.schemas.services.serviceengine.notification._2015._06.NotificationResult
 import no.altinn.schemas.services.serviceengine.notification._2015._06.SendNotificationResultList

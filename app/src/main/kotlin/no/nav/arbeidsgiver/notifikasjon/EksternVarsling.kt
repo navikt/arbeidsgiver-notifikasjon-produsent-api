@@ -7,7 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.eksternvarsling.EksternVarslingRepository
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingRepository
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
@@ -62,8 +63,14 @@ object EksternVarsling {
             }
 
             launch {
-                // plukk oppgaver fra databasen
+                val service = EksternVarslingService(
+                    eksternVarslingRepository = eksternVarslingModelAsync.await(),
+                    altinnVarselKlient = TODO(),
+                    kafkaProducer = TODO()
+                )
+                service.start(this)
             }
+
 
             launch {
                 embeddedServer(Netty, port = httpPort) {

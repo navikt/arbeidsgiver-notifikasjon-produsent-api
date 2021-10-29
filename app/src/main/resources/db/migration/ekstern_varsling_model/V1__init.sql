@@ -28,7 +28,7 @@ create table ekstern_varsel_kontaktinfo
     altinn_response jsonb null
 );
 
-create table work_queue
+create table ubehandlede_eksterne_varsler
 (
     id bigserial primary key,
     varsel_id uuid not null,
@@ -45,4 +45,5 @@ create table work_queue_processing
     constraint at_most_one_row check (id = 0)
 );
 
-insert into work_queue_processing (enabled) values (true);
+-- We've come up with a clean database!
+insert into work_queue_processing (enabled) values (false);

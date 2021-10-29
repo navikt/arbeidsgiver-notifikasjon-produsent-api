@@ -1,12 +1,13 @@
-package no.nav.arbeidsgiver.notifikasjon.eksternvarsling
+package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
-import java.util.*
 
 // TODO: huske å potensielt implementere cancel-event. jira?
 // TODO: dokumentasjon for soft/hard delete: Stopper ikke sending av varsler.
@@ -93,68 +94,65 @@ import java.util.*
 
 class EksternVarslingService(
     private val eksternVarslingRepository: EksternVarslingRepository,
-    private val altinnVarselKlient: AltinnVarselKlient,
+    private val altinnVarselKlient: AltinnVarselKlientImpl,
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
 ) {
     private val log = logger()
 
-    suspend fun releaseAbandonedLocksLoop() {
-        while (true) {
-            try {
-                val released = eksternVarslingRepository.releaseAbandonedLocks()
-                if (released.isNotEmpty()) {
-                    log.error(
-                        """
-                        Found ${released.size} abandoned jobs.
-                        Returning to job queue ${released.joinToString(", ")}.
-                        """.trimMargin()
-                    )
-                }
-            } catch (e: Exception) {
-                log.error("Releasing abandoned jobs failed with exception.", e)
+    fun start(coroutineScope: CoroutineScope) {
+
+        coroutineScope.launchProcessingLoop(
+            "hard-delete",
+            pauseAfterEach = Duration.ofMinutes(10)
+        ) {
+            eksternVarslingRepository.deleteScheduledHardDeletes()
+        }
+
+        coroutineScope.launchProcessingLoop(
+            "release-locks",
+            pauseAfterEach = Duration.ofMinutes(10)
+        ) {
+            val released = eksternVarslingRepository.releaseAbandonedLocks()
+            if (released.isNotEmpty()) {
+                log.error(
+                    """
+                    Found ${released.size} abandoned jobs.
+                    Returning to job queue ${released.joinToString(", ")}.
+                    """.trimMargin()
+                )
             }
-            delay(Duration.ofMinutes(10).toMillis())
+        }
+
+        coroutineScope.launchProcessingLoop(
+            "requeue-lost-work",
+            pauseAfterEach = Duration.ofMinutes(10)
+        ) {
+            TODO("re-queue work of eksterne varsler that are neither completed nor queued")
+        }
+
+        coroutineScope.launchProcessingLoop(
+            "ekstern-varsel",
+            init = { eksternVarslingRepository.detectEmptyDatabase() }
+        ) {
+            workOnEksternVarsel()
         }
     }
 
-    suspend fun hardDeleteLoop() {
-        while (true) {
-            try {
-                eksternVarslingRepository.deleteScheduledHardDeletes()
-            } catch (e: Exception) {
-                log.error("utføring av hard deletes feilet", e)
-            }
-            delay(Duration.ofMinutes(10).toMillis())
+    private suspend fun workOnEksternVarsel() {
+        if (eksternVarslingRepository.processingDisabled()) {
+            log.info("processing is disabled. will check again later.")
+            delay(Duration.ofMinutes(1).toMillis())
+            return
         }
-    }
 
-    suspend fun rescheduleAbandonedTasks() {
-        while (true) {
-            try {
-                TODO()
-            } catch (e: Exception) {
-                log.error("utføring av hard deletes feilet", e)
-            }
-            delay(Duration.ofMinutes(10).toMillis())
+        val varselId = eksternVarslingRepository.findWork()
+
+        if (varselId == null) {
+            log.info("ingen varsler å prossessere.")
+            delay(Duration.ofSeconds(10).toMillis())
+            return
         }
-    }
 
-    suspend fun doWorkLoop() {
-        while (true) {
-            try {
-                val varselId = eksternVarslingRepository.findWork()
-                if (varselId == null) {
-                    delay(Duration.ofSeconds(10).toMillis())
-                } else {
-                    doWork(varselId)
-                }
-            } catch (e: Exception) {
-                log.error("foo", e)
-            }
-        }
-    }
-
-    suspend fun doWork(varselId: UUID) {
         val varsel = eksternVarslingRepository.findVarsel(varselId)
             ?: run {
                 log.info("varsel mangler")
@@ -164,15 +162,19 @@ class EksternVarslingService(
 
         when (varsel) {
             is EksterntVarsel.Ny -> {
-                try {
-                    val response = TODO() as AltinnResponse
-                    eksternVarslingRepository.storeAndRelease(varsel)
-                } catch (e: Exception) {
-                    log.error("foo", e)
-                    eksternVarslingRepository.returnToWorkQueue(varsel.varselId)
-                    //TODO("backoff-teknikk?")
-                }
+                altinnVarselKlient.send(varsel.varselFoo).fold(
+                    onSuccess = { response ->
+                        eksternVarslingRepository.storeAndRelease(varselId, response)
+                    },
+                    onFailure = {
+                        eksternVarslingRepository.returnToWorkQueue(varsel.varselId)
+                        log.error("error", it)
+                        // TODO: backoff-teknikk?
+                        throw it
+                    },
+                )
             }
+
             is EksterntVarsel.Utført -> {
                 try {
                     kafkaProducer.send(TODO())
@@ -182,6 +184,7 @@ class EksternVarslingService(
                     eksternVarslingRepository.returnToWorkQueue(varsel.varselId)
                 }
             }
+
             is EksterntVarsel.Kvittert -> {
                 eksternVarslingRepository.deleteFromWorkQueue(varselId)
             }

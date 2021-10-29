@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.eksternvarsling
+package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilling
@@ -7,12 +7,15 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import org.apache.kafka.common.protocol.types.Field
 import java.time.LocalDateTime
 import java.util.*
 
 class EksternVarslingRepository(
     private val database: Database
 ) {
+    private val log = logger()
     private val podName = System.getenv("HOSTNAME") ?: "localhost"
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
@@ -97,7 +100,7 @@ class EksternVarslingRepository(
         database.transaction {
             for (varsel in varsler) {
                 executeUpdate("""
-                    insert into work_queue(varsel_id, locked) values (?, false);
+                    insert into job_queue(varsel_id, locked) values (?, false);
                 """) {
                     uuid(varsel.varselId)
                 }
@@ -220,7 +223,7 @@ class EksternVarslingRepository(
 
     suspend fun releaseAbandonedLocks(): List<ReleasedResource> {
         return database.nonTransactionalExecuteQuery("""
-            UPDATE work_queue
+            UPDATE job_queue
             SET locked = false
             WHERE locked = true AND locked_until < CURRENT_TIMESTAMP
             RETURNING varsel_id, locked_by, locked_at
@@ -233,16 +236,48 @@ class EksternVarslingRepository(
         }
     }
 
+
+    suspend fun detectEmptyDatabase() {
+        database.transaction {
+            val databaseIsEmpty = executeQuery(
+                """select 1 from ekstern_varsel_kontaktinfo limit 1""", transform = {}
+            ).isEmpty()
+
+            if (databaseIsEmpty) {
+                log.error("database is empty, disabling processing")
+                executeUpdate(
+                    """
+                        insert into queue_processing (id, enabled)
+                        values (0, false)
+                        on conflict (id) do nothing
+                    """
+                )
+            }
+        }
+    }
+
+    suspend fun processingDisabled(): Boolean {
+        val enabled = database.nonTransactionalExecuteQuery(
+            """ select enabled from work_queue_processing where id = 0 """,
+            transform = { getBoolean("enabled") }
+        )
+            .firstOrNull()
+            ?: false
+
+        return !enabled
+    }
+
+
     suspend fun requeueAbandonedWork() {
         database.nonTransactionalExecuteUpdate("""
             --- todo
-            insert into work_queue (varsel_id, locked)
+            insert into job_queue (varsel_id, locked)
             from 
             (
                 select varsel_id from ekstern_varsel_kontaktinfo
                 where 
                     tilstand <> '${EksterntVarselTilstand.UTFØRT}'
-                    and varsel_id not in (select varsel_id from work_queue)
+                    and varsel_id not in (select varsel_id from job_queue)
             )
         """)
     }
@@ -250,14 +285,14 @@ class EksternVarslingRepository(
 
     suspend fun findWork(): UUID? {
         return database.nonTransactionalExecuteQuery("""
-                UPDATE work_queue
+                UPDATE job_queue
                 SET locked = true,
                     locked_by = ?,
                     locked_at = CURRENT_TIMESTAMP,
                     locked_until = CURRENT_TIMESTAMP + ?
                 WHERE 
                     id = (
-                        SELECT id FROM work_queue 
+                        SELECT id FROM job_queue 
                         WHERE 
                             locked = false
                         LIMIT 1
@@ -290,7 +325,7 @@ class EksternVarslingRepository(
 
     fun Transaction.returnToWorkQueue(varselId: UUID) {
         executeUpdate("""
-            UPDATE work_queue
+            UPDATE job_queue
             SET locked = false
             WHERE varsel_id = ?
         """) {
@@ -306,7 +341,7 @@ class EksternVarslingRepository(
 
     fun Transaction.deleteFromWorkQueue(varselId: UUID) {
         executeUpdate("""
-            DELETE FROM work_queue WHERE varsel_id = ?
+            DELETE FROM job_queue WHERE varsel_id = ?
         """) {
             uuid(varselId)
         }
@@ -334,7 +369,7 @@ class EksternVarslingRepository(
             }
 
             executeUpdate(""" 
-                update work_queue
+                update job_queue
                 set locked = false
                 where varsel_id = ?
             """) {

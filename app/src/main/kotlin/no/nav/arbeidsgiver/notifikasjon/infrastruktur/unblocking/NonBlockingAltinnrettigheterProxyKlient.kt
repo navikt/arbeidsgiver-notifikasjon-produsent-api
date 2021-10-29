@@ -17,7 +17,7 @@ value */class NonBlockingAltinnrettigheterProxyKlient(
         serviceEdition: ServiceEdition,
         filtrerPåAktiveOrganisasjoner: Boolean
     ): List<AltinnReportee> =
-        withContext(Dispatchers.IO) {
+        blockingIO {
             blockingClient.hentOrganisasjoner(
                 selvbetjeningToken,
                 subject,
