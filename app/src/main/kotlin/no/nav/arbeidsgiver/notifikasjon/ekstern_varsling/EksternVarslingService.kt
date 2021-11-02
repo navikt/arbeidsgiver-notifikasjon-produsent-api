@@ -167,7 +167,7 @@ class EksternVarslingService(
             is EksternVarselTilstand.Ny -> {
                 altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
                     onSuccess = { response ->
-                        // TODO eksternVarslingRepository.storeAndRelease(varselId, response)
+                        eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                     },
                     onFailure = {
                         eksternVarslingRepository.returnToWorkQueue(varsel.data.varselId)
@@ -179,7 +179,7 @@ class EksternVarslingService(
             is EksternVarselTilstand.Utført -> {
                 try {
                     kafkaProducer.sendHendelse(varsel.toHendelse())
-                    eksternVarslingRepository.storeAndDelete(TODO())
+                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
                 } catch (e: Exception) {
                     log.error("foo", e)
                     eksternVarslingRepository.returnToWorkQueue(varsel.data.varselId)

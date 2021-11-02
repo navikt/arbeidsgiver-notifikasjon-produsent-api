@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldHaveSize
@@ -8,6 +9,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.instanceOf
 import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -177,5 +179,99 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             type2 shouldBeIn listOf(EksternVarsel.Sms::class, EksternVarsel.Epost::class)
         }
 
+    }
+
+    describe("Kan gå gjennom tilstandene ok") {
+        repository.oppdaterModellEtterHendelse(
+            oppgaveOpprettet.copy(
+                eksterneVarsler = oppgaveOpprettet.eksterneVarsler.subList(0, 1)
+            )
+        )
+
+        val id1 = repository.findWork(lockTimeout = Duration.ofDays(10))!!
+        val varsel1 = repository.findVarsel(id1)!!
+
+        it("should be Ny") {
+            varsel1 shouldBe instanceOf(EksternVarselTilstand.Ny::class)
+        }
+
+        repository.markerSomSendtAndReleaseJob(
+            id1,
+            AltinnVarselKlient.AltinnResponse.Ok(
+                rå = NullNode.instance
+            )
+        )
+
+        val id2 = repository.findWork(lockTimeout = Duration.ofDays(1))!!
+        val varsel2 = repository.findVarsel(id2)
+
+        it("should be utført") {
+            varsel2 shouldBe instanceOf(EksternVarselTilstand.Utført::class)
+        }
+
+        repository.markerSomKvittertAndDeleteJob(id2)
+
+        val id3 = repository.findWork(lockTimeout = Duration.ofDays(1))
+
+        it("no more work") {
+            id3 should beNull()
+        }
+
+        val varsel3 = repository.findVarsel(id2)!!
+        it("should be completed") {
+            varsel3 shouldBe instanceOf(EksternVarselTilstand.Kvittert::class)
+            varsel3 as EksternVarselTilstand.Kvittert
+            varsel3.response shouldBe instanceOf(AltinnVarselKlient.AltinnResponse.Ok::class)
+        }
+    }
+
+    describe("Kan gå gjennom tilstandene altinn-feil") {
+        repository.oppdaterModellEtterHendelse(
+            oppgaveOpprettet.copy(
+                eksterneVarsler = oppgaveOpprettet.eksterneVarsler.subList(0, 1)
+            )
+        )
+
+        val id1 = repository.findWork(lockTimeout = Duration.ofDays(10))!!
+        val varsel1 = repository.findVarsel(id1)!!
+
+        it("should be Ny") {
+            varsel1 shouldBe instanceOf(EksternVarselTilstand.Ny::class)
+        }
+
+        repository.markerSomSendtAndReleaseJob(
+            id1,
+            AltinnVarselKlient.AltinnResponse.Feil(
+                rå = NullNode.instance,
+                feilmelding = "hallo",
+                feilkode = "1",
+            )
+        )
+
+        val id2 = repository.findWork(lockTimeout = Duration.ofDays(1))!!
+        val varsel2 = repository.findVarsel(id2)
+
+        it("should be utført") {
+            varsel2 shouldBe instanceOf(EksternVarselTilstand.Utført::class)
+        }
+
+        repository.markerSomKvittertAndDeleteJob(id2)
+
+        val id3 = repository.findWork(lockTimeout = Duration.ofDays(1))
+
+        it("no more work") {
+            id3 should beNull()
+        }
+
+        val varsel3 = repository.findVarsel(id2)!!
+        it("should be failed") {
+            varsel3 shouldBe instanceOf(EksternVarselTilstand.Kvittert::class)
+            varsel3 as EksternVarselTilstand.Kvittert
+            val response = varsel3.response
+            response shouldBe instanceOf(AltinnVarselKlient.AltinnResponse.Feil::class)
+            response as AltinnVarselKlient.AltinnResponse.Feil
+            response.feilkode shouldBe "1"
+            response.feilmelding shouldBe "hallo"
+        }
     }
 })

@@ -379,7 +379,7 @@ class EksternVarslingRepository(
         }
     }
 
-    fun Transaction.returnToWorkQueue(varselId: UUID) {
+    private fun Transaction.returnToWorkQueue(varselId: UUID) {
         executeUpdate("""
             UPDATE job_queue
             SET locked = false
@@ -395,7 +395,7 @@ class EksternVarslingRepository(
         }
     }
 
-    fun Transaction.deleteFromWorkQueue(varselId: UUID) {
+    private fun Transaction.deleteFromWorkQueue(varselId: UUID) {
         executeUpdate("""
             DELETE FROM job_queue WHERE varsel_id = ?
         """) {
@@ -403,34 +403,51 @@ class EksternVarslingRepository(
         }
     }
 
-    suspend fun storeAndDelete(v: EksternVarselTilstand.Kvittert) {
+    suspend fun markerSomKvittertAndDeleteJob(varselId: UUID) {
+        database.transaction {
+            executeUpdate(
+                """
+                    update ekstern_varsel_kontaktinfo
+                    set state = '${EksterntVarselTilstand.KVITTERT}'
+                    where varsel_id = ?
+                """
+            ) {
+                uuid(varselId)
+            }
 
+            deleteFromWorkQueue(varselId)
+        }
     }
 
-    suspend fun storeAndRelease(v: EksternVarselTilstand.Utført) {
+    suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlient.AltinnResponse) {
         database.transaction {
             executeUpdate(""" 
                 update ekstern_varsel_kontaktinfo
                 set 
+                    state = '${EksterntVarselTilstand.SENDT}',
                     altinn_response = ?::jsonb,
-                    altinn_utfall = ?,
-                    altinn_feilmelding = ?,
-                    tilstand = '${EksterntVarselTilstand.SENDT}'
+                    sende_status = ?::status,
+                    feilmelding = ?,
+                    altinn_feilkode = ?
                 where varsel_id = ?
             """) {
-                jsonb(TODO())
-                string(TODO())
-                string(TODO())
-                uuid(v.data.varselId)
+                jsonb(response.rå)
+                when (response) {
+                    is AltinnVarselKlient.AltinnResponse.Ok -> {
+                        string("OK")
+                        nullableString(null)
+                        nullableString(null)
+                    }
+                    is AltinnVarselKlient.AltinnResponse.Feil -> {
+                        string("FEIL")
+                        nullableString(response.feilmelding)
+                        nullableString(response.feilkode)
+                    }
+                }
+                uuid(varselId)
             }
 
-            executeUpdate(""" 
-                update job_queue
-                set locked = false
-                where varsel_id = ?
-            """) {
-                uuid(v.data.varselId)
-            }
+            returnToWorkQueue(varselId)
         }
     }
 }
