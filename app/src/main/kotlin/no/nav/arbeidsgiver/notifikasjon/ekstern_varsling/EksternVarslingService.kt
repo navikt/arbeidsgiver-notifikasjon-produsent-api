@@ -5,6 +5,7 @@ import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
@@ -145,7 +146,9 @@ class EksternVarslingService(
             return
         }
 
-        val varselId = eksternVarslingRepository.findWork()
+        val varselId = eksternVarslingRepository.findWork(
+            lockTimeout = Duration.ofMinutes(5)
+        )
 
         if (varselId == null) {
             log.info("ingen varsler å prossessere.")
@@ -155,29 +158,27 @@ class EksternVarslingService(
 
         val varsel = eksternVarslingRepository.findVarsel(varselId)
             ?: run {
-                log.info("varsel mangler")
+                log.info("ingen varsel")
                 eksternVarslingRepository.deleteFromWorkQueue(varselId)
                 return
             }
 
         when (varsel) {
-            is EksterntVarsel.Ny -> {
-                altinnVarselKlient.send(varsel.varselFoo).fold(
+            is EksternVarselTilstand.Ny -> {
+                altinnVarselKlient.send(varsel.eksternVarsel).fold(
                     onSuccess = { response ->
-                        eksternVarslingRepository.storeAndRelease(varselId, response)
+                        // TODO eksternVarslingRepository.storeAndRelease(varselId, response)
                     },
                     onFailure = {
                         eksternVarslingRepository.returnToWorkQueue(varsel.varselId)
-                        log.error("error", it)
-                        // TODO: backoff-teknikk?
                         throw it
                     },
                 )
             }
 
-            is EksterntVarsel.Utført -> {
+            is EksternVarselTilstand.Utført -> {
                 try {
-                    kafkaProducer.send(TODO())
+                    kafkaProducer.sendHendelse(varsel.toHendelse())
                     eksternVarslingRepository.storeAndDelete(TODO())
                 } catch (e: Exception) {
                     log.error("foo", e)
@@ -185,7 +186,7 @@ class EksternVarslingService(
                 }
             }
 
-            is EksterntVarsel.Kvittert -> {
+            is EksternVarselTilstand.Kvittert -> {
                 eksternVarslingRepository.deleteFromWorkQueue(varselId)
             }
         }

@@ -63,12 +63,12 @@ object EksternVarsling {
             }
 
             launch {
-                val service = EksternVarslingService(
-                    eksternVarslingRepository = eksternVarslingModelAsync.await(),
-                    altinnVarselKlient = TODO(),
-                    kafkaProducer = TODO()
-                )
-                service.start(this)
+//                val service = EksternVarslingService(
+//                    eksternVarslingRepository = eksternVarslingModelAsync.await(),
+//                    altinnVarselKlient = TODO(),
+//                    kafkaProducer = TODO()
+//                )
+//                service.start(this)
             }
 
 

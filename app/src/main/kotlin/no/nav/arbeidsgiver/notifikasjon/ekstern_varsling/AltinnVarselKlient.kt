@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.NullNode
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
@@ -10,9 +9,9 @@ import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
@@ -31,12 +30,14 @@ interface AltinnVarselKlient {
         ) : AltinnResponse
 
         data class Feil(
-            override val rå: JsonNode
+            override val rå: JsonNode,
+            val feilkode: String,
+            val feilmelding: String,
         ) : AltinnResponse
     }
 
 
-    suspend fun send(varselFoo: VarselFoo): Result<AltinnResponse>
+    suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnResponse>
 
     suspend fun sendSms(
         mottaker: AltinnMottaker,
@@ -85,18 +86,18 @@ class AltinnVarselKlientImpl(
     private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
 
 
-    override suspend fun send(varselFoo: VarselFoo): Result<AltinnVarselKlient.AltinnResponse> {
-        return when (varselFoo) {
-            is VarselFoo.Epost -> sendEpost(
-                virksomhetsnummer = varselFoo.virksomhetsnummer,
-                epostadresse = varselFoo.epostadresse,
-                tittel = varselFoo.tittel,
-                tekst = varselFoo.tekst,
+    override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
+        return when (eksternVarsel) {
+            is EksternVarsel.Epost -> sendEpost(
+                virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
+                epostadresse = eksternVarsel.epostadresse,
+                tittel = eksternVarsel.tittel,
+                tekst = eksternVarsel.tekst,
             )
-            is VarselFoo.Sms -> sendSms(
-                virksomhetsnummer = varselFoo.virksomhetsnummer,
-                mobilnummer = varselFoo.mobilnummer,
-                tekst = varselFoo.tekst,
+            is EksternVarsel.Sms -> sendSms(
+                virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
+                mobilnummer = eksternVarsel.mobilnummer,
+                tekst = eksternVarsel.tekst,
             )
         }
     }
@@ -242,14 +243,14 @@ class AltinnVarselKlientImpl(
     private suspend fun send(payload: StandaloneNotificationBEList): Result<AltinnVarselKlient.AltinnResponse> {
         return blockingIO {
             try {
-                wsclient.sendStandaloneNotificationBasicV3(
+                val response = wsclient.sendStandaloneNotificationBasicV3(
                     altinnBrukernavn,
                     altinnPassord,
                     payload
                 )
                 Result.success(
                     AltinnVarselKlient.AltinnResponse.Ok(
-                        rå = NullNode.instance
+                        rå = objectMapper.valueToTree(response),
                     )
                 )
             } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
@@ -259,7 +260,9 @@ class AltinnVarselKlientImpl(
                 )
                 Result.success(
                     AltinnVarselKlient.AltinnResponse.Feil(
-                        rå = NullNode.instance,
+                        feilkode = e.faultInfo.errorID.toString(),
+                        feilmelding = e.faultInfo.altinnErrorMessage.value,
+                        rå = objectMapper.valueToTree(e),
                     )
                 )
             } catch (e: Throwable) {

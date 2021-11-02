@@ -144,42 +144,51 @@ class Database private constructor(
     suspend fun withFlyway(body: Flyway.() -> Unit) {
         dataSource.withFlyway(config.migrationLocations, body)
     }
+
 }
+
 
 @JvmInline
 value class Transaction(
     private val connection: Connection
 ) {
+    companion object {
+        private val log = logger()
+    }
+
     fun <T> executeQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> {
-        return connection
-            .prepareStatement(sql)
-            .use { preparedStatement ->
-                ParameterSetters(preparedStatement).apply(setup)
-                preparedStatement.executeQuery().use { resultSet ->
-                    val resultList = mutableListOf<T>()
-                    while (resultSet.next()) {
-                        resultList.add(resultSet.transform())
+        return logQueryOnError(sql) {
+            connection
+                .prepareStatement(sql)
+                .use { preparedStatement ->
+                    ParameterSetters(preparedStatement).apply(setup)
+                    preparedStatement.executeQuery().use { resultSet ->
+                        val resultList = mutableListOf<T>()
+                        while (resultSet.next()) {
+                            resultList.add(resultSet.transform())
+                        }
+                        resultList
                     }
-                    resultList
                 }
-            }
+        }
     }
 
     fun executeUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
-    ): Int {
-        return connection
-            .prepareStatement(sql)
-            .use { preparedStatement ->
-                ParameterSetters(preparedStatement).apply(setup)
-                preparedStatement.executeUpdate()
-            }
-    }
+    ): Int =
+        logQueryOnError(sql) {
+            connection
+                .prepareStatement(sql)
+                .use { preparedStatement ->
+                    ParameterSetters(preparedStatement).apply(setup)
+                    preparedStatement.executeUpdate()
+                }
+        }
 
     fun <T> executeBatch(
         @Language("PostgreSQL") sql: String,
@@ -189,16 +198,26 @@ value class Transaction(
         if (iterable.none()) {
             return intArrayOf()
         }
-        return connection
-            .prepareStatement(sql)
-            .use { preparedStatement ->
-                iterable.forEach {
-                    ParameterSetters(preparedStatement).setup(it)
-                    preparedStatement.addBatch()
+        return logQueryOnError(sql) {
+            connection
+                .prepareStatement(sql)
+                .use { preparedStatement ->
+                    iterable.forEach {
+                        ParameterSetters(preparedStatement).setup(it)
+                        preparedStatement.addBatch()
+                    }
+                    preparedStatement.executeBatch()
                 }
-                preparedStatement.executeBatch()
-            }
+        }
     }
+
+    private fun <T> logQueryOnError(sql: String, action: () -> T): T =
+        try {
+            action()
+        } catch (e: Exception) {
+            log.error("exception executing query: {}", sql, e)
+            throw e
+        }
 }
 
 class ParameterSetters(
@@ -244,4 +263,3 @@ class ParameterSetters(
     fun nullableTimestamp(value: LocalDateTime?) =
         preparedStatement.setObject(index++, value)
 }
-

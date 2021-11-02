@@ -8,7 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import org.apache.kafka.common.protocol.types.Field
+import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 
@@ -65,15 +65,16 @@ class EksternVarslingRepository(
             update ekstern_varsel_kontaktinfo 
             set 
                 altinn_response = ?::jsonb,
-                tilstand = '${EksterntVarselTilstand.KVITTERT}' 
+                state = '${EksterntVarselTilstand.KVITTERT}' 
             where
                 varsel_id = ? 
-                and tilstand <> '${EksterntVarselTilstand.KVITTERT}'
+                and state <> '${EksterntVarselTilstand.KVITTERT}'
         """) {
             jsonb(råRespons)
             uuid(varselId)
         }
     }
+
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
         database.nonTransactionalExecuteUpdate("""
             update ekstern_varsel_kontaktinfo
@@ -87,7 +88,7 @@ class EksternVarslingRepository(
     suspend fun deleteScheduledHardDeletes() {
         database.nonTransactionalExecuteUpdate("""
             delete from ekstern_varsel_kontaktinfo
-            where hard_deleted and tilstand = '${EksterntVarselTilstand.KVITTERT}'
+            where hard_deleted and state = '${EksterntVarselTilstand.KVITTERT}'
         """)
     }
 
@@ -131,27 +132,26 @@ class EksternVarslingRepository(
                 varsel_id,
                 notifikasjon_id,
                 produsent_id,
+                varsel_type,
                 tlfnr,
                 fnr_eller_orgnr,
                 sms_tekst,
                 sendevindu,
                 sendetidspunkt,
-
-                tilstand,
-                altinn_response
+                state
             )
             VALUES 
             (
                 ?, /* varsel_id */
                 ?, /* notifikasjon_id */
                 ?, /* produsent_id */
+                'SMS',
                 ?, /* tlfnr */
                 ?, /* fnr_eller_orgnr */
                 ?, /* smsTekst */
                 ?, /* sendevindu */
                 ?, /* sendetidspunkt */
-                'NY', /* tilstand */
-                NULL /* altinn_response */
+                'NY' /* tilstand */
             )
             ON CONFLICT (varsel_id) DO NOTHING;
         """) {
@@ -177,29 +177,28 @@ class EksternVarslingRepository(
                 varsel_id,
                 notifikasjon_id,
                 produsent_id,
+                varsel_type,
                 epost_adresse,
                 fnr_eller_orgnr,
                 tittel,
                 html_body,
                 sendevindu,
                 sendetidspunkt,
-
-                tilstand,
-                altinn_response
+                state
             )
             VALUES 
             (
                 ?, /* varsel_id */
                 ?, /* notifikasjon_id */
                 ?, /* produsent_id */
+                'EMAIL',
                 ?, /* epost_adresse */
                 ?, /* fnr_eller_orgnr */
                 ?, /* tittel */
                 ?, /* html_body */
                 ?, /* sendevindu */
                 ?, /* sendetidspunkt */
-                'NY', /* tilstand */
-                NULL /* altinn_response */
+                'NY' /* tilstand */
             )
             ON CONFLICT (varsel_id) DO NOTHING;
         """) {
@@ -247,9 +246,10 @@ class EksternVarslingRepository(
                 log.error("database is empty, disabling processing")
                 executeUpdate(
                     """
-                        insert into queue_processing (id, enabled)
-                        values (0, false)
-                        on conflict (id) do nothing
+                        insert into emergency_break (id, stop_processing)
+                        values (0, true)
+                        on conflict (id) do update
+                            set stop_processing = true
                     """
                 )
             }
@@ -257,14 +257,12 @@ class EksternVarslingRepository(
     }
 
     suspend fun processingDisabled(): Boolean {
-        val enabled = database.nonTransactionalExecuteQuery(
-            """ select enabled from work_queue_processing where id = 0 """,
-            transform = { getBoolean("enabled") }
+        return database.nonTransactionalExecuteQuery(
+            """ select stop_processing from emergency_break where id = 0 """,
+            transform = { getBoolean("stop_processing") }
         )
             .firstOrNull()
-            ?: false
-
-        return !enabled
+            ?: true
     }
 
 
@@ -276,20 +274,20 @@ class EksternVarslingRepository(
             (
                 select varsel_id from ekstern_varsel_kontaktinfo
                 where 
-                    tilstand <> '${EksterntVarselTilstand.UTFØRT}'
+                    state <> '${EksterntVarselTilstand.SENDT}'
                     and varsel_id not in (select varsel_id from job_queue)
             )
         """)
     }
 
 
-    suspend fun findWork(): UUID? {
+    suspend fun findWork(lockTimeout: Duration): UUID? {
         return database.nonTransactionalExecuteQuery("""
                 UPDATE job_queue
                 SET locked = true,
                     locked_by = ?,
                     locked_at = CURRENT_TIMESTAMP,
-                    locked_until = CURRENT_TIMESTAMP + ?
+                    locked_until = CURRENT_TIMESTAMP + ?::interval
                 WHERE 
                     id = (
                         SELECT id FROM job_queue 
@@ -302,7 +300,7 @@ class EksternVarslingRepository(
                     """,
                 setup = {
                     string(podName)
-                    // locked_until offset
+                    string(lockTimeout.toString())
 
                 },
                 transform = {
@@ -312,8 +310,15 @@ class EksternVarslingRepository(
                 .firstOrNull()
     }
 
-    suspend fun findVarsel(varselId: UUID): EksterntVarsel? {
-        TODO()
+    suspend fun findVarsel(varselId: UUID): EksternVarselTilstand? {
+        database.nonTransactionalExecuteQuery(
+            """
+            select * from ekstern_varsel_kontaktinfo where varsel_id = ?
+            """,
+            setup = {
+            },
+            transform = {
+            })
     }
 
 
@@ -347,11 +352,11 @@ class EksternVarslingRepository(
         }
     }
 
-    suspend fun storeAndDelete(v: EksterntVarsel.Kvittert) {
+    suspend fun storeAndDelete(v: EksternVarselTilstand.Kvittert) {
 
     }
 
-    suspend fun storeAndRelease(v: EksterntVarsel.Utført) {
+    suspend fun storeAndRelease(v: EksternVarselTilstand.Utført) {
         database.transaction {
             executeUpdate(""" 
                 update ekstern_varsel_kontaktinfo
@@ -359,7 +364,7 @@ class EksternVarslingRepository(
                     altinn_response = ?::jsonb,
                     altinn_utfall = ?,
                     altinn_feilmelding = ?,
-                    tilstand = '${EksterntVarselTilstand.UTFØRT}'
+                    tilstand = '${EksterntVarselTilstand.SENDT}'
                 where varsel_id = ?
             """) {
                 jsonb(TODO())
