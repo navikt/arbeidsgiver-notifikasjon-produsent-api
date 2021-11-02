@@ -270,9 +270,8 @@ class EksternVarslingRepository(
     suspend fun createJobsForAbandonedVarsler() {
         database.nonTransactionalExecuteUpdate("""
             insert into job_queue (varsel_id, locked)
-            from 
             (
-                select varsel_id from ekstern_varsel_kontaktinfo
+                select varsel_id, false as locked from ekstern_varsel_kontaktinfo
                 where 
                     state <> '${EksterntVarselTilstand.SENDT}'
                     and varsel_id not in (select varsel_id from job_queue)
