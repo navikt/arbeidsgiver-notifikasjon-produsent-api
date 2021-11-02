@@ -267,9 +267,8 @@ class EksternVarslingRepository(
     }
 
 
-    suspend fun requeueAbandonedWork() {
+    suspend fun createJobsForAbandonedVarsler() {
         database.nonTransactionalExecuteUpdate("""
-            --- todo
             insert into job_queue (varsel_id, locked)
             from 
             (

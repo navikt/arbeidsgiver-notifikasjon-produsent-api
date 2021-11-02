@@ -39,29 +39,29 @@ interface AltinnVarselKlient {
 
     suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnResponse>
 
-    suspend fun sendSms(
-        mottaker: AltinnMottaker,
-        tekst: String
-    ): Result<AltinnResponse>
-
-    suspend fun sendSms(
-        mobilnummer: String,
-        virksomhetsnummer: String,
-        tekst: String
-    ): Result<AltinnResponse>
-
-    suspend fun sendEpost(
-        mottaker: AltinnMottaker,
-        tittel: String,
-        tekst: String
-    ): Result<AltinnResponse>
-
-    suspend fun sendEpost(
-        virksomhetsnummer: String,
-        epostadresse: String,
-        tittel: String,
-        tekst: String
-    ): Result<AltinnResponse>
+//    suspend fun sendSms(
+//        mottaker: AltinnMottaker,
+//        tekst: String
+//    ): Result<AltinnResponse>
+//
+//    suspend fun sendSms(
+//        mobilnummer: String,
+//        virksomhetsnummer: String,
+//        tekst: String
+//    ): Result<AltinnResponse>
+//
+//    suspend fun sendEpost(
+//        mottaker: AltinnMottaker,
+//        tittel: String,
+//        tekst: String
+//    ): Result<AltinnResponse>
+//
+//    suspend fun sendEpost(
+//        virksomhetsnummer: String,
+//        epostadresse: String,
+//        tittel: String,
+//        tekst: String
+//    ): Result<AltinnResponse>
 }
 
 /**
@@ -76,7 +76,7 @@ interface AltinnVarselKlient {
  */
 class AltinnVarselKlientImpl(
     altinnEndPoint: String = basedOnEnv(
-        prod = "",
+        prod = "", /* TODO */
         other = "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"
     ),
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
@@ -102,7 +102,7 @@ class AltinnVarselKlientImpl(
         }
     }
 
-    override suspend fun sendSms(
+    /*override*/ suspend fun sendSms(
         mottaker: AltinnMottaker,
         tekst: String,
     ): Result<AltinnVarselKlient.AltinnResponse> {
@@ -135,7 +135,7 @@ class AltinnVarselKlientImpl(
         ))
     }
 
-    override suspend fun sendSms(
+    /*override*/ suspend fun sendSms(
         mobilnummer: String,
         virksomhetsnummer: String,
         tekst: String,
@@ -170,7 +170,7 @@ class AltinnVarselKlientImpl(
         ))
     }
 
-    override suspend fun sendEpost(
+    /*override*/ suspend fun sendEpost(
         mottaker: AltinnMottaker,
         tittel: String,
         tekst: String,
@@ -204,7 +204,7 @@ class AltinnVarselKlientImpl(
         ))
     }
 
-    override suspend fun sendEpost(
+    /*override*/ suspend fun sendEpost(
         virksomhetsnummer: String,
         epostadresse: String,
         tittel: String,

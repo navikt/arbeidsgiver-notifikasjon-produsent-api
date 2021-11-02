@@ -95,7 +95,7 @@ import java.time.Duration
 
 class EksternVarslingService(
     private val eksternVarslingRepository: EksternVarslingRepository,
-    private val altinnVarselKlient: AltinnVarselKlientImpl,
+    private val altinnVarselKlient: AltinnVarselKlient,
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
 ) {
     private val log = logger()
@@ -128,7 +128,7 @@ class EksternVarslingService(
             "requeue-lost-work",
             pauseAfterEach = Duration.ofMinutes(10)
         ) {
-            TODO("re-queue work of eksterne varsler that are neither completed nor queued")
+            eksternVarslingRepository.createJobsForAbandonedVarsler()
         }
 
         coroutineScope.launchProcessingLoop(
