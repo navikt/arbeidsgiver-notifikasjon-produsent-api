@@ -113,7 +113,7 @@ class EksternVarslingService(
             "release-locks",
             pauseAfterEach = Duration.ofMinutes(10)
         ) {
-            val released = eksternVarslingRepository.releaseAbandonedLocks()
+            val released = eksternVarslingRepository.releaseTimedOutJobLocks()
             if (released.isNotEmpty()) {
                 log.error(
                     """
@@ -146,7 +146,7 @@ class EksternVarslingService(
             return
         }
 
-        val varselId = eksternVarslingRepository.findWork(
+        val varselId = eksternVarslingRepository.findJob(
             lockTimeout = Duration.ofMinutes(5)
         )
 
@@ -159,7 +159,7 @@ class EksternVarslingService(
         val varsel = eksternVarslingRepository.findVarsel(varselId)
             ?: run {
                 log.info("ingen varsel")
-                eksternVarslingRepository.deleteFromWorkQueue(varselId)
+                eksternVarslingRepository.deleteFromJobQueue(varselId)
                 return
             }
 
@@ -170,7 +170,7 @@ class EksternVarslingService(
                         eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                     },
                     onFailure = {
-                        eksternVarslingRepository.returnToWorkQueue(varsel.data.varselId)
+                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                         throw it
                     },
                 )
@@ -182,12 +182,12 @@ class EksternVarslingService(
                     eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
                 } catch (e: Exception) {
                     log.error("foo", e)
-                    eksternVarslingRepository.returnToWorkQueue(varsel.data.varselId)
+                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                 }
             }
 
             is EksternVarselTilstand.Kvittert -> {
-                eksternVarslingRepository.deleteFromWorkQueue(varselId)
+                eksternVarslingRepository.deleteFromJobQueue(varselId)
             }
         }
     }

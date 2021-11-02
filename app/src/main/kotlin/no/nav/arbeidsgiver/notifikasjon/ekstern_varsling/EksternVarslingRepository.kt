@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilling
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
@@ -222,7 +221,7 @@ class EksternVarslingRepository(
         val lockedBy: String
     )
 
-    suspend fun releaseAbandonedLocks(): List<ReleasedResource> {
+    suspend fun releaseTimedOutJobLocks(): List<ReleasedResource> {
         return database.nonTransactionalExecuteQuery("""
             UPDATE job_queue
             SET locked = false
@@ -283,7 +282,7 @@ class EksternVarslingRepository(
     }
 
 
-    suspend fun findWork(lockTimeout: Duration): UUID? {
+    suspend fun findJob(lockTimeout: Duration): UUID? {
         return database.nonTransactionalExecuteQuery("""
                 UPDATE job_queue
                 SET locked = true,
@@ -373,13 +372,13 @@ class EksternVarslingRepository(
     }
 
 
-    suspend fun returnToWorkQueue(varselId: UUID) {
+    suspend fun returnToJobQueue(varselId: UUID) {
         database.transaction {
-            returnToWorkQueue(varselId)
+            returnToJobQueue(varselId)
         }
     }
 
-    private fun Transaction.returnToWorkQueue(varselId: UUID) {
+    private fun Transaction.returnToJobQueue(varselId: UUID) {
         executeUpdate("""
             UPDATE job_queue
             SET locked = false
@@ -389,13 +388,13 @@ class EksternVarslingRepository(
         }
     }
 
-    suspend fun deleteFromWorkQueue(varselId: UUID) {
+    suspend fun deleteFromJobQueue(varselId: UUID) {
         database.transaction {
-            deleteFromWorkQueue(varselId)
+            deleteFromJobQueue(varselId)
         }
     }
 
-    private fun Transaction.deleteFromWorkQueue(varselId: UUID) {
+    private fun Transaction.deleteFromJobQueue(varselId: UUID) {
         executeUpdate("""
             DELETE FROM job_queue WHERE varsel_id = ?
         """) {
@@ -415,7 +414,7 @@ class EksternVarslingRepository(
                 uuid(varselId)
             }
 
-            deleteFromWorkQueue(varselId)
+            deleteFromJobQueue(varselId)
         }
     }
 
@@ -447,7 +446,7 @@ class EksternVarslingRepository(
                 uuid(varselId)
             }
 
-            returnToWorkQueue(varselId)
+            returnToJobQueue(varselId)
         }
     }
 }

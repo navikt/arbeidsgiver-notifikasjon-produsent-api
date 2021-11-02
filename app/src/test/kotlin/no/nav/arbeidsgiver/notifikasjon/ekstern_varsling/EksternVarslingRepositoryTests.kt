@@ -62,23 +62,23 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     describe("Getting and deleting jobs") {
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-        val id1 = repository.findWork(lockTimeout = Duration.ofMinutes(1))
+        val id1 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
 
         it("should pick and delete a job") {
             id1 shouldNot beNull()
             id1 shouldBeIn listOf(uuid("3"), uuid("4"))
         }
-        repository.deleteFromWorkQueue(id1!!)
+        repository.deleteFromJobQueue(id1!!)
 
-        val id2 = repository.findWork(lockTimeout = Duration.ofMinutes(1))
+        val id2 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
         it("should pick and delete another job") {
             id2 shouldNot beNull()
             id1 shouldNotBe id2
             id2 shouldBeIn listOf(uuid("3"), uuid("4"))
         }
-        repository.deleteFromWorkQueue(id2!!)
+        repository.deleteFromJobQueue(id2!!)
 
-        val id3 = repository.findWork(lockTimeout = Duration.ofMinutes(1))
+        val id3 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
         it("should be no more jobs to pick") {
             id3 should beNull()
         }
@@ -91,8 +91,8 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             )
         )
 
-        val id1 = repository.findWork(lockTimeout = Duration.ofDays(1))
-        val id2 = repository.findWork(lockTimeout = Duration.ofDays(1))
+        val id1 = repository.findJob(lockTimeout = Duration.ofDays(1))
+        val id2 = repository.findJob(lockTimeout = Duration.ofDays(1))
 
         it("should pick up the single job we have") {
             id1 shouldBe uuid("3")
@@ -111,14 +111,14 @@ class EksternVarslingRepositoryTests: DescribeSpec({
                 )
             )
 
-            val id1 = repository.findWork(lockTimeout = Duration.ofMillis(1))
+            val id1 = repository.findJob(lockTimeout = Duration.ofMillis(1))
             delay(Duration.ofMillis(100).toMillis())
-            val abandonedLocks = repository.releaseAbandonedLocks()
+            val abandonedLocks = repository.releaseTimedOutJobLocks()
 
             abandonedLocks shouldHaveSize 1
             abandonedLocks[0].varselId shouldBe id1
 
-            val id2 = repository.findWork(lockTimeout = Duration.ofMinutes(1))
+            val id2 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
             id1 shouldBe id2
         }
     }
@@ -131,17 +131,17 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             )
         )
 
-        val id1 = repository.findWork(lockTimeout = Duration.ofMinutes(1))!!
+        val id1 = repository.findJob(lockTimeout = Duration.ofMinutes(1))!!
 
         it("should get the job") {
             id1 shouldBe uuid("3")
         }
 
         it("should be returned to work queue") {
-            repository.returnToWorkQueue(id1)
+            repository.returnToJobQueue(id1)
         }
 
-        val id2 = repository.findWork(lockTimeout = Duration.ofMinutes(1))!!
+        val id2 = repository.findJob(lockTimeout = Duration.ofMinutes(1))!!
         it("should get it again") {
             id2 shouldBe uuid("3")
         }
@@ -150,8 +150,8 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     describe("read and write of notification") {
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-        val id1 = repository.findWork(lockTimeout = Duration.ofMinutes(1))
-        val id2 = repository.findWork(lockTimeout = Duration.ofMinutes(1))
+        val id1 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
+        val id2 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
 
         it("har fått to forskjellige id-er") {
             id1 shouldNot beNull()
@@ -188,7 +188,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             )
         )
 
-        val id1 = repository.findWork(lockTimeout = Duration.ofDays(10))!!
+        val id1 = repository.findJob(lockTimeout = Duration.ofDays(10))!!
         val varsel1 = repository.findVarsel(id1)!!
 
         it("should be Ny") {
@@ -202,7 +202,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             )
         )
 
-        val id2 = repository.findWork(lockTimeout = Duration.ofDays(1))!!
+        val id2 = repository.findJob(lockTimeout = Duration.ofDays(1))!!
         val varsel2 = repository.findVarsel(id2)
 
         it("should be utført") {
@@ -211,7 +211,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
 
         repository.markerSomKvittertAndDeleteJob(id2)
 
-        val id3 = repository.findWork(lockTimeout = Duration.ofDays(1))
+        val id3 = repository.findJob(lockTimeout = Duration.ofDays(1))
 
         it("no more work") {
             id3 should beNull()
@@ -232,7 +232,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             )
         )
 
-        val id1 = repository.findWork(lockTimeout = Duration.ofDays(10))!!
+        val id1 = repository.findJob(lockTimeout = Duration.ofDays(10))!!
         val varsel1 = repository.findVarsel(id1)!!
 
         it("should be Ny") {
@@ -248,7 +248,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             )
         )
 
-        val id2 = repository.findWork(lockTimeout = Duration.ofDays(1))!!
+        val id2 = repository.findJob(lockTimeout = Duration.ofDays(1))!!
         val varsel2 = repository.findVarsel(id2)
 
         it("should be utført") {
@@ -257,7 +257,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
 
         repository.markerSomKvittertAndDeleteJob(id2)
 
-        val id3 = repository.findWork(lockTimeout = Duration.ofDays(1))
+        val id3 = repository.findJob(lockTimeout = Duration.ofDays(1))
 
         it("no more work") {
             id3 should beNull()
