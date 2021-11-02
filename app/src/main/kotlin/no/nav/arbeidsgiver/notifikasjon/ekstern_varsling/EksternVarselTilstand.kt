@@ -16,38 +16,32 @@ sealed interface EksternVarsel {
         override val fnrEllerOrgnr: String,
         val epostadresse: String,
         val tittel: String,
-        val tekst: String
+        val body: String
     ): EksternVarsel
 }
 
-sealed interface EksternVarselTilstand {
-    val varselId: UUID
-    val notifikasjonId: UUID
-    val produsentId: String
+data class EksternVarselStatiskData(
+    val varselId: UUID,
+    val notifikasjonId: UUID,
+    val produsentId: String,
+    val eksternVarsel: EksternVarsel,
+)
 
-    val eksternVarsel: EksternVarsel
+sealed interface EksternVarselTilstand {
+    val data: EksternVarselStatiskData
 
     data class Ny(
-        override val varselId: UUID,
-        override val eksternVarsel: EksternVarsel,
-        override val notifikasjonId: UUID,
-        override val produsentId: String,
+        override val data: EksternVarselStatiskData
     ) : EksternVarselTilstand
 
     data class Utført(
-        override val varselId: UUID,
-        override val eksternVarsel: EksternVarsel,
-        override val notifikasjonId: UUID,
-        override val produsentId: String,
+        override val data: EksternVarselStatiskData,
         val response: AltinnVarselKlient.AltinnResponse
     ) : EksternVarselTilstand
 
 
     data class Kvittert(
-        override val varselId: UUID,
-        override val eksternVarsel: EksternVarsel,
-        override val notifikasjonId: UUID,
-        override val produsentId: String,
+        override val data: EksternVarselStatiskData,
         val response: AltinnVarselKlient.AltinnResponse
     ) : EksternVarselTilstand
 }
@@ -61,21 +55,21 @@ private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notif
 fun EksternVarselTilstand.Utført.toHendelse(): Hendelse =
     when (this.response) {
         is AltinnVarselKlient.AltinnResponse.Ok -> Hendelse.EksterntVarselVellykket(
-            virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
-            notifikasjonId = notifikasjonId,
+            virksomhetsnummer = data.eksternVarsel.fnrEllerOrgnr,
+            notifikasjonId = data.notifikasjonId,
             hendelseId = UUID.randomUUID(),
-            produsentId = produsentId,
+            produsentId = data.produsentId,
             kildeAppNavn = naisClientId,
-            varselId = varselId,
+            varselId = data.varselId,
             råRespons = response.rå
         )
         is AltinnVarselKlient.AltinnResponse.Feil -> Hendelse.EksterntVarselFeilet(
-            virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
-            notifikasjonId = notifikasjonId,
+            virksomhetsnummer = data.eksternVarsel.fnrEllerOrgnr,
+            notifikasjonId = data.notifikasjonId,
             hendelseId = UUID.randomUUID(),
-            produsentId = produsentId,
+            produsentId = data.produsentId,
             kildeAppNavn = naisClientId,
-            varselId = varselId,
+            varselId = data.varselId,
             råRespons = response.rå,
             altinnFeilkode = response.feilkode,
             feilmelding = response.feilmelding,

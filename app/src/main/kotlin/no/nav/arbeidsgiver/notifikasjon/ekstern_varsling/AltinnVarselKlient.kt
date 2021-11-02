@@ -92,7 +92,7 @@ class AltinnVarselKlientImpl(
                 virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
                 epostadresse = eksternVarsel.epostadresse,
                 tittel = eksternVarsel.tittel,
-                tekst = eksternVarsel.tekst,
+                tekst = eksternVarsel.body,
             )
             is EksternVarsel.Sms -> sendSms(
                 virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,

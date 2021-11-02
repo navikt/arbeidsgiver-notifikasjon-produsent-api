@@ -144,4 +144,38 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             id2 shouldBe uuid("3")
         }
     }
+
+    describe("read and write of notification") {
+        repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
+
+        val id1 = repository.findWork(lockTimeout = Duration.ofMinutes(1))
+        val id2 = repository.findWork(lockTimeout = Duration.ofMinutes(1))
+
+        it("har fått to forskjellige id-er") {
+            id1 shouldNot beNull()
+            id2 shouldNot beNull()
+            id1 shouldNotBe id2
+        }
+
+        val varsel1 = repository.findVarsel(id1!!)
+        val varsel2 = repository.findVarsel(id2!!)
+
+
+        it("har fått to varsler av forskjellig type") {
+            varsel1 shouldNot beNull();
+            varsel1 as EksternVarselTilstand
+
+            varsel2 shouldNot beNull();
+            varsel2 as EksternVarselTilstand
+
+            val type1 = varsel1.data.eksternVarsel::class
+            val type2 = varsel2.data.eksternVarsel::class
+
+            type1 shouldNotBe type2
+
+            type1 shouldBeIn listOf(EksternVarsel.Sms::class, EksternVarsel.Epost::class)
+            type2 shouldBeIn listOf(EksternVarsel.Sms::class, EksternVarsel.Epost::class)
+        }
+
+    }
 })

@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilling
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
@@ -8,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
@@ -311,14 +313,63 @@ class EksternVarslingRepository(
     }
 
     suspend fun findVarsel(varselId: UUID): EksternVarselTilstand? {
-        database.nonTransactionalExecuteQuery(
+        return database.nonTransactionalExecuteQuery(
             """
             select * from ekstern_varsel_kontaktinfo where varsel_id = ?
             """,
             setup = {
+                uuid(varselId)
             },
             transform = {
+                val data = EksternVarselStatiskData(
+                    produsentId = getString("produsent_id"),
+                    varselId = varselId,
+                    notifikasjonId = getObject("notifikasjon_id", UUID::class.java),
+                    eksternVarsel = when (getString("varsel_type")) {
+                        "SMS" -> EksternVarsel.Sms(
+                            fnrEllerOrgnr = getString("fnr_eller_orgnr"),
+                            mobilnummer = getString("tlfnr"),
+                            tekst = getString("sms_tekst"),
+                        )
+                        "EMAIL" -> EksternVarsel.Epost(
+                            fnrEllerOrgnr = getString("fnr_eller_orgnr"),
+                            epostadresse = getString("epost_adresse"),
+                            tittel = getString("tittel"),
+                            body = getString("html_body")
+                        )
+                        else -> throw Error() // TODO
+                    }
+                )
+                val state = getString("state")
+
+                val response = when (state) {
+                    EksterntVarselTilstand.NY.toString() -> null
+                    EksterntVarselTilstand.SENDT.toString(),
+                    EksterntVarselTilstand.KVITTERT.toString() ->
+                        when (getString("sende_status")) {
+                            "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
+                                rå = objectMapper.readTree(getString("altinn_response")),
+                            )
+                            "FEIL" -> AltinnVarselKlient.AltinnResponse.Feil(
+                                rå = objectMapper.readTree(getString("altinn_response")),
+                                feilkode = getString("altinn_feilkode"),
+                                feilmelding = getString("feilmelding"),
+                            )
+                            else -> throw Error("") // TODO
+                        }
+                    else -> throw Error("") // TODO
+                }
+
+                when (state) {
+                    EksterntVarselTilstand.NY.toString() -> EksternVarselTilstand.Ny(data)
+                    EksterntVarselTilstand.SENDT.toString() ->
+                        EksternVarselTilstand.Utført(data, response!!) // todo rewrite to don't use !!
+                    EksterntVarselTilstand.KVITTERT.toString() ->
+                        EksternVarselTilstand.Kvittert(data, response!!) // todo rewrite to don't use !!
+                    else -> throw Error() // TODO
+                }
             })
+            .firstOrNull()
     }
 
 
@@ -370,7 +421,7 @@ class EksternVarslingRepository(
                 jsonb(TODO())
                 string(TODO())
                 string(TODO())
-                uuid(v.varselId)
+                uuid(v.data.varselId)
             }
 
             executeUpdate(""" 
@@ -378,7 +429,7 @@ class EksternVarslingRepository(
                 set locked = false
                 where varsel_id = ?
             """) {
-                uuid(v.varselId)
+                uuid(v.data.varselId)
             }
         }
     }

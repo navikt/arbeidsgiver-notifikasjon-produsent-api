@@ -165,12 +165,12 @@ class EksternVarslingService(
 
         when (varsel) {
             is EksternVarselTilstand.Ny -> {
-                altinnVarselKlient.send(varsel.eksternVarsel).fold(
+                altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
                     onSuccess = { response ->
                         // TODO eksternVarslingRepository.storeAndRelease(varselId, response)
                     },
                     onFailure = {
-                        eksternVarslingRepository.returnToWorkQueue(varsel.varselId)
+                        eksternVarslingRepository.returnToWorkQueue(varsel.data.varselId)
                         throw it
                     },
                 )
@@ -182,7 +182,7 @@ class EksternVarslingService(
                     eksternVarslingRepository.storeAndDelete(TODO())
                 } catch (e: Exception) {
                     log.error("foo", e)
-                    eksternVarslingRepository.returnToWorkQueue(varsel.varselId)
+                    eksternVarslingRepository.returnToWorkQueue(varsel.data.varselId)
                 }
             }
 
