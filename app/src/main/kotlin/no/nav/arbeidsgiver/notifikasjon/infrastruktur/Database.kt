@@ -51,7 +51,7 @@ class Database private constructor(
                 driverClassName = "org.postgresql.Driver"
                 metricsTrackerFactory = PrometheusMetricsTrackerFactory()
                 minimumIdle = 1
-                maximumPoolSize = 2
+                maximumPoolSize = 10
                 connectionTimeout = 10000
                 idleTimeout = 10001
                 maxLifetime = 30001
