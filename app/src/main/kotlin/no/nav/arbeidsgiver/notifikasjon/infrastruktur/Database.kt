@@ -154,30 +154,34 @@ value class Transaction(
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> {
-        return connection
-            .prepareStatement(sql)
-            .use { preparedStatement ->
-                ParameterSetters(preparedStatement).apply(setup)
-                preparedStatement.executeQuery().use { resultSet ->
-                    val resultList = mutableListOf<T>()
-                    while (resultSet.next()) {
-                        resultList.add(resultSet.transform())
+        return measure(sql) {
+            connection
+                .prepareStatement(sql)
+                .use { preparedStatement ->
+                    ParameterSetters(preparedStatement).apply(setup)
+                    preparedStatement.executeQuery().use { resultSet ->
+                        val resultList = mutableListOf<T>()
+                        while (resultSet.next()) {
+                            resultList.add(resultSet.transform())
+                        }
+                        resultList
                     }
-                    resultList
                 }
-            }
+        }
     }
 
     fun executeUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int {
-        return connection
-            .prepareStatement(sql)
-            .use { preparedStatement ->
-                ParameterSetters(preparedStatement).apply(setup)
-                preparedStatement.executeUpdate()
-            }
+        return measure(sql) {
+            connection
+                .prepareStatement(sql)
+                .use { preparedStatement ->
+                    ParameterSetters(preparedStatement).apply(setup)
+                    preparedStatement.executeUpdate()
+                }
+        }
     }
 
     fun <T> executeBatch(
@@ -188,15 +192,25 @@ value class Transaction(
         if (iterable.none()) {
             return intArrayOf()
         }
-        return connection
-            .prepareStatement(sql)
-            .use { preparedStatement ->
-                iterable.forEach {
-                    ParameterSetters(preparedStatement).setup(it)
-                    preparedStatement.addBatch()
+        return measure(sql) {
+            connection
+                .prepareStatement(sql)
+                .use { preparedStatement ->
+                    iterable.forEach {
+                        ParameterSetters(preparedStatement).setup(it)
+                        preparedStatement.addBatch()
+                    }
+                    preparedStatement.executeBatch()
                 }
-                preparedStatement.executeBatch()
-            }
+        }
+    }
+
+    private fun <T> measure(sql: String, action: () -> T): T {
+        return getTimer(
+            name = "database.execution",
+            tags = setOf("sql" to sql),
+            description = "Execution time for sql query or update"
+        ).record(action)
     }
 }
 
@@ -236,5 +250,10 @@ class ParameterSetters(
     fun timestamp(value: LocalDateTime) =
         preparedStatement.setObject(index++, value)
 
+    fun integer(value: Int) =
+        preparedStatement.setInt(index++, value)
+
+    fun jsonb(value: Any) =
+        preparedStatement.setString(index++, objectMapper.writeValueAsString(value))
 }
 
