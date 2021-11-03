@@ -7,18 +7,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlient
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientImpl
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingRepository
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingService
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
 
 
@@ -36,7 +30,10 @@ object EksternVarsling {
 
     fun main(
         httpPort: Int = 8080,
-        altinnVarselKlient: AltinnVarselKlient = AltinnVarselKlientImpl(),
+        altinnVarselKlient: AltinnVarselKlient = basedOnEnv(
+            prod = { AltinnVarselKlientImpl() },
+            other = { AltinnVarselKlientLogging() },
+        )
     ) {
         runBlocking(Dispatchers.Default) {
             val eksternVarslingModelAsync = async {

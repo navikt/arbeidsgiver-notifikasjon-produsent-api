@@ -21,15 +21,15 @@ interface NærmesteLederService {
 class NærmesteLederServiceImpl(
     private val tokenExchangeClient: TokenExchangeClient = TokenExchangeClientImpl(),
     baseUrl: String = basedOnEnv(
-        prod = "https://narmesteleder.nav.no",
-        other = "https://narmesteleder.dev.nav.no",
+        prod = { "https://narmesteleder.nav.no" },
+        other = { "https://narmesteleder.dev.nav.no" },
     )
 ) : NærmesteLederService {
     private val log = logger()
 
     private val targetAudience = basedOnEnv(
-        prod = "prod-gcp:teamsykmelding:narmesteleder",
-        other = "dev-gcp:teamsykmelding:narmesteleder"
+        prod = { "prod-gcp:teamsykmelding:narmesteleder" },
+        other = { "dev-gcp:teamsykmelding:narmesteleder" },
     )
 
     private val url = URLBuilder()

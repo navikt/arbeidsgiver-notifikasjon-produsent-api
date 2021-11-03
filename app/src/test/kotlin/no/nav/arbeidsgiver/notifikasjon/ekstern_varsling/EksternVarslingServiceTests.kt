@@ -1,19 +1,22 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.node.NullNode
+import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class EksternVarslingServiceTests : DescribeSpec({
     val log = logger()
     val database = testDatabase(EksternVarsling.databaseConfig)
@@ -67,12 +70,13 @@ class EksternVarslingServiceTests : DescribeSpec({
             update emergency_break set stop_processing = false where id = 0
         """)
 
-        service.start(this)
+        launch {
+            service.start(this)
+        }
 
         it("sends message eventually") {
-            while (!meldingSendt.get()) {
-                delay(Duration.ofSeconds(1).toMillis())
-                log.info("checking if message is sent")
+            eventually(kotlin.time.Duration.seconds(1)) {
+                meldingSendt.get() shouldBe true
             }
         }
 

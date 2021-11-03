@@ -247,17 +247,19 @@ class EksternVarslingRepository(
                 log.error("database is empty, disabling processing")
                 executeUpdate(
                     """
-                        insert into emergency_break (id, stop_processing)
-                        values (0, true)
+                        insert into emergency_break (id, stop_processing, detected_at)
+                        values (0, true, CURRENT_TIMESTAMP)
                         on conflict (id) do update
-                            set stop_processing = true
+                            set 
+                                stop_processing = true,
+                                detected_at = CURRENT_TIMESTAMP
                     """
                 )
             }
         }
     }
 
-    suspend fun processingDisabled(): Boolean {
+    suspend fun emergencyBreakOn(): Boolean {
         return database.nonTransactionalExecuteQuery(
             """ select stop_processing from emergency_break where id = 0 """,
             transform = { getBoolean("stop_processing") }

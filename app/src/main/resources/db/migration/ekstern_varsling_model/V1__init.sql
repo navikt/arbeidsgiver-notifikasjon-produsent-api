@@ -47,6 +47,7 @@ create table emergency_break
 (
     id int primary key default 0,
     stop_processing boolean not null,
+    detected_at timestamp not null,
     constraint at_most_one_row check (id = 0)
 );
 
@@ -56,4 +57,4 @@ create table emergency_break
 -- Otherwise, we would begin re-sending past notifications, as we
 -- get the event with the order information before the event
 -- with the result of the order.
-insert into emergency_break (stop_processing) values (true);
+insert into emergency_break (stop_processing, detected_at) values (true, CURRENT_TIMESTAMP);

@@ -10,55 +10,56 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
 
-// TODO: huske å potensielt implementere cancel-event. jira?
-// TODO: dokumentasjon for soft/hard delete: Stopper ikke sending av varsler.
-
 /*
-    aiven-hendelse: offset mistes/reset til 0, men database ok
-        - lett: Finnes rad? noop
-
-    gcp-hendelse: kommer opp med database tom, offset ok
-        - er ikke store konsekvensen om vi ikke gjør noe i det hele tatt
-
-        - fører ikke til dobbel-sending
-        - fører varsler er potensielt ikke sendt.
-        - finnes backup-er av databasen
-
-        - hvor vanskelig er det å replaye i dette scenarioet?
-        - vi vet nøyaktig hvilke offsets som er replay, og hvilke som er nye
-        - er det vanskelig å detecte?
-
-    begge: komme opp med tom database, offset = 0
-        - autodetect: disable processing
- */
-
-/*
-    pod main:
-        if (db.rows == 0) {
-            db.stop_processing = true
-        }
-
-        launch {
-            while (true) {
-                msg = kafka.get()
-                log(msg.timestamp)
-                db.put(msg)
-            }
-        }
-
-
-        launch {
-            while (true) {
-                if (db.stop_processing) {
-                    prometheus("processing_stopped", 1)
-                } else {
-                    do_db_jobs()
-                }
-            }
-        }
- */
-
-/* TODO: skal vi håndtere at man tømmer database og null-stiller kafka consumer group?
+ *
+ *  En naiv implementasjon vil kunne sende gamle sms/epost på nytt hvis det er
+ *  no feil med infrastrukturen. Det er spesielt tre tilfeller vi har studert:
+ *
+ *  aiven-hendelse: offset mistes/reset til 0, men database ok
+ *      - lett: Finnes rad? noop
+ *
+ *  gcp-hendelse: kommer opp med database tom, offset ok
+ *      - er ikke store konsekvensen om vi ikke gjør noe i det hele tatt
+ *
+ *      - fører ikke til dobbel-sending
+ *      - fører varsler er potensielt ikke sendt.
+ *      - finnes backup-er av databasen
+ *
+ *      - hvor vanskelig er det å replaye i dette scenarioet?
+ *      - vi vet nøyaktig hvilke offsets som er replay, og hvilke som er nye
+ *      - er det vanskelig å detecte?
+ *
+ *  begge: komme opp med tom database, offset = 0
+ *      - autodetect: disable processing
+ *
+ *
+ *  Vi har kommet fram til følgende pseudo-kode.
+ *
+ *  pod main:
+ *      if (db.rows == 0) {
+ *          db.stop_processing = true
+ *      }
+ *
+ *      launch {
+ *          while (true) {
+ *              msg = kafka.get()
+ *              log(msg.timestamp)
+ *              db.put(msg)
+ *          }
+ *      }
+ *
+ *
+ *      launch {
+ *          while (true) {
+ *              if (db.stop_processing) {
+ *                  prometheus("processing_stopped", 1)
+ *              } else {
+ *                  do_db_jobs()
+ *              }
+ *          }
+ *      }
+ *
+ * Andre notater:
  * - forhindre re-sending ved å "detektere" at man ikke er ajour med kafka-strømmen.
  *
  * - basert på kafka-event-metadata, så kan vi se hvor "gammel" en hendelse er.
@@ -140,7 +141,7 @@ class EksternVarslingService(
     }
 
     private suspend fun workOnEksternVarsel() {
-        if (eksternVarslingRepository.processingDisabled()) {
+        if (eksternVarslingRepository.emergencyBreakOn()) {
             log.info("processing is disabled. will check again later.")
             delay(Duration.ofMinutes(1).toMillis())
             return
