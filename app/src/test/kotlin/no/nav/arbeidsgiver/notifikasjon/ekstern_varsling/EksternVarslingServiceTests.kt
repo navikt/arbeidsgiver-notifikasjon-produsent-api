@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
@@ -15,6 +12,8 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
+
+class Done : Throwable("done")
 
 @OptIn(ExperimentalTime::class)
 class EksternVarslingServiceTests : DescribeSpec({
@@ -38,7 +37,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         kafkaProducer = kafka.newProducer(),
     )
 
-    runBlocking(Dispatchers.IO) {
+    describe("foobar") {
         repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
             virksomhetsnummer = "1",
             notifikasjonId = uuid("1"),
@@ -70,9 +69,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             update emergency_break set stop_processing = false where id = 0
         """)
 
-        launch {
-            service.start(this)
-        }
+        val serviceJob = service.start(this)
 
         it("sends message eventually") {
             eventually(kotlin.time.Duration.seconds(1)) {
@@ -81,12 +78,20 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         val consumer = kafka.newConsumer()
-        consumer.forEachEvent { event ->
-            if (event is Hendelse.EksterntVarselVellykket) {
-                return@forEachEvent
+        try {
+            consumer.forEachEvent { event ->
+                log.info("message received $event")
+                if (event is Hendelse.EksterntVarselVellykket) {
+                    throw Done()
+                }
             }
+        } catch (e: Done) {
         }
+
         it("message received from kafka") {
+            true shouldBe true
         }
+
+        serviceJob.cancel()
     }
 })

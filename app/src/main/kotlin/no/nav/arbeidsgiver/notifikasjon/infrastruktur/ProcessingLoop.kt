@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
@@ -11,10 +12,10 @@ fun CoroutineScope.launchProcessingLoop(
     pauseAfterEach: Duration? = null,
     init: suspend () -> Unit = {},
     action: suspend () -> Unit
-) {
+): Job {
     val log = LoggerFactory.getLogger("no.nav.processing_loop.$debugDescription")!!
 
-    this.launch {
+    return this.launch {
 
         init()
 

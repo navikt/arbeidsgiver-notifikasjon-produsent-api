@@ -1,7 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
@@ -101,42 +103,43 @@ class EksternVarslingService(
 ) {
     private val log = logger()
 
-    fun start(coroutineScope: CoroutineScope) {
+    fun start(coroutineScope: CoroutineScope): Job {
+        return coroutineScope.launch {
+            launchProcessingLoop(
+                "hard-delete",
+                pauseAfterEach = Duration.ofMinutes(10)
+            ) {
+                eksternVarslingRepository.deleteScheduledHardDeletes()
+            }
 
-        coroutineScope.launchProcessingLoop(
-            "hard-delete",
-            pauseAfterEach = Duration.ofMinutes(10)
-        ) {
-            eksternVarslingRepository.deleteScheduledHardDeletes()
-        }
-
-        coroutineScope.launchProcessingLoop(
-            "release-locks",
-            pauseAfterEach = Duration.ofMinutes(10)
-        ) {
-            val released = eksternVarslingRepository.releaseTimedOutJobLocks()
-            if (released.isNotEmpty()) {
-                log.error(
-                    """
+            launchProcessingLoop(
+                "release-locks",
+                pauseAfterEach = Duration.ofMinutes(10)
+            ) {
+                val released = eksternVarslingRepository.releaseTimedOutJobLocks()
+                if (released.isNotEmpty()) {
+                    log.error(
+                        """
                     Found ${released.size} abandoned jobs.
                     Returning to job queue ${released.joinToString(", ")}.
                     """.trimMargin()
-                )
+                    )
+                }
             }
-        }
 
-        coroutineScope.launchProcessingLoop(
-            "requeue-lost-work",
-            pauseAfterEach = Duration.ofMinutes(10)
-        ) {
-            eksternVarslingRepository.createJobsForAbandonedVarsler()
-        }
+            launchProcessingLoop(
+                "requeue-lost-work",
+                pauseAfterEach = Duration.ofMinutes(10)
+            ) {
+                eksternVarslingRepository.createJobsForAbandonedVarsler()
+            }
 
-        coroutineScope.launchProcessingLoop(
-            "ekstern-varsel",
-            init = { eksternVarslingRepository.detectEmptyDatabase() }
-        ) {
-            workOnEksternVarsel()
+            launchProcessingLoop(
+                "ekstern-varsel",
+                init = { eksternVarslingRepository.detectEmptyDatabase() }
+            ) {
+                workOnEksternVarsel()
+            }
         }
     }
 
