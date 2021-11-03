@@ -9,8 +9,8 @@ import javax.sql.DataSource
 class NonBlockingDataSource(
     private val dataSource: DataSource
 ) {
-    suspend fun <T> withConnection(body: suspend Connection.() -> T): T =
-        blockingIO {
+    suspend fun <T> withConnection(body: suspend (Connection) -> T): T =
+        withContext(Dispatchers.IO) {
             dataSource.connection.use { connection ->
                 body(connection)
             }

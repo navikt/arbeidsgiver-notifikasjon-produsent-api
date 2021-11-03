@@ -52,7 +52,7 @@ class Database private constructor(
                 driverClassName = "org.postgresql.Driver"
                 metricsTrackerFactory = PrometheusMetricsTrackerFactory()
                 minimumIdle = 1
-                maximumPoolSize = 2
+                maximumPoolSize = 10
                 connectionTimeout = 10000
                 idleTimeout = 10001
                 maxLifetime = 30001
@@ -102,42 +102,42 @@ class Database private constructor(
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> =
-        dataSource.withConnection {
-            Transaction(this).executeQuery(sql, setup, transform)
+        dataSource.withConnection { connection ->
+            Transaction(connection).executeQuery(sql, setup, transform)
         }
 
     suspend fun nonTransactionalExecuteUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
-    ): Int = dataSource.withConnection {
-        Transaction(this).executeUpdate(sql, setup)
+    ): Int = dataSource.withConnection { connection ->
+        Transaction(connection).executeUpdate(sql, setup)
     }
 
     suspend fun <T> nonTransactionalExecuteBatch(
         @Language("PostgreSQL") sql: String,
         iterable: Iterable<T>,
         setup: ParameterSetters.(it: T) -> Unit = {},
-    ): IntArray = dataSource.withConnection {
-        Transaction(this).executeBatch(sql, iterable, setup)
+    ): IntArray = dataSource.withConnection { connection ->
+        Transaction(connection).executeBatch(sql, iterable, setup)
     }
 
     suspend fun <T> transaction(
         rollback: (e: Exception) -> T = { throw it },
         body: Transaction.() -> T
     ): T =
-        dataSource.withConnection {
-            val savedAutoCommit = autoCommit
-            autoCommit = false
+        dataSource.withConnection { connection ->
+            val savedAutoCommit = connection.autoCommit
+            connection.autoCommit = false
 
             try {
-                val result = Transaction(this).body()
-                commit()
+                val result = Transaction(connection).body()
+                connection.commit()
                 result
             } catch (e: Exception) {
+                connection.rollback()
                 rollback(e)
             } finally {
-                autoCommit = savedAutoCommit
-                close()
+                connection.autoCommit = savedAutoCommit
             }
         }
 
@@ -161,7 +161,7 @@ value class Transaction(
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T
     ): List<T> {
-        return logQueryOnError(sql) {
+        return measure(sql) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -180,8 +180,8 @@ value class Transaction(
     fun executeUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
-    ): Int =
-        logQueryOnError(sql) {
+    ): Int {
+        return measure(sql) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -189,6 +189,7 @@ value class Transaction(
                     preparedStatement.executeUpdate()
                 }
         }
+    }
 
     fun <T> executeBatch(
         @Language("PostgreSQL") sql: String,
@@ -198,7 +199,7 @@ value class Transaction(
         if (iterable.none()) {
             return intArrayOf()
         }
-        return logQueryOnError(sql) {
+        return measure(sql) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -211,13 +212,13 @@ value class Transaction(
         }
     }
 
-    private fun <T> logQueryOnError(sql: String, action: () -> T): T =
-        try {
-            action()
-        } catch (e: Exception) {
-            log.error("exception executing query: {}", sql, e)
-            throw e
-        }
+    private fun <T> measure(sql: String, action: () -> T): T {
+        return getTimer(
+            name = "database.execution",
+            tags = setOf("sql" to sql),
+            description = "Execution time for sql query or update"
+        ).record(action)
+    }
 }
 
 class ParameterSetters(
@@ -262,4 +263,9 @@ class ParameterSetters(
 
     fun nullableTimestamp(value: LocalDateTime?) =
         preparedStatement.setObject(index++, value)
+    fun integer(value: Int) =
+        preparedStatement.setInt(index++, value)
+
+    fun jsonb(value: Any) =
+        preparedStatement.setString(index++, objectMapper.writeValueAsString(value))
 }

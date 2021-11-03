@@ -122,11 +122,13 @@ class ProdusentRepositoryImpl(
             """ select * from notifikasjon 
                   where merkelapp = any(?)
                   ${grupperingsid?.let { "and grupperingsid = ?" }?:""} 
-                  limit $antall
-                  offset $offset
+                  limit ?
+                  offset ?
             """.trimMargin(), {
                 stringList(merkelapper)
                 grupperingsid?.let { string(grupperingsid) }
+                integer(antall)
+                integer(offset)
             },
             resultSetTilNotifikasjon
         )

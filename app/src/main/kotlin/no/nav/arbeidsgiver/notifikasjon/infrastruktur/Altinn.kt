@@ -1,5 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import io.ktor.client.features.*
+import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -8,6 +10,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxy
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnException
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
@@ -108,5 +111,14 @@ object AltinnImpl : Altinn {
                     serviceedition = serviceEdition
                 )
             }
+    }
+}
+
+fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse() : Boolean {
+    return when ((cause as? ServerResponseException)?.response?.status) {
+        HttpStatusCode.BadGateway,
+        HttpStatusCode.GatewayTimeout,
+        HttpStatusCode.ServiceUnavailable -> true
+        else -> false
     }
 }
