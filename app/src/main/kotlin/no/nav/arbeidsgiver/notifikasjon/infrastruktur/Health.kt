@@ -45,7 +45,7 @@ suspend fun <T> Timer.coRecord(body: suspend () -> T): T {
         return body()
     } finally {
         val end = Health.clock.monotonicTime()
-        this.record(start - end, TimeUnit.NANOSECONDS)
+        this.record(end - start, TimeUnit.NANOSECONDS)
     }
 }
 
