@@ -236,5 +236,10 @@ class ParameterSetters(
     fun timestamp(value: LocalDateTime) =
         preparedStatement.setObject(index++, value)
 
+    fun integer(value: Int) =
+        preparedStatement.setInt(index++, value)
+
+    fun jsonb(value: Any) =
+        preparedStatement.setString(index++, objectMapper.writeValueAsString(value))
 }
 

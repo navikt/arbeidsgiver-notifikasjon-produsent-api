@@ -109,17 +109,13 @@ class BrukerModelImpl(
         tilganger: Collection<BrukerModel.Tilgang>,
         ansatte: List<NærmesteLederModel.NærmesteLederFor>
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
-        val tilgangerJsonB = tilganger.joinToString {
-            "'${
-                objectMapper.writeValueAsString(
-                    AltinnMottaker(
-                        it.servicecode,
-                        it.serviceedition,
-                        it.virksomhet
-                    )
+        val tilgangerAltinnMottaker = tilganger.map {
+                AltinnMottaker(
+                    it.servicecode,
+                    it.serviceedition,
+                    it.virksomhet
                 )
-            }'"
-        }
+            }
 
         val ansatteLookupTable = ansatte.toSet()
 
@@ -137,14 +133,17 @@ class BrukerModelImpl(
                 and mottaker ->> 'naermesteLederFnr' = ?
             ) or (
                 mottaker ->> '@type' = 'altinn'
-                and mottaker @> ANY (ARRAY [$tilgangerJsonB]::jsonb[])
+                and mottaker in (select * from jsonb_array_elements(?::jsonb))
             )
             order by opprettet_tidspunkt desc
             limit 200
-        """, {
+            """,
+            {
                 string(fnr)
                 string(fnr)
-            }) {
+                jsonb(tilgangerAltinnMottaker)
+            }
+        ) {
             when (val type = getString("type")) {
                 "BESKJED" -> BrukerModel.Beskjed(
                     merkelapp = getString("merkelapp"),
