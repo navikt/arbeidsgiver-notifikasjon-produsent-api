@@ -207,7 +207,7 @@ value class Transaction(
 
     private fun <T> measure(sql: String, action: () -> T): T {
         return getTimer(
-            name = "",
+            name = "database.execution",
             tags = setOf("sql" to sql),
             description = "Execution time for sql query or update"
         ).record(action)
