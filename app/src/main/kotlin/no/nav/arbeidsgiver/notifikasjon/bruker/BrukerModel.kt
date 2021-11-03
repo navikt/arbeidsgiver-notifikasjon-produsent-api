@@ -111,9 +111,9 @@ class BrukerModelImpl(
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
         val tilgangerAltinnMottaker = tilganger.map {
                 AltinnMottaker(
-                    it.servicecode,
-                    it.serviceedition,
-                    it.virksomhet
+                    serviceCode = it.servicecode,
+                    serviceEdition = it.serviceedition,
+                    virksomhetsnummer = it.virksomhet
                 )
             }
 
