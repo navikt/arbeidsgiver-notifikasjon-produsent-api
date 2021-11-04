@@ -7,9 +7,10 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.ValueSerializer
 import java.time.OffsetDateTime
 import java.util.*
 
-private val uuid = UUID.fromString("70a4beb3-53b9-49f0-ae31-2d5e6cfe52bf")
 
 class KafkaSerializerTests : DescribeSpec({
+    val uuid = UUID.fromString("70a4beb3-53b9-49f0-ae31-2d5e6cfe52bf")
+
     describe("kafka value serde") {
         val serializer = ValueSerializer()
         val deserializer = ValueDeserializer()

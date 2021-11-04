@@ -237,6 +237,8 @@ type Mutation {
 
     For dere (produsenter), så kan dere fortsatt se notifikasjonen i listen over deres notifikasjoner.
 
+    Eventuelle eksterne varsler (SMS, e-post) knyttet til notifikasjonen vil bli fortsatt bli sendt.
+
     Advarsel: det er ikke mulig å angre på denne operasjonen.
     """
     softDeleteNotifikasjon(id: ID!): SoftDeleteNotifikasjonResultat!
@@ -259,6 +261,8 @@ type Mutation {
     """
     Sletter en notifikasjon og tilhørende data helt fra databasen og kafka.
     Formålet er å støtte juridiske krav om sletting i henhold til personvern.
+
+    Eventuelle eksterne varsler (SMS, e-post) knyttet til notifikasjonen vil bli fortsatt bli sendt.
 
     Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
     """

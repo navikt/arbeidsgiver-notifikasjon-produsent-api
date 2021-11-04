@@ -24,7 +24,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_REGISTER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import org.slf4j.event.Level
 import java.util.*
