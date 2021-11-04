@@ -72,7 +72,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
         }
 
     override suspend fun forEachEvent(body: suspend (V, HendelseMetadata) -> Unit) {
-        while (true) {
+        while (!Health.terminating) {
             consumer.resume(resumeQueue.pollAll())
             val records = try {
                 poll(Duration.ofMillis(1000))
@@ -83,6 +83,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
 
             forEachEvent(records, body)
         }
+        log.info("kafka consumer stopped")
     }
 
 

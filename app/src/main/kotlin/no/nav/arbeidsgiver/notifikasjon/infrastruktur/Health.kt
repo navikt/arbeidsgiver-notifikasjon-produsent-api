@@ -6,9 +6,11 @@ import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.prometheus.client.CollectorRegistry
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timer
 
 enum class Subsystem {
@@ -16,6 +18,8 @@ enum class Subsystem {
 }
 
 object Health {
+    private val log = logger()
+
     val clock: Clock = Clock.SYSTEM
 
     val meterRegistry = PrometheusMeterRegistry(
@@ -37,6 +41,24 @@ object Health {
 
     val ready
         get() = subsystemReady.all { it.value }
+
+    private val terminatingAtomic = AtomicBoolean(false)
+
+    val terminating: Boolean
+        get() = terminatingAtomic.get()
+
+    init {
+        Runtime.getRuntime().addShutdownHook(object: Thread() {
+            override fun run() {
+                terminatingAtomic.set(true)
+                log.info("shutdown signal received")
+                try {
+                    sleep(Duration.ofSeconds(20).toMillis())
+                } catch (e: Exception) {
+                }
+            }
+        })
+    }
 }
 
 suspend fun <T> Timer.coRecord(body: suspend () -> T): T {

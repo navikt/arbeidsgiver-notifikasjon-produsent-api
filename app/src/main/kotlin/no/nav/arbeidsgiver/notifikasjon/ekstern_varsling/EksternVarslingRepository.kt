@@ -324,7 +324,7 @@ class EksternVarslingRepository(
                     produsentId = getString("produsent_id"),
                     varselId = varselId,
                     notifikasjonId = getObject("notifikasjon_id", UUID::class.java),
-                    eksternVarsel = when (getString("varsel_type")) {
+                    eksternVarsel = when (val varselType = getString("varsel_type")) {
                         "SMS" -> EksternVarsel.Sms(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
                             mobilnummer = getString("tlfnr"),
@@ -336,7 +336,7 @@ class EksternVarslingRepository(
                             tittel = getString("tittel"),
                             body = getString("html_body")
                         )
-                        else -> throw Error() // TODO
+                        else -> throw Error("Ukjent varsel_type '$varselType'")
                     }
                 )
                 val state = getString("state")
@@ -345,7 +345,7 @@ class EksternVarslingRepository(
                     EksterntVarselTilstand.NY.toString() -> null
                     EksterntVarselTilstand.SENDT.toString(),
                     EksterntVarselTilstand.KVITTERT.toString() ->
-                        when (getString("sende_status")) {
+                        when (val sendeStatus = getString("sende_status")) {
                             "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
                                 rå = objectMapper.readTree(getString("altinn_response")),
                             )
@@ -354,9 +354,9 @@ class EksternVarslingRepository(
                                 feilkode = getString("altinn_feilkode"),
                                 feilmelding = getString("feilmelding"),
                             )
-                            else -> throw Error("") // TODO
+                            else -> throw Error("ukjent sende_status '$sendeStatus'")
                         }
-                    else -> throw Error("") // TODO
+                    else -> throw Error("ukjent tilstand '$state'")
                 }
 
                 when (state) {
@@ -365,7 +365,7 @@ class EksternVarslingRepository(
                         EksternVarselTilstand.Utført(data, response!!) // todo rewrite to don't use !!
                     EksterntVarselTilstand.KVITTERT.toString() ->
                         EksternVarselTilstand.Kvittert(data, response!!) // todo rewrite to don't use !!
-                    else -> throw Error() // TODO
+                    else -> throw Error("Ukjent tilstand '$state'")
                 }
             })
             .firstOrNull()
