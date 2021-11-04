@@ -5,12 +5,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicInteger
 
 /*
  *
@@ -102,6 +104,7 @@ class EksternVarslingService(
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
 ) {
     private val log = logger()
+    private val emergencyBreakGauge = Health.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
 
     fun start(coroutineScope: CoroutineScope): Job {
         return coroutineScope.launch {
@@ -144,7 +147,11 @@ class EksternVarslingService(
     }
 
     private suspend fun workOnEksternVarsel() {
-        if (eksternVarslingRepository.emergencyBreakOn()) {
+        val emergencyBreakOn = eksternVarslingRepository.emergencyBreakOn()
+            .also {
+                emergencyBreakGauge.set(if (it) 1 else 0)
+            }
+        if (emergencyBreakOn) {
             log.info("processing is disabled. will check again later.")
             delay(Duration.ofMinutes(1).toMillis())
             return
