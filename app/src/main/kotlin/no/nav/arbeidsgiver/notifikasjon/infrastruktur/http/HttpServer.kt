@@ -157,7 +157,7 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
     }
 
     install(ContentNegotiation) {
-        register(ContentType.Application.Json, JacksonConverter(objectMapper))
+        register(ContentType.Application.Json, TimedContentConverter(JacksonConverter(objectMapper)))
     }
 
     install(Authentication) {
