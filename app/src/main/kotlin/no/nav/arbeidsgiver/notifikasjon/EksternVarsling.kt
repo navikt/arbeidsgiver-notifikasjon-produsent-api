@@ -7,14 +7,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.eksternvarsling.EksternVarslingModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 
 
@@ -31,14 +29,18 @@ object EksternVarsling {
     )
 
     fun main(
-        httpPort: Int = 8080
+        httpPort: Int = 8080,
+        altinnVarselKlient: AltinnVarselKlient = basedOnEnv(
+            prod = { AltinnVarselKlientImpl() },
+            other = { AltinnVarselKlientLogging() },
+        )
     ) {
         runBlocking(Dispatchers.Default) {
             val eksternVarslingModelAsync = async {
                 try {
                     val database = Database.openDatabase(databaseConfig)
                     Health.subsystemReady[Subsystem.DATABASE] = true
-                    EksternVarslingModel(database)
+                    EksternVarslingRepository(database)
                 } catch (e: Exception) {
                     Health.subsystemAlive[Subsystem.DATABASE] = false
                     throw e
@@ -62,8 +64,14 @@ object EksternVarsling {
             }
 
             launch {
-                // plukk oppgaver fra databasen
+                val service = EksternVarslingService(
+                    eksternVarslingRepository = eksternVarslingModelAsync.await(),
+                    altinnVarselKlient = altinnVarselKlient,
+                    kafkaProducer = createKafkaProducer(),
+                )
+                service.start(this)
             }
+
 
             launch {
                 embeddedServer(Netty, port = httpPort) {

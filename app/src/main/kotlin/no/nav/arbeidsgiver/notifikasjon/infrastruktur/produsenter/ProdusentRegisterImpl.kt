@@ -5,8 +5,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 val FAGER_TESTPRODUSENT = Produsent(
     id = "fager",
     accessPolicy = basedOnEnv(
-        prod = listOf("prod-gcp:fager:notifikasjon-test-produsent"),
-        other = listOf("dev-gcp:fager:notifikasjon-test-produsent")
+        prod = { listOf("prod-gcp:fager:notifikasjon-test-produsent") },
+        other = { listOf("dev-gcp:fager:notifikasjon-test-produsent") },
     ),
     tillatteMerkelapper = listOf(
         "fager",
@@ -19,13 +19,17 @@ val FAGER_TESTPRODUSENT = Produsent(
 val ARBEIDSGIVER_TILTAK = Produsent(
     id = "arbeidsgiver-tiltak",
     accessPolicy = basedOnEnv(
-        prod = listOf(
-            "prod-fss:arbeidsgiver:tiltaksgjennomforing-api",
-        ),
-        other = listOf(
-            "dev-gcp:arbeidsgiver:tiltak-refusjon-api",
-            "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
-        )
+        prod = {
+            listOf(
+                "prod-fss:arbeidsgiver:tiltaksgjennomforing-api",
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:arbeidsgiver:tiltak-refusjon-api",
+                "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
+            )
+        }
     ),
     tillatteMerkelapper = listOf(
         "Tiltak",
@@ -36,7 +40,7 @@ val ARBEIDSGIVER_TILTAK = Produsent(
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
-        ServicecodeDefinisjon(code = "5332", version = basedOnEnv(prod = "2", other = "1"), description = "Arbeidstrening"),
+        ServicecodeDefinisjon(code = "5332", version = basedOnEnv(prod = { "2" }, other = { "1" }), description = "Arbeidstrening"),
         ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
         ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
         ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
@@ -44,13 +48,17 @@ val ARBEIDSGIVER_TILTAK = Produsent(
 )
 
 val PRODUSENT_LIST = basedOnEnv(
-    prod = listOf(
-        ARBEIDSGIVER_TILTAK,
-    ),
-    other = listOf(
-        FAGER_TESTPRODUSENT,
-        ARBEIDSGIVER_TILTAK,
-    )
+    prod = {
+        listOf(
+            ARBEIDSGIVER_TILTAK,
+        )
+    },
+    other = {
+        listOf(
+            FAGER_TESTPRODUSENT,
+            ARBEIDSGIVER_TILTAK,
+        )
+    }
 )
 
 val PRODUSENT_REGISTER by lazy { ProdusentRegisterImpl(PRODUSENT_LIST) }

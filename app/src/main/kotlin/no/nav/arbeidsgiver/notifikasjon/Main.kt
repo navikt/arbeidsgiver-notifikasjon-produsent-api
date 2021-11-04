@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 
 @Suppress("unused") /* Entry point for jar. */
-object Main {
+private object Main {
     val log = logger()
 }
 

@@ -41,8 +41,8 @@ object AltinnImpl : Altinn {
                 ),
                 AltinnConfig(
                     url = basedOnEnv(
-                        prod = "https://api-gw.oera.no",
-                        other = "https://api-gw-q1.oera.no"
+                        prod = { "https://api-gw.oera.no" },
+                        other = { "https://api-gw-q1.oera.no" },
                     ),
                     altinnApiKey = System.getenv("ALTINN_HEADER") ?: "default",
                     altinnApiGwApiKey = System.getenv("APIGW_HEADER") ?: "default",
