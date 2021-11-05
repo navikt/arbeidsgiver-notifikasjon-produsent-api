@@ -25,6 +25,10 @@ class StatistikkServiceImpl(
         .description("Antall klikk på notifikasjon")
         .register(Health.meterRegistry)
 
+    private val antallKlikketPaa = MultiGauge.builder("antall_klikket_paa")
+        .description("Antall notifikasjoner som er klikket på")
+        .register(Health.meterRegistry)
+
     private val antallUtførte = MultiGauge.builder("antall_utforte")
         .description("Antall utførte (med histogram)")
         .register(Health.meterRegistry)
@@ -43,5 +47,6 @@ class StatistikkServiceImpl(
         antallKlikk.register(statistikkModel.antallKlikk(), true)
         antallUtførte.register(statistikkModel.antallUtførteHistogram(), true)
         antallVarsler.register(statistikkModel.antallVarsler(), true)
+        antallKlikketPaa.register(statistikkModel.antallKlikketPaa(), true)
     }
 }

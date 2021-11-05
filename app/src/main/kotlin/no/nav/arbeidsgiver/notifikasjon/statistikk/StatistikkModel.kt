@@ -13,6 +13,34 @@ import java.security.MessageDigest
 class StatistikkModel(
     val database: Database,
 ) {
+
+    suspend fun antallKlikketPaa(): List<MultiGauge.Row<Number>> {
+        return database.nonTransactionalExecuteQuery(
+            """
+                select
+                    notifikasjon.produsent_id,
+                    notifikasjon.merkelapp,
+                    notifikasjon.mottaker,
+                    notifikasjon.notifikasjon_type,
+                    count(distinct notifikasjon.notifikasjon_id) as antall_klikket_paa
+                from notifikasjon
+                inner join notifikasjon_klikk klikk on notifikasjon.notifikasjon_id = klikk.notifikasjon_id
+                group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
+            """
+        ) {
+            MultiGauge.Row.of(
+                Tags.of(
+                    "produsent_id", this.getString("produsent_id"),
+                    "merkelapp", this.getString("merkelapp"),
+                    "mottaker", this.getString("mottaker"),
+                    "notifikasjon_type", this.getString("notifikasjon_type")
+                ),
+                this.getInt("antall_klikket_paa")
+            )
+        }
+
+    }
+
     suspend fun antallUtførteHistogram(): List<MultiGauge.Row<Number>> {
         return database.nonTransactionalExecuteQuery(
             """
@@ -24,6 +52,7 @@ class StatistikkModel(
                         notifikasjon_type,
                         (utfoert_tidspunkt - opprettet_tidspunkt) as alder_sekunder
                     from notifikasjon
+                    where utfoert_tidspunkt is not null
                 )
                 select produsent_id, merkelapp, mottaker, notifikasjon_type, '0-1H' as bucket, count(*) as antall
                     from alder_tabell
@@ -55,9 +84,9 @@ class StatistikkModel(
                     where interval '2 week' <= alder_sekunder and alder_sekunder < interval '4 week'
                     group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
                 union
-                select produsent_id,  merkelapp, mottaker, notifikasjon_type, 'infinity' as bucket, count(*) as antall
+                select produsent_id,  merkelapp, mottaker, notifikasjon_type, '4W-infinity' as bucket, count(*) as antall
                     from alder_tabell
-                    where alder_sekunder is null
+                    where interval '4 week' <= alder_sekunder
                     group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
