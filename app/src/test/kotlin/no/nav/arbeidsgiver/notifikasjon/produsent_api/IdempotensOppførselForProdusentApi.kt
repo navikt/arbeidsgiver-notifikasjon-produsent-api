@@ -5,8 +5,11 @@ import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyBeskjed
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyOppgave
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
@@ -94,10 +97,10 @@ class IdempotensOppførselForProdusentApi : DescribeSpec({
             val resultat2 = engine.produsentApi(nyBeskjedGql("bar")).getTypedContent<String>("/nyBeskjed/__typename")
 
             it("første kall er opprettet") {
-                resultat1 shouldBe ProdusentAPI.NyBeskjedVellykket::class.simpleName
+                resultat1 shouldBe MutationNyBeskjed.NyBeskjedVellykket::class.simpleName
             }
             it("andre kall er feilmelding") {
-                resultat2 shouldBe ProdusentAPI.Error.DuplikatEksternIdOgMerkelapp::class.simpleName
+                resultat2 shouldBe Error.DuplikatEksternIdOgMerkelapp::class.simpleName
             }
         }
 
@@ -115,10 +118,10 @@ class IdempotensOppførselForProdusentApi : DescribeSpec({
             val resultat2 = engine.produsentApi(nyOppgaveGql("bar")).getTypedContent<String>("/nyOppgave/__typename")
 
             it("første kall er opprettet") {
-                resultat1 shouldBe ProdusentAPI.NyOppgaveVellykket::class.simpleName
+                resultat1 shouldBe MutationNyOppgave.NyOppgaveVellykket::class.simpleName
             }
             it("andre kall er feilmelding") {
-                resultat2 shouldBe ProdusentAPI.Error.DuplikatEksternIdOgMerkelapp::class.simpleName
+                resultat2 shouldBe Error.DuplikatEksternIdOgMerkelapp::class.simpleName
             }
         }
     }

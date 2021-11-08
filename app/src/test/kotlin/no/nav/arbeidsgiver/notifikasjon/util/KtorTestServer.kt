@@ -12,7 +12,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper

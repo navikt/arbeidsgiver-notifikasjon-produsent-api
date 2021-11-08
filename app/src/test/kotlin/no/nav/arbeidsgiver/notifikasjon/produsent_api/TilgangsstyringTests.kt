@@ -6,7 +6,9 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyBeskjed
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import kotlin.time.ExperimentalTime
@@ -53,11 +55,11 @@ class TilgangsstyringTests : DescribeSpec({
                             }
                         }
                     """.trimIndent()
-            ).getTypedContent<ProdusentAPI.NyBeskjedResultat>("nyBeskjed")
+            ).getTypedContent<MutationNyBeskjed.NyBeskjedResultat>("nyBeskjed")
 
             it("errors har forklarende feilmelding") {
-                resultat should beOfType<ProdusentAPI.Error.UgyldigMerkelapp>()
-                resultat as ProdusentAPI.Error.UgyldigMerkelapp
+                resultat should beOfType<Error.UgyldigMerkelapp>()
+                resultat as Error.UgyldigMerkelapp
                 resultat.feilmelding shouldContain merkelapp
             }
         }
@@ -97,11 +99,11 @@ class TilgangsstyringTests : DescribeSpec({
                             }
                         }
                     """.trimIndent()
-            ).getTypedContent<ProdusentAPI.NyBeskjedResultat>("nyBeskjed")
+            ).getTypedContent<MutationNyBeskjed.NyBeskjedResultat>("nyBeskjed")
 
             it("errors har forklarende feilmelding") {
-                resultat should beOfType<ProdusentAPI.Error.UgyldigMottaker>()
-                resultat as ProdusentAPI.Error.UgyldigMottaker
+                resultat should beOfType<Error.UgyldigMottaker>()
+                resultat as Error.UgyldigMottaker
                 resultat.feilmelding shouldContain mottaker.serviceCode
                 resultat.feilmelding shouldContain mottaker.serviceEdition
             }

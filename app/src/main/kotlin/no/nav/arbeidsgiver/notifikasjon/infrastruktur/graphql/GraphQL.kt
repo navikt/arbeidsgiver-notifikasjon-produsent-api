@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
+import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.module.kotlin.convertValue
 import graphql.*
 import graphql.GraphQL.newGraphQL
@@ -42,11 +43,15 @@ object GraphQLLogger {
     val log = logger()
 }
 
+fun jsonTypeName(clazz: Class<*>): String =
+    clazz.getAnnotation(JsonTypeName::class.java).value!!
+
 inline fun <reified T : Any> RuntimeWiring.Builder.resolveSubtypes() {
     GraphQLLogger.log.info("SubtypeResolver registered for ${T::class.simpleName}")
     type(T::class.simpleName) {
         it.typeResolver { env ->
-            val name = env.getObject<T>().javaClass.simpleName
+            val obj = env.getObject<T>()
+            val name = jsonTypeName(obj.javaClass)
             env.schema.getObjectType(name)
         }
     }
