@@ -5,7 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 val FAGER_TESTPRODUSENT = Produsent(
     id = "fager",
     accessPolicy = basedOnEnv(
-        prod = { listOf("prod-gcp:fager:notifikasjon-test-produsent") },
+        prod = { listOf() },
         other = { listOf("dev-gcp:fager:notifikasjon-test-produsent") },
     ),
     tillatteMerkelapper = listOf(
