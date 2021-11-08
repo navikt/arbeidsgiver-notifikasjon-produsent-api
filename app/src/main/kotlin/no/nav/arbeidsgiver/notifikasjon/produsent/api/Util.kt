@@ -8,23 +8,25 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.util.*
 
-suspend inline fun ProdusentRepository.hentNotifikasjonFoo(
+suspend inline fun hentNotifikasjon(
+    produsentRepository: ProdusentRepository,
     id: UUID,
     onError: (Error.NotifikasjonFinnesIkke) -> Nothing
 ): ProdusentModel.Notifikasjon {
-    return hentNotifikasjon(id)
+    return produsentRepository.hentNotifikasjon(id)
         ?: onError(
             Error.NotifikasjonFinnesIkke("Notifikasjon med id $id finnes ikke")
         )
 }
 
 
-suspend inline fun ProdusentRepository.hentNotifikasjonFoo(
+suspend inline fun hentNotifikasjon(
+    produsentRepository: ProdusentRepository,
     eksternId: String,
     merkelapp: String,
     onError: (Error.NotifikasjonFinnesIkke) -> Nothing
 ): ProdusentModel.Notifikasjon {
-    return hentNotifikasjon(eksternId, merkelapp)
+    return produsentRepository.hentNotifikasjon(eksternId, merkelapp)
         ?: onError(
             Error.NotifikasjonFinnesIkke("Notifikasjon med eksternId $eksternId og merkelapp $merkelapp finnes ikke")
         )

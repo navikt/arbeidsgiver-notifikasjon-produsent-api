@@ -27,8 +27,6 @@ object ProdusentAPI {
             return env.getContext<Context>().appName
         }
 
-
-
         return TypedGraphQL(
             createGraphQL("/produsent.graphql") {
                 directive("Validate", ValidateDirective)

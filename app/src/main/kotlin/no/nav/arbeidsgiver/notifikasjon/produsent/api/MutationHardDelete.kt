@@ -52,7 +52,7 @@ class MutationHardDelete(
         context: ProdusentAPI.Context,
         id: UUID,
     ): HardDeleteNotifikasjonResultat {
-        val notifikasjon = produsentRepository.hentNotifikasjonFoo(id) { error -> return error }
+        val notifikasjon = hentNotifikasjon(produsentRepository, id) { error -> return error }
         return hardDelete(context, notifikasjon)
     }
 
@@ -61,7 +61,7 @@ class MutationHardDelete(
         eksternId: String,
         merkelapp: String,
     ): HardDeleteNotifikasjonResultat {
-        val notifikasjon = produsentRepository.hentNotifikasjonFoo(eksternId, merkelapp) { error -> return error }
+        val notifikasjon = hentNotifikasjon(produsentRepository, eksternId, merkelapp) { error -> return error }
         return hardDelete(context, notifikasjon)
     }
 
