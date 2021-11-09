@@ -72,7 +72,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         val serviceJob = service.start(this)
 
         it("sends message eventually") {
-            eventually(kotlin.time.Duration.seconds(1)) {
+            eventually(kotlin.time.Duration.seconds(5)) {
                 meldingSendt.get() shouldBe true
             }
         }
