@@ -39,7 +39,6 @@ class LogConfig : ContextAwareBase(), Configurator {
 
         lc.getLogger("org.apache.kafka").level = Level.INFO
         lc.getLogger("io.netty").level = Level.INFO
-        lc.getLogger("org.postgresql").level = Level.TRACE
 
         if (naisCluster == null || naisCluster == "dev-gcp") {
             lc.getLogger("io.ktor.auth.jwt").level = Level.TRACE
