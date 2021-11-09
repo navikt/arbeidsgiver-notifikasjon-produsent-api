@@ -9,9 +9,11 @@ import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationOppgaveUtfoert
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -85,7 +87,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer tilbake id-en") {
-                val vellykket = response.getTypedContent<ProdusentAPI.OppgaveUtfoertVellykket>("oppgaveUtfoert")
+                val vellykket = response.getTypedContent<MutationOppgaveUtfoert.OppgaveUtfoertVellykket>("oppgaveUtfoert")
                 vellykket.id shouldBe uuid
             }
 
@@ -116,7 +118,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
             }
         }
 
@@ -151,7 +153,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.UgyldigMerkelapp>("oppgaveUtfoert")
+                response.getTypedContent<Error.UgyldigMerkelapp>("oppgaveUtfoert")
             }
         }
 
@@ -186,7 +188,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
             }
         }
     }
@@ -237,7 +239,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer tilbake id-en") {
-                val vellykket = response.getTypedContent<ProdusentAPI.OppgaveUtfoertVellykket>("oppgaveUtfoertByEksternId")
+                val vellykket = response.getTypedContent<MutationOppgaveUtfoert.OppgaveUtfoertVellykket>("oppgaveUtfoertByEksternId")
                 vellykket.id shouldBe uuid
             }
 
@@ -268,7 +270,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
             }
         }
 
@@ -303,7 +305,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
             }
         }
 
@@ -338,7 +340,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
             }
         }
 
@@ -373,7 +375,7 @@ class OppgaveUtførtTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
             }
         }
     }

@@ -7,8 +7,10 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.QueryMineNotifikasjoner
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -123,7 +125,7 @@ class MineNotifikasjonerTests : DescribeSpec({
             )
 
             it("respons inneholder forventet data") {
-                response.getTypedContent<ProdusentAPI.Error.UgyldigMerkelapp>("mineNotifikasjoner")
+                response.getTypedContent<Error.UgyldigMerkelapp>("mineNotifikasjoner")
             }
         }
 
@@ -214,7 +216,7 @@ class MineNotifikasjonerTests : DescribeSpec({
             )
 
             it("respons inneholder forventet data") {
-                response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
+                response.getTypedContent<QueryMineNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
             }
         }
 
@@ -307,7 +309,7 @@ class MineNotifikasjonerTests : DescribeSpec({
             )
 
             it("respons inneholder forventet data") {
-                val connection = response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
+                val connection = response.getTypedContent<QueryMineNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
                 connection.edges.size shouldBe 1
                 connection.pageInfo.hasNextPage shouldBe true
             }

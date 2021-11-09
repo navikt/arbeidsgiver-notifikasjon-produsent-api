@@ -11,8 +11,9 @@ import io.ktor.http.*
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentAPI
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyBeskjed
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -78,8 +79,8 @@ class NyBeskjedTests : DescribeSpec({
         }
 
         it("respons inneholder forventet data") {
-            val nyBeskjed = response.getTypedContent<ProdusentAPI.NyBeskjedResultat>("nyBeskjed")
-            nyBeskjed should beOfType<ProdusentAPI.NyBeskjedVellykket>()
+            val nyBeskjed = response.getTypedContent<MutationNyBeskjed.NyBeskjedResultat>("nyBeskjed")
+            nyBeskjed should beOfType<MutationNyBeskjed.NyBeskjedVellykket>()
         }
 
         it("sends message to kafka") {
@@ -88,7 +89,7 @@ class NyBeskjedTests : DescribeSpec({
             val value = poll.last().value()
             value should beOfType<Hendelse.BeskjedOpprettet>()
             val event = value as Hendelse.BeskjedOpprettet
-            val nyBeskjed = response.getTypedContent<ProdusentAPI.NyBeskjedVellykket>("nyBeskjed")
+            val nyBeskjed = response.getTypedContent<MutationNyBeskjed.NyBeskjedVellykket>("nyBeskjed")
             event.notifikasjonId shouldBe nyBeskjed.id
             event.lenke shouldBe "https://foo.bar"
             event.tekst shouldBe "hello world"

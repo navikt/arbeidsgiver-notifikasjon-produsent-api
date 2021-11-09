@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProduc
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.*
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -98,7 +99,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket =
-                    response.getTypedContent<ProdusentAPI.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjon")
+                    response.getTypedContent<MutationHardDelete.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjon")
                 vellykket.id shouldBe uuid
             }
 
@@ -206,7 +207,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                     """
                 )
                 val slettetNotifikasjon =
-                    response.getTypedContent<ProdusentAPI.NotifikasjonConnection>("mineNotifikasjoner")
+                    response.getTypedContent<QueryMineNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
                         .edges
                         .map { it.node }
                         .find { it.id == uuid }
@@ -230,7 +231,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjon")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjon")
             }
         }
 
@@ -251,7 +252,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.UgyldigMerkelapp>("hardDeleteNotifikasjon")
+                response.getTypedContent<Error.UgyldigMerkelapp>("hardDeleteNotifikasjon")
             }
         }
     }
@@ -282,7 +283,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket =
-                    response.getTypedContent<ProdusentAPI.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjonByEksternId")
+                    response.getTypedContent<MutationHardDelete.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjonByEksternId")
                 vellykket.id shouldBe uuid
             }
 
@@ -318,7 +319,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
             }
         }
 
@@ -339,7 +340,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
             }
         }
 
@@ -360,7 +361,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<ProdusentAPI.Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
             }
         }
     }
