@@ -13,7 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
-class NærmesteLederTilgangsstyring: DescribeSpec({
+class NærmesteLederTilgangsstyringTests: DescribeSpec({
 
     val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerModelImpl(database)

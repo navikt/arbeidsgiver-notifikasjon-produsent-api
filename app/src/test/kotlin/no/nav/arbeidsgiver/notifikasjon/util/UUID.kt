@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.util
 import java.util.*
 
 
-private const val UUID_BASE: String = "da89eafe-b31b-11eb-8529-0242ac000000"
+private const val UUID_BASE: String = "da89eafe-b31b-11eb-8529-000000000000"
 
 fun String.replaceSuffix(suffix: String): String =
     removeRange(length - suffix.length, length) + suffix
