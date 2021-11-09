@@ -262,7 +262,7 @@ class ParameterSetters(
     fun integer(value: Int) =
         preparedStatement.setInt(index++, value)
 
-    inline fun <reified T>jsonb(value: T) =
+    inline fun <reified T> jsonb(value: T) =
         string(
             objectMapper.writeValueAsString<T>(value)
         )
