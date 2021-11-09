@@ -14,7 +14,7 @@ data class EpostMottakerInput(
 
 data class EpostKontaktinfoInput(
     val fnr: String,
-    val epost: String,
+    val epostadresse: String,
 )
 
 data class EksternVarselInput(
@@ -39,7 +39,7 @@ data class SmsKontaktinfoInput(
 data class EksternVarselEpostInput(
     val mottaker: EpostMottakerInput,
     val epostTittel: String,
-    val epostBodyHtml: String,
+    val epostHtmlBody: String,
 )
 
 
