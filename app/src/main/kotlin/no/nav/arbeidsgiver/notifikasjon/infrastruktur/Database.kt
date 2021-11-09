@@ -165,8 +165,6 @@ value class Transaction(
                 .prepareStatement(sql)
                 .use { preparedStatement ->
                     ParameterSetters(preparedStatement).apply(setup)
-
-                    log.info("XXXXXXXXXXXXX '$preparedStatement'")
                     preparedStatement.executeQuery().use { resultSet ->
                         val resultList = mutableListOf<T>()
                         while (resultSet.next()) {
