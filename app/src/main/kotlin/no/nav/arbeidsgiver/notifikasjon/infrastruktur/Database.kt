@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
@@ -244,9 +243,6 @@ class ParameterSetters(
     fun uuid(value: UUID) =
         preparedStatement.setObject(index++, value)
 
-    fun jsonb(value: JsonNode) =
-        preparedStatement.setObject(index++, objectMapper.writeValueAsString(value))
-
     fun timestamptz(value: OffsetDateTime) =
         preparedStatement.setObject(index++, value)
 
@@ -260,12 +256,14 @@ class ParameterSetters(
     fun timestamp(value: LocalDateTime) =
         preparedStatement.setObject(index++, value)
 
-
     fun nullableTimestamp(value: LocalDateTime?) =
         preparedStatement.setObject(index++, value)
+
     fun integer(value: Int) =
         preparedStatement.setInt(index++, value)
 
-    fun jsonb(value: Any) =
-        preparedStatement.setString(index++, objectMapper.writeValueAsString(value))
+    inline fun <reified T> jsonb(value: T) =
+        string(
+            objectMapper.writeValueAsString<T>(value)
+        )
 }
