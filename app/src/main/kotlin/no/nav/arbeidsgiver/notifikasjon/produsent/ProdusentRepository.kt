@@ -27,52 +27,84 @@ class ProdusentRepositoryImpl(
     val log = logger()
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? {
-        return database.nonTransactionalExecuteQuery(
-            """ select * from notifikasjon where id = ? """, {
+        database.transaction {
+            val eksterneVarsler = executeQuery( """ select * from ekstern_varsel where notifikasjon_id = ? """, {
                 uuid(id)
-            }, resultSetTilNotifikasjon
-        ).firstOrNull()
+            }) {
+                ProdusentModel.EksterntVarsel(
+                    varselId = getObject("varsel_id", UUID::class.java),
+                    status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
+                    feilmelding = getString("feilmelding")
+                )
+            }
+            executeQuery(
+                """ select * from notifikasjon where id = ? """,
+                {
+                    uuid(id)
+                },
+                {
+                    resultSetTilNotifikasjon(eksterneVarsler)
+                }
+            ).firstOrNull()
+        }
     }
 
     override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? {
-        return database.nonTransactionalExecuteQuery(
-            """ select * from notifikasjon where ekstern_id = ? and merkelapp = ? """, {
-                string(eksternId)
-                string(merkelapp)
-            },
-            resultSetTilNotifikasjon
-        ).firstOrNull()
+        return database.transaction {
+            val eksterneVarsler = executeQuery(
+                """
+                    select v.* from notifikasjon n
+                    join ekstern_varsel v on n.notifikasjon_id = v.notifikasjon_id
+                    where n.merkelapp = ? AND n.ekstern_id = ?
+                """
+            ) {
+                ProdusentModel.EksterntVarsel(
+                    varselId = getObject("varsel_id", UUID::class.java),
+                    status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
+                    feilmelding = getString("feilmelding")
+                )
+            }
+
+            executeQuery(
+                """ select * from notifikasjon where ekstern_id = ? and merkelapp = ? """, {
+                    string(eksternId)
+                    string(merkelapp)
+                }, {
+                    resultSetTilNotifikasjon(eksterneVarsler)
+                }
+            ).firstOrNull()
+        }
     }
 
-    val resultSetTilNotifikasjon: ResultSet.() -> ProdusentModel.Notifikasjon =
-        {
-            when (val type = getString("type")) {
-                "BESKJED" -> ProdusentModel.Beskjed(
-                    merkelapp = getString("merkelapp"),
-                    tekst = getString("tekst"),
-                    grupperingsid = getString("grupperingsid"),
-                    lenke = getString("lenke"),
-                    eksternId = getString("ekstern_id"),
-                    mottaker = objectMapper.readValue(getString("mottaker")),
-                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                    id = getObject("id", UUID::class.java),
-                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                )
-                "OPPGAVE" -> ProdusentModel.Oppgave(
-                    merkelapp = getString("merkelapp"),
-                    tilstand = ProdusentModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
-                    tekst = getString("tekst"),
-                    grupperingsid = getString("grupperingsid"),
-                    lenke = getString("lenke"),
-                    eksternId = getString("ekstern_id"),
-                    mottaker = objectMapper.readValue(getString("mottaker")),
-                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                    id = getObject("id", UUID::class.java),
-                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                )
-                else ->
-                    throw Exception("Ukjent notifikasjonstype '$type'")
-            }
+    private fun ResultSet.resultSetTilNotifikasjon(eksterneVarsler: List<ProdusentModel.EksterntVarsel>):  ProdusentModel.Notifikasjon =
+        when (val type = getString("type")) {
+            "BESKJED" -> ProdusentModel.Beskjed(
+                merkelapp = getString("merkelapp"),
+                tekst = getString("tekst"),
+                grupperingsid = getString("grupperingsid"),
+                lenke = getString("lenke"),
+                eksternId = getString("ekstern_id"),
+                mottaker = objectMapper.readValue(getString("mottaker")),
+                opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                id = getObject("id", UUID::class.java),
+                deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
+                eksterneVarsler = eksterneVarsler,
+            )
+            "OPPGAVE" -> ProdusentModel.Oppgave(
+                merkelapp = getString("merkelapp"),
+                tilstand = ProdusentModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
+                tekst = getString("tekst"),
+                grupperingsid = getString("grupperingsid"),
+                lenke = getString("lenke"),
+                eksternId = getString("ekstern_id"),
+                mottaker = objectMapper.readValue(getString("mottaker")),
+                opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                id = getObject("id", UUID::class.java),
+                deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
+                eksterneVarsler = eksterneVarsler,
+            )
+            else ->
+                throw Exception("Ukjent notifikasjonstype '$type'")
         }
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {

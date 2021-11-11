@@ -50,7 +50,7 @@ class MutationNyBeskjed(
         val mottaker: MottakerInput,
         val notifikasjon: QueryMineNotifikasjoner.NotifikasjonData,
         val metadata: MetadataInput,
-        val eksternVarsel: List<EksternVarselInput>,
+        val eksterneVarsler: List<EksterntVarselInput>,
     ) {
         fun tilDomene(id: UUID, produsentId: String, kildeAppNavn: String): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
@@ -67,6 +67,7 @@ class MutationNyBeskjed(
                 virksomhetsnummer = mottaker.virksomhetsnummer,
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
+                eksterneVarsler = eksterneVarsler.map(EksterntVarselInput::tilDomene)
             )
         }
     }
@@ -103,14 +104,18 @@ class MutationNyBeskjed(
                 produsentRepository.oppdaterModellEtterHendelse(domeneNyBeskjed)
                 NyBeskjedVellykket(
                     id = id,
-                    eksternVarsel = listOf()
+                    eksternVarsel = domeneNyBeskjed.eksterneVarsler.map {
+                        NyEksternVarselResultat(it.varselId)
+                    }
                 )
             }
             eksisterende.erDuplikatAv(domeneNyBeskjed.tilProdusentModel()) -> {
                 log.info("duplisert opprettelse av beskjed med id ${eksisterende.id}")
                 NyBeskjedVellykket(
                     id = eksisterende.id,
-                    eksternVarsel = listOf()
+                    eksternVarsel = eksisterende.eksterneVarsler.map {
+                        NyEksternVarselResultat(it.varselId)
+                    }
                 )
             }
             else -> {

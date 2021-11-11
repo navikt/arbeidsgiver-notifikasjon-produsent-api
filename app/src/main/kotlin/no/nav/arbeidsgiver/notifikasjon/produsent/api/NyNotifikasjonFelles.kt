@@ -1,5 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel
+import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -8,40 +12,80 @@ sealed interface NyNotifikasjonError :
     MutationNyOppgave.NyOppgaveResultat
 
 
-data class EpostMottakerInput(
-    val kontaktinfo: EpostKontaktinfoInput?
-)
+data class EksterntVarselInput(
+    val sms: Sms?,
+    val epost: Epost?,
+) {
 
-data class EpostKontaktinfoInput(
-    val fnr: String,
-    val epostadresse: String,
-)
+    fun tilDomene(): EksterntVarsel {
+        if (sms != null) {
+            return sms.tilDomene()
+        }
+        if (epost != null) {
+            return epost.tilDomene()
+        }
+        throw Error("Feil format")
+    }
 
-data class EksternVarselInput(
-    val sms: EksternVarselSmsInput?,
-    val epost: EksternVarselEpostInput?,
-)
+    data class Sms(
+        val mottaker: Mottaker,
+        val smsTekst: String,
+    ) {
 
-data class EksternVarselSmsInput(
-    val mottaker: SmsMottakerInput,
-    val smsTekst: String
-)
+        fun tilDomene(): SmsVarselKontaktinfo {
+            if (mottaker.kontaktinfo != null) {
+                return SmsVarselKontaktinfo(
+                    varselId =  UUID.randomUUID(),
+                    tlfnr = mottaker.kontaktinfo.tlf,
+                    fnrEllerOrgnr = mottaker.kontaktinfo.fnr,
+                    smsTekst = smsTekst,
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null,
+                )
+            }
+            throw Error("mottaker-felt mangler for sms")
+        }
 
-data class SmsMottakerInput(
-    val kontaktinfo: SmsKontaktinfoInput?
-)
+        data class Mottaker(
+            val kontaktinfo: Kontaktinfo?
+        )
 
-data class SmsKontaktinfoInput(
-    val fnr: String,
-    val tlf: String,
-)
+        data class Kontaktinfo(
+            val fnr: String,
+            val tlf: String,
+        )
+    }
 
-data class EksternVarselEpostInput(
-    val mottaker: EpostMottakerInput,
-    val epostTittel: String,
-    val epostHtmlBody: String,
-)
+    data class Epost(
+        val mottaker: Mottaker,
+        val epostTittel: String,
+        val epostHtmlBody: String,
+    ) {
+        fun tilDomene(): EpostVarselKontaktinfo {
+            if (mottaker.kontaktinfo != null) {
+                return EpostVarselKontaktinfo(
+                    varselId = UUID.randomUUID(),
+                    epostAddr = mottaker.kontaktinfo.epostadresse,
+                    fnrEllerOrgnr = mottaker.kontaktinfo.fnr,
+                    tittel = epostTittel,
+                    htmlBody = epostHtmlBody,
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null,
+                )
+            }
+            throw Error("mottaker mangler for epost")
+        }
 
+        data class Mottaker(
+            val kontaktinfo: Kontaktinfo?
+        )
+
+        data class Kontaktinfo(
+            val fnr: String,
+            val epostadresse: String,
+        )
+    }
+}
 
 data class NaermesteLederMottakerInput(
     val naermesteLederFnr: String,

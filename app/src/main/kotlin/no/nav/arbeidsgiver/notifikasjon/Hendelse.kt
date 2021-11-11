@@ -38,6 +38,10 @@ sealed class Hendelse {
         val grupperingsid: String? = null,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
+
+        // TODO: Det finnes hendelser i kafka-strømmen som mangler dette feltet.
+        // Men det er dumt at vi må sette default value for hele prosjektet, siden
+        // det kan være man glemmer å sette den, og på den måten får bugs.
         val eksterneVarsler: List<EksterntVarsel> = listOf()
     ) : Hendelse()
 
@@ -55,6 +59,10 @@ sealed class Hendelse {
         val grupperingsid: String? = null,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
+
+        // TODO: Det finnes hendelser i kafka-strømmen som mangler dette feltet.
+        // Men det er dumt at vi må sette default value for hele prosjektet, siden
+        // det kan være man glemmer å sette den, og på den måten får bugs.
         val eksterneVarsler: List<EksterntVarsel> = listOf()
     ) : Hendelse()
 
