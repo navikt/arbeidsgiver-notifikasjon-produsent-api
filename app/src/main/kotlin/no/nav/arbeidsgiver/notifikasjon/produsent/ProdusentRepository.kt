@@ -17,18 +17,18 @@ interface ProdusentRepository {
         merkelapper: List<String>,
         grupperingsid: String?,
         antall: Int,
-        offset: Int
+        offset: Int,
     ): List<ProdusentModel.Notifikasjon>
 }
 
 class ProdusentRepositoryImpl(
-    private val database: Database
+    private val database: Database,
 ) : ProdusentRepository {
     val log = logger()
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? {
-        database.transaction {
-            val eksterneVarsler = executeQuery( """ select * from ekstern_varsel where notifikasjon_id = ? """, {
+        return database.transaction {
+            val eksterneVarsler = executeQuery(""" select * from eksternt_varsel where notifikasjon_id = ? """, {
                 uuid(id)
             }) {
                 ProdusentModel.EksterntVarsel(
@@ -54,7 +54,7 @@ class ProdusentRepositoryImpl(
             val eksterneVarsler = executeQuery(
                 """
                     select v.* from notifikasjon n
-                    join ekstern_varsel v on n.notifikasjon_id = v.notifikasjon_id
+                    join eksternt_varsel v on n.notifikasjon_id = v.notifikasjon_id
                     where n.merkelapp = ? AND n.ekstern_id = ?
                 """
             ) {
@@ -76,7 +76,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private fun ResultSet.resultSetTilNotifikasjon(eksterneVarsler: List<ProdusentModel.EksterntVarsel>):  ProdusentModel.Notifikasjon =
+    private fun ResultSet.resultSetTilNotifikasjon(eksterneVarsler: List<ProdusentModel.EksterntVarsel>): ProdusentModel.Notifikasjon =
         when (val type = getString("type")) {
             "BESKJED" -> ProdusentModel.Beskjed(
                 merkelapp = getString("merkelapp"),
@@ -148,12 +148,13 @@ class ProdusentRepositoryImpl(
         merkelapper: List<String>,
         grupperingsid: String?,
         antall: Int,
-        offset: Int
+        offset: Int,
     ): List<ProdusentModel.Notifikasjon> {
         return database.nonTransactionalExecuteQuery(
-            """ select * from notifikasjon 
+            """ select *, eksterntvarsel.* from notifikasjon 
+                  join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
                   where merkelapp = any(?)
-                  ${grupperingsid?.let { "and grupperingsid = ?" }?:""} 
+                  ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
                   limit ?
                   offset ?
             """.trimMargin(), {
@@ -162,7 +163,30 @@ class ProdusentRepositoryImpl(
                 integer(antall)
                 integer(offset)
             },
-            resultSetTilNotifikasjon
+            { cache ->
+                val id = getObject("id", UUID::class.java)
+                val notifikasjon = cache.getOrPut(id) {
+                    resultSetTilNotifikasjon(mutableListOf())
+                }
+
+                getObject("eksterntvarsel.id", UUID::class.java).also { varselId ->
+                    val eksterntVarsel = ProdusentModel.EksterntVarsel(
+                        varselId = varselId,
+                        status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("eksterntvarsel.status")),
+                        feilmelding = getString("eksterntvarsel.feilmelding")
+                    )
+                    cache[id] = when (notifikasjon) {
+                        is ProdusentModel.Beskjed -> {
+                            notifikasjon.copy(eksterneVarsler = notifikasjon.eksterneVarsler + listOf(eksterntVarsel))
+                        }
+                        is ProdusentModel.Oppgave -> {
+                            notifikasjon.copy(eksterneVarsler = notifikasjon.eksterneVarsler + listOf(eksterntVarsel))
+                        }
+                    }
+
+                }
+                cache[id]!!
+            }
         )
     }
 
