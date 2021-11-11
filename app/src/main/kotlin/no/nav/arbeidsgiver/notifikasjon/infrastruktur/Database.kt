@@ -99,7 +99,7 @@ class Database private constructor(
     suspend fun <T> nonTransactionalExecuteQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
-        transform: ResultSet.() -> T
+        transform: ResultSet.(entityCache: MutableMap<UUID, T>) -> T
     ): List<T> =
         dataSource.withConnection { connection ->
             Transaction(connection).executeQuery(sql, setup, transform)
@@ -158,7 +158,7 @@ value class Transaction(
     fun <T> executeQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
-        transform: ResultSet.() -> T
+        transform: ResultSet.(entityCache: MutableMap<UUID, T>) -> T
     ): List<T> {
         return measure(sql) {
             connection
@@ -166,9 +166,10 @@ value class Transaction(
                 .use { preparedStatement ->
                     ParameterSetters(preparedStatement).apply(setup)
                     preparedStatement.executeQuery().use { resultSet ->
+                        val entityCache = mutableMapOf<UUID, T>()
                         val resultList = mutableListOf<T>()
                         while (resultSet.next()) {
-                            resultList.add(resultSet.transform())
+                            resultList.add(resultSet.transform(entityCache))
                         }
                         resultList
                     }
