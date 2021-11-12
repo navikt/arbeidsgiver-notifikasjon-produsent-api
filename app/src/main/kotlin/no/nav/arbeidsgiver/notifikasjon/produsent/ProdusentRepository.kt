@@ -51,7 +51,7 @@ class ProdusentRepositoryImpl(
 
     override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? {
         return database.transaction {
-            val eksterneVarsler = executeQuery(
+            val eksterneVarsler = executeQuery<ProdusentModel.EksterntVarsel>(
                 """
                     select v.* from notifikasjon n
                     join eksternt_varsel v on n.notifikasjon_id = v.notifikasjon_id
@@ -150,6 +150,7 @@ class ProdusentRepositoryImpl(
         antall: Int,
         offset: Int,
     ): List<ProdusentModel.Notifikasjon> {
+        val entityCache = mutableMapOf<UUID, ProdusentModel.Notifikasjon>()
         return database.nonTransactionalExecuteQuery(
             """ select *, eksterntvarsel.* from notifikasjon 
                   join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
@@ -163,10 +164,10 @@ class ProdusentRepositoryImpl(
                 integer(antall)
                 integer(offset)
             },
-            { cache ->
+            {
                 val id = getObject("id", UUID::class.java)
-                val notifikasjon = cache.getOrPut(id) {
-                    resultSetTilNotifikasjon(mutableListOf())
+                val notifikasjon = entityCache.getOrPut(id) {
+                    resultSetTilNotifikasjon(listOf())
                 }
 
                 getObject("eksterntvarsel.id", UUID::class.java).also { varselId ->
@@ -175,7 +176,7 @@ class ProdusentRepositoryImpl(
                         status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("eksterntvarsel.status")),
                         feilmelding = getString("eksterntvarsel.feilmelding")
                     )
-                    cache[id] = when (notifikasjon) {
+                    entityCache[id] = when (notifikasjon) {
                         is ProdusentModel.Beskjed -> {
                             notifikasjon.copy(eksterneVarsler = notifikasjon.eksterneVarsler + listOf(eksterntVarsel))
                         }
@@ -185,7 +186,7 @@ class ProdusentRepositoryImpl(
                     }
 
                 }
-                cache[id]!!
+                entityCache[id]!!
             }
         )
     }
