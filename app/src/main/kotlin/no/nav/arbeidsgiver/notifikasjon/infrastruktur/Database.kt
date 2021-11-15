@@ -31,9 +31,10 @@ class Database private constructor(
         val username: String,
         val password: String,
         val migrationLocations: String,
+        val jdbcOpts: Map<String, Any> = mapOf()
     ) {
         val jdbcUrl: String
-            get() = "jdbc:postgresql://$host:$port/$database"
+            get() = "jdbc:postgresql://$host:$port/$database?${jdbcOpts.entries.joinToString("&")}"
     }
 
     companion object {
