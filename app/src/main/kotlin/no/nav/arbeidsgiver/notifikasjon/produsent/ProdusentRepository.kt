@@ -26,57 +26,69 @@ class ProdusentRepositoryImpl(
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? {
         return database.transaction {
-            val eksterneVarsler = executeQuery(""" select * from eksternt_varsel where notifikasjon_id = ? """, {
-                uuid(id)
-            }) {
-                ProdusentModel.EksterntVarsel(
-                    varselId = getObject("varsel_id", UUID::class.java),
-                    status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
-                    feilmelding = getString("feilmelding")
-                )
-            }
+            val entityCache = mutableMapOf<UUID, ProdusentModel.Notifikasjon>()
             executeQuery(
-                """ select * from notifikasjon where id = ? """,
+                """ 
+                select notifikasjon.*, eksterntvarsel.* from notifikasjon 
+                left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
+                where notifikasjon.id = ?
+                """,
                 {
                     uuid(id)
                 },
                 {
-                    resultSetTilNotifikasjon(eksterneVarsler)
+                    val notifikasjon = entityCache.getOrPut(id) {
+                        resultSetTilNotifikasjon()
+                    }
+
+                    getNullableObject("varsel_id", UUID::class.java)?.let { varselId ->
+                        val eksterntVarsel = ProdusentModel.EksterntVarsel(
+                            varselId = varselId,
+                            status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
+                            feilmelding = getString("feilmelding")
+                        )
+                        entityCache[id] = notifikasjon.medEksterntVarsel(eksterntVarsel)
+
+                    }
+                    entityCache[id]!!
                 }
-            ).firstOrNull()
+            ).lastDistinctBy { it.id }.firstOrNull()
         }
     }
 
     override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? {
         return database.transaction {
-            val eksterneVarsler = executeQuery(
-                """
-                    select v.* from notifikasjon n
-                    join eksternt_varsel v on n.id = v.notifikasjon_id
-                    where n.ekstern_id = ? AND n.merkelapp = ?
+            val entityCache = mutableMapOf<UUID, ProdusentModel.Notifikasjon>()
+            executeQuery(
+                """ 
+                select notifikasjon.*, eksterntvarsel.* from notifikasjon 
+                left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
+                where ekstern_id = ? and merkelapp = ? 
                 """, {
                     string(eksternId)
                     string(merkelapp)
                 }, {
-                    ProdusentModel.EksterntVarsel(
-                        varselId = getObject("v.varsel_id", UUID::class.java),
-                        status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("v.status")),
-                        feilmelding = getString("v.feilmelding")
-                    )
-                })
+                    val id = getObject("id", UUID::class.java)
+                    val notifikasjon = entityCache.getOrPut(id) {
+                        resultSetTilNotifikasjon()
+                    }
 
-            executeQuery(
-                """ select * from notifikasjon where ekstern_id = ? and merkelapp = ? """, {
-                    string(eksternId)
-                    string(merkelapp)
-                }, {
-                    resultSetTilNotifikasjon(eksterneVarsler)
+                    getNullableObject("varsel_id", UUID::class.java)?.let { varselId ->
+                        val eksterntVarsel = ProdusentModel.EksterntVarsel(
+                            varselId = varselId,
+                            status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
+                            feilmelding = getString("feilmelding")
+                        )
+                        entityCache[id] = notifikasjon.medEksterntVarsel(eksterntVarsel)
+
+                    }
+                    entityCache[id]!!
                 }
-            ).firstOrNull()
+            ).lastDistinctBy { it.id }.firstOrNull()
         }
     }
 
-    private fun ResultSet.resultSetTilNotifikasjon(eksterneVarsler: List<ProdusentModel.EksterntVarsel>): ProdusentModel.Notifikasjon =
+    private fun ResultSet.resultSetTilNotifikasjon(): ProdusentModel.Notifikasjon =
         when (val type = getString("type")) {
             "BESKJED" -> ProdusentModel.Beskjed(
                 merkelapp = getString("merkelapp"),
@@ -88,7 +100,7 @@ class ProdusentRepositoryImpl(
                 opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                 id = getObject("id", UUID::class.java),
                 deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                eksterneVarsler = eksterneVarsler,
+                eksterneVarsler = listOf(),
             )
             "OPPGAVE" -> ProdusentModel.Oppgave(
                 merkelapp = getString("merkelapp"),
@@ -101,7 +113,7 @@ class ProdusentRepositoryImpl(
                 opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                 id = getObject("id", UUID::class.java),
                 deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                eksterneVarsler = eksterneVarsler,
+                eksterneVarsler = listOf(),
             )
             else ->
                 throw Exception("Ukjent notifikasjonstype '$type'")
@@ -167,7 +179,7 @@ class ProdusentRepositoryImpl(
             {
                 val id = getObject("id", UUID::class.java)
                 val notifikasjon = entityCache.getOrPut(id) {
-                    resultSetTilNotifikasjon(listOf())
+                    resultSetTilNotifikasjon()
                 }
 
                 getNullableObject("varsel_id", UUID::class.java)?.let { varselId ->
