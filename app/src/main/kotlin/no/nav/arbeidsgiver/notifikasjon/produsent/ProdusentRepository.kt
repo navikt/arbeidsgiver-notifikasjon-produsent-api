@@ -41,7 +41,7 @@ class ProdusentRepositoryImpl(
                         resultSetTilNotifikasjon()
                     }
 
-                    getNullableObject("varsel_id", UUID::class.java)?.let { varselId ->
+                    getObject("varsel_id", UUID::class.java)?.let { varselId ->
                         val eksterntVarsel = ProdusentModel.EksterntVarsel(
                             varselId = varselId,
                             status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
@@ -73,7 +73,7 @@ class ProdusentRepositoryImpl(
                         resultSetTilNotifikasjon()
                     }
 
-                    getNullableObject("varsel_id", UUID::class.java)?.let { varselId ->
+                    getObject("varsel_id", UUID::class.java)?.let { varselId ->
                         val eksterntVarsel = ProdusentModel.EksterntVarsel(
                             varselId = varselId,
                             status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
@@ -182,7 +182,7 @@ class ProdusentRepositoryImpl(
                     resultSetTilNotifikasjon()
                 }
 
-                getNullableObject("varsel_id", UUID::class.java)?.let { varselId ->
+                getObject("varsel_id", UUID::class.java)?.let { varselId ->
                     val eksterntVarsel = ProdusentModel.EksterntVarsel(
                         varselId = varselId,
                         status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),

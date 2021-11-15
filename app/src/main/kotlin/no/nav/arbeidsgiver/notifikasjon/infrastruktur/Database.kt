@@ -265,11 +265,3 @@ class ParameterSetters(
             objectMapper.writeValueAsString<T>(value)
         )
 }
-
-fun <T> ResultSet.getNullableObject(columnLabel: String, type: Class<T>) : T? {
-    return try {
-        getObject(columnLabel, type)
-    } catch (e: SQLException) {
-        null
-    }
-}
