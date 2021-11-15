@@ -2,9 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.util.*
@@ -51,19 +49,21 @@ class ProdusentRepositoryImpl(
 
     override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? {
         return database.transaction {
-            val eksterneVarsler = executeQuery<ProdusentModel.EksterntVarsel>(
+            val eksterneVarsler = executeQuery(
                 """
                     select v.* from notifikasjon n
-                    join eksternt_varsel v on n.notifikasjon_id = v.notifikasjon_id
-                    where n.merkelapp = ? AND n.ekstern_id = ?
-                """
-            ) {
-                ProdusentModel.EksterntVarsel(
-                    varselId = getObject("varsel_id", UUID::class.java),
-                    status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
-                    feilmelding = getString("feilmelding")
-                )
-            }
+                    join eksternt_varsel v on n.id = v.notifikasjon_id
+                    where n.ekstern_id = ? AND n.merkelapp = ?
+                """, {
+                    string(eksternId)
+                    string(merkelapp)
+                }, {
+                    ProdusentModel.EksterntVarsel(
+                        varselId = getObject("v.varsel_id", UUID::class.java),
+                        status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("v.status")),
+                        feilmelding = getString("v.feilmelding")
+                    )
+                })
 
             executeQuery(
                 """ select * from notifikasjon where ekstern_id = ? and merkelapp = ? """, {
@@ -115,8 +115,8 @@ class ProdusentRepositoryImpl(
             is Hendelse.BrukerKlikket -> /* Ignorer */ Unit
             is Hendelse.SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
             is Hendelse.HardDelete -> oppdaterModellEtterHardDelete(hendelse)
-            is Hendelse.EksterntVarselVellykket -> TODO()
-            is Hendelse.EksterntVarselFeilet -> TODO()
+            is Hendelse.EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
+            is Hendelse.EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
         }
     }
 
@@ -152,8 +152,8 @@ class ProdusentRepositoryImpl(
     ): List<ProdusentModel.Notifikasjon> {
         val entityCache = mutableMapOf<UUID, ProdusentModel.Notifikasjon>()
         return database.nonTransactionalExecuteQuery(
-            """ select *, eksterntvarsel.* from notifikasjon 
-                  join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
+            """ select notifikasjon.*, eksterntvarsel.* from notifikasjon 
+                  left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
                   where merkelapp = any(?)
                   ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
                   limit ?
@@ -170,25 +170,18 @@ class ProdusentRepositoryImpl(
                     resultSetTilNotifikasjon(listOf())
                 }
 
-                getObject("eksterntvarsel.id", UUID::class.java).also { varselId ->
+                getNullableObject("varsel_id", UUID::class.java)?.let { varselId ->
                     val eksterntVarsel = ProdusentModel.EksterntVarsel(
                         varselId = varselId,
-                        status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("eksterntvarsel.status")),
-                        feilmelding = getString("eksterntvarsel.feilmelding")
+                        status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
+                        feilmelding = getString("feilmelding")
                     )
-                    entityCache[id] = when (notifikasjon) {
-                        is ProdusentModel.Beskjed -> {
-                            notifikasjon.copy(eksterneVarsler = notifikasjon.eksterneVarsler + listOf(eksterntVarsel))
-                        }
-                        is ProdusentModel.Oppgave -> {
-                            notifikasjon.copy(eksterneVarsler = notifikasjon.eksterneVarsler + listOf(eksterntVarsel))
-                        }
-                    }
+                    entityCache[id] = notifikasjon.medEksterntVarsel(eksterntVarsel)
 
                 }
                 entityCache[id]!!
             }
-        )
+        ).lastDistinctBy(ProdusentModel.Notifikasjon::id)
     }
 
     private suspend fun oppdatertModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
@@ -233,6 +226,21 @@ class ProdusentRepositoryImpl(
             timestamptz(nyBeskjed.opprettetTidspunkt)
             string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
         }
+        database.nonTransactionalExecuteBatch(
+            """
+            insert into eksternt_varsel(
+                varsel_id,
+                notifikasjon_id,
+                status
+            )
+            values (?, ?, 'NY')
+            on conflict on constraint eksternt_varsel_pkey do nothing;
+            """,
+            beskjedOpprettet.eksterneVarsler
+        ) { eksterntVarsel ->
+            uuid(eksterntVarsel.varselId)
+            uuid(beskjedOpprettet.notifikasjonId)
+        }
     }
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
@@ -263,6 +271,45 @@ class ProdusentRepositoryImpl(
             string(nyBeskjed.eksternId)
             timestamptz(nyBeskjed.opprettetTidspunkt)
             string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
+        }
+        database.nonTransactionalExecuteBatch(
+            """
+            insert into eksternt_varsel(
+                varsel_id,
+                notifikasjon_id,
+                status
+            )
+            values (?, ?, 'NY')
+            on conflict on constraint eksternt_varsel_pkey do nothing;
+            """,
+            oppgaveOpprettet.eksterneVarsler
+        ) { eksterntVarsel ->
+            uuid(eksterntVarsel.varselId)
+            uuid(oppgaveOpprettet.notifikasjonId)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: Hendelse.EksterntVarselVellykket) {
+        database.nonTransactionalExecuteUpdate(
+            """
+            update eksternt_varsel set status = 'SENDT' where varsel_id = ?
+            """
+        ) {
+            uuid(eksterntVarselVellykket.varselId)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: Hendelse.EksterntVarselFeilet) {
+        database.nonTransactionalExecuteUpdate(
+            """
+            update eksternt_varsel 
+            set status = 'FEILET',
+                feilmelding = ?  
+            where varsel_id = ?
+            """
+        ) {
+            string(eksterntVarselFeilet.feilmelding)
+            uuid(eksterntVarselFeilet.varselId)
         }
     }
 }

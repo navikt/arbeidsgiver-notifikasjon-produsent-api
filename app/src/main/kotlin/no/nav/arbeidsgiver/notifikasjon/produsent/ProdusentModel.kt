@@ -11,6 +11,15 @@ object ProdusentModel {
         val deletedAt: OffsetDateTime?
         val eksterneVarsler: List<EksterntVarsel>
         fun erDuplikatAv(other: Notifikasjon): Boolean
+        fun medEksterntVarsel(eksterntVarsel: EksterntVarsel): Notifikasjon =
+            when (this) {
+                is Beskjed -> {
+                    copy(eksterneVarsler = eksterneVarsler + listOf(eksterntVarsel))
+                }
+                is Oppgave -> {
+                    copy(eksterneVarsler = eksterneVarsler + listOf(eksterntVarsel))
+                }
+            }
     }
 
     data class Beskjed(
