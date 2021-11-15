@@ -51,5 +51,16 @@ class UnavailableInProduction<T>(initializer: () -> T) {
     }
 }
 
+/**
+ * last man wins variant av distinctBy.
+ */
+inline fun <V, K> Collection<V>.lastDistinctBy(selector: (V) -> K): List<V> {
+    val map = LinkedHashMap<K, V>()
+    for (e in this) {
+        map[selector(e)] = e
+    }
+    return map.values.toList()
+}
+
 
 

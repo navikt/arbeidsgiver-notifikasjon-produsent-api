@@ -9,10 +9,7 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
 import org.flywaydb.core.Flyway
 import org.intellij.lang.annotations.Language
-import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.PreparedStatement
-import java.sql.ResultSet
+import java.sql.*
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -25,7 +22,7 @@ import java.util.*
  */
 class Database private constructor(
     private val config: Config,
-    private val dataSource: NonBlockingDataSource
+    private val dataSource: NonBlockingDataSource,
 ) {
     data class Config(
         val host: String,
@@ -99,7 +96,7 @@ class Database private constructor(
     suspend fun <T> nonTransactionalExecuteQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
-        transform: ResultSet.() -> T
+        transform: ResultSet.() -> T,
     ): List<T> =
         dataSource.withConnection { connection ->
             Transaction(connection).executeQuery(sql, setup, transform)
@@ -122,7 +119,7 @@ class Database private constructor(
 
     suspend fun <T> transaction(
         rollback: (e: Exception) -> T = { throw it },
-        body: Transaction.() -> T
+        body: Transaction.() -> T,
     ): T =
         dataSource.withConnection { connection ->
             val savedAutoCommit = connection.autoCommit
@@ -149,7 +146,7 @@ class Database private constructor(
 
 @JvmInline
 value class Transaction(
-    private val connection: Connection
+    private val connection: Connection,
 ) {
     companion object {
         private val log = logger()
@@ -158,7 +155,7 @@ value class Transaction(
     fun <T> executeQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
-        transform: ResultSet.() -> T
+        transform: ResultSet.() -> T,
     ): List<T> {
         return measure(sql) {
             connection
@@ -221,7 +218,7 @@ value class Transaction(
 }
 
 class ParameterSetters(
-    private val preparedStatement: PreparedStatement
+    private val preparedStatement: PreparedStatement,
 ) {
     private var index = 1
 
@@ -266,4 +263,12 @@ class ParameterSetters(
         string(
             objectMapper.writeValueAsString<T>(value)
         )
+}
+
+fun <T> ResultSet.getNullableObject(columnLabel: String, type: Class<T>) : T? {
+    return try {
+        getObject(columnLabel, type)
+    } catch (e: SQLException) {
+        null
+    }
 }
