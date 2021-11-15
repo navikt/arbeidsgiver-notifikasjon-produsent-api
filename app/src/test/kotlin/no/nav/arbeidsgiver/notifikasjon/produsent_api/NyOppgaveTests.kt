@@ -61,7 +61,7 @@ class NyOppgaveTests : DescribeSpec({
                             __typename
                             ... on NyOppgaveVellykket {
                                 id
-                                eksternVarsel {
+                                eksterneVarsler {
                                     id
                                 }
                             }

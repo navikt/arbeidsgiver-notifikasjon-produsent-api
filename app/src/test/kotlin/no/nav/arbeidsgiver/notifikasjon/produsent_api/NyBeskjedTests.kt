@@ -61,7 +61,7 @@ class NyBeskjedTests : DescribeSpec({
                             __typename
                             ... on NyBeskjedVellykket {
                                 id
-                                eksternVarsel {
+                                eksterneVarsler {
                                     id
                                 }
                             }

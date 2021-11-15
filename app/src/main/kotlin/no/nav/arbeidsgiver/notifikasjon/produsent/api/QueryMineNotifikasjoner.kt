@@ -49,7 +49,7 @@ class QueryMineNotifikasjoner(
             val mottaker: Mottaker,
             val metadata: Metadata,
             val beskjed: BeskjedData,
-            val eksternVarsel: List<EksternVarsel>,
+            val eksterneVarsler: List<EksterntVarsel>,
         ) : Notifikasjon() {
             companion object {
                 fun fraDomene(beskjed: ProdusentModel.Beskjed): Beskjed {
@@ -67,7 +67,18 @@ class QueryMineNotifikasjoner(
                             tekst = beskjed.tekst,
                             lenke = beskjed.lenke,
                         ),
-                        eksternVarsel = listOf(),
+                        eksterneVarsler = beskjed.eksterneVarsler.map {
+                            EksterntVarsel(
+                                id = it.varselId,
+                                status = when (it.status) {
+                                    ProdusentModel.EksterntVarsel.Status.NY -> EksterntVarselStatus.NY
+                                    ProdusentModel.EksterntVarsel.Status.FEILET -> EksterntVarselStatus.FEILET
+                                    ProdusentModel.EksterntVarsel.Status.SENDT -> EksterntVarselStatus.SENDT
+                                },
+                                feilmelding = it.feilmelding,
+
+                            )
+                        },
                     )
                 }
             }
@@ -78,7 +89,7 @@ class QueryMineNotifikasjoner(
             val mottaker: Mottaker,
             val metadata: Metadata,
             val oppgave: OppgaveData,
-            val eksternVarsel: List<EksternVarsel>,
+            val eksterneVarsler: List<EksterntVarsel>,
         ) : Notifikasjon() {
             @Suppress("unused")
             /* Sendes til produsent */
@@ -104,7 +115,7 @@ class QueryMineNotifikasjoner(
                             tekst = oppgave.tekst,
                             lenke = oppgave.lenke,
                         ),
-                        eksternVarsel = listOf(),
+                        eksterneVarsler = listOf(),
                     )
                 }
             }
@@ -126,15 +137,16 @@ class QueryMineNotifikasjoner(
         val lenke: String,
     )
 
-    data class EksternVarsel(
+    data class EksterntVarsel(
         val id: UUID,
-        val status: EksternVarselStatus,
+        val status: EksterntVarselStatus,
+        val feilmelding: String?,
     )
 
-    enum class EksternVarselStatus {
+    enum class EksterntVarselStatus {
         NY,
-        UTFOERT,
-        FEIL
+        SENDT,
+        FEILET
     }
 
     @JsonTypeName("Metadata")
