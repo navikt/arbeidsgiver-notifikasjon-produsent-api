@@ -39,11 +39,15 @@ class EnhetsregisteretImpl(
     }
 
     val cache = SimpleLRUCache<String, Enhetsregisteret.Enhet>(100_000) { orgnr ->
-        val response: HttpResponse = httpClient.get("$baseUrl/enhetsregisteret/api/enheter/$orgnr")
-        if (response.status.isSuccess()) {
+        val response = listOf<HttpResponse>(
+            httpClient.get("$baseUrl/enhetsregisteret/api/enheter/$orgnr"),
+            httpClient.get("$baseUrl/enhetsregisteret/api/underenheter/$orgnr")
+        ).find { it.status.isSuccess() }
+
+        if (response != null) {
             response.receive()
         } else {
-            logger().warn("kunne ikke finne navn for virksomhet. kall til brreg feilet: ${response.status} ${response.readText()}")
+            logger().warn("kunne ikke finne navn for virksomhet. kall til brreg feilet.")
             Enhetsregisteret.Enhet(orgnr, "")
         }
     }

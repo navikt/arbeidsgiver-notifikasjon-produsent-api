@@ -17,27 +17,39 @@ class EnhetsregisteretTests : DescribeSpec({
     val port = 1111
     val brreg = EnhetsregisteretImpl("http://$host:$port")
     val mockServerClient = MockServerClient(host, port)
-    fun mockBrregResponse(
+    fun mockBrregEnhetResponse(
         withContentType: HttpResponse?
     ) {
         mockServerClient.reset()
         mockServerClient.`when`(
             HttpRequest.request()
                 .withMethod("GET")
-                .withPath("/enhetsregisteret/api/enheter/$orgnr")
+                .withPath("/enhetsregisteret/api/enheter/$virksomhetsnummer")
+        ).respond(
+            withContentType
+        )
+    }
+    fun mockBrregUnderenhetResponse(
+        withContentType: HttpResponse?
+    ) {
+        mockServerClient.reset()
+        mockServerClient.`when`(
+            HttpRequest.request()
+                .withMethod("GET")
+                .withPath("/enhetsregisteret/api/underenheter/$virksomhetsnummer")
         ).respond(
             withContentType
         )
     }
 
     describe("Brreg#hentEnhet") {
-        context("når enhet finnes") {
-            mockBrregResponse(
+        context("når enhet finnes i enheter") {
+            mockBrregEnhetResponse(
                 HttpResponse.response()
                     .withBody(enhetJson, Charsets.UTF_8)
                     .withContentType(MediaType.APPLICATION_JSON)
             )
-            val enhet = brreg.hentEnhet(orgnr)
+            val enhet = brreg.hentEnhet(virksomhetsnummer)
 
 
             it("inneholder navn på enhet") {
@@ -45,17 +57,30 @@ class EnhetsregisteretTests : DescribeSpec({
             }
 
             context("når det gjøres flere kall til samme enhet") {
-                val enhet2 = brreg.hentEnhet(orgnr)
+                val enhet2 = brreg.hentEnhet(virksomhetsnummer)
 
                 it("enhet er samme instans") {
                     enhet2 shouldBeSameInstanceAs enhet
                 }
             }
         }
-        context("når enhet ikke finnes") {
-            mockBrregResponse(HttpResponse.notFoundResponse())
+        context("når enhet ikke finnes i enheter men finnes i underenheter") {
+            mockBrregEnhetResponse(HttpResponse.notFoundResponse())
+            mockBrregUnderenhetResponse(HttpResponse.response()
+                .withBody(underenhetJson, Charsets.UTF_8)
+                .withContentType(MediaType.APPLICATION_JSON))
             brreg.cache.clear()
-            val enhet = brreg.hentEnhet(orgnr)
+            val enhet = brreg.hentEnhet(virksomhetsnummer)
+
+            it("inneholder navn på enhet") {
+                enhet.navn shouldBe "BEDR AS"
+            }
+        }
+        context("når enhet ikke finnes i enheter eller underenheter") {
+            mockBrregEnhetResponse(HttpResponse.notFoundResponse())
+            mockBrregUnderenhetResponse(HttpResponse.notFoundResponse())
+            brreg.cache.clear()
+            val enhet = brreg.hentEnhet(virksomhetsnummer)
 
             it("inneholder ikke navn på enhet") {
                 enhet.navn shouldBe ""
@@ -64,7 +89,7 @@ class EnhetsregisteretTests : DescribeSpec({
     }
 }) {
     companion object {
-        private const val orgnr = "889640782"
+        private const val virksomhetsnummer = "889640782"
         private val enhetJson = """
             {
               "organisasjonsnummer": "889640782",
@@ -126,6 +151,61 @@ class EnhetsregisteretTests : DescribeSpec({
                 },
                 "overordnetEnhet": {
                   "href": "https://data.brreg.no/enhetsregisteret/api/enheter/983887457"
+                }
+              }
+            }
+            """.trimIndent()
+        private val underenhetJson = """
+            {
+              "organisasjonsnummer": "111111111",
+              "navn": "BEDR AS",
+              "organisasjonsform": {
+                "kode": "BEDR",
+                "beskrivelse": "Underenhet til næringsdrivende og offentlig forvaltning",
+                "_links": {
+                  "self": {
+                    "href": "https://data.brreg.no/enhetsregisteret/api/organisasjonsformer/BEDR"
+                  }
+                }
+              },
+              "postadresse": {
+                "land": "Norge",
+                "landkode": "NO",
+                "postnummer": "0154",
+                "poststed": "OSLO",
+                "adresse": [
+                  "Jarl Kohans gate 61"
+                ],
+                "kommune": "OSLO",
+                "kommunenummer": "0301"
+              },
+              "registreringsdatoEnhetsregisteret": "2011-11-11",
+              "registrertIMvaregisteret": false,
+              "naeringskode1": {
+                "beskrivelse": "Konsulentvirksomhet tilknyttet informasjonsteknologi",
+                "kode": "62.020"
+              },
+              "antallAnsatte": 1,
+              "overordnetEnhet": "914757274",
+              "oppstartsdato": "2011-11-11",
+              "beliggenhetsadresse": {
+                "land": "Norge",
+                "landkode": "NO",
+                "postnummer": "0154",
+                "poststed": "OSLO",
+                "adresse": [
+                  "c/o Fon Thex",
+                  "Jarl Kohans gate 61"
+                ],
+                "kommune": "OSLO",
+                "kommunenummer": "0301"
+              },
+              "_links": {
+                "self": {
+                  "href": "https://data.brreg.no/enhetsregisteret/api/underenheter/111111111"
+                },
+                "overordnetEnhet": {
+                  "href": "https://data.brreg.no/enhetsregisteret/api/enheter/111111111"
                 }
               }
             }
