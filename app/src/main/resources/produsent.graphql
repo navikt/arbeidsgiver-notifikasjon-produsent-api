@@ -94,14 +94,14 @@ type Oppgave {
     mottaker: Mottaker!
     metadata: Metadata!
     oppgave: OppgaveData!
-    eksternVarsel: [EksternVarsel!]!
+    eksterneVarsler: [EksterntVarsel!]!
 }
 
 type Beskjed {
     mottaker: Mottaker!
     metadata: Metadata!
     beskjed: BeskjedData!
-    eksternVarsel: [EksternVarsel!]!
+    eksterneVarsler: [EksterntVarsel!]!
 }
 
 union Mottaker =
@@ -176,15 +176,15 @@ type Metadata {
     softDeletedAt: ISO8601DateTime
 }
 
-type EksternVarsel {
+type EksterntVarsel {
     id: ID!
-    status: EksternVarselStatus!
+    status: EksterntVarselStatus!
 }
 
-enum EksternVarselStatus {
+enum EksterntVarselStatus {
     NY
-    UTFORT
-    FEIL
+    SENDT
+    FEILET
 }
 
 
@@ -327,27 +327,27 @@ input NyBeskjedInput {
     mottaker: MottakerInput!
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
-    eksternVarsel: [EksternVarselInput!]! = []
+    eksterneVarsler: [EksterntVarselInput!]! = []
 }
 
 input NyOppgaveInput {
     mottaker: MottakerInput!
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
-    eksternVarsel: [EksternVarselInput!]! = []
+    eksterneVarsler: [EksterntVarselInput!]! = []
 }
 
-input EksternVarselInput @ExactlyOneFieldGiven {
-    sms: EksternVarselSmsInput
-    epost: EksternVarselEpostInput
+input EksterntVarselInput @ExactlyOneFieldGiven {
+    sms: EksterntVarselSmsInput
+    epost: EksterntVarselEpostInput
 }
 
-input EksternVarselSmsInput {
+input EksterntVarselSmsInput {
     mottaker: SmsMottakerInput!
     smsTekst: String!
 }
 
-input EksternVarselEpostInput {
+input EksterntVarselEpostInput {
     mottaker: EpostMottakerInput!
     epostTittel: String!
     epostHtmlBody: String!
@@ -469,16 +469,16 @@ union NyBeskjedResultat =
 
 type NyBeskjedVellykket {
     id: ID!
-    eksternVarsel: [NyEksternVarselResultat!]!
+    eksterneVarsler: [NyEksterntVarselResultat!]!
 }
 
-type NyEksternVarselResultat {
+type NyEksterntVarselResultat {
     id: ID!
 }
 
 type NyOppgaveVellykket {
     id: ID!
-    eksternVarsel: [NyEksternVarselResultat!]!
+    eksterneVarsler: [NyEksterntVarselResultat!]!
 }
 
 """

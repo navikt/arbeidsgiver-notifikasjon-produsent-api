@@ -68,7 +68,7 @@ class MutationNyOppgave(
     @JsonTypeName("NyOppgaveVellykket")
     data class NyOppgaveVellykket(
         val id: UUID,
-        val eksternVarsel: List<NyEksternVarselResultat>,
+        val eksterneVarsler: List<NyEksternVarselResultat>,
     ) : NyOppgaveResultat
 
     private suspend fun nyOppgave(
@@ -101,7 +101,7 @@ class MutationNyOppgave(
                 produsentRepository.oppdaterModellEtterHendelse(domeneNyOppgave)
                 NyOppgaveVellykket(
                     id = id,
-                    eksternVarsel = domeneNyOppgave.eksterneVarsler.map {
+                    eksterneVarsler = domeneNyOppgave.eksterneVarsler.map {
                         NyEksternVarselResultat(it.varselId)
                     }
                 )
@@ -110,7 +110,7 @@ class MutationNyOppgave(
                 log.info("duplisert opprettelse av oppgave med id ${eksisterende.id}")
                 NyOppgaveVellykket(
                     id = eksisterende.id,
-                    eksternVarsel = eksisterende.eksterneVarsler.map {
+                    eksterneVarsler = eksisterende.eksterneVarsler.map {
                         NyEksternVarselResultat(it.varselId)
                     }
                 )

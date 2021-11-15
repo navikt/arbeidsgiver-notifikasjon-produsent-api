@@ -171,7 +171,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                         }
-                                        eksternVarsel {
+                                        eksterneVarsler {
                                             id
                                         }
                                       }
@@ -202,7 +202,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             tekst
                                             tilstand
                                         }
-                                        eksternVarsel {
+                                        eksterneVarsler {
                                             id
                                         }
                                       }
@@ -262,7 +262,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                         }
-                                        eksternVarsel {
+                                        eksterneVarsler {
                                             id
                                         }
                                       }
@@ -295,7 +295,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             tekst
                                             tilstand
                                         }
-                                        eksternVarsel {
+                                        eksterneVarsler {
                                             id
                                         }
                                       }

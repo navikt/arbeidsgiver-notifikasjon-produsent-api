@@ -165,7 +165,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                                             merkelapp
                                             tekst
                                         }
-                                        eksternVarsel {
+                                        eksterneVarsler {
                                             id
                                         }
                                       }
@@ -198,7 +198,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                                             tekst
                                             tilstand
                                         }
-                                        eksternVarsel {
+                                        eksterneVarsler {
                                             id
                                         }
                                       }
