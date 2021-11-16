@@ -13,12 +13,12 @@ import java.util.*
 
 interface Enhetsregisteret {
     @JsonIgnoreProperties(ignoreUnknown = true)
-    data class Enhet(
+    data class Underenhet(
         val organisasjonsnummer: String,
         val navn: String,
     )
 
-    suspend fun hentEnhet(orgnr: String): Enhet
+    suspend fun hentUnderenhet(orgnr: String): Underenhet
 }
 
 class EnhetsregisteretImpl(
@@ -38,17 +38,17 @@ class EnhetsregisteretImpl(
         expectSuccess = false
     }
 
-    val cache = SimpleLRUCache<String, Enhetsregisteret.Enhet>(100_000) { orgnr ->
-        val response: HttpResponse = httpClient.get("$baseUrl/enhetsregisteret/api/enheter/$orgnr")
+    val cache = SimpleLRUCache<String, Enhetsregisteret.Underenhet>(100_000) { orgnr ->
+        val response: HttpResponse = httpClient.get("$baseUrl/enhetsregisteret/api/underenheter/$orgnr")
         if (response.status.isSuccess()) {
             response.receive()
         } else {
             logger().warn("kunne ikke finne navn for virksomhet. kall til brreg feilet: ${response.status} ${response.readText()}")
-            Enhetsregisteret.Enhet(orgnr, "")
+            Enhetsregisteret.Underenhet(orgnr, "")
         }
     }
 
-    override suspend fun hentEnhet(orgnr: String): Enhetsregisteret.Enhet =
+    override suspend fun hentUnderenhet(orgnr: String): Enhetsregisteret.Underenhet =
         timer.coRecord {
             cache.get(orgnr)
         }

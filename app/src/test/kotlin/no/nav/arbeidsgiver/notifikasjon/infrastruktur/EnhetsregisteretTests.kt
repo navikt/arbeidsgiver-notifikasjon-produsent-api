@@ -24,7 +24,7 @@ class EnhetsregisteretTests : DescribeSpec({
         mockServerClient.`when`(
             HttpRequest.request()
                 .withMethod("GET")
-                .withPath("/enhetsregisteret/api/enheter/$orgnr")
+                .withPath("/enhetsregisteret/api/underenheter/$orgnr")
         ).respond(
             withContentType
         )
@@ -37,7 +37,7 @@ class EnhetsregisteretTests : DescribeSpec({
                     .withBody(enhetJson, Charsets.UTF_8)
                     .withContentType(MediaType.APPLICATION_JSON)
             )
-            val enhet = brreg.hentEnhet(orgnr)
+            val enhet = brreg.hentUnderenhet(orgnr)
 
 
             it("inneholder navn på enhet") {
@@ -45,7 +45,7 @@ class EnhetsregisteretTests : DescribeSpec({
             }
 
             context("når det gjøres flere kall til samme enhet") {
-                val enhet2 = brreg.hentEnhet(orgnr)
+                val enhet2 = brreg.hentUnderenhet(orgnr)
 
                 it("enhet er samme instans") {
                     enhet2 shouldBeSameInstanceAs enhet
@@ -55,7 +55,7 @@ class EnhetsregisteretTests : DescribeSpec({
         context("når enhet ikke finnes") {
             mockBrregResponse(HttpResponse.notFoundResponse())
             brreg.cache.clear()
-            val enhet = brreg.hentEnhet(orgnr)
+            val enhet = brreg.hentUnderenhet(orgnr)
 
             it("inneholder ikke navn på enhet") {
                 enhet.navn shouldBe ""
