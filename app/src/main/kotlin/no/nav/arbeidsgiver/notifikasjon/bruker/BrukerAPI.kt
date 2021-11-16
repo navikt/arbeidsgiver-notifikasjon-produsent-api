@@ -278,7 +278,7 @@ object BrukerAPI {
     ): Virksomhet {
         val source = env.getSource<T>()
         return if (env.selectionSet.contains("Virksomhet.navn")) {
-            enhetsregisteret.hentEnhet(source.virksomhet.virksomhetsnummer).let { enhet ->
+            enhetsregisteret.hentUnderenhet(source.virksomhet.virksomhetsnummer).let { enhet ->
                 Virksomhet(
                     virksomhetsnummer = enhet.organisasjonsnummer,
                     navn = enhet.navn
