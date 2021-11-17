@@ -7,7 +7,7 @@ import io.kotest.matchers.string.shouldContain
 
 /**
  * Vi har opplevd at tester vi kjører lokalt ikke blir kjørt av maven pga surefire forventer at filnavn inneholder Test
- * Denne lytteren skal forhåpentligvis hjelpe oss unngå det ved å fange det opp ved lokal kjøring.
+ * Denne lytteren skal forhåpentligvis hjelpe oss unngå det ved å fange det opp ved lokal kjøring i idea/kotest plugin.
  */
 @AutoScan
 object EnsureTestFileNameListener : TestListener {
