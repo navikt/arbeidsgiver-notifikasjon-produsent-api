@@ -13,7 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyOppgave
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
-class IdempotensOppførselForProdusentApi : DescribeSpec({
+class IdempotensOppførselForProdusentApiTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val queryModel = ProdusentRepositoryImpl(database)
 
