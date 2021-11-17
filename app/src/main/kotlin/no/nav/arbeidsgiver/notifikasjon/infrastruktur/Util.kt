@@ -5,23 +5,16 @@ import org.slf4j.LoggerFactory
 import kotlin.math.pow
 import kotlin.reflect.KProperty
 
-private val WHITESPACE = Regex("\\s+")
-
 fun <T> basedOnEnv(prod: () -> T, other: () -> T): T =
     when (System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> prod()
         else -> other()
     }
 
-/** Removes all occurences of whitespace [ \t\n\x0B\f\r]. */
-fun String.removeAllWhitespace() =
-    this.replace(WHITESPACE, "")
-
 
 /** Get logger for enclosing class. */
 inline fun <reified T : Any> T.logger(): Logger =
     LoggerFactory.getLogger(this::class.java)
-
 
 fun Int.toThePowerOf(exponent: Int): Long = toDouble().pow(exponent).toLong()
 
@@ -50,17 +43,3 @@ class UnavailableInProduction<T>(initializer: () -> T) {
         }
     }
 }
-
-/**
- * last man wins variant av distinctBy.
- */
-inline fun <V, K> Collection<V>.lastDistinctBy(selector: (V) -> K): List<V> {
-    val map = LinkedHashMap<K, V>()
-    for (e in this) {
-        map[selector(e)] = e
-    }
-    return map.values.toList()
-}
-
-
-

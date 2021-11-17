@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import no.nav.arbeidsgiver.notifikasjon.*
+import java.lang.IllegalArgumentException
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -11,15 +12,20 @@ object ProdusentModel {
         val deletedAt: OffsetDateTime?
         val eksterneVarsler: List<EksterntVarsel>
         fun erDuplikatAv(other: Notifikasjon): Boolean
-        fun medEksterntVarsel(eksterntVarsel: EksterntVarsel): Notifikasjon =
-            when (this) {
+
+        fun mergeEksterneVarsler(other: Notifikasjon): Notifikasjon {
+            if (this.id != other.id) {
+                throw IllegalArgumentException("merging requires same id")
+            }
+            return when (this) {
                 is Beskjed -> {
-                    copy(eksterneVarsler = eksterneVarsler + listOf(eksterntVarsel))
+                    copy(eksterneVarsler = eksterneVarsler + other.eksterneVarsler)
                 }
                 is Oppgave -> {
-                    copy(eksterneVarsler = eksterneVarsler + listOf(eksterntVarsel))
+                    copy(eksterneVarsler = eksterneVarsler + other.eksterneVarsler)
                 }
             }
+        }
     }
 
     data class Beskjed(

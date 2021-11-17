@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -24,100 +23,84 @@ class ProdusentRepositoryImpl(
 ) : ProdusentRepository {
     val log = logger()
 
-    override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? {
-        return database.transaction {
-            val entityCache = mutableMapOf<UUID, ProdusentModel.Notifikasjon>()
-            executeQuery(
-                """ 
+    override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
+        hentNotifikasjonerMedVarsler(
+            """ 
                 select notifikasjon.*, eksterntvarsel.* from notifikasjon 
                 left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
                 where notifikasjon.id = ?
-                """,
-                {
-                    uuid(id)
-                },
-                {
-                    val notifikasjon = entityCache.getOrPut(id) {
-                        resultSetTilNotifikasjon()
-                    }
-
-                    getObject("varsel_id", UUID::class.java)?.let { varselId ->
-                        val eksterntVarsel = ProdusentModel.EksterntVarsel(
-                            varselId = varselId,
-                            status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
-                            feilmelding = getString("feilmelding")
-                        )
-                        entityCache[id] = notifikasjon.medEksterntVarsel(eksterntVarsel)
-
-                    }
-                    entityCache[id]!!
-                }
-            ).lastDistinctBy { it.id }.firstOrNull()
+            """
+        ) {
+            uuid(id)
         }
-    }
+            .firstOrNull()
 
-    override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? {
-        return database.transaction {
-            val entityCache = mutableMapOf<UUID, ProdusentModel.Notifikasjon>()
-            executeQuery(
-                """ 
+    private suspend fun hentNotifikasjonerMedVarsler(
+        sqlQuery: String,
+        setup: ParameterSetters.() -> Unit
+    ): List<ProdusentModel.Notifikasjon> =
+        database.nonTransactionalExecuteQuery(
+            sqlQuery,
+            setup
+        ) {
+            val varselId = getObject("varsel_id", UUID::class.java)
+            val eksterneVarsler = if (varselId == null)
+                listOf()
+            else
+                listOf(
+                    ProdusentModel.EksterntVarsel(
+                        varselId = varselId,
+                        status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
+                        feilmelding = getString("feilmelding")
+                    )
+                )
+
+            when (val type = getString("type")) {
+                "BESKJED" -> ProdusentModel.Beskjed(
+                    merkelapp = getString("merkelapp"),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    mottaker = objectMapper.readValue(getString("mottaker")),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getObject("id", UUID::class.java),
+                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
+                    eksterneVarsler = eksterneVarsler,
+                )
+                "OPPGAVE" -> ProdusentModel.Oppgave(
+                    merkelapp = getString("merkelapp"),
+                    tilstand = ProdusentModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    mottaker = objectMapper.readValue(getString("mottaker")),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getObject("id", UUID::class.java),
+                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
+                    eksterneVarsler = eksterneVarsler
+                )
+                else ->
+                    throw Exception("Ukjent notifikasjonstype '$type'")
+            }
+        }
+            .groupBy { it.id }
+            .values
+            .map { it.reduce(ProdusentModel.Notifikasjon::mergeEksterneVarsler) }
+
+    override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? =
+        hentNotifikasjonerMedVarsler(
+            """ 
                 select notifikasjon.*, eksterntvarsel.* from notifikasjon 
                 left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
                 where ekstern_id = ? and merkelapp = ? 
-                """, {
-                    string(eksternId)
-                    string(merkelapp)
-                }, {
-                    val id = getObject("id", UUID::class.java)
-                    val notifikasjon = entityCache.getOrPut(id) {
-                        resultSetTilNotifikasjon()
-                    }
-
-                    getObject("varsel_id", UUID::class.java)?.let { varselId ->
-                        val eksterntVarsel = ProdusentModel.EksterntVarsel(
-                            varselId = varselId,
-                            status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
-                            feilmelding = getString("feilmelding")
-                        )
-                        entityCache[id] = notifikasjon.medEksterntVarsel(eksterntVarsel)
-
-                    }
-                    entityCache[id]!!
-                }
-            ).lastDistinctBy { it.id }.firstOrNull()
+            """
+        ) {
+            string(eksternId)
+            string(merkelapp)
         }
-    }
-
-    private fun ResultSet.resultSetTilNotifikasjon(): ProdusentModel.Notifikasjon =
-        when (val type = getString("type")) {
-            "BESKJED" -> ProdusentModel.Beskjed(
-                merkelapp = getString("merkelapp"),
-                tekst = getString("tekst"),
-                grupperingsid = getString("grupperingsid"),
-                lenke = getString("lenke"),
-                eksternId = getString("ekstern_id"),
-                mottaker = objectMapper.readValue(getString("mottaker")),
-                opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                id = getObject("id", UUID::class.java),
-                deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                eksterneVarsler = listOf(),
-            )
-            "OPPGAVE" -> ProdusentModel.Oppgave(
-                merkelapp = getString("merkelapp"),
-                tilstand = ProdusentModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
-                tekst = getString("tekst"),
-                grupperingsid = getString("grupperingsid"),
-                lenke = getString("lenke"),
-                eksternId = getString("ekstern_id"),
-                mottaker = objectMapper.readValue(getString("mottaker")),
-                opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                id = getObject("id", UUID::class.java),
-                deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                eksterneVarsler = listOf(),
-            )
-            else ->
-                throw Exception("Ukjent notifikasjonstype '$type'")
-        }
+            .firstOrNull()
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignored: Unit = when (hendelse) {
@@ -161,40 +144,21 @@ class ProdusentRepositoryImpl(
         grupperingsid: String?,
         antall: Int,
         offset: Int,
-    ): List<ProdusentModel.Notifikasjon> {
-        val entityCache = mutableMapOf<UUID, ProdusentModel.Notifikasjon>()
-        return database.nonTransactionalExecuteQuery(
+    ): List<ProdusentModel.Notifikasjon> =
+        hentNotifikasjonerMedVarsler(
             """ select notifikasjon.*, eksterntvarsel.* from notifikasjon 
                   left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
                   where merkelapp = any(?)
                   ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
                   limit ?
                   offset ?
-            """.trimMargin(), {
-                stringList(merkelapper)
-                grupperingsid?.let { string(grupperingsid) }
-                integer(antall)
-                integer(offset)
-            },
-            {
-                val id = getObject("id", UUID::class.java)
-                val notifikasjon = entityCache.getOrPut(id) {
-                    resultSetTilNotifikasjon()
-                }
-
-                getObject("varsel_id", UUID::class.java)?.let { varselId ->
-                    val eksterntVarsel = ProdusentModel.EksterntVarsel(
-                        varselId = varselId,
-                        status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
-                        feilmelding = getString("feilmelding")
-                    )
-                    entityCache[id] = notifikasjon.medEksterntVarsel(eksterntVarsel)
-
-                }
-                entityCache[id]!!
-            }
-        ).lastDistinctBy(ProdusentModel.Notifikasjon::id)
-    }
+            """
+        ) {
+            stringList(merkelapper)
+            grupperingsid?.let { string(grupperingsid) }
+            integer(antall)
+            integer(offset)
+        }
 
     private suspend fun oppdatertModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
         database.nonTransactionalExecuteUpdate(
