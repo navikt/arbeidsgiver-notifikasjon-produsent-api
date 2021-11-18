@@ -76,7 +76,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             """
         )
 
-        val klikkMarkørFørKlikk = response.getTypedContent<Boolean>("/notifikasjoner/notifikasjoner/0/brukerKlikk/klikketPaa")
+        val klikkMarkørFørKlikk = response.getTypedContent<Boolean>("$.notifikasjoner.notifikasjoner[0].brukerKlikk.klikketPaa")
 
         it("notifikasjon er ikke klikket på") {
             klikkMarkørFørKlikk shouldBe false
@@ -110,7 +110,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             }
             """
         )
-        val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("/notifikasjoner/notifikasjoner/0/brukerKlikk/klikketPaa")
+        val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("$.notifikasjoner.notifikasjoner[0].brukerKlikk.klikketPaa")
 
         it("notifikasjon er klikket på") {
             klikkMarkørEtterKlikk shouldBe true

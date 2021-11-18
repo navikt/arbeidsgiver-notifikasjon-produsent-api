@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import com.fasterxml.jackson.module.kotlin.convertValue
+import com.jayway.jsonpath.JsonPath
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -28,11 +29,17 @@ inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T 
     if (errors.isEmpty()) {
         val tree = objectMapper.readTree(this.content!!)
         logger().info("content: $tree")
-        val node = tree.get("data").at(name.ensurePrefix("/"))
-        if (node.isNull || node.isMissingNode) {
-            throw Exception("content.data does not contain element '$name' content: $tree")
+        val dataNode = tree.get("data")
+
+        return if (name.startsWith("$")) {
+            JsonPath.read(dataNode.toString(), name)
+        } else {
+            val node = dataNode.at(name.ensurePrefix("/"))
+            if (node.isNull || node.isMissingNode) {
+                throw Exception("content.data does not contain element '$name' content: $tree")
+            }
+            objectMapper.convertValue(node)
         }
-        return objectMapper.convertValue(node)
     } else {
         throw Exception("Got errors $errors")
     }

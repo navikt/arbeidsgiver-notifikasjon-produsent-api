@@ -37,7 +37,7 @@ object AltinnImpl : Altinn {
             AltinnrettigheterProxyKlientConfig(
                 ProxyConfig(
                     url = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/",
-                    consumerId = "arbeidsgiver-arbeidsforhold-api",
+                    consumerId = "notifikasjon-bruker-api",
                 ),
                 AltinnConfig(
                     url = basedOnEnv(
