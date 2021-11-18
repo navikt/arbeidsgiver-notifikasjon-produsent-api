@@ -5,9 +5,14 @@ import org.slf4j.LoggerFactory
 import kotlin.math.pow
 import kotlin.reflect.KProperty
 
-fun <T> basedOnEnv(prod: () -> T, other: () -> T): T =
+fun <T> basedOnEnv(
+    prod: () -> T,
+    other: () -> T,
+    dev: () -> T = other,
+): T =
     when (System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> prod()
+        "dev-gcp" -> dev()
         else -> other()
     }
 

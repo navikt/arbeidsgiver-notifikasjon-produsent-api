@@ -7,6 +7,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 sealed class Error {
     abstract val feilmelding: String
 
+    sealed interface NyNotifikasjonError :
+        MutationNyBeskjed.NyBeskjedResultat,
+        MutationNyOppgave.NyOppgaveResultat
+
     @JsonTypeName("UgyldigMerkelapp")
     data class UgyldigMerkelapp(
         override val feilmelding: String

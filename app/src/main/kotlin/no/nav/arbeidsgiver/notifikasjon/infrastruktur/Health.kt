@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import ch.qos.logback.core.util.OptionHelper.getEnv
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
@@ -48,12 +49,18 @@ object Health {
         get() = terminatingAtomic.get()
 
     init {
+        val shutdownTimeout = basedOnEnv(
+            prod = { Duration.ofSeconds(20) },
+            dev = { Duration.ofSeconds(20) },
+            other = { Duration.ofMillis(0) },
+        )
+
         Runtime.getRuntime().addShutdownHook(object: Thread() {
             override fun run() {
                 terminatingAtomic.set(true)
                 log.info("shutdown signal received")
                 try {
-                    sleep(Duration.ofSeconds(20).toMillis())
+                    sleep(shutdownTimeout.toMillis())
                 } catch (e: Exception) {
                 }
             }

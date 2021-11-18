@@ -7,9 +7,6 @@ import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
 import java.time.OffsetDateTime
 import java.util.*
 
-sealed interface NyNotifikasjonError :
-    MutationNyBeskjed.NyBeskjedResultat,
-    MutationNyOppgave.NyOppgaveResultat
 
 
 data class EksterntVarselInput(

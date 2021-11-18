@@ -74,7 +74,7 @@ inline fun tilgangsstyrNyNotifikasjon(
     produsent: Produsent,
     mottaker: Mottaker,
     merkelapp: String,
-    onError: (NyNotifikasjonError) -> Nothing
+    onError: (Error.NyNotifikasjonError) -> Nothing
 ) {
     tilgangsstyrMottaker(produsent, mottaker) { error -> onError(error) }
     tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
