@@ -5,23 +5,21 @@ import org.slf4j.LoggerFactory
 import kotlin.math.pow
 import kotlin.reflect.KProperty
 
-private val WHITESPACE = Regex("\\s+")
-
-fun <T> basedOnEnv(prod: () -> T, other: () -> T): T =
+fun <T> basedOnEnv(
+    prod: () -> T,
+    other: () -> T,
+    dev: () -> T = other,
+): T =
     when (System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> prod()
+        "dev-gcp" -> dev()
         else -> other()
     }
-
-/** Removes all occurences of whitespace [ \t\n\x0B\f\r]. */
-fun String.removeAllWhitespace() =
-    this.replace(WHITESPACE, "")
 
 
 /** Get logger for enclosing class. */
 inline fun <reified T : Any> T.logger(): Logger =
     LoggerFactory.getLogger(this::class.java)
-
 
 fun Int.toThePowerOf(exponent: Int): Long = toDouble().pow(exponent).toLong()
 
@@ -50,6 +48,3 @@ class UnavailableInProduction<T>(initializer: () -> T) {
         }
     }
 }
-
-
-

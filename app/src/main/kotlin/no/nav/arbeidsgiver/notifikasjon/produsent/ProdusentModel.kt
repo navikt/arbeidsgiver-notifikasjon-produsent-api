@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.*
+import java.lang.IllegalArgumentException
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -10,7 +10,22 @@ object ProdusentModel {
         val id: UUID
         val merkelapp: String
         val deletedAt: OffsetDateTime?
+        val eksterneVarsler: List<EksterntVarsel>
         fun erDuplikatAv(other: Notifikasjon): Boolean
+
+        fun mergeEksterneVarsler(other: Notifikasjon): Notifikasjon {
+            if (this.id != other.id) {
+                throw IllegalArgumentException("merging requires same id")
+            }
+            return when (this) {
+                is Beskjed -> {
+                    copy(eksterneVarsler = eksterneVarsler + other.eksterneVarsler)
+                }
+                is Oppgave -> {
+                    copy(eksterneVarsler = eksterneVarsler + other.eksterneVarsler)
+                }
+            }
+        }
     }
 
     data class Beskjed(
@@ -23,6 +38,7 @@ object ProdusentModel {
         val eksternId: String,
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
+        override val eksterneVarsler: List<EksterntVarsel>,
     ) : Notifikasjon {
         override fun erDuplikatAv(other: Notifikasjon): Boolean {
             return when (other) {
@@ -48,6 +64,7 @@ object ProdusentModel {
         val mottaker: Mottaker,
         val opprettetTidspunkt: OffsetDateTime,
         val tilstand: Tilstand,
+        override val eksterneVarsler: List<EksterntVarsel>,
     ) : Notifikasjon {
 
         @Suppress("unused")
@@ -70,6 +87,17 @@ object ProdusentModel {
         }
     }
 
+    data class EksterntVarsel(
+        val varselId: UUID,
+        val status: Status,
+        val feilmelding: String?,
+    ) {
+        enum class Status {
+            NY,
+            SENDT,
+            FEILET,
+        }
+    }
 }
 
 fun Hendelse.BeskjedOpprettet.tilProdusentModel(): ProdusentModel.Beskjed =
@@ -83,6 +111,7 @@ fun Hendelse.BeskjedOpprettet.tilProdusentModel(): ProdusentModel.Beskjed =
         mottaker = this.mottaker,
         opprettetTidspunkt = this.opprettetTidspunkt,
         deletedAt = null,
+        eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel)
     )
 
 fun Hendelse.OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
@@ -97,4 +126,22 @@ fun Hendelse.OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
         opprettetTidspunkt = this.opprettetTidspunkt,
         tilstand = ProdusentModel.Oppgave.Tilstand.NY,
         deletedAt = null,
+        eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel)
     )
+
+fun EksterntVarsel.tilProdusentModel(): ProdusentModel.EksterntVarsel {
+    return when (this) {
+        is SmsVarselKontaktinfo ->
+            ProdusentModel.EksterntVarsel(
+                varselId = this.varselId,
+                status = ProdusentModel.EksterntVarsel.Status.NY,
+                feilmelding = null,
+            )
+        is EpostVarselKontaktinfo ->
+            ProdusentModel.EksterntVarsel(
+                varselId = this.varselId,
+                status = ProdusentModel.EksterntVarsel.Status.NY,
+                feilmelding = null,
+            )
+    }
+}

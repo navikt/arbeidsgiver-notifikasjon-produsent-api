@@ -14,7 +14,13 @@ fun TestConfiguration.testDatabase(config: Database.Config): Database =
     runBlocking {
         mockkObject(MigrationOps)
         every { MigrationOps.resetOffsetsToEarliest() } returns Unit
-        Database.openDatabase(config)
+        Database.openDatabase(
+            config.copy(
+                // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
+                jdbcOpts = mapOf("preparedStatementCacheQueries" to 0)
+
+            )
+        )
     }
         .also { listener(PostgresTestListener(it)) }
 

@@ -20,7 +20,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
-class KlikkPåNotifikasjonGraphQLTest: DescribeSpec({
+class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
     val queryModel: BrukerModelImpl = mockk(relaxed = true)
     val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = mockk()
 

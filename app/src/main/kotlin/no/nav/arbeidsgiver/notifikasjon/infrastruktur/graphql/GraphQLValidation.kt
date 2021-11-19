@@ -7,6 +7,7 @@ import graphql.language.SourceLocation
 import graphql.schema.*
 import graphql.schema.idl.SchemaDirectiveWiring
 import graphql.schema.idl.SchemaDirectiveWiringEnvironment
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 
 object ValidateDirective : SchemaDirectiveWiring {
 
@@ -59,9 +60,10 @@ object ValidateDirective : SchemaDirectiveWiring {
             .createValidator(path + listOf("array element"))
             ?.let { validate ->
                 { list ->
-                    list as List<Any?>
-                    for (value in list) {
-                        validate(value)
+                    if (list is List<Any?>) {
+                        for (value in list) {
+                            validate(value)
+                        }
                     }
                 }
             }
@@ -71,9 +73,7 @@ object ValidateDirective : SchemaDirectiveWiring {
         (this.wrappedType as GraphQLInputType).createValidator(path)
             ?.let { validate ->
                 { value ->
-                    if (value != null) {
-                        validate(value)
-                    }
+                    validate(value)
                 }
             }
 
@@ -85,8 +85,17 @@ object ValidateDirective : SchemaDirectiveWiring {
                 ?: throw Error("Unknown directive '${directive.name}' to validate")
         }
         val fieldValidators = this.fields.mapNotNull { it.createValidator(path) }
+        val objValidator = (fieldValidators + objectValidators).andAll()
 
-        return (fieldValidators + objectValidators).andAll()
+        if (objValidator != null) {
+            return { obj ->
+                if (obj != null) {
+                    objValidator(obj)
+                }
+            }
+        } else {
+            return null
+        }
     }
 
     private fun GraphQLInputObjectField.createValidator(path: Path): Validator? {
@@ -105,6 +114,7 @@ object ValidateDirective : SchemaDirectiveWiring {
             return { objectValue ->
                 objectValue as Map<String, Any?>
                 val fieldValue = objectValue[name]
+
                 validators.forEach { validator ->
                     validator(fieldValue)
                 }

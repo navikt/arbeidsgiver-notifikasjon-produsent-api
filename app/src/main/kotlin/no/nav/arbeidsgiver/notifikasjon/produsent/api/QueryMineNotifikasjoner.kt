@@ -49,7 +49,7 @@ class QueryMineNotifikasjoner(
             val mottaker: Mottaker,
             val metadata: Metadata,
             val beskjed: BeskjedData,
-            val eksternVarsel: List<EksternVarsel>,
+            val eksterneVarsler: List<EksterntVarsel>,
         ) : Notifikasjon() {
             companion object {
                 fun fraDomene(beskjed: ProdusentModel.Beskjed): Beskjed {
@@ -67,7 +67,7 @@ class QueryMineNotifikasjoner(
                             tekst = beskjed.tekst,
                             lenke = beskjed.lenke,
                         ),
-                        eksternVarsel = listOf(),
+                        eksterneVarsler = beskjed.eksterneVarsler.map(EksterntVarsel.Companion::fraDomene),
                     )
                 }
             }
@@ -78,7 +78,7 @@ class QueryMineNotifikasjoner(
             val mottaker: Mottaker,
             val metadata: Metadata,
             val oppgave: OppgaveData,
-            val eksternVarsel: List<EksternVarsel>,
+            val eksterneVarsler: List<EksterntVarsel>,
         ) : Notifikasjon() {
             @Suppress("unused")
             /* Sendes til produsent */
@@ -104,7 +104,7 @@ class QueryMineNotifikasjoner(
                             tekst = oppgave.tekst,
                             lenke = oppgave.lenke,
                         ),
-                        eksternVarsel = listOf(),
+                        eksterneVarsler = oppgave.eksterneVarsler.map(EksterntVarsel.Companion::fraDomene),
                     )
                 }
             }
@@ -126,15 +126,28 @@ class QueryMineNotifikasjoner(
         val lenke: String,
     )
 
-    data class EksternVarsel(
+    data class EksterntVarsel(
         val id: UUID,
-        val status: EksternVarselStatus,
-    )
+        val status: EksterntVarselStatus,
+        val feilmelding: String?,
+    ) {
+        companion object {
+            fun fraDomene(domene: ProdusentModel.EksterntVarsel) : EksterntVarsel = EksterntVarsel(
+                id = domene.varselId,
+                status = when (domene.status) {
+                    ProdusentModel.EksterntVarsel.Status.NY -> EksterntVarselStatus.NY
+                    ProdusentModel.EksterntVarsel.Status.FEILET -> EksterntVarselStatus.FEILET
+                    ProdusentModel.EksterntVarsel.Status.SENDT -> EksterntVarselStatus.SENDT
+                },
+                feilmelding = domene.feilmelding,
+            )
+        }
+    }
 
-    enum class EksternVarselStatus {
+    enum class EksterntVarselStatus {
         NY,
-        UTFOERT,
-        FEIL
+        SENDT,
+        FEILET
     }
 
     @JsonTypeName("Metadata")
