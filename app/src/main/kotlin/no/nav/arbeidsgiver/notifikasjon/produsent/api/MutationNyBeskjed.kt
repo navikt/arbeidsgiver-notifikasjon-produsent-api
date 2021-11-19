@@ -50,7 +50,7 @@ class MutationNyBeskjed(
         val mottaker: MottakerInput,
         val notifikasjon: QueryMineNotifikasjoner.NotifikasjonData,
         val metadata: MetadataInput,
-        val eksterneVarsler: List<EksterntVarselInput> = listOf(),
+        val eksterneVarsler: List<EksterntVarselInput>
     ) {
         fun tilDomene(id: UUID, produsentId: String, kildeAppNavn: String): Hendelse.BeskjedOpprettet {
             val mottaker = mottaker.tilDomene()
