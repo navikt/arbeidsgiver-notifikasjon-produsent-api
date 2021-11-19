@@ -67,18 +67,7 @@ class QueryMineNotifikasjoner(
                             tekst = beskjed.tekst,
                             lenke = beskjed.lenke,
                         ),
-                        eksterneVarsler = beskjed.eksterneVarsler.map {
-                            EksterntVarsel(
-                                id = it.varselId,
-                                status = when (it.status) {
-                                    ProdusentModel.EksterntVarsel.Status.NY -> EksterntVarselStatus.NY
-                                    ProdusentModel.EksterntVarsel.Status.FEILET -> EksterntVarselStatus.FEILET
-                                    ProdusentModel.EksterntVarsel.Status.SENDT -> EksterntVarselStatus.SENDT
-                                },
-                                feilmelding = it.feilmelding,
-
-                            )
-                        },
+                        eksterneVarsler = beskjed.eksterneVarsler.map(EksterntVarsel.Companion::fraDomene),
                     )
                 }
             }
@@ -115,7 +104,7 @@ class QueryMineNotifikasjoner(
                             tekst = oppgave.tekst,
                             lenke = oppgave.lenke,
                         ),
-                        eksterneVarsler = listOf(),
+                        eksterneVarsler = oppgave.eksterneVarsler.map(EksterntVarsel.Companion::fraDomene),
                     )
                 }
             }
@@ -141,7 +130,19 @@ class QueryMineNotifikasjoner(
         val id: UUID,
         val status: EksterntVarselStatus,
         val feilmelding: String?,
-    )
+    ) {
+        companion object {
+            fun fraDomene(domene: ProdusentModel.EksterntVarsel) : EksterntVarsel = EksterntVarsel(
+                id = domene.varselId,
+                status = when (domene.status) {
+                    ProdusentModel.EksterntVarsel.Status.NY -> EksterntVarselStatus.NY
+                    ProdusentModel.EksterntVarsel.Status.FEILET -> EksterntVarselStatus.FEILET
+                    ProdusentModel.EksterntVarsel.Status.SENDT -> EksterntVarselStatus.SENDT
+                },
+                feilmelding = domene.feilmelding,
+            )
+        }
+    }
 
     enum class EksterntVarselStatus {
         NY,
