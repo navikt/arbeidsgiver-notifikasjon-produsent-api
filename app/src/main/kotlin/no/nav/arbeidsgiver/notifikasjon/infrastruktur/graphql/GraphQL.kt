@@ -52,7 +52,6 @@ inline fun <reified T : Any> RuntimeWiring.Builder.resolveSubtypes() {
         it.typeResolver { env ->
             val obj = env.getObject<T>()
             val name = jsonTypeName(obj.javaClass)
-            GraphQLLogger.log.info("Resolving $obj of ${obj.javaClass} to $name")
             env.schema.getObjectType(name)
         }
     }
