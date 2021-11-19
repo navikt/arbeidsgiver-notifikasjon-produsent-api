@@ -44,7 +44,7 @@ object GraphQLLogger {
 }
 
 fun jsonTypeName(clazz: Class<*>): String =
-    clazz.getAnnotation(JsonTypeName::class.java).value!!
+    clazz.getAnnotation(JsonTypeName::class.java).value
 
 inline fun <reified T : Any> RuntimeWiring.Builder.resolveSubtypes() {
     GraphQLLogger.log.info("SubtypeResolver registered for ${T::class.simpleName}")
