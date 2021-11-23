@@ -53,6 +53,7 @@ class Database private constructor(
                 connectionTimeout = 10000
                 idleTimeout = 10001
                 maxLifetime = 30001
+                leakDetectionThreshold = 30000
             }
         }
 
