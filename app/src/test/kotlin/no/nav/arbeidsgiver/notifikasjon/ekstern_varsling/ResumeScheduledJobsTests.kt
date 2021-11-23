@@ -1,15 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.collections.shouldContain
-import io.kotest.matchers.collections.shouldContainAll
-import io.kotest.matchers.collections.shouldContainInOrder
-import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.collections.*
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 
@@ -83,7 +81,33 @@ class ResumeScheduledJobsTests: DescribeSpec({
         }
     }
 
-    // 2) forsøker å putte id inn i wait_queue, men eksisterer allerede
+    describe("putter varsel_id flere ganger inn i vente-kø") {
+        repository.scheduleJob(uuid("0"), dateTime("00"))
+        repository.scheduleJob(uuid("0"), dateTime("01"))
+
+        it("begge ligger i køen") {
+            database.waitQueue() shouldContainExactly listOf(uuid("0"), uuid("0"))
+        }
+
+        repository.rescheduleWaitingJobs(dateTime("00"))
+
+        it("første har blitt flyttet") {
+            database.jobQueue() shouldContainExactly listOf(uuid("0"))
+            database.waitQueue() shouldContainExactly listOf(uuid("0"))
+        }
+
+        val id = repository.findJob(Duration.ofMinutes(1))!!
+        repository.deleteFromJobQueue(id)
+        it("fant riktig jobb") {
+            id shouldBe uuid("0")
+        }
+
+        repository.rescheduleWaitingJobs(dateTime("01"))
+        it("flyttet nok en gang") {
+            database.jobQueue() shouldContainExactly listOf(uuid("0"))
+            database.waitQueue() shouldBe emptyList()
+        }
+    }
 })
 
 suspend fun Database.jobQueue(): List<UUID> =
@@ -100,7 +124,8 @@ suspend fun Database.waitQueue(): List<UUID> =
     """) {
         getObject("varsel_id", UUID::class.java)
     }
-private suspend fun Database.putOnJobQueue(varselId: UUID) {
+
+suspend fun Database.putOnJobQueue(varselId: UUID) {
     this.transaction {
         putOnJobQueue(varselId)
     }

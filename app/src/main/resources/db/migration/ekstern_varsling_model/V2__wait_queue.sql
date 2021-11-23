@@ -9,3 +9,5 @@ create table wait_queue
 
 create index idx_wait_queue_resume_job_at on wait_queue(resume_job_at);
 
+create unique index idx_job_queue_varsel_id_unique on job_queue(varsel_id);
+

@@ -293,7 +293,8 @@ class EksternVarslingRepository(
                         WHERE 
                             locked = false
                         LIMIT 1
-                        FOR UPDATE SKIP LOCKED
+                        FOR UPDATE
+                        SKIP LOCKED
                     )
                 RETURNING varsel_id
                     """,
@@ -468,6 +469,7 @@ class EksternVarslingRepository(
                 ) 
                 insert into job_queue (varsel_id, locked) 
                 select varsel_id, false as locked from selected
+                on conflict (varsel_id) do nothing
             """,
         ) {
             timestamp(scheduledAt)
@@ -494,7 +496,8 @@ class EksternVarslingRepository(
 internal fun Transaction.putOnJobQueue(varselId: UUID) {
     executeUpdate(
         """
-            insert into job_queue(varsel_id, locked) values (?, false);
+            insert into job_queue(varsel_id, locked) values (?, false)
+            on conflict (varsel_id) do nothing;
         """
     ) {
         uuid(varselId)
