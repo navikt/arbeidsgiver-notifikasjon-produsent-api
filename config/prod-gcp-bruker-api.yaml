@@ -29,6 +29,9 @@ spec:
         databases:
           - name: bruker-model
             envVarPrefix: DB
+        autoBackupHour: 1
+        maintenance:
+          hour: 3
   accessPolicy:
     inbound:
       rules:
