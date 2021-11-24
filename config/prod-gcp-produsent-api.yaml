@@ -41,3 +41,6 @@ spec:
         databases:
           - name: produsent-model
             envVarPrefix: DB
+        autoBackupHour: 1
+        maintenance:
+          hour: 3
