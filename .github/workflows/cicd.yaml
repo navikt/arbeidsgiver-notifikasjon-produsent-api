@@ -66,6 +66,13 @@ jobs:
           name: jacoco-report
           path: app/target/site/jacoco/
 
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.2
+        with:
+          paths: ${{ github.workspace }}/app/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Login to GitHub Package Repository
         uses: docker/login-action@v1
         with:
