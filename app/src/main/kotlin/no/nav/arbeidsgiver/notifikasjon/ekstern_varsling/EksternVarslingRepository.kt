@@ -101,11 +101,7 @@ class EksternVarslingRepository(
         /* Rewrite to batch insert? */
         database.transaction {
             for (varsel in varsler) {
-                executeUpdate("""
-                    insert into job_queue(varsel_id, locked) values (?, false);
-                """) {
-                    uuid(varsel.varselId)
-                }
+                putOnJobQueue(varsel.varselId)
                 when (varsel) {
                     is SmsVarselKontaktinfo -> insertSmsVarsel(
                         varsel = varsel,
@@ -295,7 +291,8 @@ class EksternVarslingRepository(
                         WHERE 
                             locked = false
                         LIMIT 1
-                        FOR UPDATE SKIP LOCKED
+                        FOR UPDATE
+                        SKIP LOCKED
                     )
                 RETURNING varsel_id
                     """,
@@ -448,5 +445,59 @@ class EksternVarslingRepository(
 
             returnToJobQueue(varselId)
         }
+    }
+
+    suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime) {
+        database.nonTransactionalExecuteUpdate("""
+            insert into wait_queue (varsel_id, resume_job_at) 
+            values (?, ?)
+        """) {
+            uuid(varselId)
+            timestamp(resumeAt)
+        }
+    }
+
+    suspend fun rescheduleWaitingJobs(scheduledAt: LocalDateTime): Int {
+        return database.nonTransactionalExecuteUpdate(
+            """
+                with selected as (
+                    delete from wait_queue
+                    where resume_job_at <= ?
+                    returning varsel_id
+                ) 
+                insert into job_queue (varsel_id, locked) 
+                select varsel_id, false as locked from selected
+                on conflict (varsel_id) do nothing
+            """,
+        ) {
+            timestamp(scheduledAt)
+        }
+    }
+
+    suspend fun jobQueueCount(): Int {
+        return database.nonTransactionalExecuteQuery("""
+            select count(*) as count from job_queue 
+        """) {
+            this.getInt("count")
+        }.first()
+    }
+
+    suspend fun waitQueueCount(): Int {
+        return database.nonTransactionalExecuteQuery("""
+            select count(*) as count from wait_queue 
+        """) {
+            this.getInt("count")
+        }.first()
+    }
+}
+
+internal fun Transaction.putOnJobQueue(varselId: UUID) {
+    executeUpdate(
+        """
+            insert into job_queue(varsel_id, locked) values (?, false)
+            on conflict (varsel_id) do nothing;
+        """
+    ) {
+        uuid(varselId)
     }
 }
