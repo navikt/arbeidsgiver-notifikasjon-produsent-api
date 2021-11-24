@@ -46,11 +46,6 @@ jobs:
           generate-branches-badge: true
           jacoco-csv-file: app/target/site/jacoco/jacoco.csv
 
-      - name: Log coverage percentage
-        run: |
-          echo "coverage = ${{ steps.jacoco.outputs.coverage }}"
-          echo "branch coverage = ${{ steps.jacoco.outputs.branches }}"
-
       - name: Commit the badge (if it changed)
         run: |
           if [[ `git status --porcelain` ]]; then
@@ -64,9 +59,13 @@ jobs:
       - name: Add coverage to PR
         id: jacoco
         uses: madrapps/jacoco-report@v1.2
+        if: github.event_name == 'pull_request'
         with:
           paths: ${{ github.workspace }}/app/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+          title: ":space_invader: jacococo go nogo :space_invader:"
 
       - name: Login to GitHub Package Repository
         uses: docker/login-action@v1
