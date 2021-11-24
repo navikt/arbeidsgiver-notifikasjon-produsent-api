@@ -118,8 +118,6 @@ class EksternVarslingRepository(
         }
     }
 
-
-
     private fun Transaction.insertSmsVarsel(
         varsel: SmsVarselKontaktinfo,
         notifikasjonsId: UUID,
