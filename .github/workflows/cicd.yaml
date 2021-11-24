@@ -43,6 +43,7 @@ jobs:
         uses: cicirello/jacoco-badge-generator@v2
         with:
           generate-branches-badge: true
+          jacoco-csv-file: app/target/site/jacoco/jacoco.csv
 
       - name: Login to GitHub Package Repository
         uses: docker/login-action@v1
