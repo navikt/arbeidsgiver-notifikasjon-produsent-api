@@ -60,12 +60,6 @@ jobs:
             git push
           fi
 
-      - name: Upload JaCoCo coverage report
-        uses: actions/upload-artifact@v2
-        with:
-          name: jacoco-report
-          path: app/target/site/jacoco/
-
       - name: Add coverage to PR
         id: jacoco
         uses: madrapps/jacoco-report@v1.2
