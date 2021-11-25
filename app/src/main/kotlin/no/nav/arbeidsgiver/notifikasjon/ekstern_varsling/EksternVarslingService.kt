@@ -184,13 +184,7 @@ class EksternVarslingService(
                     EksterntVarselSendingsvindu.LØPENDE -> LokalOsloTid.nå()
                     EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
                 }
-                /**
-                 * TODO: justere grenseverdi?
-                 * hvis 1-2 timer eller mer bør tidspunkt kanskje sendes med til altinn / provider ?
-                 */
-                if (kalkulertSendeTidspunkt.isAfter(LocalDateTime.now().plusHours(2))) {
-                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
-                } else {
+                if (kalkulertSendeTidspunkt <= LokalOsloTid.nå()) {
                     altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
                         onSuccess = { response ->
                             eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
@@ -200,6 +194,8 @@ class EksternVarslingService(
                             throw it
                         },
                     )
+                } else {
+                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
                 }
             }
 
