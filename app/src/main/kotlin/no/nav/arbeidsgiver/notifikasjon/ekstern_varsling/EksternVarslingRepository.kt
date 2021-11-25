@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
+import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilling
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
@@ -324,11 +325,15 @@ class EksternVarslingRepository(
                     eksternVarsel = when (val varselType = getString("varsel_type")) {
                         "SMS" -> EksternVarsel.Sms(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
+                            sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
+                            sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
                             mobilnummer = getString("tlfnr"),
                             tekst = getString("sms_tekst"),
                         )
                         "EMAIL" -> EksternVarsel.Epost(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
+                            sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
+                            sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
                             epostadresse = getString("epost_adresse"),
                             tittel = getString("tittel"),
                             body = getString("html_body")
