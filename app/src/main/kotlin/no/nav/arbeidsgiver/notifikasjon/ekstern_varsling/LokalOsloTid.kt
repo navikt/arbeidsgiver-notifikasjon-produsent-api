@@ -12,29 +12,32 @@ class LokalOsloTid {
         private val norwayZoneId = ZoneId.of("Europe/Oslo")
         fun nå(): LocalDateTime = LocalDateTime.now(norwayZoneId).truncatedTo(MINUTES)
         fun nesteNksÅpningstid(
-            start : LocalDateTime = nå()
+            start: LocalDateTime = nå(),
         ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erNksÅpningstid)!!
 
         fun nesteDagtidIkkeSøndag(
-            start : LocalDateTime = nå()
+            start: LocalDateTime = nå(),
         ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erDagtidIkkeSøndag)!!
 
         private fun tidspunkterFremover(
-            start : LocalDateTime = nå()
+            start: LocalDateTime = nå(),
         ): Sequence<LocalDateTime> = generateSequence(start) { it.plusHours(1) }
     }
 }
 
-fun LocalDateTime.erNksÅpningstid() : Boolean {
-    return dayOfWeek != SATURDAY &&
+fun LocalDateTime.erNksÅpningstid(): Boolean =
+    dayOfWeek != SATURDAY &&
             dayOfWeek != SUNDAY &&
-            !toLocalTime().truncatedTo(MINUTES).isBefore(LocalTime.of(9, 0)) &&
-            !toLocalTime().truncatedTo(MINUTES).isAfter(LocalTime.of(14, 59))
-}
+            toLocalTime().isBetween(LocalTime.of(8, 29), LocalTime.of(14, 31))
 
-fun LocalDateTime.erDagtidIkkeSøndag() : Boolean {
-    return dayOfWeek != SUNDAY &&
-            !toLocalTime().truncatedTo(MINUTES).isBefore(LocalTime.of(9, 0)) &&
-            !toLocalTime().truncatedTo(MINUTES).isAfter(LocalTime.of(15, 59))
+fun LocalDateTime.erDagtidIkkeSøndag(): Boolean =
+    dayOfWeek != SUNDAY && toLocalTime().isBetween(LocalTime.of(8, 59), LocalTime.of(16, 0))
+
+fun LocalTime.isBetween(
+    beginning: LocalTime,
+    end: LocalTime,
+): Boolean {
+    val time = truncatedTo(MINUTES)
+    return beginning <= time && time <= end
 }
 
