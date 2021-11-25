@@ -52,8 +52,11 @@ object ValidateDirective : SchemaDirectiveWiring {
             is GraphQLInputObjectType -> this.createValidator(path)
             is GraphQLScalarType -> null
             is GraphQLList -> this.createValidator(path)
+            is GraphQLEnumType -> this.createValidator(path)
             else -> throw Error("Unexpected graphql type ${this.javaClass.canonicalName} in ${path.joinToString(", ")}")
         }
+
+    private fun GraphQLEnumType.createValidator(path: Path): Validator? = null
 
     private fun GraphQLList.createValidator(path: Path): Validator? =
         (this.wrappedType as GraphQLInputType)

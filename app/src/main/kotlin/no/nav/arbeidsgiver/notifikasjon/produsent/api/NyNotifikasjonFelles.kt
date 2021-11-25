@@ -5,6 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -33,6 +34,7 @@ data class EksterntVarselInput(
     data class Sms(
         val mottaker: Mottaker,
         val smsTekst: String,
+        val sendetidspunkt: SendetidspunktInput,
     ) {
 
         fun tilDomene(): SmsVarselKontaktinfo {
@@ -42,8 +44,8 @@ data class EksterntVarselInput(
                     tlfnr = mottaker.kontaktinfo.tlf,
                     fnrEllerOrgnr = mottaker.kontaktinfo.fnr,
                     smsTekst = smsTekst,
-                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                    sendeTidspunkt = null,
+                    sendevindu = sendetidspunkt.sendevindu.tilDomene(),
+                    sendeTidspunkt = sendetidspunkt.tidspunkt
                 )
             }
             throw RuntimeException("mottaker-felt mangler for sms")
@@ -59,10 +61,25 @@ data class EksterntVarselInput(
         )
     }
 
+    data class SendetidspunktInput(
+        val tidspunkt: LocalDateTime?,
+        val sendevindu: Sendevindu?,
+    )
+
+    @Suppress("unused") // kommer som graphql input
+    enum class Sendevindu(
+        val somDomene: EksterntVarselSendingsvindu
+    ) {
+        NKS_AAPNINGSTID(EksterntVarselSendingsvindu.NKS_ÅPNINGSTID),
+        DAGTID_IKKE_SOENDAG(EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG),
+        LOEPENDE(EksterntVarselSendingsvindu.LØPENDE),
+    }
+
     data class Epost(
         val mottaker: Mottaker,
         val epostTittel: String,
         val epostHtmlBody: String,
+        val sendetidspunkt: SendetidspunktInput,
     ) {
         fun tilDomene(): EpostVarselKontaktinfo {
             if (mottaker.kontaktinfo != null) {
@@ -72,8 +89,8 @@ data class EksterntVarselInput(
                     fnrEllerOrgnr = mottaker.kontaktinfo.fnr,
                     tittel = epostTittel,
                     htmlBody = epostHtmlBody,
-                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                    sendeTidspunkt = null,
+                    sendevindu = sendetidspunkt.sendevindu.tilDomene(),
+                    sendeTidspunkt = sendetidspunkt.tidspunkt
                 )
             }
             throw RuntimeException("mottaker mangler for epost")
@@ -141,3 +158,6 @@ data class MetadataInput(
 data class NyEksternVarselResultat(
     val id: UUID,
 )
+
+fun EksterntVarselInput.Sendevindu?.tilDomene(): EksterntVarselSendingsvindu =
+    this?.somDomene ?: EksterntVarselSendingsvindu.SPESIFISERT
