@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -12,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 
 /*
@@ -176,15 +178,29 @@ class EksternVarslingService(
 
         when (varsel) {
             is EksternVarselTilstand.Ny -> {
-                altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
-                    onSuccess = { response ->
-                        eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                    },
-                    onFailure = {
-                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                        throw it
-                    },
-                )
+                val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
+                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> LokalOsloTid.nesteNksÅpningstid()
+                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> LokalOsloTid.nesteDagtidIkkeSøndag()
+                    EksterntVarselSendingsvindu.LØPENDE -> LokalOsloTid.nå()
+                    EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
+                }
+                /**
+                 * TODO: justere grenseverdi?
+                 * hvis 1-2 timer eller mer bør tidspunkt kanskje sendes med til altinn / provider ?
+                 */
+                if (kalkulertSendeTidspunkt.isAfter(LocalDateTime.now().plusHours(2))) {
+                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
+                } else {
+                    altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
+                        onSuccess = { response ->
+                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                        },
+                        onFailure = {
+                            eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                            throw it
+                        },
+                    )
+                }
             }
 
             is EksternVarselTilstand.Utført -> {

@@ -1,19 +1,27 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import java.time.LocalDateTime
 import java.util.*
 
 sealed interface EksternVarsel {
     val fnrEllerOrgnr: String
+    val sendeVindu: EksterntVarselSendingsvindu
+    val sendeTidspunkt: LocalDateTime?
 
     data class Sms(
         override val fnrEllerOrgnr: String,
+        override val sendeVindu: EksterntVarselSendingsvindu,
+        override val sendeTidspunkt: LocalDateTime?,
         val mobilnummer: String,
         val tekst: String,
     ): EksternVarsel
 
     data class Epost(
         override val fnrEllerOrgnr: String,
+        override val sendeVindu: EksterntVarselSendingsvindu,
+        override val sendeTidspunkt: LocalDateTime?,
         val epostadresse: String,
         val tittel: String,
         val body: String
