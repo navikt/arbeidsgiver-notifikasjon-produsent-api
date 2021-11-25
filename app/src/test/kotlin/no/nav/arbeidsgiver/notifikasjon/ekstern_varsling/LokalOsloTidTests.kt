@@ -8,29 +8,36 @@ import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.LokalOsloTid.Companion.
 import java.time.DayOfWeek
 import java.time.DayOfWeek.*
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit.MINUTES
 import java.time.temporal.TemporalAdjusters
 
 class LokalOsloTidTests: DescribeSpec({
-    val dateTime = LokalOsloTid.nå().truncatedTo(MINUTES)
+    val dateTime = LokalOsloTid.nå()
+
+    val kl0829 = dateTime.withHour(8).withMinute(29)
+    val kl0830 = dateTime.withHour(8).withMinute(30)
+
+    val kl0859 = dateTime.withHour(8).withMinute(59)
+    val kl0900 = dateTime.withHour(9).withMinute(0)
+    val kl1430 = dateTime.withHour(14).withMinute(30)
+    val kl1431 = dateTime.withHour(14).withMinute(31)
+
+    val kl1600 = dateTime.withHour(16).withMinute(0)
+    val kl1601 = dateTime.withHour(16).withMinute(1)
 
     describe("LocalDateTime.erNksÅpningstid") {
         context("når tidspunkt er innenfor NKS åningstid") {
-            val kl0900 = dateTime.withHour(9).withMinute(0)
-            val kl1459 = dateTime.withHour(14).withMinute(59)
-
             forAll(
-                kl0900.next(MONDAY),
-                kl0900.next(TUESDAY),
-                kl0900.next(WEDNESDAY),
-                kl0900.next(THURSDAY),
-                kl0900.next(FRIDAY),
+                kl0830.next(MONDAY),
+                kl0830.next(TUESDAY),
+                kl0830.next(WEDNESDAY),
+                kl0830.next(THURSDAY),
+                kl0830.next(FRIDAY),
 
-                kl1459.next(MONDAY),
-                kl1459.next(TUESDAY),
-                kl1459.next(WEDNESDAY),
-                kl1459.next(THURSDAY),
-                kl1459.next(FRIDAY),
+                kl1430.next(MONDAY),
+                kl1430.next(TUESDAY),
+                kl1430.next(WEDNESDAY),
+                kl1430.next(THURSDAY),
+                kl1430.next(FRIDAY),
             ) { dt ->
                 it("${dt.dayOfWeek} ${dt.toLocalTime()}") {
                     dt.erNksÅpningstid() shouldBe true
@@ -39,29 +46,24 @@ class LokalOsloTidTests: DescribeSpec({
         }
 
         context("når tidspunkt ikke er innenfor NKS åningstid") {
-            val kl0859 = dateTime.withHour(8).withMinute(59)
-            val kl0900 = dateTime.withHour(9).withMinute(0)
-            val kl1459 = dateTime.withHour(14).withMinute(59)
-            val kl1500 = dateTime.withHour(15).withMinute(0)
-
             forAll(
-                kl0859.next(MONDAY),
-                kl0859.next(TUESDAY),
-                kl0859.next(WEDNESDAY),
-                kl0859.next(THURSDAY),
-                kl0859.next(FRIDAY),
+                kl0829.next(MONDAY),
+                kl0829.next(TUESDAY),
+                kl0829.next(WEDNESDAY),
+                kl0829.next(THURSDAY),
+                kl0829.next(FRIDAY),
 
-                kl1500.next(MONDAY),
-                kl1500.next(TUESDAY),
-                kl1500.next(WEDNESDAY),
-                kl1500.next(THURSDAY),
-                kl1500.next(FRIDAY),
+                kl1431.next(MONDAY),
+                kl1431.next(TUESDAY),
+                kl1431.next(WEDNESDAY),
+                kl1431.next(THURSDAY),
+                kl1431.next(FRIDAY),
 
-                kl0900.next(SATURDAY),
-                kl0900.next(SUNDAY),
+                kl0830.next(SATURDAY),
+                kl0830.next(SUNDAY),
 
-                kl1459.next(SATURDAY),
-                kl1459.next(SUNDAY),
+                kl1430.next(SATURDAY),
+                kl1430.next(SUNDAY),
             ) { dt ->
                 it("${dt.dayOfWeek} ${dt.toLocalTime()}") {
                     dt.erNksÅpningstid() shouldBe false
@@ -72,9 +74,6 @@ class LokalOsloTidTests: DescribeSpec({
 
     describe("LocalDateTime.erDagtidIkkeSøndag") {
         context("når tidspunkt er dagtid ikke søndag") {
-            val kl0900 = dateTime.withHour(9).withMinute(0)
-            val kl1559 = dateTime.withHour(15).withMinute(59)
-
             forAll(
                 kl0900.next(MONDAY),
                 kl0900.next(TUESDAY),
@@ -83,12 +82,12 @@ class LokalOsloTidTests: DescribeSpec({
                 kl0900.next(FRIDAY),
                 kl0900.next(SATURDAY),
 
-                kl1559.next(MONDAY),
-                kl1559.next(TUESDAY),
-                kl1559.next(WEDNESDAY),
-                kl1559.next(THURSDAY),
-                kl1559.next(FRIDAY),
-                kl1559.next(SATURDAY),
+                kl1600.next(MONDAY),
+                kl1600.next(TUESDAY),
+                kl1600.next(WEDNESDAY),
+                kl1600.next(THURSDAY),
+                kl1600.next(FRIDAY),
+                kl1600.next(SATURDAY),
             ) { dt ->
                 it("${dt.dayOfWeek} ${dt.toLocalTime()}") {
                     dt.erDagtidIkkeSøndag() shouldBe true
@@ -97,11 +96,6 @@ class LokalOsloTidTests: DescribeSpec({
         }
 
         context("når tidspunkt er noe annet enn dagtid ikke søndag") {
-            val kl0859 = dateTime.withHour(8).withMinute(59)
-            val kl0900 = dateTime.withHour(9).withMinute(0)
-            val kl1559 = dateTime.withHour(15).withMinute(59)
-            val kl1600 = dateTime.withHour(16).withMinute(0)
-
             forAll(
                 kl0859.next(MONDAY),
                 kl0859.next(TUESDAY),
@@ -110,16 +104,16 @@ class LokalOsloTidTests: DescribeSpec({
                 kl0859.next(FRIDAY),
                 kl0859.next(SATURDAY),
 
-                kl1600.next(MONDAY),
-                kl1600.next(TUESDAY),
-                kl1600.next(WEDNESDAY),
-                kl1600.next(THURSDAY),
-                kl1600.next(FRIDAY),
-                kl1600.next(SATURDAY),
+                kl1601.next(MONDAY),
+                kl1601.next(TUESDAY),
+                kl1601.next(WEDNESDAY),
+                kl1601.next(THURSDAY),
+                kl1601.next(FRIDAY),
+                kl1601.next(SATURDAY),
 
                 kl0900.next(SUNDAY),
 
-                kl1559.next(SUNDAY),
+                kl1600.next(SUNDAY),
             ) { dt ->
                 it("${dt.dayOfWeek} ${dt.toLocalTime()}") {
                     dt.erDagtidIkkeSøndag() shouldBe false
@@ -129,26 +123,21 @@ class LokalOsloTidTests: DescribeSpec({
     }
 
     describe("LocalDateTime.nesteNksÅpningstid") {
-        val kl0859 = dateTime.withHour(8).withMinute(59)
-        val kl0900 = dateTime.withHour(9).withMinute(0)
-        val kl1459 = dateTime.withHour(14).withMinute(59)
-        val kl1500 = dateTime.withHour(15).withMinute(0)
-
         context("finner neste nks åpningstid") {
             forAll(
-                kl0859.next(SATURDAY) to kl0859.withHour(9).next(MONDAY),
-                kl0859.next(SUNDAY) to kl0859.withHour(9).next(MONDAY),
-                kl0859.next(MONDAY) to kl0859.withHour(9).next(MONDAY),
+                kl0829.next(SATURDAY) to kl0829.withHour(9).next(MONDAY),
+                kl0829.next(SUNDAY) to kl0829.withHour(9).next(MONDAY),
+                kl0829.next(MONDAY) to kl0829.withHour(9).next(MONDAY),
 
                 kl0900.next(SATURDAY) to kl0900.next(MONDAY),
                 kl0900.next(SUNDAY) to kl0900.next(MONDAY),
 
-                kl1459.next(SATURDAY) to kl0859.withHour(9).next(MONDAY),
-                kl1459.next(SUNDAY) to kl0859.withHour(9).next(MONDAY),
-                kl1459.next(MONDAY) to kl1459.next(MONDAY),
+                kl1430.next(SATURDAY) to kl0830.next(MONDAY),
+                kl1430.next(SUNDAY) to kl0830.next(MONDAY),
+                kl1430.next(MONDAY) to kl1430.next(MONDAY),
 
-                kl1500.next(SATURDAY) to kl0900.next(MONDAY),
-                kl1500.next(SUNDAY) to kl0900.next(MONDAY),
+                kl1431.next(SATURDAY) to kl1431.withHour(8).next(MONDAY),
+                kl1431.next(SUNDAY) to kl1431.withHour(8).next(MONDAY),
             ) { p ->
                 it("${p.first.dayOfWeek} ${p.first.toLocalTime()} -> ${p.second.dayOfWeek} ${p.second.toLocalTime()}") {
                     nesteNksÅpningstid(p.first) shouldBe p.second
@@ -158,11 +147,6 @@ class LokalOsloTidTests: DescribeSpec({
     }
 
     describe("LocalDateTime.nesteDagtidIkkeSøndag") {
-        val kl0859 = dateTime.withHour(8).withMinute(59)
-        val kl0900 = dateTime.withHour(9).withMinute(0)
-        val kl1559 = dateTime.withHour(15).withMinute(59)
-        val kl1600 = dateTime.withHour(16).withMinute(0)
-
         context("finner neste dagtid ikke søndag") {
             forAll(
                 kl0859.next(SATURDAY) to kl0859.withHour(9).next(SATURDAY),
@@ -172,11 +156,11 @@ class LokalOsloTidTests: DescribeSpec({
                 kl0900.next(SATURDAY) to kl0900.next(SATURDAY),
                 kl0900.next(SUNDAY) to kl0900.next(MONDAY),
 
-                kl1559.next(SATURDAY) to kl1559.next(SATURDAY),
-                kl1559.next(SUNDAY) to kl0859.withHour(9).next(MONDAY),
-                kl1559.next(MONDAY) to kl1559.next(MONDAY),
+                kl1600.next(SATURDAY) to kl1600.next(SATURDAY),
+                kl1600.next(SUNDAY) to kl0900.next(MONDAY),
+                kl1600.next(MONDAY) to kl1600.next(MONDAY),
 
-                kl1600.next(SATURDAY) to kl0900.next(MONDAY),
+                kl1601.next(SATURDAY) to kl1601.withHour(9).next(MONDAY),
                 kl1600.next(SUNDAY) to kl0900.next(MONDAY),
             ) { p ->
                 it("${p.first.dayOfWeek} ${p.first.toLocalTime()} -> ${p.second.dayOfWeek} ${p.second.toLocalTime()}") {

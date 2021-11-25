@@ -28,15 +28,12 @@ class LokalOsloTid {
 fun LocalDateTime.erNksÅpningstid(): Boolean =
     dayOfWeek != SATURDAY &&
             dayOfWeek != SUNDAY &&
-            toLocalTime().isBetween(LocalTime.of(8, 29), LocalTime.of(14, 31))
+            toLocalTime().isBetween(LocalTime.of(8, 30), LocalTime.of(14, 30))
 
 fun LocalDateTime.erDagtidIkkeSøndag(): Boolean =
-    dayOfWeek != SUNDAY && toLocalTime().isBetween(LocalTime.of(8, 59), LocalTime.of(16, 0))
+    dayOfWeek != SUNDAY && toLocalTime().isBetween(LocalTime.of(9, 0), LocalTime.of(16, 0))
 
-fun LocalTime.isBetween(
-    beginning: LocalTime,
-    end: LocalTime,
-): Boolean {
+fun LocalTime.isBetween(beginning: LocalTime, end: LocalTime): Boolean {
     val time = truncatedTo(MINUTES)
     return beginning <= time && time <= end
 }
