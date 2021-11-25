@@ -36,6 +36,7 @@ spec:
     inbound:
       rules:
         - application: ditt-nav-arbeidsgiver
+        - application: min-side-arbeidsgiver
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
