@@ -38,14 +38,15 @@ data class EksterntVarselInput(
     ) {
 
         fun tilDomene(): SmsVarselKontaktinfo {
+            val (sendevindu, sendeTidspunkt) = sendetidspunkt.tilDomene()
             if (mottaker.kontaktinfo != null) {
                 return SmsVarselKontaktinfo(
                     varselId =  UUID.randomUUID(),
                     tlfnr = mottaker.kontaktinfo.tlf,
                     fnrEllerOrgnr = mottaker.kontaktinfo.fnr,
                     smsTekst = smsTekst,
-                    sendevindu = sendetidspunkt.sendevindu.tilDomene(),
-                    sendeTidspunkt = sendetidspunkt.tidspunkt
+                    sendevindu = sendevindu,
+                    sendeTidspunkt = sendeTidspunkt,
                 )
             }
             throw RuntimeException("mottaker-felt mangler for sms")
@@ -82,6 +83,7 @@ data class EksterntVarselInput(
         val sendetidspunkt: SendetidspunktInput,
     ) {
         fun tilDomene(): EpostVarselKontaktinfo {
+            val (sendevindu, sendeTidspunkt) = sendetidspunkt.tilDomene()
             if (mottaker.kontaktinfo != null) {
                 return EpostVarselKontaktinfo(
                     varselId = UUID.randomUUID(),
@@ -89,8 +91,8 @@ data class EksterntVarselInput(
                     fnrEllerOrgnr = mottaker.kontaktinfo.fnr,
                     tittel = epostTittel,
                     htmlBody = epostHtmlBody,
-                    sendevindu = sendetidspunkt.sendevindu.tilDomene(),
-                    sendeTidspunkt = sendetidspunkt.tidspunkt
+                    sendevindu = sendevindu,
+                    sendeTidspunkt = sendeTidspunkt
                 )
             }
             throw RuntimeException("mottaker mangler for epost")
@@ -159,5 +161,21 @@ data class NyEksternVarselResultat(
     val id: UUID,
 )
 
-fun EksterntVarselInput.Sendevindu?.tilDomene(): EksterntVarselSendingsvindu =
-    this?.somDomene ?: EksterntVarselSendingsvindu.SPESIFISERT
+fun EksterntVarselInput.SendetidspunktInput.tilDomene(): Pair<EksterntVarselSendingsvindu, LocalDateTime?> {
+    val sendevindu = this.sendevindu?.somDomene ?: EksterntVarselSendingsvindu.SPESIFISERT
+
+    if (sendevindu == EksterntVarselSendingsvindu.SPESIFISERT) {
+        if (tidspunkt == null) {
+            throw RuntimeException("SPESIFISERT sendevindu krever tidspunkt, men er null")
+        } else {
+            return Pair(sendevindu, this.tidspunkt)
+        }
+    }
+
+    if (tidspunkt != null) {
+        throw RuntimeException("$sendevindu bruker ikke tidspunkt, men det er oppgitt")
+    } else {
+        return Pair(sendevindu, null)
+    }
+}
+
