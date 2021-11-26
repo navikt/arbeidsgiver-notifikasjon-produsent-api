@@ -16,7 +16,8 @@ Er representert som String.
 scalar ISO8601DateTime
 
 """
-Dato og lokaltid etter ISO8601-standaren. F.eks. 2001-12-24T10:44:01".
+Dato og lokaltid etter ISO8601-standaren. F.eks. '2001-12-24T10:44:01'.
+Vi tolker tidspunktet som Oslo-tid ('Europe/Oslo').
 """
 scalar ISO8601LocalDateTime
 
