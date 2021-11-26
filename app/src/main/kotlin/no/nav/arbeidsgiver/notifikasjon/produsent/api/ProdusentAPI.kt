@@ -32,6 +32,7 @@ object ProdusentAPI {
                 directive("Validate", ValidateDirective)
 
                 scalar(Scalars.ISO8601DateTime)
+                scalar(Scalars.ISO8601LocalDateTime)
 
                 resolveSubtypes<Error>()
 

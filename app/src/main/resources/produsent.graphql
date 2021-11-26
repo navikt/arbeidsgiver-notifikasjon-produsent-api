@@ -15,6 +15,12 @@ Er representert som String.
 """
 scalar ISO8601DateTime
 
+"""
+Dato og lokaltid etter ISO8601-standaren. F.eks. '2001-12-24T10:44:01'.
+Vi tolker tidspunktet som Oslo-tid ('Europe/Oslo').
+"""
+scalar ISO8601LocalDateTime
+
 # scalar NotifikasjonCursor
 
 """
@@ -342,15 +348,62 @@ input EksterntVarselInput @ExactlyOneFieldGiven {
     epost: EksterntVarselEpostInput
 }
 
+enum Sendevindu {
+    """
+    Vi sender varselet slik at mottaker skal ha mulighet for å kontakte NAVs
+    kontaktsenter (NKS). Varsler blir sendt litt før NKS åpner, og vi slutter å
+    sende litt før NKS stenger.
+
+    Vi tar foreløpig ikke hensyn til røde dager eller produksjonshendelser som fører til
+    at NKS er utilgjengelig.
+    """
+    NKS_AAPNINGSTID
+
+
+    """
+    Vi sender varselet på dagtid, mandag til lørdag.
+    Altså sender vi ikke om kvelden og om natten, og ikke i det hele tatt på søndager.
+
+    Vi tar ikke hensyn til røde dager.
+    """
+    DAGTID_IKKE_SOENDAG
+
+    """
+    Vi sender varslet så fort vi kan.
+    """
+    LOEPENDE
+}
+
+"""
+Med denne typen velger du når du ønsker at det eksterne varselet blir sendt.
+Du skal velge en (og kun en) av feltene, ellers blir forespørselen din avvist
+med en feil.
+"""
+input SendetidspunktInput @ExactlyOneFieldGiven {
+    """
+    Hvis du spesifiserer et tidspunkt på formen "YYYY-MM-DDThh:mm", så sender
+    vi notifikasjonen på det tidspunktet. Oppgir du et tidspunkt i fortiden,
+    så sender vi varselet øyeblikkelig.
+
+    Tidspunktet tolker vi som lokal, norsk tid (veggklokke-tid).
+    """
+    tidspunkt: ISO8601LocalDateTime
+
+    sendevindu: Sendevindu
+}
+
+
 input EksterntVarselSmsInput {
     mottaker: SmsMottakerInput!
     smsTekst: String!
+    sendetidspunkt: SendetidspunktInput!
 }
 
 input EksterntVarselEpostInput {
     mottaker: EpostMottakerInput!
     epostTittel: String!
     epostHtmlBody: String!
+    sendetidspunkt: SendetidspunktInput!
 }
 
 input SmsMottakerInput @ExactlyOneFieldGiven {

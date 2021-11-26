@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 
 @Suppress("unused") /* Entry point for jar. */
 private object Main {

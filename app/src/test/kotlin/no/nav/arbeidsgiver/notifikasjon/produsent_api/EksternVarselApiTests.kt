@@ -67,6 +67,9 @@ class EksternVarselApiTests: DescribeSpec({
                                     }
                                 }
                                 smsTekst: "En test SMS"
+                                sendetidspunkt: {
+                                    sendevindu: NKS_AAPNINGSTID
+                                }
                             }}
                             {epost: {
                                 mottaker: {
@@ -77,6 +80,9 @@ class EksternVarselApiTests: DescribeSpec({
                                 }
                                 epostTittel: "En tittel til din epost"
                                 epostHtmlBody: "<body><h1>hei</h1></body>"
+                                sendetidspunkt: {
+                                    sendevindu: NKS_AAPNINGSTID
+                                }
                             }}
                         ]
                     }
