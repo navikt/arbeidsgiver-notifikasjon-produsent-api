@@ -140,6 +140,16 @@ class EksternVarslingService(
             }
 
             launchProcessingLoop(
+                "resume-scheduled-work",
+                pauseAfterEach = Duration.ofMinutes(5)
+            ) {
+                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(lokalOsloTid.nå())
+                if (rescheduledCount > 0) {
+                    log.info("resumed $rescheduledCount jobs from wait queue")
+                }
+            }
+
+            launchProcessingLoop(
                 "ekstern-varsel",
                 init = { eksternVarslingRepository.detectEmptyDatabase() }
             ) {
