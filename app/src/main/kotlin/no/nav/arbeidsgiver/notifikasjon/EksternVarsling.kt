@@ -73,7 +73,6 @@ object EksternVarsling {
                 service.start(this)
             }
 
-
             launch {
                 embeddedServer(Netty, port = httpPort) {
                     installMetrics()
