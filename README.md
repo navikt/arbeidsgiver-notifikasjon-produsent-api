@@ -1,7 +1,5 @@
 # produsent-api
 
-![Coverage](.github/badges/jacoco.svg) ![Branches](.github/badges/branches.svg)
-
 # Lokal utvikling
 
 For lokal utvikling benyttes docker-compose til å starte nødvendige platform tjenester (postgres, kafka etc).
