@@ -7,22 +7,30 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit.MINUTES
 
-class LokalOsloTid {
-    companion object {
-        private val norwayZoneId = ZoneId.of("Europe/Oslo")
-        fun nå(): LocalDateTime = LocalDateTime.now(norwayZoneId).truncatedTo(MINUTES)
-        fun nesteNksÅpningstid(
-            start: LocalDateTime = nå(),
-        ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erNksÅpningstid)!!
+interface LokalOsloTid {
+    fun nå(): LocalDateTime
+    fun nesteNksÅpningstid(): LocalDateTime
+    fun nesteDagtidIkkeSøndag(): LocalDateTime
+}
 
-        fun nesteDagtidIkkeSøndag(
-            start: LocalDateTime = nå(),
-        ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erDagtidIkkeSøndag)!!
+object LokalOsloTidImpl : LokalOsloTid {
+    private val norwayZoneId = ZoneId.of("Europe/Oslo")
 
-        private fun tidspunkterFremover(
-            start: LocalDateTime = nå(),
-        ): Sequence<LocalDateTime> = generateSequence(start) { it.plusHours(1) }
-    }
+    override fun nå(): LocalDateTime = LocalDateTime.now(norwayZoneId).truncatedTo(MINUTES)
+    override fun nesteDagtidIkkeSøndag(): LocalDateTime = nesteDagtidIkkeSøndag(nå())
+    override fun nesteNksÅpningstid(): LocalDateTime = nesteNksÅpningstid(nå())
+
+    internal fun nesteNksÅpningstid(
+        start: LocalDateTime,
+    ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erNksÅpningstid)!!
+
+    internal fun nesteDagtidIkkeSøndag(
+        start: LocalDateTime = nå(),
+    ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erDagtidIkkeSøndag)!!
+
+    private fun tidspunkterFremover(
+        start: LocalDateTime = nå(),
+    ): Sequence<LocalDateTime> = generateSequence(start) { it.plusHours(1) }
 }
 
 fun LocalDateTime.erNksÅpningstid(): Boolean =
