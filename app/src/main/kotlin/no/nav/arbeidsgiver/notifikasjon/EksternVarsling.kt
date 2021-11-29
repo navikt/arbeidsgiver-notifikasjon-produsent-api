@@ -68,6 +68,7 @@ object EksternVarsling {
                     eksternVarslingRepository = eksternVarslingModelAsync.await(),
                     altinnVarselKlient = altinnVarselKlient,
                     kafkaProducer = createKafkaProducer(),
+                    lokalOsloTid = LokalOsloTidImpl,
                 )
                 service.start(this)
             }

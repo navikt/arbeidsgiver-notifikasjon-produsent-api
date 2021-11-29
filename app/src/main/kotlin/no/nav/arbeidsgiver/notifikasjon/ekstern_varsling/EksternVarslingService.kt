@@ -102,6 +102,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class EksternVarslingService(
     private val eksternVarslingRepository: EksternVarslingRepository,
     private val altinnVarselKlient: AltinnVarselKlient,
+    private val lokalOsloTid: LokalOsloTid,
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
 ) {
     private val log = logger()
@@ -178,12 +179,12 @@ class EksternVarslingService(
         when (varsel) {
             is EksternVarselTilstand.Ny -> {
                 val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
-                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> LokalOsloTid.nesteNksÅpningstid()
-                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> LokalOsloTid.nesteDagtidIkkeSøndag()
-                    EksterntVarselSendingsvindu.LØPENDE -> LokalOsloTid.nå()
+                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> lokalOsloTid.nesteNksÅpningstid()
+                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> lokalOsloTid.nesteDagtidIkkeSøndag()
+                    EksterntVarselSendingsvindu.LØPENDE -> lokalOsloTid.nå()
                     EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
                 }
-                if (kalkulertSendeTidspunkt <= LokalOsloTid.nå()) {
+                if (kalkulertSendeTidspunkt <= lokalOsloTid.nå()) {
                     altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
                         onSuccess = { response ->
                             eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)

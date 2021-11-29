@@ -5,8 +5,7 @@ import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
+import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
@@ -25,6 +24,10 @@ class EksternVarslingServiceTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
     val kafka = embeddedKafka()
+    val nå = LocalDateTime.parse("2020-01-01T01:01")
+    val lokalOsloTid = mockk<LokalOsloTid> {
+        every { nå() } returns nå
+    }
 
     val meldingSendt = AtomicBoolean(false)
 
@@ -38,16 +41,9 @@ class EksternVarslingServiceTests : DescribeSpec({
                 return Result.success(AltinnVarselKlient.AltinnResponse.Ok(rå = NullNode.instance))
             }
         },
+        lokalOsloTid = lokalOsloTid,
         kafkaProducer = kafka.newProducer(),
     )
-
-    beforeAny {
-        mockkObject(LokalOsloTid)
-        every { LokalOsloTid.nå() } answers { LocalDateTime.now() }
-    }
-    afterAny {
-        unmockkObject(LokalOsloTid)
-    }
 
     describe("EksternVarslingService#start()") {
         context("LØPENDE sendingsvindu") {
@@ -140,7 +136,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
             """)
 
-            every { LokalOsloTid.nesteNksÅpningstid() } answers { LocalDateTime.now().minusMinutes(5) }
+            every { lokalOsloTid.nesteNksÅpningstid() } returns nå.minusMinutes(5)
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
@@ -184,7 +180,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
             """)
 
-            every { LokalOsloTid.nesteNksÅpningstid() } answers { LocalDateTime.now().plusMinutes(5) }
+            every { lokalOsloTid.nesteNksÅpningstid() } returns nå.plusMinutes(5)
             val serviceJob = service.start(this)
 
             it("reschedules") {
@@ -228,7 +224,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
             """)
 
-            every { LokalOsloTid.nesteDagtidIkkeSøndag() } answers { LocalDateTime.now().minusMinutes(5) }
+            every { lokalOsloTid.nesteDagtidIkkeSøndag() } returns nå.minusMinutes(5)
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
@@ -272,7 +268,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
             """)
 
-            every { LokalOsloTid.nesteDagtidIkkeSøndag() } answers { LocalDateTime.now().plusMinutes(5) }
+            every { lokalOsloTid.nesteDagtidIkkeSøndag() } returns nå.plusMinutes(5)
             val serviceJob = service.start(this)
 
             it("reskjedduleres") {
