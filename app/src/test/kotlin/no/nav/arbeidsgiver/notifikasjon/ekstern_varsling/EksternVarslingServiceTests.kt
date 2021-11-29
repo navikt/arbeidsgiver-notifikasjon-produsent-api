@@ -4,11 +4,15 @@ import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
@@ -37,61 +41,333 @@ class EksternVarslingServiceTests : DescribeSpec({
         kafkaProducer = kafka.newProducer(),
     )
 
-    describe("foobar") {
-        repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
-            virksomhetsnummer = "1",
-            notifikasjonId = uuid("1"),
-            hendelseId = uuid("1"),
-            produsentId = "",
-            kildeAppNavn = "",
-            merkelapp = "",
-            eksternId = "",
-            mottaker = AltinnMottaker(
-                virksomhetsnummer = "",
-                serviceCode = "",
-                serviceEdition = "",
-            ),
-            tekst = "",
-            grupperingsid = "",
-            lenke = "",
-            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-            eksterneVarsler = listOf(SmsVarselKontaktinfo(
-                varselId = uuid("2"),
-                tlfnr = "",
-                fnrEllerOrgnr = "",
-                smsTekst = "",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null,
-            )),
-        ))
+    beforeAny {
+        mockkObject(LokalOsloTid)
+        every { LokalOsloTid.nå() } answers { LocalDateTime.now() }
+    }
+    afterAny {
+        unmockkObject(LokalOsloTid)
+    }
 
-        database.nonTransactionalExecuteUpdate("""
-            update emergency_break set stop_processing = false where id = 0
-        """)
+    describe("EksternVarslingService#start()") {
+        context("LØPENDE sendingsvindu") {
+            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                notifikasjonId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "",
+                kildeAppNavn = "",
+                merkelapp = "",
+                eksternId = "",
+                mottaker = AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                ),
+                tekst = "",
+                grupperingsid = "",
+                lenke = "",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null,
+                )),
+            ))
 
-        val serviceJob = service.start(this)
+            database.nonTransactionalExecuteUpdate("""
+                update emergency_break set stop_processing = false where id = 0
+            """)
 
-        it("sends message eventually") {
-            eventually(kotlin.time.Duration.seconds(5)) {
-                meldingSendt.get() shouldBe true
-            }
-        }
+            val serviceJob = service.start(this)
 
-        val consumer = kafka.newConsumer()
-        try {
-            consumer.forEachEvent { event ->
-                log.info("message received $event")
-                if (event is Hendelse.EksterntVarselVellykket) {
-                    throw Done()
+            it("sends message eventually") {
+                eventually(kotlin.time.Duration.seconds(5)) {
+                    meldingSendt.get() shouldBe true
                 }
             }
-        } catch (e: Done) {
+
+            val consumer = kafka.newConsumer()
+            try {
+                consumer.forEachEvent { event ->
+                    log.info("message received $event")
+                    if (event is Hendelse.EksterntVarselVellykket) {
+                        throw Done()
+                    }
+                }
+            } catch (e: Done) {
+            }
+
+            it("message received from kafka") {
+                true shouldBe true
+            }
+
+            serviceJob.cancel()
         }
 
-        it("message received from kafka") {
-            true shouldBe true
+        context("NKS_ÅPNINGSTID sendingsvindu innenfor nks åpningstid sendes med en gang") {
+            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                notifikasjonId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "",
+                kildeAppNavn = "",
+                merkelapp = "",
+                eksternId = "",
+                mottaker = AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                ),
+                tekst = "",
+                grupperingsid = "",
+                lenke = "",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                    sendeTidspunkt = null,
+                )),
+            ))
+
+            database.nonTransactionalExecuteUpdate("""
+                update emergency_break set stop_processing = false where id = 0
+            """)
+
+            every { LokalOsloTid.nesteNksÅpningstid() } answers { LocalDateTime.now().minusMinutes(5) }
+            val serviceJob = service.start(this)
+
+            it("sends message eventually") {
+                eventually(kotlin.time.Duration.seconds(5)) {
+                    meldingSendt.get() shouldBe true
+                }
+            }
+
+            serviceJob.cancel()
         }
 
-        serviceJob.cancel()
+        context("NKS_ÅPNINGSTID sendingsvindu utenfor nks åpningstid reskjeddullerres") {
+            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                notifikasjonId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "",
+                kildeAppNavn = "",
+                merkelapp = "",
+                eksternId = "",
+                mottaker = AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                ),
+                tekst = "",
+                grupperingsid = "",
+                lenke = "",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                    sendeTidspunkt = null,
+                )),
+            ))
+
+            database.nonTransactionalExecuteUpdate("""
+                update emergency_break set stop_processing = false where id = 0
+            """)
+
+            every { LokalOsloTid.nesteNksÅpningstid() } answers { LocalDateTime.now().plusMinutes(5) }
+            val serviceJob = service.start(this)
+
+            it("reschedules") {
+                eventually(kotlin.time.Duration.seconds(5)) {
+                    repository.waitQueueCount() shouldBe 1
+                }
+            }
+
+            serviceJob.cancel()
+        }
+
+        context("DAGTID_IKKE_SØNDAG sendingsvindu innenfor sendes med en gang") {
+            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                notifikasjonId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "",
+                kildeAppNavn = "",
+                merkelapp = "",
+                eksternId = "",
+                mottaker = AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                ),
+                tekst = "",
+                grupperingsid = "",
+                lenke = "",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
+                    sendeTidspunkt = null,
+                )),
+            ))
+
+            database.nonTransactionalExecuteUpdate("""
+                update emergency_break set stop_processing = false where id = 0
+            """)
+
+            every { LokalOsloTid.nesteDagtidIkkeSøndag() } answers { LocalDateTime.now().minusMinutes(5) }
+            val serviceJob = service.start(this)
+
+            it("sends message eventually") {
+                eventually(kotlin.time.Duration.seconds(5)) {
+                    meldingSendt.get() shouldBe true
+                }
+            }
+
+            serviceJob.cancel()
+        }
+
+        context("DAGTID_IKKE_SØNDAG sendingsvindu utenfor reskjedduleres") {
+            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                notifikasjonId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "",
+                kildeAppNavn = "",
+                merkelapp = "",
+                eksternId = "",
+                mottaker = AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                ),
+                tekst = "",
+                grupperingsid = "",
+                lenke = "",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
+                    sendeTidspunkt = null,
+                )),
+            ))
+
+            database.nonTransactionalExecuteUpdate("""
+                update emergency_break set stop_processing = false where id = 0
+            """)
+
+            every { LokalOsloTid.nesteDagtidIkkeSøndag() } answers { LocalDateTime.now().plusMinutes(5) }
+            val serviceJob = service.start(this)
+
+            it("reskjedduleres") {
+                eventually(kotlin.time.Duration.seconds(5)) {
+                    repository.waitQueueCount() shouldBe 1
+                }
+            }
+
+            serviceJob.cancel()
+        }
+
+        context("SPESIFISERT sendingsvindu som har passert sendes med en gang") {
+            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                notifikasjonId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "",
+                kildeAppNavn = "",
+                merkelapp = "",
+                eksternId = "",
+                mottaker = AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                ),
+                tekst = "",
+                grupperingsid = "",
+                lenke = "",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
+                    sendeTidspunkt = LocalDateTime.now().minusMinutes(5),
+                )),
+            ))
+
+            database.nonTransactionalExecuteUpdate("""
+                update emergency_break set stop_processing = false where id = 0
+            """)
+
+            val serviceJob = service.start(this)
+
+            it("sends message eventually") {
+                eventually(kotlin.time.Duration.seconds(5)) {
+                    meldingSendt.get() shouldBe true
+                }
+            }
+
+            serviceJob.cancel()
+        }
+
+        context("SPESIFISERT sendingsvindu som er i fremtid reskjedduleres") {
+            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                notifikasjonId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "",
+                kildeAppNavn = "",
+                merkelapp = "",
+                eksternId = "",
+                mottaker = AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                ),
+                tekst = "",
+                grupperingsid = "",
+                lenke = "",
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
+                    sendeTidspunkt = LocalDateTime.now().plusMinutes(5),
+                )),
+            ))
+
+            database.nonTransactionalExecuteUpdate("""
+                update emergency_break set stop_processing = false where id = 0
+            """)
+
+            val serviceJob = service.start(this)
+
+            it("reschedules") {
+                eventually(kotlin.time.Duration.seconds(5)) {
+                    repository.waitQueueCount() shouldBe 1
+                }
+            }
+
+            serviceJob.cancel()
+        }
     }
 })

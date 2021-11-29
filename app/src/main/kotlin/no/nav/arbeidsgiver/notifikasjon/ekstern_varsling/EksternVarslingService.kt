@@ -13,7 +13,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
-import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 
 /*
