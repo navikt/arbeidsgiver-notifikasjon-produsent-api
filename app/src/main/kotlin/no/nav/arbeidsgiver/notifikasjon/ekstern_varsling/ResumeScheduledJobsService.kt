@@ -8,6 +8,7 @@ class ResumeScheduledJobsService(
 ) {
     private val log = logger()
 
+    // TODO: launch denne servicen ved oppstart
     suspend fun doWork() {
         val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(LokalOsloTid.nå())
         if (rescheduledCount > 0) {

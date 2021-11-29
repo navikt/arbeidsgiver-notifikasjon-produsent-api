@@ -326,14 +326,14 @@ class EksternVarslingRepository(
                         "SMS" -> EksternVarsel.Sms(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
                             sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
-                            sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
+                            sendeTidspunkt = getTimestamp("sendetidspunkt")?.toLocalDateTime(),
                             mobilnummer = getString("tlfnr"),
                             tekst = getString("sms_tekst"),
                         )
                         "EMAIL" -> EksternVarsel.Epost(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
                             sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
-                            sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
+                            sendeTidspunkt = getTimestamp("sendetidspunkt")?.toLocalDateTime(),
                             epostadresse = getString("epost_adresse"),
                             tittel = getString("tittel"),
                             body = getString("html_body")
