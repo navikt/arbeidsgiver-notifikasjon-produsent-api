@@ -107,6 +107,8 @@ class EksternVarslingService(
 ) {
     private val log = logger()
     private val emergencyBreakGauge = Health.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
+    private val jobQueueSizeGauge = Health.meterRegistry.gauge("jobqueue.size", AtomicInteger(0))!!
+    private val waitQueueSizeGauge = Health.meterRegistry.gauge("waitqueue.size", AtomicInteger(0))!!
 
     fun start(coroutineScope: CoroutineScope): Job {
         return coroutineScope.launch {
@@ -147,6 +149,15 @@ class EksternVarslingService(
                 if (rescheduledCount > 0) {
                     log.info("resumed $rescheduledCount jobs from wait queue")
                 }
+            }
+
+            launchProcessingLoop(
+                "gauge-oppdatering",
+                pauseAfterEach = Duration.ofMinutes(1)
+            ) {
+                jobQueueSizeGauge.set(eksternVarslingRepository.jobQueueCount())
+                waitQueueSizeGauge.set(eksternVarslingRepository.waitQueueCount())
+                log.info("gauge-oppdatering vellykket")
             }
 
             launchProcessingLoop(
