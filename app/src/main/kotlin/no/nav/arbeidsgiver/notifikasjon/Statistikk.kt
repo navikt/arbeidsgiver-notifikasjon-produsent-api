@@ -4,17 +4,14 @@ import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkModel
 import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import kotlin.time.Duration
+import java.time.Duration
 import kotlin.time.ExperimentalTime
 
 object Statistikk {
@@ -69,10 +66,12 @@ object Statistikk {
 
             launch {
                 val statistikkService = statistikkServiceAsync.await()
-                while (true) {
+                launchProcessingLoop(
+                    "gauge-oppdatering",
+                    pauseAfterEach = Duration.ofMinutes(1),
+                ) {
                     statistikkService.updateGauges()
                     log.info("gauge-oppdatering vellykket ")
-                    delay(Duration.minutes(1))
                 }
             }
 
