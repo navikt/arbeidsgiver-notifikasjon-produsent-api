@@ -89,7 +89,7 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
             }
             "dev-gcp" -> {
                 host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
-                host("*.dev.nav.no", schemes = listOf("https"))
+                host("arbeidsforhold.dev.nav.no", schemes = listOf("https"))
                 host("localhost:3000")
             }
         }
