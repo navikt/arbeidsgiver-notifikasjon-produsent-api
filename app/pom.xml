@@ -10,7 +10,7 @@
 
     <properties>
         <kotlin.version>1.5.10</kotlin.version>
-        <ktor.version>1.6.0</ktor.version>
+        <ktor.version>1.6.6</ktor.version>
         <kotest.version>4.6.0</kotest.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
         <jvm.version>15</jvm.version>
