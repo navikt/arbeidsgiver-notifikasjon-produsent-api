@@ -86,24 +86,12 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
         allowNonSimpleContentTypes = true
         when (System.getenv("NAIS_CLUSTER_NAME")) {
             "prod-gcp" -> {
-                host(
-                    "nav.no",
-                    subDomains = listOf(
-                        "min-side-arbeidsgiver",
-                        "arbeidsforhold",
-                    ),
-                    schemes = listOf("https"),
-                )
+                host("min-side-arbeidsgiver.nav.no", schemes = listOf("https"))
+                host("arbeidsforhold.nav.no", schemes = listOf("https"))
             }
             "dev-gcp" -> {
-                host(
-                    "dev.nav.no",
-                    subDomains = listOf(
-                        "min-side-arbeidsgiver",
-                        "arbeidsforhold",
-                    ),
-                    schemes = listOf("https"),
-                )
+                host("min-side-arbeidsgiver.dev.nav.no", schemes = listOf("https"))
+                host("arbeidsforhold.dev.nav.no", schemes = listOf("https"))
                 host("localhost:3000")
             }
         }
