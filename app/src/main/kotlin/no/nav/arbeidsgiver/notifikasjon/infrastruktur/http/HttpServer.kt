@@ -85,7 +85,7 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
         allowNonSimpleContentTypes = true
         when (System.getenv("NAIS_CLUSTER_NAME")) {
             "prod-gcp" -> {
-                host("arbeidsgiver.nav.no", schemes = listOf("https"))
+                host("*.nav.no", schemes = listOf("https"))
             }
             "dev-gcp" -> {
                 host("*.dev.nav.no", schemes = listOf("https"))
