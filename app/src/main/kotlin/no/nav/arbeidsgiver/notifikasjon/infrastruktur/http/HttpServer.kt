@@ -40,14 +40,15 @@ val extractBrukerContext = fun PipelineContext<Unit, ApplicationCall>.(): Bruker
     )
 }
 
-fun extractProdusentContext(produsentRegister: ProdusentRegister) = fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
-    val principal = call.principal<ProdusentPrincipal>()!!
-    return ProdusentAPI.Context(
-        appName = principal.appName,
-        produsent = produsentRegister.finn(principal.appName),
-        coroutineScope = this
-    )
-}
+fun extractProdusentContext(produsentRegister: ProdusentRegister) =
+    fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
+        val principal = call.principal<ProdusentPrincipal>()!!
+        return ProdusentAPI.Context(
+            appName = principal.appName,
+            produsent = produsentRegister.finn(principal.appName),
+            coroutineScope = this
+        )
+    }
 
 private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1)
     .produceMetrics("internal-http")
@@ -85,10 +86,24 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
         allowNonSimpleContentTypes = true
         when (System.getenv("NAIS_CLUSTER_NAME")) {
             "prod-gcp" -> {
-                host("*.nav.no", schemes = listOf("https"))
+                host(
+                    "nav.no",
+                    subDomains = listOf(
+                        "min-side-arbeidsgiver",
+                        "arbeidsforhold",
+                    ),
+                    schemes = listOf("https"),
+                )
             }
             "dev-gcp" -> {
-                host("*.dev.nav.no", schemes = listOf("https"))
+                host(
+                    "dev.nav.no",
+                    subDomains = listOf(
+                        "min-side-arbeidsgiver",
+                        "arbeidsforhold",
+                    ),
+                    schemes = listOf("https"),
+                )
                 host("localhost:3000")
             }
         }
