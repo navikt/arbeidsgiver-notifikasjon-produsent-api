@@ -40,15 +40,14 @@ val extractBrukerContext = fun PipelineContext<Unit, ApplicationCall>.(): Bruker
     )
 }
 
-fun extractProdusentContext(produsentRegister: ProdusentRegister) =
-    fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
-        val principal = call.principal<ProdusentPrincipal>()!!
-        return ProdusentAPI.Context(
-            appName = principal.appName,
-            produsent = produsentRegister.finn(principal.appName),
-            coroutineScope = this
-        )
-    }
+fun extractProdusentContext(produsentRegister: ProdusentRegister) = fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
+    val principal = call.principal<ProdusentPrincipal>()!!
+    return ProdusentAPI.Context(
+        appName = principal.appName,
+        produsent = produsentRegister.finn(principal.appName),
+        coroutineScope = this
+    )
+}
 
 private val metricsDispatcher: CoroutineContext = Executors.newFixedThreadPool(1)
     .produceMetrics("internal-http")
