@@ -37,6 +37,7 @@ spec:
       rules:
         - application: ditt-nav-arbeidsgiver
         - application: min-side-arbeidsgiver
+        - application: notifikasjon-proxy
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
