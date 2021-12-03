@@ -15,6 +15,7 @@ jobs:
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
           IMAGE: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+          REF: ${{ github.sha }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
