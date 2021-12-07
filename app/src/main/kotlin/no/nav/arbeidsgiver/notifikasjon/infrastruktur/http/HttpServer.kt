@@ -88,7 +88,7 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
                 host("*.nav.no", schemes = listOf("https"))
             }
             "dev-gcp" -> {
-                host("*.dev.nav.no", schemes = listOf("https"))
+                host("*.nav.no", schemes = listOf("https"))
                 host("localhost:3000")
             }
         }
