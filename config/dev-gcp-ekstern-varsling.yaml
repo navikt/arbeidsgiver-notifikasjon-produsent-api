@@ -19,6 +19,13 @@ spec:
     path: /internal/metrics
   kafka:
     pool: nav-dev
+  azure:
+    application:
+      enabled: true
+  accessPolicy:
+    outbound:
+      rules:
+        - application: altinn-varsel-firewall
   gcp:
     sqlInstances:
       - type: POSTGRES_12

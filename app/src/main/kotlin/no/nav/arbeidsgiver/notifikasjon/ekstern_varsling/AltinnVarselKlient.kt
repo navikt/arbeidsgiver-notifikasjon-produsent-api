@@ -16,7 +16,10 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
+import org.apache.cxf.interceptor.Interceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
+import org.apache.cxf.message.Message
+import org.apache.cxf.phase.AbstractPhaseInterceptor
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
@@ -66,7 +69,7 @@ class AltinnVarselKlientLogging : AltinnVarselKlient {
 class AltinnVarselKlientImpl(
     altinnEndPoint: String = basedOnEnv(
         prod = { "" },
-        other = { "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc" },
+        other = { "https://altinn-varsel-firewall.dev.nav.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc" },
     ),
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
@@ -295,6 +298,12 @@ fun <PORT_TYPE> createServicePort(
     serviceClass = clazz
     inInterceptors.add(LoggingInInterceptor().apply {
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
+    })
+    inInterceptors.add(object: AbstractPhaseInterceptor<Message>() {
+        override fun handleMessage(message: Message?) {
+            TODO("Not yet implemented")
+        }
+
     })
     outInterceptors.add(LoggingOutInterceptor().apply {
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
