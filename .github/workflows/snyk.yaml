@@ -3,9 +3,6 @@ on: push
 jobs:
   security:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: app
     steps:
       - uses: actions/checkout@master
       - name: Snyk monitor
@@ -14,4 +11,4 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: monitor
-          args: --org=teamfager
+          args: --org=teamfager --file=app/
