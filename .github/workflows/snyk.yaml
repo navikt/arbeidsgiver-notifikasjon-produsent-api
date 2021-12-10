@@ -1,4 +1,4 @@
-name: Snyk example
+name: Run Snyk
 on: push
 jobs:
   security:
@@ -6,7 +6,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Snyk monitor
-        uses: snyk/actions/maven-3-jdk-11@master
+        uses: snyk/actions/maven@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
