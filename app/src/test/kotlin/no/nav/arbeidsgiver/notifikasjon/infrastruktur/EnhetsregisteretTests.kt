@@ -61,6 +61,20 @@ class EnhetsregisteretTests : DescribeSpec({
                 enhet.navn shouldBe ""
             }
         }
+
+        /* hvis api-et er nede, hender det de returnerer html >:( */
+        context("når ereg returnerer html") {
+            mockBrregResponse(
+                HttpResponse.response()
+                    .withBody("<html>hello world </html>")
+                    .withContentType(MediaType.TEXT_HTML))
+            brreg.cache.clear()
+            val enhet = brreg.hentUnderenhet(orgnr)
+
+            it("inneholder ikke navn på enhet") {
+                enhet.navn shouldBe ""
+            }
+        }
     }
 }) {
     companion object {
