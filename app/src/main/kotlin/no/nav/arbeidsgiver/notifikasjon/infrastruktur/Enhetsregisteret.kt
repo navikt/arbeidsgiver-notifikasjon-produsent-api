@@ -24,7 +24,7 @@ interface Enhetsregisteret {
 class EnhetsregisteretImpl(
     private val baseUrl : String = "https://data.brreg.no"
 ) : Enhetsregisteret {
-    val log = logger()
+    private val log = logger()
 
     private val timer = Health.meterRegistry.timer("brreg_hent_organisasjon")
 
@@ -41,9 +41,14 @@ class EnhetsregisteretImpl(
     val cache = SimpleLRUCache<String, Enhetsregisteret.Underenhet>(100_000) { orgnr ->
         val response: HttpResponse = httpClient.get("$baseUrl/enhetsregisteret/api/underenheter/$orgnr")
         if (response.status.isSuccess()) {
-            response.receive()
+            try {
+                response.receive()
+            } catch (e: Exception) {
+                log.warn("feil ved deserializing av response fra enhetsregisteret", e)
+                Enhetsregisteret.Underenhet(orgnr, "")
+            }
         } else {
-            logger().warn("kunne ikke finne navn for virksomhet. kall til brreg feilet: ${response.status} ${response.readText()}")
+            log.warn("kunne ikke finne navn for virksomhet. kall til brreg feilet: ${response.status} ${response.readText()}")
             Enhetsregisteret.Underenhet(orgnr, "")
         }
     }
