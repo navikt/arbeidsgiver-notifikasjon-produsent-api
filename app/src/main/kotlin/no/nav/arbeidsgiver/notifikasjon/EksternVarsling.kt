@@ -1,14 +1,22 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import io.ktor.application.*
+import io.ktor.features.*
+import io.ktor.http.*
+import io.ktor.jackson.*
+import io.ktor.request.*
+import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.util.pipeline.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.TimedContentConverter
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
@@ -76,11 +84,52 @@ object EksternVarsling {
             launch {
                 embeddedServer(Netty, port = httpPort) {
                     installMetrics()
+                    install(ContentNegotiation) {
+                        register(ContentType.Application.Json, TimedContentConverter(JacksonConverter(objectMapper)))
+                    }
                     routing {
                         internalRoutes()
+                        get("/internal/test_ekstern_varsel") {
+                            testEksternVarsel(altinnVarselKlient)
+                        }
                     }
                 }.start(wait = true)
             }
         }
     }
+}
+
+data class TestEksternVarselRequestBody(
+    val reporteeNumber: String?,
+    val tlf: String,
+    val tekst: String,
+)
+
+suspend fun PipelineContext<Unit, ApplicationCall>.testEksternVarsel(altinnVarselKlient: AltinnVarselKlient) {
+    val varselRequest = call.receive<TestEksternVarselRequestBody>()
+    if (altinnVarselKlient is AltinnVarselKlientImpl) {
+        altinnVarselKlient.sendSms(
+            mobilnummer = varselRequest.tlf,
+            reporteeNumber = varselRequest.reporteeNumber,
+            tekst = varselRequest.tekst,
+        ).fold(
+            onSuccess = {
+                when (it) {
+                    is AltinnVarselKlient.AltinnResponse.Ok ->
+                        call.respond(HttpStatusCode.OK, objectMapper.writeValueAsString(it.rå))
+                    is AltinnVarselKlient.AltinnResponse.Feil ->
+                        call.respond(HttpStatusCode.BadRequest, objectMapper.writeValueAsString(it.rå))
+                }
+            },
+            onFailure = {
+                call.respond(HttpStatusCode.InternalServerError,
+                    objectMapper.writeValueAsString(mapOf(
+                        "type" to it.javaClass.canonicalName,
+                        "msg" to it.message,
+                    ))
+                )
+            }
+        )
+    }
+
 }

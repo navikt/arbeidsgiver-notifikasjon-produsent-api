@@ -98,7 +98,7 @@ class AltinnVarselKlientImpl(
                 tekst = eksternVarsel.body,
             )
             is EksternVarsel.Sms -> sendSms(
-                virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
+                reporteeNumber = eksternVarsel.fnrEllerOrgnr,
                 mobilnummer = eksternVarsel.mobilnummer,
                 tekst = eksternVarsel.tekst,
             )
@@ -140,7 +140,7 @@ class AltinnVarselKlientImpl(
 
     suspend fun sendSms(
         mobilnummer: String,
-        virksomhetsnummer: String,
+        reporteeNumber: String?,
         tekst: String,
     ): Result<AltinnVarselKlient.AltinnResponse> {
         return send(StandaloneNotificationBEList().withStandaloneNotification(
@@ -148,7 +148,7 @@ class AltinnVarselKlientImpl(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
-                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
+                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
