@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
+import io.ktor.http.*
+import kotlinx.coroutines.runBlocking
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
@@ -14,12 +16,14 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
+import no.nav.tms.token.support.azure.exchange.AzureService
+import no.nav.tms.token.support.azure.exchange.AzureServiceBuilder
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
-import org.apache.cxf.interceptor.Interceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import org.apache.cxf.message.Message
 import org.apache.cxf.phase.AbstractPhaseInterceptor
+import org.apache.cxf.phase.Phase
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
@@ -73,10 +77,17 @@ class AltinnVarselKlientImpl(
     ),
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
+    azureService: AzureService = AzureServiceBuilder.buildAzureService(),
+    azureTargetApp: String = basedOnEnv(
+        prod = { "" },
+        dev = { "dev-gcp:fager:altinn-varsel-firewall" },
+        other = { " "}
+    ),
 ): AltinnVarselKlient {
     val log = logger()
-    private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
-
+    private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java) {
+        azureService.getAccessToken(azureTargetApp)
+    }
 
     override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
         return when (eksternVarsel) {
@@ -293,19 +304,37 @@ inline fun <reified T> ns(localpart: String, value: T): JAXBElement<T> {
 fun <PORT_TYPE> createServicePort(
     url: String,
     clazz: Class<PORT_TYPE>,
+    createAuthorizeToken: suspend () -> String,
 ): PORT_TYPE = JaxWsProxyFactoryBean().apply {
     address = url
     serviceClass = clazz
+    /* mask credentials */
     inInterceptors.add(LoggingInInterceptor().apply {
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
     })
-    inInterceptors.add(object: AbstractPhaseInterceptor<Message>() {
-        override fun handleMessage(message: Message?) {
-            TODO("Not yet implemented")
-        }
-
-    })
     outInterceptors.add(LoggingOutInterceptor().apply {
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
+    })
+
+    /* inject Azure AD token */
+    inInterceptors.add(object: AbstractPhaseInterceptor<Message>(Phase.PRE_STREAM) {
+        override fun handleMessage(message: Message?) {
+            if (message == null || message[Message.INBOUND_MESSAGE] as? Boolean != false) {
+                return
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            val headers = message[Message.PROTOCOL_HEADERS] as MutableMap<String, MutableList<String>>?
+                ?: mutableMapOf()
+
+            val token = runBlocking { createAuthorizeToken() }
+
+            val authorizationHeaders = headers.computeIfAbsent(HttpHeaders.Authorization) {
+                mutableListOf()
+            }
+
+            authorizationHeaders.add("Bearer $token")
+            message[Message.PROTOCOL_HEADERS] = headers
+        }
     })
 }.create(clazz)
