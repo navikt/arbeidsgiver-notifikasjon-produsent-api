@@ -50,5 +50,3 @@ spec:
         - application: tiltaksgjennomforing-api
           namespace: arbeidsgiver
           cluster: dev-fss
-  envFrom:
-    - secret: altinn-basic-ws
