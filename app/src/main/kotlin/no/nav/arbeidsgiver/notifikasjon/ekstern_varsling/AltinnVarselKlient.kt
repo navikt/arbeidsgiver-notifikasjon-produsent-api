@@ -80,7 +80,7 @@ class AltinnVarselKlientImpl(
     azureService: AzureService = AzureServiceBuilder.buildAzureService(),
     azureTargetApp: String = basedOnEnv(
         prod = { "" },
-        dev = { "dev-gcp:fager:altinn-varsel-firewall" },
+        dev = { "dev-gcp.fager.altinn-varsel-firewall" },
         other = { " "}
     ),
 ): AltinnVarselKlient {
