@@ -317,7 +317,7 @@ fun <PORT_TYPE> createServicePort(
     })
 
     /* inject Azure AD token */
-    inInterceptors.add(object: AbstractPhaseInterceptor<Message>(Phase.PRE_STREAM) {
+    outInterceptors.add(object: AbstractPhaseInterceptor<Message>(Phase.PRE_STREAM) {
         override fun handleMessage(message: Message?) {
             if (message == null || message[Message.INBOUND_MESSAGE] as? Boolean != false) {
                 return
