@@ -2,8 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
-import io.ktor.http.*
-import kotlinx.coroutines.runBlocking
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
@@ -21,9 +19,6 @@ import no.nav.tms.token.support.azure.exchange.AzureServiceBuilder
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
-import org.apache.cxf.message.Message
-import org.apache.cxf.phase.AbstractPhaseInterceptor
-import org.apache.cxf.phase.Phase
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
@@ -92,7 +87,7 @@ class AltinnVarselKlientImpl(
     override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
         return when (eksternVarsel) {
             is EksternVarsel.Epost -> sendEpost(
-                virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
+                reporteeNumber = eksternVarsel.fnrEllerOrgnr,
                 epostadresse = eksternVarsel.epostadresse,
                 tittel = eksternVarsel.tittel,
                 tekst = eksternVarsel.body,
@@ -113,7 +108,11 @@ class AltinnVarselKlientImpl(
             StandaloneNotification().apply {
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
-                setMottaker(mottaker)
+                reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
+                service = ns("Service", Service().apply {
+                    serviceCode = mottaker.serviceCode
+                    serviceEdition = mottaker.serviceEdition.toInt()
+                })
 
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
@@ -148,7 +147,9 @@ class AltinnVarselKlientImpl(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
-                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
+                if (reporteeNumber != null) {
+                    this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
+                }
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
@@ -184,7 +185,11 @@ class AltinnVarselKlientImpl(
             StandaloneNotification().apply {
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
-                setMottaker(mottaker)
+                reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
+                service = ns("Service", Service().apply {
+                    serviceCode = mottaker.serviceCode
+                    serviceEdition = mottaker.serviceEdition.toInt()
+                })
 
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
@@ -210,7 +215,7 @@ class AltinnVarselKlientImpl(
     }
 
     suspend fun sendEpost(
-        virksomhetsnummer: String,
+        reporteeNumber: String?,
         epostadresse: String,
         tittel: String,
         tekst: String,
@@ -220,7 +225,9 @@ class AltinnVarselKlientImpl(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
-                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
+                if (reporteeNumber != null) {
+                    this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
+                }
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
