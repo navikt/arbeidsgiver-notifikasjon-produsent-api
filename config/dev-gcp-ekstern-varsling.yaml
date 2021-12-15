@@ -26,6 +26,8 @@ spec:
     outbound:
       rules:
         - application: altinn-varsel-firewall
+      external:
+        - host: tt02.altinn.no
   gcp:
     sqlInstances:
       - type: POSTGRES_12
