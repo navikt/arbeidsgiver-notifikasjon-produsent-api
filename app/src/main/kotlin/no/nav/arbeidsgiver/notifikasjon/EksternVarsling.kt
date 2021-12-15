@@ -89,8 +89,14 @@ object EksternVarsling {
                     }
                     routing {
                         internalRoutes()
+
+                        val internalTestClient = basedOnEnv(
+                            prod = { AltinnVarselKlientLogging() },
+                            dev = { AltinnVarselKlientImpl() },
+                            other = { AltinnVarselKlientLogging() }
+                        )
                         get("/internal/test_ekstern_varsel") {
-                            testEksternVarsel(altinnVarselKlient)
+                            testEksternVarsel(internalTestClient)
                         }
                     }
                 }.start(wait = true)
@@ -131,5 +137,4 @@ suspend fun PipelineContext<Unit, ApplicationCall>.testEksternVarsel(altinnVarse
             }
         )
     }
-
 }
