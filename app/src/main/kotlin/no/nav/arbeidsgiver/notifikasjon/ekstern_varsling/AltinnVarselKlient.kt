@@ -139,7 +139,7 @@ class AltinnVarselKlientImpl(
     }
 
     suspend fun sendSms(
-        mobilnummer: String,
+        mobilnummer: String?,
         reporteeNumber: String?,
         tekst: String,
     ): Result<AltinnVarselKlient.AltinnResponse> {
@@ -153,7 +153,9 @@ class AltinnVarselKlientImpl(
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
                             transportType = ns("TransportType", TransportType.SMS)
-                            receiverAddress = ns("ReceiverAddress", mobilnummer)
+                            if (mobilnummer != null) {
+                                receiverAddress = ns("ReceiverAddress", mobilnummer)
+                            }
                         }
                     )
                 )
