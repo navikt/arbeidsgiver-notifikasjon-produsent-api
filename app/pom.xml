@@ -107,7 +107,7 @@
             <!-- trengs bare for å dra opp DummyServer lokalt -->
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http-jetty</artifactId>
-            <version>3.4.4</version>
+            <version>3.4.5</version>
             <scope>test</scope>
         </dependency>
 
