@@ -30,10 +30,10 @@ spec:
         diskAutoresize: true
         highAvailability: true
         databases:
-          - name: produsent-model
+          - name: ekstern-varsling-model
             envVarPrefix: DB
         autoBackupHour: 1
         maintenance:
           hour: 3
-#  envFrom:
-#    - secret: altinn-basic-ws
+  envFrom:
+    - secret: altinn-basic-ws
