@@ -76,7 +76,7 @@ class AltinnVarselKlientImpl(
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
     azureService: AzureService = AzureServiceBuilder.buildAzureService(),
     azureTargetApp: String = basedOnEnv(
-        prod = { "" },
+        prod = { "prod-gcp.fager.altinn-varsel-firewall" },
         dev = { "dev-gcp.fager.altinn-varsel-firewall" },
         other = { " "}
     ),
