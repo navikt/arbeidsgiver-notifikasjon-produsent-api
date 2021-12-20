@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
+import io.ktor.http.HttpHeaders.Authorization
+import kotlinx.coroutines.runBlocking
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
@@ -19,6 +21,9 @@ import no.nav.tms.token.support.azure.exchange.AzureServiceBuilder
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
+import org.apache.cxf.message.Message
+import org.apache.cxf.phase.AbstractPhaseInterceptor
+import org.apache.cxf.phase.Phase
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
@@ -296,14 +301,6 @@ fun AltinnFault.toLoggableString(): String {
     """.trimIndent()
 }
 
-fun StandaloneNotification.setMottaker(mottaker: AltinnMottaker) {
-    reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
-    service = ns("Service", Service().apply {
-        serviceCode = mottaker.serviceCode
-        serviceEdition = mottaker.serviceEdition.toInt()
-    })
-}
-
 @Suppress("HttpUrlsUsage")
 inline fun <reified T> ns(localpart: String, value: T): JAXBElement<T> {
     val ns = "http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10"
@@ -338,7 +335,7 @@ fun <PORT_TYPE> createServicePort(
 
             val token = runBlocking { createAuthorizeToken() }
 
-            val authorizationHeaders = headers.computeIfAbsent(HttpHeaders.Authorization) {
+            val authorizationHeaders = headers.computeIfAbsent(Authorization) {
                 mutableListOf()
             }
 
