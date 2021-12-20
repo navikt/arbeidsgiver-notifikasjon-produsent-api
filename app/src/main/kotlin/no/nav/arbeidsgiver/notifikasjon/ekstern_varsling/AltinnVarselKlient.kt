@@ -71,10 +71,7 @@ class AltinnVarselKlientLogging : AltinnVarselKlient {
  * [TransportType.EMAIL] støtter også html, det gjør ikke [TransportType.SMS]
  */
 class AltinnVarselKlientImpl(
-    altinnEndPoint: String = basedOnEnv(
-        prod = { "" },
-        other = { "https://altinn-varsel-firewall.dev.nav.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc" },
-    ),
+    altinnEndPoint: String = "http://altinn-varsel-firewall.fager/ServiceEngineExternal/NotificationAgencyExternalBasic.svc",
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
     azureService: AzureService = AzureServiceBuilder.buildAzureService(),

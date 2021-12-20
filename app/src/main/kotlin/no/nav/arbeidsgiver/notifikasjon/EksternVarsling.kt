@@ -92,12 +92,7 @@ object EksternVarsling {
 
                         val internalTestClient = basedOnEnv(
                             prod = { AltinnVarselKlientLogging() },
-                            dev = { AltinnVarselKlientImpl(
-                                altinnEndPoint = basedOnEnv(
-                                    prod = { "" },
-                                    other = { "https://altinn-varsel-firewall.dev.nav.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc" },
-                                ),
-                            ) },
+                            dev = { AltinnVarselKlientImpl() },
                             other = { AltinnVarselKlientLogging() }
                         )
                         get("/internal/test_ekstern_varsel") {
