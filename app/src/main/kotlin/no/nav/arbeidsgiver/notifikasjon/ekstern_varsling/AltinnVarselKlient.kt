@@ -140,8 +140,8 @@ class AltinnVarselKlientImpl(
     }
 
     suspend fun sendSms(
-        mobilnummer: String?,
-        reporteeNumber: String?,
+        mobilnummer: String,
+        reporteeNumber: String,
         tekst: String,
     ): Result<AltinnVarselKlient.AltinnResponse> {
         return send(StandaloneNotificationBEList().withStandaloneNotification(
@@ -149,16 +149,12 @@ class AltinnVarselKlientImpl(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
-                if (reporteeNumber != null) {
-                    this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
-                }
+                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
                             transportType = ns("TransportType", TransportType.SMS)
-                            if (mobilnummer != null) {
-                                receiverAddress = ns("ReceiverAddress", mobilnummer)
-                            }
+                            receiverAddress = ns("ReceiverAddress", mobilnummer)
                         }
                     )
                 )
@@ -217,7 +213,7 @@ class AltinnVarselKlientImpl(
     }
 
     suspend fun sendEpost(
-        reporteeNumber: String?,
+        reporteeNumber: String,
         epostadresse: String,
         tittel: String,
         tekst: String,
@@ -227,9 +223,7 @@ class AltinnVarselKlientImpl(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
-                if (reporteeNumber != null) {
-                    this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
-                }
+                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {

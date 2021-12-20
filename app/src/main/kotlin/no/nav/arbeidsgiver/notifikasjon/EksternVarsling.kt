@@ -106,8 +106,8 @@ object EksternVarsling {
 }
 
 data class TestEksternVarselRequestBody(
-    val reporteeNumber: String?,
-    val tlf: String?,
+    val reporteeNumber: String,
+    val tlf: String,
     val tekst: String,
 )
 
