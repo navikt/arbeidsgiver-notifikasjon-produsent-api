@@ -11,29 +11,29 @@ spec:
     path: /internal/alive
   readiness:
     path: /internal/ready
-  replicas:
-    min: 1
-    max: 2
   prometheus:
     enabled: true
     path: /internal/metrics
   kafka:
-    pool: nav-dev
+    pool: nav-prod
   azure:
     application:
       enabled: true
-  accessPolicy:
-    outbound:
-      rules:
-        - application: altinn-varsel-firewall
+#  accessPolicy:
+#    outbound:
+#      rules:
+#        - application: altinn-varsel-firewall
   gcp:
     sqlInstances:
       - type: POSTGRES_12
-        tier: db-f1-micro
+        tier: db-custom-1-3840
         diskAutoresize: true
-        highAvailability: false
+        highAvailability: true
         databases:
           - name: ekstern-varsling-model
             envVarPrefix: DB
+        autoBackupHour: 1
+        maintenance:
+          hour: 3
   envFrom:
     - secret: altinn-basic-ws

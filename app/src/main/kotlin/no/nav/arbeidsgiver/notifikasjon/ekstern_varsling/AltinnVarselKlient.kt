@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
+import io.ktor.http.HttpHeaders.Authorization
+import kotlinx.coroutines.runBlocking
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
@@ -14,9 +16,14 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
+import no.nav.tms.token.support.azure.exchange.AzureService
+import no.nav.tms.token.support.azure.exchange.AzureServiceBuilder
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
+import org.apache.cxf.message.Message
+import org.apache.cxf.phase.AbstractPhaseInterceptor
+import org.apache.cxf.phase.Phase
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
@@ -64,27 +71,31 @@ class AltinnVarselKlientLogging : AltinnVarselKlient {
  * [TransportType.EMAIL] støtter også html, det gjør ikke [TransportType.SMS]
  */
 class AltinnVarselKlientImpl(
-    altinnEndPoint: String = basedOnEnv(
-        prod = { "" },
-        other = { "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc" },
-    ),
+    altinnEndPoint: String = "http://altinn-varsel-firewall.fager/ServiceEngineExternal/NotificationAgencyExternalBasic.svc",
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
+    azureService: AzureService = AzureServiceBuilder.buildAzureService(),
+    azureTargetApp: String = basedOnEnv(
+        prod = { "prod-gcp.fager.altinn-varsel-firewall" },
+        dev = { "dev-gcp.fager.altinn-varsel-firewall" },
+        other = { " "}
+    ),
 ): AltinnVarselKlient {
     val log = logger()
-    private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java)
-
+    private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java) {
+        azureService.getAccessToken(azureTargetApp)
+    }
 
     override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
         return when (eksternVarsel) {
             is EksternVarsel.Epost -> sendEpost(
-                virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
+                reporteeNumber = eksternVarsel.fnrEllerOrgnr,
                 epostadresse = eksternVarsel.epostadresse,
                 tittel = eksternVarsel.tittel,
                 tekst = eksternVarsel.body,
             )
             is EksternVarsel.Sms -> sendSms(
-                virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
+                reporteeNumber = eksternVarsel.fnrEllerOrgnr,
                 mobilnummer = eksternVarsel.mobilnummer,
                 tekst = eksternVarsel.tekst,
             )
@@ -99,7 +110,11 @@ class AltinnVarselKlientImpl(
             StandaloneNotification().apply {
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
-                setMottaker(mottaker)
+                reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
+                service = ns("Service", Service().apply {
+                    serviceCode = mottaker.serviceCode
+                    serviceEdition = mottaker.serviceEdition.toInt()
+                })
 
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
@@ -126,7 +141,7 @@ class AltinnVarselKlientImpl(
 
     suspend fun sendSms(
         mobilnummer: String,
-        virksomhetsnummer: String,
+        reporteeNumber: String,
         tekst: String,
     ): Result<AltinnVarselKlient.AltinnResponse> {
         return send(StandaloneNotificationBEList().withStandaloneNotification(
@@ -134,7 +149,7 @@ class AltinnVarselKlientImpl(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
-                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
+                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
@@ -168,7 +183,11 @@ class AltinnVarselKlientImpl(
             StandaloneNotification().apply {
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
-                setMottaker(mottaker)
+                reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
+                service = ns("Service", Service().apply {
+                    serviceCode = mottaker.serviceCode
+                    serviceEdition = mottaker.serviceEdition.toInt()
+                })
 
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
@@ -194,7 +213,7 @@ class AltinnVarselKlientImpl(
     }
 
     suspend fun sendEpost(
-        virksomhetsnummer: String,
+        reporteeNumber: String,
         epostadresse: String,
         tittel: String,
         tekst: String,
@@ -204,7 +223,7 @@ class AltinnVarselKlientImpl(
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
-                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
+                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().withReceiverEndPoint(
                         ReceiverEndPoint().apply {
@@ -273,14 +292,6 @@ fun AltinnFault.toLoggableString(): String {
     """.trimIndent()
 }
 
-fun StandaloneNotification.setMottaker(mottaker: AltinnMottaker) {
-    reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
-    service = ns("Service", Service().apply {
-        serviceCode = mottaker.serviceCode
-        serviceEdition = mottaker.serviceEdition.toInt()
-    })
-}
-
 @Suppress("HttpUrlsUsage")
 inline fun <reified T> ns(localpart: String, value: T): JAXBElement<T> {
     val ns = "http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10"
@@ -290,13 +301,37 @@ inline fun <reified T> ns(localpart: String, value: T): JAXBElement<T> {
 fun <PORT_TYPE> createServicePort(
     url: String,
     clazz: Class<PORT_TYPE>,
+    createAuthorizeToken: suspend () -> String,
 ): PORT_TYPE = JaxWsProxyFactoryBean().apply {
     address = url
     serviceClass = clazz
+    /* mask credentials */
     inInterceptors.add(LoggingInInterceptor().apply {
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
     })
     outInterceptors.add(LoggingOutInterceptor().apply {
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
+    })
+
+    /* inject Azure AD token */
+    outInterceptors.add(object: AbstractPhaseInterceptor<Message>(Phase.PRE_STREAM) {
+        override fun handleMessage(message: Message?) {
+            if (message == null || message[Message.INBOUND_MESSAGE] as? Boolean != false) {
+                return
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            val headers = message[Message.PROTOCOL_HEADERS] as MutableMap<String, MutableList<String>>?
+                ?: mutableMapOf()
+
+            val token = runBlocking { createAuthorizeToken() }
+
+            val authorizationHeaders = headers.computeIfAbsent(Authorization) {
+                mutableListOf()
+            }
+
+            authorizationHeaders.add("Bearer $token")
+            message[Message.PROTOCOL_HEADERS] = headers
+        }
     })
 }.create(clazz)

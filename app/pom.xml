@@ -178,6 +178,11 @@
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>9.15.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.navikt.tms-ktor-token-support</groupId>
+            <artifactId>token-support-azure-exchange</artifactId>
+            <version>2021.09.15-12.26-2b3dd2a9ca44</version>
+        </dependency>
 
         <!-- test dependencies -->
         <dependency>
@@ -337,4 +342,10 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 </project>

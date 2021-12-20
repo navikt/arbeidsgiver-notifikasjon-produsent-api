@@ -79,9 +79,6 @@ jobs:
       matrix:
         cluster: [ dev-gcp, prod-gcp ]
         app: [ bruker-api, produsent-api, kafka-reaper, statistikk, ekstern-varsling ]
-        exclude:
-          - cluster: prod-gcp
-            app: ekstern-varsling
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1
