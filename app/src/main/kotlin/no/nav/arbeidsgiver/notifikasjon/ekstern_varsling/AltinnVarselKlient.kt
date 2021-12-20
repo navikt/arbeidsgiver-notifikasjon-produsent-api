@@ -325,25 +325,25 @@ fun <PORT_TYPE> createServicePort(
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
     })
 
-//    /* inject Azure AD token */
-//    outInterceptors.add(object: AbstractPhaseInterceptor<Message>(Phase.PRE_STREAM) {
-//        override fun handleMessage(message: Message?) {
-//            if (message == null || message[Message.INBOUND_MESSAGE] as? Boolean != false) {
-//                return
-//            }
-//
-//            @Suppress("UNCHECKED_CAST")
-//            val headers = message[Message.PROTOCOL_HEADERS] as MutableMap<String, MutableList<String>>?
-//                ?: mutableMapOf()
-//
-//            val token = runBlocking { createAuthorizeToken() }
-//
-//            val authorizationHeaders = headers.computeIfAbsent(HttpHeaders.Authorization) {
-//                mutableListOf()
-//            }
-//
-//            authorizationHeaders.add("Bearer $token")
-//            message[Message.PROTOCOL_HEADERS] = headers
-//        }
-//    })
+    /* inject Azure AD token */
+    outInterceptors.add(object: AbstractPhaseInterceptor<Message>(Phase.PRE_STREAM) {
+        override fun handleMessage(message: Message?) {
+            if (message == null || message[Message.INBOUND_MESSAGE] as? Boolean != false) {
+                return
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            val headers = message[Message.PROTOCOL_HEADERS] as MutableMap<String, MutableList<String>>?
+                ?: mutableMapOf()
+
+            val token = runBlocking { createAuthorizeToken() }
+
+            val authorizationHeaders = headers.computeIfAbsent(HttpHeaders.Authorization) {
+                mutableListOf()
+            }
+
+            authorizationHeaders.add("Bearer $token")
+            message[Message.PROTOCOL_HEADERS] = headers
+        }
+    })
 }.create(clazz)

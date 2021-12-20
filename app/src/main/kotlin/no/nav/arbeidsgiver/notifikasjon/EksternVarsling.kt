@@ -95,8 +95,8 @@ object EksternVarsling {
                             dev = { AltinnVarselKlientImpl(
                                 altinnEndPoint = basedOnEnv(
                                     prod = { "" },
-                                    other = { "https://tt02.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc" },
-                                    ),
+                                    other = { "https://altinn-varsel-firewall.dev.nav.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc" },
+                                ),
                             ) },
                             other = { AltinnVarselKlientLogging() }
                         )
