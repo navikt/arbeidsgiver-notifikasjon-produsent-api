@@ -98,7 +98,7 @@ object AltinnImpl : Altinn {
             .filter { it.type != "Enterprise" }
             .filter {
                 if (it.organizationNumber == null) {
-                    log.warn("filtrerer ut reportee uten organizationNumber")
+                    log.warn("filtrerer ut reportee uten organizationNumber: organizationForm=${it.organizationForm} type=${it.type} status=${it.status}")
                     false
                 } else {
                     true
