@@ -6,16 +6,13 @@ import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilli
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 
 class EksternVarslingRepository(
-    private val database: Database
+    private val database: Database,
 ) {
     private val log = logger()
     private val podName = System.getenv("HOSTNAME") ?: "localhost"
@@ -97,7 +94,7 @@ class EksternVarslingRepository(
     private suspend fun insertVarsler(
         varsler: List<EksterntVarselBestilling>,
         produsentId: String,
-        notifikasjonsId: UUID
+        notifikasjonsId: UUID,
     ) {
         /* Rewrite to batch insert? */
         database.transaction {
@@ -215,7 +212,7 @@ class EksternVarslingRepository(
     data class ReleasedResource(
         val varselId: UUID,
         val lockedAt: LocalDateTime,
-        val lockedBy: String
+        val lockedBy: String,
     )
 
     suspend fun releaseTimedOutJobLocks(): List<ReleasedResource> {
@@ -297,16 +294,16 @@ class EksternVarslingRepository(
                     )
                 RETURNING varsel_id
                     """,
-                setup = {
-                    string(podName)
-                    string(lockTimeout.toString())
+            setup = {
+                string(podName)
+                string(lockTimeout.toString())
 
-                },
-                transform = {
-                    getObject("varsel_id") as UUID
-                }
-            )
-                .firstOrNull()
+            },
+            transform = {
+                getObject("varsel_id") as UUID
+            }
+        )
+            .firstOrNull()
     }
 
     suspend fun findVarsel(varselId: UUID): EksternVarselTilstand? {
@@ -346,7 +343,8 @@ class EksternVarslingRepository(
                 val response = when (state) {
                     EksterntVarselTilstand.NY.toString() -> null
                     EksterntVarselTilstand.SENDT.toString(),
-                    EksterntVarselTilstand.KVITTERT.toString() ->
+                    EksterntVarselTilstand.KVITTERT.toString(),
+                    ->
                         when (val sendeStatus = getString("sende_status")) {
                             "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
                                 rå = objectMapper.readTree(getString("altinn_response")),
@@ -493,6 +491,18 @@ class EksternVarslingRepository(
         """) {
             this.getInt("count")
         }.first()
+    }
+
+    suspend fun mottakerErPåAllowList(mottaker: String): Boolean {
+        return database.nonTransactionalExecuteQuery("""
+            select mottaker from allow_list 
+            where mottaker = ?
+            and skal_sendes = true
+        """, {
+            string(mottaker)
+        }) {
+            this.getString("mottaker")
+        }.isNotEmpty()
     }
 }
 
