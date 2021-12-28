@@ -60,6 +60,25 @@ class AltinnVarselKlientLogging : AltinnVarselKlient {
     }
 }
 
+class AltinnVarselKlientMedFilter(
+    private val repository: EksternVarslingRepository,
+    private val altinnVarselKlient: AltinnVarselKlientImpl,
+    private val loggingKlient: AltinnVarselKlientLogging,
+) : AltinnVarselKlient {
+
+    override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
+        val mottaker = when(eksternVarsel) {
+            is EksternVarsel.Sms -> eksternVarsel.mobilnummer
+            is EksternVarsel.Epost -> eksternVarsel.epostadresse
+        }
+        return if (repository.mottakerErPåAllowList(mottaker)) {
+           altinnVarselKlient.send(eksternVarsel)
+        } else {
+            loggingKlient.send(eksternVarsel)
+        }
+    }
+}
+
 /**
  * TokenTextOnly NotificationType (aka varslingsmal) i altinn har visstnok forskjellig oppførsel basert på
  * [TransportType]. Ved [TransportType.EMAIL] så kan det settes tittel,

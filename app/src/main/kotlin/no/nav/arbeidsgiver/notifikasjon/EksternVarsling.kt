@@ -37,11 +37,7 @@ object EksternVarsling {
     )
 
     fun main(
-        httpPort: Int = 8080,
-        altinnVarselKlient: AltinnVarselKlient = basedOnEnv(
-            prod = { AltinnVarselKlientImpl() },
-            other = { AltinnVarselKlientLogging() },
-        )
+        httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
             val eksternVarslingModelAsync = async {
@@ -72,9 +68,14 @@ object EksternVarsling {
             }
 
             launch {
+                val eksternVarslingRepository = eksternVarslingModelAsync.await()
                 val service = EksternVarslingService(
-                    eksternVarslingRepository = eksternVarslingModelAsync.await(),
-                    altinnVarselKlient = altinnVarselKlient,
+                    eksternVarslingRepository = eksternVarslingRepository,
+                    altinnVarselKlient = basedOnEnv(
+                        prod = { AltinnVarselKlientImpl() },
+                        dev = { AltinnVarselKlientMedFilter(eksternVarslingRepository, AltinnVarselKlientImpl(), AltinnVarselKlientLogging()) },
+                        other = { AltinnVarselKlientLogging() },
+                    ),
                     kafkaProducer = createKafkaProducer(),
                     lokalOsloTid = LokalOsloTidImpl,
                 )
