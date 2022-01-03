@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.core.JsonLocation
 import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.core.io.ContentReference
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -51,7 +52,7 @@ class StatusPageTests : DescribeSpec({
 
         context("when an JsonProcessingException occurs") {
             val ex = object : JsonProcessingException(
-                "Error", JsonLocation({}, 42,42,42)
+                "Error", JsonLocation(ContentReference.unknown(), 42,42,42)
             ) {}
             val response = whenExceptionThrown("/some/json/exception", ex)
 
