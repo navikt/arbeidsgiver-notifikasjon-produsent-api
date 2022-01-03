@@ -50,3 +50,7 @@ spec:
         - application: tiltaksgjennomforing-api
           namespace: arbeidsgiver
           cluster: dev-fss
+
+        - application: esyfovarsel
+          namespace: team-esyfo
+          cluster: dev-fss
