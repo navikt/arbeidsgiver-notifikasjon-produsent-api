@@ -47,6 +47,16 @@ val ARBEIDSGIVER_TILTAK = Produsent(
     )
 )
 
+val ESYFO = Produsent(
+    id = "esyfovarsel",
+    accessPolicy = basedOnEnv(
+        prod = { listOf("prod-fss:team-esyfo:esyfovarsel") },
+        other = { listOf("dev-fss:team-esyfo:esyfovarsel") },
+    ),
+    tillatteMerkelapper = listOf("Aktivitetskrav"),
+    tillatteMottakere = listOf(NærmesteLederDefinisjon)
+)
+
 val PRODUSENT_LIST = basedOnEnv(
     prod = {
         listOf(
@@ -57,6 +67,7 @@ val PRODUSENT_LIST = basedOnEnv(
         listOf(
             FAGER_TESTPRODUSENT,
             ARBEIDSGIVER_TILTAK,
+            ESYFO,
         )
     }
 )
