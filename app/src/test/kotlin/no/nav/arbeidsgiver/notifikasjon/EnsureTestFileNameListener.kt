@@ -12,6 +12,14 @@ import io.kotest.matchers.string.shouldContain
 @AutoScan
 object EnsureTestFileNameListener : TestListener {
     override suspend fun beforeAny(testCase: TestCase) {
-        testCase.source.fileName shouldContain "Test"
+        /**
+         * er noe rart med fileName når man har forAll med suspend. blir satt til
+         * testCase.source.fileName == "ContinuationImpl.kt"
+         *
+         * Derfor sjekker vi bare når vi er på root, der er det sannsynligvis ikke et problem
+         */
+        if (testCase.description.isRootTest()) {
+            testCase.source.fileName shouldContain "Test"
+        }
     }
 }
