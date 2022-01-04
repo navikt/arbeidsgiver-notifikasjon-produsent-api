@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.statistikk
 
 import com.fasterxml.jackson.databind.node.NullNode
+import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MultiGauge
@@ -9,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID
 import no.nav.arbeidsgiver.notifikasjon.Hendelse.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.Hendelse.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.Instant.now
 import java.time.OffsetDateTime
@@ -105,6 +107,16 @@ class StatistikkModelTests : DescribeSpec({
                 bestilt shouldBe 1
                 feilet shouldBe 1
                 vellykket shouldBe 1
+            }
+        }
+    }
+
+    describe("Idempotent oppførsel") {
+        forAll<Hendelse>(EksempelHendelse.Alle) { hendelse ->
+            val metadata = HendelseMetadata(now())
+            it("håndterer ${hendelse::class.simpleName} med idempotens") {
+                model.oppdaterModellEtterHendelse(hendelse, metadata)
+                model.oppdaterModellEtterHendelse(hendelse, metadata)
             }
         }
     }
