@@ -117,6 +117,7 @@ object AltinnImpl : Altinn {
 
 fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolean {
     return when (cause) {
+        is io.ktor.network.sockets.SocketTimeoutException -> true
         is ServerResponseException -> {
             when ((cause as? ServerResponseException)?.response?.status) {
                 HttpStatusCode.BadGateway,
@@ -126,9 +127,6 @@ fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolea
                 else -> false
             }
         }
-        is io.ktor.network.sockets.SocketTimeoutException,
-        is io.ktor.network.sockets.ConnectTimeoutException,
-        -> true
         else -> false
 
     }
