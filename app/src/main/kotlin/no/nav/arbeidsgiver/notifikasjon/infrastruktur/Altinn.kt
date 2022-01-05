@@ -23,7 +23,7 @@ interface Altinn {
     suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
-        tjenester: Iterable<ServicecodeDefinisjon>
+        tjenester: Iterable<ServicecodeDefinisjon>,
     ): List<BrukerModel.Tilgang>
 }
 
@@ -54,7 +54,7 @@ object AltinnImpl : Altinn {
     override suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
-        tjenester: Iterable<ServicecodeDefinisjon>
+        tjenester: Iterable<ServicecodeDefinisjon>,
     ): List<BrukerModel.Tilgang> =
         timer.coRecord {
             coroutineScope {
@@ -115,11 +115,21 @@ object AltinnImpl : Altinn {
     }
 }
 
-fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse() : Boolean {
-    return when ((cause as? ServerResponseException)?.response?.status) {
-        HttpStatusCode.BadGateway,
-        HttpStatusCode.GatewayTimeout,
-        HttpStatusCode.ServiceUnavailable -> true
+fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolean {
+    return when (cause) {
+        is ServerResponseException -> {
+            when ((cause as? ServerResponseException)?.response?.status) {
+                HttpStatusCode.BadGateway,
+                HttpStatusCode.GatewayTimeout,
+                HttpStatusCode.ServiceUnavailable,
+                -> true
+                else -> false
+            }
+        }
+        is io.ktor.network.sockets.SocketTimeoutException,
+        is io.ktor.network.sockets.ConnectTimeoutException,
+        -> true
         else -> false
+
     }
 }
