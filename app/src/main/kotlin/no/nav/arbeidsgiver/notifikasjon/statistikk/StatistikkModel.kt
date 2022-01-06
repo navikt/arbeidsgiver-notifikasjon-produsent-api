@@ -298,7 +298,7 @@ class StatistikkModel(
                     insert into varsel_resultat 
                         (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
                     values
-                    (?, ?, ?, ?, 'feilet')
+                        (?, ?, ?, ?, 'feilet')
                     on conflict on constraint varsel_resultat_pkey do nothing;
                     """
                 ) {
@@ -333,11 +333,12 @@ class StatistikkModel(
     ) {
         database.nonTransactionalExecuteBatch(
             """
-                        insert into varsel_bestilling 
-                            (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
-                        values
-                            (?, ?, ?, ?, ?)
-                        """,
+            insert into varsel_bestilling 
+                (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
+            values
+                (?, ?, ?, ?, ?)
+            on conflict (varsel_id) do nothing;
+            """,
             iterable
         ) { eksterntVarsel ->
             when (eksterntVarsel) {

@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <kotlin.version>1.6.0</kotlin.version>
+        <kotlin.version>1.6.10</kotlin.version>
         <ktor.version>1.6.7</ktor.version>
         <kotest.version>4.6.0</kotest.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
@@ -127,7 +127,7 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.8.0</version>
+            <version>1.8.1</version>
         </dependency>
 
         <!-- logging -->
