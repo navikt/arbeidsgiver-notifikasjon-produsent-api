@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -128,6 +129,12 @@ class BrukerApiTests : DescribeSpec({
                     returnedOppgave.brukerKlikk.klikketPaa shouldBe false
                 }
             }
+
+            it("notifikasjoner hentet counter økt") {
+                val vellykket = meterRegistry.get("notifikasjoner_hentet").counter().count()
+                vellykket shouldBe 2
+            }
+
         }
     }
 })
