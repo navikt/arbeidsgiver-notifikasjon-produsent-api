@@ -103,7 +103,6 @@ class BrukerModelImpl(
 
 
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
-    private val notifikasjonerHentetCount = Health.meterRegistry.counter("notifikasjoner_hentet")
 
     override suspend fun hentNotifikasjoner(
         fnr: String,
@@ -145,7 +144,6 @@ class BrukerModelImpl(
                 jsonb(tilgangerAltinnMottaker)
             }
         ) {
-            notifikasjonerHentetCount.increment()
             when (val type = getString("type")) {
                 "BESKJED" -> BrukerModel.Beskjed(
                     merkelapp = getString("merkelapp"),
