@@ -40,7 +40,7 @@ spec:
         - application: notifikasjon-proxy
     outbound:
       rules:
-        - application: altinn-rettigheter-proxy
+        - application: altinn-rettigheter-proxy-2
           namespace: arbeidsgiver
         - application: narmesteleder
           namespace: teamsykmelding
