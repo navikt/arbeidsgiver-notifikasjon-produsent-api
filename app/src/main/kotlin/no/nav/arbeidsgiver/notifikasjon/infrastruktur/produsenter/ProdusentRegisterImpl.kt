@@ -50,8 +50,8 @@ val ARBEIDSGIVER_TILTAK = Produsent(
 val ESYFO = Produsent(
     id = "esyfovarsel",
     accessPolicy = basedOnEnv(
-        prod = { listOf("prod-fss:team-esyfo:esyfovarsel") },
-        other = { listOf("dev-fss:team-esyfo:esyfovarsel") },
+        prod = { listOf("prod-fss:team-esyfo:esyfovarsel-job") },
+        other = { listOf("dev-fss:team-esyfo:esyfovarsel-job") },
     ),
     tillatteMerkelapper = listOf("Aktivitetskrav"),
     tillatteMottakere = listOf(NærmesteLederDefinisjon)
