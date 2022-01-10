@@ -1,7 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 
