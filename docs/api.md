@@ -100,6 +100,7 @@ Med variabler:
     * [Beskjed](#beskjed)
     * [BeskjedData](#beskjeddata)
     * [DuplikatEksternIdOgMerkelapp](#duplikateksternidogmerkelapp)
+    * [EksterntVarsel](#eksterntvarsel)
     * [HardDeleteNotifikasjonVellykket](#harddeletenotifikasjonvellykket)
     * [Metadata](#metadata)
     * [NaermesteLederMottaker](#naermesteledermottaker)
@@ -107,6 +108,7 @@ Med variabler:
     * [NotifikasjonEdge](#notifikasjonedge)
     * [NotifikasjonFinnesIkke](#notifikasjonfinnesikke)
     * [NyBeskjedVellykket](#nybeskjedvellykket)
+    * [NyEksterntVarselResultat](#nyeksterntvarselresultat)
     * [NyOppgaveVellykket](#nyoppgavevellykket)
     * [Oppgave](#oppgave)
     * [OppgaveData](#oppgavedata)
@@ -118,18 +120,29 @@ Med variabler:
     * [UkjentProdusent](#ukjentprodusent)
   * [Inputs](#inputs)
     * [AltinnMottakerInput](#altinnmottakerinput)
+    * [EksterntVarselEpostInput](#eksterntvarselepostinput)
+    * [EksterntVarselInput](#eksterntvarselinput)
+    * [EksterntVarselSmsInput](#eksterntvarselsmsinput)
+    * [EpostKontaktInfoInput](#epostkontaktinfoinput)
+    * [EpostMottakerInput](#epostmottakerinput)
     * [MetadataInput](#metadatainput)
     * [MottakerInput](#mottakerinput)
     * [NaermesteLederMottakerInput](#naermesteledermottakerinput)
     * [NotifikasjonInput](#notifikasjoninput)
     * [NyBeskjedInput](#nybeskjedinput)
     * [NyOppgaveInput](#nyoppgaveinput)
+    * [SendetidspunktInput](#sendetidspunktinput)
+    * [SmsKontaktInfoInput](#smskontaktinfoinput)
+    * [SmsMottakerInput](#smsmottakerinput)
   * [Enums](#enums)
+    * [EksterntVarselStatus](#eksterntvarselstatus)
     * [OppgaveTilstand](#oppgavetilstand)
+    * [Sendevindu](#sendevindu)
   * [Scalars](#scalars)
     * [Boolean](#boolean)
     * [ID](#id)
     * [ISO8601DateTime](#iso8601datetime)
+    * [ISO8601LocalDateTime](#iso8601localdatetime)
     * [Int](#int)
     * [String](#string)
   * [Interfaces](#interfaces)
@@ -179,6 +192,9 @@ informasjon.
 
 Dere må gjenta paremetere når dere blar gjennom alle notifikasjonen.
 
+Hvis verken `merkelapp` eller `merkelapper` er gitt, vil notifikasjoner
+med alle dine merkelapper være med.
+
 </td>
 </tr>
 <tr>
@@ -201,6 +217,24 @@ Cursor til notifikasjonen du henter fra. Cursor får du fra [NotifikasjonEdge](#
 </tr>
 <tr>
 <td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Filtrer på merkelapp. Kan ikke brukes sammen med `merkelapper`.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapper</td>
+<td valign="top">[<a href="#string">String</a>!]</td>
+<td>
+
+Filtrer på merkelapper. Kan ikke brukes sammen med `merkelapp`.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">grupperingsid</td>
 <td valign="top"><a href="#string">String</a></td>
 <td></td>
 </tr>
@@ -306,6 +340,8 @@ noen som helst måte — som om notifikasjonen aldri eksisterte.
 
 For dere (produsenter), så kan dere fortsatt se notifikasjonen i listen over deres notifikasjoner.
 
+Eventuelle eksterne varsler (SMS, e-post) knyttet til notifikasjonen vil bli fortsatt bli sendt.
+
 Advarsel: det er ikke mulig å angre på denne operasjonen.
 
 </td>
@@ -349,6 +385,8 @@ ID-en som dere ga oss da dere opprettet notifikasjonen.
 
 Sletter en notifikasjon og tilhørende data helt fra databasen og kafka.
 Formålet er å støtte juridiske krav om sletting i henhold til personvern.
+
+Eventuelle eksterne varsler (SMS, e-post) knyttet til notifikasjonen vil bli fortsatt bli sendt.
 
 Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
 
@@ -448,6 +486,11 @@ ID-en som dere ga oss da dere opprettet notifikasjonen.
 <td valign="top"><a href="#beskjeddata">BeskjedData</a>!</td>
 <td></td>
 </tr>
+<tr>
+<td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
+<td valign="top">[<a href="#eksterntvarsel">EksterntVarsel</a>!]!</td>
+<td></td>
+</tr>
 </tbody>
 </table>
 
@@ -510,6 +553,31 @@ Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eks
 <tr>
 <td colspan="2" valign="top"><strong>feilmelding</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### EksterntVarsel
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>id</strong></td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>status</strong></td>
+<td valign="top"><a href="#eksterntvarselstatus">EksterntVarselStatus</a>!</td>
 <td></td>
 </tr>
 </tbody>
@@ -707,6 +775,31 @@ av "eventual consistency" i systemet vårt.
 <td valign="top"><a href="#id">ID</a>!</td>
 <td></td>
 </tr>
+<tr>
+<td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
+<td valign="top">[<a href="#nyeksterntvarselresultat">NyEksterntVarselResultat</a>!]!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### NyEksterntVarselResultat
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>id</strong></td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td></td>
+</tr>
 </tbody>
 </table>
 
@@ -725,6 +818,11 @@ av "eventual consistency" i systemet vårt.
 <tr>
 <td colspan="2" valign="top"><strong>id</strong></td>
 <td valign="top"><a href="#id">ID</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
+<td valign="top">[<a href="#nyeksterntvarselresultat">NyEksterntVarselResultat</a>!]!</td>
 <td></td>
 </tr>
 </tbody>
@@ -755,6 +853,11 @@ av "eventual consistency" i systemet vårt.
 <tr>
 <td colspan="2" valign="top"><strong>oppgave</strong></td>
 <td valign="top"><a href="#oppgavedata">OppgaveData</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
+<td valign="top">[<a href="#eksterntvarsel">EksterntVarsel</a>!]!</td>
 <td></td>
 </tr>
 </tbody>
@@ -984,6 +1087,136 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 </tbody>
 </table>
 
+#### EksterntVarselEpostInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>mottaker</strong></td>
+<td valign="top"><a href="#epostmottakerinput">EpostMottakerInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>epostTittel</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>epostHtmlBody</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>sendetidspunkt</strong></td>
+<td valign="top"><a href="#sendetidspunktinput">SendetidspunktInput</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### EksterntVarselInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>sms</strong></td>
+<td valign="top"><a href="#eksterntvarselsmsinput">EksterntVarselSmsInput</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>epost</strong></td>
+<td valign="top"><a href="#eksterntvarselepostinput">EksterntVarselEpostInput</a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### EksterntVarselSmsInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>mottaker</strong></td>
+<td valign="top"><a href="#smsmottakerinput">SmsMottakerInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>smsTekst</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>sendetidspunkt</strong></td>
+<td valign="top"><a href="#sendetidspunktinput">SendetidspunktInput</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### EpostKontaktInfoInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>fnr</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>epostadresse</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### EpostMottakerInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>kontaktinfo</strong></td>
+<td valign="top"><a href="#epostkontaktinfoinput">EpostKontaktInfoInput</a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 #### MetadataInput
 
 <table>
@@ -1147,6 +1380,11 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 <td valign="top"><a href="#metadatainput">MetadataInput</a>!</td>
 <td></td>
 </tr>
+<tr>
+<td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
+<td valign="top">[<a href="#eksterntvarselinput">EksterntVarselInput</a>!]!</td>
+<td></td>
+</tr>
 </tbody>
 </table>
 
@@ -1176,10 +1414,117 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 <td valign="top"><a href="#metadatainput">MetadataInput</a>!</td>
 <td></td>
 </tr>
+<tr>
+<td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
+<td valign="top">[<a href="#eksterntvarselinput">EksterntVarselInput</a>!]!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### SendetidspunktInput
+
+Med denne typen velger du når du ønsker at det eksterne varselet blir sendt.
+Du skal velge en (og kun en) av feltene, ellers blir forespørselen din avvist
+med en feil.
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>tidspunkt</strong></td>
+<td valign="top"><a href="#iso8601localdatetime">ISO8601LocalDateTime</a></td>
+<td>
+
+Hvis du spesifiserer et tidspunkt på formen "YYYY-MM-DDThh:mm", så sender
+vi notifikasjonen på det tidspunktet. Oppgir du et tidspunkt i fortiden,
+så sender vi varselet øyeblikkelig.
+
+Tidspunktet tolker vi som lokal, norsk tid (veggklokke-tid).
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>sendevindu</strong></td>
+<td valign="top"><a href="#sendevindu">Sendevindu</a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### SmsKontaktInfoInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>fnr</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>tlf</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### SmsMottakerInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>kontaktinfo</strong></td>
+<td valign="top"><a href="#smskontaktinfoinput">SmsKontaktInfoInput</a></td>
+<td></td>
+</tr>
 </tbody>
 </table>
 
 ### Enums
+
+#### EksterntVarselStatus
+
+<table>
+<thead>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>NY</strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong>SENDT</strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong>FEILET</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 
 #### OppgaveTilstand
 
@@ -1210,6 +1555,49 @@ En oppgave som allerede er utført.
 </tbody>
 </table>
 
+#### Sendevindu
+
+<table>
+<thead>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>NKS_AAPNINGSTID</strong></td>
+<td>
+
+Vi sender varselet slik at mottaker skal ha mulighet for å kontakte NAVs
+kontaktsenter (NKS). Varsler blir sendt litt før NKS åpner, og vi slutter å
+sende litt før NKS stenger.
+
+Vi tar foreløpig ikke hensyn til røde dager eller produksjonshendelser som fører til
+at NKS er utilgjengelig.
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>DAGTID_IKKE_SOENDAG</strong></td>
+<td>
+
+Vi sender varselet på dagtid, mandag til lørdag.
+Altså sender vi ikke om kvelden og om natten, og ikke i det hele tatt på søndager.
+
+Vi tar ikke hensyn til røde dager.
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>LOEPENDE</strong></td>
+<td>
+
+Vi sender varslet så fort vi kan.
+
+</td>
+</tr>
+</tbody>
+</table>
+
 ### Scalars
 
 #### Boolean
@@ -1225,6 +1613,11 @@ The `ID` scalar type represents a unique identifier, often used to refetch an ob
 DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
 
 Er representert som String.
+
+#### ISO8601LocalDateTime
+
+Dato og lokaltid etter ISO8601-standaren. F.eks. '2001-12-24T10:44:01'.
+Vi tolker tidspunktet som Oslo-tid ('Europe/Oslo').
 
 #### Int
 
