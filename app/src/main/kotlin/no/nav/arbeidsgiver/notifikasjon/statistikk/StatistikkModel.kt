@@ -181,11 +181,17 @@ class StatistikkModel(
     suspend fun antallVarsler(): List<MultiGauge.Row<Number>> {
         return database.nonTransactionalExecuteQuery(
             """
-                select notifikasjon.produsent_id, merkelapp, varsel_type, coalesce(status, 'bestilt') as status, count(*) as antall
+                select 
+                    notifikasjon.produsent_id, 
+                    merkelapp, 
+                    varsel_type, 
+                    coalesce(status, 'bestilt') as status, 
+                    coalesce(feilkode, '') as feilkode,
+                    count(*) as antall
                 from varsel_bestilling as bestilling
                          inner join notifikasjon on bestilling.notifikasjon_id = notifikasjon.notifikasjon_id
                          left outer join varsel_resultat as resultat on resultat.varsel_id = bestilling.varsel_id
-                group by (notifikasjon.produsent_id, merkelapp, varsel_type, status)
+                group by (notifikasjon.produsent_id, merkelapp, varsel_type, status, feilkode)
             """,
             transform = {
                 MultiGauge.Row.of(
@@ -193,7 +199,8 @@ class StatistikkModel(
                         "produsent_id", this.getString("produsent_id"),
                         "merkelapp", this.getString("merkelapp"),
                         "varsel_type", this.getString("varsel_type"),
-                        "status", this.getString("status")
+                        "status", this.getString("status"),
+                        "feilkode", this.getString("feilkode"),
                     ),
                     this.getInt("antall")
                 )
@@ -296,9 +303,9 @@ class StatistikkModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into varsel_resultat 
-                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
+                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status, feilkode)
                     values
-                        (?, ?, ?, ?, 'feilet')
+                        (?, ?, ?, ?, 'feilet', ?)
                     on conflict on constraint varsel_resultat_pkey do nothing;
                     """
                 ) {
@@ -306,6 +313,7 @@ class StatistikkModel(
                     uuid(hendelse.varselId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.produsentId)
+                    string(hendelse.altinnFeilkode)
                 }
             }
             is Hendelse.SoftDelete -> {
