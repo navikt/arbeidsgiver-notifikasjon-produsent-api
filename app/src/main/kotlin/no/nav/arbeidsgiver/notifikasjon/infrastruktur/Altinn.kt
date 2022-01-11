@@ -83,10 +83,10 @@ object AltinnImpl : Altinn {
                 false
             )
         } catch (error: AltinnException) {
-            if (error.proxyError.httpStatus == 400)
-                return emptyList()
-            else
-                throw error
+            when (error.proxyError.httpStatus) {
+                400, 403 -> return emptyList()
+                else -> throw error
+            }
         } catch (error: Exception) {
             if (error.message?.contains("403") == true)
                 return emptyList()
