@@ -12,14 +12,11 @@ import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.erDriftsforstyrrelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import java.time.OffsetDateTime
 import java.util.*
@@ -28,6 +25,8 @@ object BrukerAPI {
     private val log = logger()
 
     private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-bruker-api"
+
+    private val notifikasjonerHentetCount = Health.meterRegistry.counter("notifikasjoner_hentet")
 
     data class Context(
         val fnr: String,
@@ -233,6 +232,7 @@ object BrukerAPI {
                                 )
                         }
                     }
+                notifikasjonerHentetCount.increment(notifikasjoner.size.toDouble())
                 return@coroutineScope NotifikasjonerResultat(
                     notifikasjoner,
                     feilAltinn = tilganger.await() == null,

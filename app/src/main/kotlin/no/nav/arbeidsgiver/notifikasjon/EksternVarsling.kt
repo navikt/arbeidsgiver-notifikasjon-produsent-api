@@ -92,12 +92,15 @@ object EksternVarsling {
                         internalRoutes()
 
                         val internalTestClient = basedOnEnv(
-                            prod = { AltinnVarselKlientLogging() },
+                            prod = { AltinnVarselKlientImpl() },
                             dev = { AltinnVarselKlientImpl() },
                             other = { AltinnVarselKlientLogging() }
                         )
-                        get("/internal/test_ekstern_varsel") {
-                            testEksternVarsel(internalTestClient)
+                        get("/internal/send_sms") {
+                            testSms(internalTestClient)
+                        }
+                        get("/internal/send_epost") {
+                            testEpost(internalTestClient)
                         }
                     }
                 }.start(wait = true)
@@ -106,36 +109,65 @@ object EksternVarsling {
     }
 }
 
-data class TestEksternVarselRequestBody(
+data class TestSmsRequestBody(
     val reporteeNumber: String,
     val tlf: String,
     val tekst: String,
 )
 
-suspend fun PipelineContext<Unit, ApplicationCall>.testEksternVarsel(altinnVarselKlient: AltinnVarselKlient) {
-    val varselRequest = call.receive<TestEksternVarselRequestBody>()
-    if (altinnVarselKlient is AltinnVarselKlientImpl) {
-        altinnVarselKlient.sendSms(
+suspend fun PipelineContext<Unit, ApplicationCall>.testSms(altinnVarselKlient: AltinnVarselKlient) {
+    val varselRequest = call.receive<TestSmsRequestBody>()
+    testSend(altinnVarselKlient) {
+        sendSms(
             mobilnummer = varselRequest.tlf,
             reporteeNumber = varselRequest.reporteeNumber,
             tekst = varselRequest.tekst,
-        ).fold(
-            onSuccess = {
-                when (it) {
-                    is AltinnVarselKlient.AltinnResponse.Ok ->
-                        call.respond(HttpStatusCode.OK, objectMapper.writeValueAsString(it.rå))
-                    is AltinnVarselKlient.AltinnResponse.Feil ->
-                        call.respond(HttpStatusCode.BadRequest, objectMapper.writeValueAsString(it.rå))
-                }
-            },
-            onFailure = {
-                call.respond(HttpStatusCode.InternalServerError,
-                    objectMapper.writeValueAsString(mapOf(
-                        "type" to it.javaClass.canonicalName,
-                        "msg" to it.message,
-                    ))
-                )
-            }
         )
+    }
+}
+
+data class TestEpostRequestBody(
+    val reporteeNumber: String,
+    val epost: String,
+    val subject: String,
+    val body: String,
+)
+
+suspend fun PipelineContext<Unit, ApplicationCall>.testEpost(altinnVarselKlient: AltinnVarselKlient) {
+    val varselRequest = call.receive<TestEpostRequestBody>()
+    this.testSend(altinnVarselKlient) {
+        sendEpost(
+            reporteeNumber = varselRequest.reporteeNumber,
+            epostadresse = varselRequest.epost,
+            tittel = varselRequest.subject,
+            tekst = varselRequest.body,
+        )
+    }
+}
+
+private suspend fun PipelineContext<Unit, ApplicationCall>.testSend(
+    client: AltinnVarselKlient,
+    action: suspend AltinnVarselKlientImpl.() -> Result<AltinnVarselKlient.AltinnResponse>
+) {
+    if (client is AltinnVarselKlientImpl) {
+        client.action()
+            .fold(
+                onSuccess = {
+                    when (it) {
+                        is AltinnVarselKlient.AltinnResponse.Ok ->
+                            call.respond(HttpStatusCode.OK, objectMapper.writeValueAsString(it.rå))
+                        is AltinnVarselKlient.AltinnResponse.Feil ->
+                            call.respond(HttpStatusCode.BadRequest, objectMapper.writeValueAsString(it.rå))
+                    }
+                },
+                onFailure = {
+                    call.respond(HttpStatusCode.InternalServerError,
+                        objectMapper.writeValueAsString(mapOf(
+                            "type" to it.javaClass.canonicalName,
+                            "msg" to it.message,
+                        ))
+                    )
+                }
+            )
     }
 }

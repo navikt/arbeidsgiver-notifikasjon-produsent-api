@@ -184,11 +184,17 @@ group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
     suspend fun antallVarsler(): List<MultiGauge.Row<Number>> {
         return database.nonTransactionalExecuteQuery(
             """
-                select notifikasjon.produsent_id, merkelapp, varsel_type, coalesce(status, 'bestilt') as status, count(*) as antall
+                select 
+                    notifikasjon.produsent_id, 
+                    merkelapp, 
+                    varsel_type, 
+                    coalesce(status, 'bestilt') as status, 
+                    coalesce(feilkode, '') as feilkode,
+                    count(*) as antall
                 from varsel_bestilling as bestilling
                          inner join notifikasjon on bestilling.notifikasjon_id = notifikasjon.notifikasjon_id
                          left outer join varsel_resultat as resultat on resultat.varsel_id = bestilling.varsel_id
-                group by (notifikasjon.produsent_id, merkelapp, varsel_type, status)
+                group by (notifikasjon.produsent_id, merkelapp, varsel_type, status, feilkode)
             """,
             transform = {
                 MultiGauge.Row.of(
@@ -196,7 +202,8 @@ group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
                         "produsent_id", this.getString("produsent_id"),
                         "merkelapp", this.getString("merkelapp"),
                         "varsel_type", this.getString("varsel_type"),
-                        "status", this.getString("status")
+                        "status", this.getString("status"),
+                        "feilkode", this.getString("feilkode"),
                     ),
                     this.getInt("antall")
                 )
@@ -299,9 +306,9 @@ group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into varsel_resultat 
-                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
+                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status, feilkode)
                     values
-                    (?, ?, ?, ?, 'feilet')
+                        (?, ?, ?, ?, 'feilet', ?)
                     on conflict on constraint varsel_resultat_pkey do nothing;
                     """
                 ) {
@@ -309,6 +316,7 @@ group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
                     uuid(hendelse.varselId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.produsentId)
+                    string(hendelse.altinnFeilkode)
                 }
             }
             is Hendelse.SoftDelete -> {
@@ -336,11 +344,12 @@ group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
     ) {
         database.nonTransactionalExecuteBatch(
             """
-                        insert into varsel_bestilling 
-                            (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
-                        values
-                            (?, ?, ?, ?, ?)
-                        """,
+            insert into varsel_bestilling 
+                (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
+            values
+                (?, ?, ?, ?, ?)
+            on conflict (varsel_id) do nothing;
+            """,
             iterable
         ) { eksterntVarsel ->
             when (eksterntVarsel) {
