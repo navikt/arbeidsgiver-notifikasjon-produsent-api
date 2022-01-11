@@ -326,9 +326,11 @@ fun <PORT_TYPE> createServicePort(
     serviceClass = clazz
     /* mask credentials */
     inInterceptors.add(LoggingInInterceptor().apply {
+        addSensitiveProtocolHeaderNames(setOf("Authorization"))
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
     })
     outInterceptors.add(LoggingOutInterceptor().apply {
+        addSensitiveProtocolHeaderNames(setOf("Authorization"))
         addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber"))
     })
 

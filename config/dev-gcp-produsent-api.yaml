@@ -51,6 +51,6 @@ spec:
           namespace: arbeidsgiver
           cluster: dev-fss
 
-        - application: esyfovarsel
+        - application: esyfovarsel-job
           namespace: team-esyfo
           cluster: dev-fss
