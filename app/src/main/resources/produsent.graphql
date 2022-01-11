@@ -395,13 +395,25 @@ input SendetidspunktInput @ExactlyOneFieldGiven {
 
 input EksterntVarselSmsInput {
     mottaker: SmsMottakerInput!
+    """
+    Teksten som sendes i SMS-en.
+    OBS: Det er ikke lov med personopplysninger i teksten. SMS er ikke en sikker kanal.
+    """
     smsTekst: String!
     sendetidspunkt: SendetidspunktInput!
 }
 
 input EksterntVarselEpostInput {
     mottaker: EpostMottakerInput!
+    """
+    Subject/emne til e-posten.
+    OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+    """
     epostTittel: String!
+    """
+    Kroppen til e-posten. Tolkes som HTML.
+    OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+    """
     epostHtmlBody: String!
     sendetidspunkt: SendetidspunktInput!
 }
