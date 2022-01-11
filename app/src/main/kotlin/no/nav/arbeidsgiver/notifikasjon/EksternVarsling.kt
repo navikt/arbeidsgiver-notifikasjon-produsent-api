@@ -92,7 +92,7 @@ object EksternVarsling {
                         internalRoutes()
 
                         val internalTestClient = basedOnEnv(
-                            prod = { AltinnVarselKlientLogging() },
+                            prod = { AltinnVarselKlientImpl() },
                             dev = { AltinnVarselKlientImpl() },
                             other = { AltinnVarselKlientLogging() }
                         )
