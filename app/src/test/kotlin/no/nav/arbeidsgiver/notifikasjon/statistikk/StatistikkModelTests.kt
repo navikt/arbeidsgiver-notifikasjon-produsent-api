@@ -73,7 +73,7 @@ class StatistikkModelTests : DescribeSpec({
             hendelseId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac111111"),
             produsentId = bestilling.produsentId,
             kildeAppNavn = bestilling.kildeAppNavn,
-            varselId =  epostBestilling.varselId,
+            varselId = epostBestilling.varselId,
             råRespons = NullNode.instance,
             altinnFeilkode = "42",
             feilmelding = "uwotm8"
@@ -90,7 +90,7 @@ class StatistikkModelTests : DescribeSpec({
 
         val brukerKlikket = Hendelse.BrukerKlikket(
             virksomhetsnummer = bestilling.virksomhetsnummer,
-            fnr =  "1234567789",
+            fnr = "1234567789",
             hendelseId = UUID.randomUUID(),
             notifikasjonId = bestilling.notifikasjonId,
             kildeAppNavn = "",
@@ -119,8 +119,8 @@ class StatistikkModelTests : DescribeSpec({
             model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(epostFeilet, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(smsVellykket, HendelseMetadata(now()))
-            model.oppdaterModellEtterHendelse(brukerKlikket,HendelseMetadata(now()))
-            model.oppdaterModellEtterHendelse(oppgaveUtført,HendelseMetadata(now()))
+            model.oppdaterModellEtterHendelse(brukerKlikket, HendelseMetadata(now()))
+            model.oppdaterModellEtterHendelse(oppgaveUtført, HendelseMetadata(now()))
 
             it("opprettes statistikk i databasen") {
                 val antallVarsler = model.antallVarsler()
