@@ -54,7 +54,13 @@ Oppgave brukes når du trenger at arbeidsgiver skal gjøre en konkret handling. 
 
 __Hva med varsler på e-post eller SMS?__
 
-Ekstern varsling på sms og e-post er under utvikling og ikke støttet enda. 
+Når dere oppretter en notifikasjon velger dere om denne skal varsles eksternt i tillegg. SMS eller e-post skal ikke inneholde noen personopplysninger men si generelt hva varslet gjelder. T ex “_Du har en ny sykemelding. Logg inn på NAV på Min side – arbeidsgiver for å finne den_”. Se bruksvilkårene for fler detaljer. 
+
+**Ekstern varsling med kontaktinformasjon:**
+Vi støtter ekstern varsling der dere som produsent har kontaktinformasjon (telefonnummer eller e-postadresse) + virksomhetsnummer til den som skal varsles. 
+
+**Ekstern varsling basert på service code I Altinn - planlagt:**
+Vil dere sende eksternt varslet til arbeidsgiver som har tilgang til deres tjeneste basert på tilgang i Altinn? Ta kontakt med oss så vi kan prioritere utvikling av dette!
 
 __Hvor lenge vises notifikasjonen for mottakere og lagres i loggene?__
 
