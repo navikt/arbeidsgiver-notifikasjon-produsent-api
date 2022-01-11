@@ -4,12 +4,9 @@ import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
-
-
 
 data class EksterntVarselInput(
     val sms: Sms?,
@@ -17,11 +14,6 @@ data class EksterntVarselInput(
 ) {
 
     fun tilDomene(): EksterntVarsel {
-        basedOnEnv(
-            prod = { throw RuntimeException("eksternt varsel ikke skrudd på i prod") },
-            other = {}
-        )
-
         if (sms != null) {
             return sms.tilDomene()
         }
