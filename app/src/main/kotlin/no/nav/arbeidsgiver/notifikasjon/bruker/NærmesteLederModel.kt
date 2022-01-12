@@ -37,6 +37,11 @@ interface NærmesteLederModel {
 
 class NarmesteLederLeesahDeserializer : JsonDeserializer<NarmesteLederLeesah>(NarmesteLederLeesah::class.java)
 
+/**
+ * Topic-ressurs: https://github.com/navikt/teamsykmelding-kafka-topics/blob/main/topics/narmesteleder/syfo-narmesteleder-leesah.yaml
+ * Produsent-repo: https://github.com/navikt/narmesteleder
+ * Eksempel konsument fra syfo-teamene: https://github.com/navikt/narmesteleder-varsel/blob/a8e03fbf14cc5e19dc77e169e3cabf2735a64922/src/main/kotlin/no/nav/syfo/narmesteleder/OppdaterNarmesteLederService.kt#L23
+ */
 class NærmesteLederModelImpl(
     private val database: Database,
 ) : NærmesteLederModel {
