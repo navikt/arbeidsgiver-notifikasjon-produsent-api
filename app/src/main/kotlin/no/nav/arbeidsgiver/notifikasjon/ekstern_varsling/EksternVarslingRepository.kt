@@ -508,12 +508,13 @@ class EksternVarslingRepository(
     suspend fun updateEmergencyBrakeTo(newState: Boolean) {
         database.nonTransactionalExecuteUpdate("""
             insert into emergency_break (id, stop_processing, detected_at)
-            values (0, true, CURRENT_TIMESTAMP)
+            values (0, ?, CURRENT_TIMESTAMP)
             on conflict (id) do update
                 set 
                     stop_processing = ?,
                     detected_at = CURRENT_TIMESTAMP
         """) {
+            boolean(newState)
             boolean(newState)
         }
     }
