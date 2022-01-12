@@ -48,7 +48,7 @@ class StatistikkModelTests : DescribeSpec({
             sendevindu = NKS_ÅPNINGSTID,
             sendeTidspunkt = null,
         )
-        val bestilling = Hendelse.BeskjedOpprettet(
+        val bestilling = Hendelse.OppgaveOpprettet(
             merkelapp = "foo",
             eksternId = "42",
             mottaker = NærmesteLederMottaker(
@@ -73,7 +73,7 @@ class StatistikkModelTests : DescribeSpec({
             hendelseId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac111111"),
             produsentId = bestilling.produsentId,
             kildeAppNavn = bestilling.kildeAppNavn,
-            varselId =  epostBestilling.varselId,
+            varselId = epostBestilling.varselId,
             råRespons = NullNode.instance,
             altinnFeilkode = "42",
             feilmelding = "uwotm8"
@@ -88,14 +88,39 @@ class StatistikkModelTests : DescribeSpec({
             råRespons = NullNode.instance,
         )
 
+        val brukerKlikket = Hendelse.BrukerKlikket(
+            virksomhetsnummer = bestilling.virksomhetsnummer,
+            fnr = "1234567789",
+            hendelseId = UUID.randomUUID(),
+            notifikasjonId = bestilling.notifikasjonId,
+            kildeAppNavn = "",
+            produsentId = null,
+        )
+
+        val oppgaveUtført = Hendelse.OppgaveUtført(
+            virksomhetsnummer = bestilling.virksomhetsnummer,
+            hendelseId = UUID.randomUUID(),
+            notifikasjonId = bestilling.notifikasjonId,
+            kildeAppNavn = "",
+            produsentId = "",
+        )
+
+
+
         context("gitt hendelse med to varsler") {
             val meterRegistry = SimpleMeterRegistry()
             val gauge = MultiGauge.builder("antall_varsler")
                 .description("Antall varsler")
                 .register(meterRegistry)
+            val antallUtførteGauge = MultiGauge.builder("antall_utforte")
+                .description("Antall utførte (med histogram)")
+                .register(meterRegistry)
+
             model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(epostFeilet, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(smsVellykket, HendelseMetadata(now()))
+            model.oppdaterModellEtterHendelse(brukerKlikket, HendelseMetadata(now()))
+            model.oppdaterModellEtterHendelse(oppgaveUtført, HendelseMetadata(now()))
 
             it("opprettes statistikk i databasen") {
                 val antallVarsler = model.antallVarsler()
@@ -107,6 +132,12 @@ class StatistikkModelTests : DescribeSpec({
                 bestilt shouldBe 1
                 feilet shouldBe 1
                 vellykket shouldBe 1
+            }
+
+            it("utførthistogram inneholder informasjon om klikket på eller ikke") {
+                antallUtførteGauge.register(model.antallUtførteHistogram(), true)
+                val utførteOgKlikketPaa = meterRegistry.get("antall_utforte").tag("klikket_paa", "t").gauge().value()
+                utførteOgKlikketPaa shouldBe 1
             }
         }
     }
