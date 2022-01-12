@@ -265,4 +265,8 @@ class ParameterSetters(
         string(
             objectMapper.writeValueAsString<T>(value)
         )
+
+    fun boolean(newState: Boolean) {
+        preparedStatement.setBoolean(index++, newState)
+    }
 }

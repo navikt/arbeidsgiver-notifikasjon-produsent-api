@@ -102,6 +102,9 @@ object EksternVarsling {
                         get("/internal/send_epost") {
                             testEpost(internalTestClient)
                         }
+                        post("/internal/update_emergency_brake") {
+                            updateEmergencyBrake(eksternVarslingModelAsync.await())
+                        }
                     }
                 }.start(wait = true)
             }
@@ -170,4 +173,16 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.testSend(
                 }
             )
     }
+}
+
+data class UpdateEmergencyBrakeRequestBody(
+    val newState: Boolean
+)
+
+suspend fun PipelineContext<Unit, ApplicationCall>.updateEmergencyBrake(
+    eksternVarslingRepository: EksternVarslingRepository
+) {
+    val newState = call.receive<UpdateEmergencyBrakeRequestBody>().newState
+    eksternVarslingRepository.updateEmergencyBrakeTo(newState)
+    call.respond(HttpStatusCode.OK)
 }
