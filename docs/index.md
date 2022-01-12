@@ -96,6 +96,6 @@ Vi bruker digisyfo nærmeste leder konsept.
 
 - [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/) for notifikasjoner til arbeidsgivere.
 
-- Har du spørsmål? Kontakt oss på slack: [#team-fager](https://nav-it.slack.com/archives/C01V9FFEHEK).
+- Har du spørsmål? Kontakt oss på slack: [#arbeidsgiver-notifikasjon](https://nav-it.slack.com/archives/C02F7211DQ8).
 
 
