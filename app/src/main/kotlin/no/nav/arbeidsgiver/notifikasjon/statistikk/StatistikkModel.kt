@@ -45,57 +45,52 @@ class StatistikkModel(
         return database.nonTransactionalExecuteQuery(
             """
                WITH alder_tabell AS (
-    select produsent_id,
-           merkelapp,
-           mottaker,
-           notifikasjon_type,
-           (utfoert_tidspunkt - opprettet_tidspunkt) as alder_sekunder,
-           (case
-                when exists(select 1 from notifikasjon_klikk klikk where notifikasjon_id = notifikasjon.notifikasjon_id)
-                    then true
-                else false end)                      as klikket_paa
-    from notifikasjon
-    where utfoert_tidspunkt is not null)
-select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '0-1H' as bucket, count(*) as antall
-from alder_tabell
-where alder_sekunder < interval '1 hour'
-group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
-union
-select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '1H-1D' as bucket, count(*) as antall
-from alder_tabell
-where interval '1 hour' <= alder_sekunder
-  and alder_sekunder < interval '1 day'
-group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
-union
-select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '1D-3D' as bucket, count(*) as antall
-from alder_tabell
-where interval '1 day' <= alder_sekunder
-  and alder_sekunder < interval '3 day'
-group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
-union
-select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '3D-1W' as bucket, count(*) as antall
-from alder_tabell
-where interval '1 day' <= alder_sekunder
-  and alder_sekunder < interval '1 week'
-group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
-union
-select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '1W-2W' as bucket, count(*) as antall
-from alder_tabell
-where interval '1 week' <= alder_sekunder
-  and alder_sekunder < interval '2 week'
-group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
-union
-select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '2W-4W' as bucket, count(*) as antall
-from alder_tabell
-where interval '2 week' <= alder_sekunder
-  and alder_sekunder < interval '4 week'
-group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
-union
-select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '4W-infinity' as bucket, count(*) as antall
-from alder_tabell
-where interval '4 week' <= alder_sekunder
-group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
-""",
+                    select produsent_id,
+                           merkelapp,
+                           mottaker,
+                           notifikasjon_type,
+                           (utfoert_tidspunkt - opprettet_tidspunkt) as alder_sekunder,
+                           (case
+                                when exists(select 1 from notifikasjon_klikk klikk where notifikasjon_id = notifikasjon.notifikasjon_id)
+                                    then true
+                                else false end)                      as klikket_paa
+                    from notifikasjon
+                    where utfoert_tidspunkt is not null)
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '0-1H' as bucket, count(*) as antall
+                    from alder_tabell
+                    where alder_sekunder < interval '1 hour'
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
+                union
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '1H-1D' as bucket, count(*) as antall
+                    from alder_tabell
+                    where interval '1 hour' <= alder_sekunder and alder_sekunder < interval '1 day'
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
+                union
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '1D-3D' as bucket, count(*) as antall
+                    from alder_tabell
+                    where interval '1 day' <= alder_sekunder and alder_sekunder < interval '3 day'
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
+                union
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '3D-1W' as bucket, count(*) as antall
+                    from alder_tabell
+                    where interval '1 day' <= alder_sekunder and alder_sekunder < interval '1 week'
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
+                union
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '1W-2W' as bucket, count(*) as antall
+                    from alder_tabell
+                    where interval '1 week' <= alder_sekunder and alder_sekunder < interval '2 week'
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
+                union
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '2W-4W' as bucket, count(*) as antall
+                    from alder_tabell
+                    where interval '2 week' <= alder_sekunder and alder_sekunder < interval '4 week'
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
+                union
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa, '4W-infinity' as bucket, count(*) as antall
+                    from alder_tabell
+                    where interval '4 week' <= alder_sekunder
+                    group by (produsent_id, merkelapp, mottaker, notifikasjon_type, klikket_paa)
+            """,
             transform = {
                 MultiGauge.Row.of(
                     Tags.of(
