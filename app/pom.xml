@@ -12,6 +12,7 @@
         <kotlin.version>1.6.10</kotlin.version>
         <ktor.version>1.6.7</ktor.version>
         <kotest.version>4.6.0</kotest.version>
+        <cxf.version>3.5.0</cxf.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
         <jvm.version>15</jvm.version>
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
@@ -91,23 +92,23 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>3.4.5</version>
+            <version>${cxf.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-features-logging</artifactId>
-            <version>3.5.0</version>
+            <version>${cxf.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
-            <version>3.5.0</version>
+            <version>${cxf.version}</version>
         </dependency>
         <dependency>
             <!-- trengs bare for å dra opp DummyServer lokalt -->
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http-jetty</artifactId>
-            <version>3.4.5</version>
+            <version>${cxf.version}</version>
             <scope>test</scope>
         </dependency>
 
