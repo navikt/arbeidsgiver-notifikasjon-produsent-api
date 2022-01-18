@@ -60,7 +60,7 @@ sealed class Hendelse {
                 kildeAppNavn: String,
                 merkelapp: String,
                 eksternId: String,
-                mottaker: Mottaker? = null,
+                @JsonProperty("mottaker") mottaker: Mottaker? = null,
                 mottakere: List<Mottaker> = listOf(),
                 tekst: String,
                 grupperingsid: String? = null,
