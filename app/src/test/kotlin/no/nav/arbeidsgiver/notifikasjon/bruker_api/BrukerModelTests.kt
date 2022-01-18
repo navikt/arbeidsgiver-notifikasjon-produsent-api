@@ -43,6 +43,7 @@ class BrukerModelTests : DescribeSpec({
             virksomhetsnummer = mottaker.virksomhetsnummer,
             kildeAppNavn = "",
             produsentId = "",
+            eksterneVarsler = listOf(),
         )
 
         context("happy path") {

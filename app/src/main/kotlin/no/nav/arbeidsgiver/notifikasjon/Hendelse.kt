@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
 import java.time.Instant
 import java.time.LocalDateTime
@@ -25,7 +24,8 @@ sealed class Hendelse {
     abstract val kildeAppNavn: String
 
     @JsonTypeName("BeskjedOpprettet")
-    data class BeskjedOpprettet(
+    data class BeskjedOpprettet
+    @JsonIgnore constructor(
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
@@ -35,18 +35,55 @@ sealed class Hendelse {
         val eksternId: String,
         val mottaker: Mottaker,
         val tekst: String,
-        val grupperingsid: String? = null,
+        val grupperingsid: String?,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
+        val eksterneVarsler: List<EksterntVarsel>,
+    ) : Hendelse() {
 
-        // TODO: Det finnes hendelser i kafka-strømmen som mangler dette feltet.
-        // Men det er dumt at vi må sette default value for hele prosjektet, siden
-        // det kan være man glemmer å sette den, og på den måten får bugs.
-        val eksterneVarsler: List<EksterntVarsel> = listOf()
-    ) : Hendelse()
+        companion object {
+            // Denne konstruktøren har default properties, og støtter historiske
+            // JSON-felter man kan finne i kafka-topicen.
+            // Denne konstruktøren skal ikke brukes i vår kode, fordi da er det lett å gå glipp
+            // av å initialisere viktige felt.
+            @JsonCreator
+            @JvmStatic
+            fun jsonConstructor(
+                virksomhetsnummer: String,
+                notifikasjonId: UUID,
+                hendelseId: UUID,
+                produsentId: String,
+                kildeAppNavn: String,
+                merkelapp: String,
+                eksternId: String,
+                mottaker: Mottaker? = null,
+                mottakere: List<Mottaker> = listOf(),
+                tekst: String,
+                grupperingsid: String? = null,
+                lenke: String,
+                opprettetTidspunkt: OffsetDateTime,
+                eksterneVarsler: List<EksterntVarsel> = listOf(),
+            ) = BeskjedOpprettet(
+                virksomhetsnummer = virksomhetsnummer,
+                notifikasjonId = notifikasjonId,
+                hendelseId = hendelseId,
+                produsentId = produsentId,
+                kildeAppNavn = kildeAppNavn,
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottaker = mottaker ?: mottakere[0],
+                tekst = tekst,
+                grupperingsid = grupperingsid,
+                lenke = lenke,
+                opprettetTidspunkt = opprettetTidspunkt,
+                eksterneVarsler = eksterneVarsler
+            )
+        }
+    }
 
     @JsonTypeName("OppgaveOpprettet")
-    data class OppgaveOpprettet(
+    data class OppgaveOpprettet
+        @JsonIgnore constructor(
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
@@ -56,15 +93,46 @@ sealed class Hendelse {
         val eksternId: String,
         val mottaker: Mottaker,
         val tekst: String,
-        val grupperingsid: String? = null,
+        val grupperingsid: String?,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
-
-        // TODO: Det finnes hendelser i kafka-strømmen som mangler dette feltet.
-        // Men det er dumt at vi må sette default value for hele prosjektet, siden
-        // det kan være man glemmer å sette den, og på den måten får bugs.
-        val eksterneVarsler: List<EksterntVarsel> = listOf()
-    ) : Hendelse()
+        val eksterneVarsler: List<EksterntVarsel>,
+    ) : Hendelse() {
+        companion object {
+            @JvmStatic
+            @JsonCreator
+            fun jsonConstructor(
+                virksomhetsnummer: String,
+                notifikasjonId: UUID,
+                hendelseId: UUID,
+                produsentId: String,
+                kildeAppNavn: String,
+                merkelapp: String,
+                eksternId: String,
+                mottaker: Mottaker? = null,
+                mottakere: List<Mottaker> = listOf(),
+                tekst: String,
+                grupperingsid: String? = null,
+                lenke: String,
+                opprettetTidspunkt: OffsetDateTime,
+                eksterneVarsler: List<EksterntVarsel> = listOf(),
+            ) = OppgaveOpprettet(
+                virksomhetsnummer = virksomhetsnummer,
+                notifikasjonId = notifikasjonId,
+                hendelseId = hendelseId,
+                produsentId = produsentId,
+                kildeAppNavn = kildeAppNavn,
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottaker = mottaker ?: mottakere[0],
+                tekst = tekst,
+                grupperingsid = grupperingsid,
+                lenke = lenke,
+                opprettetTidspunkt = opprettetTidspunkt,
+                eksterneVarsler = eksterneVarsler,
+            )
+        }
+    }
 
     @JsonTypeName("OppgaveUtfoert")
     data class OppgaveUtført(

@@ -33,7 +33,8 @@ class AltinnTilgangsstyringTests : DescribeSpec({
         tekst = "",
         lenke = "https://dev.nav.no",
         opprettetTidspunkt = OffsetDateTime.parse("2020-02-02T02:02:02+02"),
-        eksterneVarsler  = listOf()
+        eksterneVarsler  = listOf(),
+        grupperingsid = null,
     )
 
     describe("Tilgangsstyring med altinn-tjenester") {

@@ -45,6 +45,7 @@ class HardDeleteTests : DescribeSpec({
             virksomhetsnummer = mottaker.virksomhetsnummer,
             kildeAppNavn = "",
             produsentId = "",
+            eksterneVarsler = listOf(),
         )
 
         val hardDeleteEvent = Hendelse.HardDelete(

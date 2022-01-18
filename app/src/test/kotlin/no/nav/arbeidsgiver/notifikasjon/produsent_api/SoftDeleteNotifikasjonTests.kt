@@ -67,6 +67,8 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         opprettetTidspunkt = opprettetTidspunkt,
         kildeAppNavn = "",
         produsentId = "",
+        grupperingsid = null,
+        eksterneVarsler = listOf(),
     )
     val oppgaveOpprettet2 = oppgaveOpprettet.copy(
         eksternId = eksternId2,
