@@ -31,7 +31,7 @@ class IdempotentOppgaveOpprettetTests: DescribeSpec({
         kildeAppNavn = "",
         merkelapp = "",
         eksternId = "",
-        mottaker = AltinnMottaker("", "", ""),
+        mottakere = listOf(AltinnMottaker("", "", "")),
         tekst = "",
         lenke = "",
         opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+01"),

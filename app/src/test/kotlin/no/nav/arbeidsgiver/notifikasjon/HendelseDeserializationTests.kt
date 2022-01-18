@@ -9,7 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 /** Unit tests for historical and current formats that
  * may be seen in kafka log.
  */
-class HendelseTests : DescribeSpec({
+class HendelseDeserializationTests : DescribeSpec({
 
     describe("kun 'mottaker'") {
         val oppgaveOpprettet = objectMapper.readValue<Hendelse>("""
@@ -33,6 +33,7 @@ class HendelseTests : DescribeSpec({
                 "opprettetTidspunkt": "2020-01-01T01:01+01"
             }
         """)
+        println(oppgaveOpprettet)
 
         it("mottaker parsed") {
             oppgaveOpprettet as Hendelse.OppgaveOpprettet

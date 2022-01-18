@@ -25,11 +25,11 @@ class AltinnTilgangsstyringTests : DescribeSpec({
         kildeAppNavn = "k",
         merkelapp = "m",
         eksternId = id.toString(),
-        mottaker = AltinnMottaker(
+        mottakere = listOf(AltinnMottaker(
             virksomhetsnummer = "1",
             serviceCode = serviceCode,
             serviceEdition = "1",
-        ),
+        )),
         tekst = "",
         lenke = "https://dev.nav.no",
         opprettetTidspunkt = OffsetDateTime.parse("2020-02-02T02:02:02+02"),

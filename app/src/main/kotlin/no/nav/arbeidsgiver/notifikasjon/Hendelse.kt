@@ -33,13 +33,17 @@ sealed class Hendelse {
         override val kildeAppNavn: String,
         val merkelapp: String,
         val eksternId: String,
-        val mottaker: Mottaker,
+        val mottakere: List<Mottaker>,
         val tekst: String,
         val grupperingsid: String?,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
     ) : Hendelse() {
+
+        @Deprecated("may be more than one!")
+        val mottaker: Mottaker
+            @JsonIgnore get() = mottakere[0]
 
         companion object {
             // Denne konstruktøren har default properties, og støtter historiske
@@ -71,7 +75,7 @@ sealed class Hendelse {
                 kildeAppNavn = kildeAppNavn,
                 merkelapp = merkelapp,
                 eksternId = eksternId,
-                mottaker = mottaker ?: mottakere[0],
+                mottakere = listOfNotNull(mottaker) + mottakere,
                 tekst = tekst,
                 grupperingsid = grupperingsid,
                 lenke = lenke,
@@ -91,13 +95,18 @@ sealed class Hendelse {
         override val kildeAppNavn: String,
         val merkelapp: String,
         val eksternId: String,
-        val mottaker: Mottaker,
+        val mottakere: List<Mottaker>,
         val tekst: String,
         val grupperingsid: String?,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
     ) : Hendelse() {
+
+        @Deprecated("may be more than one!")
+        val mottaker: Mottaker
+            @JsonIgnore get() = mottakere[0]
+
         companion object {
             @JvmStatic
             @JsonCreator
@@ -109,7 +118,7 @@ sealed class Hendelse {
                 kildeAppNavn: String,
                 merkelapp: String,
                 eksternId: String,
-                mottaker: Mottaker? = null,
+                @JsonProperty("mottaker") mottaker: Mottaker? = null,
                 mottakere: List<Mottaker> = listOf(),
                 tekst: String,
                 grupperingsid: String? = null,
@@ -124,7 +133,7 @@ sealed class Hendelse {
                 kildeAppNavn = kildeAppNavn,
                 merkelapp = merkelapp,
                 eksternId = eksternId,
-                mottaker = mottaker ?: mottakere[0],
+                mottakere = listOfNotNull(mottaker) + mottakere,
                 tekst = tekst,
                 grupperingsid = grupperingsid,
                 lenke = lenke,

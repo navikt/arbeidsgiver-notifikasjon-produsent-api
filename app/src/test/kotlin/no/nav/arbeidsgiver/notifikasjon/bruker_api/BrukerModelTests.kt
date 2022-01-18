@@ -33,7 +33,7 @@ class BrukerModelTests : DescribeSpec({
         val event = Hendelse.BeskjedOpprettet(
             merkelapp = "foo",
             eksternId = "42",
-            mottaker = mottaker,
+            mottakere = listOf(mottaker),
             hendelseId = uuid,
             notifikasjonId = uuid,
             tekst = "teste",

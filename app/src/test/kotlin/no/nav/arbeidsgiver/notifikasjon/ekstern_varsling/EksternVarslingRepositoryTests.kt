@@ -29,11 +29,11 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         kildeAppNavn = "1",
         merkelapp = "1",
         eksternId = "1",
-        mottaker = AltinnMottaker(
+        mottakere = listOf(AltinnMottaker(
             virksomhetsnummer = "1",
             serviceCode = "1",
             serviceEdition = "1"
-        ),
+        )),
         tekst = "1",
         grupperingsid = null,
         lenke = "",

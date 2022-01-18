@@ -51,11 +51,11 @@ class StatistikkModelTests : DescribeSpec({
         val bestilling = Hendelse.OppgaveOpprettet(
             merkelapp = "foo",
             eksternId = "42",
-            mottaker = NærmesteLederMottaker(
+            mottakere = listOf(NærmesteLederMottaker(
                 naermesteLederFnr = "314",
                 ansattFnr = "33314",
                 virksomhetsnummer = "1337"
-            ),
+            )),
             hendelseId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac000000"),
             notifikasjonId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac000000"),
             tekst = "teste",

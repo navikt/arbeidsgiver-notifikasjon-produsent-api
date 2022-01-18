@@ -55,11 +55,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                 kildeAppNavn = "",
                 merkelapp = "",
                 eksternId = "",
-                mottaker = AltinnMottaker(
+                mottakere = listOf(AltinnMottaker(
                     virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
-                ),
+                )),
                 tekst = "",
                 grupperingsid = "",
                 lenke = "",
@@ -113,11 +113,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                 kildeAppNavn = "",
                 merkelapp = "",
                 eksternId = "",
-                mottaker = AltinnMottaker(
+                mottakere = listOf(AltinnMottaker(
                     virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
-                ),
+                )),
                 tekst = "",
                 grupperingsid = "",
                 lenke = "",
@@ -157,11 +157,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                 kildeAppNavn = "",
                 merkelapp = "",
                 eksternId = "",
-                mottaker = AltinnMottaker(
+                mottakere = listOf(AltinnMottaker(
                     virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
-                ),
+                )),
                 tekst = "",
                 grupperingsid = "",
                 lenke = "",
@@ -201,11 +201,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                 kildeAppNavn = "",
                 merkelapp = "",
                 eksternId = "",
-                mottaker = AltinnMottaker(
+                mottakere = listOf(AltinnMottaker(
                     virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
-                ),
+                )),
                 tekst = "",
                 grupperingsid = "",
                 lenke = "",
@@ -245,11 +245,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                 kildeAppNavn = "",
                 merkelapp = "",
                 eksternId = "",
-                mottaker = AltinnMottaker(
+                mottakere = listOf(AltinnMottaker(
                     virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
-                ),
+                )),
                 tekst = "",
                 grupperingsid = "",
                 lenke = "",
@@ -289,11 +289,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                 kildeAppNavn = "",
                 merkelapp = "",
                 eksternId = "",
-                mottaker = AltinnMottaker(
+                mottakere = listOf(AltinnMottaker(
                     virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
-                ),
+                )),
                 tekst = "",
                 grupperingsid = "",
                 lenke = "",
@@ -332,11 +332,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                 kildeAppNavn = "",
                 merkelapp = "",
                 eksternId = "",
-                mottaker = AltinnMottaker(
+                mottakere = listOf(AltinnMottaker(
                     virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
-                ),
+                )),
                 tekst = "",
                 grupperingsid = "",
                 lenke = "",
