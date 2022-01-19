@@ -133,7 +133,7 @@ sealed class Hendelse {
                 kildeAppNavn = kildeAppNavn,
                 merkelapp = merkelapp,
                 eksternId = eksternId,
-                mottakere = listOfNotNull(mottaker) + mottakere,
+                mottakere = (listOfNotNull(mottaker) + mottakere),
                 tekst = tekst,
                 grupperingsid = grupperingsid,
                 lenke = lenke,
