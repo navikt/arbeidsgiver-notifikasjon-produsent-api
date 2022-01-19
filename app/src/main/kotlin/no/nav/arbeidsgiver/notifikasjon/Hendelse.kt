@@ -43,7 +43,7 @@ sealed class Hendelse {
 
         @Deprecated("may be more than one!")
         val mottaker: Mottaker
-            @JsonIgnore get() = mottakere[0]
+            @JsonIgnore get() = mottakere.single()
 
         companion object {
             // Denne konstruktøren har default properties, og støtter historiske
@@ -106,7 +106,7 @@ sealed class Hendelse {
 
         @Deprecated("may be more than one!")
         val mottaker: Mottaker
-            @JsonIgnore get() = mottakere[0]
+            @JsonIgnore get() = mottakere.single()
 
         companion object {
             @JvmStatic
