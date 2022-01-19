@@ -75,7 +75,8 @@ sealed class Hendelse {
                 kildeAppNavn = kildeAppNavn,
                 merkelapp = merkelapp,
                 eksternId = eksternId,
-                mottakere = listOfNotNull(mottaker) + mottakere,
+                mottakere = (listOfNotNull(mottaker) + mottakere)
+                    .also { require(it.isNotEmpty()) { "minst en mottakere må gis" } },
                 tekst = tekst,
                 grupperingsid = grupperingsid,
                 lenke = lenke,
@@ -133,7 +134,8 @@ sealed class Hendelse {
                 kildeAppNavn = kildeAppNavn,
                 merkelapp = merkelapp,
                 eksternId = eksternId,
-                mottakere = (listOfNotNull(mottaker) + mottakere),
+                mottakere = (listOfNotNull(mottaker) + mottakere)
+                    .also { require(it.isNotEmpty()) { "minst en mottakere må gis" } },
                 tekst = tekst,
                 grupperingsid = grupperingsid,
                 lenke = lenke,
