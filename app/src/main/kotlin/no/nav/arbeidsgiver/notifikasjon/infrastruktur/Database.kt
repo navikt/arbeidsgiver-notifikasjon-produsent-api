@@ -9,7 +9,10 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
 import org.flywaydb.core.Flyway
 import org.intellij.lang.annotations.Language
-import java.sql.*
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.PreparedStatement
+import java.sql.ResultSet
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime

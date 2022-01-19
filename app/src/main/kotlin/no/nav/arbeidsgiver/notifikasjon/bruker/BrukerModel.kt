@@ -66,34 +66,6 @@ interface BrukerModel {
 class BrukerModelImpl(
     private val database: Database
 ) : BrukerModel {
-    private val log = logger()
-
-    private fun Hendelse.BeskjedOpprettet.tilQueryDomene(): BrukerModel.Beskjed =
-        BrukerModel.Beskjed(
-            id = this.hendelseId,
-            merkelapp = this.merkelapp,
-            tekst = this.tekst,
-            grupperingsid = this.grupperingsid,
-            lenke = this.lenke,
-            eksternId = this.eksternId,
-            mottaker = this.mottaker,
-            opprettetTidspunkt = this.opprettetTidspunkt,
-            klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
-        )
-
-    private fun Hendelse.OppgaveOpprettet.tilQueryDomene(): BrukerModel.Oppgave =
-        BrukerModel.Oppgave(
-            id = this.hendelseId,
-            merkelapp = this.merkelapp,
-            tekst = this.tekst,
-            grupperingsid = this.grupperingsid,
-            lenke = this.lenke,
-            eksternId = this.eksternId,
-            mottaker = this.mottaker,
-            opprettetTidspunkt = this.opprettetTidspunkt,
-            tilstand = BrukerModel.Oppgave.Tilstand.NY,
-            klikketPaa = false /* TODO: lag QueryBeskjedMedKlikk, så denne linjen kan fjernes */
-        )
 
     val BrukerModel.Notifikasjon.mottaker: Mottaker
         get() = when (this) {
@@ -256,8 +228,6 @@ class BrukerModelImpl(
     }
 
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
-        val nyBeskjed = beskjedOpprettet.tilQueryDomene()
-
         database.transaction {
             executeUpdate(
                 """
@@ -277,14 +247,18 @@ class BrukerModelImpl(
                 on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
-                uuid(nyBeskjed.id)
-                string(nyBeskjed.merkelapp)
-                string(nyBeskjed.tekst)
-                nullableString(nyBeskjed.grupperingsid)
-                string(nyBeskjed.lenke)
-                string(nyBeskjed.eksternId)
-                timestamptz(nyBeskjed.opprettetTidspunkt)
-                string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
+                uuid(beskjedOpprettet.notifikasjonId)
+                string(beskjedOpprettet.merkelapp)
+                string(beskjedOpprettet.tekst)
+                nullableString(beskjedOpprettet.grupperingsid)
+                string(beskjedOpprettet.lenke)
+                string(beskjedOpprettet.eksternId)
+                timestamptz(beskjedOpprettet.opprettetTidspunkt)
+                string(objectMapper.writeValueAsString(beskjedOpprettet.mottaker))
+            }
+
+            for (mottaker in beskjedOpprettet.mottakere) {
+                storeMottaker(beskjedOpprettet.notifikasjonId, mottaker)
             }
 
             executeUpdate(
@@ -299,9 +273,39 @@ class BrukerModelImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
-        val nyBeskjed = oppgaveOpprettet.tilQueryDomene()
+    private fun Transaction.storeMottaker(notifikasjonId: UUID, mottaker: Mottaker) {
+        when (mottaker) {
+            is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
+            is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
+        }
+    }
 
+    private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID, mottaker: NærmesteLederMottaker) {
+        executeUpdate("""
+            insert into mottaker_digisyfo(notifikasjon_id, virksomhet, fnr_leder, fnr_sykmeldt)
+            values (?, ?, ?, ?)
+        """) {
+            uuid(notifikasjonId)
+            string(mottaker.virksomhetsnummer)
+            string(mottaker.naermesteLederFnr)
+            string(mottaker.ansattFnr)
+        }
+    }
+
+    private fun Transaction.storeAltinnMottaker(notifikasjonId: UUID, mottaker: AltinnMottaker) {
+        executeUpdate("""
+            insert into mottaker_altinn_enkeltrettighet
+                (notifikasjon_id, virksomhet, service_code, service_edition)
+            values (?, ?, ?, ?)
+        """) {
+            uuid(notifikasjonId)
+            string(mottaker.virksomhetsnummer)
+            string(mottaker.serviceCode)
+            string(mottaker.serviceEdition)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
         database.transaction {
             executeUpdate(
                 """
@@ -321,14 +325,18 @@ class BrukerModelImpl(
                 on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
-                uuid(nyBeskjed.id)
-                string(nyBeskjed.merkelapp)
-                string(nyBeskjed.tekst)
-                nullableString(nyBeskjed.grupperingsid)
-                string(nyBeskjed.lenke)
-                string(nyBeskjed.eksternId)
-                timestamptz(nyBeskjed.opprettetTidspunkt)
-                string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
+                uuid(oppgaveOpprettet.notifikasjonId)
+                string(oppgaveOpprettet.merkelapp)
+                string(oppgaveOpprettet.tekst)
+                nullableString(oppgaveOpprettet.grupperingsid)
+                string(oppgaveOpprettet.lenke)
+                string(oppgaveOpprettet.eksternId)
+                timestamptz(oppgaveOpprettet.opprettetTidspunkt)
+                string(objectMapper.writeValueAsString(oppgaveOpprettet.mottaker))
+            }
+
+            for (mottaker in oppgaveOpprettet.mottakere) {
+                storeMottaker(oppgaveOpprettet.notifikasjonId, mottaker)
             }
 
             executeUpdate(
