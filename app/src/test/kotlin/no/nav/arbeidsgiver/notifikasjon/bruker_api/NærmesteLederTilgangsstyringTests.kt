@@ -114,4 +114,6 @@ fun beskjedOpprettet(mottaker: Mottaker, id: UUID, eksternId: String) = Hendelse
     opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
     kildeAppNavn = "",
     produsentId = "",
+    grupperingsid = null,
+    eksterneVarsler = listOf(),
 )

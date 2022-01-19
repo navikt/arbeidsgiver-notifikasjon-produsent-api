@@ -34,6 +34,8 @@ class KafkaSerializerTests : DescribeSpec({
                 virksomhetsnummer = virksomhetsnummer,
                 kildeAppNavn = "",
                 produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
             )
 
             it("serde preservers all values") {

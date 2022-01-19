@@ -45,6 +45,7 @@ class SoftDeleteTests : DescribeSpec({
             virksomhetsnummer = mottaker.virksomhetsnummer,
             kildeAppNavn = "",
             produsentId = "",
+            eksterneVarsler = listOf(),
         )
 
         val softDeleteEvent = Hendelse.SoftDelete(

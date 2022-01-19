@@ -66,6 +66,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 opprettetTidspunkt = opprettetTidspunkt,
                 kildeAppNavn = "",
                 produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -135,6 +137,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 opprettetTidspunkt = opprettetTidspunkt,
                 kildeAppNavn = "",
                 produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -170,6 +174,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 opprettetTidspunkt = opprettetTidspunkt,
                 kildeAppNavn = "",
                 produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
@@ -218,6 +224,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 opprettetTidspunkt = opprettetTidspunkt,
                 kildeAppNavn = "",
                 produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -287,6 +295,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 opprettetTidspunkt = opprettetTidspunkt,
                 kildeAppNavn = "",
                 produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -322,6 +332,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 opprettetTidspunkt = opprettetTidspunkt,
                 kildeAppNavn = "",
                 produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -357,6 +369,8 @@ class OppgaveUtførtTests : DescribeSpec({
                 opprettetTidspunkt = opprettetTidspunkt,
                 kildeAppNavn = "",
                 produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)

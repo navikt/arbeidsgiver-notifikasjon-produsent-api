@@ -54,6 +54,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 grupperingsid = grupperingsid,
                 kildeAppNavn = "",
                 produsentId = "",
+                eksterneVarsler = listOf(),
             )
         )
         val uuid2 = UUID.randomUUID()
@@ -71,6 +72,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 grupperingsid = grupperingsid,
                 kildeAppNavn = "",
                 produsentId = "",
+                eksterneVarsler = listOf(),
             )
         )
         val uuid3 = UUID.randomUUID()
@@ -87,7 +89,8 @@ class MineNotifikasjonerTests : DescribeSpec({
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
                 grupperingsid = grupperingsid,
                 produsentId = "",
-                kildeAppNavn = ""
+                kildeAppNavn = "",
+                eksterneVarsler = listOf(),
             )
         )
         val uuid4 = UUID.randomUUID()
@@ -105,6 +108,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 grupperingsid = grupperingsid,
                 produsentId = "",
                 kildeAppNavn = "",
+                eksterneVarsler = listOf(),
             )
         )
     }

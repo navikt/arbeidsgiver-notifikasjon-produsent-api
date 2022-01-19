@@ -49,6 +49,8 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             lenke = "",
             kildeAppNavn = "",
             produsentId = "",
+            grupperingsid = null,
+            eksterneVarsler = listOf(),
         )
         queryModel.oppdaterModellEtterHendelse(beskjedOpprettet)
         nærmesteLederModel.oppdaterModell(NærmesteLederModel.NarmesteLederLeesah(
