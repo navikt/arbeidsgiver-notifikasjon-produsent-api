@@ -13,6 +13,10 @@ val FAGER_TESTPRODUSENT = Produsent(
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1"),
+        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
+        ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
+        ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
+        NærmesteLederDefinisjon,
     )
 )
 
