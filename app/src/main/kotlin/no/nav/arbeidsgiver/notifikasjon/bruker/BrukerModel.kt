@@ -94,7 +94,7 @@ class BrukerModelImpl(
             )
         }
 
-        val notifikasjoner = database.nonTransactionalExecuteQuery(
+        database.nonTransactionalExecuteQuery(
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
             with 
@@ -163,20 +163,6 @@ class BrukerModelImpl(
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
-
-        notifikasjoner
-//            .filter { notifikasjon ->
-//                when (val mottaker = notifikasjon.mottaker) {
-//                    is NærmesteLederMottaker ->
-//                        ansatteLookupTable.contains(
-//                            NærmesteLederModel.NærmesteLederFor(
-//                                ansattFnr = mottaker.ansattFnr,
-//                                virksomhetsnummer = mottaker.virksomhetsnummer
-//                            )
-//                        )
-//                    else -> true
-//                }
-//            }
     }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
