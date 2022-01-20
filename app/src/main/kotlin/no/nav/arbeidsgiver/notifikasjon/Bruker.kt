@@ -124,7 +124,6 @@ object Bruker {
                     enhetsregisteret = enhetsregisteret,
                     brukerModel = brukerModelAsync.await(),
                     kafkaProducer = createKafkaProducer(),
-                    nærmesteLederModel = nærmesteLederModelAsync.await()
                 )
             }
 

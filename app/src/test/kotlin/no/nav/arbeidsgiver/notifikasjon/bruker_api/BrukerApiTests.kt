@@ -25,7 +25,6 @@ class BrukerApiTests : DescribeSpec({
             altinn = AltinnStub(),
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
             brukerModel = queryModel,
-            nærmesteLederModel = mockk(),
             kafkaProducer = mockk()
         )
     )
@@ -59,7 +58,7 @@ class BrukerApiTests : DescribeSpec({
             )
 
             coEvery {
-                queryModel.hentNotifikasjoner(any(), any(), any())
+                queryModel.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed, oppgave)
 
             val response = engine.brukerApi(

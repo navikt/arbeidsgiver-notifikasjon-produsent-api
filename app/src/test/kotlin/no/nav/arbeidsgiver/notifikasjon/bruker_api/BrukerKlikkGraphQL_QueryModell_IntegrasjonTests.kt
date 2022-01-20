@@ -30,7 +30,6 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             enhetsregisteret = EnhetsregisteretStub(),
             brukerModel = queryModel,
             kafkaProducer = mockk(),
-            nærmesteLederModel = nærmesteLederModel
         )
     )
 

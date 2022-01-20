@@ -63,7 +63,6 @@ interface BrukerModel {
     suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<Tilgang>,
-        ansatte: List<NærmesteLederModel.NærmesteLederFor>
     ): List<Notifikasjon>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -86,7 +85,6 @@ class BrukerModelImpl(
     override suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<BrukerModel.Tilgang>,
-        ansatte: List<NærmesteLederModel.NærmesteLederFor>
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
         val tilgangerAltinnMottaker = tilganger.map {
             AltinnMottaker(
@@ -96,31 +94,45 @@ class BrukerModelImpl(
             )
         }
 
-        val ansatteLookupTable = ansatte.toSet()
-
         val notifikasjoner = database.nonTransactionalExecuteQuery(
+            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
+            with 
+                mine_altinntilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                ),
+                mine_notifikasjoner as (
+                    (
+                        select notifikasjon_id 
+                        from notifikasjoner_for_digisyfo_fnr
+                        where fnr_leder = ?
+                    )
+                    union
+                    (
+                        select er.notifikasjon_id
+                        from mottaker_altinn_enkeltrettighet er
+                        join mine_altinntilganger at on 
+                            er.virksomhet = at.virksomhetsnummer and
+                            er.service_code = at."serviceCode" and
+                            er.service_edition = at."serviceEdition"
+                    )
+                )
             select 
                 n.*, 
                 klikk.notifikasjonsid is not null as klikketPaa
-            from notifikasjon as n
+            from mine_notifikasjoner as mn
+            join notifikasjon as n on n.id = mn.notifikasjon_id
             left outer join brukerklikk as klikk on
                 klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
-            where (
-                mottaker ->> '@type' = 'naermesteLeder'
-                and mottaker ->> 'naermesteLederFnr' = ?
-            ) or (
-                mottaker ->> '@type' = 'altinn'
-                and mottaker in (select * from jsonb_array_elements(?::jsonb))
-            )
             order by opprettet_tidspunkt desc
             limit 200
             """,
             {
-                string(fnr)
-                string(fnr)
                 jsonb(tilgangerAltinnMottaker)
+                string(fnr)
+                string(fnr)
             }
         ) {
             when (val type = getString("type")) {
@@ -153,18 +165,18 @@ class BrukerModelImpl(
         }
 
         notifikasjoner
-            .filter { notifikasjon ->
-                when (val mottaker = notifikasjon.mottaker) {
-                    is NærmesteLederMottaker ->
-                        ansatteLookupTable.contains(
-                            NærmesteLederModel.NærmesteLederFor(
-                                ansattFnr = mottaker.ansattFnr,
-                                virksomhetsnummer = mottaker.virksomhetsnummer
-                            )
-                        )
-                    else -> true
-                }
-            }
+//            .filter { notifikasjon ->
+//                when (val mottaker = notifikasjon.mottaker) {
+//                    is NærmesteLederMottaker ->
+//                        ansatteLookupTable.contains(
+//                            NærmesteLederModel.NærmesteLederFor(
+//                                ansattFnr = mottaker.ansattFnr,
+//                                virksomhetsnummer = mottaker.virksomhetsnummer
+//                            )
+//                        )
+//                    else -> true
+//                }
+//            }
     }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =

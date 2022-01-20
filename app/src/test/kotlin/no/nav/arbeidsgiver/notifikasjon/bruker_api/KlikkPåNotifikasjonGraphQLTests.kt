@@ -30,7 +30,6 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
             enhetsregisteret = EnhetsregisteretStub(),
             brukerModel = queryModel,
             kafkaProducer = kafkaProducer,
-            nærmesteLederModel = mockk(relaxed = true)
         ),
     )
 
