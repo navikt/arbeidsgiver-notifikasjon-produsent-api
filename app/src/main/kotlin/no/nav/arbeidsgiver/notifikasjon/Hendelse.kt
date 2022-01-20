@@ -40,6 +40,11 @@ sealed class Hendelse {
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
     ) : Hendelse() {
+        init {
+            require(mottakere.isNotEmpty()) {
+                "minst 1 mottaker må gis"
+            }
+        }
 
         @Deprecated("may be more than one!")
         val mottaker: Mottaker
@@ -75,8 +80,7 @@ sealed class Hendelse {
                 kildeAppNavn = kildeAppNavn,
                 merkelapp = merkelapp,
                 eksternId = eksternId,
-                mottakere = (listOfNotNull(mottaker) + mottakere)
-                    .also { require(it.isNotEmpty()) { "minst en mottakere må gis" } },
+                mottakere = (listOfNotNull(mottaker) + mottakere),
                 tekst = tekst,
                 grupperingsid = grupperingsid,
                 lenke = lenke,
@@ -103,6 +107,11 @@ sealed class Hendelse {
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
     ) : Hendelse() {
+        init {
+            require(mottakere.isNotEmpty()) {
+                "minst 1 mottaker må gis"
+            }
+        }
 
         @Deprecated("may be more than one!")
         val mottaker: Mottaker
@@ -134,8 +143,7 @@ sealed class Hendelse {
                 kildeAppNavn = kildeAppNavn,
                 merkelapp = merkelapp,
                 eksternId = eksternId,
-                mottakere = (listOfNotNull(mottaker) + mottakere)
-                    .also { require(it.isNotEmpty()) { "minst en mottakere må gis" } },
+                mottakere = (listOfNotNull(mottaker) + mottakere),
                 tekst = tekst,
                 grupperingsid = grupperingsid,
                 lenke = lenke,
