@@ -59,7 +59,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         virksomhetsnummer = "1",
         merkelapp = merkelapp,
         eksternId = eksternId,
-        mottaker = mottaker,
+        mottakere = listOf(mottaker),
         hendelseId = uuid,
         notifikasjonId = uuid,
         tekst = "test",

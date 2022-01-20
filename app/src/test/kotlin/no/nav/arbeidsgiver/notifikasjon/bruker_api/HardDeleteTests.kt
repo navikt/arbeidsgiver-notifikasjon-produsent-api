@@ -35,7 +35,7 @@ class HardDeleteTests : DescribeSpec({
         val opprettEvent = fun (id: UUID) = Hendelse.BeskjedOpprettet(
             merkelapp = "foo",
             eksternId = id.toString(),
-            mottaker = mottaker,
+            mottakere = listOf(mottaker),
             hendelseId = id,
             notifikasjonId = id,
             tekst = "teste",

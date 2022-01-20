@@ -62,7 +62,7 @@ class MutationNyBeskjed(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottaker = mottaker,
+                mottakere = listOf(mottaker),
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = mottaker.virksomhetsnummer,
                 produsentId = produsentId,

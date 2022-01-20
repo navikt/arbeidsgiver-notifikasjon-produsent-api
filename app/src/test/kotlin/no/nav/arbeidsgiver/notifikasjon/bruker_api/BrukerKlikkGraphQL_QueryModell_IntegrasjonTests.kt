@@ -39,7 +39,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
 
         val beskjedOpprettet = Hendelse.BeskjedOpprettet(
             virksomhetsnummer = virksomhetsnummer,
-            mottaker = mottaker,
+            mottakere = listOf(mottaker),
             opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
             hendelseId = uuid,
             notifikasjonId = uuid,

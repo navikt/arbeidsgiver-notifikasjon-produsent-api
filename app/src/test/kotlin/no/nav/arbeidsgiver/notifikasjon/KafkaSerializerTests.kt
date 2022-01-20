@@ -23,11 +23,11 @@ class KafkaSerializerTests : DescribeSpec({
                 merkelapp = "merkelappen",
                 hendelseId = uuid,
                 notifikasjonId = uuid,
-                mottaker = AltinnMottaker(
+                mottakere = listOf(AltinnMottaker(
                     serviceCode = "1234",
                     serviceEdition = "1",
                     virksomhetsnummer = virksomhetsnummer
-                ),
+                )),
                 lenke = "https://foop.no",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T00:00:00.00Z"),
                 eksternId = "ekstern 1234h",
