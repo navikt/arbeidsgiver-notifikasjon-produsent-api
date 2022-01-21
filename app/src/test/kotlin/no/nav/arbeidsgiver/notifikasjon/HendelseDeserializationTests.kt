@@ -33,7 +33,6 @@ class HendelseDeserializationTests : DescribeSpec({
                 "opprettetTidspunkt": "2020-01-01T01:01+01"
             }
         """)
-        println(oppgaveOpprettet)
 
         it("mottaker parsed") {
             oppgaveOpprettet as Hendelse.OppgaveOpprettet
