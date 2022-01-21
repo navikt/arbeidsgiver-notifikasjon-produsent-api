@@ -14,7 +14,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelseMedKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.util.*
 
 class MutationNyOppgave(
@@ -46,8 +45,14 @@ class MutationNyOppgave(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
-            virksomhetsnummer: String,
         ): Hendelse.OppgaveOpprettet {
+            val virksomhetsnummer = listOfNotNull(
+                metadata.virksomhetsnummer,
+                mottaker.altinn?.virksomhetsnummer,
+                mottaker.naermesteLeder?.virksomhetsnummer
+            )
+                .toSet()
+                .single()
             val mottaker = mottaker.tilDomene(virksomhetsnummer)
             return Hendelse.OppgaveOpprettet(
                 hendelseId = id,
@@ -81,29 +86,19 @@ class MutationNyOppgave(
         nyOppgave: NyOppgaveInput,
     ): NyOppgaveResultat {
         val produsent = hentProdusent(context) { error -> return error }
-
-        val virksomhetsnummer = listOfNotNull(
-            nyOppgave.metadata.virksomhetsnummer,
-            nyOppgave.mottaker.altinn?.virksomhetsnummer,
-            nyOppgave.mottaker.naermesteLeder?.virksomhetsnummer
-        )
-            .toSet()
-            .single()
-
-
-        tilgangsstyrNyNotifikasjon(
-            produsent,
-            nyOppgave.mottaker.tilDomene(virksomhetsnummer),
-            nyOppgave.notifikasjon.merkelapp,
-        ) { error -> return error }
-
         val id = UUID.randomUUID()
         val domeneNyOppgave = nyOppgave.tilDomene(
             id = id,
             produsentId = produsent.id,
             kildeAppNavn = context.appName,
-            virksomhetsnummer = virksomhetsnummer,
         )
+
+        tilgangsstyrNyNotifikasjon(
+            produsent,
+            domeneNyOppgave.mottaker,
+            nyOppgave.notifikasjon.merkelapp,
+        ) { error -> return error }
+
         val eksisterende = produsentRepository.hentNotifikasjon(
             eksternId = domeneNyOppgave.eksternId,
             merkelapp = domeneNyOppgave.merkelapp,
