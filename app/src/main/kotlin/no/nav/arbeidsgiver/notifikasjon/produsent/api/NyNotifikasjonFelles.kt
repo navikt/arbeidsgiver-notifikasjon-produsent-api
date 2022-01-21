@@ -104,9 +104,9 @@ data class EksterntVarselInput(
 data class NaermesteLederMottakerInput(
     val naermesteLederFnr: String,
     val ansattFnr: String,
-    val virksomhetsnummer: String
+    val virksomhetsnummer: String?,
 ) {
-    fun tilDomene(): no.nav.arbeidsgiver.notifikasjon.Mottaker =
+    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker =
         no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker(
             naermesteLederFnr = naermesteLederFnr,
             ansattFnr = ansattFnr,
@@ -117,9 +117,9 @@ data class NaermesteLederMottakerInput(
 data class AltinnMottakerInput(
     val serviceCode: String,
     val serviceEdition: String,
-    val virksomhetsnummer: String,
+    val virksomhetsnummer: String?,
 ) {
-    fun tilDomene(): no.nav.arbeidsgiver.notifikasjon.Mottaker =
+    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker =
         no.nav.arbeidsgiver.notifikasjon.AltinnMottaker(
             serviceCode = serviceCode,
             serviceEdition = serviceEdition,
@@ -132,11 +132,11 @@ data class MottakerInput(
     val naermesteLeder: NaermesteLederMottakerInput?
 ) {
 
-    fun tilDomene(): no.nav.arbeidsgiver.notifikasjon.Mottaker {
+    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker {
         return if (altinn != null && naermesteLeder == null) {
-            altinn.tilDomene()
+            altinn.tilDomene(virksomhetsnummer)
         } else if (naermesteLeder != null && altinn == null) {
-            naermesteLeder.tilDomene()
+            naermesteLeder.tilDomene(virksomhetsnummer)
         } else {
             throw IllegalArgumentException("Ugyldig mottaker")
         }
@@ -147,6 +147,7 @@ data class MetadataInput(
     val grupperingsid: String?,
     val eksternId: String,
     val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
+    val virksomhetsnummer: String?
 )
 
 data class NyEksternVarselResultat(

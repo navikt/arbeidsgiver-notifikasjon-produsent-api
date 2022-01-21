@@ -42,8 +42,13 @@ class MutationNyOppgave(
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>,
     ) {
-        fun tilDomene(id: UUID, produsentId: String, kildeAppNavn: String): Hendelse.OppgaveOpprettet {
-            val mottaker = mottaker.tilDomene()
+        fun tilDomene(
+            id: UUID,
+            produsentId: String,
+            kildeAppNavn: String,
+            virksomhetsnummer: String,
+        ): Hendelse.OppgaveOpprettet {
+            val mottaker = mottaker.tilDomene(virksomhetsnummer)
             return Hendelse.OppgaveOpprettet(
                 hendelseId = id,
                 notifikasjonId = id,
@@ -54,7 +59,7 @@ class MutationNyOppgave(
                 eksternId = metadata.eksternId,
                 mottakere = listOf(mottaker),
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
-                virksomhetsnummer = mottaker.virksomhetsnummer,
+                virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
                 eksterneVarsler = eksterneVarsler.map(EksterntVarselInput::tilDomene)
@@ -77,9 +82,18 @@ class MutationNyOppgave(
     ): NyOppgaveResultat {
         val produsent = hentProdusent(context) { error -> return error }
 
+        val virksomhetsnummer = listOfNotNull(
+            nyOppgave.metadata.virksomhetsnummer,
+            nyOppgave.mottaker.altinn?.virksomhetsnummer,
+            nyOppgave.mottaker.naermesteLeder?.virksomhetsnummer
+        )
+            .toSet()
+            .single()
+
+
         tilgangsstyrNyNotifikasjon(
             produsent,
-            nyOppgave.mottaker.tilDomene(),
+            nyOppgave.mottaker.tilDomene(virksomhetsnummer),
             nyOppgave.notifikasjon.merkelapp,
         ) { error -> return error }
 
@@ -88,6 +102,7 @@ class MutationNyOppgave(
             id = id,
             produsentId = produsent.id,
             kildeAppNavn = context.appName,
+            virksomhetsnummer = virksomhetsnummer,
         )
         val eksisterende = produsentRepository.hentNotifikasjon(
             eksternId = domeneNyOppgave.eksternId,

@@ -52,8 +52,13 @@ class MutationNyBeskjed(
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>
     ) {
-        fun tilDomene(id: UUID, produsentId: String, kildeAppNavn: String): Hendelse.BeskjedOpprettet {
-            val mottaker = mottaker.tilDomene()
+        fun tilDomene(
+            id: UUID,
+            produsentId: String,
+            kildeAppNavn: String,
+            virksomhetsnummer: String,
+        ): Hendelse.BeskjedOpprettet {
+            val mottaker = mottaker.tilDomene(virksomhetsnummer)
             return Hendelse.BeskjedOpprettet(
                 hendelseId = id,
                 notifikasjonId = id,
@@ -64,7 +69,7 @@ class MutationNyBeskjed(
                 eksternId = metadata.eksternId,
                 mottakere = listOf(mottaker),
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
-                virksomhetsnummer = mottaker.virksomhetsnummer,
+                virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
                 eksterneVarsler = eksterneVarsler.map(EksterntVarselInput::tilDomene)
@@ -78,9 +83,18 @@ class MutationNyBeskjed(
     ): NyBeskjedResultat {
         val produsent = hentProdusent(context) { error -> return error }
 
+        val virksomhetsnummer = listOfNotNull(
+            nyBeskjed.metadata.virksomhetsnummer,
+            nyBeskjed.mottaker.altinn?.virksomhetsnummer,
+            nyBeskjed.mottaker.naermesteLeder?.virksomhetsnummer
+        )
+            .toSet()
+            .single()
+
+
         tilgangsstyrNyNotifikasjon(
             produsent,
-            nyBeskjed.mottaker.tilDomene(),
+            nyBeskjed.mottaker.tilDomene(virksomhetsnummer),
             nyBeskjed.notifikasjon.merkelapp
         ) { error ->
             return error
@@ -90,7 +104,8 @@ class MutationNyBeskjed(
         val domeneNyBeskjed = nyBeskjed.tilDomene(
             id = id,
             produsentId = produsent.id,
-            kildeAppNavn = context.appName
+            kildeAppNavn = context.appName,
+            virksomhetsnummer = virksomhetsnummer,
         )
         val eksisterende = produsentRepository.hentNotifikasjon(
             eksternId = domeneNyBeskjed.eksternId,
