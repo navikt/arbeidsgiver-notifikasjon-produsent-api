@@ -102,21 +102,23 @@ class BrukerModelImpl(
                     select * from json_to_recordset(?::json) 
                     as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
                 ),
+                mine_altinn_notifikasjoner as (
+                    select er.notifikasjon_id
+                    from mottaker_altinn_enkeltrettighet er
+                    join mine_altinntilganger at on 
+                        er.virksomhet = at.virksomhetsnummer and
+                        er.service_code = at."serviceCode" and
+                        er.service_edition = at."serviceEdition"
+                ),
+                mine_digisyfo_notifikasjoner as (
+                    select notifikasjon_id 
+                    from notifikasjoner_for_digisyfo_fnr
+                    where fnr_leder = ?
+                ),
                 mine_notifikasjoner as (
-                    (
-                        select notifikasjon_id 
-                        from notifikasjoner_for_digisyfo_fnr
-                        where fnr_leder = ?
-                    )
-                    union
-                    (
-                        select er.notifikasjon_id
-                        from mottaker_altinn_enkeltrettighet er
-                        join mine_altinntilganger at on 
-                            er.virksomhet = at.virksomhetsnummer and
-                            er.service_code = at."serviceCode" and
-                            er.service_edition = at."serviceEdition"
-                    )
+                    (select * from mine_digisyfo_notifikasjoner)
+                    union 
+                    (select * from mine_altinn_notifikasjoner)
                 )
             select 
                 n.*, 
