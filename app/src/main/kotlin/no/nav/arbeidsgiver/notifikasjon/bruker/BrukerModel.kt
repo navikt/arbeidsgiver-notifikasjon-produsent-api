@@ -1,14 +1,21 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.random.Random
 
 interface BrukerModel {
     data class Tilgang(
@@ -66,13 +73,13 @@ interface BrukerModel {
 class BrukerModelImpl(
     private val database: Database
 ) : BrukerModel {
+    private val log = logger()
 
     val BrukerModel.Notifikasjon.mottaker: Mottaker
         get() = when (this) {
             is BrukerModel.Oppgave -> this.mottaker
             is BrukerModel.Beskjed -> this.mottaker
         }
-
 
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
@@ -82,12 +89,12 @@ class BrukerModelImpl(
         ansatte: List<NærmesteLederModel.NærmesteLederFor>
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
         val tilgangerAltinnMottaker = tilganger.map {
-                AltinnMottaker(
-                    serviceCode = it.servicecode,
-                    serviceEdition = it.serviceedition,
-                    virksomhetsnummer = it.virksomhet
-                )
-            }
+            AltinnMottaker(
+                serviceCode = it.servicecode,
+                serviceEdition = it.serviceedition,
+                virksomhetsnummer = it.virksomhet
+            )
+        }
 
         val ansatteLookupTable = ansatte.toSet()
 
@@ -349,5 +356,43 @@ class BrukerModelImpl(
                 string(oppgaveOpprettet.virksomhetsnummer)
             }
         }
+    }
+
+    // # of notifications: 20k
+    // # of notification pr. pod: 5k
+    // one notification per second -> 5k seconds -> 83 minutes
+
+    suspend fun startBackgroundMottakerMigration() {
+        var done = false
+
+        while (!done) {
+            database.transaction {
+                val (id, mottaker) = executeQuery(
+                    """
+                            select n.id as id, n.mottaker as mottaker from notifikasjon as n
+                            where
+                             n.id not in (select notifikasjon_id from mottaker_altinn_enkeltrettighet)
+                             and n.id not in (select notifikasjon_id from mottaker_digisyfo)
+                             limit 1
+                        """
+                ) {
+                    Pair(
+                        getObject("id", UUID::class.java),
+                        objectMapper.readValue<Mottaker>(getString("mottaker"))
+                    )
+                }
+                    .singleOrNull()
+                    ?: run {
+                        done = true
+                        return@transaction
+                    }
+
+                log.info("migrating $id")
+
+                storeMottaker(id, mottaker)
+            }
+            delay(Random.Default.nextLong(500, 1_500))
+        }
+        log.info("finished copying mottakere. delete me.")
     }
 }
