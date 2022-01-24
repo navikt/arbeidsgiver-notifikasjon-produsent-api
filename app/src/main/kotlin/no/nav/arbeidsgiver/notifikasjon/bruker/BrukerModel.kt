@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.random.Random
@@ -248,9 +249,10 @@ class BrukerModelImpl(
                     lenke,
                     ekstern_id,
                     opprettet_tidspunkt,
-                    mottaker
+                    mottaker,
+                    virksomhetsnummer
                 )
-                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json)
+                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json, ?)
                 on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
@@ -262,6 +264,7 @@ class BrukerModelImpl(
                 string(beskjedOpprettet.eksternId)
                 timestamptz(beskjedOpprettet.opprettetTidspunkt)
                 string(objectMapper.writeValueAsString(beskjedOpprettet.mottaker))
+                string(beskjedOpprettet.virksomhetsnummer)
             }
 
             for (mottaker in beskjedOpprettet.mottakere) {
@@ -326,9 +329,10 @@ class BrukerModelImpl(
                     lenke,
                     ekstern_id,
                     opprettet_tidspunkt,
-                    mottaker
+                    mottaker,
+                    virksomhetsnummer
                 )
-                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json)
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json, ?)
                 on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
@@ -340,6 +344,7 @@ class BrukerModelImpl(
                 string(oppgaveOpprettet.eksternId)
                 timestamptz(oppgaveOpprettet.opprettetTidspunkt)
                 string(objectMapper.writeValueAsString(oppgaveOpprettet.mottaker))
+                string(oppgaveOpprettet.virksomhetsnummer)
             }
 
             for (mottaker in oppgaveOpprettet.mottakere) {
@@ -369,11 +374,9 @@ class BrukerModelImpl(
             database.transaction {
                 val (id, mottaker) = executeQuery(
                     """
-                            select n.id as id, n.mottaker as mottaker from notifikasjon as n
-                            where
-                             n.id not in (select notifikasjon_id from mottaker_altinn_enkeltrettighet)
-                             and n.id not in (select notifikasjon_id from mottaker_digisyfo)
-                             limit 1
+                            select id, mottaker from notifikasjon
+                            where virksomhetsnummer is null
+                            limit 1
                         """
                 ) {
                     Pair(
@@ -387,9 +390,16 @@ class BrukerModelImpl(
                         return@transaction
                     }
 
-                log.info("migrating $id")
+                log.info("migrating vnr for $id")
 
-                storeMottaker(id, mottaker)
+                executeUpdate("""
+                    update notifikasjon
+                    set virksomhetsnummer = ?
+                    where id = ?
+                """) {
+                    string(mottaker.virksomhetsnummer)
+                    uuid(id)
+                }
             }
             delay(Random.Default.nextLong(500, 1_500))
         }
