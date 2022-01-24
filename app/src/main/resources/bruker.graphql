@@ -1,6 +1,48 @@
 type Query {
     notifikasjoner: NotifikasjonerResultat!
+    saker(
+        first: Int,
+        after: String,
+        virksomhetsnummer: String!
+    ): SakConnection!
     whoami: String
+}
+type SakConnection {
+    edges: [SakEdge!]!
+    pageInfo: PageInfo!
+#    totaltAntall: Int
+#    feilAltinn: Boolean!
+}
+type PageInfo {
+    hasNextPage: Boolean!
+    endCursor: String!
+}
+type SakEdge {
+    node: Sak!
+    cursor: String!
+}
+type Sak {
+    virksomhet: Virksomhet!
+    sisteStatus: Statusoppdatering!
+#    kan eksponere som ett to eller tre felt. ikke med i første omgang
+#    statusoppdateringer: [Statusoppdatering!]!
+#    notifikasjoner: [Notifikasjon!]!
+#    notifikasjonerogstatusoppdateringer: [Notifikasjon | Statusoppdatering!]!
+}
+type Statusoppdatering {
+    status: Status!
+    tidspunkt: ISO8601DateTime!
+}
+union Status = PredefinertStatus | EgendefinertStatus
+type PredefinertStatus {
+    value: StatusEnum
+}
+type EgendefinertStatus {
+    value: String!
+}
+enum StatusEnum {
+    MOTTATT
+    UNDER_BEHANDLING
 }
 type NotifikasjonerResultat {
     notifikasjoner: [Notifikasjon!]!

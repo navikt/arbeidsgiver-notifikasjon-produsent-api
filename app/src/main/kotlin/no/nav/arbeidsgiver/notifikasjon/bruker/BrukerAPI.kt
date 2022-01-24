@@ -75,6 +75,44 @@ object BrukerAPI {
         }
     }
 
+    @JsonTypeName("SakConnection")
+    data class SakConnection(
+        val edges: List<Edge<Sak>>,
+        val pageInfo: PageInfo,
+        val totaltAntall: Int
+    ) : Connection<Sak>
+
+    @JsonTypeName("Sak")
+    data class Sak(
+        val virksomhet: Virksomhet,
+        val sisteStatus: Statusoppdatering
+    )
+
+    @JsonTypeName("Statusoppdatering")
+    data class Statusoppdatering(
+        val status: Status,
+        val tidspunkt: OffsetDateTime
+    )
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed class Status {
+
+        @JsonTypeName("EgendefinertStatus")
+        data class EgendefinertStatus(
+            val value: String,
+        ) : Status()
+
+        @JsonTypeName("PredefinertStatus")
+        data class PredefinertStatus(
+            val value: String,
+        ) : Status() {
+            enum class StatusEnum {
+                MOTTATT,
+                UNDER_BEHANDLING;
+            }
+        }
+    }
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class NotifikasjonKlikketPaaResultat
 
@@ -113,6 +151,7 @@ object BrukerAPI {
 
             resolveSubtypes<Notifikasjon>()
             resolveSubtypes<NotifikasjonKlikketPaaResultat>()
+            resolveSubtypes<Status>()
 
             wire("Query") {
                 dataFetcher("whoami") {
@@ -121,6 +160,12 @@ object BrukerAPI {
 
                 queryNotifikasjoner(
                     altinn = altinn,
+                    brukerModel = brukerModel
+                )
+
+                querySaker(
+                    altinn = altinn,
+                    nærmesteLederModel = nærmesteLederModel,
                     brukerModel = brukerModel
                 )
 
@@ -218,6 +263,22 @@ object BrukerAPI {
                     feilAltinn = tilganger.await() == null,
                     feilDigiSyfo = false,
                 )
+            }
+        }
+    }
+
+    fun TypeRuntimeWiring.Builder.querySaker(
+        altinn: Altinn,
+        nærmesteLederModel: NærmesteLederModel,
+        brukerModel: BrukerModel
+    ) {
+        coDataFetcher("saker") { env ->
+            val context = env.getContext<Context>()
+            val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
+            val first = env.getArgumentOrDefault("first", 3)
+            val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
+            coroutineScope {
+                TODO("not implemented")
             }
         }
     }
