@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
@@ -10,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
+import java.util.*
 
 class MottakerMigrationTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
@@ -41,98 +41,34 @@ class MottakerMigrationTests: DescribeSpec({
 
         model.startBackgroundMottakerMigration()
 
-        val mottaker1 = database.nonTransactionalExecuteQuery(
-            """
-                    select * from mottaker_altinn_enkeltrettighet
-                    where notifikasjon_id = ?
+        suspend fun hentVnr(id: UUID) =
+            database.nonTransactionalExecuteQuery(
+                """
+                    select virksomhetsnummer from notifikasjon where id = ?
                 """,
-            setup = {
-                uuid(uuid("0"))
-            },
-            transform = {
-                AltinnMottaker(
-                    virksomhetsnummer = getString("virksomhet"),
-                    serviceCode = getString("service_code"),
-                    serviceEdition = getString("service_edition"),
-                )
+                setup = { uuid(id) },
+                transform = { getString("virksomhetsnummer") }
+            )
+                .single()
 
-            })
-            .single()
-
-        val mottaker2 = database.nonTransactionalExecuteQuery(
-            """
-                    select * from mottaker_altinn_enkeltrettighet
-                    where notifikasjon_id = ?
-                """,
-            setup = {
-                uuid(uuid("1"))
-            },
-            transform = {
-                AltinnMottaker(
-                    virksomhetsnummer = getString("virksomhet"),
-                    serviceCode = getString("service_code"),
-                    serviceEdition = getString("service_edition"),
-                )
-            })
-            .single()
-
-        val mottaker3 = database.nonTransactionalExecuteQuery(
-            """
-                    select * from mottaker_digisyfo
-                    where notifikasjon_id = ?
-                """,
-            setup = {
-                uuid(uuid("2"))
-            },
-            transform = {
-                NærmesteLederMottaker(
-                    virksomhetsnummer = getString("virksomhet"),
-                    naermesteLederFnr = getString("fnr_leder"),
-                    ansattFnr = getString("fnr_sykmeldt"),
-                )
-            })
-            .single()
-
-
-        val mottaker4 = database.nonTransactionalExecuteQuery(
-            """
-                    select * from mottaker_digisyfo
-                    where notifikasjon_id = ?
-                """,
-            setup = {
-                uuid(uuid("3"))
-            },
-            transform = {
-                NærmesteLederMottaker(
-                    virksomhetsnummer = getString("virksomhet"),
-                    naermesteLederFnr = getString("fnr_leder"),
-                    ansattFnr = getString("fnr_sykmeldt"),
-                )
-            })
-            .single()
-
+        val mottaker1 = hentVnr(uuid("0"))
+        val mottaker2 = hentVnr(uuid("1"))
+        val mottaker3 = hentVnr(uuid("2"))
+        val mottaker4 = hentVnr(uuid("3"))
 
         it("the first should be migrated") {
-            mottaker1.virksomhetsnummer shouldBe "1"
-            mottaker1.serviceCode shouldBe "2"
-            mottaker1.serviceEdition shouldBe "3"
+            mottaker1 shouldBe "1"
         }
 
         it("the second should be migrated") {
-            mottaker2.virksomhetsnummer shouldBe "4"
-            mottaker2.serviceCode shouldBe "5"
-            mottaker2.serviceEdition shouldBe "6"
+            mottaker2 shouldBe "4"
         }
 
         it("the third should be migrated") {
-            mottaker3.virksomhetsnummer shouldBe "7"
-            mottaker3.ansattFnr shouldBe "8"
-            mottaker3.naermesteLederFnr shouldBe "9"
+            mottaker3 shouldBe "7"
         }
         it("the fourth should be migrated") {
-            mottaker4.virksomhetsnummer shouldBe "10"
-            mottaker4.ansattFnr shouldBe "11"
-            mottaker4.naermesteLederFnr shouldBe "12"
+            mottaker4 shouldBe "10"
         }
     }
 })
