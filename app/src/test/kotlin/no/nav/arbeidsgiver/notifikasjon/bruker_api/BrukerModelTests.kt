@@ -12,7 +12,6 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
@@ -68,7 +67,7 @@ class BrukerModelTests : DescribeSpec({
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
                     eksternId = "42",
-                    mottaker = mottaker,
+                    virksomhetsnummer = mottaker.virksomhetsnummer,
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",
@@ -104,7 +103,7 @@ class BrukerModelTests : DescribeSpec({
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
                     eksternId = "42",
-                    mottaker = mottaker,
+                    virksomhetsnummer = mottaker.virksomhetsnummer,
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",
