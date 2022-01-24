@@ -165,8 +165,6 @@ type BeskjedData {
 type Metadata {
     id: ID!
 
-    virksomhetsNummer: String!
-
     """
     """
     eksternId: String!
