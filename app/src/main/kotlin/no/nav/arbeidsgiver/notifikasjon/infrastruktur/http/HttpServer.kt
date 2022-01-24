@@ -111,6 +111,7 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
     }
 
     install(CallLogging) {
+        disableDefaultColors()
         level = Level.INFO
 
         filter { call ->
