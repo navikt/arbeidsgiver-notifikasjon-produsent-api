@@ -8,9 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
@@ -189,10 +187,7 @@ object BrukerAPI {
                                     opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                     id = notifikasjon.id,
                                     virksomhet = Virksomhet(
-                                        when (notifikasjon.mottaker) {
-                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                        }
+                                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
                                     ),
                                     brukerKlikk = BrukerKlikk(
                                         id = "${context.fnr}-${notifikasjon.id}",
@@ -208,10 +203,7 @@ object BrukerAPI {
                                     opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                     id = notifikasjon.id,
                                     virksomhet = Virksomhet(
-                                        when (notifikasjon.mottaker) {
-                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                        }
+                                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
                                     ),
                                     brukerKlikk = BrukerKlikk(
                                         id = "${context.fnr}-${notifikasjon.id}",
