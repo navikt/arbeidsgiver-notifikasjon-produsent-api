@@ -2,21 +2,27 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.collections.shouldBeOneOf
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NærmesteLederFor
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
 class NærmesteLederTilgangsstyringTests: DescribeSpec({
-
     val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerModelImpl(database)
+    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("Tilgangsstyring av nærmeste leder") {
 
@@ -63,16 +69,35 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
         ).also { model.oppdaterModellEtterHendelse(it) }
 
         it("ingen ansatte gir ingen notifikasjoner") {
-            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, listOf(), listOf())
+            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, listOf())
             notifikasjoner should beEmpty()
         }
 
+        nærmesteLederModel.oppdaterModell(
+            NærmesteLederModel.NarmesteLederLeesah(
+                narmesteLederId = uuid("12"),
+                fnr = mottaker1.ansattFnr,
+                narmesteLederFnr = mottaker1.naermesteLederFnr,
+                orgnummer = mottaker1.virksomhetsnummer,
+                aktivTom = null,
+            )
+        )
         it("får notifikasjon om nåværende ansatt") {
-            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, listOf(), ansatte(mottaker1))
+            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, listOf(), /* ansatte(mottaker1) */)
             notifikasjoner shouldHaveSize 1
             val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
             beskjed.id shouldBe beskjed1.notifikasjonId
         }
+
+        nærmesteLederModel.oppdaterModell(
+            NærmesteLederModel.NarmesteLederLeesah(
+                narmesteLederId = uuid("13"),
+                fnr = mottaker1.ansattFnr,
+                narmesteLederFnr = mottaker1.naermesteLederFnr,
+                orgnummer = virksomhet2,
+                aktivTom = null,
+            )
+        )
 
         it("""
             får ikke notifikasjon om ansatte i andre virksomheter,
@@ -82,25 +107,16 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             val notifikasjoner = model.hentNotifikasjoner(
                 nærmesteLeder,
                 listOf(),
-                ansatte(mottaker1.copy(virksomhetsnummer = virksomhet2))
+                //ansatte(mottaker1.copy(virksomhetsnummer = virksomhet2))
             )
-            notifikasjoner shouldHaveSize 1
-            val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
-            beskjed.id shouldBe beskjed3.notifikasjonId
+            notifikasjoner shouldHaveSize 2
+            val b1 = notifikasjoner[0] as BrukerModel.Beskjed
+            listOf(beskjed1.notifikasjonId, beskjed3.notifikasjonId) shouldContain b1.id
+            val b2 = notifikasjoner[0] as BrukerModel.Beskjed
+            listOf(beskjed1.notifikasjonId, beskjed3.notifikasjonId) shouldContain b2.id
         }
     }
 })
-
-fun ansatte(vararg mottakere: Mottaker): List<NærmesteLederFor> {
-    return mottakere.toList()
-        .filterIsInstance<NærmesteLederMottaker>()
-        .map {
-            NærmesteLederFor(
-                virksomhetsnummer = it.virksomhetsnummer,
-                ansattFnr = it.ansattFnr
-            )
-        }
-}
 
 fun beskjedOpprettet(mottaker: Mottaker, id: UUID, eksternId: String) = Hendelse.BeskjedOpprettet(
     virksomhetsnummer = mottaker.virksomhetsnummer,

@@ -107,7 +107,6 @@ object BrukerAPI {
         altinn: Altinn,
         enhetsregisteret: Enhetsregisteret,
         brukerModel: BrukerModel,
-        nærmesteLederModel: NærmesteLederModel,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
@@ -124,7 +123,6 @@ object BrukerAPI {
 
                 queryNotifikasjoner(
                     altinn = altinn,
-                    nærmesteLederModel = nærmesteLederModel,
                     brukerModel = brukerModel
                 )
 
@@ -152,7 +150,6 @@ object BrukerAPI {
 
     fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
         altinn: Altinn,
-        nærmesteLederModel: NærmesteLederModel,
         brukerModel: BrukerModel
     ) {
         coDataFetcher("notifikasjoner") { env ->
@@ -175,22 +172,13 @@ object BrukerAPI {
                         log.error("Henting av Altinn-tilganger feilet", e)
                         null
                     }
-
-                }
-                val ansatte = async {
-                    try{
-                        nærmesteLederModel.hentAnsatte(context.fnr)
-                    } catch (e: Exception) {
-                        log.error("Henting av DigiSyfo-tilganger feilet", e)
-                        null
-                    }
                 }
 
                 val notifikasjoner = brukerModel
                     .hentNotifikasjoner(
                         context.fnr,
-                        tilganger.await().orEmpty(),
-                        ansatte.await().orEmpty())
+                        tilganger.await().orEmpty()
+                    )
                     .map { notifikasjon ->
                         when (notifikasjon) {
                             is BrukerModel.Beskjed ->
@@ -236,7 +224,7 @@ object BrukerAPI {
                 return@coroutineScope NotifikasjonerResultat(
                     notifikasjoner,
                     feilAltinn = tilganger.await() == null,
-                    feilDigiSyfo = ansatte.await() == null
+                    feilDigiSyfo = false,
                 )
             }
         }

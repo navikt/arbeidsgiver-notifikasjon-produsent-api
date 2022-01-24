@@ -57,7 +57,6 @@ class AltinnTilgangsstyringTests : DescribeSpec({
                     serviceedition = "1",
                 )
             },
-            ansatte = listOf()
         )
 
         it("har fått riktig antall meldinger") {
