@@ -55,7 +55,7 @@ object Produsent {
         produsentRegister: ProdusentRegister = PRODUSENT_REGISTER
     ) {
         runBlocking(Dispatchers.Default) {
-            val produsentModelAsync = async {
+            val produsentRepositoryAsync = async {
                 try {
                     val database = Database.openDatabase(databaseConfig)
                     Health.subsystemReady[Subsystem.DATABASE] = true
@@ -73,18 +73,22 @@ object Produsent {
                     val kafkaConsumer = createKafkaConsumer {
                         put(ConsumerConfig.GROUP_ID_CONFIG, "produsent-model-builder")
                     }
-                    val produsentModel = produsentModelAsync.await()
+                    val produsentRepository = produsentRepositoryAsync.await()
 
                     kafkaConsumer.forEachEvent { event ->
-                        produsentModel.oppdaterModellEtterHendelse(event)
+                        produsentRepository.oppdaterModellEtterHendelse(event)
                     }
                 }
+            }
+
+            launch {
+                produsentRepositoryAsync.await().migrate()
             }
 
             val graphql = async {
                 ProdusentAPI.newGraphQL(
                     kafkaProducer = createKafkaProducer(),
-                    produsentRepository = produsentModelAsync.await()
+                    produsentRepository = produsentRepositoryAsync.await()
 
                 )
             }

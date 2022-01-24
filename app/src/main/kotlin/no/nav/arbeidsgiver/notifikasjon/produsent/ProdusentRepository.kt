@@ -336,7 +336,7 @@ class ProdusentRepositoryImpl(
     }
 
 
-    private suspend fun migrate() {
+    suspend fun migrate() {
         var done = false
 
         while (!done) {
