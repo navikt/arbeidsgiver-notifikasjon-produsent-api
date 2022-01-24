@@ -30,10 +30,10 @@ interface BrukerModel {
         val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
+        override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
         override val id: UUID,
-        val klikketPaa: Boolean,
-        override val virksomhetsnummer: String,
+        val klikketPaa: Boolean
     ) : Notifikasjon
 
     data class Oppgave(
@@ -42,11 +42,11 @@ interface BrukerModel {
         val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
+        override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
         override val id: UUID,
         val klikketPaa: Boolean,
         val tilstand: Tilstand,
-        override val virksomhetsnummer: String,
     ) : Notifikasjon {
         @Suppress("unused")
         /* leses fra database */
@@ -132,10 +132,10 @@ class BrukerModelImpl(
                     grupperingsid = getString("grupperingsid"),
                     lenke = getString("lenke"),
                     eksternId = getString("ekstern_id"),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getObject("id", UUID::class.java),
-                    klikketPaa = getBoolean("klikketPaa"),
-                    virksomhetsnummer = getString("virksomhetsnummer")
+                    klikketPaa = getBoolean("klikketPaa")
                 )
                 "OPPGAVE" -> BrukerModel.Oppgave(
                     merkelapp = getString("merkelapp"),
@@ -144,10 +144,10 @@ class BrukerModelImpl(
                     grupperingsid = getString("grupperingsid"),
                     lenke = getString("lenke"),
                     eksternId = getString("ekstern_id"),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getObject("id", UUID::class.java),
-                    klikketPaa = getBoolean("klikketPaa"),
-                    virksomhetsnummer = getString("virksomhetsnummer")
+                    klikketPaa = getBoolean("klikketPaa")
                 )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
