@@ -15,3 +15,5 @@ create table mottaker_digisyfo
     fnr_leder text not null,
     fnr_sykmeldt text not null
 );
+
+alter table notifikasjon add column virksomhetsnummer text;

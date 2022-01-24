@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.random.Random.Default.nextLong as randomLong
@@ -365,9 +366,24 @@ class ProdusentRepositoryImpl(
                 log.info("migrating $id")
 
                 storeMottaker(id, mottaker)
+
+                executeUpdate("""
+                    update notifikasjon
+                    set virksomhetsnummer = ?
+                    where id = ?
+                """) {
+                    string(mottaker.virksomhetsnummer)
+                    uuid(id)
+                }
             }
+
             delay(randomLong(500, 1_500))
         }
-        log.info("finished copying mottakere. delete me.")
+        val virksomhetsnummerMangler = database.nonTransactionalExecuteQuery("""
+            select count(*) from notifikasjon where virksomhetsnummer is null
+            """
+        ) {}
+
+        log.info("finished copying mottakere. {} rows with null virksomhetsnummer. delete me.", virksomhetsnummerMangler)
     }
 }
