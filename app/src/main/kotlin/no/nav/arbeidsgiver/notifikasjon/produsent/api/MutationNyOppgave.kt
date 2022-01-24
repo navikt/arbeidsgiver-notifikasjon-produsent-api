@@ -95,7 +95,7 @@ class MutationNyOppgave(
 
         tilgangsstyrNyNotifikasjon(
             produsent,
-            domeneNyOppgave.mottaker,
+            domeneNyOppgave.mottakere,
             nyOppgave.notifikasjon.merkelapp,
         ) { error -> return error }
 
