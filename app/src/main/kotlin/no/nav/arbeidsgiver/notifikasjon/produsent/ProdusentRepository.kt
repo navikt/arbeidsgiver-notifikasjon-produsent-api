@@ -1,10 +1,16 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.coroutines.delay
+import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.random.Random.Default.nextLong as randomLong
 
 interface ProdusentRepository {
     suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon?
@@ -172,96 +178,109 @@ class ProdusentRepositoryImpl(
         }
     }
 
-
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
-        database.nonTransactionalExecuteUpdate(
+        database.transaction {
+            executeUpdate("""
+                insert into notifikasjon(
+                    type,
+                    tilstand,
+                    id,
+                    merkelapp,
+                    tekst,
+                    grupperingsid,
+                    lenke,
+                    ekstern_id,
+                    opprettet_tidspunkt,
+                    mottaker,
+                    virksomhetsnummer
+                )
+                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json, ?)
+                on conflict on constraint notifikasjon_pkey do nothing;
             """
-            insert into notifikasjon(
-                type,
-                tilstand,
-                id,
-                merkelapp,
-                tekst,
-                grupperingsid,
-                lenke,
-                ekstern_id,
-                opprettet_tidspunkt,
-                mottaker
-            )
-            values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json)
-            on conflict on constraint notifikasjon_pkey do nothing;
-        """
-        ) {
-            val nyBeskjed = beskjedOpprettet.tilProdusentModel()
-            uuid(nyBeskjed.id)
-            string(nyBeskjed.merkelapp)
-            string(nyBeskjed.tekst)
-            nullableString(nyBeskjed.grupperingsid)
-            string(nyBeskjed.lenke)
-            string(nyBeskjed.eksternId)
-            timestamptz(nyBeskjed.opprettetTidspunkt)
-            string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
-        }
-        database.nonTransactionalExecuteBatch(
-            """
-            insert into eksternt_varsel(
-                varsel_id,
-                notifikasjon_id,
-                status
-            )
-            values (?, ?, 'NY')
-            on conflict on constraint eksternt_varsel_pkey do nothing;
-            """,
-            beskjedOpprettet.eksterneVarsler
-        ) { eksterntVarsel ->
-            uuid(eksterntVarsel.varselId)
-            uuid(beskjedOpprettet.notifikasjonId)
+            ) {
+                uuid(beskjedOpprettet.notifikasjonId)
+                string(beskjedOpprettet.merkelapp)
+                string(beskjedOpprettet.tekst)
+                nullableString(beskjedOpprettet.grupperingsid)
+                string(beskjedOpprettet.lenke)
+                string(beskjedOpprettet.eksternId)
+                timestamptz(beskjedOpprettet.opprettetTidspunkt)
+                string(objectMapper.writeValueAsString(beskjedOpprettet.mottaker))
+                string(beskjedOpprettet.virksomhetsnummer)
+            }
+
+            for (mottaker in beskjedOpprettet.mottakere) {
+                storeMottaker(beskjedOpprettet.notifikasjonId, mottaker)
+            }
+
+            executeBatch("""
+                insert into eksternt_varsel(
+                    varsel_id,
+                    notifikasjon_id,
+                    status
+                )
+                values (?, ?, 'NY')
+                on conflict on constraint eksternt_varsel_pkey do nothing;
+                """,
+                beskjedOpprettet.eksterneVarsler
+            ) { eksterntVarsel ->
+                uuid(eksterntVarsel.varselId)
+                uuid(beskjedOpprettet.notifikasjonId)
+            }
         }
     }
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
-        database.nonTransactionalExecuteUpdate(
+        database.transaction {
+            executeUpdate(
+                """
+                insert into notifikasjon(
+                    type,
+                    tilstand,
+                    id,
+                    merkelapp,
+                    tekst,
+                    grupperingsid,
+                    lenke,
+                    ekstern_id,
+                    opprettet_tidspunkt,
+                    mottaker,
+                    virksomhetsnummer
+                )
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json, ?)
+                on conflict on constraint notifikasjon_pkey do nothing;
             """
-            insert into notifikasjon(
-                type,
-                tilstand,
-                id,
-                merkelapp,
-                tekst,
-                grupperingsid,
-                lenke,
-                ekstern_id,
-                opprettet_tidspunkt,
-                mottaker
-            )
-            values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json)
-            on conflict on constraint notifikasjon_pkey do nothing;
-        """
-        ) {
-            val nyBeskjed = oppgaveOpprettet.tilProdusentModel()
-            uuid(nyBeskjed.id)
-            string(nyBeskjed.merkelapp)
-            string(nyBeskjed.tekst)
-            nullableString(nyBeskjed.grupperingsid)
-            string(nyBeskjed.lenke)
-            string(nyBeskjed.eksternId)
-            timestamptz(nyBeskjed.opprettetTidspunkt)
-            string(objectMapper.writeValueAsString(nyBeskjed.mottaker))
-        }
-        database.nonTransactionalExecuteBatch(
-            """
-            insert into eksternt_varsel(
-                varsel_id,
-                notifikasjon_id,
-                status
-            )
-            values (?, ?, 'NY')
-            on conflict on constraint eksternt_varsel_pkey do nothing;
-            """,
-            oppgaveOpprettet.eksterneVarsler
-        ) { eksterntVarsel ->
-            uuid(eksterntVarsel.varselId)
-            uuid(oppgaveOpprettet.notifikasjonId)
+            ) {
+                uuid(oppgaveOpprettet.notifikasjonId)
+                string(oppgaveOpprettet.merkelapp)
+                string(oppgaveOpprettet.tekst)
+                nullableString(oppgaveOpprettet.grupperingsid)
+                string(oppgaveOpprettet.lenke)
+                string(oppgaveOpprettet.eksternId)
+                timestamptz(oppgaveOpprettet.opprettetTidspunkt)
+                string(objectMapper.writeValueAsString(oppgaveOpprettet.mottaker))
+                string(oppgaveOpprettet.virksomhetsnummer)
+            }
+
+            for (mottaker in oppgaveOpprettet.mottakere) {
+                storeMottaker(oppgaveOpprettet.notifikasjonId, mottaker)
+            }
+
+            executeBatch(
+                """
+                insert into eksternt_varsel(
+                    varsel_id,
+                    notifikasjon_id,
+                    status
+                )
+                values (?, ?, 'NY')
+                on conflict on constraint eksternt_varsel_pkey do nothing;
+                """,
+                oppgaveOpprettet.eksterneVarsler
+            ) { eksterntVarsel ->
+                uuid(eksterntVarsel.varselId)
+                uuid(oppgaveOpprettet.notifikasjonId)
+            }
         }
     }
 
@@ -287,5 +306,90 @@ class ProdusentRepositoryImpl(
             string(eksterntVarselFeilet.feilmelding)
             uuid(eksterntVarselFeilet.varselId)
         }
+    }
+
+    private fun Transaction.storeMottaker(notifikasjonId: UUID, mottaker: Mottaker) {
+        when (mottaker) {
+            is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
+            is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
+        }
+    }
+
+    private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID, mottaker: NærmesteLederMottaker) {
+        executeUpdate("""
+            insert into mottaker_digisyfo(notifikasjon_id, virksomhet, fnr_leder, fnr_sykmeldt)
+            values (?, ?, ?, ?)
+        """) {
+            uuid(notifikasjonId)
+            string(mottaker.virksomhetsnummer)
+            string(mottaker.naermesteLederFnr)
+            string(mottaker.ansattFnr)
+        }
+    }
+
+    private fun Transaction.storeAltinnMottaker(notifikasjonId: UUID, mottaker: AltinnMottaker) {
+        executeUpdate("""
+            insert into mottaker_altinn_enkeltrettighet
+                (notifikasjon_id, virksomhet, service_code, service_edition)
+            values (?, ?, ?, ?)
+        """) {
+            uuid(notifikasjonId)
+            string(mottaker.virksomhetsnummer)
+            string(mottaker.serviceCode)
+            string(mottaker.serviceEdition)
+        }
+    }
+
+
+    suspend fun migrate() {
+        var done = false
+
+        while (!done) {
+            database.transaction {
+                val (id, mottaker) = executeQuery(
+                    """
+                        select n.id as id, n.mottaker as mottaker
+                        from notifikasjon as n
+                        where
+                            n.id not in (select notifikasjon_id from mottaker_altinn_enkeltrettighet)
+                            and n.id not in (select notifikasjon_id from mottaker_digisyfo)
+                        limit 1
+                    """
+                ) {
+                    Pair(
+                        getObject("id", UUID::class.java),
+                        objectMapper.readValue<Mottaker>(getString("mottaker"))
+                    )
+                }
+                    .singleOrNull()
+                    ?: run {
+                        done = true
+                        return@transaction
+                    }
+
+                log.info("migrating $id")
+
+                storeMottaker(id, mottaker)
+
+                executeUpdate("""
+                    update notifikasjon
+                    set virksomhetsnummer = ?
+                    where id = ?
+                """) {
+                    string(mottaker.virksomhetsnummer)
+                    uuid(id)
+                }
+            }
+
+            delay(randomLong(500, 1_500))
+        }
+        val virksomhetsnummerMangler = database.nonTransactionalExecuteQuery("""
+            select count(*) as c from notifikasjon where virksomhetsnummer is null
+            """
+        ) {
+            this.getInt("c")
+        }
+
+        log.info("finished copying mottakere. {} rows with null virksomhetsnummer. delete me.", virksomhetsnummerMangler)
     }
 }
