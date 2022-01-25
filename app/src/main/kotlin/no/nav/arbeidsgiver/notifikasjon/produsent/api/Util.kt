@@ -72,11 +72,13 @@ val ProdusentModel.Notifikasjon.virksomhetsnummer: String
 
 inline fun tilgangsstyrNyNotifikasjon(
     produsent: Produsent,
-    mottaker: Mottaker,
+    mottakere: List<Mottaker>,
     merkelapp: String,
     onError: (Error.NyNotifikasjonError) -> Nothing
 ) {
-    tilgangsstyrMottaker(produsent, mottaker) { error -> onError(error) }
+    for (mottaker in mottakere) {
+        tilgangsstyrMottaker(produsent, mottaker) { error -> onError(error) }
+    }
     tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
 }
 

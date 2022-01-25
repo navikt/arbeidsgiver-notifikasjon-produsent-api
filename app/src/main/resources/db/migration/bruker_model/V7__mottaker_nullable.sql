@@ -1,0 +1,1 @@
+alter table notifikasjon alter column mottaker drop not null;

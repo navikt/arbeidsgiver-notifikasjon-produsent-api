@@ -7,7 +7,9 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
@@ -16,6 +18,7 @@ import java.util.*
 class HardDeleteTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerModelImpl(database)
+    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("HardDelete av notifikasjon") {
         val uuid1 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
@@ -26,11 +29,6 @@ class HardDeleteTests : DescribeSpec({
             ansattFnr = "33314",
             virksomhetsnummer = "1337"
         )
-
-        val ansatte = listOf(NærmesteLederModel.NærmesteLederFor(
-            ansattFnr = mottaker.ansattFnr,
-            virksomhetsnummer = mottaker.virksomhetsnummer,
-        ))
 
         val opprettEvent = fun (id: UUID) = Hendelse.BeskjedOpprettet(
             merkelapp = "foo",
@@ -61,12 +59,20 @@ class HardDeleteTests : DescribeSpec({
         it("oppretter to beskjeder i databasen") {
             queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid1))
             queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid2))
+            nærmesteLederModel.oppdaterModell(
+                NærmesteLederModel.NarmesteLederLeesah(
+                    narmesteLederId = uuid("43"),
+                    fnr = mottaker.ansattFnr,
+                    narmesteLederFnr = mottaker.naermesteLederFnr,
+                    orgnummer = mottaker.virksomhetsnummer,
+                    aktivTom = null,
+                )
+            )
 
             val notifikasjoner =
                 queryModel.hentNotifikasjoner(
                     mottaker.naermesteLederFnr,
                     emptyList(),
-                    ansatte,
                 )
                     .map { it.id }
                     .sorted()
@@ -79,7 +85,6 @@ class HardDeleteTests : DescribeSpec({
             val notifikasjonerEtterSletting = queryModel.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
                 emptyList(),
-                ansatte,
             )
                 .map { it.id }
 

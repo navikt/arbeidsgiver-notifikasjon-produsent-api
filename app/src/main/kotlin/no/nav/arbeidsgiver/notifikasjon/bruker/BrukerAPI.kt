@@ -8,9 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
@@ -145,7 +143,6 @@ object BrukerAPI {
         altinn: Altinn,
         enhetsregisteret: Enhetsregisteret,
         brukerModel: BrukerModel,
-        nærmesteLederModel: NærmesteLederModel,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
@@ -163,7 +160,6 @@ object BrukerAPI {
 
                 queryNotifikasjoner(
                     altinn = altinn,
-                    nærmesteLederModel = nærmesteLederModel,
                     brukerModel = brukerModel
                 )
 
@@ -197,7 +193,6 @@ object BrukerAPI {
 
     fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
         altinn: Altinn,
-        nærmesteLederModel: NærmesteLederModel,
         brukerModel: BrukerModel
     ) {
         coDataFetcher("notifikasjoner") { env ->
@@ -220,22 +215,13 @@ object BrukerAPI {
                         log.error("Henting av Altinn-tilganger feilet", e)
                         null
                     }
-
-                }
-                val ansatte = async {
-                    try{
-                        nærmesteLederModel.hentAnsatte(context.fnr)
-                    } catch (e: Exception) {
-                        log.error("Henting av DigiSyfo-tilganger feilet", e)
-                        null
-                    }
                 }
 
                 val notifikasjoner = brukerModel
                     .hentNotifikasjoner(
                         context.fnr,
-                        tilganger.await().orEmpty(),
-                        ansatte.await().orEmpty())
+                        tilganger.await().orEmpty()
+                    )
                     .map { notifikasjon ->
                         when (notifikasjon) {
                             is BrukerModel.Beskjed ->
@@ -246,10 +232,7 @@ object BrukerAPI {
                                     opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                     id = notifikasjon.id,
                                     virksomhet = Virksomhet(
-                                        when (notifikasjon.mottaker) {
-                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                        }
+                                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
                                     ),
                                     brukerKlikk = BrukerKlikk(
                                         id = "${context.fnr}-${notifikasjon.id}",
@@ -265,10 +248,7 @@ object BrukerAPI {
                                     opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                     id = notifikasjon.id,
                                     virksomhet = Virksomhet(
-                                        when (notifikasjon.mottaker) {
-                                            is NærmesteLederMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                            is AltinnMottaker -> notifikasjon.mottaker.virksomhetsnummer
-                                        }
+                                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
                                     ),
                                     brukerKlikk = BrukerKlikk(
                                         id = "${context.fnr}-${notifikasjon.id}",
@@ -281,7 +261,7 @@ object BrukerAPI {
                 return@coroutineScope NotifikasjonerResultat(
                     notifikasjoner,
                     feilAltinn = tilganger.await() == null,
-                    feilDigiSyfo = ansatte.await() == null
+                    feilDigiSyfo = false,
                 )
             }
         }

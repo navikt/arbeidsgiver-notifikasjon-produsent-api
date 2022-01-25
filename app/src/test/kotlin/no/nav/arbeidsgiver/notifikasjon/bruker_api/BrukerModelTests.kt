@@ -9,7 +9,9 @@ import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
@@ -18,6 +20,7 @@ import java.util.*
 class BrukerModelTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerModelImpl(database)
+    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("Beskjed opprettet i BrukerModel") {
         val uuid = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
@@ -26,10 +29,6 @@ class BrukerModelTests : DescribeSpec({
             ansattFnr = "33314",
             virksomhetsnummer = "1337"
         )
-        val ansatte = listOf(NærmesteLederModel.NærmesteLederFor(
-            ansattFnr = mottaker.ansattFnr,
-            virksomhetsnummer = mottaker.virksomhetsnummer,
-        ))
         val event = Hendelse.BeskjedOpprettet(
             merkelapp = "foo",
             eksternId = "42",
@@ -46,7 +45,17 @@ class BrukerModelTests : DescribeSpec({
             eksterneVarsler = listOf(),
         )
 
+
         context("happy path") {
+            nærmesteLederModel.oppdaterModell(
+                NærmesteLederModel.NarmesteLederLeesah(
+                    narmesteLederId = uuid("4321"),
+                    fnr = mottaker.ansattFnr,
+                    narmesteLederFnr = mottaker.naermesteLederFnr,
+                    orgnummer = mottaker.virksomhetsnummer,
+                    aktivTom = null,
+                )
+            )
             queryModel.oppdaterModellEtterHendelse(event)
 
             it("opprettes beskjed i databasen") {
@@ -54,12 +63,11 @@ class BrukerModelTests : DescribeSpec({
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
                         emptyList(),
-                        ansatte,
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
                     eksternId = "42",
-                    mottaker = mottaker,
+                    virksomhetsnummer = mottaker.virksomhetsnummer,
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",
@@ -71,6 +79,15 @@ class BrukerModelTests : DescribeSpec({
         }
 
         context("notifikasjon mottas flere ganger (fra kafka f.eks.)") {
+            nærmesteLederModel.oppdaterModell(
+                NærmesteLederModel.NarmesteLederLeesah(
+                    narmesteLederId = uuid("4321"),
+                    fnr = mottaker.ansattFnr,
+                    narmesteLederFnr = mottaker.naermesteLederFnr,
+                    orgnummer = mottaker.virksomhetsnummer,
+                    aktivTom = null,
+                )
+            )
             queryModel.oppdaterModellEtterHendelse(event)
 
             shouldNotThrowAny {
@@ -82,12 +99,11 @@ class BrukerModelTests : DescribeSpec({
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
                         emptyList(),
-                        ansatte
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
                     eksternId = "42",
-                    mottaker = mottaker,
+                    virksomhetsnummer = mottaker.virksomhetsnummer,
                     tekst = "teste",
                     grupperingsid = "gr1",
                     lenke = "foo.no/bar",

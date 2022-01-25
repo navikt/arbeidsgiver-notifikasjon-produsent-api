@@ -1,7 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
@@ -10,13 +8,9 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
-import kotlin.random.Random
 
 interface BrukerModel {
     data class Tilgang(
@@ -27,6 +21,7 @@ interface BrukerModel {
 
     sealed interface Notifikasjon {
         val id: UUID
+        val virksomhetsnummer: String
     }
 
     data class Beskjed(
@@ -35,7 +30,7 @@ interface BrukerModel {
         val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
-        val mottaker: Mottaker,
+        override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
         override val id: UUID,
         val klikketPaa: Boolean
@@ -47,7 +42,7 @@ interface BrukerModel {
         val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
-        val mottaker: Mottaker,
+        override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
         override val id: UUID,
         val klikketPaa: Boolean,
@@ -64,7 +59,6 @@ interface BrukerModel {
     suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<Tilgang>,
-        ansatte: List<NærmesteLederModel.NærmesteLederFor>
     ): List<Notifikasjon>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -74,20 +68,11 @@ interface BrukerModel {
 class BrukerModelImpl(
     private val database: Database
 ) : BrukerModel {
-    private val log = logger()
-
-    val BrukerModel.Notifikasjon.mottaker: Mottaker
-        get() = when (this) {
-            is BrukerModel.Oppgave -> this.mottaker
-            is BrukerModel.Beskjed -> this.mottaker
-        }
-
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
     override suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: Collection<BrukerModel.Tilgang>,
-        ansatte: List<NærmesteLederModel.NærmesteLederFor>
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
         val tilgangerAltinnMottaker = tilganger.map {
             AltinnMottaker(
@@ -97,31 +82,47 @@ class BrukerModelImpl(
             )
         }
 
-        val ansatteLookupTable = ansatte.toSet()
-
-        val notifikasjoner = database.nonTransactionalExecuteQuery(
+        database.nonTransactionalExecuteQuery(
+            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
+            with 
+                mine_altinntilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                ),
+                mine_altinn_notifikasjoner as (
+                    select er.notifikasjon_id
+                    from mottaker_altinn_enkeltrettighet er
+                    join mine_altinntilganger at on 
+                        er.virksomhet = at.virksomhetsnummer and
+                        er.service_code = at."serviceCode" and
+                        er.service_edition = at."serviceEdition"
+                ),
+                mine_digisyfo_notifikasjoner as (
+                    select notifikasjon_id 
+                    from notifikasjoner_for_digisyfo_fnr
+                    where fnr_leder = ?
+                ),
+                mine_notifikasjoner as (
+                    (select * from mine_digisyfo_notifikasjoner)
+                    union 
+                    (select * from mine_altinn_notifikasjoner)
+                )
             select 
                 n.*, 
                 klikk.notifikasjonsid is not null as klikketPaa
-            from notifikasjon as n
+            from mine_notifikasjoner as mn
+            join notifikasjon as n on n.id = mn.notifikasjon_id
             left outer join brukerklikk as klikk on
                 klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
-            where (
-                mottaker ->> '@type' = 'naermesteLeder'
-                and mottaker ->> 'naermesteLederFnr' = ?
-            ) or (
-                mottaker ->> '@type' = 'altinn'
-                and mottaker in (select * from jsonb_array_elements(?::jsonb))
-            )
             order by opprettet_tidspunkt desc
             limit 200
             """,
             {
-                string(fnr)
-                string(fnr)
                 jsonb(tilgangerAltinnMottaker)
+                string(fnr)
+                string(fnr)
             }
         ) {
             when (val type = getString("type")) {
@@ -131,7 +132,7 @@ class BrukerModelImpl(
                     grupperingsid = getString("grupperingsid"),
                     lenke = getString("lenke"),
                     eksternId = getString("ekstern_id"),
-                    mottaker = objectMapper.readValue(getString("mottaker")),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getObject("id", UUID::class.java),
                     klikketPaa = getBoolean("klikketPaa")
@@ -143,7 +144,7 @@ class BrukerModelImpl(
                     grupperingsid = getString("grupperingsid"),
                     lenke = getString("lenke"),
                     eksternId = getString("ekstern_id"),
-                    mottaker = objectMapper.readValue(getString("mottaker")),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getObject("id", UUID::class.java),
                     klikketPaa = getBoolean("klikketPaa")
@@ -152,26 +153,12 @@ class BrukerModelImpl(
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
-
-        notifikasjoner
-            .filter { notifikasjon ->
-                when (val mottaker = notifikasjon.mottaker) {
-                    is NærmesteLederMottaker ->
-                        ansatteLookupTable.contains(
-                            NærmesteLederModel.NærmesteLederFor(
-                                ansattFnr = mottaker.ansattFnr,
-                                virksomhetsnummer = mottaker.virksomhetsnummer
-                            )
-                        )
-                    else -> true
-                }
-            }
     }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
         database.nonTransactionalExecuteQuery(
             """
-                SELECT virksomhetsnummer FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ? LIMIT 1
+                SELECT virksomhetsnummer FROM notifikasjon WHERE id = ? LIMIT 1
             """, {
                 uuid(notifikasjonsid)
             }) {
@@ -197,10 +184,6 @@ class BrukerModelImpl(
             throw RuntimeException("Delete", it)
         }) {
             executeUpdate(""" DELETE FROM notifikasjon WHERE id = ?;""") {
-                uuid(hendelsesId)
-            }
-
-            executeUpdate("""DELETE FROM notifikasjonsid_virksomhet_map WHERE notifikasjonsid = ?;""") {
                 uuid(hendelsesId)
             }
 
@@ -249,10 +232,9 @@ class BrukerModelImpl(
                     lenke,
                     ekstern_id,
                     opprettet_tidspunkt,
-                    mottaker,
                     virksomhetsnummer
                 )
-                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json, ?)
+                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
                 on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
@@ -263,22 +245,11 @@ class BrukerModelImpl(
                 string(beskjedOpprettet.lenke)
                 string(beskjedOpprettet.eksternId)
                 timestamptz(beskjedOpprettet.opprettetTidspunkt)
-                string(objectMapper.writeValueAsString(beskjedOpprettet.mottaker))
                 string(beskjedOpprettet.virksomhetsnummer)
             }
 
             for (mottaker in beskjedOpprettet.mottakere) {
                 storeMottaker(beskjedOpprettet.notifikasjonId, mottaker)
-            }
-
-            executeUpdate(
-                """
-                INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
-                ON CONFLICT ON CONSTRAINT notifikasjonsid_virksomhet_map_pkey DO NOTHING;
-            """
-            ) {
-                uuid(beskjedOpprettet.notifikasjonId)
-                string(beskjedOpprettet.virksomhetsnummer)
             }
         }
     }
@@ -329,10 +300,9 @@ class BrukerModelImpl(
                     lenke,
                     ekstern_id,
                     opprettet_tidspunkt,
-                    mottaker,
                     virksomhetsnummer
                 )
-                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json, ?)
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
                 on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
@@ -343,66 +313,12 @@ class BrukerModelImpl(
                 string(oppgaveOpprettet.lenke)
                 string(oppgaveOpprettet.eksternId)
                 timestamptz(oppgaveOpprettet.opprettetTidspunkt)
-                string(objectMapper.writeValueAsString(oppgaveOpprettet.mottaker))
                 string(oppgaveOpprettet.virksomhetsnummer)
             }
 
             for (mottaker in oppgaveOpprettet.mottakere) {
                 storeMottaker(oppgaveOpprettet.notifikasjonId, mottaker)
             }
-
-            executeUpdate(
-                """
-                INSERT INTO notifikasjonsid_virksomhet_map(notifikasjonsid, virksomhetsnummer) VALUES (?, ?)
-                ON CONFLICT ON CONSTRAINT notifikasjonsid_virksomhet_map_pkey DO NOTHING;
-            """
-            ) {
-                uuid(oppgaveOpprettet.notifikasjonId)
-                string(oppgaveOpprettet.virksomhetsnummer)
-            }
         }
-    }
-
-    // # of notifications: 20k
-    // # of notification pr. pod: 5k
-    // one notification per second -> 5k seconds -> 83 minutes
-
-    suspend fun startBackgroundMottakerMigration() {
-        var done = false
-
-        while (!done) {
-            database.transaction {
-                val (id, mottaker) = executeQuery(
-                    """
-                            select id, mottaker from notifikasjon
-                            where virksomhetsnummer is null
-                            limit 1
-                        """
-                ) {
-                    Pair(
-                        getObject("id", UUID::class.java),
-                        objectMapper.readValue<Mottaker>(getString("mottaker"))
-                    )
-                }
-                    .singleOrNull()
-                    ?: run {
-                        done = true
-                        return@transaction
-                    }
-
-                log.info("migrating vnr for $id")
-
-                executeUpdate("""
-                    update notifikasjon
-                    set virksomhetsnummer = ?
-                    where id = ?
-                """) {
-                    string(mottaker.virksomhetsnummer)
-                    uuid(id)
-                }
-            }
-            delay(Random.Default.nextLong(500, 1_500))
-        }
-        log.info("finished copying mottakere. delete me.")
     }
 }

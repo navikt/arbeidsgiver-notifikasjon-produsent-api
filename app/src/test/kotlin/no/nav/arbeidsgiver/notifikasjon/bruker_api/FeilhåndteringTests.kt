@@ -10,7 +10,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.util.*
 
@@ -18,7 +17,6 @@ class FeilhåndteringTests : DescribeSpec({
     val queryModel: BrukerModelImpl = mockk()
 
     val altinn: Altinn = mockk()
-    val nærmesteLederModel: NærmesteLederModel = mockk()
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
@@ -26,7 +24,6 @@ class FeilhåndteringTests : DescribeSpec({
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
             brukerModel = queryModel,
             kafkaProducer = mockk(),
-            nærmesteLederModel = nærmesteLederModel,
         )
     )
 
@@ -38,11 +35,7 @@ class FeilhåndteringTests : DescribeSpec({
             } throws RuntimeException("Mock failure")
 
             coEvery {
-                queryModel.hentNotifikasjoner(any(), any(), any())
-            } returns listOf()
-
-            coEvery {
-                nærmesteLederModel.hentAnsatte(any())
+                queryModel.hentNotifikasjoner(any(), any())
             } returns listOf()
 
             val response = engine.brukerApi(
@@ -67,87 +60,7 @@ class FeilhåndteringTests : DescribeSpec({
             it("feil Altinn") {
                 response.getTypedContent<Boolean>("notifikasjoner/feilAltinn") shouldBe true
                 response.getTypedContent<Boolean>("notifikasjoner/feilDigiSyfo") shouldBe false
-                coVerify { queryModel.hentNotifikasjoner(any(), listOf(), any()) }
-            }
-        }
-        context("Feil DigiSyfo, Altinn ok") {
-
-            coEvery {
-                nærmesteLederModel.hentAnsatte(any())
-            } throws RuntimeException("Mock failure")
-
-            coEvery {
-                queryModel.hentNotifikasjoner(any(), any(), any())
-            } returns listOf()
-
-            coEvery {
-                altinn.hentTilganger(any(), any(), any())
-            } returns listOf()
-
-            val response = engine.brukerApi(
-                """
-                    {
-                        notifikasjoner{
-                            feilAltinn
-                            feilDigiSyfo
-                           
-                        }
-                    }
-                """.trimIndent()
-            )
-
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
-
-            it("feil DigiSyfo") {
-                response.getTypedContent<Boolean>("notifikasjoner/feilDigiSyfo") shouldBe true
-                response.getTypedContent<Boolean>("notifikasjoner/feilAltinn") shouldBe false
-                coVerify { queryModel.hentNotifikasjoner(any(), any(), listOf()) }
-            }
-        }
-        context("Feil DigiSyfo, feil Altinn") {
-
-            coEvery {
-                nærmesteLederModel.hentAnsatte(any())
-            } throws RuntimeException("Mock failure")
-
-            coEvery {
-                queryModel.hentNotifikasjoner(any(), any(), any())
-            } returns listOf()
-
-            coEvery {
-                altinn.hentTilganger(any(), any(), any())
-            } throws RuntimeException("Mock failure")
-
-            val response = engine.brukerApi(
-                """
-                    {
-                        notifikasjoner{
-                            feilAltinn
-                            feilDigiSyfo
-                           
-                        }
-                    }
-                """.trimIndent()
-            )
-
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
-
-            it("feil DigiSyfo") {
-                response.getTypedContent<Boolean>("notifikasjoner/feilDigiSyfo") shouldBe true
-                response.getTypedContent<Boolean>("notifikasjoner/feilAltinn") shouldBe true
-                coVerify { queryModel.hentNotifikasjoner(any(), listOf(), listOf()) }
+                coVerify { queryModel.hentNotifikasjoner(any(), listOf()) }
             }
         }
     }

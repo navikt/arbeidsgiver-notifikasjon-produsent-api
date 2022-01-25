@@ -114,17 +114,12 @@ object Bruker {
                 }
             }
 
-            launch {
-                brukerModelAsync.await().startBackgroundMottakerMigration()
-            }
-
             val graphql = async {
                 BrukerAPI.createBrukerGraphQL(
                     altinn = altinn,
                     enhetsregisteret = enhetsregisteret,
                     brukerModel = brukerModelAsync.await(),
                     kafkaProducer = createKafkaProducer(),
-                    nærmesteLederModel = nærmesteLederModelAsync.await()
                 )
             }
 
