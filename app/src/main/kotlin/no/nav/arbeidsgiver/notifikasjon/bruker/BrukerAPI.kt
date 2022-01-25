@@ -165,7 +165,6 @@ object BrukerAPI {
 
                 querySaker(
                     altinn = altinn,
-                    nærmesteLederModel = nærmesteLederModel,
                     brukerModel = brukerModel
                 )
 
@@ -269,7 +268,6 @@ object BrukerAPI {
 
     fun TypeRuntimeWiring.Builder.querySaker(
         altinn: Altinn,
-        nærmesteLederModel: NærmesteLederModel,
         brukerModel: BrukerModel
     ) {
         coDataFetcher("saker") { env ->
