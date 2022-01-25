@@ -1,16 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
-import kotlin.random.Random.Default.nextLong as randomLong
 
 interface ProdusentRepository {
     suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon?
@@ -338,56 +335,5 @@ class ProdusentRepositoryImpl(
             string(mottaker.serviceCode)
             string(mottaker.serviceEdition)
         }
-    }
-
-
-    suspend fun migrate() {
-        var done = false
-
-        while (!done) {
-            database.transaction {
-                val (id, mottaker) = executeQuery(
-                    """
-                        select n.id as id, n.mottaker as mottaker
-                        from notifikasjon as n
-                        where
-                            n.id not in (select notifikasjon_id from mottaker_altinn_enkeltrettighet)
-                            and n.id not in (select notifikasjon_id from mottaker_digisyfo)
-                        limit 1
-                    """
-                ) {
-                    Pair(
-                        getObject("id", UUID::class.java),
-                        objectMapper.readValue<Mottaker>(getString("mottaker"))
-                    )
-                }
-                    .singleOrNull()
-                    ?: run {
-                        done = true
-                        return@transaction
-                    }
-
-                log.info("migrating $id")
-
-                storeMottaker(id, mottaker)
-
-                executeUpdate("""
-                    update notifikasjon
-                    set virksomhetsnummer = ?
-                    where id = ?
-                """) {
-                    string(mottaker.virksomhetsnummer)
-                    uuid(id)
-                }
-            }
-
-            delay(randomLong(500, 1_500))
-        }
-        val virksomhetsnummerMangler = database.nonTransactionalExecuteQuery("""
-            select count(*) from notifikasjon where virksomhetsnummer is null
-            """
-        ) {}
-
-        log.info("finished copying mottakere. {} rows with null virksomhetsnummer. delete me.", virksomhetsnummerMangler)
     }
 }
