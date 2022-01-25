@@ -31,6 +31,8 @@ type Sak {
 }
 type Statusoppdatering {
     status: Status!
+    tittel: String!
+    lenke: String!
     tidspunkt: ISO8601DateTime!
 }
 union Status = PredefinertStatus | EgendefinertStatus
