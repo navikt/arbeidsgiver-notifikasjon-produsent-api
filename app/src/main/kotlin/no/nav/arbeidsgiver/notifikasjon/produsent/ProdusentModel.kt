@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import no.nav.arbeidsgiver.notifikasjon.*
 import java.lang.IllegalArgumentException
 import java.time.OffsetDateTime
@@ -36,10 +37,15 @@ object ProdusentModel {
         val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
-        val mottaker: Mottaker,
+        val mottakere: List<Mottaker>,
         val opprettetTidspunkt: OffsetDateTime,
         override val eksterneVarsler: List<EksterntVarsel>,
     ) : Notifikasjon {
+
+        @Deprecated("may be more than one")
+        val mottaker: Mottaker
+            get() = mottakere.single()
+
         override fun erDuplikatAv(other: Notifikasjon): Boolean {
             return when (other) {
                 is Beskjed -> {
@@ -61,11 +67,15 @@ object ProdusentModel {
         val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
-        val mottaker: Mottaker,
+        val mottakere: List<Mottaker>,
         val opprettetTidspunkt: OffsetDateTime,
         val tilstand: Tilstand,
         override val eksterneVarsler: List<EksterntVarsel>,
     ) : Notifikasjon {
+
+        @Deprecated("may be more than one")
+        val mottaker: Mottaker
+            get() = mottakere.single()
 
         @Suppress("unused")
         /* leses fra database */
@@ -108,7 +118,7 @@ fun Hendelse.BeskjedOpprettet.tilProdusentModel(): ProdusentModel.Beskjed =
         grupperingsid = this.grupperingsid,
         lenke = this.lenke,
         eksternId = this.eksternId,
-        mottaker = this.mottaker,
+        mottakere = listOf(this.mottaker),
         opprettetTidspunkt = this.opprettetTidspunkt,
         deletedAt = null,
         eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel)
@@ -122,7 +132,7 @@ fun Hendelse.OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
         grupperingsid = this.grupperingsid,
         lenke = this.lenke,
         eksternId = this.eksternId,
-        mottaker = this.mottaker,
+        mottakere = listOf(this.mottaker),
         opprettetTidspunkt = this.opprettetTidspunkt,
         tilstand = ProdusentModel.Oppgave.Tilstand.NY,
         deletedAt = null,
