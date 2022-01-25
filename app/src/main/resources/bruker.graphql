@@ -37,10 +37,10 @@ type Statusoppdatering {
 }
 union Status = PredefinertStatus | EgendefinertStatus
 type PredefinertStatus {
-    value: StatusEnum!
+    predefinertVerdi: StatusEnum!
 }
 type EgendefinertStatus {
-    value: String!
+    egendefinertVerdi: String!
 }
 enum StatusEnum {
     MOTTATT
