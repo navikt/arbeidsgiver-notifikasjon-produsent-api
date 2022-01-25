@@ -384,9 +384,11 @@ class ProdusentRepositoryImpl(
             delay(randomLong(500, 1_500))
         }
         val virksomhetsnummerMangler = database.nonTransactionalExecuteQuery("""
-            select count(*) from notifikasjon where virksomhetsnummer is null
+            select count(*) as c from notifikasjon where virksomhetsnummer is null
             """
-        ) {}
+        ) {
+            this.getInt("c")
+        }
 
         log.info("finished copying mottakere. {} rows with null virksomhetsnummer. delete me.", virksomhetsnummerMangler)
     }
