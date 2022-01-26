@@ -98,6 +98,7 @@ union Notifikasjon = Beskjed | Oppgave
 
 type Oppgave {
     mottaker: Mottaker!
+    mottakere: [Mottaker!]!
     metadata: Metadata!
     oppgave: OppgaveData!
     eksterneVarsler: [EksterntVarsel!]!
@@ -105,6 +106,7 @@ type Oppgave {
 
 type Beskjed {
     mottaker: Mottaker!
+    mottakere: [Mottaker!]!
     metadata: Metadata!
     beskjed: BeskjedData!
     eksterneVarsler: [EksterntVarsel!]!

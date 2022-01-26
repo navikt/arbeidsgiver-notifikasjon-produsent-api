@@ -46,6 +46,7 @@ class QueryMineNotifikasjoner(
     sealed class Notifikasjon {
         @JsonTypeName("Beskjed")
         data class Beskjed(
+            val mottakere: List<Mottaker>,
             val mottaker: Mottaker,
             val metadata: Metadata,
             val beskjed: BeskjedData,
@@ -61,7 +62,8 @@ class QueryMineNotifikasjoner(
                             opprettetTidspunkt = beskjed.opprettetTidspunkt,
                             softDeletedAt = beskjed.deletedAt,
                         ),
-                        mottaker = Mottaker.fraDomene(beskjed.mottaker),
+                        mottaker = Mottaker.fraDomene(beskjed.mottakere.single()),
+                        mottakere = beskjed.mottakere.map { Mottaker.fraDomene(it) },
                         beskjed = BeskjedData(
                             merkelapp = beskjed.merkelapp,
                             tekst = beskjed.tekst,
@@ -76,6 +78,7 @@ class QueryMineNotifikasjoner(
         @JsonTypeName("Oppgave")
         data class Oppgave(
             val mottaker: Mottaker,
+            val mottakere: List<Mottaker>,
             val metadata: Metadata,
             val oppgave: OppgaveData,
             val eksterneVarsler: List<EksterntVarsel>,
@@ -97,7 +100,8 @@ class QueryMineNotifikasjoner(
                             opprettetTidspunkt = oppgave.opprettetTidspunkt,
                             softDeletedAt = oppgave.deletedAt
                         ),
-                        mottaker = Mottaker.fraDomene(oppgave.mottaker),
+                        mottaker = Mottaker.fraDomene(oppgave.mottakere.single()),
+                        mottakere = oppgave.mottakere.map { Mottaker.fraDomene(it) },
                         oppgave = OppgaveData(
                             tilstand = enumValueOf(oppgave.tilstand.name),
                             merkelapp = oppgave.merkelapp,

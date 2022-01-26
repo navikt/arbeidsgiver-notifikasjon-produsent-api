@@ -15,7 +15,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_REGISTER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -57,7 +56,7 @@ object Produsent {
         altinn: Altinn = AltinnImpl,
     ) {
         runBlocking(Dispatchers.Default) {
-            val produsentModelAsync = async {
+            val produsentRepositoryAsync = async {
                 try {
                     val database = Database.openDatabase(databaseConfig)
                     Health.subsystemReady[Subsystem.DATABASE] = true
@@ -75,10 +74,10 @@ object Produsent {
                     val kafkaConsumer = createKafkaConsumer {
                         put(ConsumerConfig.GROUP_ID_CONFIG, "produsent-model-builder")
                     }
-                    val produsentModel = produsentModelAsync.await()
+                    val produsentRepository = produsentRepositoryAsync.await()
 
                     kafkaConsumer.forEachEvent { event ->
-                        produsentModel.oppdaterModellEtterHendelse(event)
+                        produsentRepository.oppdaterModellEtterHendelse(event)
                     }
                 }
             }
@@ -86,7 +85,8 @@ object Produsent {
             val graphql = async {
                 ProdusentAPI.newGraphQL(
                     kafkaProducer = createKafkaProducer(),
-                    produsentRepository = produsentModelAsync.await()
+                    produsentRepository = produsentRepositoryAsync.await()
+
                 )
             }
 
@@ -107,7 +107,7 @@ object Produsent {
             launch {
                 val roller = altinn.hentRoller()
                 roller.forEach { rolle ->
-                    produsentModelAsync.await().leggTilAltinnRolle(rolle)
+                    produsentRepositoryAsync.await().leggTilAltinnRolle(rolle)
                 }
             }
         }
