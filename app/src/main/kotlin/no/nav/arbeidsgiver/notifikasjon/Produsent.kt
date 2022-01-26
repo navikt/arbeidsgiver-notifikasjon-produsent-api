@@ -54,6 +54,7 @@ object Produsent {
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         httpPort: Int = 8080,
         produsentRegister: ProdusentRegister = PRODUSENT_REGISTER,
+        altinn: Altinn = AltinnImpl,
     ) {
         runBlocking(Dispatchers.Default) {
             val produsentModelAsync = async {
@@ -86,7 +87,6 @@ object Produsent {
                 ProdusentAPI.newGraphQL(
                     kafkaProducer = createKafkaProducer(),
                     produsentRepository = produsentModelAsync.await()
-
                 )
             }
 
@@ -105,7 +105,10 @@ object Produsent {
                 httpServer.start(wait = true)
             }
             launch {
-
+                val roller = altinn.hentRoller()
+                roller.forEach { rolle ->
+                    produsentModelAsync.await().leggTilAltinnRolle(rolle)
+                }
             }
         }
     }

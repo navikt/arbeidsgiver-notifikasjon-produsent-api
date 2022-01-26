@@ -30,10 +30,10 @@ class ProdusentRepositoryImpl(
                 """
             insert into altinn_rolle(
                  role_definition_id,
-                 role_definition_code
-                 
+                 role_definition_code                 
             )
             values (?, ?)
+            on conflict on constraint altinn_rolle_pkey do nothing
             """
             ) {
                 string(altinnRolle.RoleDefinitionId)
