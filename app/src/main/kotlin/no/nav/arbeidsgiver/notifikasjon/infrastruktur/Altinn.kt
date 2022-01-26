@@ -168,19 +168,19 @@ object AltinnImpl : Altinn {
     }
 }
 
-    fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolean {
-        return when (cause) {
-            is io.ktor.network.sockets.SocketTimeoutException -> true
-            is ServerResponseException -> {
-                when ((cause as? ServerResponseException)?.response?.status) {
-                    HttpStatusCode.BadGateway,
-                    HttpStatusCode.GatewayTimeout,
-                    HttpStatusCode.ServiceUnavailable,
-                    -> true
-                    else -> false
-                }
+fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolean {
+    return when (cause) {
+        is io.ktor.network.sockets.SocketTimeoutException -> true
+        is ServerResponseException -> {
+            when ((cause as? ServerResponseException)?.response?.status) {
+                HttpStatusCode.BadGateway,
+                HttpStatusCode.GatewayTimeout,
+                HttpStatusCode.ServiceUnavailable,
+                -> true
+                else -> false
             }
-            else -> false
-
         }
+        else -> false
+
     }
+}

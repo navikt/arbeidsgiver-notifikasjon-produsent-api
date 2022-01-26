@@ -19,8 +19,9 @@ interface ProdusentRepository {
         antall: Int,
         offset: Int,
     ): List<ProdusentModel.Notifikasjon>
+
     suspend fun leggTilAltinnRolle(altinnRolle: AltinnRolle)
-    suspend fun hentAltinnrolle(rolleKode: String):AltinnRolle?
+    suspend fun hentAltinnrolle(rolleKode: String): AltinnRolle?
 }
 
 class ProdusentRepositoryImpl(
@@ -30,7 +31,7 @@ class ProdusentRepositoryImpl(
 
     override suspend fun leggTilAltinnRolle(altinnRolle: AltinnRolle) {
         database.nonTransactionalExecuteUpdate(
-                """
+            """
             insert into altinn_rolle(
                  role_definition_id,
                  role_definition_code                 
@@ -38,11 +39,11 @@ class ProdusentRepositoryImpl(
             values (?, ?)
             on conflict on constraint altinn_rolle_pkey do nothing
             """
-            ) {
-                string(altinnRolle.RoleDefinitionId)
-                string(altinnRolle.RoleDefinitionCode)
-            }
+        ) {
+            string(altinnRolle.RoleDefinitionId)
+            string(altinnRolle.RoleDefinitionCode)
         }
+    }
 
     override suspend fun hentAltinnrolle(rolleKode: String): AltinnRolle? =
         database.nonTransactionalExecuteQuery("""
@@ -51,14 +52,13 @@ class ProdusentRepositoryImpl(
                 from altinn_rolle                
                 where role_definition_code = ?
         """,
-            {string(rolleKode)}
-        ){
-            AltinnRolle (
+            { string(rolleKode) }
+        ) {
+            AltinnRolle(
                 RoleDefinitionCode = getString("role_definition_code"),
                 RoleDefinitionId = getString("role_definition_id")
             )
         }.firstOrNull()
-
 
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
@@ -106,7 +106,8 @@ class ProdusentRepositoryImpl(
         filter: String,
         setup: ParameterSetters.() -> Unit
     ): List<ProdusentModel.Notifikasjon> =
-        database.nonTransactionalExecuteQuery(""" 
+        database.nonTransactionalExecuteQuery(
+            """ 
             with 
                 valgt_notifikasjon as (
                     select notifikasjon.* 
@@ -211,7 +212,8 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
         database.transaction {
-            executeUpdate("""
+            executeUpdate(
+                """
                 insert into notifikasjon(
                     type,
                     tilstand,
@@ -244,7 +246,8 @@ class ProdusentRepositoryImpl(
                 storeMottaker(beskjedOpprettet.notifikasjonId, mottaker)
             }
 
-            executeBatch("""
+            executeBatch(
+                """
                 insert into eksternt_varsel(
                     varsel_id,
                     notifikasjon_id,
@@ -347,10 +350,12 @@ class ProdusentRepositoryImpl(
     }
 
     private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID, mottaker: NærmesteLederMottaker) {
-        executeUpdate("""
+        executeUpdate(
+            """
             insert into mottaker_digisyfo(notifikasjon_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?)
-        """) {
+        """
+        ) {
             uuid(notifikasjonId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.naermesteLederFnr)
@@ -359,11 +364,13 @@ class ProdusentRepositoryImpl(
     }
 
     private fun Transaction.storeAltinnMottaker(notifikasjonId: UUID, mottaker: AltinnMottaker) {
-        executeUpdate("""
+        executeUpdate(
+            """
             insert into mottaker_altinn_enkeltrettighet
                 (notifikasjon_id, virksomhet, service_code, service_edition)
             values (?, ?, ?, ?)
-        """) {
+        """
+        ) {
             uuid(notifikasjonId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.serviceCode)

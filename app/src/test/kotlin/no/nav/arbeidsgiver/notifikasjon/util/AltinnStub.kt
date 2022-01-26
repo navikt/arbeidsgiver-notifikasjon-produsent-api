@@ -26,6 +26,6 @@ open class AltinnStub(
         hentAlleTilgangerImpl(fnr, selvbetjeningsToken)
 
     override suspend fun hentRoller(): List<AltinnRolle> {
-       return  listOf(AltinnRolle("195","DAGL"),AltinnRolle("196","BOBE"))
+       return listOf(AltinnRolle("195", "DAGL"), AltinnRolle("196", "BOBE"))
     }
 }
