@@ -225,7 +225,6 @@ value class Transaction(
 class ParameterSetters(
     private val preparedStatement: PreparedStatement,
 ) {
-
     private var index = 1
 
 
