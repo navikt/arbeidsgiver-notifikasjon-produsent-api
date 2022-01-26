@@ -1,6 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.ktor.client.*
+import io.ktor.client.engine.apache.*
 import io.ktor.client.features.*
+import io.ktor.client.features.json.*
+import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -19,12 +24,21 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class AltinnRolle(
+    val RoleDefinitionId: String,
+    val RoleDefinitionCode: String
+)
+
 interface Altinn {
     suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
     ): List<BrukerModel.Tilgang>
+
+    suspend fun hentRoller(
+    ): List<AltinnRolle>
 }
 
 object AltinnImpl : Altinn {
@@ -113,21 +127,60 @@ object AltinnImpl : Altinn {
                 )
             }
     }
-}
 
-fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolean {
-    return when (cause) {
-        is io.ktor.network.sockets.SocketTimeoutException -> true
-        is ServerResponseException -> {
-            when ((cause as? ServerResponseException)?.response?.status) {
-                HttpStatusCode.BadGateway,
-                HttpStatusCode.GatewayTimeout,
-                HttpStatusCode.ServiceUnavailable,
-                -> true
-                else -> false
+    private val httpClient = HttpClient(Apache) {
+        install(JsonFeature) {
+            serializer = JacksonSerializer()
+        }
+    }
+
+    override suspend fun hentRoller(): List<AltinnRolle> {
+        val baseUrl = basedOnEnv(
+            prod = { "https://api-gw.oera.no" },
+            other = { "https://api-gw-q1.oera.no" }
+        )
+        val altinnApiKey = System.getenv("ALTINN_HEADER") ?: "default"
+        val altinnApiGwApiKey = System.getenv("APIGW_HEADER") ?: "default"
+
+        val url = "${baseUrl}/ekstern/altinn/api/serviceowner/roledefinitions?ForceEIAuthentication&language=1044"
+        val httpClient = HttpClient(Apache) {
+            install(JsonFeature) {
+                serializer = JacksonSerializer()
             }
         }
-        else -> false
-
+        try {
+            return httpClient.get(url) {
+                headers {
+                    append("X-NAV-APIKEY", altinnApiGwApiKey)
+                    append("APIKEY", altinnApiKey)
+                }
+            }
+        } catch (e: ResponseException) {
+            val melding = "Hent roller fra altinn feiler med " +
+                    "${e.response.status.value} '${e.response.status.description}'"
+            log.warn(melding)
+            throw AltinnrettigheterProxyKlientFallbackException(melding, e)
+        } catch (e: Exception) {
+            val melding = "Fallback kall mot Altinn feiler med exception: '${e.message}' "
+            log.warn(melding, e)
+            throw AltinnrettigheterProxyKlientFallbackException(melding, e)
+        }
     }
 }
+
+    fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolean {
+        return when (cause) {
+            is io.ktor.network.sockets.SocketTimeoutException -> true
+            is ServerResponseException -> {
+                when ((cause as? ServerResponseException)?.response?.status) {
+                    HttpStatusCode.BadGateway,
+                    HttpStatusCode.GatewayTimeout,
+                    HttpStatusCode.ServiceUnavailable,
+                    -> true
+                    else -> false
+                }
+            }
+            else -> false
+
+        }
+    }
