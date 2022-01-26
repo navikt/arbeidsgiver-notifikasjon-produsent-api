@@ -24,21 +24,10 @@ type Sak {
     sisteStatus: Statusoppdatering!
 }
 type Statusoppdatering {
-    status: Status!
+    status: String!
     tittel: String!
     lenke: String!
     tidspunkt: ISO8601DateTime!
-}
-union Status = PredefinertStatus | EgendefinertStatus
-type PredefinertStatus {
-    predefinertVerdi: StatusEnum!
-}
-type EgendefinertStatus {
-    egendefinertVerdi: String!
-}
-enum StatusEnum {
-    MOTTATT
-    UNDER_BEHANDLING
 }
 type NotifikasjonerResultat {
     notifikasjoner: [Notifikasjon!]!
