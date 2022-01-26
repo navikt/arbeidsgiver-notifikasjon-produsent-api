@@ -81,10 +81,6 @@ object Produsent {
                 }
             }
 
-            launch {
-                produsentRepositoryAsync.await().migrate()
-            }
-
             val graphql = async {
                 ProdusentAPI.newGraphQL(
                     kafkaProducer = createKafkaProducer(),

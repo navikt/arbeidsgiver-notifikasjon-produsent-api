@@ -2,10 +2,12 @@
 
 package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
+import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
+import io.mockk.InternalPlatformDsl.toArray
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Produsent
@@ -209,10 +211,11 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                     """
                 )
                 val slettetNotifikasjon =
-                    response.getTypedContent<QueryMineNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
-                        .edges
-                        .map { it.node }
-                        .find { it.id == uuid }
+                    response
+                        .getTypedContent<JsonNode>("mineNotifikasjoner")["edges"]
+                        .toList()
+                        .map { it["node"] }
+                        .find { it["id"]?.asText() == uuid.toString() }
 
                 slettetNotifikasjon shouldBe null
             }

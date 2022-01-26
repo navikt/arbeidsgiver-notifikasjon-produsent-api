@@ -5,7 +5,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.util.*
 
 suspend inline fun hentNotifikasjon(
@@ -63,12 +62,6 @@ inline fun hentProdusent(
         return context.produsent
     }
 }
-
-val ProdusentModel.Notifikasjon.virksomhetsnummer: String
-    get() = when (this) {
-        is ProdusentModel.Oppgave -> this.mottaker.virksomhetsnummer
-        is ProdusentModel.Beskjed -> this.mottaker.virksomhetsnummer
-    }
 
 inline fun tilgangsstyrNyNotifikasjon(
     produsent: Produsent,

@@ -81,7 +81,7 @@ class MutationOppgaveUtfoert(
         val utførtHendelse = Hendelse.OppgaveUtført(
             hendelseId = UUID.randomUUID(),
             notifikasjonId = notifikasjon.id,
-            virksomhetsnummer = notifikasjon.mottaker.virksomhetsnummer,
+            virksomhetsnummer = notifikasjon.virksomhetsnummer,
             produsentId = produsent.id,
             kildeAppNavn = context.appName
         )

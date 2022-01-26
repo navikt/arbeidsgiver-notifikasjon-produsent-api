@@ -1,16 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
-import kotlin.random.Random.Default.nextLong as randomLong
 
 interface ProdusentRepository {
     suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon?
@@ -32,8 +29,6 @@ class ProdusentRepositoryImpl(
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
             """ 
-                select notifikasjon.*, eksterntvarsel.* from notifikasjon 
-                left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
                 where notifikasjon.id = ?
             """
         ) {
@@ -41,26 +36,62 @@ class ProdusentRepositoryImpl(
         }
             .firstOrNull()
 
+    override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? =
+        hentNotifikasjonerMedVarsler(
+            """ 
+                where ekstern_id = ? and merkelapp = ? 
+            """
+        ) {
+            string(eksternId)
+            string(merkelapp)
+        }
+            .firstOrNull()
+
+    override suspend fun finnNotifikasjoner(
+        merkelapper: List<String>,
+        grupperingsid: String?,
+        antall: Int,
+        offset: Int,
+    ): List<ProdusentModel.Notifikasjon> =
+        hentNotifikasjonerMedVarsler(
+            """ 
+                where merkelapp = any(?)
+                    ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
+                limit ?
+                offset ?
+            """
+        ) {
+            stringList(merkelapper)
+            grupperingsid?.let { string(grupperingsid) }
+            integer(antall)
+            integer(offset)
+        }
+
     private suspend fun hentNotifikasjonerMedVarsler(
-        sqlQuery: String,
+        filter: String,
         setup: ParameterSetters.() -> Unit
     ): List<ProdusentModel.Notifikasjon> =
-        database.nonTransactionalExecuteQuery(
-            sqlQuery,
+        database.nonTransactionalExecuteQuery(""" 
+            with 
+                valgt_notifikasjon as (
+                    select notifikasjon.* 
+                    from notifikasjon
+                    $filter
+                )
+            select 
+                valgt_notifikasjon.*, 
+                coalesce(ev.eksterne_varsler_json, '[]'::json) as eksterne_varsler,
+                (coalesce(ma.mottakere::jsonb, '[]'::jsonb) || coalesce(md.mottakere::jsonb, '[]'::jsonb)) as mottakere
+            from valgt_notifikasjon
+            left join eksterne_varsler_json ev 
+                on ev.notifikasjon_id = valgt_notifikasjon.id
+            left join mottakere_altinn_enkeltrettighet_json ma
+                on ma.notifikasjon_id = valgt_notifikasjon.id
+            left join mottakere_digisyfo_json md
+                on md.notifikasjon_id = valgt_notifikasjon.id
+            """,
             setup
         ) {
-            val varselId = getObject("varsel_id", UUID::class.java)
-            val eksterneVarsler = if (varselId == null)
-                listOf()
-            else
-                listOf(
-                    ProdusentModel.EksterntVarsel(
-                        varselId = varselId,
-                        status = ProdusentModel.EksterntVarsel.Status.valueOf(getString("status")),
-                        feilmelding = getString("feilmelding")
-                    )
-                )
-
             when (val type = getString("type")) {
                 "BESKJED" -> ProdusentModel.Beskjed(
                     merkelapp = getString("merkelapp"),
@@ -68,11 +99,12 @@ class ProdusentRepositoryImpl(
                     grupperingsid = getString("grupperingsid"),
                     lenke = getString("lenke"),
                     eksternId = getString("ekstern_id"),
-                    mottaker = objectMapper.readValue(getString("mottaker")),
+                    mottakere = objectMapper.readValue(getString("mottakere")),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getObject("id", UUID::class.java),
                     deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                    eksterneVarsler = eksterneVarsler,
+                    eksterneVarsler = objectMapper.readValue(getString("eksterne_varsler")),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
                 )
                 "OPPGAVE" -> ProdusentModel.Oppgave(
                     merkelapp = getString("merkelapp"),
@@ -81,32 +113,17 @@ class ProdusentRepositoryImpl(
                     grupperingsid = getString("grupperingsid"),
                     lenke = getString("lenke"),
                     eksternId = getString("ekstern_id"),
-                    mottaker = objectMapper.readValue(getString("mottaker")),
+                    mottakere = objectMapper.readValue(getString("mottakere")),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getObject("id", UUID::class.java),
                     deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                    eksterneVarsler = eksterneVarsler
+                    eksterneVarsler = objectMapper.readValue(getString("eksterne_varsler")),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
                 )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
-            .groupBy { it.id }
-            .values
-            .map { it.reduce(ProdusentModel.Notifikasjon::mergeEksterneVarsler) }
-
-    override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? =
-        hentNotifikasjonerMedVarsler(
-            """ 
-                select notifikasjon.*, eksterntvarsel.* from notifikasjon 
-                left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
-                where ekstern_id = ? and merkelapp = ? 
-            """
-        ) {
-            string(eksternId)
-            string(merkelapp)
-        }
-            .firstOrNull()
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignored: Unit = when (hendelse) {
@@ -144,27 +161,6 @@ class ProdusentRepositoryImpl(
             uuid(softDelete.notifikasjonId)
         }
     }
-
-    override suspend fun finnNotifikasjoner(
-        merkelapper: List<String>,
-        grupperingsid: String?,
-        antall: Int,
-        offset: Int,
-    ): List<ProdusentModel.Notifikasjon> =
-        hentNotifikasjonerMedVarsler(
-            """ select notifikasjon.*, eksterntvarsel.* from notifikasjon 
-                  left join eksternt_varsel eksterntvarsel on notifikasjon.id = eksterntvarsel.notifikasjon_id
-                  where merkelapp = any(?)
-                  ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
-                  limit ?
-                  offset ?
-            """
-        ) {
-            stringList(merkelapper)
-            grupperingsid?.let { string(grupperingsid) }
-            integer(antall)
-            integer(offset)
-        }
 
     private suspend fun oppdatertModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
         database.nonTransactionalExecuteUpdate(
@@ -338,58 +334,5 @@ class ProdusentRepositoryImpl(
             string(mottaker.serviceCode)
             string(mottaker.serviceEdition)
         }
-    }
-
-
-    suspend fun migrate() {
-        var done = false
-
-        while (!done) {
-            database.transaction {
-                val (id, mottaker) = executeQuery(
-                    """
-                        select n.id as id, n.mottaker as mottaker
-                        from notifikasjon as n
-                        where
-                            n.id not in (select notifikasjon_id from mottaker_altinn_enkeltrettighet)
-                            and n.id not in (select notifikasjon_id from mottaker_digisyfo)
-                        limit 1
-                    """
-                ) {
-                    Pair(
-                        getObject("id", UUID::class.java),
-                        objectMapper.readValue<Mottaker>(getString("mottaker"))
-                    )
-                }
-                    .singleOrNull()
-                    ?: run {
-                        done = true
-                        return@transaction
-                    }
-
-                log.info("migrating $id")
-
-                storeMottaker(id, mottaker)
-
-                executeUpdate("""
-                    update notifikasjon
-                    set virksomhetsnummer = ?
-                    where id = ?
-                """) {
-                    string(mottaker.virksomhetsnummer)
-                    uuid(id)
-                }
-            }
-
-            delay(randomLong(500, 1_500))
-        }
-        val virksomhetsnummerMangler = database.nonTransactionalExecuteQuery("""
-            select count(*) as c from notifikasjon where virksomhetsnummer is null
-            """
-        ) {
-            this.getInt("c")
-        }
-
-        log.info("finished copying mottakere. {} rows with null virksomhetsnummer. delete me.", virksomhetsnummerMangler)
     }
 }
