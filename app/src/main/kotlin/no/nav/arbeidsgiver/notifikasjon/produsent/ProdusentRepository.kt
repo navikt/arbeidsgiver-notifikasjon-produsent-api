@@ -124,9 +124,6 @@ class ProdusentRepositoryImpl(
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
-//            .groupBy { it.id }
-//            .values
-//            .map { it.reduce(ProdusentModel.Notifikasjon::mergeEksterneVarsler) }
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignored: Unit = when (hendelse) {

@@ -267,6 +267,19 @@ class MineNotifikasjonerTests : DescribeSpec({
                                     node {
                                       __typename
                                       ... on Beskjed {
+                                        mottakere {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
                                         mottaker {
                                             __typename
                                             ... on AltinnMottaker {
@@ -297,7 +310,20 @@ class MineNotifikasjonerTests : DescribeSpec({
                                         }
                                       }
                                       ... on Oppgave {
-                                      mottaker {
+                                        mottakere {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
+                                        mottaker {
                                             __typename
                                             ... on AltinnMottaker {
                                                 serviceCode
