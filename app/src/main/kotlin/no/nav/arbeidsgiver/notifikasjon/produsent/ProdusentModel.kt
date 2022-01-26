@@ -1,8 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import no.nav.arbeidsgiver.notifikasjon.*
-import java.lang.IllegalArgumentException
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -12,21 +10,8 @@ object ProdusentModel {
         val merkelapp: String
         val deletedAt: OffsetDateTime?
         val eksterneVarsler: List<EksterntVarsel>
+        val virksomhetsnummer: String
         fun erDuplikatAv(other: Notifikasjon): Boolean
-
-        fun mergeEksterneVarsler(other: Notifikasjon): Notifikasjon {
-            if (this.id != other.id) {
-                throw IllegalArgumentException("merging requires same id")
-            }
-            return when (this) {
-                is Beskjed -> {
-                    copy(eksterneVarsler = eksterneVarsler + other.eksterneVarsler)
-                }
-                is Oppgave -> {
-                    copy(eksterneVarsler = eksterneVarsler + other.eksterneVarsler)
-                }
-            }
-        }
     }
 
     data class Beskjed(
@@ -40,11 +25,8 @@ object ProdusentModel {
         val mottakere: List<Mottaker>,
         val opprettetTidspunkt: OffsetDateTime,
         override val eksterneVarsler: List<EksterntVarsel>,
+        override val virksomhetsnummer: String,
     ) : Notifikasjon {
-
-        @Deprecated("may be more than one")
-        val mottaker: Mottaker
-            get() = mottakere.single()
 
         override fun erDuplikatAv(other: Notifikasjon): Boolean {
             return when (other) {
@@ -71,11 +53,8 @@ object ProdusentModel {
         val opprettetTidspunkt: OffsetDateTime,
         val tilstand: Tilstand,
         override val eksterneVarsler: List<EksterntVarsel>,
+        override val virksomhetsnummer: String,
     ) : Notifikasjon {
-
-        @Deprecated("may be more than one")
-        val mottaker: Mottaker
-            get() = mottakere.single()
 
         @Suppress("unused")
         /* leses fra database */
@@ -118,10 +97,11 @@ fun Hendelse.BeskjedOpprettet.tilProdusentModel(): ProdusentModel.Beskjed =
         grupperingsid = this.grupperingsid,
         lenke = this.lenke,
         eksternId = this.eksternId,
-        mottakere = listOf(this.mottaker),
+        mottakere = this.mottakere,
         opprettetTidspunkt = this.opprettetTidspunkt,
         deletedAt = null,
-        eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel)
+        eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel),
+        virksomhetsnummer = this.virksomhetsnummer,
     )
 
 fun Hendelse.OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
@@ -132,11 +112,12 @@ fun Hendelse.OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
         grupperingsid = this.grupperingsid,
         lenke = this.lenke,
         eksternId = this.eksternId,
-        mottakere = listOf(this.mottaker),
+        mottakere = this.mottakere,
         opprettetTidspunkt = this.opprettetTidspunkt,
         tilstand = ProdusentModel.Oppgave.Tilstand.NY,
         deletedAt = null,
-        eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel)
+        eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel),
+        virksomhetsnummer = this.virksomhetsnummer,
     )
 
 fun EksterntVarsel.tilProdusentModel(): ProdusentModel.EksterntVarsel {

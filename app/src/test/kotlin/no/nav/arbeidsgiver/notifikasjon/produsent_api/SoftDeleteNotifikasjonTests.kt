@@ -153,6 +153,19 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                                                 virksomhetsnummer
                                             }
                                         }
+                                        mottakere {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
                                         metadata {
                                             __typename
                                             id
@@ -173,6 +186,19 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                                       }
                                       ... on Oppgave {
                                       mottaker {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
+                                        mottakere {
                                             __typename
                                             ... on AltinnMottaker {
                                                 serviceCode

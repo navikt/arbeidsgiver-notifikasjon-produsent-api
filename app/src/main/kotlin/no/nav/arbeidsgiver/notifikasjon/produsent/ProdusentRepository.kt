@@ -104,6 +104,7 @@ class ProdusentRepositoryImpl(
                     id = getObject("id", UUID::class.java),
                     deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                     eksterneVarsler = objectMapper.readValue(getString("eksterne_varsler")),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
                 )
                 "OPPGAVE" -> ProdusentModel.Oppgave(
                     merkelapp = getString("merkelapp"),
@@ -117,7 +118,8 @@ class ProdusentRepositoryImpl(
                     id = getObject("id", UUID::class.java),
                     deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                     eksterneVarsler = objectMapper.readValue(getString("eksterne_varsler")),
-                    )
+                    virksomhetsnummer = getString("virksomhetsnummer"),
+                )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }

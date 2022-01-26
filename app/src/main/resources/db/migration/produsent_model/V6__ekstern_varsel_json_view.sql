@@ -1,3 +1,5 @@
+alter table notifikasjon alter column mottaker drop not null;
+
 create view eksterne_varsler_json as
 select
     notifikasjon_id,
