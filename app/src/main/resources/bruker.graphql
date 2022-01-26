@@ -10,8 +10,6 @@ type Query {
 type SakConnection {
     edges: [SakEdge!]!
     pageInfo: PageInfo!
-#    totaltAntall: Int
-#    feilAltinn: Boolean!
 }
 type PageInfo {
     hasNextPage: Boolean!
@@ -24,10 +22,6 @@ type SakEdge {
 type Sak {
     virksomhet: Virksomhet!
     sisteStatus: Statusoppdatering!
-#    kan eksponere som ett to eller tre felt. ikke med i første omgang
-#    statusoppdateringer: [Statusoppdatering!]!
-#    notifikasjoner: [Notifikasjon!]!
-#    notifikasjonerogstatusoppdateringer: [Notifikasjon | Statusoppdatering!]!
 }
 type Statusoppdatering {
     status: Status!
