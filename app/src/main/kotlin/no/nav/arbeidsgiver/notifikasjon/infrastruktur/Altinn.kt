@@ -141,13 +141,8 @@ object AltinnImpl : Altinn {
         )
         val altinnApiKey = System.getenv("ALTINN_HEADER") ?: "default"
         val altinnApiGwApiKey = System.getenv("APIGW_HEADER") ?: "default"
-
         val url = "${baseUrl}/ekstern/altinn/api/serviceowner/roledefinitions?ForceEIAuthentication&language=1044"
-        val httpClient = HttpClient(Apache) {
-            install(JsonFeature) {
-                serializer = JacksonSerializer()
-            }
-        }
+
         try {
             return httpClient.get(url) {
                 headers {
