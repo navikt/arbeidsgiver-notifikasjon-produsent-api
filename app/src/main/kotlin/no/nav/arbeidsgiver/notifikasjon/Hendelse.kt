@@ -46,10 +46,6 @@ sealed class Hendelse {
             }
         }
 
-        @Deprecated("may be more than one!")
-        val mottaker: Mottaker
-            @JsonIgnore get() = mottakere.single()
-
         companion object {
             // Denne konstruktøren har default properties, og støtter historiske
             // JSON-felter man kan finne i kafka-topicen.
@@ -112,10 +108,6 @@ sealed class Hendelse {
                 "minst 1 mottaker må gis"
             }
         }
-
-        @Deprecated("may be more than one!")
-        val mottaker: Mottaker
-            @JsonIgnore get() = mottakere.single()
 
         companion object {
             @JvmStatic
