@@ -383,9 +383,9 @@ fun List<Mottaker>.oppsummering(): String =
         .joinToString(",")
 
 
- fun String.toHash(alg: String = "MD5"): String {
-     return MessageDigest
-         .getInstance(alg)
-         .digest(toByteArray())
-         .fold("") { acc, it -> acc + "%02x".format(it) }
- }
+fun String.toHash(alg: String = "MD5"): String {
+    return MessageDigest
+        .getInstance(alg)
+        .digest(toByteArray())
+        .fold("") { acc, it -> acc + "%02x".format(it) }
+}
