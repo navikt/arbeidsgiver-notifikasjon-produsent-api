@@ -94,7 +94,7 @@ class NyOppgaveTests : DescribeSpec({
             event.lenke shouldBe "https://foo.bar"
             event.tekst shouldBe "hello world"
             event.merkelapp shouldBe "tag"
-            event.mottaker shouldBe NærmesteLederMottaker(
+            event.mottakere.single() shouldBe NærmesteLederMottaker(
                 naermesteLederFnr = "12345678910",
                 ansattFnr = "321",
                 virksomhetsnummer = "42"
