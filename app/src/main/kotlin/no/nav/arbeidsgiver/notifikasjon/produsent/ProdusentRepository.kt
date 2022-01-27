@@ -22,6 +22,7 @@ interface ProdusentRepository {
 
     suspend fun leggTilAltinnRolle(altinnRolle: AltinnRolle)
     suspend fun hentAltinnrolle(rolleKode: String): AltinnRolle?
+    suspend fun hentAlleAltinnRoller(): List<AltinnRolle>
 }
 
 class ProdusentRepositoryImpl(
@@ -37,7 +38,6 @@ class ProdusentRepositoryImpl(
                  role_definition_code                 
             )
             values (?, ?)
-            on conflict on constraint altinn_rolle_pkey do nothing
             """
         ) {
             string(altinnRolle.RoleDefinitionId)
@@ -60,6 +60,19 @@ class ProdusentRepositoryImpl(
             )
         }.firstOrNull()
 
+    override suspend fun hentAlleAltinnRoller(): List<AltinnRolle> =
+        database.nonTransactionalExecuteQuery(
+            """
+                select role_definition_id,
+                    role_definition_code                
+                from altinn_rolle                          
+        """
+        ) {
+            AltinnRolle(
+                RoleDefinitionCode = getString("role_definition_code"),
+                RoleDefinitionId = getString("role_definition_id")
+            )
+        }
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(

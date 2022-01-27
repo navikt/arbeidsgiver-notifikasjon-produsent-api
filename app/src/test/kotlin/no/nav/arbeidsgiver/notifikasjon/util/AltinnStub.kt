@@ -12,7 +12,7 @@ open class AltinnStub(
         tilganger
             .toMap()
             .let {
-                fun (fnr: String, _: String): List<BrukerModel.Tilgang> {
+                fun(fnr: String, _: String): List<BrukerModel.Tilgang> {
                     return it[fnr] ?: emptyList()
                 }
             }
@@ -26,6 +26,6 @@ open class AltinnStub(
         hentAlleTilgangerImpl(fnr, selvbetjeningsToken)
 
     override suspend fun hentRoller(): List<AltinnRolle> {
-       return listOf(AltinnRolle("195", "DAGL"), AltinnRolle("196", "BOBE"))
+        return listOf(AltinnRolle("195", "DAGL"), AltinnRolle("196", "BOBE"))
     }
 }

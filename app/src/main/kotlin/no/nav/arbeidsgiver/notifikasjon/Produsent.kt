@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
@@ -18,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegis
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import java.time.Duration
 
 object Produsent {
     val log = logger()
@@ -105,9 +107,11 @@ object Produsent {
                 httpServer.start(wait = true)
             }
             launch {
-                val roller = altinn.hentRoller()
-                roller.forEach { rolle ->
-                    produsentRepositoryAsync.await().leggTilAltinnRolle(rolle)
+                launchProcessingLoop(
+                    "last Altinnroller",
+                    pauseAfterEach = Duration.ofDays(1),
+                ) {
+                    AltinnRolleServiceImpl(altinn, produsentRepositoryAsync.await()).lastAltinnroller()
                 }
             }
         }
