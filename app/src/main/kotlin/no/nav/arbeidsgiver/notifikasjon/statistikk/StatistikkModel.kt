@@ -226,7 +226,7 @@ class StatistikkModel(
                     string(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.merkelapp)
-                    string(hendelse.mottaker.typeNavn)
+                    string(hendelse.mottakere.oppsummering())
                     string(hendelse.tekst.toHash())
                     timestamptz(hendelse.opprettetTidspunkt)
                 }
@@ -253,7 +253,7 @@ class StatistikkModel(
                     string(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
                     string(hendelse.merkelapp)
-                    string(hendelse.mottaker.typeNavn)
+                    string(hendelse.mottakere.oppsummering())
                     string(hendelse.tekst.toHash())
                     timestamp_utc(hendelse.opprettetTidspunkt)
                 }
@@ -372,11 +372,15 @@ class StatistikkModel(
     }
 }
 
-val Mottaker.typeNavn: String
-    get() = when (this) {
-        is NærmesteLederMottaker -> "NærmesteLeder"
-        is AltinnMottaker -> "Altinn:${serviceCode}:${serviceEdition}"
+fun List<Mottaker>.oppsummering(): String =
+    map {
+        when (it) {
+            is NærmesteLederMottaker -> "NærmesteLeder"
+            is AltinnMottaker -> "Altinn:${it.serviceCode}:${it.serviceEdition}"
+        }
     }
+        .sorted()
+        .joinToString(",")
 
 
 fun String.toHash(alg: String = "MD5"): String {

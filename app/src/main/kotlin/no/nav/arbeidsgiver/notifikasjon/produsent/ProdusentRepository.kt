@@ -237,10 +237,9 @@ class ProdusentRepositoryImpl(
                     lenke,
                     ekstern_id,
                     opprettet_tidspunkt,
-                    mottaker,
                     virksomhetsnummer
                 )
-                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json, ?)
+                values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
                 on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
@@ -251,7 +250,6 @@ class ProdusentRepositoryImpl(
                 string(beskjedOpprettet.lenke)
                 string(beskjedOpprettet.eksternId)
                 timestamptz(beskjedOpprettet.opprettetTidspunkt)
-                string(objectMapper.writeValueAsString(beskjedOpprettet.mottaker))
                 string(beskjedOpprettet.virksomhetsnummer)
             }
 
@@ -291,10 +289,9 @@ class ProdusentRepositoryImpl(
                     lenke,
                     ekstern_id,
                     opprettet_tidspunkt,
-                    mottaker,
                     virksomhetsnummer
                 )
-                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?::json, ?)
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
                 on conflict on constraint notifikasjon_pkey do nothing;
             """
             ) {
@@ -305,7 +302,6 @@ class ProdusentRepositoryImpl(
                 string(oppgaveOpprettet.lenke)
                 string(oppgaveOpprettet.eksternId)
                 timestamptz(oppgaveOpprettet.opprettetTidspunkt)
-                string(objectMapper.writeValueAsString(oppgaveOpprettet.mottaker))
                 string(oppgaveOpprettet.virksomhetsnummer)
             }
 

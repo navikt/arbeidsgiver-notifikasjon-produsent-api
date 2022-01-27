@@ -36,7 +36,7 @@ class HendelseDeserializationTests : DescribeSpec({
 
         it("mottaker parsed") {
             oppgaveOpprettet as Hendelse.OppgaveOpprettet
-            val mottaker = oppgaveOpprettet.mottaker as AltinnMottaker
+            val mottaker = oppgaveOpprettet.mottakere.single() as AltinnMottaker
             mottaker.serviceCode shouldBe "1"
             mottaker.serviceEdition shouldBe "2"
             mottaker.virksomhetsnummer shouldBe "3"
@@ -70,7 +70,7 @@ class HendelseDeserializationTests : DescribeSpec({
 
         it("mottaker parsed") {
             oppgaveOpprettet as Hendelse.OppgaveOpprettet
-            val mottaker = oppgaveOpprettet.mottaker as AltinnMottaker
+            val mottaker = oppgaveOpprettet.mottakere.single() as AltinnMottaker
             mottaker.serviceCode shouldBe "1"
             mottaker.serviceEdition shouldBe "2"
             mottaker.virksomhetsnummer shouldBe "3"
