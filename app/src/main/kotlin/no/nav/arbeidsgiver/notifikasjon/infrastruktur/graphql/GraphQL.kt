@@ -79,6 +79,15 @@ data class GraphQLRequest(
     val variables: Map<String, String>? = null,
 )
 
+inline fun requireGraphql(check: Boolean, message: () -> String) {
+    if (!check) {
+        throw GraphqlErrorException
+            .newErrorException()
+            .message(message())
+            .build()
+    }
+}
+
 class TypedGraphQL<T : WithCoroutineScope>(
     private val graphQL: GraphQL
 ) {

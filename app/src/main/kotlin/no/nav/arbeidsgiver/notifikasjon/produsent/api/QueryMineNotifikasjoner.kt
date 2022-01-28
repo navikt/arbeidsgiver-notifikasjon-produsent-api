@@ -284,3 +284,17 @@ val QueryMineNotifikasjoner.Notifikasjon.metadata: QueryMineNotifikasjoner.Metad
 
 val QueryMineNotifikasjoner.Notifikasjon.id: UUID
     get() = this.metadata.id
+
+fun finnVirksomhetsnummer(
+    virksomhetsnummer: String?,
+    mottakere: List<MottakerInput>
+): String {
+    val mottakerVirksomhetsnummer = mottakere.flatMap {
+            listOfNotNull(
+                it.altinn?.virksomhetsnummer,
+                it.naermesteLeder?.virksomhetsnummer
+            )
+        }
+    val alleVirksomhetsnummer = listOfNotNull(virksomhetsnummer) + mottakerVirksomhetsnummer
+    return alleVirksomhetsnummer.toSet().single()
+}
