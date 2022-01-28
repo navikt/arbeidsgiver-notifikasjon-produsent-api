@@ -11,8 +11,8 @@ class AltinnRolleServiceImpl(val altinn: Altinn, val produsentRepository: Produs
     override suspend fun lastAltinnroller() {
         val ferskeRollerFraAltinn = altinn.hentRoller()
         val eksisterendeRollerFraDb = produsentRepository.hentAlleAltinnRoller()
-        val snittFerskeOgEksisterendeRoller = ferskeRollerFraAltinn - eksisterendeRollerFraDb
-        snittFerskeOgEksisterendeRoller.forEach { rolle ->
+        val nyeRoller = ferskeRollerFraAltinn - eksisterendeRollerFraDb
+        nyeRoller.forEach { rolle ->
             produsentRepository.leggTilAltinnRolle(rolle)
         }
     }
