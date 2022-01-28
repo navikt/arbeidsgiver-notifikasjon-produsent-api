@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
@@ -18,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegis
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import java.time.Duration
 
 object Produsent {
     val log = logger()
@@ -52,7 +54,8 @@ object Produsent {
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         httpPort: Int = 8080,
-        produsentRegister: ProdusentRegister = PRODUSENT_REGISTER
+        produsentRegister: ProdusentRegister = PRODUSENT_REGISTER,
+        altinn: Altinn = AltinnImpl,
     ) {
         runBlocking(Dispatchers.Default) {
             val produsentRepositoryAsync = async {
@@ -102,6 +105,14 @@ object Produsent {
                     )
                 }
                 httpServer.start(wait = true)
+            }
+            launch {
+                launchProcessingLoop(
+                    "last Altinnroller",
+                    pauseAfterEach = Duration.ofDays(1),
+                ) {
+                    AltinnRolleServiceImpl(altinn, produsentRepositoryAsync.await()).lastAltinnroller()
+                }
             }
         }
     }

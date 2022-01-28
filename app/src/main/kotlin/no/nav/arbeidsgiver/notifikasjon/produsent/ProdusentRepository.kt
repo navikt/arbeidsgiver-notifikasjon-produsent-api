@@ -19,12 +19,60 @@ interface ProdusentRepository {
         antall: Int,
         offset: Int,
     ): List<ProdusentModel.Notifikasjon>
+
+    suspend fun leggTilAltinnRolle(altinnRolle: AltinnRolle)
+    suspend fun hentAltinnrolle(rolleKode: String): AltinnRolle?
+    suspend fun hentAlleAltinnRoller(): List<AltinnRolle>
 }
 
 class ProdusentRepositoryImpl(
     private val database: Database,
 ) : ProdusentRepository {
     val log = logger()
+
+    override suspend fun leggTilAltinnRolle(altinnRolle: AltinnRolle) {
+        database.nonTransactionalExecuteUpdate(
+            """
+            insert into altinn_rolle(
+                 role_definition_id,
+                 role_definition_code                 
+            )
+            values (?, ?)
+            """
+        ) {
+            string(altinnRolle.RoleDefinitionId)
+            string(altinnRolle.RoleDefinitionCode)
+        }
+    }
+
+    override suspend fun hentAltinnrolle(rolleKode: String): AltinnRolle? =
+        database.nonTransactionalExecuteQuery("""
+                select role_definition_id,
+                    role_definition_code                
+                from altinn_rolle                
+                where role_definition_code = ?
+        """,
+            { string(rolleKode) }
+        ) {
+            AltinnRolle(
+                RoleDefinitionCode = getString("role_definition_code"),
+                RoleDefinitionId = getString("role_definition_id")
+            )
+        }.firstOrNull()
+
+    override suspend fun hentAlleAltinnRoller(): List<AltinnRolle> =
+        database.nonTransactionalExecuteQuery(
+            """
+                select role_definition_id,
+                    role_definition_code                
+                from altinn_rolle                          
+        """
+        ) {
+            AltinnRolle(
+                RoleDefinitionCode = getString("role_definition_code"),
+                RoleDefinitionId = getString("role_definition_id")
+            )
+        }
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
@@ -71,7 +119,8 @@ class ProdusentRepositoryImpl(
         filter: String,
         setup: ParameterSetters.() -> Unit
     ): List<ProdusentModel.Notifikasjon> =
-        database.nonTransactionalExecuteQuery(""" 
+        database.nonTransactionalExecuteQuery(
+            """ 
             with 
                 valgt_notifikasjon as (
                     select notifikasjon.* 
@@ -176,7 +225,8 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
         database.transaction {
-            executeUpdate("""
+            executeUpdate(
+                """
                 insert into notifikasjon(
                     type,
                     tilstand,
@@ -207,7 +257,8 @@ class ProdusentRepositoryImpl(
                 storeMottaker(beskjedOpprettet.notifikasjonId, mottaker)
             }
 
-            executeBatch("""
+            executeBatch(
+                """
                 insert into eksternt_varsel(
                     varsel_id,
                     notifikasjon_id,
@@ -308,10 +359,12 @@ class ProdusentRepositoryImpl(
     }
 
     private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID, mottaker: NærmesteLederMottaker) {
-        executeUpdate("""
+        executeUpdate(
+            """
             insert into mottaker_digisyfo(notifikasjon_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?)
-        """) {
+        """
+        ) {
             uuid(notifikasjonId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.naermesteLederFnr)
@@ -320,11 +373,13 @@ class ProdusentRepositoryImpl(
     }
 
     private fun Transaction.storeAltinnMottaker(notifikasjonId: UUID, mottaker: AltinnMottaker) {
-        executeUpdate("""
+        executeUpdate(
+            """
             insert into mottaker_altinn_enkeltrettighet
                 (notifikasjon_id, virksomhet, service_code, service_edition)
             values (?, ?, ?, ?)
-        """) {
+        """
+        ) {
             uuid(notifikasjonId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.serviceCode)

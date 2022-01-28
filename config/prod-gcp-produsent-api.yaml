@@ -44,3 +44,5 @@ spec:
         autoBackupHour: 1
         maintenance:
           hour: 3
+  envFrom:
+    - secret: notifikasjon-produsent-api-secrets
