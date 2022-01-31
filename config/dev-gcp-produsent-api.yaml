@@ -54,3 +54,5 @@ spec:
         - application: esyfovarsel-job
           namespace: team-esyfo
           cluster: dev-fss
+  envFrom:
+    - secret: notifikasjon-produsent-api-secrets
