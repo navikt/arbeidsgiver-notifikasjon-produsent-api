@@ -62,7 +62,9 @@ class MutationNyOppgave(
                 virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
-                eksterneVarsler = eksterneVarsler.map(EksterntVarselInput::tilDomene)
+                eksterneVarsler = eksterneVarsler.map {
+                    it.tilDomene(virksomhetsnummer)
+                }
             )
         }
     }
