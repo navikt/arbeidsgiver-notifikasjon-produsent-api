@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.jayway.jsonpath.JsonPath
 import io.ktor.http.*
 import io.ktor.server.testing.*
@@ -32,7 +33,8 @@ inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T 
         val dataNode = tree.get("data")
 
         return if (name.startsWith("$")) {
-            JsonPath.read(dataNode.toString(), name)
+            val rawJson = objectMapper.writeValueAsString(JsonPath.read(dataNode.toString(), name))
+            objectMapper.readValue(rawJson)
         } else {
             val node = dataNode.at(name.ensurePrefix("/"))
             if (node.isNull || node.isMissingNode) {
