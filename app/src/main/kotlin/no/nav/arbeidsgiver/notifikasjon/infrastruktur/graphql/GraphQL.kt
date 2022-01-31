@@ -2,14 +2,23 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.module.kotlin.convertValue
-import graphql.*
+import graphql.ErrorClassification
+import graphql.ErrorType
+import graphql.ExecutionInput
+import graphql.GraphQL
 import graphql.GraphQL.newGraphQL
-import graphql.schema.*
-import graphql.schema.idl.*
+import graphql.GraphQLError
+import graphql.GraphqlErrorException
+import graphql.execution.DataFetcherResult
+import graphql.language.SourceLocation
+import graphql.schema.DataFetchingEnvironment
+import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
+import graphql.schema.idl.SchemaGenerator
+import graphql.schema.idl.SchemaParser
+import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
@@ -30,13 +39,49 @@ interface WithCoroutineScope {
     val coroutineScope: CoroutineScope
 }
 
-fun <T> TypeRuntimeWiring.Builder.coDataFetcher(fieldName: String, fetcher: suspend (DataFetchingEnvironment) -> T) {
+class UnhandledGraphQLExceptionError(
+    private val exception: Exception
+): GraphQLError {
+    override fun getErrorType(): ErrorClassification {
+        return ErrorType.DataFetchingException
+    }
+
+    override fun getLocations(): MutableList<SourceLocation> {
+        return mutableListOf()
+    }
+
+    override fun getMessage(): String {
+        return "unhandled exception ${exception.javaClass.canonicalName}: ${exception.message ?: ""}"
+    }
+}
+
+fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
+    fieldName: String,
+    fetcher: suspend (DataFetchingEnvironment) -> T,
+) {
     dataFetcher(fieldName) { env ->
         val ctx = env.getContext<WithCoroutineScope>()
-        ctx.coroutineScope.future(Dispatchers.Default) {
-            fetcher(env)
+        ctx.coroutineScope.future(Dispatchers.IO) {
+            try {
+                fetcher(env)
+            } catch (e: GraphqlErrorException) {
+                handleUnexepctedError(e, e)
+            } catch (e: Exception) {
+                handleUnexepctedError(e, UnhandledGraphQLExceptionError(e))
+            }
         }
     }
+}
+
+fun handleUnexepctedError(exception: Exception, error: GraphQLError): DataFetcherResult<*> {
+    GraphQLLogger.log.error(
+        "unhandled exception while executing coDataFetcher: {}",
+        exception.javaClass.canonicalName,
+        exception
+    )
+    return DataFetcherResult.newResult<Nothing?>()
+        .error(error)
+        .build()
 }
 
 object GraphQLLogger {
@@ -79,17 +124,21 @@ data class GraphQLRequest(
     val variables: Map<String, String>? = null,
 )
 
+inline fun requireGraphql(check: Boolean, message: () -> String) {
+    if (!check) {
+        throw GraphqlErrorException
+            .newErrorException()
+            .message(message())
+            .build()
+    }
+}
+
 class TypedGraphQL<T : WithCoroutineScope>(
     private val graphQL: GraphQL
 ) {
     fun execute(request: GraphQLRequest, context: T): Any {
         val executionInput = executionInput(request, context)
         return graphQL.execute(executionInput).toSpecification()
-    }
-
-    suspend fun executeAsync(request: GraphQLRequest, context: T): Any {
-        val executionInput = executionInput(request, context)
-        return graphQL.executeAsync(executionInput).await().toSpecification()
     }
 
     private fun executionInput(

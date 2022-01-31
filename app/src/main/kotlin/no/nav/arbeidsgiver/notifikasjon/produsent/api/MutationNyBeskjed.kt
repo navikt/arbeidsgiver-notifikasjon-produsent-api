@@ -46,7 +46,8 @@ class MutationNyBeskjed(
     ) : NyBeskjedResultat
 
     data class NyBeskjedInput(
-        val mottaker: MottakerInput,
+        val mottakere: List<MottakerInput>,
+        val mottaker: MottakerInput?,
         val notifikasjon: QueryMineNotifikasjoner.NotifikasjonData,
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>
@@ -56,14 +57,8 @@ class MutationNyBeskjed(
             produsentId: String,
             kildeAppNavn: String,
         ): Hendelse.BeskjedOpprettet {
-            val virksomhetsnummer = listOfNotNull(
-                metadata.virksomhetsnummer,
-                mottaker.altinn?.virksomhetsnummer,
-                mottaker.naermesteLeder?.virksomhetsnummer
-            )
-                .toSet()
-                .single()
-            val mottaker = mottaker.tilDomene(virksomhetsnummer)
+            val alleMottakere = listOfNotNull(mottaker) + mottakere
+            val virksomhetsnummer = finnVirksomhetsnummer(metadata.virksomhetsnummer, alleMottakere)
             return Hendelse.BeskjedOpprettet(
                 hendelseId = id,
                 notifikasjonId = id,
@@ -72,7 +67,7 @@ class MutationNyBeskjed(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = listOf(mottaker),
+                mottakere = alleMottakere.map { it.tilDomene(virksomhetsnummer) },
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,

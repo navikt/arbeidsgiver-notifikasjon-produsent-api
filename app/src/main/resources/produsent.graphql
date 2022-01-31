@@ -332,14 +332,41 @@ type OppgaveUtfoertVellykket {
 }
 
 input NyBeskjedInput {
-    mottaker: MottakerInput!
+    """
+    Se dokumentasjonen til `mottakere`-feltet.
+    """
+    mottaker: MottakerInput
+
+    """
+    Her bestemmer dere hvem som skal få se notifikasjonen.
+
+    Hvis dere oppgir en mottaker i `mottaker`-feltet, så tolker vi det som om det var et element
+    i denne listen over mottakere.
+
+    Dere må gi oss minst 1 mottaker.
+    """
+    mottakere: [MottakerInput!]! = []
+
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
     eksterneVarsler: [EksterntVarselInput!]! = []
 }
 
 input NyOppgaveInput {
+    """
+    Se dokumentasjonen til `mottakere`-feltet.
+    """
     mottaker: MottakerInput!
+
+    """
+    Her bestemmer dere hvem som skal få se notifikasjonen.
+
+    Hvis dere oppgir en mottaker i `mottaker`-feltet, så tolker vi det som om det var et element
+    i denne listen over mottakere.
+
+    Dere må gi oss minst 1 mottaker.
+    """
+    mottakere: [MottakerInput!]! = []
     notifikasjon: NotifikasjonInput!
     metadata: MetadataInput!
     eksterneVarsler: [EksterntVarselInput!]! = []

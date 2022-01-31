@@ -62,7 +62,7 @@ class QueryMineNotifikasjoner(
                             opprettetTidspunkt = beskjed.opprettetTidspunkt,
                             softDeletedAt = beskjed.deletedAt,
                         ),
-                        mottaker = Mottaker.fraDomene(beskjed.mottakere.single()),
+                        mottaker = Mottaker.fraDomene(beskjed.mottakere.first()),
                         mottakere = beskjed.mottakere.map { Mottaker.fraDomene(it) },
                         beskjed = BeskjedData(
                             merkelapp = beskjed.merkelapp,
@@ -100,7 +100,7 @@ class QueryMineNotifikasjoner(
                             opprettetTidspunkt = oppgave.opprettetTidspunkt,
                             softDeletedAt = oppgave.deletedAt
                         ),
-                        mottaker = Mottaker.fraDomene(oppgave.mottakere.single()),
+                        mottaker = Mottaker.fraDomene(oppgave.mottakere.first()),
                         mottakere = oppgave.mottakere.map { Mottaker.fraDomene(it) },
                         oppgave = OppgaveData(
                             tilstand = enumValueOf(oppgave.tilstand.name),
@@ -284,3 +284,17 @@ val QueryMineNotifikasjoner.Notifikasjon.metadata: QueryMineNotifikasjoner.Metad
 
 val QueryMineNotifikasjoner.Notifikasjon.id: UUID
     get() = this.metadata.id
+
+fun finnVirksomhetsnummer(
+    virksomhetsnummer: String?,
+    mottakere: List<MottakerInput>
+): String {
+    val mottakerVirksomhetsnummer = mottakere.flatMap {
+            listOfNotNull(
+                it.altinn?.virksomhetsnummer,
+                it.naermesteLeder?.virksomhetsnummer
+            )
+        }
+    val alleVirksomhetsnummer = listOfNotNull(virksomhetsnummer) + mottakerVirksomhetsnummer
+    return alleVirksomhetsnummer.toSet().single()
+}

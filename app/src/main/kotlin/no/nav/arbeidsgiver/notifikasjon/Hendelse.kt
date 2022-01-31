@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -41,7 +42,7 @@ sealed class Hendelse {
         val eksterneVarsler: List<EksterntVarsel>,
     ) : Hendelse() {
         init {
-            require(mottakere.isNotEmpty()) {
+            requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
             }
         }
@@ -104,7 +105,7 @@ sealed class Hendelse {
         val eksterneVarsler: List<EksterntVarsel>,
     ) : Hendelse() {
         init {
-            require(mottakere.isNotEmpty()) {
+            requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
             }
         }
