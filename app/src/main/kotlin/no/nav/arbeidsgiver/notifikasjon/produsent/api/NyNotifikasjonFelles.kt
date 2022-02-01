@@ -13,12 +13,12 @@ data class EksterntVarselInput(
     val epost: Epost?,
 ) {
 
-    fun tilDomene(): EksterntVarsel {
+    fun tilDomene(virksomhetsnummer: String): EksterntVarsel {
         if (sms != null) {
-            return sms.tilDomene()
+            return sms.tilDomene(virksomhetsnummer)
         }
         if (epost != null) {
-            return epost.tilDomene()
+            return epost.tilDomene(virksomhetsnummer)
         }
         throw RuntimeException("Feil format")
     }
@@ -29,13 +29,13 @@ data class EksterntVarselInput(
         val sendetidspunkt: SendetidspunktInput,
     ) {
 
-        fun tilDomene(): SmsVarselKontaktinfo {
+        fun tilDomene(virksomhetsnummer: String): SmsVarselKontaktinfo {
             val (sendevindu, sendeTidspunkt) = sendetidspunkt.tilDomene()
             if (mottaker.kontaktinfo != null) {
                 return SmsVarselKontaktinfo(
                     varselId =  UUID.randomUUID(),
                     tlfnr = mottaker.kontaktinfo.tlf,
-                    fnrEllerOrgnr = mottaker.kontaktinfo.fnr,
+                    fnrEllerOrgnr = virksomhetsnummer,
                     smsTekst = smsTekst,
                     sendevindu = sendevindu,
                     sendeTidspunkt = sendeTidspunkt,
@@ -49,7 +49,7 @@ data class EksterntVarselInput(
         )
 
         data class Kontaktinfo(
-            val fnr: String,
+            val fnr: String?,
             val tlf: String,
         )
     }
@@ -74,13 +74,13 @@ data class EksterntVarselInput(
         val epostHtmlBody: String,
         val sendetidspunkt: SendetidspunktInput,
     ) {
-        fun tilDomene(): EpostVarselKontaktinfo {
+        fun tilDomene(virksomhetsnummer: String): EpostVarselKontaktinfo {
             val (sendevindu, sendeTidspunkt) = sendetidspunkt.tilDomene()
             if (mottaker.kontaktinfo != null) {
                 return EpostVarselKontaktinfo(
                     varselId = UUID.randomUUID(),
                     epostAddr = mottaker.kontaktinfo.epostadresse,
-                    fnrEllerOrgnr = mottaker.kontaktinfo.fnr,
+                    fnrEllerOrgnr = virksomhetsnummer,
                     tittel = epostTittel,
                     htmlBody = epostHtmlBody,
                     sendevindu = sendevindu,
@@ -95,7 +95,7 @@ data class EksterntVarselInput(
         )
 
         data class Kontaktinfo(
-            val fnr: String,
+            val fnr: String?,
             val epostadresse: String,
         )
     }

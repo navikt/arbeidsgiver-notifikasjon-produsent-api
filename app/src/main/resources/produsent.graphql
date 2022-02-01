@@ -453,8 +453,9 @@ input SmsMottakerInput @ExactlyOneFieldGiven {
 }
 
 input SmsKontaktInfoInput {
-    fnr: String!
-    tlf: String! # Validate regex ?
+    """deprecated. value is ignored. """
+    fnr: String
+    tlf: String!
 }
 
 input EpostMottakerInput @ExactlyOneFieldGiven {
@@ -463,7 +464,8 @@ input EpostMottakerInput @ExactlyOneFieldGiven {
 }
 
 input EpostKontaktInfoInput {
-    fnr: String!
+    """deprecated. value is ignored. """
+    fnr: String
     epostadresse: String!
 }
 
