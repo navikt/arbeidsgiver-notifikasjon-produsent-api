@@ -356,7 +356,7 @@ input NyOppgaveInput {
     """
     Se dokumentasjonen til `mottakere`-feltet.
     """
-    mottaker: MottakerInput!
+    mottaker: MottakerInput
 
     """
     Her bestemmer dere hvem som skal få se notifikasjonen.
