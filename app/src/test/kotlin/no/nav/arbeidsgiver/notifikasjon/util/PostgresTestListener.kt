@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.util
 import db.migration.MigrationOps
 import io.kotest.core.TestConfiguration
 import io.kotest.core.listeners.TestListener
-import io.kotest.core.spec.Spec
 import io.kotest.core.test.TestCase
 import io.mockk.every
 import io.mockk.mockkObject

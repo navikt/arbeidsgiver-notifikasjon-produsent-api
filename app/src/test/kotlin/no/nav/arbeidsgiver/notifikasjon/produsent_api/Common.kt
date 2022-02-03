@@ -32,6 +32,7 @@ val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
             tillatteMerkelapper = listOf("tag", "tag2"),
             tillatteMottakere = listOf(
                 ServicecodeDefinisjon(code = "5441", version = "1"),
+                AltinnReporteeDefinisjon,
                 NærmesteLederDefinisjon,
             )
         )

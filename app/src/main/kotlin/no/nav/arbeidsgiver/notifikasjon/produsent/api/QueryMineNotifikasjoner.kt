@@ -188,6 +188,7 @@ class QueryMineNotifikasjoner(
                 return when (domene) {
                     is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> AltinnMottaker.fraDomene(domene)
                     is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> NærmesteLederMottaker.fraDomene(domene)
+                    is no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker -> AltinnReporteeMottaker.fraDomene(domene)
                 }
             }
         }
@@ -221,6 +222,21 @@ class QueryMineNotifikasjoner(
                 return AltinnMottaker(
                     serviceCode = domene.serviceCode,
                     serviceEdition = domene.serviceEdition,
+                    virksomhetsnummer = domene.virksomhetsnummer
+                )
+            }
+        }
+    }
+
+    @JsonTypeName("AltinnReporteeMottaker")
+    data class AltinnReporteeMottaker(
+        val fnr: String,
+        val virksomhetsnummer: String,
+    ) : Mottaker() {
+        companion object {
+            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker): AltinnReporteeMottaker {
+                return AltinnReporteeMottaker(
+                    fnr = domene.fnr,
                     virksomhetsnummer = domene.virksomhetsnummer
                 )
             }

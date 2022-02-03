@@ -1,10 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -130,12 +127,14 @@ class ProdusentRepositoryImpl(
             select 
                 valgt_notifikasjon.*, 
                 coalesce(ev.eksterne_varsler_json, '[]'::json) as eksterne_varsler,
-                (coalesce(ma.mottakere::jsonb, '[]'::jsonb) || coalesce(md.mottakere::jsonb, '[]'::jsonb)) as mottakere
+                (coalesce(ma.mottakere::jsonb, '[]'::jsonb) || coalesce(mar.mottakere::jsonb, '[]'::jsonb) || coalesce(md.mottakere::jsonb, '[]'::jsonb)) as mottakere
             from valgt_notifikasjon
             left join eksterne_varsler_json ev 
                 on ev.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_altinn_enkeltrettighet_json ma
                 on ma.notifikasjon_id = valgt_notifikasjon.id
+            left join mottakere_altinn_reportee_json mar
+                on mar.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_digisyfo_json md
                 on md.notifikasjon_id = valgt_notifikasjon.id
             """,
@@ -352,9 +351,10 @@ class ProdusentRepositoryImpl(
     }
 
     private fun Transaction.storeMottaker(notifikasjonId: UUID, mottaker: Mottaker) {
-        when (mottaker) {
+        val ignored = when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
+            is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(notifikasjonId, mottaker)
         }
     }
 
@@ -384,6 +384,20 @@ class ProdusentRepositoryImpl(
             string(mottaker.virksomhetsnummer)
             string(mottaker.serviceCode)
             string(mottaker.serviceEdition)
+        }
+    }
+
+    private fun Transaction.storeAltinnReporteeMottaker(notifikasjonId: UUID, mottaker: AltinnReporteeMottaker) {
+        executeUpdate(
+            """
+            insert into mottaker_altinn_reportee
+                (notifikasjon_id, virksomhet, fnr)
+            values (?, ?, ?)
+        """
+        ) {
+            uuid(notifikasjonId)
+            string(mottaker.virksomhetsnummer)
+            string(mottaker.fnr)
         }
     }
 }

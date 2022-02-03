@@ -33,7 +33,7 @@ data class EksterntVarselInput(
             val (sendevindu, sendeTidspunkt) = sendetidspunkt.tilDomene()
             if (mottaker.kontaktinfo != null) {
                 return SmsVarselKontaktinfo(
-                    varselId =  UUID.randomUUID(),
+                    varselId = UUID.randomUUID(),
                     tlfnr = mottaker.kontaktinfo.tlf,
                     fnrEllerOrgnr = virksomhetsnummer,
                     smsTekst = smsTekst,
@@ -45,7 +45,7 @@ data class EksterntVarselInput(
         }
 
         data class Mottaker(
-            val kontaktinfo: Kontaktinfo?
+            val kontaktinfo: Kontaktinfo?,
         )
 
         data class Kontaktinfo(
@@ -61,7 +61,7 @@ data class EksterntVarselInput(
 
     @Suppress("unused") // kommer som graphql input
     enum class Sendevindu(
-        val somDomene: EksterntVarselSendingsvindu
+        val somDomene: EksterntVarselSendingsvindu,
     ) {
         NKS_AAPNINGSTID(EksterntVarselSendingsvindu.NKS_ÅPNINGSTID),
         DAGTID_IKKE_SOENDAG(EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG),
@@ -91,7 +91,7 @@ data class EksterntVarselInput(
         }
 
         data class Mottaker(
-            val kontaktinfo: Kontaktinfo?
+            val kontaktinfo: Kontaktinfo?,
         )
 
         data class Kontaktinfo(
@@ -127,19 +127,30 @@ data class AltinnMottakerInput(
         )
 }
 
+data class AltinnReporteeMottakerInput(
+    val fnr: String,
+) {
+    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker =
+        no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker(
+            fnr = fnr,
+            virksomhetsnummer = virksomhetsnummer
+        )
+}
+
 data class MottakerInput(
     val altinn: AltinnMottakerInput?,
-    val naermesteLeder: NaermesteLederMottakerInput?
+    val altinnReportee: AltinnReporteeMottakerInput?,
+    val naermesteLeder: NaermesteLederMottakerInput?,
 ) {
 
     fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker {
-        return if (altinn != null && naermesteLeder == null) {
-            altinn.tilDomene(virksomhetsnummer)
-        } else if (naermesteLeder != null && altinn == null) {
-            naermesteLeder.tilDomene(virksomhetsnummer)
-        } else {
-            throw IllegalArgumentException("Ugyldig mottaker")
+        check(listOfNotNull(altinn, naermesteLeder, altinnReportee).size == 1) {
+            "Ugyldig mottaker"
         }
+        return altinn?.tilDomene(virksomhetsnummer)
+            ?: (altinnReportee?.tilDomene(virksomhetsnummer)
+                ?: (naermesteLeder?.tilDomene(virksomhetsnummer)
+                    ?: throw IllegalArgumentException("Ugyldig mottaker")))
     }
 }
 
@@ -147,7 +158,7 @@ data class MetadataInput(
     val grupperingsid: String?,
     val eksternId: String,
     val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
-    val virksomhetsnummer: String?
+    val virksomhetsnummer: String?,
 )
 
 data class NyEksternVarselResultat(
