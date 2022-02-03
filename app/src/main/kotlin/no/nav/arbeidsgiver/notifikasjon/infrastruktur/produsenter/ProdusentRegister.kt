@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AppName
@@ -59,6 +60,14 @@ object NærmesteLederDefinisjon : MottakerDefinisjon() {
         }
 }
 
+object AltinnReporteeDefinisjon : MottakerDefinisjon() {
+    override fun akseptererMottaker(mottaker: Mottaker): Boolean =
+        when (mottaker) {
+            is AltinnReporteeMottaker -> true
+            else -> false
+        }
+}
+
 object MottakerRegister {
     val servicecodeDefinisjoner: List<ServicecodeDefinisjon>
         get() {
@@ -69,6 +78,7 @@ object MottakerRegister {
         when (mottakerDefinisjon) {
             is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
             is NærmesteLederDefinisjon -> true
+            is AltinnReporteeDefinisjon -> true
         }
 }
 
