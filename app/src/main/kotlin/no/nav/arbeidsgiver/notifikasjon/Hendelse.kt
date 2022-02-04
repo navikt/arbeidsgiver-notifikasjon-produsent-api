@@ -213,6 +213,11 @@ sealed class Hendelse {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class Mottaker
 
+@JsonTypeName("altinnRolle")
+data class AltinnRolleMottaker(
+   val rollekode: String,
+) : Mottaker()
+
 @JsonTypeName("naermesteLeder")
 data class NærmesteLederMottaker(
     val naermesteLederFnr: String,
@@ -277,6 +282,7 @@ val Mottaker.virksomhetsnummer: String
     get() = when (this) {
         is NærmesteLederMottaker -> this.virksomhetsnummer
         is AltinnMottaker -> this.virksomhetsnummer
+        is AltinnRolleMottaker -> TODO()
     }
 
 data class HendelseMetadata(
