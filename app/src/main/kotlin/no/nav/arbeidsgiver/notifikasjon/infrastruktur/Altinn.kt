@@ -77,6 +77,8 @@ object AltinnImpl : Altinn {
                     async {
                         hentTilganger(fnr, code, version, selvbetjeningsToken)
                     }
+                } + async {
+                    hentTilganger(fnr, selvbetjeningsToken)
                 }
                 return@coroutineScope alleTilganger.awaitAll().flatten()
             }
@@ -120,10 +122,40 @@ object AltinnImpl : Altinn {
                 }
             }
             .map {
-                BrukerModel.Tilgang(
+                BrukerModel.Tilgang.Altinn(
                     virksomhet = it.organizationNumber!!,
                     servicecode = serviceCode,
                     serviceedition = serviceEdition
+                )
+            }
+    }
+
+    private suspend fun hentTilganger(
+        fnr: String,
+        selvbetjeningsToken: String,
+    ): List<BrukerModel.Tilgang> {
+        val reporteeList = try {
+            klient.hentOrganisasjoner(
+                SelvbetjeningToken(selvbetjeningsToken),
+                Subject(fnr),
+                true
+            )
+        } catch (error: AltinnException) {
+            when (error.proxyError.httpStatus) {
+                403 -> return emptyList()
+                else -> throw error
+            }
+        } catch (error: Exception) {
+            if (error.message?.contains("403") == true)
+                return emptyList()
+            else
+                throw error
+        }
+
+        return reporteeList.map {
+                BrukerModel.Tilgang.AltinnReportee(
+                    virksomhet = it.organizationNumber!!,
+                    fnr = fnr
                 )
             }
     }
