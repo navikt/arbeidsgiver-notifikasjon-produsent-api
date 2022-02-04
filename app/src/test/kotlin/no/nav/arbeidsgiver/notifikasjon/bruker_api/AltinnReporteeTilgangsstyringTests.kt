@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
@@ -13,11 +13,11 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 import java.util.*
 
-class AltinnTilgangsstyringTests : DescribeSpec({
+class AltinnReporteeTilgangsstyringTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerModelImpl(database)
 
-    fun lagMelding(id: UUID, serviceCode: String) = Hendelse.BeskjedOpprettet(
+    fun lagMelding(id: UUID, fnr: String) = Hendelse.BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = id,
         hendelseId = id,
@@ -25,10 +25,9 @@ class AltinnTilgangsstyringTests : DescribeSpec({
         kildeAppNavn = "k",
         merkelapp = "m",
         eksternId = id.toString(),
-        mottakere = listOf(AltinnMottaker(
+        mottakere = listOf(AltinnReporteeMottaker(
             virksomhetsnummer = "1",
-            serviceCode = serviceCode,
-            serviceEdition = "1",
+            fnr = fnr
         )),
         tekst = "",
         lenke = "https://dev.nav.no",
@@ -37,7 +36,7 @@ class AltinnTilgangsstyringTests : DescribeSpec({
         grupperingsid = null,
     )
 
-    describe("Tilgangsstyring med altinn-tjenester") {
+    describe("Tilgangsstyring med altinn reportee") {
         listOf(
             lagMelding(uuid("0"), "HarTilgang0"),
             lagMelding(uuid("1"), "HarTilgang1"),
@@ -51,10 +50,9 @@ class AltinnTilgangsstyringTests : DescribeSpec({
         val notifikasjoner = model.hentNotifikasjoner(
             fnr = "",
             tilganger = listOf("HarTilgang0", "HarTilgang1").map {
-                BrukerModel.Tilgang.Altinn(
+                BrukerModel.Tilgang.AltinnReportee(
                     virksomhet = "1",
-                    servicecode = it,
-                    serviceedition = "1",
+                    fnr = it,
                 )
             },
         )
