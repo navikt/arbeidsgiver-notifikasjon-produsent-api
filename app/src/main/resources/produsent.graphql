@@ -198,7 +198,7 @@ enum EksterntVarselStatus {
 input NySakInput {
     """
     Grupperings-id-en knytter en sak og notifikasjoner sammen.
-    Den skal være for unik for saker innenfor merkelappen.
+    Den skal være unik for saker innenfor merkelappen.
     Et naturlig valg av grupperingsid er f.eks. et saksnummer.
     """
     grupperingsid: String!
