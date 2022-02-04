@@ -41,12 +41,8 @@ interface Altinn {
     ): List<AltinnRolle>
 }
 
-object AltinnImpl : Altinn {
-    private val log = logger()
-
-    private val timer = Health.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
-
-    private val klient = NonBlockingAltinnrettigheterProxyKlient(
+class AltinnImpl(
+    private val klient: NonBlockingAltinnrettigheterProxyKlient = NonBlockingAltinnrettigheterProxyKlient(
         AltinnrettigheterProxyKlient(
             AltinnrettigheterProxyKlientConfig(
                 ProxyConfig(
@@ -64,6 +60,10 @@ object AltinnImpl : Altinn {
             )
         )
     )
+) : Altinn {
+    private val log = logger()
+
+    private val timer = Health.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
 
     override suspend fun hentTilganger(
         fnr: String,
