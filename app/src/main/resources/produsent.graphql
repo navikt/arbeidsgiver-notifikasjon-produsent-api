@@ -195,12 +195,124 @@ enum EksterntVarselStatus {
     FEILET
 }
 
+input NySakInput {
+    """
+    Grupperings-id-en knytter en sak og notifikasjoner sammen.
+    Den skal være for unik for saker innenfor merkelappen.
+    Et naturlig valg av grupperingsid er f.eks. et saksnummer.
+    """
+    grupperingsid: String!
+
+    """Merkelapp som saken skal assossieres med."""
+    merkelapp: String!
+
+    """Virksomhetsnummeret til virksomheten som saken omhandler."""
+    virksomhetsnummer: String!
+
+    """
+    Hvem som skal få se saken.
+
+    NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
+    til en notifikasjon. De tilgangsstyres hver for seg.
+    """
+    mottakere: [MottakerInput!]!
+
+    """En tittel på saken, som vises til brukeren."""
+    tittel: String!
+
+    """Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken."""
+    lenke: String!
+
+    """Status saken starter med."""
+    status: StatusOppdateringInput!
+}
+
+union NySakResultat =
+    | NySakVellykket
+    | UgyldigMerkelapp
+    | UgyldigMottaker
+    | DuplikatGrupperingsid
+    | UkjentProdusent
+
+type NySakVellykket {
+    id: ID!
+}
+
+input OppdaterSakInput {
+    status: StatusOppdateringInput!
+}
+
+union OppdaterSakResultat =
+    | OppdaterSakVellykket
+    | SakFinnesIkke
+
+type OppdaterSakVellykket {
+    id: ID!
+
+    """Nyeste statusoppdatering er først i listen."""
+    statuser: [StatusOppdatering!]!
+}
+
+"""
+Statusen påvirker bl.a. hvilket ikon som vises og brukes bl.a.
+for å kunne filtrere saksoversikten på min side arbeidsgiver.
+"""
+enum SaksStatus {
+    """
+    Naturlig start-tilstand for en sak.
+
+    Default tekst som vises til bruker: "Mottatt"
+    """
+    MOTTATT
+
+    """
+    Default tekst som vises til bruker: "Under behandling"
+    """
+    UNDER_BEHANDLING
+
+    """
+    Slutt-tilstand for en sak. Når en sak er `FERDIG`, så vil vi
+    nedprioritere visningen av den på min side arbeidsgivere.
+
+    Default tekst som vises til bruker: "Ferdig".
+    """
+    FERDIG
+}
+
+input StatusOppdateringInput {
+    status: SaksStatus!
+
+    """
+    Når endringen skjedde.
+    Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
+    kallet på.
+    """
+    tidspunkt: ISO8601DateTime
+
+    """
+    Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
+    til brukeren. Se `SaksStatus` for default tekster.
+    """
+    overstyrStatustekstMed: String
+}
+
+type StatusOppdatering {
+    status: SaksStatus!
+    tidspunkt: ISO8601DateTime!
+    overstyrStatusTekstMed: String
+}
 
 """
 Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
 å opprette nye ting.
 """
 type Mutation {
+    nySak(sak: NySakInput!): NySakResultat!
+
+    oppdaterSak(id: ID!, sak: OppdaterSakInput!): OppdaterSakResultat!
+
+    oppdaterSakByGrupperingsid(grupperingsid: String!, merkelapp: String!, status: OppdaterSakInput!): OppdaterSakResultat!
+
     """
     Opprett en ny beskjed.
     """
@@ -622,10 +734,22 @@ type NotifikasjonFinnesIkke implements Error {
     feilmelding: String!
 }
 
+type SakFinnesIkke implements Error {
+    feilmelding: String!
+}
+
 """
 Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eksternId og merkelapp som allerede finnes
 """
 type DuplikatEksternIdOgMerkelapp implements Error {
+    feilmelding: String!
+}
+
+"""
+Denne feilen returneres hvis det allerede eksisterer en sak med denne grupperingsid-en under
+merkelappen.
+"""
+type DuplikatGrupperingsid implements Error {
     feilmelding: String!
 }
 
