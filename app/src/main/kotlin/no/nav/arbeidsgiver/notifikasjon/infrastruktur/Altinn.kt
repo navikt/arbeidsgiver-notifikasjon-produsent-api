@@ -41,25 +41,27 @@ interface Altinn {
     ): List<AltinnRolle>
 }
 
-class AltinnImpl(
-    private val klient: NonBlockingAltinnrettigheterProxyKlient = NonBlockingAltinnrettigheterProxyKlient(
-        AltinnrettigheterProxyKlient(
-            AltinnrettigheterProxyKlientConfig(
-                ProxyConfig(
-                    url = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/",
-                    consumerId = "notifikasjon-bruker-api",
+val nonBlockingAltinnrettigheterProxyKlient = NonBlockingAltinnrettigheterProxyKlient(
+    AltinnrettigheterProxyKlient(
+        AltinnrettigheterProxyKlientConfig(
+            ProxyConfig(
+                url = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/",
+                consumerId = "notifikasjon-bruker-api",
+            ),
+            AltinnConfig(
+                url = basedOnEnv(
+                    prod = { "https://api-gw.oera.no" },
+                    other = { "https://api-gw-q1.oera.no" },
                 ),
-                AltinnConfig(
-                    url = basedOnEnv(
-                        prod = { "https://api-gw.oera.no" },
-                        other = { "https://api-gw-q1.oera.no" },
-                    ),
-                    altinnApiKey = System.getenv("ALTINN_HEADER") ?: "default",
-                    altinnApiGwApiKey = System.getenv("APIGW_HEADER") ?: "default",
-                )
+                altinnApiKey = System.getenv("ALTINN_HEADER") ?: "default",
+                altinnApiGwApiKey = System.getenv("APIGW_HEADER") ?: "default",
             )
         )
     )
+)
+
+class AltinnImpl(
+    private val klient: NonBlockingAltinnrettigheterProxyKlient = nonBlockingAltinnrettigheterProxyKlient
 ) : Altinn {
     private val log = logger()
 
