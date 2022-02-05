@@ -1,14 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
 
@@ -58,9 +58,10 @@ class AltinnImplTests : DescribeSpec({
         val tilganger = altinn.hentTilganger(fnr, "token", listOf(def))
 
         it("returnerer tilganger") {
-            tilganger.size shouldBe 2
-            tilganger.first() shouldBe BrukerModel.Tilgang.Altinn("1", def.code, def.version)
-            tilganger.last() shouldBe BrukerModel.Tilgang.AltinnReportee(fnr = fnr, virksomhet = "2")
+            tilganger shouldContainExactlyInAnyOrder listOf(
+                Tilgang.Altinn("1", def.code, def.version),
+                Tilgang.AltinnReportee(fnr = fnr, virksomhet = "2")
+            )
         }
 
     }
