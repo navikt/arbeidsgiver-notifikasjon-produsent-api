@@ -283,7 +283,7 @@ input StatusOppdateringInput {
     status: SaksStatus!
 
     """
-    Når endringen skjedde.
+    Når endringen skjedde. Det kan godt være i fortiden.
     Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
     kallet på.
     """
