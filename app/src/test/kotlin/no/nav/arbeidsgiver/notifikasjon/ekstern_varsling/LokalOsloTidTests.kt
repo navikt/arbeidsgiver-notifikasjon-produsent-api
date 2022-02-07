@@ -139,7 +139,7 @@ class LokalOsloTidTests: DescribeSpec({
                 kl1431.next(SATURDAY) to kl1431.withHour(8).next(MONDAY),
                 kl1431.next(SUNDAY) to kl1431.withHour(8).next(MONDAY),
             ) { p ->
-                it("${p.first.dayOfWeek} ${p.first.month} ${p.first.dayOfMonth}  ${p.first.toLocalTime()} -> ${p.second.dayOfWeek} ${p.second.month} ${p.second.dayOfMonth} ${p.second.toLocalTime()}") {
+                it("${p.first.dayOfWeek} ${p.first.toLocalTime()} -> ${p.second.dayOfWeek} ${p.second.toLocalTime()}") {
                     nesteNksÅpningstid(p.first) shouldBe p.second
                 }
             }
@@ -163,7 +163,7 @@ class LokalOsloTidTests: DescribeSpec({
                 kl1601.next(SATURDAY) to kl1601.withHour(9).next(MONDAY),
                 kl1600.next(SUNDAY) to kl0900.next(MONDAY),
             ) { p ->
-                it("${p.first.dayOfWeek} ${p.first.month} ${p.first.dayOfMonth} ${p.first.toLocalTime()} -> ${p.second.dayOfWeek} ${p.second.month} ${p.second.dayOfMonth} ${p.second.toLocalTime()}") {
+                it("${p.first.dayOfWeek} ${p.first.toLocalTime()} -> ${p.second.dayOfWeek} ${p.second.toLocalTime()}") {
                     nesteDagtidIkkeSøndag(p.first) shouldBe p.second
                 }
             }
@@ -171,5 +171,4 @@ class LokalOsloTidTests: DescribeSpec({
     }
 })
 
-fun LocalDateTime.next(dayOfWeek: DayOfWeek) : LocalDateTime =
-    if (this.dayOfWeek == dayOfWeek) this else with(TemporalAdjusters.next(dayOfWeek))
+fun LocalDateTime.next(dayOfWeek: DayOfWeek) : LocalDateTime = with(TemporalAdjusters.next(dayOfWeek))
