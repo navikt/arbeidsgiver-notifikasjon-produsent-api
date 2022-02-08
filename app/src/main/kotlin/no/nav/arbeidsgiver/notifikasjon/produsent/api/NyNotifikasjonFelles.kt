@@ -1,9 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -33,7 +31,7 @@ data class EksterntVarselInput(
             val (sendevindu, sendeTidspunkt) = sendetidspunkt.tilDomene()
             if (mottaker.kontaktinfo != null) {
                 return SmsVarselKontaktinfo(
-                    varselId =  UUID.randomUUID(),
+                    varselId = UUID.randomUUID(),
                     tlfnr = mottaker.kontaktinfo.tlf,
                     fnrEllerOrgnr = virksomhetsnummer,
                     smsTekst = smsTekst,
@@ -114,6 +112,21 @@ data class NaermesteLederMottakerInput(
         )
 }
 
+data class AltinnRolleMottakerInput(
+    val roleDefinitionCode: String,
+) {
+    suspend fun tilDomene(
+        virksomhetsnummer: String,
+        finnRolleId: suspend (String) -> AltinnRolle?
+    ): no.nav.arbeidsgiver.notifikasjon.Mottaker =
+        no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker(
+            roleDefinitionCode = roleDefinitionCode,
+            roleDefinitionId = finnRolleId(roleDefinitionCode)?.RoleDefinitionId
+                ?: throw UkjentRolleException("klarte ikke finne altinnrolle $roleDefinitionCode"),
+            virksomhetsnummer = virksomhetsnummer
+        )
+}
+
 data class AltinnMottakerInput(
     val serviceCode: String,
     val serviceEdition: String,
@@ -127,16 +140,24 @@ data class AltinnMottakerInput(
         )
 }
 
+class UkjentRolleException(message: String) : RuntimeException(message)
+
+
 data class MottakerInput(
     val altinn: AltinnMottakerInput?,
-    val naermesteLeder: NaermesteLederMottakerInput?
+    val naermesteLeder: NaermesteLederMottakerInput?,
+    val altinnRolle: AltinnRolleMottakerInput?
 ) {
-
-    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker {
-        return if (altinn != null && naermesteLeder == null) {
+    suspend fun tilDomene(
+        virksomhetsnummer: String,
+        finnRolleId: suspend (String) -> AltinnRolle?
+    ): no.nav.arbeidsgiver.notifikasjon.Mottaker {
+        return if (altinn != null && naermesteLeder == null && altinnRolle == null) {
             altinn.tilDomene(virksomhetsnummer)
-        } else if (naermesteLeder != null && altinn == null) {
+        } else if (naermesteLeder != null && altinn == null && altinnRolle == null) {
             naermesteLeder.tilDomene(virksomhetsnummer)
+        } else if (naermesteLeder == null && altinn == null && altinnRolle != null) {
+            altinnRolle.tilDomene(virksomhetsnummer, finnRolleId)
         } else {
             throw IllegalArgumentException("Ugyldig mottaker")
         }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -231,14 +230,14 @@ class QueryMineNotifikasjoner(
 
     @JsonTypeName("AltinnRolleMottaker")
     data class AltinnRolleMottaker(
-        val rolleKode: String,
-        val rolleId:String,
+        val roleDefinitionCode: String,
+        val roleDefinitionId:String,
     ) : Mottaker() {
         companion object {
             fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker): AltinnRolleMottaker {
                 return AltinnRolleMottaker(
-                    rolleKode = domene.rollekode,
-                    rolleId = "195"
+                    roleDefinitionCode = domene.roleDefinitionCode,
+                    roleDefinitionId = domene.roleDefinitionId
                 )
             }
         }

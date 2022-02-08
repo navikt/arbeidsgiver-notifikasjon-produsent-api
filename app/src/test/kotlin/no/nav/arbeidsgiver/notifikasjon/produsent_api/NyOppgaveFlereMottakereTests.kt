@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.Produsent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.QueryMineNotifikasjoner
@@ -16,7 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
-class NyOppgaveFlereMottakereTests: DescribeSpec({
+class NyOppgaveFlereMottakereTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
 
@@ -28,7 +29,8 @@ class NyOppgaveFlereMottakereTests: DescribeSpec({
     )
 
     describe("sender ingen mottakere") {
-        val response = engine.produsentApi(nyOppgave(
+        val response = engine.produsentApi(
+            nyOppgave(
                 """
                 """
             )
@@ -40,14 +42,18 @@ class NyOppgaveFlereMottakereTests: DescribeSpec({
     }
 
     describe("sender 1 mottaker i 'mottaker'") {
-        val response = engine.produsentApi(nyOppgave("""
+        val response = engine.produsentApi(
+            nyOppgave(
+                """
             mottaker: {
                 altinn: {
                     serviceCode: "5441"
                     serviceEdition: "1"
                 }
             }
-        """))
+        """
+            )
+        )
         it("no error in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
@@ -70,7 +76,9 @@ class NyOppgaveFlereMottakereTests: DescribeSpec({
     }
 
     describe("sender 1 mottaker i 'mottakere'") {
-        val response = engine.produsentApi(nyOppgave("""
+        val response = engine.produsentApi(
+            nyOppgave(
+                """
             mottakere: [
                 {
                     altinn: {
@@ -79,7 +87,9 @@ class NyOppgaveFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """))
+        """
+            )
+        )
         it("no error in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
@@ -100,7 +110,9 @@ class NyOppgaveFlereMottakereTests: DescribeSpec({
         }
     }
     describe("sender 2 mottakere i 'mottakere'") {
-        val response = engine.produsentApi(nyOppgave("""
+        val response = engine.produsentApi(
+            nyOppgave(
+                """
             mottakere: [
                 {
                     altinn: {
@@ -115,7 +127,9 @@ class NyOppgaveFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """))
+        """
+            )
+        )
         it("no errors in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
@@ -141,8 +155,48 @@ class NyOppgaveFlereMottakereTests: DescribeSpec({
         }
     }
 
+    describe("sender 1 altinnRolle i 'mottaker'") {
+        listOf(AltinnRolle("196", "DAGL"), AltinnRolle("195", "BOBE")).forEach {
+            produsentRepository.leggTilAltinnRolle(
+                it
+            )
+        }
+
+        val response = engine.produsentApi(
+            nyOppgave(
+                """
+            mottaker: {
+                altinnRolle: {
+                    roleDefinitionCode: "DAGL"                    
+                }
+            }
+        """
+            )
+        )
+        it("no error in response") {
+            val errors = response.getGraphqlErrors()
+            errors.shouldBeEmpty()
+        }
+
+        it("en mottaker registrert") {
+            val resultType = response.getTypedContent<String>("$.nyOppgave.__typename")
+            resultType shouldBe "NyOppgaveVellykket"
+
+            val id = response.getTypedContent<UUID>("/nyOppgave/id")
+            val mottakere = engine.hentMottakere(id)
+            mottakere.toSet() shouldBe setOf(
+                QueryMineNotifikasjoner.AltinnRolleMottaker(
+                    roleDefinitionCode = "DAGL",
+                    roleDefinitionId = "196"
+                )
+            )
+        }
+    }
+
     describe("sender 2 mottaker, en i 'mottaker' og en i 'mottakere'") {
-        val response = engine.produsentApi(nyOppgave("""
+        val response = engine.produsentApi(
+            nyOppgave(
+                """
             mottaker: {
                 altinn: {
                     serviceCode: "5441"
@@ -157,7 +211,9 @@ class NyOppgaveFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """))
+        """
+            )
+        )
         it("no errors in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()

@@ -215,7 +215,9 @@ sealed class Mottaker
 
 @JsonTypeName("altinnRolle")
 data class AltinnRolleMottaker(
-   val rollekode: String,
+    val roleDefinitionCode: String,
+    val roleDefinitionId: String,
+    val virksomhetsnummer: String
 ) : Mottaker()
 
 @JsonTypeName("naermesteLeder")

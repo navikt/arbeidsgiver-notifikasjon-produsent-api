@@ -33,6 +33,7 @@ val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
             tillatteMottakere = listOf(
                 ServicecodeDefinisjon(code = "5441", version = "1"),
                 NærmesteLederDefinisjon,
+                AltinnRolleDefinisjon("DAGL")
             )
         )
     }

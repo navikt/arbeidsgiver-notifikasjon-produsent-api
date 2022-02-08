@@ -114,6 +114,7 @@ type Beskjed {
 
 union Mottaker =
     | AltinnMottaker
+    | AltinnRolleMottaker
     | NaermesteLederMottaker
 
 type AltinnMottaker {
@@ -126,6 +127,11 @@ type NaermesteLederMottaker {
     naermesteLederFnr: String!
     ansattFnr: String!
     virksomhetsnummer: String!
+}
+
+type AltinnRolleMottaker {
+    roleDefinitionCode: String!
+    roleDefinitionId: String!
 }
 
 type OppgaveData {
@@ -485,6 +491,7 @@ Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer
 input MottakerInput @ExactlyOneFieldGiven {
     altinn: AltinnMottakerInput
     naermesteLeder: NaermesteLederMottakerInput
+    altinnRolle:AltinnRolleMottakerInput
 }
 
 """
@@ -521,6 +528,20 @@ input NaermesteLederMottakerInput {
     """
     virksomhetsnummer: String
 }
+
+"""
+Spesifiser mottaker ved hjelp av rollekode.  Enhver som har den gitte rollen vil kunne se notifikasjonen.
+
+Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
+bruker mister en Altinn-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn-tilgangen.
+Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikasjoner for den Altinn-tilgangen.
+
+Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
+"""
+input AltinnRolleMottakerInput {
+    roleDefinitionCode: String!
+}
+
 
 """
 """
@@ -568,6 +589,7 @@ union NyOppgaveResultat =
     | UgyldigMottaker
     | DuplikatEksternIdOgMerkelapp
     | UkjentProdusent
+    | UkjentRolle
 
 union NyBeskjedResultat =
     | NyBeskjedVellykket
@@ -575,6 +597,7 @@ union NyBeskjedResultat =
     | UgyldigMottaker
     | DuplikatEksternIdOgMerkelapp
     | UkjentProdusent
+    | UkjentRolle
 
 type NyBeskjedVellykket {
     id: ID!
@@ -628,6 +651,11 @@ Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eks
 type DuplikatEksternIdOgMerkelapp implements Error {
     feilmelding: String!
 }
+
+type UkjentRolle implements Error {
+    feilmelding: String!
+}
+
 
 interface Error {
     feilmelding: String!

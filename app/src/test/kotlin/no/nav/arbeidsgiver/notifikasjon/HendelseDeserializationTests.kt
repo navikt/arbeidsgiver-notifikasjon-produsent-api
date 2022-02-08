@@ -60,11 +60,7 @@ class HendelseDeserializationTests : DescribeSpec({
                         "serviceCode": "1",
                         "serviceEdition": "2",
                         "virksomhetsnummer": "3"
-                    },
-                       {
-                        "@type": "altinnRolle",
-                        "rollekode": "DAGL"
-                    }
+                    }                
                 ],
                 "tekst": "",
                 "lenke": "",
@@ -78,11 +74,6 @@ class HendelseDeserializationTests : DescribeSpec({
             mottaker.serviceCode shouldBe "1"
             mottaker.serviceEdition shouldBe "2"
             mottaker.virksomhetsnummer shouldBe "3"
-        }
-        it("rollemottaker parsed") {
-            oppgaveOpprettet as Hendelse.OppgaveOpprettet
-            val mottaker = oppgaveOpprettet.mottakere.last() as AltinnRolleMottaker
-            mottaker.rollekode shouldBe "DAGL"
         }
     }
 })
