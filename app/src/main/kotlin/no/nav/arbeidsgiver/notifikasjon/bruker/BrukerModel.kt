@@ -283,7 +283,7 @@ class BrukerModelImpl(
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
             is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(notifikasjonId, mottaker)
-            is AltinnRolleMottaker -> storeAltinnRolleMottaker(notifikasjonId,mottaker)
+            is AltinnRolleMottaker -> storeAltinnRolleMottaker(notifikasjonId, mottaker)
         }
     }
 

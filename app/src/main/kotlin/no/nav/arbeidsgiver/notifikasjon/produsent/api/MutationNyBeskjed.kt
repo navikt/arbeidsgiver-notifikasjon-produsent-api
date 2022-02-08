@@ -25,7 +25,6 @@ class MutationNyBeskjed(
 
     fun wire(runtime: RuntimeWiring.Builder) {
         runtime.resolveSubtypes<NyBeskjedResultat>()
-
         runtime.wire("Mutation") {
             coDataFetcher("nyBeskjed") { env ->
                 nyBeskjed(

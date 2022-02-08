@@ -59,7 +59,7 @@ class MutationNyOppgave(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = alleMottakere.map { it.tilDomene(virksomhetsnummer, finnRolleId)}, //send ned funksjon for å slå opp id
+                mottakere = alleMottakere.map { it.tilDomene(virksomhetsnummer, finnRolleId)},
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,

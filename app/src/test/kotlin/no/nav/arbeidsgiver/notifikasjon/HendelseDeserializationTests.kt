@@ -60,7 +60,7 @@ class HendelseDeserializationTests : DescribeSpec({
                         "serviceCode": "1",
                         "serviceEdition": "2",
                         "virksomhetsnummer": "3"
-                    }                
+                    }
                 ],
                 "tekst": "",
                 "lenke": "",
@@ -68,9 +68,9 @@ class HendelseDeserializationTests : DescribeSpec({
             }
         """)
 
-        it("altinnmottaker parsed") {
+        it("mottaker parsed") {
             oppgaveOpprettet as Hendelse.OppgaveOpprettet
-            val mottaker = oppgaveOpprettet.mottakere.first() as AltinnMottaker
+            val mottaker = oppgaveOpprettet.mottakere.single() as AltinnMottaker
             mottaker.serviceCode shouldBe "1"
             mottaker.serviceEdition shouldBe "2"
             mottaker.virksomhetsnummer shouldBe "3"
