@@ -46,6 +46,8 @@ object ProdusentAPI {
                 MutationNyOppgave(kafkaProducer, produsentRepository).wire(this)
                 MutationOppgaveUtfoert(kafkaProducer, produsentRepository).wire(this)
                 MutationSoftDelete(kafkaProducer, produsentRepository).wire(this)
+                MutationNySak(kafkaProducer, produsentRepository).wire(this)
+                MutationOppdaterSak(kafkaProducer, produsentRepository).wire(this)
             }
         )
     }

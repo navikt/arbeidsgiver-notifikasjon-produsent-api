@@ -37,7 +37,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             )
             alleOrgnr.flatMap { orgnr ->
                 MottakerRegister.servicecodeDefinisjoner.map { tjeneste ->
-                    Tilgang(
+                    Tilgang.Altinn(
                         virksomhet = orgnr,
                         servicecode = tjeneste.code,
                         serviceedition = tjeneste.version,

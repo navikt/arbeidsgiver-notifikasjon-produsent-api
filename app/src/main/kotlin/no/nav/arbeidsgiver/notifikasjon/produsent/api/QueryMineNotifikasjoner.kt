@@ -136,7 +136,7 @@ class QueryMineNotifikasjoner(
         val feilmelding: String?,
     ) {
         companion object {
-            fun fraDomene(domene: ProdusentModel.EksterntVarsel) : EksterntVarsel = EksterntVarsel(
+            fun fraDomene(domene: ProdusentModel.EksterntVarsel): EksterntVarsel = EksterntVarsel(
                 id = domene.varselId,
                 status = when (domene.status) {
                     ProdusentModel.EksterntVarsel.Status.NY -> EksterntVarselStatus.NY
@@ -188,6 +188,9 @@ class QueryMineNotifikasjoner(
                 return when (domene) {
                     is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> AltinnMottaker.fraDomene(domene)
                     is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> NærmesteLederMottaker.fraDomene(domene)
+                    is no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker -> AltinnReporteeMottaker.fraDomene(
+                        domene
+                    )
                     is no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker -> AltinnRolleMottaker.fraDomene(domene)
                 }
             }
@@ -228,10 +231,25 @@ class QueryMineNotifikasjoner(
         }
     }
 
+    @JsonTypeName("AltinnReporteeMottaker")
+    data class AltinnReporteeMottaker(
+        val fnr: String,
+        val virksomhetsnummer: String,
+    ) : Mottaker() {
+        companion object {
+            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker): AltinnReporteeMottaker {
+                return AltinnReporteeMottaker(
+                    fnr = domene.fnr,
+                    virksomhetsnummer = domene.virksomhetsnummer
+                )
+            }
+        }
+    }
+
     @JsonTypeName("AltinnRolleMottaker")
     data class AltinnRolleMottaker(
         val roleDefinitionCode: String,
-        val roleDefinitionId:String,
+        val roleDefinitionId: String,
     ) : Mottaker() {
         companion object {
             fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker): AltinnRolleMottaker {
@@ -306,11 +324,11 @@ fun finnVirksomhetsnummer(
     mottakere: List<MottakerInput>
 ): String {
     val mottakerVirksomhetsnummer = mottakere.flatMap {
-            listOfNotNull(
-                it.altinn?.virksomhetsnummer,
-                it.naermesteLeder?.virksomhetsnummer
-            )
-        }
+        listOfNotNull(
+            it.altinn?.virksomhetsnummer,
+            it.naermesteLeder?.virksomhetsnummer
+        )
+    }
     val alleVirksomhetsnummer = listOfNotNull(virksomhetsnummer) + mottakerVirksomhetsnummer
     return alleVirksomhetsnummer.toSet().single()
 }

@@ -43,7 +43,7 @@ data class EksterntVarselInput(
         }
 
         data class Mottaker(
-            val kontaktinfo: Kontaktinfo?
+            val kontaktinfo: Kontaktinfo?,
         )
 
         data class Kontaktinfo(
@@ -59,7 +59,7 @@ data class EksterntVarselInput(
 
     @Suppress("unused") // kommer som graphql input
     enum class Sendevindu(
-        val somDomene: EksterntVarselSendingsvindu
+        val somDomene: EksterntVarselSendingsvindu,
     ) {
         NKS_AAPNINGSTID(EksterntVarselSendingsvindu.NKS_ÅPNINGSTID),
         DAGTID_IKKE_SOENDAG(EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG),
@@ -89,7 +89,7 @@ data class EksterntVarselInput(
         }
 
         data class Mottaker(
-            val kontaktinfo: Kontaktinfo?
+            val kontaktinfo: Kontaktinfo?,
         )
 
         data class Kontaktinfo(
@@ -140,27 +140,38 @@ data class AltinnMottakerInput(
         )
 }
 
+data class AltinnReporteeMottakerInput(
+    val fnr: String,
+) {
+    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker =
+        no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker(
+            fnr = fnr,
+            virksomhetsnummer = virksomhetsnummer
+        )
+}
+
 class UkjentRolleException(message: String) : RuntimeException(message)
 
 
 data class MottakerInput(
     val altinn: AltinnMottakerInput?,
+    val altinnReportee: AltinnReporteeMottakerInput?,
     val naermesteLeder: NaermesteLederMottakerInput?,
     val altinnRolle: AltinnRolleMottakerInput?
 ) {
+
     suspend fun tilDomene(
         virksomhetsnummer: String,
         finnRolleId: suspend (String) -> AltinnRolle?
-    ): no.nav.arbeidsgiver.notifikasjon.Mottaker {
-        return if (altinn != null && naermesteLeder == null && altinnRolle == null) {
-            altinn.tilDomene(virksomhetsnummer)
-        } else if (naermesteLeder != null && altinn == null && altinnRolle == null) {
-            naermesteLeder.tilDomene(virksomhetsnummer)
-        } else if (naermesteLeder == null && altinn == null && altinnRolle != null) {
-            altinnRolle.tilDomene(virksomhetsnummer, finnRolleId)
-        } else {
-            throw IllegalArgumentException("Ugyldig mottaker")
+    ): Mottaker {
+        check(listOfNotNull(altinn, naermesteLeder, altinnReportee,altinnRolle).size == 1) {
+            "Ugyldig mottaker"
         }
+        return altinn?.tilDomene(virksomhetsnummer)
+            ?: (altinnReportee?.tilDomene(virksomhetsnummer)
+                ?: (naermesteLeder?.tilDomene(virksomhetsnummer)
+                    ?: (altinnRolle?.tilDomene(virksomhetsnummer, finnRolleId)
+                        ?: throw IllegalArgumentException("Ugyldig mottaker"))))
     }
 }
 
@@ -168,7 +179,7 @@ data class MetadataInput(
     val grupperingsid: String?,
     val eksternId: String,
     val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
-    val virksomhetsnummer: String?
+    val virksomhetsnummer: String?,
 )
 
 data class NyEksternVarselResultat(

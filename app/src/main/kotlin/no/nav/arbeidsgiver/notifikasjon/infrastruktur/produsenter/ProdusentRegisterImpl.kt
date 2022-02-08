@@ -17,6 +17,7 @@ val FAGER_TESTPRODUSENT = Produsent(
         ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
         ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
         NærmesteLederDefinisjon,
+        AltinnReporteeDefinisjon,
         AltinnRolleDefinisjon("DAGL")
     )
 )
@@ -45,7 +46,11 @@ val ARBEIDSGIVER_TILTAK = Produsent(
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
-        ServicecodeDefinisjon(code = "5332", version = basedOnEnv(prod = { "2" }, other = { "1" }), description = "Arbeidstrening"),
+        ServicecodeDefinisjon(
+            code = "5332",
+            version = basedOnEnv(prod = { "2" }, other = { "1" }),
+            description = "Arbeidstrening"
+        ),
         ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
         ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
         ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
