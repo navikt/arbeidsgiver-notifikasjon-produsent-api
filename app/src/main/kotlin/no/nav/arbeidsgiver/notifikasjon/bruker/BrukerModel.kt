@@ -10,17 +10,17 @@ import java.time.OffsetDateTime
 import java.util.*
 
 interface BrukerModel {
-    sealed class Tilgang {
+    sealed interface Tilgang {
         data class Altinn(
             val virksomhet: String,
             val servicecode: String,
             val serviceedition: String,
-        ) : Tilgang()
+        ) : Tilgang
 
         data class AltinnReportee(
             val virksomhet: String,
             val fnr: String,
-        ) : Tilgang()
+        ) : Tilgang
     }
 
     sealed interface Notifikasjon {
