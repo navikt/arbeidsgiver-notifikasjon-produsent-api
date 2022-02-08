@@ -24,4 +24,17 @@ value */class NonBlockingAltinnrettigheterProxyKlient(
                 filtrerPåAktiveOrganisasjoner
             )
         }
+
+    suspend fun hentOrganisasjoner(
+        selvbetjeningToken: SelvbetjeningToken,
+        subject: Subject,
+        filtrerPåAktiveOrganisasjoner: Boolean
+    ): List<AltinnReportee> =
+        blockingIO {
+            blockingClient.hentOrganisasjoner(
+                selvbetjeningToken,
+                subject,
+                filtrerPåAktiveOrganisasjoner
+            )
+        }
 }

@@ -227,6 +227,12 @@ data class AltinnMottaker(
     val virksomhetsnummer: String,
 ) : Mottaker()
 
+@JsonTypeName("altinnReportee")
+data class AltinnReporteeMottaker(
+    val fnr: String,
+    val virksomhetsnummer: String,
+) : Mottaker()
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class EksterntVarsel {
     abstract val varselId: UUID
@@ -277,6 +283,7 @@ val Mottaker.virksomhetsnummer: String
     get() = when (this) {
         is NærmesteLederMottaker -> this.virksomhetsnummer
         is AltinnMottaker -> this.virksomhetsnummer
+        is AltinnReporteeMottaker -> this.virksomhetsnummer
     }
 
 data class HendelseMetadata(

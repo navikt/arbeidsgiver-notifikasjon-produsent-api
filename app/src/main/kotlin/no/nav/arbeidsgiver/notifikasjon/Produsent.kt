@@ -55,7 +55,7 @@ object Produsent {
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         httpPort: Int = 8080,
         produsentRegister: ProdusentRegister = PRODUSENT_REGISTER,
-        altinn: Altinn = AltinnImpl,
+        altinn: Altinn = AltinnImpl(),
     ) {
         runBlocking(Dispatchers.Default) {
             val produsentRepositoryAsync = async {

@@ -53,7 +53,7 @@ object Bruker {
 
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
-        altinn: Altinn = AltinnImpl,
+        altinn: Altinn = AltinnImpl(),
         enhetsregisteret: Enhetsregisteret = EnhetsregisteretImpl(),
         httpPort: Int = 8080
     ) {

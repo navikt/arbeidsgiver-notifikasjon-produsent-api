@@ -114,11 +114,17 @@ type Beskjed {
 
 union Mottaker =
     | AltinnMottaker
+    | AltinnReporteeMottaker
     | NaermesteLederMottaker
 
 type AltinnMottaker {
     serviceCode: String!
     serviceEdition: String!
+    virksomhetsnummer: String!
+}
+
+type AltinnReporteeMottaker {
+    fnr: String!
     virksomhetsnummer: String!
 }
 
@@ -617,6 +623,7 @@ Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer
 input MottakerInput @ExactlyOneFieldGiven {
     altinn: AltinnMottakerInput
     naermesteLeder: NaermesteLederMottakerInput
+    altinnReportee: AltinnReporteeMottakerInput
 }
 
 """
@@ -652,6 +659,18 @@ input NaermesteLederMottakerInput {
     Å oppgi virksomhetsnummer her er deprecated. Spesifiser det i metadata-feltet.
     """
     virksomhetsnummer: String
+}
+
+"""
+Spesifiser mottaker ved hjelp av fødselsnummer.
+Flere skjemaer krever kun en "tilknytning" til et orgnr for å sende inn/se status.
+Tilknytningen er da at man er "reportee" for virksomheten, uten å spesifisere noen enkeltrettighet.
+
+Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen. Dersom personen ikke lenger er tilknyttet
+virksomheten så vil de hverken se historiske eller nye notifikasjoner knyttet til virksomheten.
+"""
+input AltinnReporteeMottakerInput {
+    fnr: String!
 }
 
 """

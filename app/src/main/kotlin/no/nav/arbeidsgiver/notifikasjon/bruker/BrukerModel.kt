@@ -1,9 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
@@ -13,11 +10,18 @@ import java.time.OffsetDateTime
 import java.util.*
 
 interface BrukerModel {
-    data class Tilgang(
-        val virksomhet: String,
-        val servicecode: String,
-        val serviceedition: String,
-    )
+    sealed interface Tilgang {
+        data class Altinn(
+            val virksomhet: String,
+            val servicecode: String,
+            val serviceedition: String,
+        ) : Tilgang
+
+        data class AltinnReportee(
+            val virksomhet: String,
+            val fnr: String,
+        ) : Tilgang
+    }
 
     sealed interface Notifikasjon {
         val id: UUID
@@ -74,11 +78,17 @@ class BrukerModelImpl(
         fnr: String,
         tilganger: Collection<BrukerModel.Tilgang>,
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
-        val tilgangerAltinnMottaker = tilganger.map {
+        val tilgangerAltinnMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.Altinn>().map {
             AltinnMottaker(
                 serviceCode = it.servicecode,
                 serviceEdition = it.serviceedition,
                 virksomhetsnummer = it.virksomhet
+            )
+        }
+        val tilgangerAltinnReporteeMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.AltinnReportee>().map {
+            AltinnReporteeMottaker(
+                virksomhetsnummer = it.virksomhet,
+                fnr = it.fnr
             )
         }
 
@@ -90,6 +100,10 @@ class BrukerModelImpl(
                     select * from json_to_recordset(?::json) 
                     as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
                 ),
+                mine_altinnreporteetilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "fnr" text)
+                ),
                 mine_altinn_notifikasjoner as (
                     select er.notifikasjon_id
                     from mottaker_altinn_enkeltrettighet er
@@ -97,6 +111,13 @@ class BrukerModelImpl(
                         er.virksomhet = at.virksomhetsnummer and
                         er.service_code = at."serviceCode" and
                         er.service_edition = at."serviceEdition"
+                ),
+                mine_altinn_reportee_notifikasjoner as (
+                    select rep.notifikasjon_id
+                    from mottaker_altinn_reportee rep
+                    join mine_altinnreporteetilganger at on 
+                        rep.virksomhet = at.virksomhetsnummer and
+                        rep.fnr = at."fnr"
                 ),
                 mine_digisyfo_notifikasjoner as (
                     select notifikasjon_id 
@@ -107,6 +128,8 @@ class BrukerModelImpl(
                     (select * from mine_digisyfo_notifikasjoner)
                     union 
                     (select * from mine_altinn_notifikasjoner)
+                    union 
+                    (select * from mine_altinn_reportee_notifikasjoner)
                 )
             select 
                 n.*, 
@@ -121,6 +144,7 @@ class BrukerModelImpl(
             """,
             {
                 jsonb(tilgangerAltinnMottaker)
+                jsonb(tilgangerAltinnReporteeMottaker)
                 string(fnr)
                 string(fnr)
             }
@@ -255,9 +279,10 @@ class BrukerModelImpl(
     }
 
     private fun Transaction.storeMottaker(notifikasjonId: UUID, mottaker: Mottaker) {
-        when (mottaker) {
+        val ignored = when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
+            is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(notifikasjonId, mottaker)
         }
     }
 
@@ -283,6 +308,18 @@ class BrukerModelImpl(
             string(mottaker.virksomhetsnummer)
             string(mottaker.serviceCode)
             string(mottaker.serviceEdition)
+        }
+    }
+
+    private fun Transaction.storeAltinnReporteeMottaker(notifikasjonId: UUID, mottaker: AltinnReporteeMottaker) {
+        executeUpdate("""
+            insert into mottaker_altinn_reportee
+                (notifikasjon_id, virksomhet, fnr)
+            values (?, ?, ?)
+        """) {
+            uuid(notifikasjonId)
+            string(mottaker.virksomhetsnummer)
+            string(mottaker.fnr)
         }
     }
 
