@@ -1,35 +1,30 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelseMedKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
-import java.util.*
 
-class MutationOppdaterSak(
+class MutationNyStatusSak(
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
     private val produsentRepository: ProdusentRepository,
 ) {
 
     fun wire(runtime: RuntimeWiring.Builder) {
-        runtime.type("OppdaterSakResultat") {
+        runtime.type("NyStatusSakResultat") {
             it.typeResolver {
-                it.schema.getObjectType("OppdaterSakVellykket")
+                it.schema.getObjectType("NyStatusSakVellykket")
             }
         }
 
         runtime.wire("Mutation") {
-            coDataFetcher("oppdaterSak") { env ->
+            coDataFetcher("nyStatusSak") { env ->
+                null
+            }
+            coDataFetcher("nyStatusSakByGrupperingsid") { env ->
                 null
             }
         }
