@@ -251,7 +251,7 @@ type NySakVellykket {
 }
 
 input NyStatusSakInput {
-    status: NyStatusSakInput!
+    status: SaksStatusInput!
 }
 
 union NyStatusSakResultat =
@@ -291,7 +291,7 @@ enum SaksStatus {
     FERDIG
 }
 
-input NyStatusSakInput {
+input SaksStatusInput {
     status: SaksStatus!
 
     """
