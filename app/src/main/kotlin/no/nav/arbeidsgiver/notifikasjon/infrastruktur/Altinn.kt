@@ -155,11 +155,11 @@ class AltinnImpl(
         }
 
         return reporteeList.map {
-                BrukerModel.Tilgang.AltinnReportee(
-                    virksomhet = it.organizationNumber!!,
-                    fnr = fnr
-                )
-            }
+            BrukerModel.Tilgang.AltinnReportee(
+                virksomhet = it.organizationNumber!!,
+                fnr = fnr
+            )
+        }
     }
 
     private val httpClient = HttpClient(Apache) {

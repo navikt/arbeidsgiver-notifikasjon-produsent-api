@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
@@ -24,7 +25,6 @@ class MutationNyBeskjed(
 
     fun wire(runtime: RuntimeWiring.Builder) {
         runtime.resolveSubtypes<NyBeskjedResultat>()
-
         runtime.wire("Mutation") {
             coDataFetcher("nyBeskjed") { env ->
                 nyBeskjed(
@@ -52,10 +52,11 @@ class MutationNyBeskjed(
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>
     ) {
-        fun tilDomene(
+        suspend fun tilDomene(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
+            finnRolleId: suspend (String) -> AltinnRolle?
         ): Hendelse.BeskjedOpprettet {
             val alleMottakere = listOfNotNull(mottaker) + mottakere
             val virksomhetsnummer = finnVirksomhetsnummer(metadata.virksomhetsnummer, alleMottakere)
@@ -67,7 +68,7 @@ class MutationNyBeskjed(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = alleMottakere.map { it.tilDomene(virksomhetsnummer) },
+                mottakere = alleMottakere.map { it.tilDomene(virksomhetsnummer, finnRolleId) },
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,
@@ -85,11 +86,16 @@ class MutationNyBeskjed(
     ): NyBeskjedResultat {
         val produsent = hentProdusent(context) { error -> return error }
         val id = UUID.randomUUID()
-        val domeneNyBeskjed = nyBeskjed.tilDomene(
-            id = id,
-            produsentId = produsent.id,
-            kildeAppNavn = context.appName,
-        )
+        val domeneNyBeskjed = try {
+            nyBeskjed.tilDomene(
+                id = id,
+                produsentId = produsent.id,
+                kildeAppNavn = context.appName,
+                finnRolleId = produsentRepository::hentAltinnrolle
+            )
+        } catch (e: UkjentRolleException) {
+            return Error.UkjentRolle(e.message!!)
+        }
 
         tilgangsstyrNyNotifikasjon(
             produsent,

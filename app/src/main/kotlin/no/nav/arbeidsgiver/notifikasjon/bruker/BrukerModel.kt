@@ -283,6 +283,7 @@ class BrukerModelImpl(
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
             is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(notifikasjonId, mottaker)
+            is AltinnRolleMottaker -> storeAltinnRolleMottaker(notifikasjonId, mottaker)
         }
     }
 
@@ -323,6 +324,22 @@ class BrukerModelImpl(
         }
     }
 
+    private fun Transaction.storeAltinnRolleMottaker(notifikasjonId: UUID, mottaker: AltinnRolleMottaker) {
+        executeUpdate(
+            """
+            insert into mottaker_altinn_rolle
+                (notifikasjon_id, virksomhet, role_definition_code, role_definition_id)
+            values (?, ?, ?, ?)
+        """
+        ) {
+            uuid(notifikasjonId)
+            string(mottaker.virksomhetsnummer)
+            string(mottaker.roleDefinitionCode)
+            string(mottaker.roleDefinitionId)
+        }
+    }
+
+
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
         database.transaction {
             executeUpdate(
@@ -358,4 +375,4 @@ class BrukerModelImpl(
             }
         }
     }
-}
+ }

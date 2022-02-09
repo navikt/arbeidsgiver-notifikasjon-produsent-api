@@ -89,7 +89,7 @@ sealed class Hendelse {
 
     @JsonTypeName("OppgaveOpprettet")
     data class OppgaveOpprettet
-        @JsonIgnore constructor(
+    @JsonIgnore constructor(
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
@@ -213,6 +213,13 @@ sealed class Hendelse {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class Mottaker
 
+@JsonTypeName("altinnRolle")
+data class AltinnRolleMottaker(
+    val roleDefinitionCode: String,
+    val roleDefinitionId: String,
+    val virksomhetsnummer: String
+) : Mottaker()
+
 @JsonTypeName("naermesteLeder")
 data class NærmesteLederMottaker(
     val naermesteLederFnr: String,
@@ -284,6 +291,7 @@ val Mottaker.virksomhetsnummer: String
         is NærmesteLederMottaker -> this.virksomhetsnummer
         is AltinnMottaker -> this.virksomhetsnummer
         is AltinnReporteeMottaker -> this.virksomhetsnummer
+        is AltinnRolleMottaker -> this.virksomhetsnummer
     }
 
 data class HendelseMetadata(

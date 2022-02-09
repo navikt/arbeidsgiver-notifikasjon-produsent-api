@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
@@ -68,6 +69,16 @@ object AltinnReporteeDefinisjon : MottakerDefinisjon() {
         }
 }
 
+data class AltinnRolleDefinisjon(val roleCode: String) : MottakerDefinisjon() {
+    override fun akseptererMottaker(mottaker: Mottaker): Boolean =
+        when (mottaker) {
+            is AltinnRolleMottaker ->
+                mottaker.roleDefinitionCode == roleCode
+            else -> false
+        }
+}
+
+
 object MottakerRegister {
     val servicecodeDefinisjoner: List<ServicecodeDefinisjon>
         get() {
@@ -79,6 +90,7 @@ object MottakerRegister {
             is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
             is NærmesteLederDefinisjon -> true
             is AltinnReporteeDefinisjon -> true
+            is AltinnRolleDefinisjon -> true
         }
 }
 
@@ -111,10 +123,12 @@ class ProdusentRegisterImpl(
 
     override fun finn(appName: AppName): Produsent? {
         return produsenterByName[appName] ?: run {
-            log.error("""
+            log.error(
+                """
                 |Fant ikke produsent for appName=$appName.
                 |Gyldige appName er: \n${produsenterByName.keys.joinToString(prefix = "| - ", postfix = "\n")}
-            """.trimMargin())
+            """.trimMargin()
+            )
             return null
         }
     }

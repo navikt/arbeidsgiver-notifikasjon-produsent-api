@@ -127,7 +127,7 @@ class ProdusentRepositoryImpl(
             select 
                 valgt_notifikasjon.*, 
                 coalesce(ev.eksterne_varsler_json, '[]'::json) as eksterne_varsler,
-                (coalesce(ma.mottakere::jsonb, '[]'::jsonb) || coalesce(mar.mottakere::jsonb, '[]'::jsonb) || coalesce(md.mottakere::jsonb, '[]'::jsonb)) as mottakere
+                (coalesce(ma.mottakere::jsonb, '[]'::jsonb) || coalesce(mar.mottakere::jsonb, '[]'::jsonb) || coalesce(md.mottakere::jsonb, '[]'::jsonb) || coalesce(maro.mottakere::jsonb, '[]'::jsonb)) as mottakere
             from valgt_notifikasjon
             left join eksterne_varsler_json ev 
                 on ev.notifikasjon_id = valgt_notifikasjon.id
@@ -137,6 +137,8 @@ class ProdusentRepositoryImpl(
                 on mar.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_digisyfo_json md
                 on md.notifikasjon_id = valgt_notifikasjon.id
+            left join mottaker_altinn_rolle_json maro
+                on maro.notifikasjon_id = valgt_notifikasjon.id
             """,
             setup
         ) {
@@ -355,6 +357,7 @@ class ProdusentRepositoryImpl(
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
             is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(notifikasjonId, mottaker)
+            is AltinnRolleMottaker -> storeAltinnRolleMottaker(notifikasjonId, mottaker)
         }
     }
 
@@ -398,6 +401,21 @@ class ProdusentRepositoryImpl(
             uuid(notifikasjonId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.fnr)
+        }
+    }
+
+    private fun Transaction.storeAltinnRolleMottaker(notifikasjonId: UUID, mottaker: AltinnRolleMottaker) {
+        executeUpdate(
+            """
+            insert into mottaker_altinn_rolle
+                (notifikasjon_id, virksomhet, role_definition_code, role_definition_id)
+            values (?, ?, ?, ?)
+        """
+        ) {
+            uuid(notifikasjonId)
+            string(mottaker.virksomhetsnummer)
+            string(mottaker.roleDefinitionCode)
+            string(mottaker.roleDefinitionId)
         }
     }
 }

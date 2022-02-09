@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
@@ -42,10 +43,11 @@ class MutationNyOppgave(
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>,
     ) {
-        fun tilDomene(
+        suspend fun tilDomene(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
+            finnRolleId:  suspend (String) -> AltinnRolle?,
         ): Hendelse.OppgaveOpprettet {
             val alleMottakere = listOfNotNull(mottaker) + mottakere
             val virksomhetsnummer = finnVirksomhetsnummer(metadata.virksomhetsnummer, alleMottakere)
@@ -57,7 +59,7 @@ class MutationNyOppgave(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = alleMottakere.map { it.tilDomene(virksomhetsnummer )},
+                mottakere = alleMottakere.map { it.tilDomene(virksomhetsnummer, finnRolleId)},
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,
@@ -84,11 +86,16 @@ class MutationNyOppgave(
     ): NyOppgaveResultat {
         val produsent = hentProdusent(context) { error -> return error }
         val id = UUID.randomUUID()
-        val domeneNyOppgave = nyOppgave.tilDomene(
-            id = id,
-            produsentId = produsent.id,
-            kildeAppNavn = context.appName,
-        )
+        val domeneNyOppgave = try {
+            nyOppgave.tilDomene(
+                id = id,
+                produsentId = produsent.id,
+                kildeAppNavn = context.appName,
+                finnRolleId = produsentRepository::hentAltinnrolle
+            )
+        }catch (e: UkjentRolleException){
+            return Error.UkjentRolle(e.message!!)
+        }
 
         tilgangsstyrNyNotifikasjon(
             produsent,

@@ -36,14 +36,14 @@ object Bruker {
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
-                HttpAuthProviders.LOGIN_SERVICE,
-                HttpAuthProviders.TOKEN_X,
-            )
+            HttpAuthProviders.LOGIN_SERVICE,
+            HttpAuthProviders.TOKEN_X,
+        )
         null, "dev-gcp" -> listOf(
-                HttpAuthProviders.LOGIN_SERVICE,
-                HttpAuthProviders.TOKEN_X,
-                HttpAuthProviders.FAKEDINGS_BRUKER
-            )
+            HttpAuthProviders.LOGIN_SERVICE,
+            HttpAuthProviders.TOKEN_X,
+            HttpAuthProviders.FAKEDINGS_BRUKER
+        )
         else -> {
             val msg = "ukjent NAIS_CLUSTER_NAME '$name'"
             log.error(msg)
@@ -100,12 +100,15 @@ object Bruker {
                     log.info("KafkaConsumer er deaktivert.")
                 } else {
                     val nærmesteLederLeesahTopic = "teamsykmelding.syfo-narmesteleder-leesah"
-                    val nærmesteLederKafkaConsumer = createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
-                        putAll(mapOf(
-                            ConsumerConfig.GROUP_ID_CONFIG to "notifikasjon-bruker-api-narmesteleder-model-builder",
-                            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
-                        ))
-                    }
+                    val nærmesteLederKafkaConsumer =
+                        createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
+                            putAll(
+                                mapOf(
+                                    ConsumerConfig.GROUP_ID_CONFIG to "notifikasjon-bruker-api-narmesteleder-model-builder",
+                                    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
+                                )
+                            )
+                        }
                     val nærmesteLederModel = nærmesteLederModelAsync.await()
 
                     nærmesteLederKafkaConsumer.forEachEvent { event ->

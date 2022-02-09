@@ -34,6 +34,7 @@ val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
                 ServicecodeDefinisjon(code = "5441", version = "1"),
                 AltinnReporteeDefinisjon,
                 NærmesteLederDefinisjon,
+                AltinnRolleDefinisjon("DAGL")
             )
         )
     }

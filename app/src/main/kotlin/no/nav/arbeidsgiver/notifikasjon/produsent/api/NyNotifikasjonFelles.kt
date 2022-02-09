@@ -1,9 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -114,6 +112,21 @@ data class NaermesteLederMottakerInput(
         )
 }
 
+data class AltinnRolleMottakerInput(
+    val roleDefinitionCode: String,
+) {
+    suspend fun tilDomene(
+        virksomhetsnummer: String,
+        finnRolleId: suspend (String) -> AltinnRolle?
+    ): no.nav.arbeidsgiver.notifikasjon.Mottaker =
+        no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker(
+            roleDefinitionCode = roleDefinitionCode,
+            roleDefinitionId = finnRolleId(roleDefinitionCode)?.RoleDefinitionId
+                ?: throw UkjentRolleException("klarte ikke finne altinnrolle $roleDefinitionCode"),
+            virksomhetsnummer = virksomhetsnummer
+        )
+}
+
 data class AltinnMottakerInput(
     val serviceCode: String,
     val serviceEdition: String,
@@ -137,20 +150,28 @@ data class AltinnReporteeMottakerInput(
         )
 }
 
+class UkjentRolleException(message: String) : RuntimeException(message)
+
+
 data class MottakerInput(
     val altinn: AltinnMottakerInput?,
     val altinnReportee: AltinnReporteeMottakerInput?,
     val naermesteLeder: NaermesteLederMottakerInput?,
+    val altinnRolle: AltinnRolleMottakerInput?
 ) {
 
-    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker {
-        check(listOfNotNull(altinn, naermesteLeder, altinnReportee).size == 1) {
+    suspend fun tilDomene(
+        virksomhetsnummer: String,
+        finnRolleId: suspend (String) -> AltinnRolle?
+    ): Mottaker {
+        check(listOfNotNull(altinn, naermesteLeder, altinnReportee,altinnRolle).size == 1) {
             "Ugyldig mottaker"
         }
         return altinn?.tilDomene(virksomhetsnummer)
             ?: (altinnReportee?.tilDomene(virksomhetsnummer)
                 ?: (naermesteLeder?.tilDomene(virksomhetsnummer)
-                    ?: throw IllegalArgumentException("Ugyldig mottaker")))
+                    ?: (altinnRolle?.tilDomene(virksomhetsnummer, finnRolleId)
+                        ?: throw IllegalArgumentException("Ugyldig mottaker"))))
     }
 }
 

@@ -290,6 +290,10 @@ fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifikasjoner.
                                         naermesteLederFnr
                                         virksomhetsnummer
                                     }
+                                       ... on AltinnRolleMottaker {
+                                        roleDefinitionCode,
+                                        roleDefinitionId
+                                    }
                                 }
                             }
                             ... on Oppgave {
@@ -311,6 +315,10 @@ fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifikasjoner.
                                         ansattFnr
                                         naermesteLederFnr
                                         virksomhetsnummer
+                                    }
+                                     ... on AltinnRolleMottaker {
+                                        roleDefinitionCode,
+                                        roleDefinitionId
                                     }
                                 }
                             }

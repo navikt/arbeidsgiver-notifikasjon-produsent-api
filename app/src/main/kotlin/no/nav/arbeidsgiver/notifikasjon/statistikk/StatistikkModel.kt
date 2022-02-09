@@ -378,6 +378,7 @@ fun List<Mottaker>.oppsummering(): String =
             is NærmesteLederMottaker -> "NærmesteLeder"
             is AltinnMottaker -> "Altinn:${it.serviceCode}:${it.serviceEdition}"
             is AltinnReporteeMottaker -> "AltinnReporteeMottaker"
+            is AltinnRolleMottaker -> "AltinnRolle:${it.roleDefinitionCode}"
         }
     }
         .sorted()

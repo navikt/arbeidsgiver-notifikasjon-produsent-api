@@ -17,8 +17,6 @@ sealed class Error {
     ) :
         Error(),
         NyNotifikasjonError,
-        MutationNyBeskjed.NyBeskjedResultat,
-        MutationNyOppgave.NyOppgaveResultat,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
         MutationSoftDelete.SoftDeleteNotifikasjonResultat,
@@ -28,8 +26,6 @@ sealed class Error {
     data class UkjentProdusent(
         override val feilmelding: String
     ) : Error(),
-        MutationNyBeskjed.NyBeskjedResultat,
-        MutationNyOppgave.NyOppgaveResultat,
         NyNotifikasjonError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
@@ -41,16 +37,13 @@ sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        MutationNyBeskjed.NyBeskjedResultat,
-        MutationNyOppgave.NyOppgaveResultat,
         NyNotifikasjonError
 
     @JsonTypeName("DuplikatEksternIdOgMerkelapp")
     data class DuplikatEksternIdOgMerkelapp(
         override val feilmelding: String
     ) : Error(),
-        MutationNyBeskjed.NyBeskjedResultat,
-        MutationNyOppgave.NyOppgaveResultat
+        NyNotifikasjonError
 
     @JsonTypeName("NotifikasjonFinnesIkke")
     data class NotifikasjonFinnesIkke(
@@ -60,5 +53,12 @@ sealed class Error {
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationSoftDelete.SoftDeleteNotifikasjonResultat,
         MutationHardDelete.HardDeleteNotifikasjonResultat
+
+    @JsonTypeName("UkjentRolle")
+    data class UkjentRolle(
+        override val feilmelding: String
+    ) :
+        Error(),
+        NyNotifikasjonError
 }
 
