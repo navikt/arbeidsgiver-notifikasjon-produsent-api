@@ -86,12 +86,16 @@ class MutationNyBeskjed(
     ): NyBeskjedResultat {
         val produsent = hentProdusent(context) { error -> return error }
         val id = UUID.randomUUID()
-        val domeneNyBeskjed = nyBeskjed.tilDomene(
-            id = id,
-            produsentId = produsent.id,
-            kildeAppNavn = context.appName,
-            finnRolleId = produsentRepository::hentAltinnrolle
-        )
+        val domeneNyBeskjed = try {
+            nyBeskjed.tilDomene(
+                id = id,
+                produsentId = produsent.id,
+                kildeAppNavn = context.appName,
+                finnRolleId = produsentRepository::hentAltinnrolle
+            )
+        } catch (e: UkjentRolleException) {
+            return Error.UkjentRolle(e.message!!)
+        }
 
         tilgangsstyrNyNotifikasjon(
             produsent,
