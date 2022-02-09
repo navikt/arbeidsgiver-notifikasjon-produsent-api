@@ -236,7 +236,7 @@ input NySakInput {
     lenke: String!
 
     """Status saken starter med."""
-    status: StatusOppdateringInput!
+    status: NyStatusSakInput!
 }
 
 union NySakResultat =
@@ -250,15 +250,15 @@ type NySakVellykket {
     id: ID!
 }
 
-input OppdaterSakInput {
-    status: StatusOppdateringInput!
+input NyStatusSakInput {
+    status: NyStatusSakInput!
 }
 
-union OppdaterSakResultat =
-    | OppdaterSakVellykket
+union NyStatusSakResultat =
+    | NyStatusSakVellykket
     | SakFinnesIkke
 
-type OppdaterSakVellykket {
+type NyStatusSakVellykket {
     id: ID!
 
     """Nyeste statusoppdatering er først i listen."""
@@ -291,7 +291,7 @@ enum SaksStatus {
     FERDIG
 }
 
-input StatusOppdateringInput {
+input NyStatusSakInput {
     status: SaksStatus!
 
     """
@@ -341,9 +341,9 @@ Dette er roten som alle endringer ("mutations") starter fra. Endringer inkludere
 type Mutation {
     nySak(sak: NySakInput!): NySakResultat!
 
-    oppdaterSak(id: ID!, sak: OppdaterSakInput!): OppdaterSakResultat!
+    nyStatusSak(id: ID!, sak: NyStatusSakInput!): NyStatusSakResultat!
 
-    oppdaterSakByGrupperingsid(grupperingsid: String!, merkelapp: String!, status: OppdaterSakInput!): OppdaterSakResultat!
+    nyStatusSakByGrupperingsid(grupperingsid: String!, merkelapp: String!, status: NyStatusSakInput!): NyStatusSakResultat!
 
     """
     Opprett en ny beskjed.
@@ -722,14 +722,31 @@ input MetadataInput {
     virksomhetsnummer: String
 
     """
+    Den eksterne id-en brukes for å unikt identifisere en notifikasjon. Den må være unik for merkelappen.
+
+    Hvis dere har en enkel, statisk bruk av notifikasjoner, så kan dere utlede eksternId
+    fra f.eks. et saksnummer, og på den måten kunne referere til notifikasjoner dere har opprettet,
+    uten at dere må lagre ID-ene vi genererer og returnerer til dere.
     """
     eksternId: String!
 
     """
+    Hvilken dato vi viser til brukeren. Dersom dere ikke oppgir noen dato, så
+    bruker vi tidspuktet dere gjør kallet på.
     """
     opprettetTidspunkt: ISO8601DateTime
 
     """
+    Grupperings-id-en gjør det mulig å knytte sammen forskjellige oppgaver, beskjed og saker.
+    Det vises ikke til brukere.
+    Saksnummer er en naturlig grupperings-id.
+
+    Når dere bruker grupperings-id, så er det mulig for oss å presentere en tidslinje
+    med alle notifikasjonene og status-oppdateringer knyttet til en sak.
+
+    Vi kan også vurdere å implemntere API-er for dere, slik at dere enkelt kan slette
+    all informasjon knyttet til en sak i et enkelt kall (f.eks. for å ivareta personvern).
+    Ta kontakt med #arbeidsgiver-notifikasjon på slack for å melde interesse!
     """
     grupperingsid: String
 }
