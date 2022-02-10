@@ -78,7 +78,7 @@ jobs:
     strategy:
       matrix:
         cluster: [ dev-gcp, prod-gcp ]
-        app: [ bruker-api, produsent-api, kafka-reaper, statistikk, ekstern-varsling ]
+        app: [ bruker-api, produsent-api, kafka-reaper, statistikk, ekstern-varsling, replay-validator ]
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1

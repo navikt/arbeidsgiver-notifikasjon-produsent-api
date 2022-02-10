@@ -15,7 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.produsent_api.stubProdusentRegister
 import org.intellij.lang.annotations.Language
@@ -208,7 +208,7 @@ fun TestApplicationEngine.post(
             }
             if (jsonBody != null) {
                 addHeader(HttpHeaders.ContentType, "application/json")
-                setBody(objectMapper.writeValueAsString(jsonBody))
+                setBody(laxObjectMapper.writeValueAsString(jsonBody))
             }
             config()
         }

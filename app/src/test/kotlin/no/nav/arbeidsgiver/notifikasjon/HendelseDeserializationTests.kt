@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 
 /** Unit tests for historical and current formats that
@@ -12,7 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 class HendelseDeserializationTests : DescribeSpec({
 
     describe("kun 'mottaker'") {
-        val oppgaveOpprettet = objectMapper.readValue<Hendelse>("""
+        val oppgaveOpprettet = laxObjectMapper.readValue<Hendelse>("""
             {
                 "@type": "OppgaveOpprettet",
                 "virksomhetsnummer": "0",
@@ -44,7 +44,7 @@ class HendelseDeserializationTests : DescribeSpec({
     }
 
     describe("ikke 'mottaker', kun 'mottakere'") {
-        val oppgaveOpprettet = objectMapper.readValue<Hendelse>("""
+        val oppgaveOpprettet = laxObjectMapper.readValue<Hendelse>("""
             {
                 "@type": "OppgaveOpprettet",
                 "virksomhetsnummer": "0",

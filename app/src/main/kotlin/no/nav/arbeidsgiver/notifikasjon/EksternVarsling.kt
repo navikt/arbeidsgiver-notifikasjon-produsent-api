@@ -86,7 +86,7 @@ object EksternVarsling {
                 embeddedServer(Netty, port = httpPort) {
                     installMetrics()
                     install(ContentNegotiation) {
-                        register(ContentType.Application.Json, TimedContentConverter(JacksonConverter(objectMapper)))
+                        register(ContentType.Application.Json, TimedContentConverter(JacksonConverter(laxObjectMapper)))
                     }
                     routing {
                         internalRoutes()
@@ -158,14 +158,14 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.testSend(
                 onSuccess = {
                     when (it) {
                         is AltinnVarselKlient.AltinnResponse.Ok ->
-                            call.respond(HttpStatusCode.OK, objectMapper.writeValueAsString(it.rå))
+                            call.respond(HttpStatusCode.OK, laxObjectMapper.writeValueAsString(it.rå))
                         is AltinnVarselKlient.AltinnResponse.Feil ->
-                            call.respond(HttpStatusCode.BadRequest, objectMapper.writeValueAsString(it.rå))
+                            call.respond(HttpStatusCode.BadRequest, laxObjectMapper.writeValueAsString(it.rå))
                     }
                 },
                 onFailure = {
                     call.respond(HttpStatusCode.InternalServerError,
-                        objectMapper.writeValueAsString(mapOf(
+                        laxObjectMapper.writeValueAsString(mapOf(
                             "type" to it.javaClass.canonicalName,
                             "msg" to it.message,
                         ))

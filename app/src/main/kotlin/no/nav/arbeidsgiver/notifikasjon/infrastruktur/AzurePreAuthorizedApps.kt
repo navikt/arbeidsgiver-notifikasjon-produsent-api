@@ -17,7 +17,7 @@ class AzurePreAuthorizedAppsImpl : AzurePreAuthorizedApps {
         val clientId: ClientId
     )
 
-    private val authorizedApps = objectMapper.readValue<List<Elem>>(
+    private val authorizedApps = laxObjectMapper.readValue<List<Elem>>(
         System.getenv("AZURE_APP_PRE_AUTHORIZED_APPS")!!
     )
 

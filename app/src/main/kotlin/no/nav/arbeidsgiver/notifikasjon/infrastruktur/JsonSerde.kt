@@ -8,7 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 
-val objectMapper = jacksonObjectMapper().apply {
+val laxObjectMapper = jacksonObjectMapper().apply {
     setDefaultPrettyPrinter(
         DefaultPrettyPrinter().apply {
             indentArraysWith(DefaultPrettyPrinter.FixedSpaceIndenter.instance)
@@ -19,6 +19,10 @@ val objectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
 }
 
-inline fun <reified T> ObjectMapper.writeValueAsString(value: T): String =
+val strictObjectMapper = jacksonObjectMapper().apply {
+    registerModule(JavaTimeModule())
+}
+
+inline fun <reified T> ObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value: T): String =
     this.writerFor(jacksonTypeRef<T>())
         .writeValueAsString(value)

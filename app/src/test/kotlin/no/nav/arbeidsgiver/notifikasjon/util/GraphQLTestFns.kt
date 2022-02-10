@@ -6,7 +6,7 @@ import com.jayway.jsonpath.JsonPath
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 
 data class GraphQLError(
     val message: String,
@@ -28,19 +28,19 @@ inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T 
     validateStatusOK()
     val errors = getGraphqlErrors()
     if (errors.isEmpty()) {
-        val tree = objectMapper.readTree(this.content!!)
+        val tree = laxObjectMapper.readTree(this.content!!)
         logger().info("content: $tree")
         val dataNode = tree.get("data")
 
         return if (name.startsWith("$")) {
-            val rawJson = objectMapper.writeValueAsString(JsonPath.read(dataNode.toString(), name))
-            objectMapper.readValue(rawJson)
+            val rawJson = laxObjectMapper.writeValueAsString(JsonPath.read(dataNode.toString(), name))
+            laxObjectMapper.readValue(rawJson)
         } else {
             val node = dataNode.at(name.ensurePrefix("/"))
             if (node.isNull || node.isMissingNode) {
                 throw Exception("content.data does not contain element '$name' content: $tree")
             }
-            objectMapper.convertValue(node)
+            laxObjectMapper.convertValue(node)
         }
     } else {
         throw Exception("Got errors $errors")
@@ -52,9 +52,9 @@ fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
     if (this.content == null) {
         throw NullPointerException("content is null. status:${status()}")
     }
-    val tree = objectMapper.readTree(this.content!!)
+    val tree = laxObjectMapper.readTree(this.content!!)
     val errors = tree.get("errors")
-    return if (errors == null) emptyList() else objectMapper.convertValue(errors)
+    return if (errors == null) emptyList() else laxObjectMapper.convertValue(errors)
 }
 
 fun TestApplicationResponse.getFirstGraphqlError(): GraphQLError {

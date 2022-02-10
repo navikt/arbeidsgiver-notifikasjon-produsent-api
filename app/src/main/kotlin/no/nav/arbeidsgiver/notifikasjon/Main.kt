@@ -14,6 +14,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         "notifikasjon-kafka-reaper" -> KafkaReaper.main()
         "notifikasjon-statistikk" -> Statistikk.main()
         "notifikasjon-ekstern-varsling" -> EksternVarsling.main()
+        "notifikasjon-replay-validator" -> ReplayValidator.main()
         else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
     }
 }
