@@ -1,12 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
-import java.util.*
 
 /** Unit tests for historical and current formats that
  * may be seen in kafka log.
@@ -36,7 +34,7 @@ class HendelseSerializationTests : DescribeSpec({
 
 
         it("mottaker parsed") {
-            val json = objectMapper.readTree(objectMapper.writeValueAsString(oppgaveOpprettet))
+            val json = laxObjectMapper.readTree(laxObjectMapper.writeValueAsString(oppgaveOpprettet))
             json.has("mottaker") shouldBe false
             json["mottakere"][0]["serviceCode"].asText() shouldBe "1"
             json["mottakere"][0]["serviceEdition"].asText() shouldBe "2"

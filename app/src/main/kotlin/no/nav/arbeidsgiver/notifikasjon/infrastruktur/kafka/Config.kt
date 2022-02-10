@@ -1,7 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.strictObjectMapper
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -18,13 +20,20 @@ const val TOPIC = "fager.notifikasjon"
 
 interface JsonSerializer<T> : Serializer<T> {
     override fun serialize(topic: String?, data: T): ByteArray {
-        return objectMapper.writeValueAsBytes(data)
+        return laxObjectMapper.writeValueAsBytes(data)
     }
 }
 
 abstract class JsonDeserializer<T>(private val clazz: Class<T>) : Deserializer<T> {
+    private val log = logger()
+
     override fun deserialize(topic: String?, data: ByteArray?): T {
-        return objectMapper.readValue(data, clazz)
+        try {
+            return strictObjectMapper.readValue(data, clazz)
+        } catch (e: Exception) {
+            log.error("strict deserialize failed with message: {}", e.message)
+        }
+        return laxObjectMapper.readValue(data, clazz)
     }
 }
 

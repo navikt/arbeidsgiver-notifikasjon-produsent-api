@@ -30,6 +30,8 @@ interface CoroutineKafkaConsumer<K, V> {
     }
 
     suspend fun poll(timeout: Duration): ConsumerRecords<K, V>
+
+    suspend fun seekToBeginning()
 }
 
 private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
@@ -86,6 +88,9 @@ class CoroutineKafkaConsumerImpl<K, V>(
         log.info("kafka consumer stopped")
     }
 
+    override suspend fun seekToBeginning() {
+        consumer.seekToBeginning(consumer.assignment())
+    }
 
     private suspend fun forEachEvent(
         records: ConsumerRecords<K, V>,

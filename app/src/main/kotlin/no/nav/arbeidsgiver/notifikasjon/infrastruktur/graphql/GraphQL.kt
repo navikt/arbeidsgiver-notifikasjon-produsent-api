@@ -21,11 +21,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import org.intellij.lang.annotations.Language
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
-    objectMapper.convertValue(this.getArgument(name))
+    laxObjectMapper.convertValue(this.getArgument(name))
 
 fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Builder.() -> Unit) {
     this.type(typeName) {

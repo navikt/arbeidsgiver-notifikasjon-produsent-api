@@ -2,14 +2,17 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilling
 import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
+import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilling
 
 class EksternVarslingRepository(
     private val database: Database,
@@ -347,10 +350,10 @@ class EksternVarslingRepository(
                     ->
                         when (val sendeStatus = getString("sende_status")) {
                             "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
-                                rå = objectMapper.readTree(getString("altinn_response")),
+                                rå = laxObjectMapper.readTree(getString("altinn_response")),
                             )
                             "FEIL" -> AltinnVarselKlient.AltinnResponse.Feil(
-                                rå = objectMapper.readTree(getString("altinn_response")),
+                                rå = laxObjectMapper.readTree(getString("altinn_response")),
                                 feilkode = getString("altinn_feilkode"),
                                 feilmelding = getString("feilmelding"),
                             )

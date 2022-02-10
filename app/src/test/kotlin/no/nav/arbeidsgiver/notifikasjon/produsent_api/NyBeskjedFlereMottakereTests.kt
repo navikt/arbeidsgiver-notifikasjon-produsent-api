@@ -10,7 +10,7 @@ import io.kotest.matchers.shouldNot
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.objectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.QueryMineNotifikasjoner
@@ -331,7 +331,7 @@ fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifikasjoner.
         .getTypedContent<List<JsonNode>>("$.mineNotifikasjoner.edges[*].node")
         .flatMap {
             if (it["metadata"]["id"].asText() == id.toString())
-                objectMapper.convertValue<List<QueryMineNotifikasjoner.Mottaker>>(it["mottakere"])
+                laxObjectMapper.convertValue<List<QueryMineNotifikasjoner.Mottaker>>(it["mottakere"])
             else
                 listOf()
         }

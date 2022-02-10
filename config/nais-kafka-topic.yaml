@@ -30,3 +30,6 @@ spec:
     - application: notifikasjon-ekstern-varsling
       team: fager
       access: readwrite
+    - application: notifikasjon-replay-validator
+      team: fager
+      access: read
