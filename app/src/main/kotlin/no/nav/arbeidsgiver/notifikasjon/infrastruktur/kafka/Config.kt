@@ -1,9 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.strictObjectMapper
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -18,9 +18,13 @@ typealias KafkaKey = String
 
 const val TOPIC = "fager.notifikasjon"
 
+private val strictObjectMapper = jacksonObjectMapper().apply {
+    registerModule(JavaTimeModule())
+}
+
 interface JsonSerializer<T> : Serializer<T> {
     override fun serialize(topic: String?, data: T): ByteArray {
-        return laxObjectMapper.writeValueAsBytes(data)
+        return strictObjectMapper.writeValueAsBytes(data)
     }
 }
 
@@ -28,12 +32,7 @@ abstract class JsonDeserializer<T>(private val clazz: Class<T>) : Deserializer<T
     private val log = logger()
 
     override fun deserialize(topic: String?, data: ByteArray?): T {
-        try {
-            return strictObjectMapper.readValue(data, clazz)
-        } catch (e: Exception) {
-            log.error("strict deserialize failed with message: {}", e.message)
-        }
-        return laxObjectMapper.readValue(data, clazz)
+        return strictObjectMapper.readValue(data, clazz)
     }
 }
 
