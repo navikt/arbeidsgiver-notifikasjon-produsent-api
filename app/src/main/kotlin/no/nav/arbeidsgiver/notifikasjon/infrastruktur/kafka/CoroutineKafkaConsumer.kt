@@ -90,6 +90,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
 
     override suspend fun seekToBeginning() {
         consumer.seekToBeginning(consumer.assignment())
+        consumer.commitSync()
     }
 
     private suspend fun forEachEvent(
