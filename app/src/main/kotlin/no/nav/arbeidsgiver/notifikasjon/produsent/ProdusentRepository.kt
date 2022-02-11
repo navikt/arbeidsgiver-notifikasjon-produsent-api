@@ -177,6 +177,8 @@ class ProdusentRepositoryImpl(
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignored: Unit = when (hendelse) {
+            is Hendelse.SakOpprettet -> TODO()
+            is Hendelse.NyStatusSak -> TODO()
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is Hendelse.OppgaveUtført -> oppdatertModellEtterOppgaveUtført(hendelse)

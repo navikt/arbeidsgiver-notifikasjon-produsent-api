@@ -28,6 +28,51 @@ sealed class Hendelse {
         val notifikasjonId: UUID
     }
 
+    interface Sak {
+        val sakId: UUID
+    }
+
+    @JsonTypeName("SakOpprettet")
+    data class SakOpprettet(
+        override val hendelseId: UUID,
+        override val virksomhetsnummer: String,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        override val sakId: UUID,
+
+        val grupperingsid: String,
+        val merkelapp: String,
+        val mottakere: List<Mottaker>,
+        val tittel: String,
+        val lenke: String,
+    ): Hendelse(), Sak {
+        @JsonIgnore override val aggregateId: UUID = sakId
+
+        init {
+            requireGraphql(mottakere.isNotEmpty()) {
+                "minst 1 mottaker må gis"
+            }
+        }
+    }
+
+    @JsonTypeName("NyStatusSak")
+    data class NyStatusSak(
+        override val hendelseId: UUID,
+        override val virksomhetsnummer: String,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        override val sakId: UUID,
+
+        val status: SakStatus,
+        val overstyrStatustekstMed: String?,
+        val oppgittTidspunkt: OffsetDateTime?,
+        val mottattTidspunkt: OffsetDateTime,
+        val idempotensKey: String,
+    ): Hendelse(), Sak {
+        @JsonIgnore
+        override val aggregateId: UUID = sakId
+    }
+
     @JsonTypeName("BeskjedOpprettet")
     data class BeskjedOpprettet
     @JsonIgnore constructor(
@@ -307,6 +352,13 @@ enum class EksterntVarselSendingsvindu {
     /* Varslingstidspunkt må spesifiseres i feltet "sendeTidspunkt". */
     SPESIFISERT,
 }
+
+enum class SakStatus {
+    MOTTATT,
+    UNDER_BEHANDLING,
+    FERDIG;
+}
+
 
 val Mottaker.virksomhetsnummer: String
     get() = when (this) {

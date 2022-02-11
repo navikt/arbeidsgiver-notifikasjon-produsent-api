@@ -22,6 +22,8 @@ class EksternVarslingRepository(
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignore: Unit = when (hendelse) {
+            is Hendelse.SakOpprettet -> TODO()
+            is Hendelse.NyStatusSak -> TODO()
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is Hendelse.EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)

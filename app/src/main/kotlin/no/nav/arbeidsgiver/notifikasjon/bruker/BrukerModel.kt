@@ -192,6 +192,8 @@ class BrukerModelImpl(
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         val ignored: Unit = when (hendelse) {
+            is Hendelse.SakOpprettet -> TODO()
+            is Hendelse.NyStatusSak -> TODO()
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
