@@ -94,8 +94,8 @@ class KafkaReaperModelImpl(
 }
 
 val Hendelse.typeNavn: String get() = when (this) {
-    is Hendelse.SakOpprettet -> TODO()
-    is Hendelse.NyStatusSak -> TODO()
+    is Hendelse.SakOpprettet -> "SakOpprettet"
+    is Hendelse.NyStatusSak -> "NyStatusSak"
     is Hendelse.SoftDelete -> "SoftDelete"
     is Hendelse.HardDelete -> "HardDelete"
     is Hendelse.OppgaveUtført -> "OppgaveUtført"
