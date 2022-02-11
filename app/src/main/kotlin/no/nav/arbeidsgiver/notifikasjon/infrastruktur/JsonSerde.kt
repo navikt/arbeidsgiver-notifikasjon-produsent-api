@@ -19,10 +19,6 @@ val laxObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
 }
 
-val strictObjectMapper = jacksonObjectMapper().apply {
-    registerModule(JavaTimeModule())
-}
-
 inline fun <reified T> ObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value: T): String =
     this.writerFor(jacksonTypeRef<T>())
         .writeValueAsString(value)
