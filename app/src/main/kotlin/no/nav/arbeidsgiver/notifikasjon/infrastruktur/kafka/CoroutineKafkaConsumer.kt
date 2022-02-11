@@ -10,7 +10,12 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
-import org.apache.kafka.clients.consumer.*
+import org.apache.kafka.clients.consumer.Consumer
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.consumer.ConsumerRecords
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
 import java.time.Duration
 import java.time.Instant
@@ -31,7 +36,7 @@ interface CoroutineKafkaConsumer<K, V> {
 
     suspend fun poll(timeout: Duration): ConsumerRecords<K, V>
 
-    suspend fun seekToBeginning()
+    suspend fun seekToBeginningOnAssignment()
 }
 
 private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
@@ -88,9 +93,18 @@ class CoroutineKafkaConsumerImpl<K, V>(
         log.info("kafka consumer stopped")
     }
 
-    override suspend fun seekToBeginning() {
-        consumer.seekToBeginning(consumer.assignment())
-        consumer.commitSync()
+    override suspend fun seekToBeginningOnAssignment() {
+        consumer.subscribe(
+            consumer.subscription(),
+            object: ConsumerRebalanceListener {
+                override fun onPartitionsAssigned(partitions: MutableCollection<TopicPartition>?) {
+                    consumer.seekToBeginning(partitions.orEmpty())
+                }
+                override fun onPartitionsRevoked(partitions: MutableCollection<TopicPartition>?) {
+                    // noop
+                }
+            }
+        )
     }
 
     private suspend fun forEachEvent(
