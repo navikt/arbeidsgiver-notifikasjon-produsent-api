@@ -18,7 +18,7 @@ class KafkaReaperServiceImpl(
 
         val ignored : Unit = when (hendelse) {
             is Hendelse.HardDelete -> {
-                for (relatertHendelseId in kafkaReaperModel.alleRelaterteHendelser(hendelse.notifikasjonId)) {
+                for (relatertHendelseId in kafkaReaperModel.alleRelaterteHendelser(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(
                         key = relatertHendelseId.toString(),
                         orgnr = hendelse.virksomhetsnummer
@@ -34,7 +34,7 @@ class KafkaReaperServiceImpl(
             is Hendelse.OppgaveUtført,
             is Hendelse.EksterntVarselFeilet,
             is Hendelse.EksterntVarselVellykket -> {
-                if (kafkaReaperModel.erSlettet(hendelse.notifikasjonId)) {
+                if (kafkaReaperModel.erSlettet(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(
                         key = hendelse.hendelseId.toString(),
                         orgnr = hendelse.virksomhetsnummer

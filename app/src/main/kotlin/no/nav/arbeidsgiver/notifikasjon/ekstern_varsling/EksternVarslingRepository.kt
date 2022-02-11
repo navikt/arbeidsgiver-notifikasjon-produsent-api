@@ -83,7 +83,7 @@ class EksternVarslingRepository(
             set hard_deleted = true
             where notifikasjon_id = ?
         """) {
-            uuid(hardDelete.notifikasjonId)
+            uuid(hardDelete.aggregateId)
         }
     }
 

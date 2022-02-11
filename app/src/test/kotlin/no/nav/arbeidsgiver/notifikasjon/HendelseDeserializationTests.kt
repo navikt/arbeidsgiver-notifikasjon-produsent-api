@@ -76,4 +76,24 @@ class HendelseDeserializationTests : DescribeSpec({
             mottaker.virksomhetsnummer shouldBe "3"
         }
     }
+
+    describe("leser 'notifikasjon', selv om den heter 'aggregateId' i kotlin") {
+        val hardDelete = laxObjectMapper.readValue<Hendelse>("""
+            {
+                "@type": "HardDelete",
+                "virksomhetsnummer": "0",
+                "notifikasjonId": "${uuid("1")}",
+                "hendelseId": "${uuid("0")}",
+                "produsentId": "0",
+                "kildeAppNavn": "",
+                "deletedAt": "2020-01-01T01:01+01"
+            }
+        """)
+
+        it("mottaker parsed") {
+            hardDelete as Hendelse.HardDelete
+            hardDelete.hendelseId shouldBe uuid("0")
+            hardDelete.aggregateId shouldBe uuid("1")
+        }
+    }
 })

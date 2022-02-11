@@ -48,7 +48,7 @@ class SoftDeleteTests : DescribeSpec({
 
         val softDeleteEvent = Hendelse.SoftDelete(
             hendelseId = UUID.randomUUID(),
-            notifikasjonId = uuid1,
+            aggregateId = uuid1,
             virksomhetsnummer = mottaker.virksomhetsnummer,
             deletedAt = OffsetDateTime.MAX,
             kildeAppNavn = "",

@@ -195,7 +195,7 @@ class ProdusentRepositoryImpl(
             WHERE id = ?
             """
         ) {
-            uuid(hardDelete.notifikasjonId)
+            uuid(hardDelete.aggregateId)
         }
     }
 
@@ -208,7 +208,7 @@ class ProdusentRepositoryImpl(
             """
         ) {
             timestamptz(softDelete.deletedAt)
-            uuid(softDelete.notifikasjonId)
+            uuid(softDelete.aggregateId)
         }
     }
 

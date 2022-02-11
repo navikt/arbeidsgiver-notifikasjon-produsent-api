@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.Tags
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.security.MessageDigest
+import java.util.*
 
 /* potensielle målinger:
  * - hvor lang tid har det gått før klikk?
@@ -231,7 +232,11 @@ class StatistikkModel(
                     timestamptz(hendelse.opprettetTidspunkt)
                 }
 
-                oppdaterVarselBestilling(hendelse, hendelse.produsentId, hendelse.eksterneVarsler)
+                oppdaterVarselBestilling(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    produsentId = hendelse.produsentId,
+                    iterable = hendelse.eksterneVarsler
+                )
             }
             is Hendelse.OppgaveOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
@@ -258,7 +263,11 @@ class StatistikkModel(
                     timestamp_utc(hendelse.opprettetTidspunkt)
                 }
 
-                oppdaterVarselBestilling(hendelse, hendelse.produsentId, hendelse.eksterneVarsler)
+                oppdaterVarselBestilling(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    produsentId = hendelse.produsentId,
+                    iterable = hendelse.eksterneVarsler
+                )
             }
             is Hendelse.OppgaveUtført -> {
                 database.nonTransactionalExecuteUpdate(
@@ -328,7 +337,7 @@ class StatistikkModel(
                     """
                 ) {
                     timestamp_utc(hendelse.deletedAt)
-                    uuid(hendelse.notifikasjonId)
+                    uuid(hendelse.aggregateId)
                 }
             }
             is Hendelse.HardDelete -> {
@@ -338,7 +347,7 @@ class StatistikkModel(
     }
 
     private suspend fun oppdaterVarselBestilling(
-        hendelse: Hendelse,
+        notifikasjonId: UUID,
         produsentId: String,
         iterable: List<EksterntVarsel>,
     ) {
@@ -356,14 +365,14 @@ class StatistikkModel(
                 is EpostVarselKontaktinfo -> {
                     uuid(eksterntVarsel.varselId)
                     string("epost_kontaktinfo")
-                    uuid(hendelse.notifikasjonId)
+                    uuid(notifikasjonId)
                     string(produsentId)
                     string(eksterntVarsel.epostAddr)
                 }
                 is SmsVarselKontaktinfo -> {
                     uuid(eksterntVarsel.varselId)
                     string("sms_kontaktinfo")
-                    uuid(hendelse.notifikasjonId)
+                    uuid(notifikasjonId)
                     string(produsentId)
                     string(eksterntVarsel.tlfnr)
                 }

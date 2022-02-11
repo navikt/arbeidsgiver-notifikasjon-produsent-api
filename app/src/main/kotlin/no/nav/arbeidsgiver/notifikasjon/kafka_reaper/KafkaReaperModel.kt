@@ -34,7 +34,7 @@ class KafkaReaperModelImpl(
             """
             ) {
                 uuid(hendelse.hendelseId)
-                uuid(hendelse.notifikasjonId)
+                uuid(hendelse.aggregateId)
                 string(hendelse.typeNavn)
             }
 
@@ -45,7 +45,7 @@ class KafkaReaperModelImpl(
                         VALUES (?, ?)
                         ON CONFLICT DO NOTHING
                     """) {
-                        uuid(hendelse.notifikasjonId)
+                        uuid(hendelse.aggregateId)
                         timestamptz(OffsetDateTime.now())
                 }
             }

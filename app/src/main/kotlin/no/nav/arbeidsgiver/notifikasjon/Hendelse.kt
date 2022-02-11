@@ -10,19 +10,23 @@ import java.util.*
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class Hendelse {
+    /* ID-en til f.eks. en sak, oppgave eller beskjed som hendelsen handler om. */
+    abstract val aggregateId: UUID
+
     /* Identifikator for denne hendelsen. */
     abstract val hendelseId: UUID
 
-    /* Identifikator som grupperer hendelser sammen om en notifikasjon. */
-    abstract val notifikasjonId: UUID
-
     abstract val virksomhetsnummer: String
 
-    //Identifikator for produsent slik som oppgitt i bruksvilkår
+    /* Identifikator for produsent slik som oppgitt i bruksvilkår */
     abstract val produsentId: String?
 
     //navn på app som har produsert hendelse
     abstract val kildeAppNavn: String
+
+    interface Notifikasjon {
+        val notifikasjonId: UUID
+    }
 
     @JsonTypeName("BeskjedOpprettet")
     data class BeskjedOpprettet
@@ -40,12 +44,15 @@ sealed class Hendelse {
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
-    ) : Hendelse() {
+    ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
             }
         }
+
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
 
         companion object {
             // Denne konstruktøren har default properties, og støtter historiske
@@ -103,12 +110,15 @@ sealed class Hendelse {
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
-    ) : Hendelse() {
+    ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
             }
         }
+
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
 
         companion object {
             @JvmStatic
@@ -153,12 +163,15 @@ sealed class Hendelse {
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
-    ) : Hendelse()
+    ) : Hendelse(), Notifikasjon {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
 
     @JsonTypeName("SoftDelete")
     data class SoftDelete(
         override val virksomhetsnummer: String,
-        override val notifikasjonId: UUID,
+        @JsonProperty("notifikasjonId") override val aggregateId: UUID,
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
@@ -168,7 +181,7 @@ sealed class Hendelse {
     @JsonTypeName("HardDelete")
     data class HardDelete(
         override val virksomhetsnummer: String,
-        override val notifikasjonId: UUID,
+        @JsonProperty("notifikasjonId") override val aggregateId: UUID,
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
@@ -183,7 +196,10 @@ sealed class Hendelse {
         override val produsentId: Nothing? = null,
         override val kildeAppNavn: String,
         val fnr: String,
-    ) : Hendelse()
+    ) : Hendelse(), Notifikasjon {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
 
     @JsonTypeName("EksterntVarselVellykket")
     data class EksterntVarselVellykket(
@@ -194,7 +210,10 @@ sealed class Hendelse {
         override val kildeAppNavn: String,
         val varselId: UUID,
         val råRespons: JsonNode,
-    ) : Hendelse()
+    ) : Hendelse(), Notifikasjon {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
 
     @JsonTypeName("EksterntVarselFeilet")
     data class EksterntVarselFeilet(
@@ -207,7 +226,10 @@ sealed class Hendelse {
         val råRespons: JsonNode,
         val altinnFeilkode: String,
         val feilmelding: String,
-    ) : Hendelse()
+    ) : Hendelse(), Notifikasjon {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)

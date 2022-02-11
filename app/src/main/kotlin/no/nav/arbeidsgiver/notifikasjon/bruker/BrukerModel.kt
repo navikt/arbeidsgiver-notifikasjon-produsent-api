@@ -196,23 +196,23 @@ class BrukerModelImpl(
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is Hendelse.OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
-            is Hendelse.SoftDelete -> oppdaterModellEtterDelete(hendelse.notifikasjonId)
-            is Hendelse.HardDelete -> oppdaterModellEtterDelete(hendelse.notifikasjonId)
+            is Hendelse.SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
+            is Hendelse.HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
             is Hendelse.EksterntVarselFeilet -> Unit
             is Hendelse.EksterntVarselVellykket -> Unit
         }
     }
 
-    private suspend fun oppdaterModellEtterDelete(hendelsesId: UUID) {
+    private suspend fun oppdaterModellEtterDelete(aggregateId: UUID) {
         database.transaction({
             throw RuntimeException("Delete", it)
         }) {
             executeUpdate(""" DELETE FROM notifikasjon WHERE id = ?;""") {
-                uuid(hendelsesId)
+                uuid(aggregateId)
             }
 
             executeUpdate("""DELETE FROM brukerklikk WHERE notifikasjonsid = ?;""") {
-                uuid(hendelsesId)
+                uuid(aggregateId)
             }
         }
     }

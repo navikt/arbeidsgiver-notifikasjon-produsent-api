@@ -27,7 +27,7 @@ object ReplayValidator {
                 val kafkaConsumer = createKafkaConsumer {
                     put(ConsumerConfig.GROUP_ID_CONFIG, "replay-validator")
                 }
-                kafkaConsumer.seekToBeginning()
+                kafkaConsumer.seekToBeginningOnAssignment()
                 kafkaConsumer.forEachEvent { _ ->
                     // noop. implicitly validated
                 }

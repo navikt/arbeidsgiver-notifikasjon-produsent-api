@@ -74,7 +74,7 @@ class MutationSoftDelete(
 
         val softDelete = Hendelse.SoftDelete(
             hendelseId = UUID.randomUUID(),
-            notifikasjonId = notifikasjon.id,
+            aggregateId = notifikasjon.id,
             virksomhetsnummer = notifikasjon.virksomhetsnummer,
             deletedAt = OffsetDateTime.now(),
             produsentId = produsent.id,
