@@ -214,7 +214,7 @@ class StatistikkModel(
 
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
-        when (hendelse) {
+        val ignore = when (hendelse) {
             is Hendelse.BeskjedOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -343,6 +343,9 @@ class StatistikkModel(
             is Hendelse.HardDelete -> {
                 // noop
             }
+
+            is Hendelse.SakOpprettet -> TODO()
+            is Hendelse.NyStatusSak -> TODO()
         }
     }
 

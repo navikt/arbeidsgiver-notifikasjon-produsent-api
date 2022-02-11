@@ -26,7 +26,8 @@ class KafkaReaperServiceImpl(
                     kafkaReaperModel.fjernRelasjon(relatertHendelseId)
                 }
             }
-
+            is Hendelse.SakOpprettet,
+            is Hendelse.NyStatusSak,
             is Hendelse.SoftDelete,
             is Hendelse.BeskjedOpprettet,
             is Hendelse.OppgaveOpprettet,
