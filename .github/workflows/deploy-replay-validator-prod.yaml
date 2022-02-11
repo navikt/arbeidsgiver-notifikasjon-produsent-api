@@ -1,0 +1,17 @@
+name: deploy replay validator in prod
+on:
+  workflow_dispatch:
+
+jobs:
+  dev-deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v1
+      - uses: nais/deploy/actions/deploy@v1
+        name: "prod-gcp: deploy replay-validator"
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+          REF: ${{ github.sha }}
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: config/prod-gcp-replay-validator.yaml
