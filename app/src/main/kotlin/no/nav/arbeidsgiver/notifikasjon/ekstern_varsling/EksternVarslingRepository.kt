@@ -35,6 +35,8 @@ class EksternVarslingRepository(
             }
             is Hendelse.OppgaveUtført -> Unit
             is Hendelse.BrukerKlikket -> Unit
+            is Hendelse.SakOpprettet -> Unit
+            is Hendelse.NyStatusSak -> Unit
         }
     }
 
