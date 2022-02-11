@@ -48,7 +48,7 @@ class HardDeleteTests : DescribeSpec({
 
         val hardDeleteEvent = Hendelse.HardDelete(
             hendelseId = UUID.randomUUID(),
-            notifikasjonId = uuid1,
+            aggregateId = uuid1,
             virksomhetsnummer = mottaker.virksomhetsnummer,
             deletedAt = OffsetDateTime.MAX,
             kildeAppNavn = "",

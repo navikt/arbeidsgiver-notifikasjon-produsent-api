@@ -273,7 +273,7 @@ object EksempelHendelse {
     )
     val SoftDelete = Hendelse.SoftDelete(
         virksomhetsnummer = "1",
-        notifikasjonId = uuid("1"),
+        aggregateId = uuid("1"),
         hendelseId = uuid("2"),
         produsentId = "1",
         kildeAppNavn = "1",
@@ -281,7 +281,7 @@ object EksempelHendelse {
     )
     val HardDelete = Hendelse.HardDelete(
         virksomhetsnummer = "1",
-        notifikasjonId = uuid("1"),
+        aggregateId = uuid("1"),
         hendelseId = uuid("2"),
         produsentId = "1",
         kildeAppNavn = "1",
@@ -315,7 +315,7 @@ object EksempelHendelse {
         feilmelding = "oops"
     )
 
-    val Alle = listOf(
+    val Alle: List<Hendelse> = listOf(
         BeskjedOpprettet,
         BeskjedOpprettet_2_Mottakere,
         BeskjedOpprettet_3_Mottakere,
