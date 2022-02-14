@@ -33,6 +33,50 @@ Du må ha være autentisert med `gcloud` og ha `cloud_sql_proxy` installert.
 Kjør `./cloudsql-connect.sh dev notifikasjon-bruker-api 5432` og postgres-databasen vil være tilgjengelig på 
 localhost:5432. Brukernavn er e-post-adressen din. Passord får du ved å kjøre `gcloud auth print-access-token`.
 
+## Koble direkte til en topic på aiven
+
+Dersom man trenger å administrere en topic (f.eks. inspisere en topic, eller endre offsets for en consumer group),
+så kan man benytte [kafka cli](https://kafka.apache.org/quickstart) kombinert med [nais aiven cli](https://doc.nais.io/cli/commands/aiven/#aiven-command)
+kafka-cli kan man laste ned med `./download_kafka_cli.sh` nais aiven [installeres](https://doc.nais.io/cli/install/) med feks homebrew.
+
+Det er opprettet en `notifikasjon-devops` applikasjon med read access til topic i dev og prod.
+Etter nais aiven er installert kan man opprette applikasjonen. husk å ha valgt riktig context i k8s først:
+`nais aiven create notifikasjon-devops fager`
+
+Dette genererer noen filer med secrets i en mappe lokalt, og viser hvor disse ble laget. 
+
+Deretter kan man generere credentials som kan brukes med f.eks kafka-cli:
+`nais aiven get fager-notifikasjon-devops-ad9c851a fager`
+
+Man kan med disse credentials bruke f.eks. kafka-console-consumer eler kafka-consumer-groups.
+
+Noen eksempler på bruk:
+
+Set env vars fra genrerert secrets (som f.eks $KAFKA_BROKERS)
+```
+source /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka-secret.env
+```
+
+List offsets for en consumer group:
+```
+./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka.properties --group bruker-model-builder --describe
+```
+
+Dersom man skal endre en offset på en partisjon må consumer group være inaktiv. Dette gjøres enklest ved å skalere ned deployment til 0:
+```
+kubectl scale --replicas=0 deployment/notifikasjon-bruker-api
+```
+
+Hopp over en offset på en gitt partisjon for en consumer group:
+```
+./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --shift-by 1 --execute
+```
+
+Sett til et bestemt offset på en gitt partisjon for en consumer group:
+```
+kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --to-offset 50 --execute
+```
+
 ## Ticks n' Trips
 
 * start lokal kafka cluster
@@ -75,7 +119,7 @@ localhost:5432. Brukernavn er e-post-adressen din. Passord får du ved å kjøre
   * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --describe` 
 * adjust offset of a consumer group (requires group is inactive, i.e. no running consumers)
   * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon --reset-offsets --to-earliest --execute`
-  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon --shift-by 1 --execute`
+  * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon --reset-offsets --shift-by 1 --execute`
   * specify partition using `--topic topic:0,1,2`. e.g. reset offset for partition 14 to 5004:
   * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon:14 --reset-offsets --to-offset 5004 --execute`
 
