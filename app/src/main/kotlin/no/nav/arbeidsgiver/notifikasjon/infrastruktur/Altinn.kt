@@ -81,6 +81,9 @@ class AltinnImpl(
                     }
                 } + async {
                     hentTilganger(fnr, selvbetjeningsToken)
+                } + async {
+                    // TODO: hent roller
+                    listOf<BrukerModel.Tilgang.AltinnRolle>()
                 }
                 return@coroutineScope alleTilganger.awaitAll().flatten()
             }
