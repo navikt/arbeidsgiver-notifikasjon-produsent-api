@@ -21,6 +21,12 @@ interface BrukerModel {
             val virksomhet: String,
             val fnr: String,
         ) : Tilgang
+
+        data class AltinnRolle(
+            val virksomhet: String,
+            val roleDefinitionId: String,
+            val roleDefinitionCode: String,
+        ) : Tilgang
     }
 
     sealed interface Notifikasjon {
@@ -91,6 +97,13 @@ class BrukerModelImpl(
                 fnr = it.fnr
             )
         }
+        val tilgangerAltinnRolleMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.AltinnRolle>().map {
+            AltinnRolleMottaker(
+                virksomhetsnummer = it.virksomhet,
+                roleDefinitionId = it.roleDefinitionId,
+                roleDefinitionCode = it.roleDefinitionCode,
+            )
+        }
 
         database.nonTransactionalExecuteQuery(
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
@@ -103,6 +116,10 @@ class BrukerModelImpl(
                 mine_altinnreporteetilganger as (
                     select * from json_to_recordset(?::json) 
                     as (virksomhetsnummer text, "fnr" text)
+                ),
+                mine_altinnrolletilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
                 ),
                 mine_altinn_notifikasjoner as (
                     select er.notifikasjon_id
@@ -119,6 +136,14 @@ class BrukerModelImpl(
                         rep.virksomhet = at.virksomhetsnummer and
                         rep.fnr = at."fnr"
                 ),
+                mine_altinn_rolle_notifikasjoner as (
+                    select rol.notifikasjon_id
+                    from mottaker_altinn_rolle rol
+                    join mine_altinnrolletilganger at on 
+                        rol.virksomhet = at.virksomhetsnummer and
+                        rol.role_definition_id = at."roleDefinitionId" and
+                        rol.role_definition_code = at."roleDefinitionCode"
+                ),
                 mine_digisyfo_notifikasjoner as (
                     select notifikasjon_id 
                     from notifikasjoner_for_digisyfo_fnr
@@ -130,6 +155,8 @@ class BrukerModelImpl(
                     (select * from mine_altinn_notifikasjoner)
                     union 
                     (select * from mine_altinn_reportee_notifikasjoner)
+                    union 
+                    (select * from mine_altinn_rolle_notifikasjoner)
                 )
             select 
                 n.*, 
@@ -145,6 +172,7 @@ class BrukerModelImpl(
             {
                 jsonb(tilgangerAltinnMottaker)
                 jsonb(tilgangerAltinnReporteeMottaker)
+                jsonb(tilgangerAltinnRolleMottaker)
                 string(fnr)
                 string(fnr)
             }
