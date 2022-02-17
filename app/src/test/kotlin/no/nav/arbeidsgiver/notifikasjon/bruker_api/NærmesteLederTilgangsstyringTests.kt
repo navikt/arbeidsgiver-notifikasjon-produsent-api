@@ -2,26 +2,23 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
-import io.kotest.matchers.collections.shouldBeOneOf
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NærmesteLederFor
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
 class NærmesteLederTilgangsstyringTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val model = BrukerModelImpl(database)
+    val model = BrukerRepositoryImpl(database)
     val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("Tilgangsstyring av nærmeste leder") {

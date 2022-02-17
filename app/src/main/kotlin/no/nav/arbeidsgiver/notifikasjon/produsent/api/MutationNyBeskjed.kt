@@ -91,7 +91,7 @@ class MutationNyBeskjed(
                 id = id,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
-                finnRolleId = produsentRepository::hentAltinnrolle
+                finnRolleId = produsentRepository.altinnRolle::hentAltinnrolle
             )
         } catch (e: UkjentRolleException) {
             return Error.UkjentRolle(e.message!!)

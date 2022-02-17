@@ -8,7 +8,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
 
@@ -54,13 +54,14 @@ class AltinnImplTests : DescribeSpec({
                 true
             )
         } returns listOf(virksomhet2)
+        // TODO: legg til roller
 
-        val tilganger = altinn.hentTilganger(fnr, "token", listOf(def))
+        val tilganger = altinn.hentTilganger(fnr, "token", listOf(def), listOf())
 
         it("returnerer tilganger") {
             tilganger shouldContainExactlyInAnyOrder listOf(
-                Tilgang.Altinn("1", def.code, def.version),
-                Tilgang.AltinnReportee(fnr = fnr, virksomhet = "2")
+                BrukerModel.Tilgang.Altinn("1", def.code, def.version),
+                BrukerModel.Tilgang.AltinnReportee(fnr = fnr, virksomhet = "2")
             )
         }
 

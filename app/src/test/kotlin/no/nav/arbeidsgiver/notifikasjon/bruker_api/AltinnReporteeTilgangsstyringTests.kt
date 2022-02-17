@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -15,7 +15,7 @@ import java.util.*
 
 class AltinnReporteeTilgangsstyringTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val model = BrukerModelImpl(database)
+    val model = BrukerRepositoryImpl(database)
 
     fun lagMelding(id: UUID, fnr: String) = Hendelse.BeskjedOpprettet(
         virksomhetsnummer = "1",

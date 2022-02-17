@@ -87,8 +87,7 @@ object Produsent {
             val graphql = async {
                 ProdusentAPI.newGraphQL(
                     kafkaProducer = createKafkaProducer(),
-                    produsentRepository = produsentRepositoryAsync.await()
-
+                    produsentRepository = produsentRepositoryAsync.await(),
                 )
             }
 
@@ -111,7 +110,7 @@ object Produsent {
                     "last Altinnroller",
                     pauseAfterEach = Duration.ofDays(1),
                 ) {
-                    AltinnRolleServiceImpl(altinn, produsentRepositoryAsync.await()).lastAltinnroller()
+                    AltinnRolleServiceImpl(altinn, produsentRepositoryAsync.await().altinnRolle).lastAltinnroller()
                 }
             }
         }

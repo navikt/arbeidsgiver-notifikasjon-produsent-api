@@ -156,11 +156,9 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
     }
 
     describe("sender 1 altinnRolle i 'mottaker'") {
-        listOf(AltinnRolle("196", "DAGL"), AltinnRolle("195", "BOBE")).forEach {
-            produsentRepository.leggTilAltinnRolle(
-                it
-            )
-        }
+        produsentRepository.altinnRolle.leggTilAltinnRoller(
+            listOf(AltinnRolle("196", "DAGL"), AltinnRolle("195", "BOBE"))
+        )
 
         val response = engine.produsentApi(
             nyOppgave(

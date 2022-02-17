@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.executable.bruker_api
 
 import db.migration.OS
 import no.nav.arbeidsgiver.notifikasjon.Bruker
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
@@ -37,7 +37,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             )
             alleOrgnr.flatMap { orgnr ->
                 MottakerRegister.servicecodeDefinisjoner.map { tjeneste ->
-                    Tilgang.Altinn(
+                    BrukerModel.Tilgang.Altinn(
                         virksomhet = orgnr,
                         servicecode = tjeneste.code,
                         serviceedition = tjeneste.version,

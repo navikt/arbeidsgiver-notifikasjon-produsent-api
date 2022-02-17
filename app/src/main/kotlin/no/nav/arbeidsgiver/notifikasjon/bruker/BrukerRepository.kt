@@ -1,6 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
@@ -65,20 +67,25 @@ interface BrukerModel {
             UTFOERT
         }
     }
+}
 
+interface BrukerRepository {
     suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Collection<Tilgang>,
-    ): List<Notifikasjon>
+        tilganger: Collection<BrukerModel.Tilgang>,
+    ): List<BrukerModel.Notifikasjon>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
+
+    val altinnRolle : AltinnRolleRepository
 }
 
-class BrukerModelImpl(
+class BrukerRepositoryImpl(
     private val database: Database
-) : BrukerModel {
+) : BrukerRepository {
     private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
+    override val altinnRolle: AltinnRolleRepository = AltinnRolleRepositoryImpl(database)
 
     override suspend fun hentNotifikasjoner(
         fnr: String,

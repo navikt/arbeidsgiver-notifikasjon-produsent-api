@@ -6,8 +6,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NarmesteLederLeesahDeserializer
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
@@ -19,7 +20,9 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createAndSubscribeKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import java.time.Duration
 
 
 object Bruker {
@@ -58,11 +61,11 @@ object Bruker {
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
-            val brukerModelAsync = async {
+            val brukerRepositoryAsync = async {
                 try {
                     val database = Database.openDatabase(databaseConfig)
                     Health.subsystemReady[Subsystem.DATABASE] = true
-                    BrukerModelImpl(database)
+                    BrukerRepositoryImpl(database)
                 } catch (e: Exception) {
                     Health.subsystemAlive[Subsystem.DATABASE] = false
                     throw e
@@ -76,10 +79,10 @@ object Bruker {
                     val kafkaConsumer = createKafkaConsumer {
                         put(ConsumerConfig.GROUP_ID_CONFIG, "bruker-model-builder")
                     }
-                    val queryModel = brukerModelAsync.await()
+                    val brukerRepository = brukerRepositoryAsync.await()
 
                     kafkaConsumer.forEachEvent { event ->
-                        queryModel.oppdaterModellEtterHendelse(event)
+                        brukerRepository.oppdaterModellEtterHendelse(event)
                     }
                 }
             }
@@ -118,10 +121,23 @@ object Bruker {
             }
 
             val graphql = async {
+                val altinnRolleService = AltinnRolleServiceImpl(altinn, brukerRepositoryAsync.await().altinnRolle)
+                val altinnRoller = try {
+                    altinnRolleService.hentAltinnrollerMedRetry(
+                        MottakerRegister.rolleDefinisjoner,
+                        60,
+                        1000
+                    )
+                } catch (e: Exception) {
+                    log.error("Klarte ikke hente altinn roller", e)
+                    Health.subsystemReady[Subsystem.DATABASE] = false
+                    throw e
+                }
                 BrukerAPI.createBrukerGraphQL(
                     altinn = altinn,
+                    altinnRoller = altinnRoller,
                     enhetsregisteret = enhetsregisteret,
-                    brukerModel = brukerModelAsync.await(),
+                    brukerRepository = brukerRepositoryAsync.await(),
                     kafkaProducer = createKafkaProducer(),
                 )
             }
@@ -139,6 +155,15 @@ object Bruker {
                     )
                 }
                 httpServer.start(wait = true)
+            }
+
+            launch {
+                launchProcessingLoop(
+                    "last Altinnroller",
+                    pauseAfterEach = Duration.ofDays(1),
+                ) {
+                    AltinnRolleServiceImpl(altinn, brukerRepositoryAsync.await().altinnRolle).lastAltinnroller()
+                }
             }
         }
     }

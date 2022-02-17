@@ -1,10 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker
-import no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AppName
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.util.*
@@ -83,6 +79,10 @@ object MottakerRegister {
     val servicecodeDefinisjoner: List<ServicecodeDefinisjon>
         get() {
             return MOTTAKER_REGISTER.filterIsInstance<ServicecodeDefinisjon>()
+        }
+    val rolleDefinisjoner: List<AltinnRolleDefinisjon>
+        get() {
+            return MOTTAKER_REGISTER.filterIsInstance<AltinnRolleDefinisjon>()
         }
 
     fun erDefinert(mottakerDefinisjon: MottakerDefinisjon): Boolean =

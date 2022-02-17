@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.should
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
+import io.mockk.every
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
@@ -19,7 +20,9 @@ class TilgangsstyringTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentGraphQL = ProdusentAPI.newGraphQL(
             kafkaProducer = mockk(),
-            produsentRepository = mockk()
+            produsentRepository = mockk {
+                every { altinnRolle } returns mockk()
+            }
         )
     )
 

@@ -16,10 +16,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxy
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
@@ -35,6 +32,7 @@ interface Altinn {
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
+        roller: Iterable<AltinnRolle>,
     ): List<BrukerModel.Tilgang>
 
     suspend fun hentRoller(
@@ -67,10 +65,17 @@ class AltinnImpl(
 
     private val timer = Health.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
 
+    private val httpClient = HttpClient(Apache) {
+        install(JsonFeature) {
+            serializer = JacksonSerializer()
+        }
+    }
+
     override suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
+        roller: Iterable<AltinnRolle>,
     ): List<BrukerModel.Tilgang> =
         timer.coRecord {
             coroutineScope {
@@ -79,11 +84,13 @@ class AltinnImpl(
                     async {
                         hentTilganger(fnr, code, version, selvbetjeningsToken)
                     }
+                } + roller.map {
+                    val (RoleDefinitionId, RoleDefinitionCode) = it
+                    async {
+                        hentTilgangerForRolle(fnr, RoleDefinitionId, RoleDefinitionCode)
+                    }
                 } + async {
                     hentTilganger(fnr, selvbetjeningsToken)
-                } + async {
-                    // TODO: hent roller
-                    listOf<BrukerModel.Tilgang.AltinnRolle>()
                 }
                 return@coroutineScope alleTilganger.awaitAll().flatten()
             }
@@ -165,9 +172,28 @@ class AltinnImpl(
         }
     }
 
-    private val httpClient = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer()
+    private suspend fun hentTilgangerForRolle(
+        fnr: String,
+        roleDefinitionId: String,
+        roleDefinitionCode: String,
+    ): List<BrukerModel.Tilgang> {
+        // TODO: ta i bruk proxy-klient når vi får utvidet den
+        val baseUrl = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/ekstern/altinn"
+
+        val reportees =
+            httpClient.get<List<AltinnReportee>>("${baseUrl}/api/serviceowner/reportees?subject=$fnr&roleDefinitionId=$roleDefinitionId") {
+                headers {
+                    append("X-NAV-APIKEY", System.getenv("APIGW_HEADER") ?: "default")
+                    append("APIKEY", System.getenv("ALTINN_HEADER") ?: "default")
+                }
+            }
+
+        return reportees.map {
+            BrukerModel.Tilgang.AltinnRolle(
+                virksomhet = it.organizationNumber!!,
+                roleDefinitionId = roleDefinitionId,
+                roleDefinitionCode = roleDefinitionCode
+            )
         }
     }
 
