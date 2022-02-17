@@ -141,8 +141,9 @@ object BrukerAPI {
 
     fun createBrukerGraphQL(
         altinn: Altinn,
+        altinnRoller: List<AltinnRolle>,
         enhetsregisteret: Enhetsregisteret,
-        brukerModel: BrukerModel,
+        brukerRepository: BrukerRepository,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
@@ -160,12 +161,13 @@ object BrukerAPI {
 
                 queryNotifikasjoner(
                     altinn = altinn,
-                    brukerModel = brukerModel
+                    brukerRepository = brukerRepository,
+                    altinnRoller = altinnRoller
                 )
 
                 querySaker(
                     altinn = altinn,
-                    brukerModel = brukerModel
+                    brukerRepository = brukerRepository
                 )
 
                 wire("Oppgave") {
@@ -183,7 +185,7 @@ object BrukerAPI {
 
             wire("Mutation") {
                 mutationBrukerKlikketPa(
-                    brukerModel = brukerModel,
+                    brukerRepository = brukerRepository,
                     kafkaProducer = kafkaProducer,
                 )
             }
@@ -192,9 +194,11 @@ object BrukerAPI {
 
     fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
         altinn: Altinn,
-        brukerModel: BrukerModel
+        brukerRepository: BrukerRepository,
+        altinnRoller: List<AltinnRolle>
     ) {
         coDataFetcher("notifikasjoner") { env ->
+
             val context = env.getContext<Context>()
             coroutineScope {
                 val tilganger = async {
@@ -202,7 +206,8 @@ object BrukerAPI {
                         altinn.hentTilganger(
                             context.fnr,
                             context.token,
-                            MottakerRegister.servicecodeDefinisjoner
+                            MottakerRegister.servicecodeDefinisjoner,
+                            altinnRoller,
                         )
                     } catch (e: AltinnrettigheterProxyKlientFallbackException) {
                         if (e.erDriftsforstyrrelse())
@@ -216,7 +221,7 @@ object BrukerAPI {
                     }
                 }
 
-                val notifikasjoner = brukerModel
+                val notifikasjoner = brukerRepository
                     .hentNotifikasjoner(
                         context.fnr,
                         tilganger.await().orEmpty()
@@ -268,7 +273,7 @@ object BrukerAPI {
 
     fun TypeRuntimeWiring.Builder.querySaker(
         altinn: Altinn,
-        brukerModel: BrukerModel
+        brukerRepository: BrukerRepository
     ) {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
@@ -282,14 +287,14 @@ object BrukerAPI {
     }
 
     fun TypeRuntimeWiring.Builder.mutationBrukerKlikketPa(
-        brukerModel: BrukerModel,
+        brukerRepository: BrukerRepository,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
     ) {
         coDataFetcher("notifikasjonKlikketPaa") { env ->
             val context = env.getContext<Context>()
             val notifikasjonsid = env.getTypedArgument<UUID>("id")
 
-            val virksomhetsnummer = brukerModel.virksomhetsnummerForNotifikasjon(notifikasjonsid)
+            val virksomhetsnummer = brukerRepository.virksomhetsnummerForNotifikasjon(notifikasjonsid)
                 ?: return@coDataFetcher UgyldigId("")
 
             val hendelse = Hendelse.BrukerKlikket(
@@ -302,7 +307,7 @@ object BrukerAPI {
 
             kafkaProducer.sendHendelse(hendelse)
 
-            brukerModel.oppdaterModellEtterHendelse(hendelse)
+            brukerRepository.oppdaterModellEtterHendelse(hendelse)
 
             BrukerKlikk(
                 id = "${context.fnr}-${hendelse.notifikasjonId}",

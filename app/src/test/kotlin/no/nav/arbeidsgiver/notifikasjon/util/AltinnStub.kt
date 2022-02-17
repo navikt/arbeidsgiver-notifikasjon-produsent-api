@@ -21,7 +21,8 @@ open class AltinnStub(
     override suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
-        tjenester: Iterable<ServicecodeDefinisjon>
+        tjenester: Iterable<ServicecodeDefinisjon>,
+        roller: Iterable<AltinnRolle>,
     ): List<BrukerModel.Tilgang> =
         hentAlleTilgangerImpl(fnr, selvbetjeningsToken)
 

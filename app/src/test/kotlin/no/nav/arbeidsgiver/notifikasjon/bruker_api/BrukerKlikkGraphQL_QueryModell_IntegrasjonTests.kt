@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
@@ -16,7 +16,7 @@ import java.util.*
 
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val queryModel = BrukerModelImpl(database)
+    val queryModel = BrukerRepositoryImpl(database)
     val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     val fnr = "00000000000"
@@ -27,8 +27,9 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
+            altinnRoller = listOf(),
             enhetsregisteret = EnhetsregisteretStub(),
-            brukerModel = queryModel,
+            brukerRepository = queryModel,
             kafkaProducer = mockk(),
         )
     )

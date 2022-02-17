@@ -10,20 +10,21 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
 
 class BrukerApiTests : DescribeSpec({
-    val queryModel: BrukerModelImpl = mockk()
+    val queryModel: BrukerRepositoryImpl = mockk()
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
-            brukerModel = queryModel,
+            brukerRepository = queryModel,
+            altinnRoller = listOf(),
             kafkaProducer = mockk()
         )
     )

@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -17,9 +19,7 @@ interface ProdusentRepository {
         offset: Int,
     ): List<ProdusentModel.Notifikasjon>
 
-    suspend fun leggTilAltinnRolle(altinnRolle: AltinnRolle)
-    suspend fun hentAltinnrolle(rolleKode: String): AltinnRolle?
-    suspend fun hentAlleAltinnRoller(): List<AltinnRolle>
+    val altinnRolle : AltinnRolleRepository
 }
 
 class ProdusentRepositoryImpl(
@@ -27,49 +27,7 @@ class ProdusentRepositoryImpl(
 ) : ProdusentRepository {
     val log = logger()
 
-    override suspend fun leggTilAltinnRolle(altinnRolle: AltinnRolle) {
-        database.nonTransactionalExecuteUpdate(
-            """
-            insert into altinn_rolle(
-                 role_definition_id,
-                 role_definition_code                 
-            )
-            values (?, ?)
-            """
-        ) {
-            string(altinnRolle.RoleDefinitionId)
-            string(altinnRolle.RoleDefinitionCode)
-        }
-    }
-
-    override suspend fun hentAltinnrolle(rolleKode: String): AltinnRolle? =
-        database.nonTransactionalExecuteQuery("""
-                select role_definition_id,
-                    role_definition_code                
-                from altinn_rolle                
-                where role_definition_code = ?
-        """,
-            { string(rolleKode) }
-        ) {
-            AltinnRolle(
-                RoleDefinitionCode = getString("role_definition_code"),
-                RoleDefinitionId = getString("role_definition_id")
-            )
-        }.firstOrNull()
-
-    override suspend fun hentAlleAltinnRoller(): List<AltinnRolle> =
-        database.nonTransactionalExecuteQuery(
-            """
-                select role_definition_id,
-                    role_definition_code                
-                from altinn_rolle                          
-        """
-        ) {
-            AltinnRolle(
-                RoleDefinitionCode = getString("role_definition_code"),
-                RoleDefinitionId = getString("role_definition_id")
-            )
-        }
+    override val altinnRolle: AltinnRolleRepository = AltinnRolleRepositoryImpl(database)
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(

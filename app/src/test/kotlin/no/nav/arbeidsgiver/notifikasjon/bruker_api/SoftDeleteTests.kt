@@ -5,7 +5,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -17,7 +17,7 @@ import java.util.*
 
 class SoftDeleteTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val queryModel = BrukerModelImpl(database)
+    val queryModel = BrukerRepositoryImpl(database)
     val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("SoftDelete av notifikasjon") {

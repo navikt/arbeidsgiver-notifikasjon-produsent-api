@@ -9,20 +9,21 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.util.*
 
 class FeilhåndteringTests : DescribeSpec({
-    val queryModel: BrukerModelImpl = mockk()
+    val queryModel: BrukerRepositoryImpl = mockk()
 
     val altinn: Altinn = mockk()
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
+            altinnRoller = listOf(),
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
-            brukerModel = queryModel,
+            brukerRepository = queryModel,
             kafkaProducer = mockk(),
         )
     )
@@ -31,7 +32,7 @@ class FeilhåndteringTests : DescribeSpec({
         context("Feil Altinn, DigiSyfo ok") {
 
             coEvery {
-                altinn.hentTilganger(any(), any(), any())
+                altinn.hentTilganger(any(), any(), any(), any())
             } throws RuntimeException("Mock failure")
 
             coEvery {
