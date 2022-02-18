@@ -43,11 +43,11 @@ Det er opprettet en `notifikasjon-devops` applikasjon med read access til topic 
 Etter nais aiven er installert kan man opprette applikasjonen. husk å ha valgt riktig context i k8s først:
 `nais aiven create notifikasjon-devops fager`
 
-Dette genererer noen filer med secrets i en mappe lokalt, og viser hvor disse ble laget. 
 
 Deretter kan man generere credentials som kan brukes med f.eks kafka-cli:
 `nais aiven get fager-notifikasjon-devops-ad9c851a fager`
 
+Dette genererer noen filer med secrets i en mappe lokalt, og viser hvor disse ble laget. 
 Man kan med disse credentials bruke f.eks. kafka-console-consumer eler kafka-consumer-groups.
 
 Noen eksempler på bruk:
