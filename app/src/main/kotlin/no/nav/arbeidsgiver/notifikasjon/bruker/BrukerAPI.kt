@@ -9,6 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
@@ -141,7 +142,7 @@ object BrukerAPI {
 
     fun createBrukerGraphQL(
         altinn: Altinn,
-        altinnRoller: List<AltinnRolle>,
+        altinnRolleService: AltinnRolleService,
         enhetsregisteret: Enhetsregisteret,
         brukerRepository: BrukerRepository,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
@@ -162,7 +163,7 @@ object BrukerAPI {
                 queryNotifikasjoner(
                     altinn = altinn,
                     brukerRepository = brukerRepository,
-                    altinnRoller = altinnRoller
+                    altinnRolleService = altinnRolleService
                 )
 
                 querySaker(
@@ -195,7 +196,7 @@ object BrukerAPI {
     fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
         altinn: Altinn,
         brukerRepository: BrukerRepository,
-        altinnRoller: List<AltinnRolle>
+        altinnRolleService: AltinnRolleService,
     ) {
         coDataFetcher("notifikasjoner") { env ->
 
@@ -207,7 +208,7 @@ object BrukerAPI {
                             context.fnr,
                             context.token,
                             MottakerRegister.servicecodeDefinisjoner,
-                            altinnRoller,
+                            altinnRolleService.hentRoller(MottakerRegister.rolleDefinisjoner),
                         )
                     } catch (e: AltinnrettigheterProxyKlientFallbackException) {
                         if (e.erDriftsforstyrrelse())

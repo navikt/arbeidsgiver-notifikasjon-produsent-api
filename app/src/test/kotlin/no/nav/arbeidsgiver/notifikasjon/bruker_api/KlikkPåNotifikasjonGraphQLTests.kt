@@ -27,7 +27,7 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
-            altinnRoller = listOf(),
+            altinnRolleService = mockk(),
             enhetsregisteret = EnhetsregisteretStub(),
             brukerRepository = queryModel,
             kafkaProducer = kafkaProducer,

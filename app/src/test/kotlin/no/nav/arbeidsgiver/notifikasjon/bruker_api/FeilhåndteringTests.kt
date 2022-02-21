@@ -21,7 +21,7 @@ class FeilhåndteringTests : DescribeSpec({
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = altinn,
-            altinnRoller = listOf(),
+            altinnRolleService = mockk(),
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
             brukerRepository = queryModel,
             kafkaProducer = mockk(),

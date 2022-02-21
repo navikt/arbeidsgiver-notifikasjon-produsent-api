@@ -1,40 +1,40 @@
 package no.nav.arbeidsgiver.notifikasjon.altinn_roller
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retry
-import kotlinx.coroutines.flow.toList
-import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.AltinnRolleDefinisjon
 
 interface AltinnRolleService {
-    suspend fun lastAltinnroller()
-    suspend fun hentAltinnrollerMedRetry(rolleDefinisjoner: List<AltinnRolleDefinisjon>, retries: Long, delay: Long) : List<AltinnRolle>
+    suspend fun lastRollerFraAltinn()
+    suspend fun hentRoller(rolleDefinisjoner: Iterable<AltinnRolleDefinisjon>): Iterable<AltinnRolle>
 }
 
-class AltinnRolleServiceImpl(val altinn: Altinn, val altinnRolleRepository: AltinnRolleRepository) : AltinnRolleService {
-    override suspend fun lastAltinnroller() {
+class AltinnRolleServiceImpl(
+    val altinn: Altinn,
+    private val altinnRolleRepository: AltinnRolleRepository,
+) : AltinnRolleService {
+
+    private var alleRollerByCode: Map<String, AltinnRolle>? = null
+
+    override suspend fun lastRollerFraAltinn() {
         val ferskeRollerFraAltinn = altinn.hentRoller()
         val eksisterendeRollerFraDb = altinnRolleRepository.hentAlleAltinnRoller()
         val nyeRoller = ferskeRollerFraAltinn - eksisterendeRollerFraDb.toSet()
         altinnRolleRepository.leggTilAltinnRoller(nyeRoller)
+        hentOgSettAlleRollerByCode()
     }
 
-    override suspend fun hentAltinnrollerMedRetry(
-        rolleDefinisjoner: List<AltinnRolleDefinisjon>,
-        retries: Long,
-        delay: Long
-    ) : List<AltinnRolle> {
-        return rolleDefinisjoner.asFlow().map {
-            altinnRolleRepository.hentAltinnrolle(it.roleCode)!!
-        }.retry(retries) {
-            Bruker.log.warn("feil ved henting av altinn rolle fra db. forsøker på nytt", it)
-            delay(delay)
-            true
-        }.toList()
+    override suspend fun hentRoller(rolleDefinisjoner: Iterable<AltinnRolleDefinisjon>): Iterable<AltinnRolle> {
+        val roller = alleRollerByCode ?: hentOgSettAlleRollerByCode()
+        return rolleDefinisjoner.map {
+            roller[it.roleCode] ?: throw RuntimeException("fant ikke altinn rolle med kode=${it.roleCode}")
+        }
+    }
+
+    private suspend fun hentOgSettAlleRollerByCode(): Map<String, AltinnRolle> {
+        return altinnRolleRepository.hentAlleAltinnRoller().associateBy(AltinnRolle::RoleDefinitionCode).also {
+            alleRollerByCode = it
+        }
     }
 
 }

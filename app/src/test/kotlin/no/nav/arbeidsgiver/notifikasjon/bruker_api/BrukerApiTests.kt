@@ -22,9 +22,9 @@ class BrukerApiTests : DescribeSpec({
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
+            altinnRolleService = mockk(),
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
             brukerRepository = queryModel,
-            altinnRoller = listOf(),
             kafkaProducer = mockk()
         )
     )

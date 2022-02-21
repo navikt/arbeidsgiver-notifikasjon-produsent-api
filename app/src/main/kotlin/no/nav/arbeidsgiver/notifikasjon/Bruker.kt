@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
@@ -20,7 +21,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createAndSubscribeKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.time.Duration
 
@@ -98,6 +98,10 @@ object Bruker {
                 }
             }
 
+            val altinnRolleService = async<AltinnRolleService> {
+                AltinnRolleServiceImpl(altinn, brukerRepositoryAsync.await().altinnRolle)
+            }
+
             launch {
                 if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
                     log.info("KafkaConsumer er deaktivert.")
@@ -121,21 +125,9 @@ object Bruker {
             }
 
             val graphql = async {
-                val altinnRolleService = AltinnRolleServiceImpl(altinn, brukerRepositoryAsync.await().altinnRolle)
-                val altinnRoller = try {
-                    altinnRolleService.hentAltinnrollerMedRetry(
-                        MottakerRegister.rolleDefinisjoner,
-                        60,
-                        1000
-                    )
-                } catch (e: Exception) {
-                    log.error("Klarte ikke hente altinn roller", e)
-                    Health.subsystemReady[Subsystem.DATABASE] = false
-                    throw e
-                }
                 BrukerAPI.createBrukerGraphQL(
                     altinn = altinn,
-                    altinnRoller = altinnRoller,
+                    altinnRolleService = altinnRolleService.await(),
                     enhetsregisteret = enhetsregisteret,
                     brukerRepository = brukerRepositoryAsync.await(),
                     kafkaProducer = createKafkaProducer(),
@@ -162,7 +154,7 @@ object Bruker {
                     "last Altinnroller",
                     pauseAfterEach = Duration.ofDays(1),
                 ) {
-                    AltinnRolleServiceImpl(altinn, brukerRepositoryAsync.await().altinnRolle).lastAltinnroller()
+                    altinnRolleService.await().lastRollerFraAltinn()
                 }
             }
         }

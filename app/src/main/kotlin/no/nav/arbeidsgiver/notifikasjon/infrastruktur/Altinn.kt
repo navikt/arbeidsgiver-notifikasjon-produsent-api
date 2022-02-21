@@ -35,8 +35,7 @@ interface Altinn {
         roller: Iterable<AltinnRolle>,
     ): List<BrukerModel.Tilgang>
 
-    suspend fun hentRoller(
-    ): List<AltinnRolle>
+    suspend fun hentRoller(): List<AltinnRolle>
 }
 
 val nonBlockingAltinnrettigheterProxyKlient = NonBlockingAltinnrettigheterProxyKlient(
