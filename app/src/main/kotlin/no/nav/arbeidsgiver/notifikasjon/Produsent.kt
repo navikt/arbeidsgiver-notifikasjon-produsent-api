@@ -110,7 +110,7 @@ object Produsent {
                     "last Altinnroller",
                     pauseAfterEach = Duration.ofDays(1),
                 ) {
-                    AltinnRolleServiceImpl(altinn, produsentRepositoryAsync.await().altinnRolle).lastAltinnroller()
+                    AltinnRolleServiceImpl(altinn, produsentRepositoryAsync.await().altinnRolle).lastRollerFraAltinn()
                 }
             }
         }

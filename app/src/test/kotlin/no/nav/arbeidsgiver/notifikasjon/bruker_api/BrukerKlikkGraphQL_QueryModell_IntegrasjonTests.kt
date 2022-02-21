@@ -27,7 +27,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             altinn = AltinnStub(),
-            altinnRoller = listOf(),
+            altinnRolleService = mockk(),
             enhetsregisteret = EnhetsregisteretStub(),
             brukerRepository = queryModel,
             kafkaProducer = mockk(),

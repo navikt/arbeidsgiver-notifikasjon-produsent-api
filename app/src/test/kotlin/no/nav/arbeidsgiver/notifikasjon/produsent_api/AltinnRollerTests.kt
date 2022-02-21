@@ -26,12 +26,12 @@ class AltinnRollerTests : DescribeSpec({
         context("altinnroller har ikke blitt lastet til tabell") {
 
             it("altinnservice legger 2 roller inn i db uten å kræsje") {
-                altinnservice.lastAltinnroller()
+                altinnservice.lastRollerFraAltinn()
                 rolleRepository.hentAlleAltinnRoller().size shouldBe 2
             }
 
             it("altinnservice legger ikke eksisterende roller inn i db") {
-                altinnservice.lastAltinnroller()
+                altinnservice.lastRollerFraAltinn()
                 rolleRepository.hentAlleAltinnRoller().size shouldBe 2
             }
 
@@ -50,7 +50,7 @@ class AltinnRollerTests : DescribeSpec({
 
             it("altinnservice kaster en feil når en rolleid har fått ny rollekode") {
                 coEvery { altinn.hentRoller() } returns listOf(AltinnRolle("195", "DOGL"))
-                shouldThrowAny { altinnservice.lastAltinnroller() }
+                shouldThrowAny { altinnservice.lastRollerFraAltinn() }
             }
         }
     }
