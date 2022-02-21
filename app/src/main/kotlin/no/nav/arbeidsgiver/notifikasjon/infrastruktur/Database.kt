@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
 import org.flywaydb.core.Flyway
 import org.intellij.lang.annotations.Language
+import org.postgresql.util.PSQLException
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -153,10 +154,6 @@ class Database private constructor(
 value class Transaction(
     private val connection: Connection,
 ) {
-    companion object {
-        private val log = logger()
-    }
-
     fun <T> executeQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
@@ -173,6 +170,24 @@ value class Transaction(
                             resultList.add(resultSet.transform())
                         }
                         resultList
+                    }
+                }
+        }
+    }
+
+    fun executeUpdateReturningId(
+        @Language("PostgreSQL") sql: String,
+        setup: ParameterSetters.() -> Unit = {},
+    ): Long {
+        return measure(sql) {
+            connection
+                .prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)
+                .use { preparedStatement ->
+                    ParameterSetters(preparedStatement).apply(setup)
+                    preparedStatement.executeUpdate()
+                    preparedStatement.generatedKeys.use {
+                        require(it.next())
+                        it.getLong(1)
                     }
                 }
         }
@@ -236,6 +251,9 @@ class ParameterSetters(
         preparedStatement.setArray(index++, array)
     }
 
+    fun bigint(value: Long) =
+        preparedStatement.setLong(index++, value)
+
     fun string(value: String) =
         preparedStatement.setString(index++, value)
 
@@ -246,6 +264,9 @@ class ParameterSetters(
         preparedStatement.setObject(index++, value)
 
     fun timestamptz(value: OffsetDateTime) =
+        preparedStatement.setObject(index++, value)
+
+    fun nullableTimestamptz(value: OffsetDateTime?) =
         preparedStatement.setObject(index++, value)
 
     fun timestamp_utc(value: OffsetDateTime) =

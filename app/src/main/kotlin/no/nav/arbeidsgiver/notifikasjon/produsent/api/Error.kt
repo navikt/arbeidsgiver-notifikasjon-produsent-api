@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import no.nav.arbeidsgiver.notifikasjon.Hendelse
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
 sealed class Error {
@@ -9,7 +10,9 @@ sealed class Error {
 
     sealed interface NyNotifikasjonError :
         MutationNyBeskjed.NyBeskjedResultat,
-        MutationNyOppgave.NyOppgaveResultat
+        MutationNyOppgave.NyOppgaveResultat,
+        MutationNySak.NySakResultat,
+        MutationNyStatusSak.NyStatusSakResultat
 
     @JsonTypeName("UgyldigMerkelapp")
     data class UgyldigMerkelapp(
@@ -30,7 +33,9 @@ sealed class Error {
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
         MutationSoftDelete.SoftDeleteNotifikasjonResultat,
-        MutationHardDelete.HardDeleteNotifikasjonResultat
+        MutationHardDelete.HardDeleteNotifikasjonResultat,
+        MutationNySak.NySakResultat,
+        MutationNyStatusSak.NyStatusSakResultat
 
     @JsonTypeName("UgyldigMottaker")
     data class UgyldigMottaker(
@@ -39,11 +44,24 @@ sealed class Error {
         Error(),
         NyNotifikasjonError
 
+    @JsonTypeName("Konflikt")
+    data class Konflikt(
+        override val feilmelding: String
+    ) :
+        Error(),
+        MutationNyStatusSak.NyStatusSakResultat
+
     @JsonTypeName("DuplikatEksternIdOgMerkelapp")
     data class DuplikatEksternIdOgMerkelapp(
         override val feilmelding: String
     ) : Error(),
         NyNotifikasjonError
+
+    @JsonTypeName("DuplikatGrupperingsid")
+    data class DuplikatGrupperingsid(
+        override val feilmelding: String
+    ) : Error(),
+        MutationNySak.NySakResultat
 
     @JsonTypeName("NotifikasjonFinnesIkke")
     data class NotifikasjonFinnesIkke(
@@ -59,6 +77,13 @@ sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        NyNotifikasjonError
+        NyNotifikasjonError,
+        MutationNySak.NySakResultat
+
+    @JsonTypeName("SakFinnesIkke")
+    data class SakFinnesIkke(
+        override val feilmelding: String,
+    ):  Error(),
+        MutationNyStatusSak.NyStatusSakResultat
 }
 

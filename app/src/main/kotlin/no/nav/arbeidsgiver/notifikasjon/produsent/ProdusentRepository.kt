@@ -18,6 +18,8 @@ interface ProdusentRepository {
         antall: Int,
         offset: Int,
     ): List<ProdusentModel.Notifikasjon>
+    suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak?
+    suspend fun hentSak(sakId: UUID): ProdusentModel.Sak?
 
     val altinnRolle : AltinnRolleRepository
 }
@@ -32,7 +34,7 @@ class ProdusentRepositoryImpl(
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
             """ 
-                where notifikasjon.id = ?
+                where id = ?
             """
         ) {
             uuid(id)
@@ -42,7 +44,9 @@ class ProdusentRepositoryImpl(
     override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
             """ 
-                where ekstern_id = ? and merkelapp = ? 
+                where
+                    ekstern_id = ? and 
+                    merkelapp = ?
             """
         ) {
             string(eksternId)
@@ -58,7 +62,8 @@ class ProdusentRepositoryImpl(
     ): List<ProdusentModel.Notifikasjon> =
         hentNotifikasjonerMedVarsler(
             """ 
-                where merkelapp = any(?)
+                where 
+                    merkelapp = any(?)
                     ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
                 limit ?
                 offset ?
@@ -69,6 +74,67 @@ class ProdusentRepositoryImpl(
             integer(antall)
             integer(offset)
         }
+
+    override suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak? {
+        return hentSaker(
+            where = """
+               grupperingsid = ? and merkelapp = ?
+            """,
+            variables = {
+                string(grupperingsid)
+                string(merkelapp)
+            }
+        )
+            .firstOrNull()
+    }
+
+    override suspend fun hentSak(id: UUID): ProdusentModel.Sak? {
+        return hentSaker(
+            where = """
+                id = ?
+            """,
+            variables = {
+                uuid(id)
+            }
+        )
+            .firstOrNull()
+    }
+
+    private suspend fun hentSaker(
+        where: String,
+        variables: ParameterSetters.() -> Unit,
+    ): List<ProdusentModel.Sak> {
+        return database.nonTransactionalExecuteQuery(
+            """ 
+            with 
+                valgt_sak as (
+                    select sak.* 
+                    from sak
+                    where $where
+                )
+            select 
+                valgt_sak.*, 
+                coalesce(statusoppdateringer_json.statusoppdateringer::jsonb, '[]'::jsonb) as statusoppdateringer
+            from valgt_sak
+            left join statusoppdateringer_json
+                on statusoppdateringer_json.sak_id = valgt_sak.id
+            """,
+            variables
+        ) {
+                ProdusentModel.Sak(
+                    merkelapp = getString("merkelapp"),
+                    tittel = getString("tittel"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    mottakere = laxObjectMapper.readValue(getString("mottakere")),
+                    opprettetTidspunkt = getObject("tidspunkt_mottatt", OffsetDateTime::class.java),
+                    id = getObject("id", UUID::class.java),
+                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
+                    statusoppdateringer = laxObjectMapper.readValue(getString("statusoppdateringer"))
+                )
+        }
+    }
 
     private suspend fun hentNotifikasjonerMedVarsler(
         filter: String,
@@ -135,8 +201,8 @@ class ProdusentRepositoryImpl(
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignored: Unit = when (hendelse) {
-            is Hendelse.SakOpprettet -> TODO()
-            is Hendelse.NyStatusSak -> TODO()
+            is Hendelse.SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
+            is Hendelse.NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is Hendelse.OppgaveUtført -> oppdatertModellEtterOppgaveUtført(hendelse)
@@ -147,6 +213,69 @@ class ProdusentRepositoryImpl(
             is Hendelse.EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
         }
     }
+
+    private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: Hendelse.SakOpprettet) {
+        database.transaction {
+            executeUpdate("""
+                    insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, lenke, tidspunkt_mottatt)
+                    values (?, ?, ?, ?, ?::jsonb, ?, ?, now())
+                    on conflict on constraint grupperingsid_unique do nothing
+                """
+            ) {
+                uuid(sakOpprettet.sakId)
+                string(sakOpprettet.merkelapp)
+                string(sakOpprettet.grupperingsid)
+                string(sakOpprettet.virksomhetsnummer)
+                jsonb(sakOpprettet.mottakere)
+                string(sakOpprettet.tittel)
+                string(sakOpprettet.lenke)
+            }
+
+            executeUpdate("""
+                insert into sak_id (incoming_sak_id, sak_id) values (?, ?)
+                on conflict on constraint sak_id_pkey do nothing
+            """) {
+                uuid(sakOpprettet.sakId)
+                uuid(sakOpprettet.sakId)
+            }
+        }
+    }
+
+    private fun Transaction.finnDbSakId(sakId: UUID): UUID? =
+        executeQuery(
+            """
+                    select sak_id from sak_id where incoming_sak_id = ?
+                """,
+            setup = { uuid(sakId) },
+            transform = { getObject("sak_id", UUID::class.java) },
+        ).firstOrNull()
+
+
+    private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: Hendelse.NyStatusSak) {
+        database.transaction {
+            val sakId = finnDbSakId(nyStatusSak.sakId)
+
+            if (sakId == null) {
+                // log? metric?
+                return@transaction
+            }
+
+            executeUpdate("""
+                insert into sak_status
+                (id, idempotence_key, sak_id, status, overstyr_statustekst_med, tidspunkt_oppgitt, tidspunkt_mottatt)
+                values (?, ?, ?, ?, ?, ?, ?)
+            """) {
+                uuid(nyStatusSak.hendelseId)
+                string(nyStatusSak.idempotensKey)
+                uuid(sakId)
+                string(nyStatusSak.status.name)
+                nullableString(nyStatusSak.overstyrStatustekstMed)
+                nullableTimestamptz(nyStatusSak.oppgittTidspunkt)
+                timestamptz(nyStatusSak.mottattTidspunkt)
+            }
+        }
+    }
+
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
         database.nonTransactionalExecuteUpdate(
