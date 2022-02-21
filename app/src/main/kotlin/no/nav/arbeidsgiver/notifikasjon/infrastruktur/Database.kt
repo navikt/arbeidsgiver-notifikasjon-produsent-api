@@ -266,7 +266,7 @@ class ParameterSetters(
 
     inline fun <reified T> jsonb(value: T) =
         string(
-            laxObjectMapper.writeValueAsString(value)
+            laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)
         )
 
     fun boolean(newState: Boolean) {
