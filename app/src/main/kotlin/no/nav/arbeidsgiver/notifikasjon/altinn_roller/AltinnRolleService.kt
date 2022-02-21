@@ -14,6 +14,7 @@ class AltinnRolleServiceImpl(
     private val altinnRolleRepository: AltinnRolleRepository,
 ) : AltinnRolleService {
 
+    @Volatile
     private var alleRollerByCode: Map<String, AltinnRolle>? = null
 
     override suspend fun lastRollerFraAltinn() {
