@@ -9,7 +9,6 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
 import org.flywaydb.core.Flyway
 import org.intellij.lang.annotations.Language
-import org.postgresql.util.PSQLException
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -232,9 +231,6 @@ class ParameterSetters(
         )
         preparedStatement.setArray(index++, array)
     }
-
-    fun bigint(value: Long) =
-        preparedStatement.setLong(index++, value)
 
     fun string(value: String) =
         preparedStatement.setString(index++, value)
