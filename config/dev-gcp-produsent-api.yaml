@@ -54,5 +54,9 @@ spec:
         - application: esyfovarsel-job
           namespace: team-esyfo
           cluster: dev-fss
+
+        - application: permitteringsportal-api
+          namespace: permittering-og-nedbemanning
+          cluster: dev-gcp
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
