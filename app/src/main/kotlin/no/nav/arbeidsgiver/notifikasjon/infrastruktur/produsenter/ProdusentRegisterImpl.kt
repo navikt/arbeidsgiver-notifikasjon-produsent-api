@@ -67,6 +67,20 @@ val ESYFO = Produsent(
     tillatteMottakere = listOf(NærmesteLederDefinisjon)
 )
 
+val PERMITTERING = Produsent(
+    id = "permittering-og-nedbemmaning",
+    accessPolicy = basedOnEnv(
+        prod = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsportal-api") },
+        other = { listOf("prod-gcp:permittering-og-nedbemanning:permitteringsportal-api") },
+    ),
+    tillatteMerkelapper = listOf("Permittering"),
+    tillatteMottakere = listOf(
+        AltinnRolleDefinisjon("DAGL"),
+        AltinnRolleDefinisjon("LEDE"),
+        AltinnReporteeDefinisjon
+    )
+)
+
 val PRODUSENT_LIST = basedOnEnv(
     prod = {
         listOf(
@@ -78,6 +92,7 @@ val PRODUSENT_LIST = basedOnEnv(
             FAGER_TESTPRODUSENT,
             ARBEIDSGIVER_TILTAK,
             ESYFO,
+            PERMITTERING,
         )
     }
 )
