@@ -85,11 +85,8 @@ class MutationNyStatusSak(
     ) : NyStatusSakResultat {
         val produsent = hentProdusent(context) { error -> return error }
 
-        tilgangsstyrNyNotifikasjon(
+        tilgangsstyrMerkelapp(
             produsent,
-            /* kan vurdere å støtte andre mottakere enn på notifikasjonen?
-            * Burde kanskje kun være et subset? Hva skal det ellers bety? */
-            sak.mottakere,
             sak.merkelapp,
         ) { error -> return error }
 
