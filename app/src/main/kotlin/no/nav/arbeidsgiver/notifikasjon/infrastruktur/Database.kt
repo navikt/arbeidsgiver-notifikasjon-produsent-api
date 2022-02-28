@@ -153,10 +153,6 @@ class Database private constructor(
 value class Transaction(
     private val connection: Connection,
 ) {
-    companion object {
-        private val log = logger()
-    }
-
     fun <T> executeQuery(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
@@ -246,6 +242,9 @@ class ParameterSetters(
         preparedStatement.setObject(index++, value)
 
     fun timestamptz(value: OffsetDateTime) =
+        preparedStatement.setObject(index++, value)
+
+    fun nullableTimestamptz(value: OffsetDateTime?) =
         preparedStatement.setObject(index++, value)
 
     fun timestamp_utc(value: OffsetDateTime) =

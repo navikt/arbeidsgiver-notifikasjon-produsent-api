@@ -236,7 +236,7 @@ input NySakInput {
     lenke: String!
 
     """Status saken starter med."""
-    status: NyStatusSakInput!
+    status: SaksStatusInput!
 }
 
 union NySakResultat =
@@ -245,6 +245,7 @@ union NySakResultat =
     | UgyldigMottaker
     | DuplikatGrupperingsid
     | UkjentProdusent
+    | UkjentRolle
 
 type NySakVellykket {
     id: ID!
@@ -252,11 +253,32 @@ type NySakVellykket {
 
 input NyStatusSakInput {
     status: SaksStatusInput!
+
+    """
+    Dere kan bruke dette feltet for å få idempotent oppførsel på statusoppdateringe.
+    Hvis en sak får to oppdateringer med samme idempotencyKey, så anser vi oppdateringene
+    for som de samme. Vi sjekker kun for duplikate idempotencyKey i den aktuelle saken, ikke
+    på tvers av saker.
+
+    Det kan f.eks. brukes for å ha en retry-logikk ved feil eller å lettere kunne håndtere
+    at-least-once oppførsel ved bruk av hendelses-strømmer som Kafka.
+
+    Obs. Hvis dere har protenisielt repretereende statusoppdateringer
+    i sakene deres (f.eks. at inngåelsen av en avtale veksler mellom
+    statusene "klar-for"underskriving" og "kladd"), så må dere passe
+    på at dere ikke oppgir samme nøkkel flere ganger ved en feil,
+    slik at to oppdateringer som er forskjellige blir slått sammen
+    til en.
+
+    Feltet er frivillig. Det vises ikke til brukere.
+    """
+    idempotencyKey: String
 }
 
 union NyStatusSakResultat =
     | NyStatusSakVellykket
     | SakFinnesIkke
+    | Konflikt
 
 type NyStatusSakVellykket {
     id: ID!
@@ -306,26 +328,6 @@ input SaksStatusInput {
     til brukeren. Se `SaksStatus` for default tekster.
     """
     overstyrStatustekstMed: String
-
-    """
-    Dere kan bruke dette feltet for å få idempotent oppførsel på statusoppdateringe.
-    Hvis en sak får to oppdateringer med samme idempotencyKey, så anser vi oppdateringene
-    for som de samme. Vi sjekker kun for duplikate idempotencyKey i den aktuelle saken, ikke
-    på tvers av saker.
-
-    Det kan f.eks. brukes for å ha en retry-logikk ved feil eller å lettere kunne håndtere
-    at-least-once oppførsel ved bruk av hendelses-strømmer som Kafka.
-
-    Obs. Hvis dere har protenisielt repretereende statusoppdateringer
-    i sakene deres (f.eks. at inngåelsen av en avtale veksler mellom
-    statusene "klar-for"underskriving" og "kladd"), så må dere passe
-    på at dere ikke oppgir samme nøkkel flere ganger ved en feil,
-    slik at to oppdateringer som er forskjellige blir slått sammen
-    til en.
-
-    Feltet er frivillig. Det vises ikke til brukere.
-    """
-    idempotencyKey: String
 }
 
 type StatusOppdatering {
@@ -341,7 +343,7 @@ Dette er roten som alle endringer ("mutations") starter fra. Endringer inkludere
 type Mutation {
     nySak(sak: NySakInput!): NySakResultat!
 
-    nyStatusSak(id: ID!, sak: NyStatusSakInput!): NyStatusSakResultat!
+    nyStatusSak(id: ID!, status: NyStatusSakInput!): NyStatusSakResultat!
 
     nyStatusSakByGrupperingsid(grupperingsid: String!, merkelapp: String!, status: NyStatusSakInput!): NyStatusSakResultat!
 
@@ -836,7 +838,14 @@ type UkjentRolle implements Error {
     feilmelding: String!
 }
 
+"""
+Oppgitt informasjon samsvarer ikke med tidligere informasjon som er oppgitt.
+"""
+type Konflikt implements Error {
+    feilmelding: String!
+}
 
 interface Error {
     feilmelding: String!
 }
+

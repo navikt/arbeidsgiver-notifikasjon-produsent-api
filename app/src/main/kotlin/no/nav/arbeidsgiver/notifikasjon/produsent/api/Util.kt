@@ -67,7 +67,7 @@ inline fun tilgangsstyrNyNotifikasjon(
     produsent: Produsent,
     mottakere: List<Mottaker>,
     merkelapp: String,
-    onError: (Error.NyNotifikasjonError) -> Nothing
+    onError: (Error.TilgangsstyringError) -> Nothing
 ) {
     for (mottaker in mottakere) {
         tilgangsstyrMottaker(produsent, mottaker) { error -> onError(error) }
@@ -91,4 +91,5 @@ inline fun tilgangsstyrMerkelapp(
         )
     }
 }
+
 

@@ -1,10 +1,27 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotencyPrefix
 import java.time.OffsetDateTime
 import java.util.*
 
 object ProdusentModel {
+    data class Sak(
+        val id: UUID,
+        val grupperingsid: String,
+        val merkelapp: String,
+        val virksomhetsnummer: String,
+        val deletedAt: OffsetDateTime?,
+        val tittel: String,
+        val lenke: String,
+        val statusoppdateringer: List<SakStatusOppdatering>,
+        val mottakere: List<Mottaker>,
+        val opprettetTidspunkt: OffsetDateTime,
+    ) {
+        fun statusoppdateringIkkeRegistrert() =
+            statusoppdateringer.any { it.idempotencyKey.startsWith(IdempotencyPrefix.INITIAL.serialized) }
+    }
+
     sealed interface Notifikasjon {
         val id: UUID
         val merkelapp: String
@@ -87,6 +104,15 @@ object ProdusentModel {
             FEILET,
         }
     }
+
+    data class SakStatusOppdatering(
+        val id: UUID,
+        val status: SakStatus,
+        val overstyrStatustekstMed: String?,
+        val tidspunktMottatt: OffsetDateTime,
+        val tidspunktOppgitt: OffsetDateTime?,
+        val idempotencyKey: String,
+    )
 }
 
 fun Hendelse.BeskjedOpprettet.tilProdusentModel(): ProdusentModel.Beskjed =

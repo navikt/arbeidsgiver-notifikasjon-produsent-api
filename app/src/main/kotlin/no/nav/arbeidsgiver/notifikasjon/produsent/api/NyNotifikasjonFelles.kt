@@ -28,7 +28,7 @@ data class EksterntVarselInput(
     ) {
 
         fun tilDomene(virksomhetsnummer: String): SmsVarselKontaktinfo {
-            val (sendevindu, sendeTidspunkt) = sendetidspunkt.tilDomene()
+            val (sendevindu, sendeTidspunkt) = sendetidspunkt.somSakOpprettetHendelse()
             if (mottaker.kontaktinfo != null) {
                 return SmsVarselKontaktinfo(
                     varselId = UUID.randomUUID(),
@@ -73,7 +73,7 @@ data class EksterntVarselInput(
         val sendetidspunkt: SendetidspunktInput,
     ) {
         fun tilDomene(virksomhetsnummer: String): EpostVarselKontaktinfo {
-            val (sendevindu, sendeTidspunkt) = sendetidspunkt.tilDomene()
+            val (sendevindu, sendeTidspunkt) = sendetidspunkt.somSakOpprettetHendelse()
             if (mottaker.kontaktinfo != null) {
                 return EpostVarselKontaktinfo(
                     varselId = UUID.randomUUID(),
@@ -186,7 +186,7 @@ data class NyEksternVarselResultat(
     val id: UUID,
 )
 
-fun EksterntVarselInput.SendetidspunktInput.tilDomene(): Pair<EksterntVarselSendingsvindu, LocalDateTime?> {
+fun EksterntVarselInput.SendetidspunktInput.somSakOpprettetHendelse(): Pair<EksterntVarselSendingsvindu, LocalDateTime?> {
     val sendevindu = this.sendevindu?.somDomene ?: EksterntVarselSendingsvindu.SPESIFISERT
 
     if (sendevindu == EksterntVarselSendingsvindu.SPESIFISERT) {

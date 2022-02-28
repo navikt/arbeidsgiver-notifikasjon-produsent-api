@@ -86,7 +86,7 @@ class AltinnImpl(
                 } + roller.map {
                     val (RoleDefinitionId, RoleDefinitionCode) = it
                     async {
-                        hentTilgangerForRolle(fnr, RoleDefinitionId, RoleDefinitionCode)
+                        hentTilgangerForRolle(RoleDefinitionId, RoleDefinitionCode, selvbetjeningsToken)
                     }
                 } + async {
                     hentTilganger(fnr, selvbetjeningsToken)
@@ -172,17 +172,17 @@ class AltinnImpl(
     }
 
     private suspend fun hentTilgangerForRolle(
-        fnr: String,
         roleDefinitionId: String,
         roleDefinitionCode: String,
+        selvbetjeningsToken: String,
     ): List<BrukerModel.Tilgang> {
         // TODO: ta i bruk proxy-klient når vi får utvidet den
         val baseUrl = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/ekstern/altinn"
 
         val reportees =
-            httpClient.get<List<AltinnReportee>>("${baseUrl}/api/serviceowner/reportees?subject=$fnr&roleDefinitionId=$roleDefinitionId") {
+            httpClient.get<List<AltinnReportee>>("${baseUrl}/api/serviceowner/reportees?ForceEIAuthentication&roleDefinitionId=$roleDefinitionId") {
                 headers {
-                    append("X-NAV-APIKEY", System.getenv("APIGW_HEADER") ?: "default")
+                    append("Authorization", "Bearer $selvbetjeningsToken")
                     append("APIKEY", System.getenv("ALTINN_HEADER") ?: "default")
                 }
             }
