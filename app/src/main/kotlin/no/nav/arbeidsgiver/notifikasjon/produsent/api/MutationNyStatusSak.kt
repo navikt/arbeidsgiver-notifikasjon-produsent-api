@@ -140,7 +140,7 @@ class MutationNyStatusSak(
     }
 }
 
-private fun SaksStatusInput.isDuplicateOf(existing: ProdusentModel.SakStatusOppdatering): Boolean {
+fun SaksStatusInput.isDuplicateOf(existing: ProdusentModel.SakStatusOppdatering): Boolean {
     return this.status.hendelseType == existing.status
             && this.overstyrStatustekstMed == existing.overstyrStatustekstMed
             && this.tidspunkt == existing.tidspunktOppgitt

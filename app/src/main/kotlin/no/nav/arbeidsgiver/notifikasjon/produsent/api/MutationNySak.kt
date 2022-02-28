@@ -83,12 +83,20 @@ class MutationNySak(
                 kafkaProducer.sendHendelse(sakOpprettetHendelse)
                 kafkaProducer.sendHendelse(statusoppdateringHendelse)
                 produsentRepository.oppdaterModellEtterHendelse(sakOpprettetHendelse)
+                produsentRepository.oppdaterModellEtterHendelse(statusoppdateringHendelse)
                 NySakVellykket(
                     id = sakId,
                 )
             }
             nySak.erDuplikatAv(eksisterende) -> {
-                log.info("duplisert opprettelse av sak med id ${eksisterende.id}")
+                if (eksisterende.statusoppdateringIkkeRegistrert()) {
+                    log.info("statusoppdatering ikke registrert for duplisert opprettelse av sak med id ${eksisterende.id}")
+                    kafkaProducer.sendHendelse(statusoppdateringHendelse)
+                    produsentRepository.oppdaterModellEtterHendelse(statusoppdateringHendelse)
+                } else {
+                    log.info("duplisert opprettelse av sak med id ${eksisterende.id}")
+                }
+
                 NySakVellykket(
                     id = eksisterende.id,
                 )
@@ -156,14 +164,19 @@ class MutationNySak(
     ) : NySakResultat
 }
 
-fun MutationNySak.NySakInput.erDuplikatAv(eksisterende: ProdusentModel.Sak) =
-    this.virksomhetsnummer == eksisterende.virksomhetsnummer &&
+fun MutationNySak.NySakInput.erDuplikatAv(eksisterende: ProdusentModel.Sak): Boolean {
+    val initialOppdatering = eksisterende.statusoppdateringer.find {
+        it.idempotencyKey.startsWith(IdempotencyPrefix.INITIAL.serialized)
+    }
+
+    return this.virksomhetsnummer == eksisterende.virksomhetsnummer &&
             this.merkelapp == eksisterende.merkelapp &&
             this.grupperingsid == eksisterende.grupperingsid &&
             this.tittel == eksisterende.tittel &&
             this.lenke == eksisterende.lenke &&
-            /* TODO: this.status.status  should be in eksisterende.statusoppdateringer && */
-            this.mottakere.equalsAsSets(eksisterende.mottakere, MottakerInput::sammeSom)
+            this.mottakere.equalsAsSets(eksisterende.mottakere, MottakerInput::sammeSom) &&
+            (initialOppdatering == null || this.status.isDuplicateOf(initialOppdatering))
+}
 
 
 private fun MottakerInput.sammeSom(mottaker: Mottaker): Boolean {
