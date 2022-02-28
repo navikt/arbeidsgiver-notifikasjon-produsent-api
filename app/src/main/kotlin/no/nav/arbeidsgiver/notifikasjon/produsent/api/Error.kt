@@ -2,13 +2,12 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
 sealed class Error {
     abstract val feilmelding: String
 
-    sealed interface NyNotifikasjonError :
+    sealed interface TilgangsstyringError :
         MutationNyBeskjed.NyBeskjedResultat,
         MutationNyOppgave.NyOppgaveResultat,
         MutationNySak.NySakResultat,
@@ -19,7 +18,7 @@ sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        NyNotifikasjonError,
+        TilgangsstyringError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
         MutationSoftDelete.SoftDeleteNotifikasjonResultat,
@@ -29,7 +28,7 @@ sealed class Error {
     data class UkjentProdusent(
         override val feilmelding: String
     ) : Error(),
-        NyNotifikasjonError,
+        TilgangsstyringError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
         MutationSoftDelete.SoftDeleteNotifikasjonResultat,
@@ -42,7 +41,7 @@ sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        NyNotifikasjonError
+        TilgangsstyringError
 
     @JsonTypeName("Konflikt")
     data class Konflikt(
@@ -55,7 +54,8 @@ sealed class Error {
     data class DuplikatEksternIdOgMerkelapp(
         override val feilmelding: String
     ) : Error(),
-        NyNotifikasjonError
+        MutationNyBeskjed.NyBeskjedResultat,
+        MutationNyOppgave.NyOppgaveResultat
 
     @JsonTypeName("DuplikatGrupperingsid")
     data class DuplikatGrupperingsid(
@@ -77,7 +77,7 @@ sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        NyNotifikasjonError,
+        TilgangsstyringError,
         MutationNySak.NySakResultat
 
     @JsonTypeName("SakFinnesIkke")
