@@ -175,24 +175,6 @@ value class Transaction(
         }
     }
 
-    fun executeUpdateReturningId(
-        @Language("PostgreSQL") sql: String,
-        setup: ParameterSetters.() -> Unit = {},
-    ): Long {
-        return measure(sql) {
-            connection
-                .prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)
-                .use { preparedStatement ->
-                    ParameterSetters(preparedStatement).apply(setup)
-                    preparedStatement.executeUpdate()
-                    preparedStatement.generatedKeys.use {
-                        require(it.next())
-                        it.getLong(1)
-                    }
-                }
-        }
-    }
-
     fun executeUpdate(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
