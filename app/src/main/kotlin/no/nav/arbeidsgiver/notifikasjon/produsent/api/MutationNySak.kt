@@ -3,12 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.Mottaker
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
@@ -152,7 +147,7 @@ class MutationNySak(
             overstyrStatustekstMed = status.overstyrStatustekstMed,
             oppgittTidspunkt = status.tidspunkt,
             mottattTidspunkt = OffsetDateTime.now(),
-            idempotensKey = IdempotencyPrefix.INITIAL.serialized
+            idempotensKey = IdempotenceKey.initial()
         )
     }
 
@@ -167,7 +162,7 @@ class MutationNySak(
 
 fun MutationNySak.NySakInput.erDuplikatAv(eksisterende: ProdusentModel.Sak): Boolean {
     val initialOppdatering = eksisterende.statusoppdateringer.find {
-        it.idempotencyKey.startsWith(IdempotencyPrefix.INITIAL.serialized)
+        it.idempotencyKey == IdempotenceKey.initial()
     }
 
     return this.virksomhetsnummer == eksisterende.virksomhetsnummer &&

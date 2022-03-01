@@ -94,9 +94,9 @@ class MutationNyStatusSak(
 
         val idempotencyKey =
             if (status.idempotencyKey != null)
-                IdempotencyPrefix.USER_SUPPLIED.serialized + status.idempotencyKey
+                IdempotenceKey.userSupplied(status.idempotencyKey)
             else
-                IdempotencyPrefix.GENERATED.serialized + hendelseId
+                IdempotenceKey.generated(hendelseId)
 
         val existing = sak.statusoppdateringer.find {
             it.idempotencyKey == idempotencyKey
