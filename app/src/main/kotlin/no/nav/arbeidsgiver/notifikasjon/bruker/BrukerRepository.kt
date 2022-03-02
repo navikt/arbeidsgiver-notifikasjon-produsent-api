@@ -150,32 +150,38 @@ class BrukerRepositoryImpl(
                     as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
                 ),
                 mine_altinn_notifikasjoner as (
-                    select er.aggregate_id
+                    select er.notifikasjon_id
                     from mottaker_altinn_enkeltrettighet er
                     join mine_altinntilganger at on 
                         er.virksomhet = at.virksomhetsnummer and
                         er.service_code = at."serviceCode" and
                         er.service_edition = at."serviceEdition"
+                    where
+                        er.notifikasjon_id is not null
                 ),
                 mine_altinn_reportee_notifikasjoner as (
-                    select rep.aggregate_id
+                    select rep.notifikasjon_id
                     from mottaker_altinn_reportee rep
                     join mine_altinnreporteetilganger at on 
                         rep.virksomhet = at.virksomhetsnummer and
                         rep.fnr = at."fnr"
+                    where
+                        rep.notifikasjon_id is not null
                 ),
                 mine_altinn_rolle_notifikasjoner as (
-                    select rol.aggregate_id
+                    select rol.notifikasjon_id
                     from mottaker_altinn_rolle rol
                     join mine_altinnrolletilganger at on 
                         rol.virksomhet = at.virksomhetsnummer and
                         rol.role_definition_id = at."roleDefinitionId" and
                         rol.role_definition_code = at."roleDefinitionCode"
+                    where
+                        rol.notifikasjon_id is not null
                 ),
                 mine_digisyfo_notifikasjoner as (
-                    select aggregate_id 
-                    from aggregate_id_for_digisyfo_fnr
-                    where fnr_leder = ?
+                    select notifikasjon_id 
+                    from mottaker_digisyfo_for_fnr
+                    where fnr_leder = ? and notifikasjon_id is not null
                 ),
                 mine_notifikasjoner as (
                     (select * from mine_digisyfo_notifikasjoner)
@@ -190,7 +196,7 @@ class BrukerRepositoryImpl(
                 n.*, 
                 klikk.notifikasjonsid is not null as klikketPaa
             from mine_notifikasjoner as mn
-            join notifikasjon as n on n.id = mn.aggregate_id
+            join notifikasjon as n on n.id = mn.notifikasjon_id
             left outer join brukerklikk as klikk on
                 klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
@@ -278,32 +284,38 @@ class BrukerRepositoryImpl(
                     as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
                 ),
                 mine_altinn_saker as (
-                    select er.aggregate_id
+                    select er.sak_id
                     from mottaker_altinn_enkeltrettighet er
                     join mine_altinntilganger at on 
                         er.virksomhet = at.virksomhetsnummer and
                         er.service_code = at."serviceCode" and
                         er.service_edition = at."serviceEdition"
+                    where
+                        er.sak_id is not null
                 ),
                 mine_altinn_reportee_saker as (
-                    select rep.aggregate_id
+                    select rep.sak_id
                     from mottaker_altinn_reportee rep
                     join mine_altinnreporteetilganger at on 
                         rep.virksomhet = at.virksomhetsnummer and
                         rep.fnr = at."fnr"
+                    where
+                        rep.sak_id is not null
                 ),
                 mine_altinn_rolle_saker as (
-                    select rol.aggregate_id
+                    select rol.sak_id
                     from mottaker_altinn_rolle rol
                     join mine_altinnrolletilganger at on 
                         rol.virksomhet = at.virksomhetsnummer and
                         rol.role_definition_id = at."roleDefinitionId" and
                         rol.role_definition_code = at."roleDefinitionCode"
+                    where
+                        rol.sak_id is not null
                 ),
                 mine_digisyfo_saker as (
-                    select aggregate_id 
-                    from aggregate_id_for_digisyfo_fnr
-                    where fnr_leder = ? and virksomhet = ?
+                    select sak_id
+                    from mottaker_digisyfo_for_fnr
+                    where fnr_leder = ? and virksomhet = ? and sak_id is not null
                 ),
                 mine_saker as (
                     (select * from mine_digisyfo_saker)
@@ -318,8 +330,8 @@ class BrukerRepositoryImpl(
                 s.*, 
                 status_json.statuser as statuser
             from mine_saker as ms
-            join sak as s on s.sak_id = ms.aggregate_id
-            join sak_status_json as status_json on s.sak_id = status_json.sak_id
+            join sak as s on s.id = ms.sak_id
+            join sak_status_json as status_json on s.id = status_json.sak_id
             limit 200
             """,
             {
@@ -439,7 +451,11 @@ class BrukerRepositoryImpl(
             }
 
             for (mottaker in beskjedOpprettet.mottakere) {
-                storeMottaker(beskjedOpprettet.notifikasjonId, mottaker)
+                storeMottaker(
+                    notifikasjonId = beskjedOpprettet.notifikasjonId,
+                    sakId = null,
+                    mottaker
+                )
             }
         }
     }
@@ -449,7 +465,7 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    sak_id, virksomhetsnummer, tittel, lenke, merkelapp
+                    id, virksomhetsnummer, tittel, lenke, merkelapp
                 )
                 values (?, ?, ? ,?, ?)
                 on conflict on constraint sak_pkey do nothing;
@@ -463,7 +479,11 @@ class BrukerRepositoryImpl(
             }
 
             for (mottaker in sakOpprettet.mottakere) {
-                storeMottaker(sakOpprettet.sakId, mottaker)
+                storeMottaker(
+                    notifikasjonId = null,
+                    sakId = sakOpprettet.sakId,
+                    mottaker
+                )
             }
         }
     }
@@ -473,7 +493,7 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak_status(
-                    sak_status_id, sak_id, status, overstyrt_statustekst, tidspunkt 
+                    id, sak_id, status, overstyrt_statustekst, tidspunkt 
                 )
                 values (?, ?, ?, ?, ?)
                 on conflict on constraint sak_status_pkey do nothing;
@@ -488,61 +508,93 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private fun Transaction.storeMottaker(aggregateId: UUID, mottaker: Mottaker) {
+    private fun Transaction.storeMottaker(notifikasjonId: UUID?, sakId: UUID?, mottaker: Mottaker) {
         val ignored = when (mottaker) {
-            is NærmesteLederMottaker -> storeNærmesteLederMottaker(aggregateId, mottaker)
-            is AltinnMottaker -> storeAltinnMottaker(aggregateId, mottaker)
-            is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(aggregateId, mottaker)
-            is AltinnRolleMottaker -> storeAltinnRolleMottaker(aggregateId, mottaker)
+            is NærmesteLederMottaker -> storeNærmesteLederMottaker(
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                mottaker = mottaker
+            )
+            is AltinnMottaker -> storeAltinnMottaker(
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                mottaker = mottaker
+            )
+            is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                mottaker = mottaker
+            )
+            is AltinnRolleMottaker -> storeAltinnRolleMottaker(
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                mottaker = mottaker
+            )
         }
     }
 
-    private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID, mottaker: NærmesteLederMottaker) {
+    private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID?, sakId: UUID?, mottaker: NærmesteLederMottaker) {
         executeUpdate("""
-            insert into mottaker_digisyfo(aggregate_id, virksomhet, fnr_leder, fnr_sykmeldt)
-            values (?, ?, ?, ?)
+            insert into mottaker_digisyfo(notifikasjon_id, sak_id, virksomhet, fnr_leder, fnr_sykmeldt)
+            values (?, ?, ?, ?, ?)
         """) {
-            uuid(notifikasjonId)
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.naermesteLederFnr)
             string(mottaker.ansattFnr)
         }
     }
 
-    private fun Transaction.storeAltinnMottaker(notifikasjonId: UUID, mottaker: AltinnMottaker) {
+    private fun Transaction.storeAltinnMottaker(
+        notifikasjonId: UUID?,
+        sakId: UUID?,
+        mottaker: AltinnMottaker
+    ) {
         executeUpdate("""
             insert into mottaker_altinn_enkeltrettighet
-                (aggregate_id, virksomhet, service_code, service_edition)
-            values (?, ?, ?, ?)
+                (notifikasjon_id, sak_id, virksomhet, service_code, service_edition)
+            values (?, ?, ?, ?, ?)
         """) {
-            uuid(notifikasjonId)
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.serviceCode)
             string(mottaker.serviceEdition)
         }
     }
 
-    private fun Transaction.storeAltinnReporteeMottaker(notifikasjonId: UUID, mottaker: AltinnReporteeMottaker) {
+    private fun Transaction.storeAltinnReporteeMottaker(
+        notifikasjonId: UUID?,
+        sakId: UUID?,
+        mottaker: AltinnReporteeMottaker
+    ) {
         executeUpdate("""
             insert into mottaker_altinn_reportee
-                (aggregate_id, virksomhet, fnr)
-            values (?, ?, ?)
+                (notifikasjon_id, sak_id, virksomhet, fnr)
+            values (?, ?, ?, ?)
         """) {
-            uuid(notifikasjonId)
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.fnr)
         }
     }
 
-    private fun Transaction.storeAltinnRolleMottaker(notifikasjonId: UUID, mottaker: AltinnRolleMottaker) {
+    private fun Transaction.storeAltinnRolleMottaker(
+        notifikasjonId: UUID?,
+        sakId: UUID?,
+        mottaker: AltinnRolleMottaker
+    ) {
         executeUpdate(
             """
             insert into mottaker_altinn_rolle
-                (aggregate_id, virksomhet, role_definition_code, role_definition_id)
-            values (?, ?, ?, ?)
+                (notifikasjon_id, sak_id, virksomhet, role_definition_code, role_definition_id)
+            values (?, ?, ?, ?, ?)
         """
         ) {
-            uuid(notifikasjonId)
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.roleDefinitionCode)
             string(mottaker.roleDefinitionId)
@@ -581,7 +633,11 @@ class BrukerRepositoryImpl(
             }
 
             for (mottaker in oppgaveOpprettet.mottakere) {
-                storeMottaker(oppgaveOpprettet.notifikasjonId, mottaker)
+                storeMottaker(
+                    notifikasjonId = oppgaveOpprettet.notifikasjonId,
+                    sakId = null,
+                    mottaker
+                )
             }
         }
     }
