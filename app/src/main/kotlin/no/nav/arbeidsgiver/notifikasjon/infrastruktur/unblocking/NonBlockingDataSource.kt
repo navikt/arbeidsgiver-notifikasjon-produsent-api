@@ -26,11 +26,11 @@ class NonBlockingDataSource<T>(
 
     suspend fun withFlyway(locations: String, body: Flyway.() -> Unit) {
         blockingIO {
-            val flyway = Flyway.configure()
+            Flyway.configure()
                 .locations(locations)
                 .dataSource(dataSource)
                 .load()
-            flyway.body()
+                .body()
         }
     }
 }
