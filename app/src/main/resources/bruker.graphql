@@ -15,11 +15,18 @@ type Sak {
     tittel: String!
     lenke: String!
     merkelapp: String!
-    sisteStatus: Statusoppdatering!
+    sisteStatus: SakStatus!
 }
-type Statusoppdatering {
-    status: String!
+type SakStatus {
+    type: SakStatusType!
+    tekst: String!
     tidspunkt: ISO8601DateTime!
+}
+enum SakStatusType {
+    MOTTATT
+    UNDER_BEHANDLING
+    FERDIG
+
 }
 type NotifikasjonerResultat {
     notifikasjoner: [Notifikasjon!]!

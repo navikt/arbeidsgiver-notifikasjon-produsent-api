@@ -88,16 +88,31 @@ object BrukerAPI {
         val tittel: String,
         val lenke: String,
         val merkelapp: String,
-        val virksomhet: Virksomhet,
-        val sisteStatus: Statusoppdatering
-    )
+        override val virksomhet: Virksomhet,
+        val sisteStatus: SakStatus
+    ) : WithVirksomhet
 
 
-    @JsonTypeName("Statusoppdatering")
-    data class Statusoppdatering(
-        val status: String,
-        val tidspunkt: OffsetDateTime
+    @JsonTypeName("SakStatus")
+    data class SakStatus(
+        val type: SakStatusType,
+        val tekst: String,
+        val tidspunkt: OffsetDateTime,
     )
+
+    enum class SakStatusType(val visningsTekst: String) {
+        MOTTATT("Mottatt"),
+        UNDER_BEHANDLING("Under behandling"),
+        FERDIG("Ferdig");
+
+        companion object {
+            fun fraModel(model: no.nav.arbeidsgiver.notifikasjon.SakStatus) : SakStatusType = when(model) {
+                no.nav.arbeidsgiver.notifikasjon.SakStatus.MOTTATT -> MOTTATT
+                no.nav.arbeidsgiver.notifikasjon.SakStatus.UNDER_BEHANDLING -> UNDER_BEHANDLING
+                no.nav.arbeidsgiver.notifikasjon.SakStatus.FERDIG -> FERDIG
+            }
+        }
+    }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class NotifikasjonKlikketPaaResultat
@@ -168,7 +183,11 @@ object BrukerAPI {
                     }
                 }
 
-                // TODO: sak.virksomhet
+                wire("Sak") {
+                    coDataFetcher("virksomhet") { env ->
+                        fetchVirksomhet<Sak>(enhetsregisteret, env)
+                    }
+                }
             }
 
             wire("Mutation") {
@@ -267,8 +286,6 @@ object BrukerAPI {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
-            val first = env.getArgumentOrDefault("first", 3)
-            val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
             coroutineScope {
                 val tilganger = async {
                     try {
@@ -299,8 +316,13 @@ object BrukerAPI {
                             virksomhet = Virksomhet(
                                 virksomhetsnummer = it.virksomhetsnummer,
                             ),
-                            sisteStatus = it.statuser.map { status ->
-                                Statusoppdatering(status = status.status, tidspunkt = status.tidspunkt)
+                            sisteStatus = it.statuser.map { sakStatus ->
+                                val type = SakStatusType.fraModel(sakStatus.status)
+                                SakStatus(
+                                    type = type,
+                                    tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
+                                    tidspunkt = sakStatus.tidspunkt
+                                )
                             }.first(),
                         )
                     }

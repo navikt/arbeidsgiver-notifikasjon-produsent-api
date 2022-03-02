@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
@@ -22,9 +23,9 @@ class QuerySakerTests : DescribeSpec({
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = AltinnStub(),
-            altinnRolleService = mockk(),
-            enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
+            altinn = AltinnStub("0".repeat(11) to listOf(Tilgang.Altinn("42", "5441", "1"))),
+            altinnRolleService = mockk(relaxed = true),
+            enhetsregisteret = EnhetsregisteretStub("42" to "el virksomhete"),
             brukerRepository = brukerRepository,
             kafkaProducer = mockk()
         )
@@ -50,7 +51,7 @@ class QuerySakerTests : DescribeSpec({
             val response = engine.hentSaker()
 
             it("response inneholder riktig data") {
-                val saker = response.getTypedContent<List<Any>>("saker/saker/edges")
+                val saker = response.getTypedContent<List<Any>>("saker/saker")
                 saker should beEmpty()
             }
         }
@@ -74,13 +75,13 @@ class QuerySakerTests : DescribeSpec({
             val response = engine.hentSaker()
 
             it("response inneholder riktig data") {
-                val sak = response.getTypedContent<BrukerAPI.Sak>("saker/saker")
-                sak.id shouldBe sakOpprettet.sakId
+                val sak = response.getTypedContent<BrukerAPI.Sak>("saker/saker/0")
+                sak.id shouldBe sakOpprettet.sakId.toString()
                 sak.merkelapp shouldBe "tag"
                 sak.lenke shouldBe sakOpprettet.lenke
                 sak.tittel shouldBe sakOpprettet.tittel
                 sak.virksomhet.virksomhetsnummer shouldBe sakOpprettet.virksomhetsnummer
-                sak.sisteStatus.status shouldBe "noe"
+                sak.sisteStatus.tekst shouldBe "noe"
             }
         }
     }
@@ -100,7 +101,8 @@ fun TestApplicationEngine.hentSaker() = brukerApi(
                     virksomhetsnummer
                 }
                 sisteStatus {
-                    status
+                    type
+                    tekst
                     tidspunkt
                 }
             }

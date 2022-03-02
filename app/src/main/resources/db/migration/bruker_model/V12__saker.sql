@@ -18,7 +18,7 @@ alter table mottaker_altinn_enkeltrettighet
 
 drop view notifikasjoner_for_digisyfo_fnr;
 create view aggregate_id_for_digisyfo_fnr as
-select m.fnr_leder as fnr_leder, m.aggregate_id as aggregate_id
+select m.fnr_leder as fnr_leder, m.aggregate_id as aggregate_id, m.virksomhet as virksomhet
 from mottaker_digisyfo m
          join naermeste_leder_kobling k on
             m.fnr_leder = k.naermeste_leder_fnr

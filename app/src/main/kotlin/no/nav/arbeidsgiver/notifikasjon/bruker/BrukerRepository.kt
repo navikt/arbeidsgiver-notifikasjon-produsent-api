@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.OffsetDateTime
 import java.util.*
+import no.nav.arbeidsgiver.notifikasjon.SakStatus as Status
 
 interface BrukerModel {
     sealed interface Tilgang {
@@ -77,7 +78,7 @@ interface BrukerModel {
 
     data class SakStatus(
         val sakStatusId: UUID,
-        val status: String,
+        val status: Status,
         val overstyrtStatustekst: String?,
         val tidspunkt: OffsetDateTime
     )
@@ -327,7 +328,6 @@ class BrukerRepositoryImpl(
                 jsonb(tilgangerAltinnRolleMottaker)
                 string(fnr)
                 string(virksomhetsnummer)
-                string(fnr)
             }
         ) {
             BrukerModel.Sak(
