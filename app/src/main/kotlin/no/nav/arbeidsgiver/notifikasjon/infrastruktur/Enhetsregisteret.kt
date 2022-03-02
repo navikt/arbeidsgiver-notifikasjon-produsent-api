@@ -39,7 +39,12 @@ class EnhetsregisteretImpl(
     }
 
     val cache = SimpleLRUCache<String, Enhetsregisteret.Underenhet>(100_000) { orgnr ->
-        val response: HttpResponse = httpClient.get("$baseUrl/enhetsregisteret/api/underenheter/$orgnr")
+        val response: HttpResponse = try {
+            httpClient.get("$baseUrl/enhetsregisteret/api/underenheter/$orgnr")
+        } catch (e: Exception) {
+            log.warn("kall mot $baseUrl feilet", e)
+            return@SimpleLRUCache Enhetsregisteret.Underenhet(orgnr, "")
+        }
         if (response.status.isSuccess()) {
             try {
                 response.receive()
