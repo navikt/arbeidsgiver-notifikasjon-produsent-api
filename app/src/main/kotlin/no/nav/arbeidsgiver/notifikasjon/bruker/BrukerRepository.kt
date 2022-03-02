@@ -343,7 +343,7 @@ class BrukerRepositoryImpl(
             }
         ) {
             BrukerModel.Sak(
-                sakId = getObject("sak_id", UUID::class.java),
+                sakId = getObject("id", UUID::class.java),
                 virksomhetsnummer = getString("virksomhetsnummer"),
                 tittel = getString("tittel"),
                 lenke = getString("lenke"),
