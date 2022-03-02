@@ -1,15 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.*
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.OffsetDateTime
 import java.util.*
+import no.nav.arbeidsgiver.notifikasjon.SakStatus as Status
 
 interface BrukerModel {
     sealed interface Tilgang {
@@ -67,6 +66,22 @@ interface BrukerModel {
             UTFOERT
         }
     }
+
+    data class Sak(
+        val sakId: UUID,
+        val virksomhetsnummer: String,
+        val tittel: String,
+        val lenke: String,
+        val merkelapp: String,
+        val statuser: List<SakStatus>,
+    )
+
+    data class SakStatus(
+        val sakStatusId: UUID,
+        val status: Status,
+        val overstyrtStatustekst: String?,
+        val tidspunkt: OffsetDateTime
+    )
 }
 
 interface BrukerRepository {
@@ -74,6 +89,12 @@ interface BrukerRepository {
         fnr: String,
         tilganger: Collection<BrukerModel.Tilgang>,
     ): List<BrukerModel.Notifikasjon>
+
+    suspend fun hentSaker(
+        fnr: String,
+        virksomhetsnummer: String,
+        tilganger: Collection<BrukerModel.Tilgang>
+    ): List<BrukerModel.Sak>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
@@ -135,6 +156,8 @@ class BrukerRepositoryImpl(
                         er.virksomhet = at.virksomhetsnummer and
                         er.service_code = at."serviceCode" and
                         er.service_edition = at."serviceEdition"
+                    where
+                        er.notifikasjon_id is not null
                 ),
                 mine_altinn_reportee_notifikasjoner as (
                     select rep.notifikasjon_id
@@ -142,6 +165,8 @@ class BrukerRepositoryImpl(
                     join mine_altinnreporteetilganger at on 
                         rep.virksomhet = at.virksomhetsnummer and
                         rep.fnr = at."fnr"
+                    where
+                        rep.notifikasjon_id is not null
                 ),
                 mine_altinn_rolle_notifikasjoner as (
                     select rol.notifikasjon_id
@@ -150,11 +175,13 @@ class BrukerRepositoryImpl(
                         rol.virksomhet = at.virksomhetsnummer and
                         rol.role_definition_id = at."roleDefinitionId" and
                         rol.role_definition_code = at."roleDefinitionCode"
+                    where
+                        rol.notifikasjon_id is not null
                 ),
                 mine_digisyfo_notifikasjoner as (
                     select notifikasjon_id 
-                    from notifikasjoner_for_digisyfo_fnr
-                    where fnr_leder = ?
+                    from mottaker_digisyfo_for_fnr
+                    where fnr_leder = ? and notifikasjon_id is not null
                 ),
                 mine_notifikasjoner as (
                     (select * from mine_digisyfo_notifikasjoner)
@@ -214,6 +241,120 @@ class BrukerRepositoryImpl(
         }
     }
 
+    override suspend fun hentSaker(
+        fnr: String,
+        virksomhetsnummer: String,
+        tilganger: Collection<BrukerModel.Tilgang>,
+    ): List<BrukerModel.Sak> = timer.coRecord {
+        val tilgangerAltinnMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.Altinn>().map {
+            AltinnMottaker(
+                serviceCode = it.servicecode,
+                serviceEdition = it.serviceedition,
+                virksomhetsnummer = it.virksomhet
+            )
+        }.filter { it.virksomhetsnummer == virksomhetsnummer }
+        val tilgangerAltinnReporteeMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.AltinnReportee>().map {
+            AltinnReporteeMottaker(
+                virksomhetsnummer = it.virksomhet,
+                fnr = it.fnr
+            )
+        }.filter { it.virksomhetsnummer == virksomhetsnummer }
+        val tilgangerAltinnRolleMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.AltinnRolle>().map {
+            AltinnRolleMottaker(
+                virksomhetsnummer = it.virksomhet,
+                roleDefinitionId = it.roleDefinitionId,
+                roleDefinitionCode = it.roleDefinitionCode,
+            )
+        }.filter { it.virksomhetsnummer == virksomhetsnummer }
+
+        database.nonTransactionalExecuteQuery(
+            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+            """
+            with 
+                mine_altinntilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                ),
+                mine_altinnreporteetilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "fnr" text)
+                ),
+                mine_altinnrolletilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
+                ),
+                mine_altinn_saker as (
+                    select er.sak_id
+                    from mottaker_altinn_enkeltrettighet er
+                    join mine_altinntilganger at on 
+                        er.virksomhet = at.virksomhetsnummer and
+                        er.service_code = at."serviceCode" and
+                        er.service_edition = at."serviceEdition"
+                    where
+                        er.sak_id is not null
+                ),
+                mine_altinn_reportee_saker as (
+                    select rep.sak_id
+                    from mottaker_altinn_reportee rep
+                    join mine_altinnreporteetilganger at on 
+                        rep.virksomhet = at.virksomhetsnummer and
+                        rep.fnr = at."fnr"
+                    where
+                        rep.sak_id is not null
+                ),
+                mine_altinn_rolle_saker as (
+                    select rol.sak_id
+                    from mottaker_altinn_rolle rol
+                    join mine_altinnrolletilganger at on 
+                        rol.virksomhet = at.virksomhetsnummer and
+                        rol.role_definition_id = at."roleDefinitionId" and
+                        rol.role_definition_code = at."roleDefinitionCode"
+                    where
+                        rol.sak_id is not null
+                ),
+                mine_digisyfo_saker as (
+                    select sak_id
+                    from mottaker_digisyfo_for_fnr
+                    where fnr_leder = ? and virksomhet = ? and sak_id is not null
+                ),
+                mine_saker as (
+                    (select * from mine_digisyfo_saker)
+                    union 
+                    (select * from mine_altinn_saker)
+                    union 
+                    (select * from mine_altinn_reportee_saker)
+                    union 
+                    (select * from mine_altinn_rolle_saker)
+                )
+            select 
+                s.*, 
+                status_json.statuser as statuser
+            from mine_saker as ms
+            join sak as s on s.id = ms.sak_id
+            join sak_status_json as status_json on s.id = status_json.sak_id
+            limit 200
+            """,
+            {
+                jsonb(tilgangerAltinnMottaker)
+                jsonb(tilgangerAltinnReporteeMottaker)
+                jsonb(tilgangerAltinnRolleMottaker)
+                string(fnr)
+                string(virksomhetsnummer)
+            }
+        ) {
+            BrukerModel.Sak(
+                sakId = getObject("id", UUID::class.java),
+                virksomhetsnummer = getString("virksomhetsnummer"),
+                tittel = getString("tittel"),
+                lenke = getString("lenke"),
+                merkelapp = getString("merkelapp"),
+                statuser = getString("statuser").let {
+                    laxObjectMapper.readValue(it)
+                },
+            )
+        }
+    }
+
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
         database.nonTransactionalExecuteQuery(
             """
@@ -227,8 +368,8 @@ class BrukerRepositoryImpl(
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         val ignored: Unit = when (hendelse) {
-            is Hendelse.SakOpprettet -> TODO()
-            is Hendelse.NyStatusSak -> TODO()
+            is Hendelse.SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
+            is Hendelse.NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
             is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
@@ -310,66 +451,150 @@ class BrukerRepositoryImpl(
             }
 
             for (mottaker in beskjedOpprettet.mottakere) {
-                storeMottaker(beskjedOpprettet.notifikasjonId, mottaker)
+                storeMottaker(
+                    notifikasjonId = beskjedOpprettet.notifikasjonId,
+                    sakId = null,
+                    mottaker
+                )
             }
         }
     }
 
-    private fun Transaction.storeMottaker(notifikasjonId: UUID, mottaker: Mottaker) {
-        val ignored = when (mottaker) {
-            is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
-            is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
-            is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(notifikasjonId, mottaker)
-            is AltinnRolleMottaker -> storeAltinnRolleMottaker(notifikasjonId, mottaker)
+    private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: Hendelse.SakOpprettet) {
+        database.transaction {
+            executeUpdate(
+                """
+                insert into sak(
+                    id, virksomhetsnummer, tittel, lenke, merkelapp
+                )
+                values (?, ?, ? ,?, ?)
+                on conflict on constraint sak_pkey do nothing;
+            """
+            ) {
+                uuid(sakOpprettet.sakId)
+                string(sakOpprettet.virksomhetsnummer)
+                string(sakOpprettet.tittel)
+                string(sakOpprettet.lenke)
+                string(sakOpprettet.merkelapp)
+            }
+
+            for (mottaker in sakOpprettet.mottakere) {
+                storeMottaker(
+                    notifikasjonId = null,
+                    sakId = sakOpprettet.sakId,
+                    mottaker
+                )
+            }
         }
     }
 
-    private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID, mottaker: NærmesteLederMottaker) {
+    private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: Hendelse.NyStatusSak) {
+        database.transaction {
+            executeUpdate(
+                """
+                insert into sak_status(
+                    id, sak_id, status, overstyrt_statustekst, tidspunkt 
+                )
+                values (?, ?, ?, ?, ?)
+                on conflict on constraint sak_status_pkey do nothing;
+            """
+            ) {
+                uuid(nyStatusSak.hendelseId)
+                uuid(nyStatusSak.sakId)
+                string(nyStatusSak.status.name)
+                nullableString(nyStatusSak.overstyrStatustekstMed)
+                timestamptz(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
+            }
+        }
+    }
+
+    private fun Transaction.storeMottaker(notifikasjonId: UUID?, sakId: UUID?, mottaker: Mottaker) {
+        val ignored = when (mottaker) {
+            is NærmesteLederMottaker -> storeNærmesteLederMottaker(
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                mottaker = mottaker
+            )
+            is AltinnMottaker -> storeAltinnMottaker(
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                mottaker = mottaker
+            )
+            is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                mottaker = mottaker
+            )
+            is AltinnRolleMottaker -> storeAltinnRolleMottaker(
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                mottaker = mottaker
+            )
+        }
+    }
+
+    private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID?, sakId: UUID?, mottaker: NærmesteLederMottaker) {
         executeUpdate("""
-            insert into mottaker_digisyfo(notifikasjon_id, virksomhet, fnr_leder, fnr_sykmeldt)
-            values (?, ?, ?, ?)
+            insert into mottaker_digisyfo(notifikasjon_id, sak_id, virksomhet, fnr_leder, fnr_sykmeldt)
+            values (?, ?, ?, ?, ?)
         """) {
-            uuid(notifikasjonId)
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.naermesteLederFnr)
             string(mottaker.ansattFnr)
         }
     }
 
-    private fun Transaction.storeAltinnMottaker(notifikasjonId: UUID, mottaker: AltinnMottaker) {
+    private fun Transaction.storeAltinnMottaker(
+        notifikasjonId: UUID?,
+        sakId: UUID?,
+        mottaker: AltinnMottaker
+    ) {
         executeUpdate("""
             insert into mottaker_altinn_enkeltrettighet
-                (notifikasjon_id, virksomhet, service_code, service_edition)
-            values (?, ?, ?, ?)
+                (notifikasjon_id, sak_id, virksomhet, service_code, service_edition)
+            values (?, ?, ?, ?, ?)
         """) {
-            uuid(notifikasjonId)
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.serviceCode)
             string(mottaker.serviceEdition)
         }
     }
 
-    private fun Transaction.storeAltinnReporteeMottaker(notifikasjonId: UUID, mottaker: AltinnReporteeMottaker) {
+    private fun Transaction.storeAltinnReporteeMottaker(
+        notifikasjonId: UUID?,
+        sakId: UUID?,
+        mottaker: AltinnReporteeMottaker
+    ) {
         executeUpdate("""
             insert into mottaker_altinn_reportee
-                (notifikasjon_id, virksomhet, fnr)
-            values (?, ?, ?)
+                (notifikasjon_id, sak_id, virksomhet, fnr)
+            values (?, ?, ?, ?)
         """) {
-            uuid(notifikasjonId)
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.fnr)
         }
     }
 
-    private fun Transaction.storeAltinnRolleMottaker(notifikasjonId: UUID, mottaker: AltinnRolleMottaker) {
+    private fun Transaction.storeAltinnRolleMottaker(
+        notifikasjonId: UUID?,
+        sakId: UUID?,
+        mottaker: AltinnRolleMottaker
+    ) {
         executeUpdate(
             """
             insert into mottaker_altinn_rolle
-                (notifikasjon_id, virksomhet, role_definition_code, role_definition_id)
-            values (?, ?, ?, ?)
+                (notifikasjon_id, sak_id, virksomhet, role_definition_code, role_definition_id)
+            values (?, ?, ?, ?, ?)
         """
         ) {
-            uuid(notifikasjonId)
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
             string(mottaker.roleDefinitionCode)
             string(mottaker.roleDefinitionId)
@@ -408,7 +633,11 @@ class BrukerRepositoryImpl(
             }
 
             for (mottaker in oppgaveOpprettet.mottakere) {
-                storeMottaker(oppgaveOpprettet.notifikasjonId, mottaker)
+                storeMottaker(
+                    notifikasjonId = oppgaveOpprettet.notifikasjonId,
+                    sakId = null,
+                    mottaker
+                )
             }
         }
     }

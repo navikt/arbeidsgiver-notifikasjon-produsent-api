@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotencyPrefix
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -19,7 +19,7 @@ object ProdusentModel {
         val opprettetTidspunkt: OffsetDateTime,
     ) {
         fun statusoppdateringIkkeRegistrert() =
-            statusoppdateringer.any { it.idempotencyKey.startsWith(IdempotencyPrefix.INITIAL.serialized) }
+            statusoppdateringer.any { it.idempotencyKey.startsWith(IdempotenceKey.initial()) }
     }
 
     sealed interface Notifikasjon {

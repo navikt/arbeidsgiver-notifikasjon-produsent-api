@@ -1,33 +1,32 @@
 type Query {
     notifikasjoner: NotifikasjonerResultat!
     saker(
-        first: Int,
-        after: String,
         virksomhetsnummer: String!
-    ): SakConnection!
+    ): SakerResultat!
     whoami: String
 }
-type SakConnection {
-    edges: [SakEdge!]!
-    pageInfo: PageInfo!
-}
-type PageInfo {
-    hasNextPage: Boolean!
-    endCursor: String!
-}
-type SakEdge {
-    node: Sak!
-    cursor: String!
+type SakerResultat {
+    saker: [Sak!]!
+    feilAltinn: Boolean!
 }
 type Sak {
+    id: ID!
     virksomhet: Virksomhet!
-    sisteStatus: Statusoppdatering!
-}
-type Statusoppdatering {
-    status: String!
     tittel: String!
     lenke: String!
+    merkelapp: String!
+    sisteStatus: SakStatus!
+}
+type SakStatus {
+    type: SakStatusType!
+    tekst: String!
     tidspunkt: ISO8601DateTime!
+}
+enum SakStatusType {
+    MOTTATT
+    UNDER_BEHANDLING
+    FERDIG
+
 }
 type NotifikasjonerResultat {
     notifikasjoner: [Notifikasjon!]!

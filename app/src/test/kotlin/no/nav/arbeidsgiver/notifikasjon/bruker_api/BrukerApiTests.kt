@@ -2,10 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import io.ktor.http.*
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
@@ -105,14 +103,6 @@ class BrukerApiTests : DescribeSpec({
                     }
                 """.trimIndent()
             )
-
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
 
             it("response inneholder riktig data") {
                 response.getTypedContent<List<BrukerAPI.Notifikasjon>>("notifikasjoner/notifikasjoner").let {

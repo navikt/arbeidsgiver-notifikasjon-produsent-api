@@ -76,40 +76,40 @@ object BrukerAPI {
         }
     }
 
-    @JsonTypeName("SakConnection")
-    data class SakConnection(
-        val edges: List<Edge<Sak>>,
-        val pageInfo: PageInfo,
-        val totaltAntall: Int
-    ) : Connection<Sak>
+    @JsonTypeName("SakerResultat")
+    data class SakerResultat(
+        val saker: List<Sak>,
+        val feilAltinn: Boolean
+    )
 
     @JsonTypeName("Sak")
     data class Sak(
-        val virksomhet: Virksomhet,
-        val sisteStatus: Statusoppdatering
+        val id: String,
+        val tittel: String,
+        val lenke: String,
+        val merkelapp: String,
+        override val virksomhet: Virksomhet,
+        val sisteStatus: SakStatus
+    ) : WithVirksomhet
+
+
+    @JsonTypeName("SakStatus")
+    data class SakStatus(
+        val type: SakStatusType,
+        val tekst: String,
+        val tidspunkt: OffsetDateTime,
     )
 
-    @JsonTypeName("Statusoppdatering")
-    data class Statusoppdatering(
-        val status: Status,
-        val tidspunkt: OffsetDateTime
-    )
+    enum class SakStatusType(val visningsTekst: String) {
+        MOTTATT("Mottatt"),
+        UNDER_BEHANDLING("Under behandling"),
+        FERDIG("Ferdig");
 
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
-    sealed class Status {
-
-        @JsonTypeName("EgendefinertStatus")
-        data class EgendefinertStatus(
-            val value: String,
-        ) : Status()
-
-        @JsonTypeName("PredefinertStatus")
-        data class PredefinertStatus(
-            val value: String,
-        ) : Status() {
-            enum class StatusEnum {
-                MOTTATT,
-                UNDER_BEHANDLING;
+        companion object {
+            fun fraModel(model: no.nav.arbeidsgiver.notifikasjon.SakStatus) : SakStatusType = when(model) {
+                no.nav.arbeidsgiver.notifikasjon.SakStatus.MOTTATT -> MOTTATT
+                no.nav.arbeidsgiver.notifikasjon.SakStatus.UNDER_BEHANDLING -> UNDER_BEHANDLING
+                no.nav.arbeidsgiver.notifikasjon.SakStatus.FERDIG -> FERDIG
             }
         }
     }
@@ -153,7 +153,6 @@ object BrukerAPI {
 
             resolveSubtypes<Notifikasjon>()
             resolveSubtypes<NotifikasjonKlikketPaaResultat>()
-            resolveSubtypes<Status>()
 
             wire("Query") {
                 dataFetcher("whoami") {
@@ -168,7 +167,8 @@ object BrukerAPI {
 
                 querySaker(
                     altinn = altinn,
-                    brukerRepository = brukerRepository
+                    brukerRepository = brukerRepository,
+                    altinnRolleService = altinnRolleService
                 )
 
                 wire("Oppgave") {
@@ -180,6 +180,12 @@ object BrukerAPI {
                 wire("Beskjed") {
                     coDataFetcher("virksomhet") { env ->
                         fetchVirksomhet<Notifikasjon.Beskjed>(enhetsregisteret, env)
+                    }
+                }
+
+                wire("Sak") {
+                    coDataFetcher("virksomhet") { env ->
+                        fetchVirksomhet<Sak>(enhetsregisteret, env)
                     }
                 }
             }
@@ -274,15 +280,57 @@ object BrukerAPI {
 
     fun TypeRuntimeWiring.Builder.querySaker(
         altinn: Altinn,
+        altinnRolleService: AltinnRolleService,
         brukerRepository: BrukerRepository
     ) {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
-            val first = env.getArgumentOrDefault("first", 3)
-            val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
             coroutineScope {
-                TODO("not implemented")
+                val tilganger = async {
+                    try {
+                        altinn.hentTilganger(
+                            context.fnr,
+                            context.token,
+                            MottakerRegister.servicecodeDefinisjoner,
+                            altinnRolleService.hentRoller(MottakerRegister.rolleDefinisjoner),
+                        )
+                    } catch (e: AltinnrettigheterProxyKlientFallbackException) {
+                        if (e.erDriftsforstyrrelse())
+                            log.info("Henting av Altinn-tilganger feilet", e)
+                        else
+                            log.error("Henting av Altinn-tilganger feilet", e)
+                        null
+                    } catch (e: Exception) {
+                        log.error("Henting av Altinn-tilganger feilet", e)
+                        null
+                    }
+                }
+                val saker = brukerRepository.hentSaker(context.fnr, virksomhetsnummer, tilganger.await().orEmpty())
+                    .map {
+                        Sak(
+                            id = it.sakId.toString(),
+                            tittel = it.tittel,
+                            lenke = it.lenke,
+                            merkelapp = it.merkelapp,
+                            virksomhet = Virksomhet(
+                                virksomhetsnummer = it.virksomhetsnummer,
+                            ),
+                            sisteStatus = it.statuser.map { sakStatus ->
+                                val type = SakStatusType.fraModel(sakStatus.status)
+                                SakStatus(
+                                    type = type,
+                                    tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
+                                    tidspunkt = sakStatus.tidspunkt
+                                )
+                            }.first(),
+                        )
+                    }
+
+                SakerResultat(
+                    saker = saker,
+                    feilAltinn = tilganger.await() == null
+                )
             }
         }
     }

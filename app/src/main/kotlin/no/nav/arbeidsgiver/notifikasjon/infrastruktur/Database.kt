@@ -25,7 +25,7 @@ import java.util.*
  */
 class Database private constructor(
     private val config: Config,
-    private val dataSource: NonBlockingDataSource,
+    private val dataSource: NonBlockingDataSource<*>,
 ) {
     data class Config(
         val host: String,
@@ -38,6 +38,10 @@ class Database private constructor(
     ) {
         val jdbcUrl: String
             get() = "jdbc:postgresql://$host:$port/$database?${jdbcOpts.entries.joinToString("&")}"
+    }
+
+    suspend fun close() {
+        dataSource.close()
     }
 
     companion object {
@@ -76,6 +80,7 @@ class Database private constructor(
             dataSource.withFlyway(config.migrationLocations) {
                 migrate()
             }
+
             return Database(config, dataSource)
         }
 
@@ -239,6 +244,9 @@ class ParameterSetters(
         preparedStatement.setString(index++, value)
 
     fun uuid(value: UUID) =
+        preparedStatement.setObject(index++, value)
+
+    fun nullableUuid(value: UUID?) =
         preparedStatement.setObject(index++, value)
 
     fun timestamptz(value: OffsetDateTime) =
