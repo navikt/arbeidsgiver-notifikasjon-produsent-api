@@ -6,10 +6,6 @@ permalink: /api/
 
 Interaktiv demo av API [er tilgjengelig på labs.nais.io](https://notifikasjon-fake-produsent-api.labs.nais.io/).
 
-# Onboarding og tilganger
-
-For å få tilgang til API-et må teamet ditt godta [vilkårene](vilkaar.md), ved å registerer dere i repoet [navikt/arbeidsgiver-notifikasjon-produsenter](https://github.com/navikt/arbeidsgiver-notifikasjon-produsenter).
-Der er også tilgangsstyring spesifisert.
 
 # Autentisering
 Tjenesten deres må autentisere seg med Azure AD, type server–server, som [beskrevet i nais-dokumentasjonen](https://doc.nais.io/security/auth/azure-ad/).
@@ -26,65 +22,6 @@ prod | `https://ag-notifikasjon-produsent-api.intern.nav.no/api/graphql`
 # GraphQL over HTTP
 
 Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de offisielle anbefalingene: [https://graphql.org/learn/serving-over-http/](https://graphql.org/learn/serving-over-http/). 
-
-Et minimalt eksempel mot `https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql` (dev-miljøet) er:
-```http request
-POST /api/graphql HTTP/1.1
-Host: ag-notifikasjon-produsent-api.dev.nav.no
-Authorization: Bearer ${AZURE_AD_BEARER_TOKEN}
-Content-type: application/json
-
-{
-  "query": "whoami"
-}
-```
-
-# Eksempel på opprettelse av beskjed
-Når dere lager en GraphQL-spørring burde dere bruke variabler for å skille
-det statiske og dynamiske i spørringene.
-
-```graphql
-mutation OpprettNyBeskjed(
-  $eksternId: String!
-  $virksomhetsnummer: String!
-  $lenke: String!
-) {
-  nyBeskjed(nyBeskjed: {
-    metadata: {
-      eksternId: $eksternId
-    }
-    mottaker: {
-      altinn: {
-        serviceCode: "1234"
-        serviceEdition: "1"
-        virksomhetsnummer: $virksomhetsnummer
-      }
-    }
-    notifikasjon: {
-      merkelapp: "EtSakssystem"
-      tekst: "Du har fått svar på din søknad"
-      lenke: $lenke
-    }
-  }) {
-    __typename
-    ... on NyBeskjedVellykket {
-      id
-    }
-    ... on Error {
-      feilmelding
-    }
-  }
-}
-```
-
-Med variabler:
-```json
-{
-  "eksternId": "1234-oppdatering",
-  "virksomhetsnummer": "012345678",
-  "lenke": "https://dev.nav.no/sakssystem/?sak=1234"
-}
-```
 
 ## GraphQL Schema Types
 
