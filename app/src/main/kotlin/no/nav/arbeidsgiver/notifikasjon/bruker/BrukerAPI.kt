@@ -5,10 +5,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
@@ -17,13 +15,10 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import java.time.OffsetDateTime
 import java.util.*
 
 object BrukerAPI {
-    private val log = logger()
-
     private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-bruker-api"
 
     private val notifikasjonerHentetCount = Health.meterRegistry.counter("notifikasjoner_hentet")
@@ -147,6 +142,7 @@ object BrukerAPI {
         enhetsregisteret: Enhetsregisteret,
         brukerRepository: BrukerRepository,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+        tilgangerService: TilgangerService = TilgangerServiceImpl(),
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
 
@@ -163,13 +159,15 @@ object BrukerAPI {
                 queryNotifikasjoner(
                     altinn = altinn,
                     brukerRepository = brukerRepository,
-                    altinnRolleService = altinnRolleService
+                    altinnRolleService = altinnRolleService,
+                    tilgangerService = tilgangerService,
                 )
 
                 querySaker(
                     altinn = altinn,
                     brukerRepository = brukerRepository,
-                    altinnRolleService = altinnRolleService
+                    altinnRolleService = altinnRolleService,
+                    tilgangerService = tilgangerService,
                 )
 
                 wire("Oppgave") {
@@ -204,12 +202,13 @@ object BrukerAPI {
         altinn: Altinn,
         brukerRepository: BrukerRepository,
         altinnRolleService: AltinnRolleService,
+        tilgangerService: TilgangerService,
     ) {
         coDataFetcher("notifikasjoner") { env ->
 
             val context = env.getContext<Context>()
             coroutineScope {
-                val tilganger = async { hentTilganger(altinn, context, altinnRolleService) }
+                val tilganger = async { tilgangerService.hentTilganger(altinn, context, altinnRolleService) }
 
                 val notifikasjoner = brukerRepository
                     .hentNotifikasjoner(
@@ -265,13 +264,14 @@ object BrukerAPI {
     fun TypeRuntimeWiring.Builder.querySaker(
         altinn: Altinn,
         altinnRolleService: AltinnRolleService,
-        brukerRepository: BrukerRepository
+        brukerRepository: BrukerRepository,
+        tilgangerService: TilgangerService,
     ) {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
             coroutineScope {
-                val tilganger = async { hentTilganger(altinn, context, altinnRolleService) }
+                val tilganger = async { tilgangerService.hentTilganger(altinn, context, altinnRolleService) }
                 val saker = brukerRepository.hentSaker(context.fnr, virksomhetsnummer, tilganger.await().orEmpty())
                     .map {
                         Sak(
@@ -301,29 +301,6 @@ object BrukerAPI {
         }
     }
 
-    private suspend fun hentTilganger(
-        altinn: Altinn,
-        context: Context,
-        altinnRolleService: AltinnRolleService
-    ): List<BrukerModel.Tilgang>? {
-        return try {
-            altinn.hentTilganger(
-                context.fnr,
-                context.token,
-                MottakerRegister.servicecodeDefinisjoner,
-                altinnRolleService.hentRoller(MottakerRegister.rolleDefinisjoner),
-            )
-        } catch (e: AltinnrettigheterProxyKlientFallbackException) {
-            if (e.erDriftsforstyrrelse())
-                log.info("Henting av Altinn-tilganger feilet", e)
-            else
-                log.error("Henting av Altinn-tilganger feilet", e)
-            null
-        } catch (e: Exception) {
-            log.error("Henting av Altinn-tilganger feilet", e)
-            null
-        }
-    }
 
     fun TypeRuntimeWiring.Builder.mutationBrukerKlikketPa(
         brukerRepository: BrukerRepository,
