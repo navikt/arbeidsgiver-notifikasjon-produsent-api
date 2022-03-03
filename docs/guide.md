@@ -3,20 +3,55 @@ layout: page
 title: Guide
 permalink: /guide/
 ---
+# Onboarding og tilganger
 
-Når dere ønsker å opprette en notifikasjon, gjør et kall til GraphQL-endepunktet for produsenter ([klikk her for skjema](https://github.com/navikt/arbeidsgiver-notifikasjon-produsent-api/blob/main/app/src/main/resources/produsent.graphql)). Endepunktet er tilgangsstyrt basert på Azure AD-token og produsent-registeret som beskrevet over.
+For å få tilgang til API-et må teamet ditt godta [vilkårene](vilkaar.md), ved å registerer dere i repoet [navikt/arbeidsgiver-notifikasjon-produsenter](https://github.com/navikt/arbeidsgiver-notifikasjon-produsenter).
+Der er også tilgangsstyring spesifisert.
 
+# Eksempel på opprettelse av beskjed
+Når dere lager en GraphQL-spørring burde dere bruke variabler for å skille
+det statiske og dynamiske i spørringene.
 
-# Adressering av mottaker
-Du kan spesifisere mottakerene av notifikasjonen på to måter: basert på Altinn-tilgang og digisyfos nærmeste leder. Det er viktig å spesifisere mottaker riktig, så eventuelle personopplysninger kun vises til de med tjenestelig behov. Har dere behov for en annen måte å spesifisere mottakere på, så kontakt oss!
+```graphql
+mutation OpprettNyBeskjed(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $lenke: String!
+) {
+  nyBeskjed(nyBeskjed: {
+    metadata: {
+      eksternId: $eksternId
+    }
+    mottaker: {
+      altinn: {
+        serviceCode: "1234"
+        serviceEdition: "1"
+        virksomhetsnummer: $virksomhetsnummer
+      }
+    }
+    notifikasjon: {
+      merkelapp: "EtSakssystem"
+      tekst: "Du har fått svar på din søknad"
+      lenke: $lenke
+    }
+  }) {
+    __typename
+    ... on NyBeskjedVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+```
 
-## Altinn-tilgang
-Du kan sende en notifikasjon til alle med en gitt Altinn-tilgang (servicecode og serviceedition) i en virksomhet. Du må da oppgi:
+Med variabler:
+```json
+{
+  "eksternId": "1234-oppdatering",
+  "virksomhetsnummer": "012345678",
+  "lenke": "https://dev.nav.no/sakssystem/?sak=1234"
+}
+```
 
-- virksomhetsnummer
-- service code i Altinn
-- service edition i Altinn
-
-Hver gang en arbeidsgiver logger inn i en NAV-tjeneste, vil vi sjekke hvilke tilganger de har, og vise de notifikasjonene de har tilgang til.
-
-## Digisyfo (nærmeste leder)
