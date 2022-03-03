@@ -1,7 +1,7 @@
 ---
 layout: page
-title: Teknisk dokumentasjon
-permalink: /teknisk/
+title: Guide
+permalink: /guide/
 ---
 
 Når dere ønsker å opprette en notifikasjon, gjør et kall til GraphQL-endepunktet for produsenter ([klikk her for skjema](https://github.com/navikt/arbeidsgiver-notifikasjon-produsent-api/blob/main/app/src/main/resources/produsent.graphql)). Endepunktet er tilgangsstyrt basert på Azure AD-token og produsent-registeret som beskrevet over.
