@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
@@ -208,25 +209,7 @@ object BrukerAPI {
 
             val context = env.getContext<Context>()
             coroutineScope {
-                val tilganger = async {
-                    try {
-                        altinn.hentTilganger(
-                            context.fnr,
-                            context.token,
-                            MottakerRegister.servicecodeDefinisjoner,
-                            altinnRolleService.hentRoller(MottakerRegister.rolleDefinisjoner),
-                        )
-                    } catch (e: AltinnrettigheterProxyKlientFallbackException) {
-                        if (e.erDriftsforstyrrelse())
-                            log.info("Henting av Altinn-tilganger feilet", e)
-                        else
-                            log.error("Henting av Altinn-tilganger feilet", e)
-                        null
-                    } catch (e: Exception) {
-                        log.error("Henting av Altinn-tilganger feilet", e)
-                        null
-                    }
-                }
+                val tilganger = async { hentTilganger(altinn, context, altinnRolleService) }
 
                 val notifikasjoner = brukerRepository
                     .hentNotifikasjoner(
@@ -278,6 +261,7 @@ object BrukerAPI {
         }
     }
 
+
     fun TypeRuntimeWiring.Builder.querySaker(
         altinn: Altinn,
         altinnRolleService: AltinnRolleService,
@@ -287,25 +271,7 @@ object BrukerAPI {
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
             coroutineScope {
-                val tilganger = async {
-                    try {
-                        altinn.hentTilganger(
-                            context.fnr,
-                            context.token,
-                            MottakerRegister.servicecodeDefinisjoner,
-                            altinnRolleService.hentRoller(MottakerRegister.rolleDefinisjoner),
-                        )
-                    } catch (e: AltinnrettigheterProxyKlientFallbackException) {
-                        if (e.erDriftsforstyrrelse())
-                            log.info("Henting av Altinn-tilganger feilet", e)
-                        else
-                            log.error("Henting av Altinn-tilganger feilet", e)
-                        null
-                    } catch (e: Exception) {
-                        log.error("Henting av Altinn-tilganger feilet", e)
-                        null
-                    }
-                }
+                val tilganger = async { hentTilganger(altinn, context, altinnRolleService) }
                 val saker = brukerRepository.hentSaker(context.fnr, virksomhetsnummer, tilganger.await().orEmpty())
                     .map {
                         Sak(
@@ -332,6 +298,30 @@ object BrukerAPI {
                     feilAltinn = tilganger.await() == null
                 )
             }
+        }
+    }
+
+    private suspend fun hentTilganger(
+        altinn: Altinn,
+        context: Context,
+        altinnRolleService: AltinnRolleService
+    ): List<BrukerModel.Tilgang>? {
+        return try {
+            altinn.hentTilganger(
+                context.fnr,
+                context.token,
+                MottakerRegister.servicecodeDefinisjoner,
+                altinnRolleService.hentRoller(MottakerRegister.rolleDefinisjoner),
+            )
+        } catch (e: AltinnrettigheterProxyKlientFallbackException) {
+            if (e.erDriftsforstyrrelse())
+                log.info("Henting av Altinn-tilganger feilet", e)
+            else
+                log.error("Henting av Altinn-tilganger feilet", e)
+            null
+        } catch (e: Exception) {
+            log.error("Henting av Altinn-tilganger feilet", e)
+            null
         }
     }
 
