@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NarmesteLederLeesahDeserializer
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
@@ -125,12 +126,15 @@ object Bruker {
             }
 
             val graphql = async {
-                BrukerAPI.createBrukerGraphQL(
+                val tilgangerService = TilgangerServiceImpl(
                     altinn = altinn,
                     altinnRolleService = altinnRolleService.await(),
+                )
+                BrukerAPI.createBrukerGraphQL(
                     enhetsregisteret = enhetsregisteret,
                     brukerRepository = brukerRepositoryAsync.await(),
                     kafkaProducer = createKafkaProducer(),
+                    tilgangerService = tilgangerService,
                 )
             }
 

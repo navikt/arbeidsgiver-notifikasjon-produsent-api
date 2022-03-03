@@ -9,19 +9,18 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegist
 
 interface TilgangerService {
     suspend fun hentTilganger(
-        altinn: Altinn,
         context: BrukerAPI.Context,
-        altinnRolleService: AltinnRolleService
     ): List<BrukerModel.Tilgang>?
 }
 
-class TilgangerServiceImpl: TilgangerService {
+class TilgangerServiceImpl(
+    private val altinn: Altinn,
+    private val altinnRolleService: AltinnRolleService,
+): TilgangerService {
     private val log = logger()
 
     override suspend fun hentTilganger(
-        altinn: Altinn,
         context: BrukerAPI.Context,
-        altinnRolleService: AltinnRolleService
     ): List<BrukerModel.Tilgang>? {
         return try {
             altinn.hentTilganger(

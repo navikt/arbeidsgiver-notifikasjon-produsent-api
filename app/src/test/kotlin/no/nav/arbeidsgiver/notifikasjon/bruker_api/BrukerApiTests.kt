@@ -9,6 +9,7 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
@@ -19,8 +20,10 @@ class BrukerApiTests : DescribeSpec({
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = AltinnStub(),
-            altinnRolleService = mockk(),
+            tilgangerService = TilgangerServiceImpl(
+                altinn = AltinnStub(),
+                altinnRolleService = mockk(),
+            ),
             enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
             brukerRepository = queryModel,
             kafkaProducer = mockk()
