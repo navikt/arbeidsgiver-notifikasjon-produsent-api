@@ -1,13 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent_api
 
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.collections.shouldNotBeOneOf
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.SaksStatus

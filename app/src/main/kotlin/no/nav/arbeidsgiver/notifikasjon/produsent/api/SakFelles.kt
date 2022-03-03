@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import no.nav.arbeidsgiver.notifikasjon.SakStatus
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakStatus
 import java.time.OffsetDateTime
 import java.util.*
 

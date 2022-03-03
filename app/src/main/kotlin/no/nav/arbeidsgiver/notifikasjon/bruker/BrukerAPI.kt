@@ -7,9 +7,12 @@ import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
@@ -101,10 +104,10 @@ object BrukerAPI {
         FERDIG("Ferdig");
 
         companion object {
-            fun fraModel(model: no.nav.arbeidsgiver.notifikasjon.SakStatus) : SakStatusType = when(model) {
-                no.nav.arbeidsgiver.notifikasjon.SakStatus.MOTTATT -> MOTTATT
-                no.nav.arbeidsgiver.notifikasjon.SakStatus.UNDER_BEHANDLING -> UNDER_BEHANDLING
-                no.nav.arbeidsgiver.notifikasjon.SakStatus.FERDIG -> FERDIG
+            fun fraModel(model: HendelseModel.SakStatus) : SakStatusType = when(model) {
+                HendelseModel.SakStatus.MOTTATT -> MOTTATT
+                HendelseModel.SakStatus.UNDER_BEHANDLING -> UNDER_BEHANDLING
+                HendelseModel.SakStatus.FERDIG -> FERDIG
             }
         }
     }
@@ -302,7 +305,7 @@ object BrukerAPI {
             val virksomhetsnummer = brukerRepository.virksomhetsnummerForNotifikasjon(notifikasjonsid)
                 ?: return@coDataFetcher UgyldigId("")
 
-            val hendelse = Hendelse.BrukerKlikket(
+            val hendelse = BrukerKlikket(
                 hendelseId = UUID.randomUUID(),
                 notifikasjonId = notifikasjonsid,
                 fnr = context.fnr,

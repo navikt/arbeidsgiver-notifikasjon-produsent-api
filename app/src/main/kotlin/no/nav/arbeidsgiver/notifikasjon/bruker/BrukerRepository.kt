@@ -1,14 +1,29 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.OffsetDateTime
 import java.util.*
-import no.nav.arbeidsgiver.notifikasjon.SakStatus as Status
 
 interface BrukerModel {
     sealed interface Tilgang {
@@ -78,7 +93,7 @@ interface BrukerModel {
 
     data class SakStatus(
         val sakStatusId: UUID,
-        val status: Status,
+        val status: HendelseModel.SakStatus,
         val overstyrtStatustekst: String?,
         val tidspunkt: OffsetDateTime
     )
@@ -368,16 +383,16 @@ class BrukerRepositoryImpl(
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         val ignored: Unit = when (hendelse) {
-            is Hendelse.SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
-            is Hendelse.NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
-            is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
-            is Hendelse.BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
-            is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
-            is Hendelse.OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
-            is Hendelse.SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
-            is Hendelse.HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
-            is Hendelse.EksterntVarselFeilet -> Unit
-            is Hendelse.EksterntVarselVellykket -> Unit
+            is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
+            is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
+            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
+            is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
+            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
+            is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
+            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
+            is EksterntVarselFeilet -> Unit
+            is EksterntVarselVellykket -> Unit
         }
     }
 
@@ -395,7 +410,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
+    private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført) {
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
@@ -407,7 +422,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: Hendelse.BrukerKlikket) {
+    private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: BrukerKlikket) {
         database.nonTransactionalExecuteUpdate(
             """
             INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
@@ -420,7 +435,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
+    private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: BeskjedOpprettet) {
         database.transaction {
             executeUpdate(
                 """
@@ -460,7 +475,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: Hendelse.SakOpprettet) {
+    private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: SakOpprettet) {
         database.transaction {
             executeUpdate(
                 """
@@ -488,7 +503,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: Hendelse.NyStatusSak) {
+    private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: NyStatusSak) {
         database.transaction {
             executeUpdate(
                 """
@@ -602,7 +617,7 @@ class BrukerRepositoryImpl(
     }
 
 
-    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
+    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
         database.transaction {
             executeUpdate(
                 """

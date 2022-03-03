@@ -1,7 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import java.time.LocalDateTime
 import java.util.*
 
@@ -62,7 +64,7 @@ private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notif
 
 fun EksternVarselTilstand.Utført.toHendelse(): Hendelse =
     when (this.response) {
-        is AltinnVarselKlient.AltinnResponse.Ok -> Hendelse.EksterntVarselVellykket(
+        is AltinnVarselKlient.AltinnResponse.Ok -> EksterntVarselVellykket(
             virksomhetsnummer = data.eksternVarsel.fnrEllerOrgnr,
             notifikasjonId = data.notifikasjonId,
             hendelseId = UUID.randomUUID(),
@@ -71,7 +73,7 @@ fun EksternVarselTilstand.Utført.toHendelse(): Hendelse =
             varselId = data.varselId,
             råRespons = response.rå
         )
-        is AltinnVarselKlient.AltinnResponse.Feil -> Hendelse.EksterntVarselFeilet(
+        is AltinnVarselKlient.AltinnResponse.Feil -> EksterntVarselFeilet(
             virksomhetsnummer = data.eksternVarsel.fnrEllerOrgnr,
             notifikasjonId = data.notifikasjonId,
             hendelseId = UUID.randomUUID(),

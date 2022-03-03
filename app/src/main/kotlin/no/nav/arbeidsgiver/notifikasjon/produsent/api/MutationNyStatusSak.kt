@@ -3,7 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
@@ -62,7 +63,7 @@ class MutationNyStatusSak(
         id: UUID,
         status: NyStatusSakInput,
     ): NyStatusSakResultat {
-        val sak = produsentRepository.hentSak(sakId = id)
+        val sak = produsentRepository.hentSak(id)
             ?: return Error.SakFinnesIkke("sak med id=$id finnes ikke")
         return nyStatusSak(context = context, sak = sak, status = status)
     }
@@ -104,7 +105,7 @@ class MutationNyStatusSak(
 
         return when {
             existing == null -> {
-                val nyStatusSakHendelse = Hendelse.NyStatusSak(
+                val nyStatusSakHendelse = NyStatusSak(
                     hendelseId = hendelseId,
                     virksomhetsnummer = sak.virksomhetsnummer,
                     produsentId = produsent.id,

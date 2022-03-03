@@ -6,10 +6,11 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.Bruker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.SakStatus
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
@@ -35,7 +36,7 @@ class QuerySakerTests : DescribeSpec({
     )
 
     describe("Query.saker") {
-        val sakOpprettet = Hendelse.SakOpprettet(
+        val sakOpprettet = SakOpprettet(
             hendelseId = uuid("0"),
             virksomhetsnummer = "42",
             produsentId = "test",
@@ -60,7 +61,7 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("med sak og status") {
-            val statusSak = Hendelse.NyStatusSak(
+            val statusSak = NyStatusSak(
                 hendelseId = uuid("1"),
                 virksomhetsnummer = sakOpprettet.virksomhetsnummer,
                 produsentId = sakOpprettet.produsentId,

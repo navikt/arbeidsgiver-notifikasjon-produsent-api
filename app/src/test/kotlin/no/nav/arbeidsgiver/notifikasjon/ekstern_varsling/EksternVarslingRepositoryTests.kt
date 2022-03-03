@@ -11,7 +11,12 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
 import kotlinx.coroutines.delay
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
@@ -21,7 +26,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
 
-    val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+    val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
@@ -164,10 +169,10 @@ class EksternVarslingRepositoryTests: DescribeSpec({
 
 
         it("har fått to varsler av forskjellig type") {
-            varsel1 shouldNot beNull();
+            varsel1 shouldNot beNull()
             varsel1 as EksternVarselTilstand
 
-            varsel2 shouldNot beNull();
+            varsel2 shouldNot beNull()
             varsel2 as EksternVarselTilstand
 
             val type1 = varsel1.data.eksternVarsel::class

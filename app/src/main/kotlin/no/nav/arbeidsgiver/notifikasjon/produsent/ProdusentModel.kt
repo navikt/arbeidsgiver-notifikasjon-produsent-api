@@ -1,6 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarsel
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakStatus
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import java.time.OffsetDateTime
 import java.util.*
@@ -115,7 +121,7 @@ object ProdusentModel {
     )
 }
 
-fun Hendelse.BeskjedOpprettet.tilProdusentModel(): ProdusentModel.Beskjed =
+fun BeskjedOpprettet.tilProdusentModel(): ProdusentModel.Beskjed =
     ProdusentModel.Beskjed(
         id = this.notifikasjonId,
         merkelapp = this.merkelapp,
@@ -130,7 +136,7 @@ fun Hendelse.BeskjedOpprettet.tilProdusentModel(): ProdusentModel.Beskjed =
         virksomhetsnummer = this.virksomhetsnummer,
     )
 
-fun Hendelse.OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
+fun OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
     ProdusentModel.Oppgave(
         id = this.notifikasjonId,
         merkelapp = this.merkelapp,

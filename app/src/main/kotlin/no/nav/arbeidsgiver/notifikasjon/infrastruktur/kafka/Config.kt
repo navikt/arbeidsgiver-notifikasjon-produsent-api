@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
