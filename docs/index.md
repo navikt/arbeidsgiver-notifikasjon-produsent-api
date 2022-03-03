@@ -3,14 +3,12 @@ layout: page
 title: Introduksjon
 permalink: /
 ---
-Notfikasjoner for arbeidsgivere gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker å sende notifkasjoner om på notifkasjonsplatformen. Se hvordan det ser ut på [testversjonen i labs](https://arbeidsgiver.labs.nais.io/min-side-arbeidsgiver/?) . 
+Notfikasjoner og saker gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker å sende notifkasjoner om på notifkasjonsplatformen. Dere kan også velge å vise en søknad eller skjema som en «sak» på Min side – arbeidsgiver så arbeidsgiveren lett kan finne den igjen. Se hvordan det ser ut på [testversjonen i labs](https://arbeidsgiver.labs.nais.io/min-side-arbeidsgiver/?) . 
 
 ## Hvilket problem skal vi løse? 
 
-- __For arbedsgivere:__
-Arbeidsgivere må gå rundt og lete på mange steder for å få kontroll på hva de må gjøre og hva som skjer med saken deres.
-I tilegg kan arbeidsgiverne ha mange forskjellig virksomheter å holde styr på.
-Dette skaper en usikkerhet og et unødvendig merarbeide for arbeidgsiver som ofte har en travel hverdag.
+- __For arbeidsgivere:__
+Arbeidsgivere må gå rundt og lete på mange steder for å få kontroll på hva de må gjøre og hva som skjer med saken deres. Arbeidsgiver sliter også med å finne tilbake til skjemaer og søknader de sendt inn til NAV. Dette skaper en usikkerhet og et unødvendig merarbeide for arbeidgsiver som ofte har en travel hverdag.
 
 - __Internt i NAV:__
 Tidligere har Min side - arbeidgsiver integrert mot API-er for å kunne vise at noe krever arbeidsgivers oppmerksomhet på en viss tjeneste. Dette har vist seg å være vanskelig å vedlikeholde, da API-er endres og dataen blir upålitilig. De enkelte teamene føler lite eierskap til hva som vises på Min side - arbeidsgiver og teamet vårt blir fort en flaskehals. 
@@ -27,21 +25,12 @@ Når arbeidsgiver trykker på bjella kan de se oppgaver og beskjeder på tvers a
 ![Når man trykker på bjella ekspandere notfikasjonerne ut](images/Bjella%20expanded.png)
 
 
-Bjella med notifikasjoner er en egen NPM-pakke som hvert enkelt team i tilegg kan plassere i bedriftsmenyen i sin applikasjon (eller direkte i applikasjonen hvis dere ikke bruker bedriftsmenyn). Dette gjør det enklere for arbeidgsiver å kunne navigere mellom oppgaver og beskjeder i forskjellige applikasjoner uten å alltid må inom Min side - arbeidgsiver. 
-
-
-
-## Sånn funker det 
-
 
 __Beskjed__
 
 Dette er en typisk informasjonsmelding til arbeidsgiver. Denne krever ikke nødvendigvis noe mer handling fra arbeidsgiver. For eksempel, «Vi har mottat en søknad...». 
 
 ![](images/beskjed.svg) 
-
-
-
 
 
 __Oppgave__
@@ -52,44 +41,26 @@ Oppgave brukes når du trenger at arbeidsgiver skal gjøre en konkret handling. 
 
 
 
-__Hva med varsler på e-post eller SMS?__
+__Varsler på e-post eller SMS__
 
-Når dere oppretter en notifikasjon velger dere om denne skal varsles eksternt i tillegg. SMS eller e-post skal ikke inneholde noen personopplysninger men si generelt hva varslet gjelder. T ex “_Du har en ny sykemelding. Logg inn på NAV på Min side – arbeidsgiver for å finne den_”. Se bruksvilkårene for fler detaljer. 
+Vi støtter ekstern varsling på SMS eller e-post der dere som produsent har kontakinformasjon. 
 
-**Ekstern varsling med kontaktinformasjon:**
-Vi støtter ekstern varsling der dere som produsent har kontaktinformasjon (telefonnummer eller e-postadresse) + virksomhetsnummer til den som skal varsles. 
 
-**Ekstern varsling basert på service code I Altinn - planlagt:**
-Vil dere sende eksternt varslet til arbeidsgiver som har tilgang til deres tjeneste basert på tilgang i Altinn? Ta kontakt med oss så vi kan prioritere utvikling av dette!
 
-__Hvor lenge vises notifikasjonen for mottakere og lagres i loggene?__
+## Sak
+Lag en sak og bruk statusoppdatering-event for at vise en søknad eller skjema som en «sak» på Min side – arbeidsgiver så arbeidsgiveren lett kan finne den igjen.  
 
-Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere fortsatt har tilgang å se dem og notifikasjonen ikke er slettet. Dere som produsent må derfor vurdere hvor lenge notifikasjonen bør vises for mottakeren og lagres i loggene. Dere utfør sletting med hjelp av våre API-er for sletting, se [API dokumentasjon](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/). Vi jobber med funksjonalitet der produsenten vid opprettelse av en notifikasjon kan definere hvor lenge den skal vises for mottakeren og hvor lenge loggene skal lagres.
+Hvis en sak eller søknad har endret status kan produsenten sende et Statusoppdatering-event. Produsenten må velge én av våre 3 globale statuser: MOTTATT, UNDER_BEHANDLING eller FERDIG. Hvis produsenten ønsker, kan teksten i statusen overstyres med en egen tekst t ex «Venter på dokumentasjon».  
 
-__Hva vises i notifikasjonen?__
+![Siste saker vises på Min side - arbeidsgiver](images/siste%20saker.png)
 
-Merkelapp bestems av produsenten og skal gjøre det tydelig for mottaker hvilken domene notfifikasjonen er om. T ex sykemeldte eller tiltak. Fet skrift på meldingen betyr at brukern ikke klikket på lenken. Hvilken virksomhet notifikasjonen gjelder vises også. 
 
-Utført oppgave vises med grå ikon i tilegg til teksten "oppgave utført". Beroende av hvordan dere valgt å spesifisere mottakere kan det vare flere i virksomheten som mottat samme oppgave. Oppgaven kan derfor være utført av en annen person en den brukeren som ser "oppgave utført". 
+__Saksprosess:__
+Beskjeder, oppgaver og statusoppdatering kan alle grupperes på en sak for å vise hva som skjedd og kommer å skje med saken.   
+Status: under arbeid  
 
-![](images/forklaring.png)
 
-## Tilgangstyring av mottakere 
-Du kan spesifisere mottakerene av notifikasjonen på to måter: basert på Altinn-tilgang og digisyfos nærmeste leder. Det er viktig å spesifisere mottaker riktig, så eventuelle personopplysninger kun vises til de med tjenestelig behov. Har dere behov for en annen måte å spesifisere mottakere på, så kontakt oss!
-
-__Altinn-tilgang__
-
-Du kan sende en notifikasjon til alle med en gitt Altinn-tilgang (servicecode og serviceedition) i en virksomhet. Du må da oppgi:
-
-* virksomhetsnummer
-* service code i Altinn
-* service edition i Altinn
-
-Hver gang en arbeidsgiver logger inn i en NAV-tjeneste, vil vi sjekke hvilke tilganger de har, og vise de notifikasjonene de har tilgang til.
-
-__Dine sykemeldte__
-
-Vi bruker digisyfo nærmeste leder konsept. 
+![Saken kan ekspanderes for å vise tidligere og kommende hendelser i en sak](images/saksprosess.png)
 
 ## Hvordan komme i gang? 
 - Bruksvilkår: Bli kjent med deres ansvar som produsent og signer [bruksvilkårene](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/bruksvilk%C3%A5r/) .
