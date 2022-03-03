@@ -8,7 +8,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
@@ -137,12 +136,10 @@ object BrukerAPI {
     )
 
     fun createBrukerGraphQL(
-        altinn: Altinn,
-        altinnRolleService: AltinnRolleService,
         enhetsregisteret: Enhetsregisteret,
         brukerRepository: BrukerRepository,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
-        tilgangerService: TilgangerService = TilgangerServiceImpl(),
+        tilgangerService: TilgangerService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
 
@@ -157,16 +154,12 @@ object BrukerAPI {
                 }
 
                 queryNotifikasjoner(
-                    altinn = altinn,
                     brukerRepository = brukerRepository,
-                    altinnRolleService = altinnRolleService,
                     tilgangerService = tilgangerService,
                 )
 
                 querySaker(
-                    altinn = altinn,
                     brukerRepository = brukerRepository,
-                    altinnRolleService = altinnRolleService,
                     tilgangerService = tilgangerService,
                 )
 
@@ -199,16 +192,14 @@ object BrukerAPI {
     )
 
     fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
-        altinn: Altinn,
         brukerRepository: BrukerRepository,
-        altinnRolleService: AltinnRolleService,
         tilgangerService: TilgangerService,
     ) {
         coDataFetcher("notifikasjoner") { env ->
 
             val context = env.getContext<Context>()
             coroutineScope {
-                val tilganger = async { tilgangerService.hentTilganger(altinn, context, altinnRolleService) }
+                val tilganger = async { tilgangerService.hentTilganger(context) }
 
                 val notifikasjoner = brukerRepository
                     .hentNotifikasjoner(
@@ -262,8 +253,6 @@ object BrukerAPI {
 
 
     fun TypeRuntimeWiring.Builder.querySaker(
-        altinn: Altinn,
-        altinnRolleService: AltinnRolleService,
         brukerRepository: BrukerRepository,
         tilgangerService: TilgangerService,
     ) {
@@ -271,7 +260,7 @@ object BrukerAPI {
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
             coroutineScope {
-                val tilganger = async { tilgangerService.hentTilganger(altinn, context, altinnRolleService) }
+                val tilganger = async { tilgangerService.hentTilganger(context) }
                 val saker = brukerRepository.hentSaker(context.fnr, virksomhetsnummer, tilganger.await().orEmpty())
                     .map {
                         Sak(

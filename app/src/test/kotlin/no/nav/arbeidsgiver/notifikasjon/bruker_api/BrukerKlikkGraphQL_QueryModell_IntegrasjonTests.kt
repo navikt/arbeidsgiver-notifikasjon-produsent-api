@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -26,8 +27,10 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = AltinnStub(),
-            altinnRolleService = mockk(),
+            tilgangerService = TilgangerServiceImpl(
+                altinn = AltinnStub(),
+                altinnRolleService = mockk(),
+            ),
             enhetsregisteret = EnhetsregisteretStub(),
             brukerRepository = queryModel,
             kafkaProducer = mockk(),

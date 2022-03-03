@@ -12,6 +12,7 @@ import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -26,8 +27,10 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
 
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            altinn = AltinnStub(),
-            altinnRolleService = mockk(),
+            tilgangerService = TilgangerServiceImpl(
+                altinn = AltinnStub(),
+                altinnRolleService = mockk(),
+            ),
             enhetsregisteret = EnhetsregisteretStub(),
             brukerRepository = queryModel,
             kafkaProducer = kafkaProducer,
