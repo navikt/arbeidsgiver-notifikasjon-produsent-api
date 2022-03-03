@@ -1,10 +1,21 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.EpostVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarsel
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
@@ -12,7 +23,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarsel as EksterntVarselBestilling
 
 class EksternVarslingRepository(
     private val database: Database,
@@ -22,25 +32,25 @@ class EksternVarslingRepository(
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignore: Unit = when (hendelse) {
-            is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
-            is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
-            is Hendelse.EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
-            is Hendelse.EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
-            is Hendelse.HardDelete -> oppdaterModellEtterHardDelete(hendelse)
-            is Hendelse.SoftDelete -> {
+            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
+            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
+            is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
+            is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
+            is SoftDelete -> {
                 /* Garanterer sending (på samme måte som hard delete).
                  * Vi har ikke noe behov for å huske at den er soft-deleted i denne modellen, så
                  * dette er en noop.
                  */
             }
-            is Hendelse.OppgaveUtført -> Unit
-            is Hendelse.BrukerKlikket -> Unit
-            is Hendelse.SakOpprettet -> Unit
-            is Hendelse.NyStatusSak -> Unit
+            is OppgaveUtført -> Unit
+            is BrukerKlikket -> Unit
+            is SakOpprettet -> Unit
+            is NyStatusSak -> Unit
         }
     }
 
-    private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
+    private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: BeskjedOpprettet) {
         insertVarsler(
             varsler = beskjedOpprettet.eksterneVarsler,
             produsentId = beskjedOpprettet.produsentId,
@@ -48,7 +58,7 @@ class EksternVarslingRepository(
         )
     }
 
-    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
+    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
         insertVarsler(
             varsler = oppgaveOpprettet.eksterneVarsler,
             produsentId = oppgaveOpprettet.produsentId,
@@ -56,11 +66,11 @@ class EksternVarslingRepository(
         )
     }
 
-    private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: Hendelse.EksterntVarselFeilet) {
+    private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
         oppdaterUtfall(eksterntVarselFeilet.varselId, eksterntVarselFeilet.råRespons)
     }
 
-    private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: Hendelse.EksterntVarselVellykket) {
+    private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: EksterntVarselVellykket) {
         oppdaterUtfall(eksterntVarselVellykket.varselId, eksterntVarselVellykket.råRespons)
     }
 
@@ -79,7 +89,7 @@ class EksternVarslingRepository(
         }
     }
 
-    private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
+    private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
         database.nonTransactionalExecuteUpdate("""
             update ekstern_varsel_kontaktinfo
             set hard_deleted = true
@@ -97,7 +107,7 @@ class EksternVarslingRepository(
     }
 
     private suspend fun insertVarsler(
-        varsler: List<EksterntVarselBestilling>,
+        varsler: List<EksterntVarsel>,
         produsentId: String,
         notifikasjonsId: UUID,
     ) {

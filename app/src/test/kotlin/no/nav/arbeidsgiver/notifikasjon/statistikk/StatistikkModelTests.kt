@@ -6,10 +6,18 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
-import no.nav.arbeidsgiver.notifikasjon.*
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID
-import no.nav.arbeidsgiver.notifikasjon.Hendelse.EksterntVarselFeilet
-import no.nav.arbeidsgiver.notifikasjon.Hendelse.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HendelseMetadata
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.Statistikk
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.Instant.now
@@ -48,7 +56,7 @@ class StatistikkModelTests : DescribeSpec({
             sendevindu = NKS_ÅPNINGSTID,
             sendeTidspunkt = null,
         )
-        val bestilling = Hendelse.OppgaveOpprettet(
+        val bestilling = OppgaveOpprettet(
             merkelapp = "foo",
             eksternId = "42",
             mottakere = listOf(NærmesteLederMottaker(
@@ -88,7 +96,7 @@ class StatistikkModelTests : DescribeSpec({
             råRespons = NullNode.instance,
         )
 
-        val brukerKlikket = Hendelse.BrukerKlikket(
+        val brukerKlikket = BrukerKlikket(
             virksomhetsnummer = bestilling.virksomhetsnummer,
             fnr = "1234567789",
             hendelseId = UUID.randomUUID(),
@@ -97,7 +105,7 @@ class StatistikkModelTests : DescribeSpec({
             produsentId = null,
         )
 
-        val oppgaveUtført = Hendelse.OppgaveUtført(
+        val oppgaveUtført = OppgaveUtført(
             virksomhetsnummer = bestilling.virksomhetsnummer,
             hendelseId = UUID.randomUUID(),
             notifikasjonId = bestilling.notifikasjonId,

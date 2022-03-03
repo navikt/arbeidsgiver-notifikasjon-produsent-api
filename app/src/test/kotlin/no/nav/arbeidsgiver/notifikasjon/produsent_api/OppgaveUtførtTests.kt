@@ -3,8 +3,11 @@ package no.nav.arbeidsgiver.notifikasjon.produsent_api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
@@ -27,7 +30,7 @@ class OppgaveUtførtTests : DescribeSpec({
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
-    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.OppgaveUtført>()) } returns Unit
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<OppgaveUtført>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -54,7 +57,7 @@ class OppgaveUtførtTests : DescribeSpec({
         val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
         context("Eksisterende oppgave blir utført") {
-            val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+            val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = eksternId,
@@ -95,7 +98,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.OppgaveUtført>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<OppgaveUtført>())
                 }
             }
 
@@ -125,7 +128,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp") {
-            val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+            val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = "feil merkelapp",
                 eksternId = eksternId,
@@ -162,7 +165,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Er ikke oppgave, men beskjed") {
-            val beskjedOpprettet = Hendelse.BeskjedOpprettet(
+            val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = eksternId,
@@ -212,7 +215,7 @@ class OppgaveUtførtTests : DescribeSpec({
         val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
         context("Eksisterende oppgave blir utført") {
-            val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+            val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = eksternId,
@@ -253,7 +256,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.OppgaveUtført>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<OppgaveUtført>())
                 }
             }
 
@@ -283,7 +286,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp men riktig eksternId") {
-            val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+            val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = eksternId,
@@ -320,7 +323,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave med feil eksternId men riktig merkelapp") {
-            val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+            val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = eksternId,
@@ -357,7 +360,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Er ikke oppgave, men beskjed") {
-            val beskjedOpprettet = Hendelse.BeskjedOpprettet(
+            val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = eksternId,

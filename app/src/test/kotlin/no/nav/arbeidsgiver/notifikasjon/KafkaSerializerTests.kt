@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.ValueDeserializer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.ValueSerializer
 import java.time.OffsetDateTime
@@ -18,7 +20,7 @@ class KafkaSerializerTests : DescribeSpec({
         val virksomhetsnummer = "123456789"
 
         context("BeskjedOpprettet") {
-            val b = Hendelse.BeskjedOpprettet(
+            val b = BeskjedOpprettet(
                 tekst = "hallo",
                 merkelapp = "merkelappen",
                 hendelseId = uuid,

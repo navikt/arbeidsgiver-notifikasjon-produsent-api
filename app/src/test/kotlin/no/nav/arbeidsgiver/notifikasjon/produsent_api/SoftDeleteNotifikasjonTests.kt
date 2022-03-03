@@ -6,8 +6,10 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -29,7 +31,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
-    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.SoftDelete>()) } returns Unit
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -55,7 +57,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
     )
     val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
-    val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+    val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "1",
         merkelapp = merkelapp,
         eksternId = eksternId,
@@ -109,7 +111,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.SoftDelete>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>())
                 }
             }
 
@@ -320,7 +322,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.SoftDelete>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>())
                 }
             }
 

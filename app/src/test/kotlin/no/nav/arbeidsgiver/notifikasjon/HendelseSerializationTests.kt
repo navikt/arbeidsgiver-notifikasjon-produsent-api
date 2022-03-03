@@ -2,6 +2,10 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -12,7 +16,7 @@ import java.time.OffsetDateTime
 class HendelseSerializationTests : DescribeSpec({
 
     describe("kun 'mottaker'") {
-        val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+        val oppgaveOpprettet = OppgaveOpprettet(
             virksomhetsnummer = "",
             notifikasjonId = uuid("0"),
             hendelseId = uuid("0"),
@@ -45,7 +49,7 @@ class HendelseSerializationTests : DescribeSpec({
     /* Dette hadde vært fint å få den mer korrekte 'aggregateId' i json, så bare å slette
      * denne testen hvis det endres! */
     describe("har ikke 'aggregateId', men 'notifikasjonId' i HardDelete json") {
-        val oppgaveOpprettet = Hendelse.HardDelete(
+        val oppgaveOpprettet = HardDelete(
             virksomhetsnummer = "",
             aggregateId = uuid("0"),
             hendelseId = uuid("0"),
@@ -64,7 +68,7 @@ class HendelseSerializationTests : DescribeSpec({
     /* Dette hadde vært fint å få den mer korrekte 'aggregateId' i json, så bare å slette
      * denne testen hvis det endres! */
     describe("har ikke 'aggregateId', men 'notifikasjonId' i SoftDelete json") {
-        val oppgaveOpprettet = Hendelse.SoftDelete(
+        val oppgaveOpprettet = SoftDelete(
             virksomhetsnummer = "",
             aggregateId = uuid("0"),
             hendelseId = uuid("0"),
@@ -81,7 +85,7 @@ class HendelseSerializationTests : DescribeSpec({
     }
 
     describe("har ikke 'aggregateId' i json") {
-        val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+        val oppgaveOpprettet = OppgaveOpprettet(
             virksomhetsnummer = "",
             notifikasjonId = uuid("0"),
             hendelseId = uuid("0"),

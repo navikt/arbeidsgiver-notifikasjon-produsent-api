@@ -3,7 +3,14 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
@@ -119,7 +126,7 @@ class MutationNySak(
             produsentId: String,
             kildeAppNavn: String,
             finnRolleId: suspend (String) -> AltinnRolle?,
-        ) = Hendelse.SakOpprettet(
+        ) = SakOpprettet(
             hendelseId = id,
             virksomhetsnummer = virksomhetsnummer,
             produsentId = produsentId,
@@ -137,7 +144,7 @@ class MutationNySak(
             sakId: UUID,
             produsentId: String,
             kildeAppNavn: String,
-        ) = Hendelse.NyStatusSak(
+        ) = NyStatusSak(
             hendelseId = hendelseId,
             virksomhetsnummer = virksomhetsnummer,
             produsentId = produsentId,

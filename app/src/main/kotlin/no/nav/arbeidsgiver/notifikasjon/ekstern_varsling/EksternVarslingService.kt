@@ -4,8 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import no.nav.arbeidsgiver.notifikasjon.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey

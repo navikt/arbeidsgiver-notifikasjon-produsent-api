@@ -6,7 +6,12 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -47,7 +52,7 @@ class EksternVarslingServiceTests : DescribeSpec({
 
     describe("EksternVarslingService#start()") {
         context("LØPENDE sendingsvindu") {
-            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
                 hendelseId = uuid("1"),
@@ -90,7 +95,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             try {
                 consumer.forEachEvent { event ->
                     log.info("message received $event")
-                    if (event is Hendelse.EksterntVarselVellykket) {
+                    if (event is EksterntVarselVellykket) {
                         throw Done()
                     }
                 }
@@ -105,7 +110,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("NKS_ÅPNINGSTID sendingsvindu innenfor nks åpningstid sendes med en gang") {
-            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
                 hendelseId = uuid("1"),
@@ -149,7 +154,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("NKS_ÅPNINGSTID sendingsvindu utenfor nks åpningstid reskjeddullerres") {
-            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
                 hendelseId = uuid("1"),
@@ -193,7 +198,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("DAGTID_IKKE_SØNDAG sendingsvindu innenfor sendes med en gang") {
-            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
                 hendelseId = uuid("1"),
@@ -237,7 +242,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("DAGTID_IKKE_SØNDAG sendingsvindu utenfor reskjedduleres") {
-            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
                 hendelseId = uuid("1"),
@@ -281,7 +286,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("SPESIFISERT sendingsvindu som har passert sendes med en gang") {
-            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
                 hendelseId = uuid("1"),
@@ -324,7 +329,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("SPESIFISERT sendingsvindu som er i fremtid reskjedduleres") {
-            repository.oppdaterModellEtterHendelse(Hendelse.OppgaveOpprettet(
+            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
                 hendelseId = uuid("1"),

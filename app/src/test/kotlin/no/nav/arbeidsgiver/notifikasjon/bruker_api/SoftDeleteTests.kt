@@ -3,8 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import no.nav.arbeidsgiver.notifikasjon.Bruker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
@@ -30,7 +31,7 @@ class SoftDeleteTests : DescribeSpec({
             virksomhetsnummer = "1337"
         )
 
-        val opprettEvent = fun (id: UUID) = Hendelse.BeskjedOpprettet(
+        val opprettEvent = fun (id: UUID) = BeskjedOpprettet(
             merkelapp = "foo",
             eksternId = id.toString(),
             mottakere = listOf(mottaker),
@@ -46,7 +47,7 @@ class SoftDeleteTests : DescribeSpec({
             eksterneVarsler = listOf(),
         )
 
-        val softDeleteEvent = Hendelse.SoftDelete(
+        val softDeleteEvent = SoftDelete(
             hendelseId = UUID.randomUUID(),
             aggregateId = uuid1,
             virksomhetsnummer = mottaker.virksomhetsnummer,

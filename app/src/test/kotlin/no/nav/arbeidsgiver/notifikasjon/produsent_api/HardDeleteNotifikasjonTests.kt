@@ -7,9 +7,10 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
-import io.mockk.InternalPlatformDsl.toArray
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -31,7 +32,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
-    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.HardDelete>()) } returns Unit
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -57,7 +58,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
     )
     val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
-    val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+    val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "1",
         merkelapp = merkelapp,
         eksternId = eksternId,
@@ -109,7 +110,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.HardDelete>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>())
                 }
             }
 
@@ -294,7 +295,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<Hendelse.HardDelete>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>())
                 }
             }
 

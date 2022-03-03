@@ -4,8 +4,9 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.Bruker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
@@ -40,7 +41,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     describe("Brukerklikk-oppførsel") {
         val uuid = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130003")
 
-        val beskjedOpprettet = Hendelse.BeskjedOpprettet(
+        val beskjedOpprettet = BeskjedOpprettet(
             virksomhetsnummer = virksomhetsnummer,
             mottakere = listOf(mottaker),
             opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
@@ -88,7 +89,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         }
 
 
-        val brukerKlikket = Hendelse.BrukerKlikket(
+        val brukerKlikket = BrukerKlikket(
             virksomhetsnummer = virksomhetsnummer,
             fnr = fnr,
             hendelseId = UUID.randomUUID(),
