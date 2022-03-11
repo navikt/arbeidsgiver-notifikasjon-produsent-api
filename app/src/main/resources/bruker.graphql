@@ -2,11 +2,14 @@ type Query {
     notifikasjoner: NotifikasjonerResultat!
     saker(
         virksomhetsnummer: String!
+        offset: Int
+        limit: Int
     ): SakerResultat!
     whoami: String
 }
 type SakerResultat {
     saker: [Sak!]!
+    totaltAntallSaker: Int!
     feilAltinn: Boolean!
 }
 type Sak {

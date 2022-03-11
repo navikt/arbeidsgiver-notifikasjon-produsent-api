@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
@@ -14,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
@@ -47,6 +49,18 @@ class QuerySakerTests : DescribeSpec({
             tittel = "er det no sak",
             lenke = "#foo",
         )
+        val statusSak = Hendelse.NyStatusSak(
+            hendelseId = uuid("1"),
+            virksomhetsnummer = sakOpprettet.virksomhetsnummer,
+            produsentId = sakOpprettet.produsentId,
+            kildeAppNavn = sakOpprettet.kildeAppNavn,
+            sakId = sakOpprettet.sakId,
+            status = SakStatus.MOTTATT,
+            overstyrStatustekstMed = "noe",
+            oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+            mottattTidspunkt = OffsetDateTime.now(),
+            idempotensKey = IdempotenceKey.initial(),
+        )
 
         context("med sak opprettet men ingen status") {
             brukerRepository.oppdaterModellEtterHendelse(sakOpprettet)
@@ -60,18 +74,6 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("med sak og status") {
-            val statusSak = Hendelse.NyStatusSak(
-                hendelseId = uuid("1"),
-                virksomhetsnummer = sakOpprettet.virksomhetsnummer,
-                produsentId = sakOpprettet.produsentId,
-                kildeAppNavn = sakOpprettet.kildeAppNavn,
-                sakId = sakOpprettet.sakId,
-                status = SakStatus.MOTTATT,
-                overstyrStatustekstMed = "noe",
-                oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
-                mottattTidspunkt = OffsetDateTime.now(),
-                idempotensKey = IdempotenceKey.initial(),
-            )
             brukerRepository.oppdaterModellEtterHendelse(sakOpprettet)
             brukerRepository.oppdaterModellEtterHendelse(statusSak)
 
@@ -87,13 +89,30 @@ class QuerySakerTests : DescribeSpec({
                 sak.sisteStatus.tekst shouldBe "noe"
             }
         }
+
+        context("med offset og limit angitt") {
+            brukerRepository.oppdaterModellEtterHendelse(sakOpprettet)
+            brukerRepository.oppdaterModellEtterHendelse(statusSak)
+
+            it("offset 0 returnerer 1 sak") {
+                val saker = engine.hentSaker(offset = 0).getTypedContent<List<Any>>("saker/saker")
+                saker shouldHaveSize 1
+            }
+
+            it("offset 1 returnerer 0 saker") {
+                val saker = engine.hentSaker(offset = 1).getTypedContent<List<Any>>("saker/saker")
+                saker should beEmpty()
+            }
+        }
     }
 })
 
-fun TestApplicationEngine.hentSaker() = brukerApi(
-    """
-    {
-        saker(virksomhetsnummer: "42") {
+fun TestApplicationEngine.hentSaker(
+    offset: Int? = null,
+    limit: Int? = null,
+) = brukerApi(GraphQLRequest("""
+    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}offset: Int, ${'$'}limit: Int){
+        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, offset: ${'$'}offset, limit: ${'$'}limit) {
             saker {
                 id
                 tittel
@@ -112,5 +131,11 @@ fun TestApplicationEngine.hentSaker() = brukerApi(
             feilAltinn
         }
     }
-    """.trimIndent()
-)
+    """.trimIndent(),
+    "hentSaker",
+    listOfNotNull(
+        "virksomhetsnummer" to "42",
+        offset?.let { "offset" to "$it" },
+        limit?.let { "limit" to "$it" },
+    ).toMap()
+))

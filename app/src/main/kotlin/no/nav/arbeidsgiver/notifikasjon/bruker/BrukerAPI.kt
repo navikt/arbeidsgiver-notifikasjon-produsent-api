@@ -9,7 +9,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
@@ -259,28 +260,37 @@ object BrukerAPI {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
+            val offset = env.getArgumentOrDefault("offset", 0)
+            val limit = env.getArgumentOrDefault("limit", 3)
+
             coroutineScope {
                 val tilganger = async { tilgangerService.hentTilganger(context) }
-                val saker = brukerRepository.hentSaker(context.fnr, virksomhetsnummer, tilganger.await().orEmpty())
-                    .map {
-                        Sak(
-                            id = it.sakId.toString(),
-                            tittel = it.tittel,
-                            lenke = it.lenke,
-                            merkelapp = it.merkelapp,
-                            virksomhet = Virksomhet(
-                                virksomhetsnummer = it.virksomhetsnummer,
-                            ),
-                            sisteStatus = it.statuser.map { sakStatus ->
-                                val type = SakStatusType.fraModel(sakStatus.status)
-                                SakStatus(
-                                    type = type,
-                                    tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
-                                    tidspunkt = sakStatus.tidspunkt
-                                )
-                            }.first(),
-                        )
-                    }
+                val saker = brukerRepository.hentSaker(
+                    fnr = context.fnr,
+                    virksomhetsnummer = virksomhetsnummer,
+                    tilganger = tilganger.await().orEmpty(),
+                    offset = offset,
+                    limit = limit,
+                ).map {
+                    Sak(
+                        id = it.sakId.toString(),
+                        tittel = it.tittel,
+                        lenke = it.lenke,
+                        merkelapp = it.merkelapp,
+                        virksomhet = Virksomhet(
+                            virksomhetsnummer = it.virksomhetsnummer,
+                        ),
+                        sisteStatus = it.statuser.map { sakStatus ->
+                            val type = SakStatusType.fraModel(sakStatus.status)
+                            SakStatus(
+                                type = type,
+                                tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
+                                tidspunkt = sakStatus.tidspunkt
+                            )
+                        }.first(),
+                        // TODO: oppdater view til å gjøre `json_agg(... order by tidspunkt desc)`
+                    )
+                }
 
                 SakerResultat(
                     saker = saker,

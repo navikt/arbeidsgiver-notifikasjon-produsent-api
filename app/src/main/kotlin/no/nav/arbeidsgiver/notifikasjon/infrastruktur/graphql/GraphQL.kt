@@ -2,13 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.module.kotlin.convertValue
-import graphql.ErrorClassification
-import graphql.ErrorType
-import graphql.ExecutionInput
-import graphql.GraphQL
+import graphql.*
 import graphql.GraphQL.newGraphQL
-import graphql.GraphQLError
-import graphql.GraphqlErrorException
 import graphql.execution.DataFetcherResult
 import graphql.language.SourceLocation
 import graphql.schema.DataFetchingEnvironment
@@ -20,8 +15,8 @@ import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.intellij.lang.annotations.Language
 
 inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
