@@ -175,6 +175,7 @@ fun TestApplicationEngine.hentSaker(
                 }
             }
             feilAltinn
+            totalAntallSaker
         }
     }
     """.trimIndent(),

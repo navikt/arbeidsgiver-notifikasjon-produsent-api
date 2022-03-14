@@ -77,7 +77,8 @@ object BrukerAPI {
     @JsonTypeName("SakerResultat")
     data class SakerResultat(
         val saker: List<Sak>,
-        val feilAltinn: Boolean
+        val feilAltinn: Boolean,
+        val totalAntallSaker: Int,
     )
 
     @JsonTypeName("Sak")
@@ -295,7 +296,8 @@ object BrukerAPI {
 
                 SakerResultat(
                     saker = saker,
-                    feilAltinn = tilganger.await() == null
+                    feilAltinn = tilganger.await() == null,
+                    totalAntallSaker = saker.size, // TODO: fiks total fra db
                 )
             }
         }
