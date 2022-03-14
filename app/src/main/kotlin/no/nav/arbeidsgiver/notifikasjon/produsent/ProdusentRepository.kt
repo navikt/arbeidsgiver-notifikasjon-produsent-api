@@ -279,6 +279,7 @@ class ProdusentRepositoryImpl(
                 insert into sak_status
                 (id, idempotence_key, sak_id, status, overstyr_statustekst_med, tidspunkt_oppgitt, tidspunkt_mottatt)
                 values (?, ?, ?, ?, ?, ?, ?)
+                on conflict on constraint sak_status_pkey do nothing;
             """) {
                 uuid(nyStatusSak.hendelseId)
                 string(nyStatusSak.idempotensKey)

@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import java.time.OffsetDateTime
 
 
@@ -322,6 +323,45 @@ object EksempelHendelse {
         altinnFeilkode = "42",
         feilmelding = "oops"
     )
+    val SakOpprettet = HendelseModel.SakOpprettet(
+        hendelseId = uuid("0"),
+        virksomhetsnummer = "1",
+        produsentId = "1",
+        kildeAppNavn = "1",
+        sakId = uuid("0"),
+        grupperingsid = "1",
+        merkelapp = "tag",
+        mottakere = listOf(
+            AltinnMottaker(
+                virksomhetsnummer = "1",
+                serviceCode = "1",
+                serviceEdition = "1"
+            ),
+            NærmesteLederMottaker(
+                virksomhetsnummer = "1",
+                ansattFnr = "1",
+                naermesteLederFnr = "2"
+            ),
+            AltinnReporteeMottaker(
+                fnr = "1",
+                virksomhetsnummer = "1"
+            )
+        ),
+        tittel = "foo",
+        lenke = "#foo",
+    )
+    val NyStatusSak = HendelseModel.NyStatusSak(
+        hendelseId = uuid("1"),
+        virksomhetsnummer = "1",
+        produsentId = "1",
+        kildeAppNavn = "1",
+        sakId = uuid("0"),
+        status = HendelseModel.SakStatus.MOTTATT,
+        overstyrStatustekstMed = "noe",
+        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        mottattTidspunkt = OffsetDateTime.now(),
+        idempotensKey = IdempotenceKey.initial(),
+    )
 
     val Alle: List<Hendelse> = listOf(
         BeskjedOpprettet,
@@ -336,5 +376,7 @@ object EksempelHendelse {
         BrukerKlikket,
         EksterntVarselVellykket,
         EksterntVarselFeilet,
+        SakOpprettet,
+        NyStatusSak,
     )
 }

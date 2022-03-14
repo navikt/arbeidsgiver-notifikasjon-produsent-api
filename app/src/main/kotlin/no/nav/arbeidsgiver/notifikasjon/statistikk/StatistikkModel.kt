@@ -23,6 +23,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.security.MessageDigest
 import java.util.*
 
@@ -33,7 +34,7 @@ import java.util.*
 class StatistikkModel(
     val database: Database,
 ) {
-
+    val log = logger()
     suspend fun antallKlikketPaa(): List<MultiGauge.Row<Number>> {
         return database.nonTransactionalExecuteQuery(
             """
@@ -363,8 +364,10 @@ class StatistikkModel(
                 // noop
             }
 
-            is SakOpprettet -> TODO()
-            is NyStatusSak -> TODO()
+            is SakOpprettet,
+            is NyStatusSak -> {
+                log.error("mottok hendelse som ikke enda er støttet {}", hendelse.javaClass.simpleName)
+            }
         }
     }
 
