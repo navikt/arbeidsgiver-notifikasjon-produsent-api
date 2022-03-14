@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
@@ -13,12 +12,15 @@ import no.nav.arbeidsgiver.notifikasjon.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
+import java.time.Duration
 import java.time.OffsetDateTime
+import java.util.*
 
 class QuerySakerTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
@@ -81,7 +83,7 @@ class QuerySakerTests : DescribeSpec({
 
             it("response inneholder riktig data") {
                 val sak = response.getTypedContent<BrukerAPI.Sak>("saker/saker/0")
-                sak.id shouldBe sakOpprettet.sakId.toString()
+                sak.id shouldBe sakOpprettet.sakId
                 sak.merkelapp shouldBe "tag"
                 sak.lenke shouldBe sakOpprettet.lenke
                 sak.tittel shouldBe sakOpprettet.tittel
@@ -91,21 +93,64 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("med offset og limit angitt") {
-            brukerRepository.oppdaterModellEtterHendelse(sakOpprettet)
-            brukerRepository.oppdaterModellEtterHendelse(statusSak)
+            val eldsteId = uuid("2")
+            val mellomsteId = uuid("1")
+            val nyesteId = uuid("3")
 
-            it("offset 0 returnerer 1 sak") {
-                val saker = engine.hentSaker(offset = 0).getTypedContent<List<Any>>("saker/saker")
-                saker shouldHaveSize 1
+            brukerRepository.opprettSakMedTidspunkt(mellomsteId, Duration.ofHours(2))
+            brukerRepository.opprettSakMedTidspunkt(eldsteId, Duration.ofHours(1))
+            brukerRepository.opprettSakMedTidspunkt(nyesteId, Duration.ofHours(3))
+
+            it("nyeste sak først") {
+                val sak = engine.hentSaker(offset = 0).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
+                sak.id shouldBe nyesteId
             }
 
-            it("offset 1 returnerer 0 saker") {
-                val saker = engine.hentSaker(offset = 1).getTypedContent<List<Any>>("saker/saker")
-                saker should beEmpty()
+            it("mellomste sak ved offset 1") {
+                val sak = engine.hentSaker(offset = 1).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
+                sak.id shouldBe mellomsteId
+            }
+
+            it("eldste sak ved offset 2") {
+                val sak = engine.hentSaker(offset = 2).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
+                sak.id shouldBe eldsteId
             }
         }
     }
 })
+
+private suspend fun BrukerRepository.opprettSakMedTidspunkt(
+    sakId: UUID,
+    shift: Duration,
+) {
+    val mottattTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
+    val sak = Hendelse.SakOpprettet(
+        hendelseId = sakId,
+        sakId = sakId,
+        grupperingsid = sakId.toString(),
+        virksomhetsnummer = "42",
+        produsentId = "test",
+        kildeAppNavn = "test",
+        merkelapp = "tag",
+        mottakere = listOf(AltinnMottaker("5441", "1", "42")),
+        tittel = "er det no sak",
+        lenke = "#foo",
+    )
+    val status = Hendelse.NyStatusSak(
+        hendelseId = UUID.randomUUID(),
+        virksomhetsnummer = sak.virksomhetsnummer,
+        produsentId = sak.produsentId,
+        kildeAppNavn = sak.kildeAppNavn,
+        sakId = sak.sakId,
+        status = SakStatus.MOTTATT,
+        overstyrStatustekstMed = "noe",
+        mottattTidspunkt = mottattTidspunkt.plus(shift),
+        idempotensKey = IdempotenceKey.initial(),
+        oppgittTidspunkt = null,
+    )
+    oppdaterModellEtterHendelse(sak)
+    oppdaterModellEtterHendelse(status)
+}
 
 fun TestApplicationEngine.hentSaker(
     offset: Int? = null,
@@ -133,9 +178,9 @@ fun TestApplicationEngine.hentSaker(
     }
     """.trimIndent(),
     "hentSaker",
-    listOfNotNull(
+    mapOf(
         "virksomhetsnummer" to "42",
-        offset?.let { "offset" to "$it" },
-        limit?.let { "limit" to "$it" },
-    ).toMap()
+        "offset" to offset,
+        "limit" to limit,
+    )
 ))

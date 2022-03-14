@@ -332,10 +332,12 @@ class BrukerRepositoryImpl(
                 )
             select 
                 s.*, 
-                status_json.statuser as statuser
+                status_json.statuser as statuser,
+                status_json.sist_endret
             from mine_saker as ms
             join sak as s on s.id = ms.sak_id
             join sak_status_json as status_json on s.id = status_json.sak_id
+            order by status_json.sist_endret desc
             offset ?
             limit ?
             """,

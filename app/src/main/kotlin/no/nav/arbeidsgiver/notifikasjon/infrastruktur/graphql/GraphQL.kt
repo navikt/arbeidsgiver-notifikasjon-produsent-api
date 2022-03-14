@@ -116,7 +116,7 @@ fun createGraphQL(
 data class GraphQLRequest(
     @Language("GraphQL") val query: String,
     val operationName: String? = null,
-    val variables: Map<String, String>? = null,
+    val variables: Map<String, Any?>? = null,
 )
 
 inline fun requireGraphql(check: Boolean, message: () -> String) {

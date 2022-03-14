@@ -80,7 +80,7 @@ object BrukerAPI {
 
     @JsonTypeName("Sak")
     data class Sak(
-        val id: String,
+        val id: UUID,
         val tittel: String,
         val lenke: String,
         val merkelapp: String,
@@ -260,8 +260,8 @@ object BrukerAPI {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
-            val offset = env.getArgumentOrDefault("offset", 0)
-            val limit = env.getArgumentOrDefault("limit", 3)
+            val offset = env.getArgumentOrDefault("offset", 0) ?: 0
+            val limit = env.getArgumentOrDefault("limit", 3) ?: 3
 
             coroutineScope {
                 val tilganger = async { tilgangerService.hentTilganger(context) }
@@ -273,7 +273,7 @@ object BrukerAPI {
                     limit = limit,
                 ).map {
                     Sak(
-                        id = it.sakId.toString(),
+                        id = it.sakId,
                         tittel = it.tittel,
                         lenke = it.lenke,
                         merkelapp = it.merkelapp,
@@ -288,7 +288,6 @@ object BrukerAPI {
                                 tidspunkt = sakStatus.tidspunkt
                             )
                         }.first(),
-                        // TODO: oppdater view til å gjøre `json_agg(... order by tidspunkt desc)`
                     )
                 }
 
