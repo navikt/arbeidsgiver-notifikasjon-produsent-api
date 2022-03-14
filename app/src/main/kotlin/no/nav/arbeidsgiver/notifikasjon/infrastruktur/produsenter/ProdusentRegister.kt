@@ -1,6 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AppName
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.util.*

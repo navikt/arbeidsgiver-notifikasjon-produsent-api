@@ -2,7 +2,11 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -11,7 +15,7 @@ class EmergencyBreakTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
 
-    val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+    val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("1"),
@@ -30,13 +34,13 @@ class EmergencyBreakTests : DescribeSpec({
         opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
         eksterneVarsler = listOf(
             SmsVarselKontaktinfo(
-            varselId = uuid("2"),
-            tlfnr = "",
-            fnrEllerOrgnr = "",
-            smsTekst = "",
-            sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-            sendeTidspunkt = null,
-        )
+                varselId = uuid("2"),
+                tlfnr = "",
+                fnrEllerOrgnr = "",
+                smsTekst = "",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null,
+            )
         ),
     )
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -184,14 +185,14 @@ class QueryMineNotifikasjoner(
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class Mottaker {
         companion object {
-            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.Mottaker): Mottaker {
+            fun fraDomene(domene: HendelseModel.Mottaker): Mottaker {
                 return when (domene) {
-                    is no.nav.arbeidsgiver.notifikasjon.AltinnMottaker -> AltinnMottaker.fraDomene(domene)
-                    is no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker -> NærmesteLederMottaker.fraDomene(domene)
-                    is no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker -> AltinnReporteeMottaker.fraDomene(
+                    is HendelseModel.AltinnMottaker -> AltinnMottaker.fraDomene(domene)
+                    is HendelseModel.NærmesteLederMottaker -> NærmesteLederMottaker.fraDomene(domene)
+                    is HendelseModel.AltinnReporteeMottaker -> AltinnReporteeMottaker.fraDomene(
                         domene
                     )
-                    is no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker -> AltinnRolleMottaker.fraDomene(domene)
+                    is HendelseModel.AltinnRolleMottaker -> AltinnRolleMottaker.fraDomene(domene)
                 }
             }
         }
@@ -204,7 +205,7 @@ class QueryMineNotifikasjoner(
         val virksomhetsnummer: String
     ) : Mottaker() {
         companion object {
-            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker): NærmesteLederMottaker {
+            fun fraDomene(domene: HendelseModel.NærmesteLederMottaker): NærmesteLederMottaker {
                 return NærmesteLederMottaker(
                     naermesteLederFnr = domene.naermesteLederFnr,
                     ansattFnr = domene.ansattFnr,
@@ -221,7 +222,7 @@ class QueryMineNotifikasjoner(
         val virksomhetsnummer: String,
     ) : Mottaker() {
         companion object {
-            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.AltinnMottaker): AltinnMottaker {
+            fun fraDomene(domene: HendelseModel.AltinnMottaker): AltinnMottaker {
                 return AltinnMottaker(
                     serviceCode = domene.serviceCode,
                     serviceEdition = domene.serviceEdition,
@@ -237,7 +238,7 @@ class QueryMineNotifikasjoner(
         val virksomhetsnummer: String,
     ) : Mottaker() {
         companion object {
-            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker): AltinnReporteeMottaker {
+            fun fraDomene(domene: HendelseModel.AltinnReporteeMottaker): AltinnReporteeMottaker {
                 return AltinnReporteeMottaker(
                     fnr = domene.fnr,
                     virksomhetsnummer = domene.virksomhetsnummer
@@ -252,7 +253,7 @@ class QueryMineNotifikasjoner(
         val roleDefinitionId: String,
     ) : Mottaker() {
         companion object {
-            fun fraDomene(domene: no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker): AltinnRolleMottaker {
+            fun fraDomene(domene: HendelseModel.AltinnRolleMottaker): AltinnRolleMottaker {
                 return AltinnRolleMottaker(
                     roleDefinitionCode = domene.roleDefinitionCode,
                     roleDefinitionId = domene.roleDefinitionId

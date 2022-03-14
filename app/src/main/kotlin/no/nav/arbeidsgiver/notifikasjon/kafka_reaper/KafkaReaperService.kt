@@ -1,6 +1,16 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 
@@ -17,7 +27,7 @@ class KafkaReaperServiceImpl(
         kafkaReaperModel.oppdaterModellEtterHendelse(hendelse)
 
         val ignored : Unit = when (hendelse) {
-            is Hendelse.HardDelete -> {
+            is HardDelete -> {
                 for (relatertHendelseId in kafkaReaperModel.alleRelaterteHendelser(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(
                         key = relatertHendelseId.toString(),
@@ -26,15 +36,15 @@ class KafkaReaperServiceImpl(
                     kafkaReaperModel.fjernRelasjon(relatertHendelseId)
                 }
             }
-            is Hendelse.SakOpprettet,
-            is Hendelse.NyStatusSak,
-            is Hendelse.SoftDelete,
-            is Hendelse.BeskjedOpprettet,
-            is Hendelse.OppgaveOpprettet,
-            is Hendelse.BrukerKlikket,
-            is Hendelse.OppgaveUtført,
-            is Hendelse.EksterntVarselFeilet,
-            is Hendelse.EksterntVarselVellykket -> {
+            is SakOpprettet,
+            is NyStatusSak,
+            is SoftDelete,
+            is BeskjedOpprettet,
+            is OppgaveOpprettet,
+            is BrukerKlikket,
+            is OppgaveUtført,
+            is EksterntVarselFeilet,
+            is EksterntVarselVellykket -> {
                 if (kafkaReaperModel.erSlettet(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(
                         key = hendelse.hendelseId.toString(),

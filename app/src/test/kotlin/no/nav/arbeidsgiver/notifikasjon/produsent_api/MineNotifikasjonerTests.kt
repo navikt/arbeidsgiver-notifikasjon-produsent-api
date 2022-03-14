@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
@@ -41,7 +42,7 @@ class MineNotifikasjonerTests : DescribeSpec({
     beforeContainer {
         val uuid = UUID.randomUUID()
         produsentModel.oppdaterModellEtterHendelse(
-            Hendelse.OppgaveOpprettet(
+            OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = "1",
@@ -59,7 +60,7 @@ class MineNotifikasjonerTests : DescribeSpec({
         )
         val uuid2 = UUID.randomUUID()
         produsentModel.oppdaterModellEtterHendelse(
-            Hendelse.BeskjedOpprettet(
+            BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
                 eksternId = "2",
@@ -77,7 +78,7 @@ class MineNotifikasjonerTests : DescribeSpec({
         )
         val uuid3 = UUID.randomUUID()
         produsentModel.oppdaterModellEtterHendelse(
-            Hendelse.BeskjedOpprettet(
+            BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp + "noe annet",
                 eksternId = "3",
@@ -95,7 +96,7 @@ class MineNotifikasjonerTests : DescribeSpec({
         )
         val uuid4 = UUID.randomUUID()
         produsentModel.oppdaterModellEtterHendelse(
-            Hendelse.BeskjedOpprettet(
+            BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp + "2",
                 eksternId = "3",

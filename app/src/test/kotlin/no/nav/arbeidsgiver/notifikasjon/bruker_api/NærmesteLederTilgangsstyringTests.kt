@@ -6,13 +6,17 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.Bruker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -115,7 +119,7 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
     }
 })
 
-fun beskjedOpprettet(mottaker: Mottaker, id: UUID, eksternId: String) = Hendelse.BeskjedOpprettet(
+fun beskjedOpprettet(mottaker: Mottaker, id: UUID, eksternId: String) = BeskjedOpprettet(
     virksomhetsnummer = mottaker.virksomhetsnummer,
     merkelapp = "",
     eksternId = eksternId,

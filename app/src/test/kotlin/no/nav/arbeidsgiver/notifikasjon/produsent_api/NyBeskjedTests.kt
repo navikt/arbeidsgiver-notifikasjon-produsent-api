@@ -8,12 +8,12 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyBeskjed
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -87,8 +87,8 @@ class NyBeskjedTests : DescribeSpec({
             val consumer = embeddedKafka.newConsumer()
             val poll = consumer.poll(seconds(5).toJavaDuration())
             val value = poll.last().value()
-            value should beOfType<Hendelse.BeskjedOpprettet>()
-            val event = value as Hendelse.BeskjedOpprettet
+            value should beOfType<BeskjedOpprettet>()
+            val event = value as BeskjedOpprettet
             val nyBeskjed = response.getTypedContent<MutationNyBeskjed.NyBeskjedVellykket>("nyBeskjed")
             event.notifikasjonId shouldBe nyBeskjed.id
             event.lenke shouldBe "https://foo.bar"

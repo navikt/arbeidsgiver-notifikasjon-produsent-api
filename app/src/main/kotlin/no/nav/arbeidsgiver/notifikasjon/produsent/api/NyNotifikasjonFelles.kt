@@ -1,6 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarsel
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -104,8 +112,8 @@ data class NaermesteLederMottakerInput(
     val ansattFnr: String,
     val virksomhetsnummer: String?,
 ) {
-    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker =
-        no.nav.arbeidsgiver.notifikasjon.NærmesteLederMottaker(
+    fun tilDomene(virksomhetsnummer: String): Mottaker =
+        NærmesteLederMottaker(
             naermesteLederFnr = naermesteLederFnr,
             ansattFnr = ansattFnr,
             virksomhetsnummer = virksomhetsnummer
@@ -118,8 +126,8 @@ data class AltinnRolleMottakerInput(
     suspend fun tilDomene(
         virksomhetsnummer: String,
         finnRolleId: suspend (String) -> AltinnRolle?
-    ): no.nav.arbeidsgiver.notifikasjon.Mottaker =
-        no.nav.arbeidsgiver.notifikasjon.AltinnRolleMottaker(
+    ): Mottaker =
+        AltinnRolleMottaker(
             roleDefinitionCode = roleDefinitionCode,
             roleDefinitionId = finnRolleId(roleDefinitionCode)?.RoleDefinitionId
                 ?: throw UkjentRolleException("klarte ikke finne altinnrolle $roleDefinitionCode"),
@@ -132,8 +140,8 @@ data class AltinnMottakerInput(
     val serviceEdition: String,
     val virksomhetsnummer: String?,
 ) {
-    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker =
-        no.nav.arbeidsgiver.notifikasjon.AltinnMottaker(
+    fun tilDomene(virksomhetsnummer: String): Mottaker =
+        AltinnMottaker(
             serviceCode = serviceCode,
             serviceEdition = serviceEdition,
             virksomhetsnummer = virksomhetsnummer
@@ -143,8 +151,8 @@ data class AltinnMottakerInput(
 data class AltinnReporteeMottakerInput(
     val fnr: String,
 ) {
-    fun tilDomene(virksomhetsnummer: String): no.nav.arbeidsgiver.notifikasjon.Mottaker =
-        no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker(
+    fun tilDomene(virksomhetsnummer: String): Mottaker =
+        AltinnReporteeMottaker(
             fnr = fnr,
             virksomhetsnummer = virksomhetsnummer
         )

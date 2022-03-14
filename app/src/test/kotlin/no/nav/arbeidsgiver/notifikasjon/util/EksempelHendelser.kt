@@ -1,12 +1,20 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import com.fasterxml.jackson.databind.node.NullNode
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import java.time.OffsetDateTime
 
 
 object EksempelHendelse {
-    val BeskjedOpprettet = Hendelse.BeskjedOpprettet(
+    val BeskjedOpprettet = BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
@@ -43,7 +51,7 @@ object EksempelHendelse {
             )
         )
     )
-    val BeskjedOpprettet_2_Mottakere = Hendelse.BeskjedOpprettet(
+    val BeskjedOpprettet_2_Mottakere = BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
@@ -87,7 +95,7 @@ object EksempelHendelse {
             )
         )
     )
-    val BeskjedOpprettet_3_Mottakere = Hendelse.BeskjedOpprettet(
+    val BeskjedOpprettet_3_Mottakere = BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
@@ -135,7 +143,7 @@ object EksempelHendelse {
             )
         )
     )
-    val OppgaveOpprettet = Hendelse.OppgaveOpprettet(
+    val OppgaveOpprettet = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
@@ -172,7 +180,7 @@ object EksempelHendelse {
             )
         )
     )
-    val OppgaveOpprettet_2_Mottakere = Hendelse.OppgaveOpprettet(
+    val OppgaveOpprettet_2_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
@@ -216,7 +224,7 @@ object EksempelHendelse {
             )
         )
     )
-    val OppgaveOpprettet_3_Mottakere = Hendelse.OppgaveOpprettet(
+    val OppgaveOpprettet_3_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
@@ -264,14 +272,14 @@ object EksempelHendelse {
             )
         )
     )
-    val OppgaveUtført = Hendelse.OppgaveUtført(
+    val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
         produsentId = "1",
         kildeAppNavn = "1",
     )
-    val SoftDelete = Hendelse.SoftDelete(
+    val SoftDelete = HendelseModel.SoftDelete(
         virksomhetsnummer = "1",
         aggregateId = uuid("1"),
         hendelseId = uuid("2"),
@@ -279,7 +287,7 @@ object EksempelHendelse {
         kildeAppNavn = "1",
         deletedAt = OffsetDateTime.now()
     )
-    val HardDelete = Hendelse.HardDelete(
+    val HardDelete = HendelseModel.HardDelete(
         virksomhetsnummer = "1",
         aggregateId = uuid("1"),
         hendelseId = uuid("2"),
@@ -287,14 +295,14 @@ object EksempelHendelse {
         kildeAppNavn = "1",
         deletedAt = OffsetDateTime.now()
     )
-    val BrukerKlikket = Hendelse.BrukerKlikket(
+    val BrukerKlikket = HendelseModel.BrukerKlikket(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
         kildeAppNavn = "1",
         fnr = "42"
     )
-    val EksterntVarselVellykket = Hendelse.EksterntVarselVellykket(
+    val EksterntVarselVellykket = HendelseModel.EksterntVarselVellykket(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),
@@ -303,7 +311,7 @@ object EksempelHendelse {
         varselId = uuid("1"),
         råRespons = NullNode.instance
     )
-    val EksterntVarselFeilet = Hendelse.EksterntVarselFeilet(
+    val EksterntVarselFeilet = HendelseModel.EksterntVarselFeilet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
         hendelseId = uuid("2"),

@@ -3,7 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
@@ -48,10 +49,10 @@ class MutationNyOppgave(
             produsentId: String,
             kildeAppNavn: String,
             finnRolleId:  suspend (String) -> AltinnRolle?,
-        ): Hendelse.OppgaveOpprettet {
+        ): OppgaveOpprettet {
             val alleMottakere = listOfNotNull(mottaker) + mottakere
             val virksomhetsnummer = finnVirksomhetsnummer(metadata.virksomhetsnummer, alleMottakere)
-            return Hendelse.OppgaveOpprettet(
+            return OppgaveOpprettet(
                 hendelseId = id,
                 notifikasjonId = id,
                 merkelapp = notifikasjon.merkelapp,

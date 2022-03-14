@@ -3,9 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
-import no.nav.arbeidsgiver.notifikasjon.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.Bruker
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -17,7 +17,7 @@ class AltinnReporteeTilgangsstyringTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerRepositoryImpl(database)
 
-    fun lagMelding(id: UUID, fnr: String) = Hendelse.BeskjedOpprettet(
+    fun lagMelding(id: UUID, fnr: String) = BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = id,
         hendelseId = id,

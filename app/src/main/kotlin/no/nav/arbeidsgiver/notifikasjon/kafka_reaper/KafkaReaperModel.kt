@@ -1,6 +1,16 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.time.OffsetDateTime
 import java.util.*
@@ -38,7 +48,7 @@ class KafkaReaperModelImpl(
                 string(hendelse.typeNavn)
             }
 
-            if (hendelse is Hendelse.HardDelete) {
+            if (hendelse is HardDelete) {
                 executeUpdate(
                     """
                         INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
@@ -94,14 +104,14 @@ class KafkaReaperModelImpl(
 }
 
 val Hendelse.typeNavn: String get() = when (this) {
-    is Hendelse.SakOpprettet -> "SakOpprettet"
-    is Hendelse.NyStatusSak -> "NyStatusSak"
-    is Hendelse.SoftDelete -> "SoftDelete"
-    is Hendelse.HardDelete -> "HardDelete"
-    is Hendelse.OppgaveUtført -> "OppgaveUtført"
-    is Hendelse.BrukerKlikket -> "BrukerKlikket"
-    is Hendelse.BeskjedOpprettet -> "BeskjedOpprettet"
-    is Hendelse.OppgaveOpprettet -> "OppgaveOpprettet"
-    is Hendelse.EksterntVarselVellykket -> "EksterntVarselVellykket"
-    is Hendelse.EksterntVarselFeilet -> "EksterntVarselFeilet"
+    is SakOpprettet -> "SakOpprettet"
+    is NyStatusSak -> "NyStatusSak"
+    is SoftDelete -> "SoftDelete"
+    is HardDelete -> "HardDelete"
+    is OppgaveUtført -> "OppgaveUtført"
+    is BrukerKlikket -> "BrukerKlikket"
+    is BeskjedOpprettet -> "BeskjedOpprettet"
+    is OppgaveOpprettet -> "OppgaveOpprettet"
+    is EksterntVarselVellykket -> "EksterntVarselVellykket"
+    is EksterntVarselFeilet -> "EksterntVarselFeilet"
 }

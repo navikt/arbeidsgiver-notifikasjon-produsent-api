@@ -8,21 +8,28 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-sealed class Hendelse {
-    /* ID-en til f.eks. en sak, oppgave eller beskjed som hendelsen handler om. */
-    abstract val aggregateId: UUID
+object HendelseModel {
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    sealed class Hendelse {
+        /* ID-en til f.eks. en sak, oppgave eller beskjed som hendelsen handler om. */
+        abstract val aggregateId: UUID
 
-    /* Identifikator for denne hendelsen. */
-    abstract val hendelseId: UUID
+        /* Identifikator for denne hendelsen. */
+        abstract val hendelseId: UUID
 
-    abstract val virksomhetsnummer: String
+        abstract val virksomhetsnummer: String
 
-    /* Identifikator for produsent slik som oppgitt i bruksvilkår */
-    abstract val produsentId: String?
+        /* Identifikator for produsent slik som oppgitt i bruksvilkår */
+        abstract val produsentId: String?
 
-    //navn på app som har produsert hendelse
-    abstract val kildeAppNavn: String
+        //navn på app som har produsert hendelse
+        abstract val kildeAppNavn: String
+
+    }
+
+    data class HendelseMetadata(
+        val timestamp: Instant
+    )
 
     interface Notifikasjon {
         val notifikasjonId: UUID
@@ -45,8 +52,9 @@ sealed class Hendelse {
         val mottakere: List<Mottaker>,
         val tittel: String,
         val lenke: String,
-    ): Hendelse(), Sak {
-        @JsonIgnore override val aggregateId: UUID = sakId
+    ) : Hendelse(), Sak {
+        @JsonIgnore
+        override val aggregateId: UUID = sakId
 
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -68,7 +76,7 @@ sealed class Hendelse {
         val oppgittTidspunkt: OffsetDateTime?,
         val mottattTidspunkt: OffsetDateTime,
         val idempotensKey: String,
-    ): Hendelse(), Sak {
+    ) : Hendelse(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
     }
@@ -275,99 +283,94 @@ sealed class Hendelse {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
     }
-}
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-sealed class Mottaker
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    sealed class Mottaker
 
-@JsonTypeName("altinnRolle")
-data class AltinnRolleMottaker(
-    val roleDefinitionCode: String,
-    val roleDefinitionId: String,
-    val virksomhetsnummer: String
-) : Mottaker()
+    @JsonTypeName("altinnRolle")
+    data class AltinnRolleMottaker(
+        val roleDefinitionCode: String,
+        val roleDefinitionId: String,
+        val virksomhetsnummer: String
+    ) : Mottaker()
 
-@JsonTypeName("naermesteLeder")
-data class NærmesteLederMottaker(
-    val naermesteLederFnr: String,
-    val ansattFnr: String,
-    val virksomhetsnummer: String
-) : Mottaker()
+    @JsonTypeName("naermesteLeder")
+    data class NærmesteLederMottaker(
+        val naermesteLederFnr: String,
+        val ansattFnr: String,
+        val virksomhetsnummer: String
+    ) : Mottaker()
 
-@JsonTypeName("altinn")
-data class AltinnMottaker(
-    val serviceCode: String,
-    val serviceEdition: String,
-    val virksomhetsnummer: String,
-) : Mottaker()
+    @JsonTypeName("altinn")
+    data class AltinnMottaker(
+        val serviceCode: String,
+        val serviceEdition: String,
+        val virksomhetsnummer: String,
+    ) : Mottaker()
 
-@JsonTypeName("altinnReportee")
-data class AltinnReporteeMottaker(
-    val fnr: String,
-    val virksomhetsnummer: String,
-) : Mottaker()
+    @JsonTypeName("altinnReportee")
+    data class AltinnReporteeMottaker(
+        val fnr: String,
+        val virksomhetsnummer: String,
+    ) : Mottaker()
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-sealed class EksterntVarsel {
-    abstract val varselId: UUID
-}
-
-@JsonTypeName("smsVarselKontaktinfo")
-data class SmsVarselKontaktinfo(
-    override val varselId: UUID,
-    val tlfnr: String,
-    val fnrEllerOrgnr: String,
-    val smsTekst: String,
-    val sendevindu: EksterntVarselSendingsvindu,
-    /* Kun gyldig hvis sendevindu er "SPESIFISERT" */
-    val sendeTidspunkt: LocalDateTime?,
-) : EksterntVarsel()
-
-@JsonTypeName("epostVarselKontaktinfo")
-data class EpostVarselKontaktinfo(
-    override val varselId: UUID,
-    val epostAddr: String,
-    val fnrEllerOrgnr: String,
-    val tittel: String,
-    val htmlBody: String,
-    val sendevindu: EksterntVarselSendingsvindu,
-    /* Kun gyldig hvis sendevindu er "SPESIFISERT" */
-    val sendeTidspunkt: LocalDateTime?,
-) : EksterntVarsel()
-
-enum class EksterntVarselSendingsvindu {
-    /* Notifikasjonen sendes uten opphold fra vår side. Merk at underleverandører (Altinn) har eget vindu for utsendig
-     * av SMS, og vi vil ikke overstyre det.
-     **/
-    LØPENDE,
-
-    /* På dagtid mandag til lørdag, ikke søndag. Pr. nå 0800-1600. */
-    DAGTID_IKKE_SØNDAG,
-
-    /* Sendes så mottaker skal ha en reell mulighet for å kunne komme i kontakt med NKS/Arbeidsgivertelefonen.
-     * Varsler sendes også litt før NKS åpner. Slutter å sende varsler litt før NKS lukker, så
-     * mottaker har tid til å ringe. */
-    NKS_ÅPNINGSTID,
-
-    /* Varslingstidspunkt må spesifiseres i feltet "sendeTidspunkt". */
-    SPESIFISERT,
-}
-
-enum class SakStatus {
-    MOTTATT,
-    UNDER_BEHANDLING,
-    FERDIG;
-}
-
-
-val Mottaker.virksomhetsnummer: String
-    get() = when (this) {
-        is NærmesteLederMottaker -> this.virksomhetsnummer
-        is AltinnMottaker -> this.virksomhetsnummer
-        is AltinnReporteeMottaker -> this.virksomhetsnummer
-        is AltinnRolleMottaker -> this.virksomhetsnummer
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    sealed class EksterntVarsel {
+        abstract val varselId: UUID
     }
 
-data class HendelseMetadata(
-    val timestamp: Instant
-)
+    @JsonTypeName("smsVarselKontaktinfo")
+    data class SmsVarselKontaktinfo(
+        override val varselId: UUID,
+        val tlfnr: String,
+        val fnrEllerOrgnr: String,
+        val smsTekst: String,
+        val sendevindu: EksterntVarselSendingsvindu,
+        /* Kun gyldig hvis sendevindu er "SPESIFISERT" */
+        val sendeTidspunkt: LocalDateTime?,
+    ) : EksterntVarsel()
+
+    @JsonTypeName("epostVarselKontaktinfo")
+    data class EpostVarselKontaktinfo(
+        override val varselId: UUID,
+        val epostAddr: String,
+        val fnrEllerOrgnr: String,
+        val tittel: String,
+        val htmlBody: String,
+        val sendevindu: EksterntVarselSendingsvindu,
+        /* Kun gyldig hvis sendevindu er "SPESIFISERT" */
+        val sendeTidspunkt: LocalDateTime?,
+    ) : EksterntVarsel()
+
+    enum class EksterntVarselSendingsvindu {
+        /* Notifikasjonen sendes uten opphold fra vår side. Merk at underleverandører (Altinn) har eget vindu for utsendig
+     * av SMS, og vi vil ikke overstyre det.
+     **/
+        LØPENDE,
+
+        /* På dagtid mandag til lørdag, ikke søndag. Pr. nå 0800-1600. */
+        DAGTID_IKKE_SØNDAG,
+
+        /* Sendes så mottaker skal ha en reell mulighet for å kunne komme i kontakt med NKS/Arbeidsgivertelefonen.
+     * Varsler sendes også litt før NKS åpner. Slutter å sende varsler litt før NKS lukker, så
+     * mottaker har tid til å ringe. */
+        NKS_ÅPNINGSTID,
+
+        /* Varslingstidspunkt må spesifiseres i feltet "sendeTidspunkt". */
+        SPESIFISERT,
+    }
+
+    enum class SakStatus {
+        MOTTATT,
+        UNDER_BEHANDLING,
+        FERDIG;
+    }
+}
+
+val HendelseModel.Mottaker.virksomhetsnummer: String
+    get() = when (this) {
+        is HendelseModel.NærmesteLederMottaker -> this.virksomhetsnummer
+        is HendelseModel.AltinnMottaker -> this.virksomhetsnummer
+        is HendelseModel.AltinnReporteeMottaker -> this.virksomhetsnummer
+        is HendelseModel.AltinnRolleMottaker -> this.virksomhetsnummer
+    }

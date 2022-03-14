@@ -3,7 +3,11 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -23,7 +27,7 @@ class IdempotentOppgaveOpprettetTests: DescribeSpec({
         sendeTidspunkt = null
     )
 
-    val oppgaveOpprettet = Hendelse.OppgaveOpprettet(
+    val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "",
         notifikasjonId = uuid("0"),
         hendelseId = uuid("0"),

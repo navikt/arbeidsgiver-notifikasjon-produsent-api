@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey

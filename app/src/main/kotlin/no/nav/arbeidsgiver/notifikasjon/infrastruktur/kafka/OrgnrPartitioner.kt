@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import org.apache.kafka.clients.producer.Partitioner
 import org.apache.kafka.common.Cluster
 import org.apache.kafka.common.utils.Utils

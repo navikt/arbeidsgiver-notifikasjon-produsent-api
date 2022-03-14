@@ -6,7 +6,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyBeskjed
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
