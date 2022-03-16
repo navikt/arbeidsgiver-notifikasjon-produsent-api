@@ -3,7 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
@@ -72,7 +73,7 @@ class MutationHardDelete(
         val produsent = hentProdusent(context) { error -> return error }
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
-        val hardDelete = Hendelse.HardDelete(
+        val hardDelete = HardDelete(
             hendelseId = UUID.randomUUID(),
             aggregateId = notifikasjon.id,
             virksomhetsnummer = notifikasjon.virksomhetsnummer,

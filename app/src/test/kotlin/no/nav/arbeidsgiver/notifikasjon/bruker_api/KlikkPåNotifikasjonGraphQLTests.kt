@@ -9,7 +9,8 @@ import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
@@ -38,7 +39,7 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
     )
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
-    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(any<Hendelse.BrukerKlikket>()) } returns Unit
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(any<BrukerKlikket>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -86,7 +87,7 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
                 brukerKlikk.id shouldNot beBlank()
             }
 
-            val brukerKlikketMatcher: MockKAssertScope.(Hendelse.BrukerKlikket) -> Unit = { brukerKlikket ->
+            val brukerKlikketMatcher: MockKAssertScope.(BrukerKlikket) -> Unit = { brukerKlikket ->
                 brukerKlikket.fnr shouldNot beBlank()
                 brukerKlikket.notifikasjonId shouldBe id
 

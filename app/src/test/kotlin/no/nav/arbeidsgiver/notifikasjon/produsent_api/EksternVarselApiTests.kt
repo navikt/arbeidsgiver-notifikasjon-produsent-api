@@ -6,7 +6,9 @@ import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
@@ -149,7 +151,7 @@ class EksternVarselApiTests: DescribeSpec({
 
 
         produsentModel.oppdaterModellEtterHendelse(
-            Hendelse.EksterntVarselVellykket(
+            EksterntVarselVellykket(
                 virksomhetsnummer = "0",
                 notifikasjonId = notId,
                 hendelseId = UUID.randomUUID(),
@@ -161,7 +163,7 @@ class EksternVarselApiTests: DescribeSpec({
         )
 
         produsentModel.oppdaterModellEtterHendelse(
-            Hendelse.EksterntVarselFeilet(
+            EksterntVarselFeilet(
                 virksomhetsnummer = "0",
                 notifikasjonId = notId,
                 hendelseId = UUID.randomUUID(),
@@ -209,7 +211,7 @@ class EksternVarselApiTests: DescribeSpec({
 
 
         produsentModel.oppdaterModellEtterHendelse(
-            Hendelse.EksterntVarselVellykket(
+            EksterntVarselVellykket(
                 virksomhetsnummer = "0",
                 notifikasjonId = notId,
                 hendelseId = UUID.randomUUID(),
@@ -221,7 +223,7 @@ class EksternVarselApiTests: DescribeSpec({
         )
 
         produsentModel.oppdaterModellEtterHendelse(
-            Hendelse.EksterntVarselFeilet(
+            EksterntVarselFeilet(
                 virksomhetsnummer = "0",
                 notifikasjonId = notId,
                 hendelseId = UUID.randomUUID(),

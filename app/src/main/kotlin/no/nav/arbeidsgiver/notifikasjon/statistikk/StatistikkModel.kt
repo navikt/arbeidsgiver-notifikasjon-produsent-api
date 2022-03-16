@@ -2,8 +2,28 @@ package no.nav.arbeidsgiver.notifikasjon.statistikk
 
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.Tags
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarsel
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HendelseMetadata
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.security.MessageDigest
 import java.util.*
 
@@ -14,7 +34,7 @@ import java.util.*
 class StatistikkModel(
     val database: Database,
 ) {
-
+    val log = logger()
     suspend fun antallKlikketPaa(): List<MultiGauge.Row<Number>> {
         return database.nonTransactionalExecuteQuery(
             """
@@ -214,8 +234,8 @@ class StatistikkModel(
 
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
-        val ignore = when (hendelse) {
-            is Hendelse.BeskjedOpprettet -> {
+        val ignore : Any = when (hendelse) {
+            is BeskjedOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon 
@@ -238,7 +258,7 @@ class StatistikkModel(
                     iterable = hendelse.eksterneVarsler
                 )
             }
-            is Hendelse.OppgaveOpprettet -> {
+            is OppgaveOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon(
@@ -269,7 +289,7 @@ class StatistikkModel(
                     iterable = hendelse.eksterneVarsler
                 )
             }
-            is Hendelse.OppgaveUtført -> {
+            is OppgaveUtført -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     update notifikasjon 
@@ -281,7 +301,7 @@ class StatistikkModel(
                     uuid(hendelse.notifikasjonId)
                 }
             }
-            is Hendelse.BrukerKlikket -> {
+            is BrukerKlikket -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon_klikk 
@@ -295,7 +315,7 @@ class StatistikkModel(
                     timestamp_utc(metadata.timestamp)
                 }
             }
-            is Hendelse.EksterntVarselVellykket -> {
+            is EksterntVarselVellykket -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into varsel_resultat 
@@ -311,7 +331,7 @@ class StatistikkModel(
                     string(hendelse.produsentId)
                 }
             }
-            is Hendelse.EksterntVarselFeilet -> {
+            is EksterntVarselFeilet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into varsel_resultat 
@@ -328,7 +348,7 @@ class StatistikkModel(
                     string(hendelse.altinnFeilkode)
                 }
             }
-            is Hendelse.SoftDelete -> {
+            is SoftDelete -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     update notifikasjon 
@@ -340,12 +360,14 @@ class StatistikkModel(
                     uuid(hendelse.aggregateId)
                 }
             }
-            is Hendelse.HardDelete -> {
+            is HardDelete -> {
                 // noop
             }
 
-            is Hendelse.SakOpprettet -> TODO()
-            is Hendelse.NyStatusSak -> TODO()
+            is SakOpprettet,
+            is NyStatusSak -> {
+                log.error("mottok hendelse som ikke enda er støttet {}", hendelse.javaClass.simpleName)
+            }
         }
     }
 

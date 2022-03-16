@@ -1,7 +1,22 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.arbeidsgiver.notifikasjon.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
@@ -19,7 +34,7 @@ interface ProdusentRepository {
         offset: Int,
     ): List<ProdusentModel.Notifikasjon>
     suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak?
-    suspend fun hentSak(sakId: UUID): ProdusentModel.Sak?
+    suspend fun hentSak(id: UUID): ProdusentModel.Sak?
 
     val altinnRolle : AltinnRolleRepository
 }
@@ -201,20 +216,20 @@ class ProdusentRepositoryImpl(
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         val ignored: Unit = when (hendelse) {
-            is Hendelse.SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
-            is Hendelse.NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
-            is Hendelse.BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
-            is Hendelse.OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
-            is Hendelse.OppgaveUtført -> oppdatertModellEtterOppgaveUtført(hendelse)
-            is Hendelse.BrukerKlikket -> /* Ignorer */ Unit
-            is Hendelse.SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
-            is Hendelse.HardDelete -> oppdaterModellEtterHardDelete(hendelse)
-            is Hendelse.EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
-            is Hendelse.EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
+            is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
+            is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
+            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
+            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is OppgaveUtført -> oppdatertModellEtterOppgaveUtført(hendelse)
+            is BrukerKlikket -> /* Ignorer */ Unit
+            is SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
+            is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
+            is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
+            is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
         }
     }
 
-    private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: Hendelse.SakOpprettet) {
+    private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: SakOpprettet) {
         database.transaction {
             executeUpdate("""
                     insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, lenke, tidspunkt_mottatt)
@@ -251,7 +266,7 @@ class ProdusentRepositoryImpl(
         ).firstOrNull()
 
 
-    private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: Hendelse.NyStatusSak) {
+    private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: NyStatusSak) {
         database.transaction {
             val sakId = finnDbSakId(nyStatusSak.sakId)
 
@@ -264,6 +279,7 @@ class ProdusentRepositoryImpl(
                 insert into sak_status
                 (id, idempotence_key, sak_id, status, overstyr_statustekst_med, tidspunkt_oppgitt, tidspunkt_mottatt)
                 values (?, ?, ?, ?, ?, ?, ?)
+                on conflict on constraint sak_status_pkey do nothing;
             """) {
                 uuid(nyStatusSak.hendelseId)
                 string(nyStatusSak.idempotensKey)
@@ -277,7 +293,7 @@ class ProdusentRepositoryImpl(
     }
 
 
-    private suspend fun oppdaterModellEtterHardDelete(hardDelete: Hendelse.HardDelete) {
+    private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
         database.nonTransactionalExecuteUpdate(
             """
             DELETE FROM notifikasjon 
@@ -288,7 +304,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterSoftDelete(softDelete: Hendelse.SoftDelete) {
+    private suspend fun oppdaterModellEtterSoftDelete(softDelete: SoftDelete) {
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
@@ -301,7 +317,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdatertModellEtterOppgaveUtført(utførtHendelse: Hendelse.OppgaveUtført) {
+    private suspend fun oppdatertModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført) {
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
@@ -313,7 +329,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: Hendelse.BeskjedOpprettet) {
+    private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: BeskjedOpprettet) {
         database.transaction {
             executeUpdate(
                 """
@@ -365,7 +381,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: Hendelse.OppgaveOpprettet) {
+    private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
         database.transaction {
             executeUpdate(
                 """
@@ -417,7 +433,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: Hendelse.EksterntVarselVellykket) {
+    private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: EksterntVarselVellykket) {
         database.nonTransactionalExecuteUpdate(
             """
             update eksternt_varsel set status = 'SENDT' where varsel_id = ?
@@ -427,7 +443,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: Hendelse.EksterntVarselFeilet) {
+    private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
         database.nonTransactionalExecuteUpdate(
             """
             update eksternt_varsel 

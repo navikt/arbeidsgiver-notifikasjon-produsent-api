@@ -3,6 +3,10 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 
@@ -35,7 +39,7 @@ class HendelseDeserializationTests : DescribeSpec({
         """)
 
         it("mottaker parsed") {
-            oppgaveOpprettet as Hendelse.OppgaveOpprettet
+            oppgaveOpprettet as OppgaveOpprettet
             val mottaker = oppgaveOpprettet.mottakere.single() as AltinnMottaker
             mottaker.serviceCode shouldBe "1"
             mottaker.serviceEdition shouldBe "2"
@@ -69,7 +73,7 @@ class HendelseDeserializationTests : DescribeSpec({
         """)
 
         it("mottaker parsed") {
-            oppgaveOpprettet as Hendelse.OppgaveOpprettet
+            oppgaveOpprettet as OppgaveOpprettet
             val mottaker = oppgaveOpprettet.mottakere.single() as AltinnMottaker
             mottaker.serviceCode shouldBe "1"
             mottaker.serviceEdition shouldBe "2"
@@ -91,7 +95,7 @@ class HendelseDeserializationTests : DescribeSpec({
         """)
 
         it("mottaker parsed") {
-            hardDelete as Hendelse.HardDelete
+            hardDelete as HardDelete
             hardDelete.hendelseId shouldBe uuid("0")
             hardDelete.aggregateId shouldBe uuid("1")
         }
