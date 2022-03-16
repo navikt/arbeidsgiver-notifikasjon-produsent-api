@@ -6,3 +6,4 @@ app/target/
 .idea/
 **.iml
 .kafka-cli/
+.DS_Store

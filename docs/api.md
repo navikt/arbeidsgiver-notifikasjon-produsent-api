@@ -34,11 +34,15 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
   * [Mutation](#mutation)
   * [Objects](#objects)
     * [AltinnMottaker](#altinnmottaker)
+    * [AltinnReporteeMottaker](#altinnreporteemottaker)
+    * [AltinnRolleMottaker](#altinnrollemottaker)
     * [Beskjed](#beskjed)
     * [BeskjedData](#beskjeddata)
     * [DuplikatEksternIdOgMerkelapp](#duplikateksternidogmerkelapp)
+    * [DuplikatGrupperingsid](#duplikatgrupperingsid)
     * [EksterntVarsel](#eksterntvarsel)
     * [HardDeleteNotifikasjonVellykket](#harddeletenotifikasjonvellykket)
+    * [Konflikt](#konflikt)
     * [Metadata](#metadata)
     * [NaermesteLederMottaker](#naermesteledermottaker)
     * [NotifikasjonConnection](#notifikasjonconnection)
@@ -47,16 +51,23 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [NyBeskjedVellykket](#nybeskjedvellykket)
     * [NyEksterntVarselResultat](#nyeksterntvarselresultat)
     * [NyOppgaveVellykket](#nyoppgavevellykket)
+    * [NySakVellykket](#nysakvellykket)
+    * [NyStatusSakVellykket](#nystatussakvellykket)
     * [Oppgave](#oppgave)
     * [OppgaveData](#oppgavedata)
     * [OppgaveUtfoertVellykket](#oppgaveutfoertvellykket)
     * [PageInfo](#pageinfo)
+    * [SakFinnesIkke](#sakfinnesikke)
     * [SoftDeleteNotifikasjonVellykket](#softdeletenotifikasjonvellykket)
+    * [StatusOppdatering](#statusoppdatering)
     * [UgyldigMerkelapp](#ugyldigmerkelapp)
     * [UgyldigMottaker](#ugyldigmottaker)
     * [UkjentProdusent](#ukjentprodusent)
+    * [UkjentRolle](#ukjentrolle)
   * [Inputs](#inputs)
     * [AltinnMottakerInput](#altinnmottakerinput)
+    * [AltinnReporteeMottakerInput](#altinnreporteemottakerinput)
+    * [AltinnRolleMottakerInput](#altinnrollemottakerinput)
     * [EksterntVarselEpostInput](#eksterntvarselepostinput)
     * [EksterntVarselInput](#eksterntvarselinput)
     * [EksterntVarselSmsInput](#eksterntvarselsmsinput)
@@ -68,12 +79,16 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [NotifikasjonInput](#notifikasjoninput)
     * [NyBeskjedInput](#nybeskjedinput)
     * [NyOppgaveInput](#nyoppgaveinput)
+    * [NySakInput](#nysakinput)
+    * [NyStatusSakInput](#nystatussakinput)
+    * [SaksStatusInput](#saksstatusinput)
     * [SendetidspunktInput](#sendetidspunktinput)
     * [SmsKontaktInfoInput](#smskontaktinfoinput)
     * [SmsMottakerInput](#smsmottakerinput)
   * [Enums](#enums)
     * [EksterntVarselStatus](#eksterntvarselstatus)
     * [OppgaveTilstand](#oppgavetilstand)
+    * [SaksStatus](#saksstatus)
     * [Sendevindu](#sendevindu)
   * [Scalars](#scalars)
     * [Boolean](#boolean)
@@ -91,6 +106,8 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [Notifikasjon](#notifikasjon)
     * [NyBeskjedResultat](#nybeskjedresultat)
     * [NyOppgaveResultat](#nyoppgaveresultat)
+    * [NySakResultat](#nysakresultat)
+    * [NyStatusSakResultat](#nystatussakresultat)
     * [OppgaveUtfoertResultat](#oppgaveutfoertresultat)
     * [SoftDeleteNotifikasjonResultat](#softdeletenotifikasjonresultat)
 
@@ -192,6 +209,51 @@ Dette er roten som alle endringer ("mutations") starter fra. Endringer inkludere
 </tr>
 </thead>
 <tbody>
+<tr>
+<td colspan="2" valign="top"><strong>nySak</strong></td>
+<td valign="top"><a href="#nysakresultat">NySakResultat</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">sak</td>
+<td valign="top"><a href="#nysakinput">NySakInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>nyStatusSak</strong></td>
+<td valign="top"><a href="#nystatussakresultat">NyStatusSakResultat</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">id</td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">status</td>
+<td valign="top"><a href="#nystatussakinput">NyStatusSakInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>nyStatusSakByGrupperingsid</strong></td>
+<td valign="top"><a href="#nystatussakresultat">NyStatusSakResultat</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">grupperingsid</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">status</td>
+<td valign="top"><a href="#nystatussakinput">NyStatusSakInput</a>!</td>
+<td></td>
+</tr>
 <tr>
 <td colspan="2" valign="top"><strong>nyBeskjed</strong></td>
 <td valign="top"><a href="#nybeskjedresultat">NyBeskjedResultat</a>!</td>
@@ -396,6 +458,56 @@ ID-en som dere ga oss da dere opprettet notifikasjonen.
 </tbody>
 </table>
 
+#### AltinnReporteeMottaker
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>fnr</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### AltinnRolleMottaker
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>roleDefinitionCode</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>roleDefinitionId</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 #### Beskjed
 
 <table>
@@ -411,6 +523,11 @@ ID-en som dere ga oss da dere opprettet notifikasjonen.
 <tr>
 <td colspan="2" valign="top"><strong>mottaker</strong></td>
 <td valign="top"><a href="#mottaker">Mottaker</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>mottakere</strong></td>
+<td valign="top">[<a href="#mottaker">Mottaker</a>!]!</td>
 <td></td>
 </tr>
 <tr>
@@ -495,6 +612,29 @@ Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eks
 </tbody>
 </table>
 
+#### DuplikatGrupperingsid
+
+Denne feilen returneres hvis det allerede eksisterer en sak med denne grupperingsid-en under
+merkelappen.
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>feilmelding</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 #### EksterntVarsel
 
 <table>
@@ -540,6 +680,28 @@ Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eks
 ID-en til oppgaven du "hard-delete"-et.
 
 </td>
+</tr>
+</tbody>
+</table>
+
+#### Konflikt
+
+Oppgitt informasjon samsvarer ikke med tidligere informasjon som er oppgitt.
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>feilmelding</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -765,6 +927,55 @@ av "eventual consistency" i systemet vårt.
 </tbody>
 </table>
 
+#### NySakVellykket
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>id</strong></td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### NyStatusSakVellykket
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>id</strong></td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>statuser</strong></td>
+<td valign="top">[<a href="#statusoppdatering">StatusOppdatering</a>!]!</td>
+<td>
+
+Nyeste statusoppdatering er først i listen.
+
+</td>
+</tr>
+</tbody>
+</table>
+
 #### Oppgave
 
 <table>
@@ -780,6 +991,11 @@ av "eventual consistency" i systemet vårt.
 <tr>
 <td colspan="2" valign="top"><strong>mottaker</strong></td>
 <td valign="top"><a href="#mottaker">Mottaker</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>mottakere</strong></td>
+<td valign="top">[<a href="#mottaker">Mottaker</a>!]!</td>
 <td></td>
 </tr>
 <tr>
@@ -896,6 +1112,26 @@ ID-en til oppgaven du oppdaterte.
 </tbody>
 </table>
 
+#### SakFinnesIkke
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>feilmelding</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 #### SoftDeleteNotifikasjonVellykket
 
 <table>
@@ -916,6 +1152,36 @@ ID-en til oppgaven du oppdaterte.
 ID-en til oppgaven du "soft-delete"-et.
 
 </td>
+</tr>
+</tbody>
+</table>
+
+#### StatusOppdatering
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>status</strong></td>
+<td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>tidspunkt</strong></td>
+<td valign="top"><a href="#iso8601datetime">ISO8601DateTime</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>overstyrStatusTekstMed</strong></td>
+<td valign="top"><a href="#string">String</a></td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -986,6 +1252,26 @@ Denne feilen returneres dersom vi ikke greier å finne dere i produsent-register
 </tbody>
 </table>
 
+#### UkjentRolle
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>feilmelding</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 ### Inputs
 
 #### AltinnMottakerInput
@@ -1018,6 +1304,63 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Å oppgi virksomhetsnummer her er deprecated. Spesifiser det i metadata-feltet.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### AltinnReporteeMottakerInput
+
+Spesifiser mottaker ved hjelp av fødselsnummer.
+Flere skjemaer krever kun en "tilknytning" til et orgnr for å sende inn/se status.
+Tilknytningen er da at man er "reportee" for virksomheten, uten å spesifisere noen enkeltrettighet.
+
+Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen. Dersom personen ikke lenger er tilknyttet
+virksomheten så vil de hverken se historiske eller nye notifikasjoner knyttet til virksomheten.
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>fnr</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### AltinnRolleMottakerInput
+
+Spesifiser mottaker ved hjelp av rollekode.  Enhver som har den gitte rollen vil kunne se notifikasjonen.
+
+Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
+bruker mister en Altinn-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn-tilgangen.
+Og motsatt, hvis en bruker får en Altinn-rolle, vil de se tidligere notifikasjoner for den Altinn-tilgangen.
+
+Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>roleDefinitionCode</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
 <td></td>
 </tr>
@@ -1043,12 +1386,22 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 <tr>
 <td colspan="2" valign="top"><strong>epostTittel</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+Subject/emne til e-posten.
+OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>epostHtmlBody</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+Kroppen til e-posten. Tolkes som HTML.
+OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>sendetidspunkt</strong></td>
@@ -1101,7 +1454,12 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 <tr>
 <td colspan="2" valign="top"><strong>smsTekst</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+Teksten som sendes i SMS-en.
+OBS: Det er ikke lov med personopplysninger i teksten. SMS er ikke en sikker kanal.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>sendetidspunkt</strong></td>
@@ -1124,8 +1482,12 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 <tbody>
 <tr>
 <td colspan="2" valign="top"><strong>fnr</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+deprecated. value is ignored. 
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>epostadresse</strong></td>
@@ -1166,19 +1528,54 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 </thead>
 <tbody>
 <tr>
+<td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Hvilken virksomhet som skal motta notifikasjonen.
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>eksternId</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+Den eksterne id-en brukes for å unikt identifisere en notifikasjon. Den må være unik for merkelappen.
+
+Hvis dere har en enkel, statisk bruk av notifikasjoner, så kan dere utlede eksternId
+fra f.eks. et saksnummer, og på den måten kunne referere til notifikasjoner dere har opprettet,
+uten at dere må lagre ID-ene vi genererer og returnerer til dere.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>opprettetTidspunkt</strong></td>
 <td valign="top"><a href="#iso8601datetime">ISO8601DateTime</a></td>
-<td></td>
+<td>
+
+Hvilken dato vi viser til brukeren. Dersom dere ikke oppgir noen dato, så
+bruker vi tidspuktet dere gjør kallet på.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>grupperingsid</strong></td>
 <td valign="top"><a href="#string">String</a></td>
-<td></td>
+<td>
+
+Grupperings-id-en gjør det mulig å knytte sammen forskjellige oppgaver, beskjed og saker.
+Det vises ikke til brukere.
+Saksnummer er en naturlig grupperings-id.
+
+Når dere bruker grupperings-id, så er det mulig for oss å presentere en tidslinje
+med alle notifikasjonene og status-oppdateringer knyttet til en sak.
+
+Vi kan også vurdere å implemntere API-er for dere, slik at dere enkelt kan slette
+all informasjon knyttet til en sak i et enkelt kall (f.eks. for å ivareta personvern).
+Ta kontakt med #arbeidsgiver-notifikasjon på slack for å melde interesse!
+
+</td>
 </tr>
 </tbody>
 </table>
@@ -1208,6 +1605,16 @@ Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer
 <tr>
 <td colspan="2" valign="top"><strong>naermesteLeder</strong></td>
 <td valign="top"><a href="#naermesteledermottakerinput">NaermesteLederMottakerInput</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>altinnRolle</strong></td>
+<td valign="top"><a href="#altinnrollemottakerinput">AltinnRolleMottakerInput</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>altinnReportee</strong></td>
+<td valign="top"><a href="#altinnreporteemottakerinput">AltinnReporteeMottakerInput</a></td>
 <td></td>
 </tr>
 </tbody>
@@ -1242,8 +1649,12 @@ Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Å oppgi virksomhetsnummer her er deprecated. Spesifiser det i metadata-feltet.
+
+</td>
 </tr>
 </tbody>
 </table>
@@ -1304,8 +1715,26 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 <tbody>
 <tr>
 <td colspan="2" valign="top"><strong>mottaker</strong></td>
-<td valign="top"><a href="#mottakerinput">MottakerInput</a>!</td>
-<td></td>
+<td valign="top"><a href="#mottakerinput">MottakerInput</a></td>
+<td>
+
+Se dokumentasjonen til `mottakere`-feltet.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>mottakere</strong></td>
+<td valign="top">[<a href="#mottakerinput">MottakerInput</a>!]!</td>
+<td>
+
+Her bestemmer dere hvem som skal få se notifikasjonen.
+
+Hvis dere oppgir en mottaker i `mottaker`-feltet, så tolker vi det som om det var et element
+i denne listen over mottakere.
+
+Dere må gi oss minst 1 mottaker.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>notifikasjon</strong></td>
@@ -1338,8 +1767,26 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 <tbody>
 <tr>
 <td colspan="2" valign="top"><strong>mottaker</strong></td>
-<td valign="top"><a href="#mottakerinput">MottakerInput</a>!</td>
-<td></td>
+<td valign="top"><a href="#mottakerinput">MottakerInput</a></td>
+<td>
+
+Se dokumentasjonen til `mottakere`-feltet.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>mottakere</strong></td>
+<td valign="top">[<a href="#mottakerinput">MottakerInput</a>!]!</td>
+<td>
+
+Her bestemmer dere hvem som skal få se notifikasjonen.
+
+Hvis dere oppgir en mottaker i `mottaker`-feltet, så tolker vi det som om det var et element
+i denne listen over mottakere.
+
+Dere må gi oss minst 1 mottaker.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>notifikasjon</strong></td>
@@ -1355,6 +1802,171 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 <td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
 <td valign="top">[<a href="#eksterntvarselinput">EksterntVarselInput</a>!]!</td>
 <td></td>
+</tr>
+</tbody>
+</table>
+
+#### NySakInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>grupperingsid</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Grupperings-id-en knytter en sak og notifikasjoner sammen.
+Den skal være unik for saker innenfor merkelappen.
+Et naturlig valg av grupperingsid er f.eks. et saksnummer.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>merkelapp</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Merkelapp som saken skal assossieres med.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Virksomhetsnummeret til virksomheten som saken omhandler.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>mottakere</strong></td>
+<td valign="top">[<a href="#mottakerinput">MottakerInput</a>!]!</td>
+<td>
+
+Hvem som skal få se saken.
+
+NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
+til en notifikasjon. De tilgangsstyres hver for seg.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>tittel</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+En tittel på saken, som vises til brukeren.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>lenke</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>status</strong></td>
+<td valign="top"><a href="#saksstatusinput">SaksStatusInput</a>!</td>
+<td>
+
+Status saken starter med.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### NyStatusSakInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>status</strong></td>
+<td valign="top"><a href="#saksstatusinput">SaksStatusInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>idempotencyKey</strong></td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Dere kan bruke dette feltet for å få idempotent oppførsel på statusoppdateringe.
+Hvis en sak får to oppdateringer med samme idempotencyKey, så anser vi oppdateringene
+for som de samme. Vi sjekker kun for duplikate idempotencyKey i den aktuelle saken, ikke
+på tvers av saker.
+
+Det kan f.eks. brukes for å ha en retry-logikk ved feil eller å lettere kunne håndtere
+at-least-once oppførsel ved bruk av hendelses-strømmer som Kafka.
+
+Obs. Hvis dere har protenisielt repretereende statusoppdateringer
+i sakene deres (f.eks. at inngåelsen av en avtale veksler mellom
+statusene "klar-for"underskriving" og "kladd"), så må dere passe
+på at dere ikke oppgir samme nøkkel flere ganger ved en feil,
+slik at to oppdateringer som er forskjellige blir slått sammen
+til en.
+
+Feltet er frivillig. Det vises ikke til brukere.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### SaksStatusInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>status</strong></td>
+<td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>tidspunkt</strong></td>
+<td valign="top"><a href="#iso8601datetime">ISO8601DateTime</a></td>
+<td>
+
+Når endringen skjedde. Det kan godt være i fortiden.
+Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
+kallet på.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>overstyrStatustekstMed</strong></td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
+til brukeren. Se `SaksStatus` for default tekster.
+
+</td>
 </tr>
 </tbody>
 </table>
@@ -1408,8 +2020,12 @@ Tidspunktet tolker vi som lokal, norsk tid (veggklokke-tid).
 <tbody>
 <tr>
 <td colspan="2" valign="top"><strong>fnr</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+deprecated. value is ignored. 
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>tlf</strong></td>
@@ -1486,6 +2102,49 @@ En oppgave som kan utføres.
 <td>
 
 En oppgave som allerede er utført.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### SaksStatus
+
+Statusen påvirker bl.a. hvilket ikon som vises og brukes bl.a.
+for å kunne filtrere saksoversikten på min side arbeidsgiver.
+
+<table>
+<thead>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>MOTTATT</strong></td>
+<td>
+
+Naturlig start-tilstand for en sak.
+
+Default tekst som vises til bruker: "Mottatt"
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>UNDER_BEHANDLING</strong></td>
+<td>
+
+Default tekst som vises til bruker: "Under behandling"
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>FERDIG</strong></td>
+<td>
+
+Slutt-tilstand for en sak. Når en sak er `FERDIG`, så vil vi
+nedprioritere visningen av den på min side arbeidsgivere.
+
+Default tekst som vises til bruker: "Ferdig".
 
 </td>
 </tr>
@@ -1657,6 +2316,14 @@ av "eventual consistency" i systemet vårt.</td>
 <td></td>
 </tr>
 <tr>
+<td valign="top"><strong><a href="#altinnreporteemottaker">AltinnReporteeMottaker</a></strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#altinnrollemottaker">AltinnRolleMottaker</a></strong></td>
+<td></td>
+</tr>
+<tr>
 <td valign="top"><strong><a href="#naermesteledermottaker">NaermesteLederMottaker</a></strong></td>
 <td></td>
 </tr>
@@ -1710,6 +2377,10 @@ av "eventual consistency" i systemet vårt.</td>
 <td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
 <td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
 </tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentrolle">UkjentRolle</a></strong></td>
+<td></td>
+</tr>
 </tbody>
 </table>
 
@@ -1740,6 +2411,69 @@ av "eventual consistency" i systemet vårt.</td>
 <tr>
 <td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
 <td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentrolle">UkjentRolle</a></strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### NySakResultat
+
+<table>
+<thead>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong><a href="#nysakvellykket">NySakVellykket</a></strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong></td>
+<td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ugyldigmottaker">UgyldigMottaker</a></strong></td>
+<td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#duplikatgrupperingsid">DuplikatGrupperingsid</a></strong></td>
+<td valign="top">Denne feilen returneres hvis det allerede eksisterer en sak med denne grupperingsid-en under
+merkelappen.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentrolle">UkjentRolle</a></strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### NyStatusSakResultat
+
+<table>
+<thead>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong><a href="#nystatussakvellykket">NyStatusSakVellykket</a></strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#sakfinnesikke">SakFinnesIkke</a></strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#konflikt">Konflikt</a></strong></td>
+<td valign="top">Oppgitt informasjon samsvarer ikke med tidligere informasjon som er oppgitt.</td>
 </tr>
 </tbody>
 </table>
