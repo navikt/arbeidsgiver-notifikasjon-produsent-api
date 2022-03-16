@@ -77,12 +77,13 @@ object BrukerAPI {
     @JsonTypeName("SakerResultat")
     data class SakerResultat(
         val saker: List<Sak>,
-        val feilAltinn: Boolean
+        val feilAltinn: Boolean,
+        val totaltAntallSaker: Int,
     )
 
     @JsonTypeName("Sak")
     data class Sak(
-        val id: String,
+        val id: UUID,
         val tittel: String,
         val lenke: String,
         val merkelapp: String,
@@ -262,32 +263,41 @@ object BrukerAPI {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
+            val offset = env.getArgumentOrDefault("offset", 0) ?: 0
+            val limit = env.getArgumentOrDefault("limit", 3) ?: 3
+
             coroutineScope {
                 val tilganger = async { tilgangerService.hentTilganger(context) }
-                val saker = brukerRepository.hentSaker(context.fnr, virksomhetsnummer, tilganger.await().orEmpty())
-                    .map {
-                        Sak(
-                            id = it.sakId.toString(),
-                            tittel = it.tittel,
-                            lenke = it.lenke,
-                            merkelapp = it.merkelapp,
-                            virksomhet = Virksomhet(
-                                virksomhetsnummer = it.virksomhetsnummer,
-                            ),
-                            sisteStatus = it.statuser.map { sakStatus ->
-                                val type = SakStatusType.fraModel(sakStatus.status)
-                                SakStatus(
-                                    type = type,
-                                    tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
-                                    tidspunkt = sakStatus.tidspunkt
-                                )
-                            }.first(),
-                        )
-                    }
+                val saker = brukerRepository.hentSaker(
+                    fnr = context.fnr,
+                    virksomhetsnummer = virksomhetsnummer,
+                    tilganger = tilganger.await().orEmpty(),
+                    offset = offset,
+                    limit = limit,
+                ).map {
+                    Sak(
+                        id = it.sakId,
+                        tittel = it.tittel,
+                        lenke = it.lenke,
+                        merkelapp = it.merkelapp,
+                        virksomhet = Virksomhet(
+                            virksomhetsnummer = it.virksomhetsnummer,
+                        ),
+                        sisteStatus = it.statuser.map { sakStatus ->
+                            val type = SakStatusType.fraModel(sakStatus.status)
+                            SakStatus(
+                                type = type,
+                                tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
+                                tidspunkt = sakStatus.tidspunkt
+                            )
+                        }.first(),
+                    )
+                }
 
                 SakerResultat(
                     saker = saker,
-                    feilAltinn = tilganger.await() == null
+                    feilAltinn = tilganger.await() == null,
+                    totaltAntallSaker = saker.size, // TODO: fiks total fra db
                 )
             }
         }

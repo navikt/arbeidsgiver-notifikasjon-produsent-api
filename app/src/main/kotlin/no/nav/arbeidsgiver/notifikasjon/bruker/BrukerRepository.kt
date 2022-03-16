@@ -108,7 +108,9 @@ interface BrukerRepository {
     suspend fun hentSaker(
         fnr: String,
         virksomhetsnummer: String,
-        tilganger: Collection<BrukerModel.Tilgang>
+        tilganger: Collection<BrukerModel.Tilgang>,
+        offset: Int,
+        limit: Int
     ): List<BrukerModel.Sak>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -260,6 +262,8 @@ class BrukerRepositoryImpl(
         fnr: String,
         virksomhetsnummer: String,
         tilganger: Collection<BrukerModel.Tilgang>,
+        offset: Int,
+        limit: Int,
     ): List<BrukerModel.Sak> = timer.coRecord {
         val tilgangerAltinnMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.Altinn>().map {
             AltinnMottaker(
@@ -343,11 +347,14 @@ class BrukerRepositoryImpl(
                 )
             select 
                 s.*, 
-                status_json.statuser as statuser
+                status_json.statuser as statuser,
+                status_json.sist_endret
             from mine_saker as ms
             join sak as s on s.id = ms.sak_id
             join sak_status_json as status_json on s.id = status_json.sak_id
-            limit 200
+            order by status_json.sist_endret desc
+            offset ?
+            limit ?
             """,
             {
                 jsonb(tilgangerAltinnMottaker)
@@ -355,6 +362,8 @@ class BrukerRepositoryImpl(
                 jsonb(tilgangerAltinnRolleMottaker)
                 string(fnr)
                 string(virksomhetsnummer)
+                integer(offset)
+                integer(limit)
             }
         ) {
             BrukerModel.Sak(
