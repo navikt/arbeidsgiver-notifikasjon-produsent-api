@@ -15,4 +15,5 @@ theme: minima
 markdown: CommonMarkGhPages
 
 commonmark:
+  options: [ "UNSAFE" ]
   extensions: ["table"]
