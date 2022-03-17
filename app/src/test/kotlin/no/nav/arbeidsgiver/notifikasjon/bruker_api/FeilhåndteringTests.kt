@@ -10,6 +10,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.util.*
@@ -64,7 +65,7 @@ class FeilhåndteringTests : DescribeSpec({
             it("feil Altinn") {
                 response.getTypedContent<Boolean>("notifikasjoner/feilAltinn") shouldBe true
                 response.getTypedContent<Boolean>("notifikasjoner/feilDigiSyfo") shouldBe false
-                coVerify { queryModel.hentNotifikasjoner(any(), listOf()) }
+                coVerify { queryModel.hentNotifikasjoner(any(), Tilganger(null)) }
             }
         }
     }

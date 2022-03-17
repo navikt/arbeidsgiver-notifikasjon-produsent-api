@@ -10,10 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.*
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
@@ -70,7 +67,7 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
         ).also { model.oppdaterModellEtterHendelse(it) }
 
         it("ingen ansatte gir ingen notifikasjoner") {
-            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, listOf())
+            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
             notifikasjoner should beEmpty()
         }
 
@@ -84,7 +81,7 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             )
         )
         it("får notifikasjon om nåværende ansatt") {
-            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, listOf(), /* ansatte(mottaker1) */)
+            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY, /* ansatte(mottaker1) */)
             notifikasjoner shouldHaveSize 1
             val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
             beskjed.id shouldBe beskjed1.notifikasjonId
@@ -107,7 +104,7 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
         ) {
             val notifikasjoner = model.hentNotifikasjoner(
                 nærmesteLeder,
-                listOf(),
+                Tilganger.EMPTY,
                 //ansatte(mottaker1.copy(virksomhetsnummer = virksomhet2))
             )
             notifikasjoner shouldHaveSize 2

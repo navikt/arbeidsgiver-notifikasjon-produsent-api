@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -49,12 +50,13 @@ class AltinnReporteeTilgangsstyringTests : DescribeSpec({
 
         val notifikasjoner = model.hentNotifikasjoner(
             fnr = "",
-            tilganger = listOf("HarTilgang0", "HarTilgang1").map {
+            tilganger = Tilganger(listOf("HarTilgang0", "HarTilgang1").map {
                 BrukerModel.Tilgang.AltinnReportee(
                     virksomhet = "1",
                     fnr = it,
                 )
             },
+            )
         )
 
         it("har fått riktig antall meldinger") {

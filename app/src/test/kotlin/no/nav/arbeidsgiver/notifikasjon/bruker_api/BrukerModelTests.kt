@@ -6,10 +6,7 @@ import io.kotest.matchers.collections.shouldHaveSingleElement
 import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.*
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -62,7 +59,7 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        emptyList(),
+                        Tilganger(emptyList()),
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
@@ -98,7 +95,7 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        emptyList(),
+                        Tilganger(emptyList()),
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",

@@ -208,7 +208,7 @@ object BrukerAPI {
                 val notifikasjoner = brukerRepository
                     .hentNotifikasjoner(
                         context.fnr,
-                        tilganger.await().orEmpty()
+                        tilganger.await()
                     )
                     .map { notifikasjon ->
                         when (notifikasjon) {
@@ -248,7 +248,7 @@ object BrukerAPI {
                 notifikasjonerHentetCount.increment(notifikasjoner.size.toDouble())
                 return@coroutineScope NotifikasjonerResultat(
                     notifikasjoner,
-                    feilAltinn = tilganger.await() == null,
+                    feilAltinn = tilganger.await().harFeil(),
                     feilDigiSyfo = false,
                 )
             }
@@ -271,7 +271,7 @@ object BrukerAPI {
                 val saker = brukerRepository.hentSaker(
                     fnr = context.fnr,
                     virksomhetsnummer = virksomhetsnummer,
-                    tilganger = tilganger.await().orEmpty(),
+                    tilganger = tilganger.await(),
                     offset = offset,
                     limit = limit,
                 ).map {
@@ -296,7 +296,7 @@ object BrukerAPI {
 
                 SakerResultat(
                     saker = saker,
-                    feilAltinn = tilganger.await() == null,
+                    feilAltinn = tilganger.await().harFeil(),
                     totaltAntallSaker = saker.size, // TODO: fiks total fra db
                 )
             }

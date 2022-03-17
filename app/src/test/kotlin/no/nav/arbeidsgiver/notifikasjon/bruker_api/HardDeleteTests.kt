@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -73,7 +74,7 @@ class HardDeleteTests : DescribeSpec({
             val notifikasjoner =
                 queryModel.hentNotifikasjoner(
                     mottaker.naermesteLederFnr,
-                    emptyList(),
+                    Tilganger(emptyList()),
                 )
                     .map { it.id }
                     .sorted()
@@ -85,7 +86,7 @@ class HardDeleteTests : DescribeSpec({
             queryModel.oppdaterModellEtterHendelse(hardDeleteEvent)
             val notifikasjonerEtterSletting = queryModel.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                emptyList(),
+                Tilganger(emptyList()),
             )
                 .map { it.id }
 
