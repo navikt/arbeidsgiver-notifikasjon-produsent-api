@@ -19,8 +19,13 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.intellij.lang.annotations.Language
 
-inline fun <reified T> DataFetchingEnvironment.getTypedArgument(name: String): T =
+inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgument(name: String): T =
     laxObjectMapper.convertValue(this.getArgument(name))
+
+inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgumentOrNull(name: String): T? {
+    val value = this.getArgument<Any>(name) ?: return null
+    return laxObjectMapper.convertValue(value)
+}
 
 fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Builder.() -> Unit) {
     this.type(typeName) {
