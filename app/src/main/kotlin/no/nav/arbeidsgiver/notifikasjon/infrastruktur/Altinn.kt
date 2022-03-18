@@ -72,7 +72,7 @@ class AltinnImpl(
         }
     }
 
-    fun logException(e: Exception) {
+    private fun logException(e: Exception) {
         if (e is AltinnrettigheterProxyKlientFallbackException) {
             if (e.erDriftsforstyrrelse())
                 log.info("Henting av Altinn-tilganger feilet", e)
@@ -169,15 +169,15 @@ class AltinnImpl(
                 true
             )
         } catch (error: AltinnException) {
-            when (error.proxyError.httpStatus) {
-                403 -> return Tilganger()
-                else -> return Tilganger.FAILURE.also{logException(error)}
+            return when (error.proxyError.httpStatus) {
+                403 -> Tilganger()
+                else -> Tilganger.FAILURE.also{ logException(error) }
             }
         } catch (error: Exception) {
-            if (error.message?.contains("403") == true)
-                return Tilganger()
+            return if (error.message?.contains("403") == true)
+                Tilganger()
             else
-                return Tilganger.FAILURE.also{logException(error)}
+                Tilganger.FAILURE.also{ logException(error) }
         }
 
         return Tilganger(reportee = reporteeList.map {
@@ -197,21 +197,26 @@ class AltinnImpl(
         // TODO: ta i bruk proxy-klient når vi får utvidet den
         val baseUrl = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/ekstern/altinn"
 
-        val reportees =
-            httpClient.get<List<AltinnReportee>>("${baseUrl}/api/serviceowner/reportees?ForceEIAuthentication&roleDefinitionId=$roleDefinitionId") {
-                headers {
-                    append("Authorization", "Bearer $selvbetjeningsToken")
-                    append("APIKEY", System.getenv("ALTINN_HEADER") ?: "default")
+        try {
+            val reportees =
+                httpClient.get<List<AltinnReportee>>("${baseUrl}/api/serviceowner/reportees?ForceEIAuthentication&roleDefinitionId=$roleDefinitionId") {
+                    headers {
+                        append("Authorization", "Bearer $selvbetjeningsToken")
+                        append("APIKEY", System.getenv("ALTINN_HEADER") ?: "default")
+                    }
                 }
-            }
 
-        return Tilganger(rolle = reportees.map {
-            BrukerModel.Tilgang.AltinnRolle(
-                virksomhet = it.organizationNumber!!,
-                roleDefinitionId = roleDefinitionId,
-                roleDefinitionCode = roleDefinitionCode
-            )
-        })
+            return Tilganger(rolle = reportees.map {
+                BrukerModel.Tilgang.AltinnRolle(
+                    virksomhet = it.organizationNumber!!,
+                    roleDefinitionId = roleDefinitionId,
+                    roleDefinitionCode = roleDefinitionCode
+                )
+            })
+        } catch (e: Exception) {
+            logException(e)
+            return Tilganger.FAILURE
+        }
     }
 
     override suspend fun hentRoller(): List<AltinnRolle> {

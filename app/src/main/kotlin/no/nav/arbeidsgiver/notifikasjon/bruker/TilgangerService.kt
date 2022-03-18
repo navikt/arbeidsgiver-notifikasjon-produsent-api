@@ -20,22 +20,18 @@ data class Tilganger(
     val harFeil: Boolean = false,
 ) {
 
-    operator fun plus(other: Tilganger): Tilganger {
-        return Tilganger(
-            tjenestetilganger = this.tjenestetilganger.plus(other.tjenestetilganger),
-            reportee = this.reportee.plus(other.reportee),
-            rolle = this.rolle.plus(other.rolle),
-            harFeil = this.harFeil || other.harFeil,
-        )
-    }
+    operator fun plus(other: Tilganger) = Tilganger(
+        tjenestetilganger = this.tjenestetilganger.plus(other.tjenestetilganger),
+        reportee = this.reportee.plus(other.reportee),
+        rolle = this.rolle.plus(other.rolle),
+        harFeil = this.harFeil || other.harFeil,
+    )
 
     companion object {
         val EMPTY = Tilganger()
         val FAILURE = Tilganger(harFeil = true)
 
-        fun List<Tilganger>.flatten(): Tilganger{
-            return this.fold(EMPTY){ x, y -> x + y }
-        }
+        fun List<Tilganger>.flatten() = this.fold(EMPTY){ x, y -> x + y }
     }
 }
 
