@@ -59,7 +59,7 @@ class AltinnImplTests : DescribeSpec({
         val tilganger = altinn.hentTilganger(fnr, "token", listOf(def), listOf())
 
         it("returnerer tilganger") {
-            tilganger shouldContainExactlyInAnyOrder listOf(
+            tilganger.alleTilganger shouldContainExactlyInAnyOrder listOf(
                 BrukerModel.Tilgang.Altinn("1", def.code, def.version),
                 BrukerModel.Tilgang.AltinnReportee(fnr = fnr, virksomhet = "2")
             )

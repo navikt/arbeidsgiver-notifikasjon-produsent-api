@@ -28,6 +28,7 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
 <!-- START graphql-markdown -->
 
 <details>
+
   <summary><strong>Table of Contents</strong></summary>
 
   * [Query](#query)
@@ -114,6 +115,7 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
 </details>
 
 ### Query
+
 Dette er roten som alle forespørsler starter fra.
 
 <table>
