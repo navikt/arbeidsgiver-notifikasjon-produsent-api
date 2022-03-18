@@ -104,7 +104,7 @@ private fun TestApplicationEngine.nySak(
     produsentApi(
         """
             mutation {
-                nySak(sak: {
+                nySak(
                     virksomhetsnummer: "1"
                     merkelapp: "$merkelapp"
                     grupperingsid: "$grupperingsid"
@@ -114,12 +114,11 @@ private fun TestApplicationEngine.nySak(
                             serviceEdition: "1"
                         }
                     }]
-                    status: {
-                        status: $status
-                    }
+                    initiell_status: $status
+                    tidspunkt: "2020-01-01T01:01Z"
                     tittel: "$tittel"
                     lenke: "$lenke"
-                }) {
+                ) {
                     __typename
                     ... on NySakVellykket {
                         id

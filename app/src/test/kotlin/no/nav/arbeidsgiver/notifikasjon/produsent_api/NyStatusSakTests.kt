@@ -81,22 +81,14 @@ private fun TestApplicationEngine.nyStatusSak(
     id: UUID,
     status: SaksStatus,
     idempotencyKey: String? = null,
-) =
-    produsentApi(
+): TestApplicationResponse {
+    return produsentApi(
         """
             mutation {
                 nyStatusSak(
                     id: "$id"
-                    status: {
-                        status: {
-                            status: $status
-                        }
-                        ${ if (idempotencyKey != null)
-                                """idempotencyKey: "$idempotencyKey" """
-                            else
-                                ""
-                        }
-                    }
+                    idempotencyKey: ${idempotencyKey?.let { "\"$it\"" }}
+                    ny_status: $status
                 ) {
                     __typename
                     ... on NyStatusSakVellykket {
@@ -106,6 +98,7 @@ private fun TestApplicationEngine.nyStatusSak(
             }
         """
     )
+}
 
 
 private fun TestApplicationEngine.nySak(
@@ -114,7 +107,7 @@ private fun TestApplicationEngine.nySak(
     produsentApi(
         """
             mutation {
-                nySak(sak: {
+                nySak(
                     virksomhetsnummer: "1"
                     merkelapp: "tag"
                     grupperingsid: "grupperingsid"
@@ -124,12 +117,10 @@ private fun TestApplicationEngine.nySak(
                             serviceEdition: "1"
                         }
                     }]
-                    status: {
-                        status: $status
-                    }
+                    initiell_status: $status
                     tittel: "tittel"
                     lenke: "lenke"
-                }) {
+                ) {
                     __typename
                     ... on NySakVellykket {
                         id

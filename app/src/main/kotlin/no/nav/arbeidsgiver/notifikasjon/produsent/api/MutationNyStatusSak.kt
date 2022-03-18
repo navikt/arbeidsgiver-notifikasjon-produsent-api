@@ -2,11 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -22,6 +24,16 @@ class MutationNyStatusSak(
     private val produsentRepository: ProdusentRepository,
 ) {
 
+    private fun DataFetchingEnvironment.getStatus() =
+        NyStatusSakInput(
+            status = SaksStatusInput(
+                status = getTypedArgument("ny_status"),
+                tidspunkt = getTypedArgumentOrNull("tidspunkt"),
+                overstyrStatustekstMed = getTypedArgumentOrNull("overstyrStatustekstMed"),
+            ),
+            idempotencyKey = getTypedArgumentOrNull("idempotencyKey")
+        )
+
     fun wire(runtime: RuntimeWiring.Builder) {
         runtime.resolveSubtypes<NyStatusSakResultat>()
 
@@ -30,7 +42,7 @@ class MutationNyStatusSak(
                 nyStatusSak(
                     context = env.getContext(),
                     id = env.getTypedArgument("id"),
-                    status = env.getTypedArgument("status"),
+                    status = env.getStatus(),
                 )
             }
             coDataFetcher("nyStatusSakByGrupperingsid") { env ->
@@ -38,7 +50,7 @@ class MutationNyStatusSak(
                     context = env.getContext(),
                     grupperingsid = env.getTypedArgument("grupperingsid"),
                     merkelapp = env.getTypedArgument("merkelapp"),
-                    status = env.getTypedArgument("status"),
+                    status = env.getStatus(),
                 )
             }
         }

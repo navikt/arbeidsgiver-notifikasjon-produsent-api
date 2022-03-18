@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -38,7 +39,19 @@ class MutationNySak(
             coDataFetcher("nySak") { env ->
                 nySak(
                     context = env.getContext(),
-                    nySak = env.getTypedArgument("sak")
+                    nySak = NySakInput(
+                        grupperingsid = env.getTypedArgument("grupperingsid"),
+                        merkelapp = env.getTypedArgument("merkelapp"),
+                        virksomhetsnummer = env.getTypedArgument("virksomhetsnummer"),
+                        mottakere = env.getTypedArgument("mottakere"),
+                        tittel = env.getTypedArgument("tittel"),
+                        lenke = env.getTypedArgument("lenke"),
+                        status = SaksStatusInput(
+                            status = env.getTypedArgument("initiell_status"),
+                            tidspunkt = env.getTypedArgumentOrNull("tidspunkt"),
+                            overstyrStatustekstMed = env.getTypedArgumentOrNull("overstyrStatustekstMed"),
+                        )
+                    )
                 )
             }
         }
