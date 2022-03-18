@@ -1,8 +1,12 @@
 # produsent-api
 
-# Lokal utvikling
+# Lokal utvikling og tester
 
-For lokal utvikling benyttes docker-compose til å starte nødvendige platform tjenester (postgres, kafka etc).
+For lokal utvikling benyttes docker-compose til å starte nødvendige platform tjenester (postgres, kafka etc). Vi har god erfaring med  [colima](https://github.com/abiosoft/colima). 
+
+1. `colima start`
+2. `docker-compose up` (må kjøres i rot-mappen til prosjektet)
+
 Lokal app startes ved å kjøre main metoden i LocalMain.kt.
 
 Apiene blir da å nå på:

@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -79,7 +80,7 @@ class SoftDeleteTests : DescribeSpec({
             val notifikasjoner =
                 queryModel.hentNotifikasjoner(
                     mottaker.naermesteLederFnr,
-                    emptyList(),
+                    Tilganger.EMPTY,
                 )
                     .map { it.id }
                     .sorted()
@@ -91,7 +92,7 @@ class SoftDeleteTests : DescribeSpec({
             queryModel.oppdaterModellEtterHendelse(softDeleteEvent)
             val notifikasjonerEtterSletting = queryModel.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                emptyList(),
+                Tilganger.EMPTY,
             )
                 .map { it.id }
 

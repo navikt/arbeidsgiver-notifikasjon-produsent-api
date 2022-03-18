@@ -10,7 +10,36 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegist
 interface TilgangerService {
     suspend fun hentTilganger(
         context: BrukerAPI.Context,
-    ): List<BrukerModel.Tilgang>?
+    ): Tilganger
+}
+
+data class Tilganger(
+    private val tjenestetilganger: List<BrukerModel.Tilgang.Altinn>?,
+    private val reportee: List<BrukerModel.Tilgang.AltinnReportee>?,
+    private val rolle: List<BrukerModel.Tilgang.AltinnRolle>?,
+) {
+    val hentAltinnTjenestetilganger: List<BrukerModel.Tilgang.Altinn>
+        get() = tjenestetilganger.orEmpty()
+
+    val  hentAltinnReportee: List<BrukerModel.Tilgang.AltinnReportee>
+        get() =  reportee.orEmpty()
+
+    val hentAltinnRolle: List<BrukerModel.Tilgang.AltinnRolle>
+        get() = rolle.orEmpty()
+
+    val alleTilganger: List<BrukerModel.Tilgang>
+        get() = hentAltinnTjenestetilganger + hentAltinnReportee + hentAltinnRolle
+
+    fun harFeil(): Boolean {
+        return tjenestetilganger == null || reportee == null || rolle == null
+    }
+
+    companion object {
+        val EMPTY = Tilganger(emptyList(), emptyList(), emptyList())
+        val FAILURE = Tilganger(null, null, null)
+    }
+
+
 }
 
 class TilgangerServiceImpl(
@@ -21,7 +50,7 @@ class TilgangerServiceImpl(
 
     override suspend fun hentTilganger(
         context: BrukerAPI.Context,
-    ): List<BrukerModel.Tilgang>? {
+    ): Tilganger{
         return try {
             altinn.hentTilganger(
                 context.fnr,
@@ -34,10 +63,11 @@ class TilgangerServiceImpl(
                 log.info("Henting av Altinn-tilganger feilet", e)
             else
                 log.error("Henting av Altinn-tilganger feilet", e)
-            null
+            Tilganger.FAILURE
         } catch (e: Exception) {
             log.error("Henting av Altinn-tilganger feilet", e)
-            null
+            Tilganger.FAILURE
         }
+
     }
 }

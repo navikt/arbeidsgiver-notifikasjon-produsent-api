@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -44,19 +45,23 @@ class AltinnTilgangsstyringTests : DescribeSpec({
             lagMelding(uuid("2"), "IkkeTilgang2"),
             lagMelding(uuid("3"), "IkkeTilgang3"),
 
-        ).forEach {
+            ).forEach {
             model.oppdaterModellEtterHendelse(it)
         }
 
         val notifikasjoner = model.hentNotifikasjoner(
             fnr = "",
-            tilganger = listOf("HarTilgang0", "HarTilgang1").map {
-                BrukerModel.Tilgang.Altinn(
-                    virksomhet = "1",
-                    servicecode = it,
-                    serviceedition = "1",
-                )
-            },
+            tilganger = Tilganger(
+                tjenestetilganger = listOf("HarTilgang0", "HarTilgang1").map {
+                    BrukerModel.Tilgang.Altinn(
+                        virksomhet = "1",
+                        servicecode = it,
+                        serviceedition = "1",
+                    )
+                },
+                listOf(),
+                listOf(),
+            )
         )
 
         it("har fått riktig antall meldinger") {

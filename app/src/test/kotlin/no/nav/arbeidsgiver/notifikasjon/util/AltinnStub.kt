@@ -1,19 +1,20 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 
 open class AltinnStub(
-    val hentAlleTilgangerImpl: (String, String) -> List<BrukerModel.Tilgang> = { _, _ -> listOf() }
+    val hentAlleTilgangerImpl: (String, String) -> Tilganger = { _, _ -> Tilganger.EMPTY }
 ) : Altinn {
-    constructor(vararg tilganger: Pair<String, List<BrukerModel.Tilgang>>) : this(
+    constructor(vararg tilganger: Pair<String, Tilganger>) : this(
         tilganger
             .toMap()
             .let {
-                fun(fnr: String, _: String): List<BrukerModel.Tilgang> {
-                    return it[fnr] ?: emptyList()
+                fun(fnr: String, _: String): Tilganger {
+                    return it[fnr] ?: Tilganger.EMPTY
                 }
             }
     )
@@ -23,7 +24,7 @@ open class AltinnStub(
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
         roller: Iterable<AltinnRolle>,
-    ): List<BrukerModel.Tilgang> =
+    ): Tilganger =
         hentAlleTilgangerImpl(fnr, selvbetjeningsToken)
 
     override suspend fun hentRoller(): List<AltinnRolle> {

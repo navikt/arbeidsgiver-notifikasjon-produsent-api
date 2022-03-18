@@ -102,13 +102,13 @@ interface BrukerModel {
 interface BrukerRepository {
     suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Collection<BrukerModel.Tilgang>,
+        tilganger: Tilganger,
     ): List<BrukerModel.Notifikasjon>
 
     suspend fun hentSaker(
         fnr: String,
         virksomhetsnummer: String,
-        tilganger: Collection<BrukerModel.Tilgang>,
+        tilganger: Tilganger,
         offset: Int,
         limit: Int
     ): List<BrukerModel.Sak>
@@ -127,22 +127,22 @@ class BrukerRepositoryImpl(
 
     override suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Collection<BrukerModel.Tilgang>,
+        tilganger: Tilganger,
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
-        val tilgangerAltinnMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.Altinn>().map {
+        val tilgangerAltinnMottaker = tilganger.hentAltinnTjenestetilganger.map {
             AltinnMottaker(
                 serviceCode = it.servicecode,
                 serviceEdition = it.serviceedition,
                 virksomhetsnummer = it.virksomhet
             )
         }
-        val tilgangerAltinnReporteeMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.AltinnReportee>().map {
+        val tilgangerAltinnReporteeMottaker = tilganger.hentAltinnReportee.map {
             AltinnReporteeMottaker(
                 virksomhetsnummer = it.virksomhet,
                 fnr = it.fnr
             )
         }
-        val tilgangerAltinnRolleMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.AltinnRolle>().map {
+        val tilgangerAltinnRolleMottaker = tilganger.hentAltinnRolle.map {
             AltinnRolleMottaker(
                 virksomhetsnummer = it.virksomhet,
                 roleDefinitionId = it.roleDefinitionId,
@@ -261,24 +261,24 @@ class BrukerRepositoryImpl(
     override suspend fun hentSaker(
         fnr: String,
         virksomhetsnummer: String,
-        tilganger: Collection<BrukerModel.Tilgang>,
+        tilganger: Tilganger,
         offset: Int,
         limit: Int,
     ): List<BrukerModel.Sak> = timer.coRecord {
-        val tilgangerAltinnMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.Altinn>().map {
+        val tilgangerAltinnMottaker = tilganger.hentAltinnTjenestetilganger.map {
             AltinnMottaker(
                 serviceCode = it.servicecode,
                 serviceEdition = it.serviceedition,
                 virksomhetsnummer = it.virksomhet
             )
         }.filter { it.virksomhetsnummer == virksomhetsnummer }
-        val tilgangerAltinnReporteeMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.AltinnReportee>().map {
+        val tilgangerAltinnReporteeMottaker = tilganger.hentAltinnReportee.map {
             AltinnReporteeMottaker(
                 virksomhetsnummer = it.virksomhet,
                 fnr = it.fnr
             )
         }.filter { it.virksomhetsnummer == virksomhetsnummer }
-        val tilgangerAltinnRolleMottaker = tilganger.filterIsInstance<BrukerModel.Tilgang.AltinnRolle>().map {
+        val tilgangerAltinnRolleMottaker = tilganger.hentAltinnRolle.map {
             AltinnRolleMottaker(
                 virksomhetsnummer = it.virksomhet,
                 roleDefinitionId = it.roleDefinitionId,

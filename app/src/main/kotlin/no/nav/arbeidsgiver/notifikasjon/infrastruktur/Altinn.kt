@@ -18,6 +18,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.Altin
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
 
@@ -33,7 +34,7 @@ interface Altinn {
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
         roller: Iterable<AltinnRolle>,
-    ): List<BrukerModel.Tilgang>
+    ): Tilganger
 
     suspend fun hentRoller(): List<AltinnRolle>
 }
@@ -70,28 +71,41 @@ class AltinnImpl(
         }
     }
 
+    fun logException(e: Exception) {
+        if (e is AltinnrettigheterProxyKlientFallbackException) {
+            if (e.erDriftsforstyrrelse())
+                log.info("Henting av Altinn-tilganger feilet", e)
+            else
+                log.error("Henting av Altinn-tilganger feilet", e)
+        } else {
+            log.error("Henting av Altinn-tilganger feilet", e)
+        }
+    }
+
     override suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
         roller: Iterable<AltinnRolle>,
-    ): List<BrukerModel.Tilgang> =
+    ): Tilganger =
         timer.coRecord {
             coroutineScope {
-                val alleTilganger = tjenester.map {
+                val tjenesteTilganger = tjenester.map {
                     val (code, version) = it
                     async {
                         hentTilganger(fnr, code, version, selvbetjeningsToken)
                     }
-                } + roller.map {
+                }
+                val rolleTilganger = roller.map {
                     val (RoleDefinitionId, RoleDefinitionCode) = it
                     async {
                         hentTilgangerForRolle(RoleDefinitionId, RoleDefinitionCode, selvbetjeningsToken)
                     }
-                } + async {
+                }
+                val reporteeTilganger = async {
                     hentTilganger(fnr, selvbetjeningsToken)
                 }
-                return@coroutineScope alleTilganger.awaitAll().flatten()
+                return@coroutineScope Tilganger(tjenesteTilganger.awaitAll().flatten(), reporteeTilganger.await(), rolleTilganger.awaitAll().flatten())
             }
         }
 
@@ -100,7 +114,7 @@ class AltinnImpl(
         serviceCode: String,
         serviceEdition: String,
         selvbetjeningsToken: String,
-    ): List<BrukerModel.Tilgang> {
+    ): List<BrukerModel.Tilgang.Altinn> {
         val reporteeList = try {
             klient.hentOrganisasjoner(
                 SelvbetjeningToken(selvbetjeningsToken),
@@ -144,7 +158,7 @@ class AltinnImpl(
     private suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
-    ): List<BrukerModel.Tilgang> {
+    ): List<BrukerModel.Tilgang.AltinnReportee>? {
         val reporteeList = try {
             klient.hentOrganisasjoner(
                 SelvbetjeningToken(selvbetjeningsToken),
@@ -154,13 +168,13 @@ class AltinnImpl(
         } catch (error: AltinnException) {
             when (error.proxyError.httpStatus) {
                 403 -> return emptyList()
-                else -> throw error
+                else -> return null.also{logException(error)}
             }
         } catch (error: Exception) {
             if (error.message?.contains("403") == true)
                 return emptyList()
             else
-                throw error
+                return null.also{logException(error)}
         }
 
         return reporteeList.map {
@@ -175,7 +189,7 @@ class AltinnImpl(
         roleDefinitionId: String,
         roleDefinitionCode: String,
         selvbetjeningsToken: String,
-    ): List<BrukerModel.Tilgang> {
+    ): List<BrukerModel.Tilgang.AltinnRolle> {
         // TODO: ta i bruk proxy-klient når vi får utvidet den
         val baseUrl = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/ekstern/altinn"
 
