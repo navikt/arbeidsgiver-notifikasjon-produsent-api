@@ -148,22 +148,22 @@ mutation OpprettNySak(
   $tittel: String!
   $lenke: String!
 ) {
-	nySak(sak: {
+  nySak(
     grupperingsid: $grupperingsid
     merkelapp: "Tiltak"
     virksomhetsnummer: $virksomhetsnummer
     mottakere: [{
-        altinn: {
-            serviceCode: "4321"
-            serviceEdition: "1"
-        }
+      altinn: {
+        serviceCode: "4321"
+        serviceEdition: "1"
+      }
     }]
     tittel: $tittel
     lenke: $lenke
-    status: {
-      status: MOTTATT
-    }
-  }) {
+    initiell_status: MOTTATT
+    tidspunkt: "2022-03-01T17:18:00+01" # optional
+    overstyrStatustekstMed: "Avtale opprettet" # optional
+  ) {
     __typename
     ... on NySakVellykket {
       id
@@ -174,20 +174,53 @@ mutation OpprettNySak(
   }
 }
 ```
-med variablene:
-```json
-{
-  "grupperingsid": "1234556",
-  "virksomhetsnummer":"012345678",
-  "tittel": "Søknad om lønnstilskudd for Karlsson",
-  "lenke": "https://dev.nav.no/lønnstilskudd/123456"
-}
-```
+
 Merk at vi sender tittel som variabel, siden innholdet er dynamisk (etternavn satt inn).
 
 ## Hvordan oppdatere status i sak
+Du kan oppdatere status i sak ved å referer til vår ID (id) eller deres id (grupperingsid + merkelapp).
 
-(Fikse status.status.status før vi lager eksempel)
+Vår ID:
+```graphql
+mutation OpprettNySak($id: ID!) {
+  nyStatusSak(
+    id: $id
+    ny_status: UNDER_BEHANDLING
+    tidspunkt: "2022-03-01T18:18:00+01" # optional
+    overstyrStatustekstMed: "Avtale opprettet" # optional
+  ) {
+    __typename
+    ... on NyStatusSakVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+```
+
+Deres ID:
+```graphql
+mutation OpprettNySak($grupperingsid: String!) {
+  nyStatusSakByGrupperingsid(
+    grupperingsid: $grupperingsid
+    merkelapp: "Tiltak"
+    ny_status: UNDER_BEHANDLING
+    tidspunkt: "2022-03-01T18:18:00+01" # optional
+    overstyrStatustekstMed: "Avtale opprettet" # optional
+  ) {
+    __typename
+    ... on NyStatusSakVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+```
+
 
 
 ## Spesifisere mottakere

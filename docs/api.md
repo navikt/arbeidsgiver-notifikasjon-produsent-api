@@ -28,7 +28,6 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
 <!-- START graphql-markdown -->
 
 <details>
-
   <summary><strong>Table of Contents</strong></summary>
 
   * [Query](#query)
@@ -80,9 +79,6 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [NotifikasjonInput](#notifikasjoninput)
     * [NyBeskjedInput](#nybeskjedinput)
     * [NyOppgaveInput](#nyoppgaveinput)
-    * [NySakInput](#nysakinput)
-    * [NyStatusSakInput](#nystatussakinput)
-    * [SaksStatusInput](#saksstatusinput)
     * [SendetidspunktInput](#sendetidspunktinput)
     * [SmsKontaktInfoInput](#smskontaktinfoinput)
     * [SmsMottakerInput](#smsmottakerinput)
@@ -115,7 +111,6 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
 </details>
 
 ### Query
-
 Dette er roten som alle forespørsler starter fra.
 
 <table>
@@ -217,13 +212,98 @@ Dette er roten som alle endringer ("mutations") starter fra. Endringer inkludere
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">sak</td>
-<td valign="top"><a href="#nysakinput">NySakInput</a>!</td>
+<td colspan="2" align="right" valign="top">grupperingsid</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Grupperings-id-en knytter en sak og notifikasjoner sammen.
+Den skal være unik for saker innenfor merkelappen.
+Et naturlig valg av grupperingsid er f.eks. et saksnummer.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Merkelapp som saken skal assossieres med.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">virksomhetsnummer</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Virksomhetsnummeret til virksomheten som saken omhandler.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">mottakere</td>
+<td valign="top">[<a href="#mottakerinput">MottakerInput</a>!]!</td>
+<td>
+
+Hvem som skal få se saken.
+
+NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
+til en notifikasjon. De tilgangsstyres hver for seg.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">tittel</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+En tittel på saken, som vises til brukeren.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">lenke</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">initiell_status</td>
+<td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
 <td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">tidspunkt</td>
+<td valign="top"><a href="#iso8601datetime">ISO8601DateTime</a></td>
+<td>
+
+Når endringen skjedde. Det kan godt være i fortiden.
+Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
+kallet på.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">overstyrStatustekstMed</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
+til brukeren. Se `SaksStatus` for default tekster.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>nyStatusSak</strong></td>
 <td valign="top"><a href="#nystatussakresultat">NyStatusSakResultat</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">idempotencyKey</td>
+<td valign="top"><a href="#string">String</a></td>
 <td></td>
 </tr>
 <tr>
@@ -232,13 +312,39 @@ Dette er roten som alle endringer ("mutations") starter fra. Endringer inkludere
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">status</td>
-<td valign="top"><a href="#nystatussakinput">NyStatusSakInput</a>!</td>
+<td colspan="2" align="right" valign="top">ny_status</td>
+<td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
 <td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">tidspunkt</td>
+<td valign="top"><a href="#iso8601datetime">ISO8601DateTime</a></td>
+<td>
+
+Når endringen skjedde. Det kan godt være i fortiden.
+Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
+kallet på.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">overstyrStatustekstMed</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
+til brukeren. Se `SaksStatus` for default tekster.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>nyStatusSakByGrupperingsid</strong></td>
 <td valign="top"><a href="#nystatussakresultat">NyStatusSakResultat</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">idempotencyKey</td>
+<td valign="top"><a href="#string">String</a></td>
 <td></td>
 </tr>
 <tr>
@@ -252,9 +358,30 @@ Dette er roten som alle endringer ("mutations") starter fra. Endringer inkludere
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">status</td>
-<td valign="top"><a href="#nystatussakinput">NyStatusSakInput</a>!</td>
+<td colspan="2" align="right" valign="top">ny_status</td>
+<td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
 <td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">tidspunkt</td>
+<td valign="top"><a href="#iso8601datetime">ISO8601DateTime</a></td>
+<td>
+
+Når endringen skjedde. Det kan godt være i fortiden.
+Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
+kallet på.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">overstyrStatustekstMed</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
+til brukeren. Se `SaksStatus` for default tekster.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>nyBeskjed</strong></td>
@@ -1804,171 +1931,6 @@ Dere må gi oss minst 1 mottaker.
 <td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
 <td valign="top">[<a href="#eksterntvarselinput">EksterntVarselInput</a>!]!</td>
 <td></td>
-</tr>
-</tbody>
-</table>
-
-#### NySakInput
-
-<table>
-<thead>
-<tr>
-<th colspan="2" align="left">Field</th>
-<th align="left">Type</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td colspan="2" valign="top"><strong>grupperingsid</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td>
-
-Grupperings-id-en knytter en sak og notifikasjoner sammen.
-Den skal være unik for saker innenfor merkelappen.
-Et naturlig valg av grupperingsid er f.eks. et saksnummer.
-
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>merkelapp</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td>
-
-Merkelapp som saken skal assossieres med.
-
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td>
-
-Virksomhetsnummeret til virksomheten som saken omhandler.
-
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>mottakere</strong></td>
-<td valign="top">[<a href="#mottakerinput">MottakerInput</a>!]!</td>
-<td>
-
-Hvem som skal få se saken.
-
-NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
-til en notifikasjon. De tilgangsstyres hver for seg.
-
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>tittel</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td>
-
-En tittel på saken, som vises til brukeren.
-
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>lenke</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td>
-
-Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken.
-
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>status</strong></td>
-<td valign="top"><a href="#saksstatusinput">SaksStatusInput</a>!</td>
-<td>
-
-Status saken starter med.
-
-</td>
-</tr>
-</tbody>
-</table>
-
-#### NyStatusSakInput
-
-<table>
-<thead>
-<tr>
-<th colspan="2" align="left">Field</th>
-<th align="left">Type</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td colspan="2" valign="top"><strong>status</strong></td>
-<td valign="top"><a href="#saksstatusinput">SaksStatusInput</a>!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>idempotencyKey</strong></td>
-<td valign="top"><a href="#string">String</a></td>
-<td>
-
-Dere kan bruke dette feltet for å få idempotent oppførsel på statusoppdateringe.
-Hvis en sak får to oppdateringer med samme idempotencyKey, så anser vi oppdateringene
-for som de samme. Vi sjekker kun for duplikate idempotencyKey i den aktuelle saken, ikke
-på tvers av saker.
-
-Det kan f.eks. brukes for å ha en retry-logikk ved feil eller å lettere kunne håndtere
-at-least-once oppførsel ved bruk av hendelses-strømmer som Kafka.
-
-Obs. Hvis dere har protenisielt repretereende statusoppdateringer
-i sakene deres (f.eks. at inngåelsen av en avtale veksler mellom
-statusene "klar-for"underskriving" og "kladd"), så må dere passe
-på at dere ikke oppgir samme nøkkel flere ganger ved en feil,
-slik at to oppdateringer som er forskjellige blir slått sammen
-til en.
-
-Feltet er frivillig. Det vises ikke til brukere.
-
-</td>
-</tr>
-</tbody>
-</table>
-
-#### SaksStatusInput
-
-<table>
-<thead>
-<tr>
-<th colspan="2" align="left">Field</th>
-<th align="left">Type</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td colspan="2" valign="top"><strong>status</strong></td>
-<td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>tidspunkt</strong></td>
-<td valign="top"><a href="#iso8601datetime">ISO8601DateTime</a></td>
-<td>
-
-Når endringen skjedde. Det kan godt være i fortiden.
-Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
-kallet på.
-
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>overstyrStatustekstMed</strong></td>
-<td valign="top"><a href="#string">String</a></td>
-<td>
-
-Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
-til brukeren. Se `SaksStatus` for default tekster.
-
-</td>
 </tr>
 </tbody>
 </table>
