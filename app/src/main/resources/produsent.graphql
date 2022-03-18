@@ -388,6 +388,24 @@ type Mutation {
         """
         eksternId: ID!
     ): OppgaveUtfoertResultat!
+    @deprecated(reason:
+        "Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead."
+    )
+
+    """
+    Marker en oppgave (identifisert ved ekstern id) som utført.
+    """
+    oppgaveUtfoertByEksternId_V2(
+        """
+        Merkelapp som oppgaven er registrert med.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+        """
+        eksternId: String!
+    ): OppgaveUtfoertResultat!
 
 
     """
