@@ -14,33 +14,27 @@ interface TilgangerService {
 }
 
 data class Tilganger(
-    private val tjenestetilganger: List<BrukerModel.Tilgang.Altinn>?,
-    private val reportee: List<BrukerModel.Tilgang.AltinnReportee>?,
-    private val rolle: List<BrukerModel.Tilgang.AltinnRolle>?,
+    val tjenestetilganger: List<BrukerModel.Tilgang.Altinn> = listOf(),
+    val reportee: List<BrukerModel.Tilgang.AltinnReportee> = listOf(),
+    val rolle: List<BrukerModel.Tilgang.AltinnRolle> = listOf(),
+    val harFeil: Boolean = false,
 ) {
-    val hentAltinnTjenestetilganger: List<BrukerModel.Tilgang.Altinn>
-        get() = tjenestetilganger.orEmpty()
 
-    val  hentAltinnReportee: List<BrukerModel.Tilgang.AltinnReportee>
-        get() =  reportee.orEmpty()
-
-    val hentAltinnRolle: List<BrukerModel.Tilgang.AltinnRolle>
-        get() = rolle.orEmpty()
-
-    val alleTilganger: List<BrukerModel.Tilgang>
-        get() = hentAltinnTjenestetilganger + hentAltinnReportee + hentAltinnRolle
-
-    fun harFeil(): Boolean {
-        return tjenestetilganger == null || reportee == null || rolle == null
-    }
+    operator fun plus(other: Tilganger) = Tilganger(
+        tjenestetilganger = this.tjenestetilganger.plus(other.tjenestetilganger),
+        reportee = this.reportee.plus(other.reportee),
+        rolle = this.rolle.plus(other.rolle),
+        harFeil = this.harFeil || other.harFeil,
+    )
 
     companion object {
-        val EMPTY = Tilganger(emptyList(), emptyList(), emptyList())
-        val FAILURE = Tilganger(null, null, null)
+        val EMPTY = Tilganger()
+        val FAILURE = Tilganger(harFeil = true)
+
+        fun List<Tilganger>.flatten() = this.fold(EMPTY){ x, y -> x + y }
     }
-
-
 }
+
 
 class TilgangerServiceImpl(
     private val altinn: Altinn,

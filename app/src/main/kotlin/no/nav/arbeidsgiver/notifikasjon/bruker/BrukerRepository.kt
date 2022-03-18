@@ -129,20 +129,20 @@ class BrukerRepositoryImpl(
         fnr: String,
         tilganger: Tilganger,
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
-        val tilgangerAltinnMottaker = tilganger.hentAltinnTjenestetilganger.map {
+        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
             AltinnMottaker(
                 serviceCode = it.servicecode,
                 serviceEdition = it.serviceedition,
                 virksomhetsnummer = it.virksomhet
             )
         }
-        val tilgangerAltinnReporteeMottaker = tilganger.hentAltinnReportee.map {
+        val tilgangerAltinnReporteeMottaker = tilganger.reportee.map {
             AltinnReporteeMottaker(
                 virksomhetsnummer = it.virksomhet,
                 fnr = it.fnr
             )
         }
-        val tilgangerAltinnRolleMottaker = tilganger.hentAltinnRolle.map {
+        val tilgangerAltinnRolleMottaker = tilganger.rolle.map {
             AltinnRolleMottaker(
                 virksomhetsnummer = it.virksomhet,
                 roleDefinitionId = it.roleDefinitionId,
@@ -265,20 +265,20 @@ class BrukerRepositoryImpl(
         offset: Int,
         limit: Int,
     ): List<BrukerModel.Sak> = timer.coRecord {
-        val tilgangerAltinnMottaker = tilganger.hentAltinnTjenestetilganger.map {
+        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
             AltinnMottaker(
                 serviceCode = it.servicecode,
                 serviceEdition = it.serviceedition,
                 virksomhetsnummer = it.virksomhet
             )
         }.filter { it.virksomhetsnummer == virksomhetsnummer }
-        val tilgangerAltinnReporteeMottaker = tilganger.hentAltinnReportee.map {
+        val tilgangerAltinnReporteeMottaker = tilganger.reportee.map {
             AltinnReporteeMottaker(
                 virksomhetsnummer = it.virksomhet,
                 fnr = it.fnr
             )
         }.filter { it.virksomhetsnummer == virksomhetsnummer }
-        val tilgangerAltinnRolleMottaker = tilganger.hentAltinnRolle.map {
+        val tilgangerAltinnRolleMottaker = tilganger.rolle.map {
             AltinnRolleMottaker(
                 virksomhetsnummer = it.virksomhet,
                 roleDefinitionId = it.roleDefinitionId,

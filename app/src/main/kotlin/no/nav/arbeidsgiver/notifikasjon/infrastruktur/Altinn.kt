@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.Altin
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger.Companion.flatten
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
 
@@ -71,7 +72,7 @@ class AltinnImpl(
         }
     }
 
-    fun logException(e: Exception) {
+    private fun logException(e: Exception) {
         if (e is AltinnrettigheterProxyKlientFallbackException) {
             if (e.erDriftsforstyrrelse())
                 log.info("Henting av Altinn-tilganger feilet", e)
@@ -105,7 +106,8 @@ class AltinnImpl(
                 val reporteeTilganger = async {
                     hentTilganger(fnr, selvbetjeningsToken)
                 }
-                return@coroutineScope Tilganger(tjenesteTilganger.awaitAll().flatten(), reporteeTilganger.await(), rolleTilganger.awaitAll().flatten())
+                listOf(listOf(String)).flatten()
+                return@coroutineScope tjenesteTilganger.awaitAll().flatten() + reporteeTilganger.await() + rolleTilganger.awaitAll().flatten()
             }
         }
 
@@ -114,7 +116,7 @@ class AltinnImpl(
         serviceCode: String,
         serviceEdition: String,
         selvbetjeningsToken: String,
-    ): List<BrukerModel.Tilgang.Altinn> {
+    ): Tilganger {
         val reporteeList = try {
             klient.hentOrganisasjoner(
                 SelvbetjeningToken(selvbetjeningsToken),
@@ -125,17 +127,17 @@ class AltinnImpl(
             )
         } catch (error: AltinnException) {
             when (error.proxyError.httpStatus) {
-                400, 403 -> return emptyList()
+                400, 403 -> return Tilganger()
                 else -> throw error
             }
         } catch (error: Exception) {
             if (error.message?.contains("403") == true)
-                return emptyList()
+                return Tilganger()
             else
                 throw error
         }
 
-        return reporteeList
+        return Tilganger(reporteeList
             .filter { it.type != "Enterprise" }
             .filterNot { it.type == "Person" && it.organizationNumber == null }
             .filter {
@@ -153,12 +155,13 @@ class AltinnImpl(
                     serviceedition = serviceEdition
                 )
             }
+        )
     }
 
     private suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
-    ): List<BrukerModel.Tilgang.AltinnReportee>? {
+    ): Tilganger {
         val reporteeList = try {
             klient.hentOrganisasjoner(
                 SelvbetjeningToken(selvbetjeningsToken),
@@ -166,47 +169,53 @@ class AltinnImpl(
                 true
             )
         } catch (error: AltinnException) {
-            when (error.proxyError.httpStatus) {
-                403 -> return emptyList()
-                else -> return null.also{logException(error)}
+            return when (error.proxyError.httpStatus) {
+                403 -> Tilganger()
+                else -> Tilganger.FAILURE.also{ logException(error) }
             }
         } catch (error: Exception) {
-            if (error.message?.contains("403") == true)
-                return emptyList()
+            return if (error.message?.contains("403") == true)
+                Tilganger()
             else
-                return null.also{logException(error)}
+                Tilganger.FAILURE.also{ logException(error) }
         }
 
-        return reporteeList.map {
+        return Tilganger(reportee = reporteeList.map {
             BrukerModel.Tilgang.AltinnReportee(
                 virksomhet = it.organizationNumber!!,
                 fnr = fnr
             )
         }
+        )
     }
 
     private suspend fun hentTilgangerForRolle(
         roleDefinitionId: String,
         roleDefinitionCode: String,
         selvbetjeningsToken: String,
-    ): List<BrukerModel.Tilgang.AltinnRolle> {
+    ): Tilganger {
         // TODO: ta i bruk proxy-klient når vi får utvidet den
         val baseUrl = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/ekstern/altinn"
 
-        val reportees =
-            httpClient.get<List<AltinnReportee>>("${baseUrl}/api/serviceowner/reportees?ForceEIAuthentication&roleDefinitionId=$roleDefinitionId") {
-                headers {
-                    append("Authorization", "Bearer $selvbetjeningsToken")
-                    append("APIKEY", System.getenv("ALTINN_HEADER") ?: "default")
+        try {
+            val reportees =
+                httpClient.get<List<AltinnReportee>>("${baseUrl}/api/serviceowner/reportees?ForceEIAuthentication&roleDefinitionId=$roleDefinitionId") {
+                    headers {
+                        append("Authorization", "Bearer $selvbetjeningsToken")
+                        append("APIKEY", System.getenv("ALTINN_HEADER") ?: "default")
+                    }
                 }
-            }
 
-        return reportees.map {
-            BrukerModel.Tilgang.AltinnRolle(
-                virksomhet = it.organizationNumber!!,
-                roleDefinitionId = roleDefinitionId,
-                roleDefinitionCode = roleDefinitionCode
-            )
+            return Tilganger(rolle = reportees.map {
+                BrukerModel.Tilgang.AltinnRolle(
+                    virksomhet = it.organizationNumber!!,
+                    roleDefinitionId = roleDefinitionId,
+                    roleDefinitionCode = roleDefinitionCode
+                )
+            })
+        } catch (e: Exception) {
+            logException(e)
+            return Tilganger.FAILURE
         }
     }
 
