@@ -245,7 +245,7 @@ object BrukerAPI {
             notifikasjonerHentetCount.increment(notifikasjoner.size.toDouble())
             return@coDataFetcher NotifikasjonerResultat(
                 notifikasjoner,
-                feilAltinn = tilganger.harFeil(),
+                feilAltinn = tilganger.harFeil,
                 feilDigiSyfo = false,
             )
         }
@@ -291,7 +291,7 @@ object BrukerAPI {
 
             SakerResultat(
                 saker = saker,
-                feilAltinn = tilganger.harFeil(),
+                feilAltinn = tilganger.harFeil,
                 totaltAntallSaker = saker.size, // TODO: fiks total fra db
             )
 
