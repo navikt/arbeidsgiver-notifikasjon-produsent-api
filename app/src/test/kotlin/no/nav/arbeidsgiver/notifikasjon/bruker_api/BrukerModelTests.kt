@@ -59,7 +59,7 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        Tilganger(emptyList()),
+                        Tilganger.EMPTY,
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
@@ -95,7 +95,7 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     queryModel.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        Tilganger(emptyList()),
+                        Tilganger.EMPTY,
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",

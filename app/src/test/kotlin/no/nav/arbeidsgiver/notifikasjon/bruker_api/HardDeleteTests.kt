@@ -74,7 +74,7 @@ class HardDeleteTests : DescribeSpec({
             val notifikasjoner =
                 queryModel.hentNotifikasjoner(
                     mottaker.naermesteLederFnr,
-                    Tilganger(emptyList()),
+                    Tilganger.EMPTY,
                 )
                     .map { it.id }
                     .sorted()
@@ -86,7 +86,7 @@ class HardDeleteTests : DescribeSpec({
             queryModel.oppdaterModellEtterHendelse(hardDeleteEvent)
             val notifikasjonerEtterSletting = queryModel.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                Tilganger(emptyList()),
+                Tilganger.EMPTY,
             )
                 .map { it.id }
 

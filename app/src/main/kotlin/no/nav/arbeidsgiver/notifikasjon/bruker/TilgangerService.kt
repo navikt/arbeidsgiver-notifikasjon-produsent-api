@@ -27,6 +27,9 @@ data class Tilganger(
     val hentAltinnRolle: List<BrukerModel.Tilgang.AltinnRolle>
         get() = rolle.orEmpty()
 
+    val alleTilganger: List<BrukerModel.Tilgang>
+        get() = hentAltinnTjenestetilganger + hentAltinnReportee + hentAltinnRolle
+
     fun harFeil(): Boolean {
         return tjenestetilganger == null || reportee == null || rolle == null
     }

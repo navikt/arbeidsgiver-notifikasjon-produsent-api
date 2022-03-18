@@ -11,11 +11,8 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakStatus
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
@@ -30,7 +27,11 @@ class QuerySakerTests : DescribeSpec({
     val engine = ktorBrukerTestServer(
         brukerGraphQL = BrukerAPI.createBrukerGraphQL(
             tilgangerService = TilgangerServiceImpl(
-                altinn = AltinnStub("0".repeat(11) to listOf(Tilgang.Altinn("42", "5441", "1"))),
+                altinn = AltinnStub("0".repeat(11) to Tilganger(
+                    tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1")),
+                    listOf(),
+                    listOf(),
+                )),
                 altinnRolleService = mockk(relaxed = true),
             ),
             enhetsregisteret = EnhetsregisteretStub("42" to "el virksomhete"),

@@ -71,6 +71,17 @@ class AltinnImpl(
         }
     }
 
+    fun logException(e: Exception) {
+        if (e is AltinnrettigheterProxyKlientFallbackException) {
+            if (e.erDriftsforstyrrelse())
+                log.info("Henting av Altinn-tilganger feilet", e)
+            else
+                log.error("Henting av Altinn-tilganger feilet", e)
+        } else {
+            log.error("Henting av Altinn-tilganger feilet", e)
+        }
+    }
+
     override suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
@@ -147,7 +158,7 @@ class AltinnImpl(
     private suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
-    ): List<BrukerModel.Tilgang.AltinnReportee> {
+    ): List<BrukerModel.Tilgang.AltinnReportee>? {
         val reporteeList = try {
             klient.hentOrganisasjoner(
                 SelvbetjeningToken(selvbetjeningsToken),
@@ -157,13 +168,13 @@ class AltinnImpl(
         } catch (error: AltinnException) {
             when (error.proxyError.httpStatus) {
                 403 -> return emptyList()
-                else -> throw error
+                else -> return null.also{logException(error)}
             }
         } catch (error: Exception) {
             if (error.message?.contains("403") == true)
                 return emptyList()
             else
-                throw error
+                return null.also{logException(error)}
         }
 
         return reporteeList.map {

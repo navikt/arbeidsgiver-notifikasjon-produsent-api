@@ -50,12 +50,15 @@ class AltinnReporteeTilgangsstyringTests : DescribeSpec({
 
         val notifikasjoner = model.hentNotifikasjoner(
             fnr = "",
-            tilganger = Tilganger(listOf("HarTilgang0", "HarTilgang1").map {
-                BrukerModel.Tilgang.AltinnReportee(
-                    virksomhet = "1",
-                    fnr = it,
-                )
-            },
+            tilganger = Tilganger(
+                tjenestetilganger = listOf(),
+                reportee = listOf("HarTilgang0", "HarTilgang1").map {
+                    BrukerModel.Tilgang.AltinnReportee(
+                        virksomhet = "1",
+                        fnr = it,
+                    )
+                },
+                rolle = listOf(),
             )
         )
 

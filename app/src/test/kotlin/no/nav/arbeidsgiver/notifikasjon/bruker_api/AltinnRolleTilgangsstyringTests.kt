@@ -45,19 +45,22 @@ class AltinnRolleTilgangsstyringTests : DescribeSpec({
             lagMelding(uuid("2"), "IkkeTilgang2"),
             lagMelding(uuid("3"), "IkkeTilgang3"),
 
-        ).forEach {
+            ).forEach {
             model.oppdaterModellEtterHendelse(it)
         }
 
         val notifikasjoner = model.hentNotifikasjoner(
             fnr = "",
-            tilganger = Tilganger(listOf("HarTilgang0", "HarTilgang1").map {
-                BrukerModel.Tilgang.AltinnRolle(
-                    virksomhet = "1",
-                    roleDefinitionId = it,
-                    roleDefinitionCode = it,
-                )
-            },
+            tilganger = Tilganger(
+                rolle = listOf("HarTilgang0", "HarTilgang1").map {
+                    BrukerModel.Tilgang.AltinnRolle(
+                        virksomhet = "1",
+                        roleDefinitionId = it,
+                        roleDefinitionCode = it,
+                    )
+                },
+                reportee = listOf(),
+                tjenestetilganger = listOf(),
             )
         )
 

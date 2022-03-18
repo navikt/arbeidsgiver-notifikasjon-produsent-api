@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
@@ -195,68 +193,66 @@ object BrukerAPI {
         }
     )
 
-    fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
+    private fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
         brukerRepository: BrukerRepository,
         tilgangerService: TilgangerService,
     ) {
         coDataFetcher("notifikasjoner") { env ->
 
             val context = env.getContext<Context>()
-            coroutineScope {
-                val tilganger = async { tilgangerService.hentTilganger(context) }
+            val tilganger =  tilgangerService.hentTilganger(context)
 
-                val notifikasjoner = brukerRepository
-                    .hentNotifikasjoner(
-                        context.fnr,
-                        tilganger.await()
-                    )
-                    .map { notifikasjon ->
-                        when (notifikasjon) {
-                            is BrukerModel.Beskjed ->
-                                Notifikasjon.Beskjed(
-                                    merkelapp = notifikasjon.merkelapp,
-                                    tekst = notifikasjon.tekst,
-                                    lenke = notifikasjon.lenke,
-                                    opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                    id = notifikasjon.id,
-                                    virksomhet = Virksomhet(
-                                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                                    ),
-                                    brukerKlikk = BrukerKlikk(
-                                        id = "${context.fnr}-${notifikasjon.id}",
-                                        klikketPaa = notifikasjon.klikketPaa
-                                    )
-                                )
-                            is BrukerModel.Oppgave ->
-                                Notifikasjon.Oppgave(
-                                    merkelapp = notifikasjon.merkelapp,
-                                    tekst = notifikasjon.tekst,
-                                    lenke = notifikasjon.lenke,
-                                    tilstand = notifikasjon.tilstand.tilBrukerAPI(),
-                                    opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                    id = notifikasjon.id,
-                                    virksomhet = Virksomhet(
-                                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                                    ),
-                                    brukerKlikk = BrukerKlikk(
-                                        id = "${context.fnr}-${notifikasjon.id}",
-                                        klikketPaa = notifikasjon.klikketPaa
-                                    )
-                                )
-                        }
-                    }
-                notifikasjonerHentetCount.increment(notifikasjoner.size.toDouble())
-                return@coroutineScope NotifikasjonerResultat(
-                    notifikasjoner,
-                    feilAltinn = tilganger.await().harFeil(),
-                    feilDigiSyfo = false,
+            val notifikasjoner = brukerRepository
+                .hentNotifikasjoner(
+                    context.fnr,
+                    tilganger
                 )
-            }
+                .map { notifikasjon ->
+                    when (notifikasjon) {
+                        is BrukerModel.Beskjed ->
+                            Notifikasjon.Beskjed(
+                                merkelapp = notifikasjon.merkelapp,
+                                tekst = notifikasjon.tekst,
+                                lenke = notifikasjon.lenke,
+                                opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                id = notifikasjon.id,
+                                virksomhet = Virksomhet(
+                                    virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                                ),
+                                brukerKlikk = BrukerKlikk(
+                                    id = "${context.fnr}-${notifikasjon.id}",
+                                    klikketPaa = notifikasjon.klikketPaa
+                                )
+                            )
+                        is BrukerModel.Oppgave ->
+                            Notifikasjon.Oppgave(
+                                merkelapp = notifikasjon.merkelapp,
+                                tekst = notifikasjon.tekst,
+                                lenke = notifikasjon.lenke,
+                                tilstand = notifikasjon.tilstand.tilBrukerAPI(),
+                                opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                id = notifikasjon.id,
+                                virksomhet = Virksomhet(
+                                    virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                                ),
+                                brukerKlikk = BrukerKlikk(
+                                    id = "${context.fnr}-${notifikasjon.id}",
+                                    klikketPaa = notifikasjon.klikketPaa
+                                )
+                            )
+                    }
+                }
+            notifikasjonerHentetCount.increment(notifikasjoner.size.toDouble())
+            return@coDataFetcher NotifikasjonerResultat(
+                notifikasjoner,
+                feilAltinn = tilganger.harFeil(),
+                feilDigiSyfo = false,
+            )
         }
     }
 
 
-    fun TypeRuntimeWiring.Builder.querySaker(
+    private fun TypeRuntimeWiring.Builder.querySaker(
         brukerRepository: BrukerRepository,
         tilgangerService: TilgangerService,
     ) {
@@ -266,45 +262,44 @@ object BrukerAPI {
             val offset = env.getArgumentOrDefault("offset", 0) ?: 0
             val limit = env.getArgumentOrDefault("limit", 3) ?: 3
 
-            coroutineScope {
-                val tilganger = async { tilgangerService.hentTilganger(context) }
-                val saker = brukerRepository.hentSaker(
-                    fnr = context.fnr,
-                    virksomhetsnummer = virksomhetsnummer,
-                    tilganger = tilganger.await(),
-                    offset = offset,
-                    limit = limit,
-                ).map {
-                    Sak(
-                        id = it.sakId,
-                        tittel = it.tittel,
-                        lenke = it.lenke,
-                        merkelapp = it.merkelapp,
-                        virksomhet = Virksomhet(
-                            virksomhetsnummer = it.virksomhetsnummer,
-                        ),
-                        sisteStatus = it.statuser.map { sakStatus ->
-                            val type = SakStatusType.fraModel(sakStatus.status)
-                            SakStatus(
-                                type = type,
-                                tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
-                                tidspunkt = sakStatus.tidspunkt
-                            )
-                        }.first(),
-                    )
-                }
-
-                SakerResultat(
-                    saker = saker,
-                    feilAltinn = tilganger.await().harFeil(),
-                    totaltAntallSaker = saker.size, // TODO: fiks total fra db
+            val tilganger = tilgangerService.hentTilganger(context)
+            val saker = brukerRepository.hentSaker(
+                fnr = context.fnr,
+                virksomhetsnummer = virksomhetsnummer,
+                tilganger = tilganger,
+                offset = offset,
+                limit = limit,
+            ).map {
+                Sak(
+                    id = it.sakId,
+                    tittel = it.tittel,
+                    lenke = it.lenke,
+                    merkelapp = it.merkelapp,
+                    virksomhet = Virksomhet(
+                        virksomhetsnummer = it.virksomhetsnummer,
+                    ),
+                    sisteStatus = it.statuser.map { sakStatus ->
+                        val type = SakStatusType.fraModel(sakStatus.status)
+                        SakStatus(
+                            type = type,
+                            tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
+                            tidspunkt = sakStatus.tidspunkt
+                        )
+                    }.first(),
                 )
             }
+
+            SakerResultat(
+                saker = saker,
+                feilAltinn = tilganger.harFeil(),
+                totaltAntallSaker = saker.size, // TODO: fiks total fra db
+            )
+
         }
     }
 
 
-    fun TypeRuntimeWiring.Builder.mutationBrukerKlikketPa(
+    private fun TypeRuntimeWiring.Builder.mutationBrukerKlikketPa(
         brukerRepository: BrukerRepository,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
     ) {
@@ -334,7 +329,7 @@ object BrukerAPI {
         }
     }
 
-    suspend fun <T : WithVirksomhet> fetchVirksomhet(
+    private suspend fun <T : WithVirksomhet> fetchVirksomhet(
         enhetsregisteret: Enhetsregisteret,
         env: DataFetchingEnvironment
     ): Virksomhet {

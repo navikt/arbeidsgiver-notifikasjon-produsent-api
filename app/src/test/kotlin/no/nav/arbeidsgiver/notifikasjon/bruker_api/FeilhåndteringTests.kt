@@ -65,7 +65,7 @@ class FeilhåndteringTests : DescribeSpec({
             it("feil Altinn") {
                 response.getTypedContent<Boolean>("notifikasjoner/feilAltinn") shouldBe true
                 response.getTypedContent<Boolean>("notifikasjoner/feilDigiSyfo") shouldBe false
-                coVerify { queryModel.hentNotifikasjoner(any(), Tilganger(null)) }
+                coVerify { queryModel.hentNotifikasjoner(any(), Tilganger.FAILURE) }
             }
         }
     }
