@@ -207,38 +207,6 @@ enum EksterntVarselStatus {
     FEILET
 }
 
-input NySakInput {
-    """
-    Grupperings-id-en knytter en sak og notifikasjoner sammen.
-    Den skal være unik for saker innenfor merkelappen.
-    Et naturlig valg av grupperingsid er f.eks. et saksnummer.
-    """
-    grupperingsid: String!
-
-    """Merkelapp som saken skal assossieres med."""
-    merkelapp: String!
-
-    """Virksomhetsnummeret til virksomheten som saken omhandler."""
-    virksomhetsnummer: String!
-
-    """
-    Hvem som skal få se saken.
-
-    NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
-    til en notifikasjon. De tilgangsstyres hver for seg.
-    """
-    mottakere: [MottakerInput!]!
-
-    """En tittel på saken, som vises til brukeren."""
-    tittel: String!
-
-    """Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken."""
-    lenke: String!
-
-    """Status saken starter med."""
-    status: SaksStatusInput!
-}
-
 union NySakResultat =
     | NySakVellykket
     | UgyldigMerkelapp
@@ -249,30 +217,6 @@ union NySakResultat =
 
 type NySakVellykket {
     id: ID!
-}
-
-input NyStatusSakInput {
-    status: SaksStatusInput!
-
-    """
-    Dere kan bruke dette feltet for å få idempotent oppførsel på statusoppdateringe.
-    Hvis en sak får to oppdateringer med samme idempotencyKey, så anser vi oppdateringene
-    for som de samme. Vi sjekker kun for duplikate idempotencyKey i den aktuelle saken, ikke
-    på tvers av saker.
-
-    Det kan f.eks. brukes for å ha en retry-logikk ved feil eller å lettere kunne håndtere
-    at-least-once oppførsel ved bruk av hendelses-strømmer som Kafka.
-
-    Obs. Hvis dere har protenisielt repretereende statusoppdateringer
-    i sakene deres (f.eks. at inngåelsen av en avtale veksler mellom
-    statusene "klar-for"underskriving" og "kladd"), så må dere passe
-    på at dere ikke oppgir samme nøkkel flere ganger ved en feil,
-    slik at to oppdateringer som er forskjellige blir slått sammen
-    til en.
-
-    Feltet er frivillig. Det vises ikke til brukere.
-    """
-    idempotencyKey: String
 }
 
 union NyStatusSakResultat =
@@ -313,23 +257,6 @@ enum SaksStatus {
     FERDIG
 }
 
-input SaksStatusInput {
-    status: SaksStatus!
-
-    """
-    Når endringen skjedde. Det kan godt være i fortiden.
-    Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
-    kallet på.
-    """
-    tidspunkt: ISO8601DateTime
-
-    """
-    Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
-    til brukeren. Se `SaksStatus` for default tekster.
-    """
-    overstyrStatustekstMed: String
-}
-
 type StatusOppdatering {
     status: SaksStatus!
     tidspunkt: ISO8601DateTime!
@@ -341,11 +268,91 @@ Dette er roten som alle endringer ("mutations") starter fra. Endringer inkludere
 å opprette nye ting.
 """
 type Mutation {
-    nySak(sak: NySakInput!): NySakResultat!
+    nySak(
+        """
+        Grupperings-id-en knytter en sak og notifikasjoner sammen.
+        Den skal være unik for saker innenfor merkelappen.
+        Et naturlig valg av grupperingsid er f.eks. et saksnummer.
+        """
+        grupperingsid: String!
 
-    nyStatusSak(id: ID!, status: NyStatusSakInput!): NyStatusSakResultat!
+        """Merkelapp som saken skal assossieres med."""
+        merkelapp: String!
 
-    nyStatusSakByGrupperingsid(grupperingsid: String!, merkelapp: String!, status: NyStatusSakInput!): NyStatusSakResultat!
+        """Virksomhetsnummeret til virksomheten som saken omhandler."""
+        virksomhetsnummer: String!
+
+        """
+        Hvem som skal få se saken.
+
+        NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
+        til en notifikasjon. De tilgangsstyres hver for seg.
+        """
+        mottakere: [MottakerInput!]!
+
+        """En tittel på saken, som vises til brukeren."""
+        tittel: String!
+
+        """Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken."""
+        lenke: String!
+
+        """
+        """
+        initiell_status: SaksStatus!
+
+        """
+        Når endringen skjedde. Det kan godt være i fortiden.
+        Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
+        kallet på.
+        """
+        tidspunkt: ISO8601DateTime
+
+        """
+        Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
+        til brukeren. Se `SaksStatus` for default tekster.
+        """
+        overstyrStatustekstMed: String
+    ): NySakResultat!
+
+    nyStatusSak(
+        idempotencyKey: String
+        id: ID!
+        ny_status: SaksStatus!
+
+        """
+        Når endringen skjedde. Det kan godt være i fortiden.
+        Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
+        kallet på.
+        """
+        tidspunkt: ISO8601DateTime
+
+        """
+        Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
+        til brukeren. Se `SaksStatus` for default tekster.
+        """
+        overstyrStatustekstMed: String
+    ): NyStatusSakResultat!
+
+    nyStatusSakByGrupperingsid(
+        idempotencyKey: String
+        grupperingsid: String!
+        merkelapp: String!
+
+        ny_status: SaksStatus!
+
+        """
+        Når endringen skjedde. Det kan godt være i fortiden.
+        Dette feltet er frivillig. Hvis feltet ikke er oppgitt, bruker vi tidspunktet dere gjør
+        kallet på.
+        """
+        tidspunkt: ISO8601DateTime
+
+        """
+        Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
+        til brukeren. Se `SaksStatus` for default tekster.
+        """
+        overstyrStatustekstMed: String
+    ): NyStatusSakResultat!
 
     """
     Opprett en ny beskjed.
