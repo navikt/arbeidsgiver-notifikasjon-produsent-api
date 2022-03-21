@@ -81,7 +81,7 @@ class EnhetsregisteretImpl(
 }
 
 class SimpleLRUCache<K, V>(val maxCapacity : Int, val loader: suspend (K) -> V) {
-    private val mutex = Mutex()
+    private val mutexes = Collections.synchronizedMap(HashMap<K, Mutex>())
     private val cache = Collections.synchronizedMap(
         object : LinkedHashMap<K, ValueWithExpiry<V>>(maxCapacity, .75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, ValueWithExpiry<V>>): Boolean {
@@ -106,9 +106,14 @@ class SimpleLRUCache<K, V>(val maxCapacity : Int, val loader: suspend (K) -> V) 
     }
 
     suspend fun get(key: K) : V {
-        return mutex.withLock {
+        return withScopedLock(key) {
             get(key) { loader(key) }
         }
+    }
+
+    private suspend fun withScopedLock(key: K, action: suspend (k: K) -> V): V {
+        val mutex = mutexes.computeIfAbsent(key) { Mutex() }
+        return mutex.withLock { action(key) }
     }
 
     fun clear() {
