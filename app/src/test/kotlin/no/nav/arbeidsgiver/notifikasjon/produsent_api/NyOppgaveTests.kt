@@ -45,7 +45,6 @@ class NyOppgaveTests : DescribeSpec({
                                 naermesteLeder: {
                                     naermesteLederFnr: "12345678910",
                                     ansattFnr: "321"
-                                    virksomhetsnummer: "42"
                                 } 
                             }
                             notifikasjon: {
@@ -56,6 +55,8 @@ class NyOppgaveTests : DescribeSpec({
                             metadata: {
                                 eksternId: "heu",
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                virksomhetsnummer: "42"
+
                             }
                         }) {
                             __typename

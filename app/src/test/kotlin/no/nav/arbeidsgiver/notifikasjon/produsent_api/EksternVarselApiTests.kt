@@ -47,12 +47,12 @@ class EksternVarselApiTests: DescribeSpec({
                     $type: {
                         metadata: {
                             eksternId: "$type-0"
+                            virksomhetsnummer: "0"
                         }
                         mottaker: {
                             altinn: {
                                 serviceCode: "5441"
                                 serviceEdition: "1"
-                                virksomhetsnummer: "0"
                             }
                         }
                         notifikasjon: {

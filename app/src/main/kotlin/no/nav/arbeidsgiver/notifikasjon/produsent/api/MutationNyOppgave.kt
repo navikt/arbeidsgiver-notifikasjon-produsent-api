@@ -48,10 +48,9 @@ class MutationNyOppgave(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
-            finnRolleId:  suspend (String) -> AltinnRolle?,
+            finnRolleId: suspend (String) -> AltinnRolle?,
         ): OppgaveOpprettet {
             val alleMottakere = listOfNotNull(mottaker) + mottakere
-            val virksomhetsnummer = finnVirksomhetsnummer(metadata.virksomhetsnummer, alleMottakere)
             return OppgaveOpprettet(
                 hendelseId = id,
                 notifikasjonId = id,
@@ -60,13 +59,13 @@ class MutationNyOppgave(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = alleMottakere.map { it.tilDomene(virksomhetsnummer, finnRolleId)},
+                mottakere = alleMottakere.map { it.tilDomene(metadata.virksomhetsnummer, finnRolleId) },
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
-                virksomhetsnummer = virksomhetsnummer,
+                virksomhetsnummer = metadata.virksomhetsnummer,
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
                 eksterneVarsler = eksterneVarsler.map {
-                    it.tilDomene(virksomhetsnummer)
+                    it.tilDomene(metadata.virksomhetsnummer)
                 }
             )
         }

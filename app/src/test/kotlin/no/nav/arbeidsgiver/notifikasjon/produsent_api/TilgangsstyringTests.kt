@@ -38,7 +38,6 @@ class TilgangsstyringTests : DescribeSpec({
                                     naermesteLeder: {
                                         naermesteLederFnr: "12345678910"
                                         ansattFnr: "321234"
-                                        virksomhetsnummer: "42"
                                     } 
                                 }
                                 notifikasjon: {
@@ -49,6 +48,8 @@ class TilgangsstyringTests : DescribeSpec({
                                 metadata: {
                                     eksternId: "heu"
                                     opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                    virksomhetsnummer: "42"
+
                                 }
                             }) {
                                 __typename
@@ -82,7 +83,6 @@ class TilgangsstyringTests : DescribeSpec({
                                     altinn: {
                                         serviceCode: "${mottaker.serviceCode}",
                                         serviceEdition: "${mottaker.serviceEdition}"
-                                        virksomhetsnummer: "${mottaker.virksomhetsnummer}"
                                     } 
                                 }
                                 notifikasjon: {
@@ -93,6 +93,8 @@ class TilgangsstyringTests : DescribeSpec({
                                 metadata: {
                                     eksternId: "heu"
                                     opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                    virksomhetsnummer: "${mottaker.virksomhetsnummer}"
+
                                 }
                             }) {
                                 __typename

@@ -430,7 +430,40 @@ ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
 </td>
 </tr>
 <tr>
-<td colspan="2" valign="top"><strong>oppgaveUtfoertByEksternId</strong></td>
+<td colspan="2" valign="top"><strong>oppgaveUtfoertByEksternId</strong> ⚠️</td>
+<td valign="top"><a href="#oppgaveutfoertresultat">OppgaveUtfoertResultat</a>!</td>
+<td>
+
+Marker en oppgave (identifisert ved ekstern id) som utført.
+
+<p>⚠️ <strong>DEPRECATED</strong></p>
+<blockquote>
+
+Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead.
+
+</blockquote>
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Merkelapp som oppgaven er registrert med.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">eksternId</td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td>
+
+ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>oppgaveUtfoertByEksternId_V2</strong></td>
 <td valign="top"><a href="#oppgaveutfoertresultat">OppgaveUtfoertResultat</a>!</td>
 <td>
 
@@ -449,7 +482,7 @@ Merkelapp som oppgaven er registrert med.
 </tr>
 <tr>
 <td colspan="2" align="right" valign="top">eksternId</td>
-<td valign="top"><a href="#id">ID</a>!</td>
+<td valign="top"><a href="#string">String</a>!</td>
 <td>
 
 ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
@@ -1431,15 +1464,6 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 <td valign="top"><a href="#string">String</a>!</td>
 <td></td>
 </tr>
-<tr>
-<td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
-<td valign="top"><a href="#string">String</a></td>
-<td>
-
-Å oppgi virksomhetsnummer her er deprecated. Spesifiser det i metadata-feltet.
-
-</td>
-</tr>
 </tbody>
 </table>
 
@@ -1658,7 +1682,7 @@ deprecated. value is ignored.
 <tbody>
 <tr>
 <td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
-<td valign="top"><a href="#string">String</a></td>
+<td valign="top"><a href="#string">String</a>!</td>
 <td>
 
 Hvilken virksomhet som skal motta notifikasjonen.
@@ -1775,15 +1799,6 @@ Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
 <td colspan="2" valign="top"><strong>ansattFnr</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
 <td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
-<td valign="top"><a href="#string">String</a></td>
-<td>
-
-Å oppgi virksomhetsnummer her er deprecated. Spesifiser det i metadata-feltet.
-
-</td>
 </tr>
 </tbody>
 </table>

@@ -671,11 +671,6 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 input AltinnMottakerInput {
     serviceCode: String!
     serviceEdition: String!
-
-    """
-    Å oppgi virksomhetsnummer her er deprecated. Spesifiser det i metadata-feltet.
-    """
-    virksomhetsnummer: String
 }
 
 """
@@ -688,11 +683,6 @@ Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
 input NaermesteLederMottakerInput {
     naermesteLederFnr: String!
     ansattFnr: String!
-
-    """
-    Å oppgi virksomhetsnummer her er deprecated. Spesifiser det i metadata-feltet.
-    """
-    virksomhetsnummer: String
 }
 
 """
@@ -746,7 +736,7 @@ input MetadataInput {
     """
     Hvilken virksomhet som skal motta notifikasjonen.
     """
-    virksomhetsnummer: String
+    virksomhetsnummer: String!
 
     """
     Den eksterne id-en brukes for å unikt identifisere en notifikasjon. Den må være unik for merkelappen.
