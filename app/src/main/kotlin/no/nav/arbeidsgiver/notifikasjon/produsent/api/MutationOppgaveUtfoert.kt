@@ -2,9 +2,12 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
+import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
@@ -20,6 +23,10 @@ class MutationOppgaveUtfoert(
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
     private val produsentRepository: ProdusentRepository,
 ) {
+    private val oppgaveUtfoertByEksternIdCalls = Counter.builder("graphql.mutation")
+            .tag("field", "oppgaveUtfoertByEksternId")
+            .register(Health.meterRegistry)
+
     fun wire(runtime: RuntimeWiring.Builder) {
         runtime.resolveSubtypes<OppgaveUtfoertResultat>()
 
@@ -31,14 +38,21 @@ class MutationOppgaveUtfoert(
                 )
             }
             coDataFetcher("oppgaveUtfoertByEksternId") { env ->
-                oppgaveUtført(
-                    context = env.getContext(),
-                    eksternId = env.getTypedArgument("eksternId"),
-                    merkelapp = env.getTypedArgument("merkelapp"),
-                )
+                oppgaveUtfoertByEksternIdCalls.increment()
+                oppgaveUtfoertByEksternId(env)
+            }
+            coDataFetcher("oppgaveUtfoertByEksternId_V2") { env ->
+                oppgaveUtfoertByEksternId(env)
             }
         }
     }
+
+    private suspend fun oppgaveUtfoertByEksternId(env: DataFetchingEnvironment) =
+        oppgaveUtført(
+            context = env.getContext(),
+            eksternId = env.getTypedArgument("eksternId"),
+            merkelapp = env.getTypedArgument("merkelapp"),
+        )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface OppgaveUtfoertResultat
