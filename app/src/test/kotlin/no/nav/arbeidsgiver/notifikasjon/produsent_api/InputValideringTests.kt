@@ -31,7 +31,6 @@ class InputValideringTests : DescribeSpec({
                                     naermesteLeder: {
                                         naermesteLederFnr: "12345678910",
                                         ansattFnr: "3213"
-                                        virksomhetsnummer: "42"
                                     } 
                                 }
                                 notifikasjon: {
@@ -42,6 +41,7 @@ class InputValideringTests : DescribeSpec({
                                 metadata: {
                                     eksternId: "heu"
                                     opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                    virksomhetsnummer: "42"
                                 }
                             }) {
                                 __typename
@@ -72,6 +72,7 @@ class InputValideringTests : DescribeSpec({
                             metadata: {
                                 eksternId: "heu"
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                virksomhetsnummer: "42"
                             }
                         }) {
                             __typename
@@ -94,12 +95,10 @@ class InputValideringTests : DescribeSpec({
                                 altinn: {
                                     serviceCode: "1234"
                                     serviceEdition: "321"
-                                    virksomhetsnummer: "123456789"
                                 }
                                 naermesteLeder: {
                                     naermesteLederFnr: "00112233344"
                                     ansattFnr: "11223344455"
-                                    virksomhetsnummer: "123456789"
                                 }
                             }
                             notifikasjon: {
@@ -110,6 +109,7 @@ class InputValideringTests : DescribeSpec({
                             metadata: {
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                                 eksternId: "heu"
+                                virksomhetsnummer: "123456789"
                             }
                         }) {
                             __typename
@@ -141,12 +141,12 @@ class InputValideringTests : DescribeSpec({
                                 naermesteLeder: {
                                     naermesteLederFnr: "12345678910",
                                     ansattFnr: "3213"
-                                    virksomhetsnummer: "42"
                                 } 
                             }
                             metadata: {
                                 eksternId: "heuer",
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                virksomhetsnummer: "42"
                             }
                         }) {
                             __typename

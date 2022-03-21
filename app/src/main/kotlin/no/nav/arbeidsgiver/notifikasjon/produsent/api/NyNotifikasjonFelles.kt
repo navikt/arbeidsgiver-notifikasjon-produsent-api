@@ -110,7 +110,6 @@ data class EksterntVarselInput(
 data class NaermesteLederMottakerInput(
     val naermesteLederFnr: String,
     val ansattFnr: String,
-    val virksomhetsnummer: String?,
 ) {
     fun tilDomene(virksomhetsnummer: String): Mottaker =
         NærmesteLederMottaker(
@@ -138,7 +137,6 @@ data class AltinnRolleMottakerInput(
 data class AltinnMottakerInput(
     val serviceCode: String,
     val serviceEdition: String,
-    val virksomhetsnummer: String?,
 ) {
     fun tilDomene(virksomhetsnummer: String): Mottaker =
         AltinnMottaker(
@@ -187,7 +185,7 @@ data class MetadataInput(
     val grupperingsid: String?,
     val eksternId: String,
     val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
-    val virksomhetsnummer: String?,
+    val virksomhetsnummer: String,
 )
 
 data class NyEksternVarselResultat(

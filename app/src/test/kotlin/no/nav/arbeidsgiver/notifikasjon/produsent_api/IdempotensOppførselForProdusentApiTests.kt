@@ -35,6 +35,7 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                 nyBeskjed(nyBeskjed: {
                     metadata: {
                         eksternId: "$eksternId"
+                        virksomhetsnummer: "${mottaker.virksomhetsnummer}"
                     }
                     notifikasjon: {
                         tekst: "$tekst"
@@ -42,7 +43,6 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                         lenke: "#bar"
                     }
                     mottaker: {altinn: {
-                        virksomhetsnummer: "${mottaker.virksomhetsnummer}"
                         serviceCode: "${mottaker.serviceCode}"
                         serviceEdition: "${mottaker.serviceEdition}"
                     }}
@@ -62,6 +62,7 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                 nyOppgave(nyOppgave: {
                     metadata: {
                         eksternId: "$eksternId"
+                        virksomhetsnummer: "${mottaker.virksomhetsnummer}"
                     }
                     notifikasjon: {
                         tekst: "$tekst"
@@ -69,7 +70,6 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                         lenke: "#bar"
                     }
                     mottaker: {altinn: {
-                        virksomhetsnummer: "${mottaker.virksomhetsnummer}"
                         serviceCode: "${mottaker.serviceCode}"
                         serviceEdition: "${mottaker.serviceEdition}"
                     }}
