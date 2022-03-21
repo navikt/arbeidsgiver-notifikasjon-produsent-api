@@ -2,6 +2,9 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicInteger
 
 class SimpleLRUCacheTests: DescribeSpec({
@@ -9,6 +12,7 @@ class SimpleLRUCacheTests: DescribeSpec({
         val callCounter = AtomicInteger()
 
         val cache = SimpleLRUCache<String, Int>(100) {
+            delay(10)
             callCounter.incrementAndGet()
             0
         }
@@ -30,6 +34,18 @@ class SimpleLRUCacheTests: DescribeSpec({
         it("call with different key, new side effect") {
             cache.get("world")
             callCounter.get() shouldBe 2
+        }
+
+        it("pararell calls with same key, one side effect") {
+            val calls = (1..2).map {
+                async {
+                    cache.get("trololol")
+                }
+            }
+            val results = calls.awaitAll()
+
+            callCounter.get() shouldBe 3 // not 4
+            results shouldBe listOf(0, 0)
         }
     }
 })

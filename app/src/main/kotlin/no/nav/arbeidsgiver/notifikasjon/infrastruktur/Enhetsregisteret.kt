@@ -8,6 +8,8 @@ import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDateTime
 import java.util.*
 
@@ -79,6 +81,7 @@ class EnhetsregisteretImpl(
 }
 
 class SimpleLRUCache<K, V>(val maxCapacity : Int, val loader: suspend (K) -> V) {
+    private val mutex = Mutex()
     private val cache = Collections.synchronizedMap(
         object : LinkedHashMap<K, ValueWithExpiry<V>>(maxCapacity, .75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, ValueWithExpiry<V>>): Boolean {
@@ -96,14 +99,16 @@ class SimpleLRUCache<K, V>(val maxCapacity : Int, val loader: suspend (K) -> V) 
         }
     )
 
-    suspend fun get(key: K, load: suspend (K) -> V) : V {
+    private suspend fun get(key: K, load: suspend (K) -> V) : V {
         return cache.getOrPut(key) {
             ValueWithExpiry(load(key))
         }.value
     }
 
     suspend fun get(key: K) : V {
-        return get(key) { loader(key) }
+        return mutex.withLock {
+            get(key) { loader(key) }
+        }
     }
 
     fun clear() {
