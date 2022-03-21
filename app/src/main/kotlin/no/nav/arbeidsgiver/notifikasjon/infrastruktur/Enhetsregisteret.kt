@@ -21,6 +21,20 @@ interface Enhetsregisteret {
     suspend fun hentUnderenhet(orgnr: String): Underenhet
 }
 
+fun enhetsregisterFactory() =
+    basedOnEnv(
+        prod = { EnhetsregisteretImpl() },
+        other = { EnhetsregisteretDevImpl() }
+    )
+
+class EnhetsregisteretDevImpl: Enhetsregisteret {
+    override suspend fun hentUnderenhet(orgnr: String) =
+        Enhetsregisteret.Underenhet(
+            organisasjonsnummer = orgnr,
+            navn = ""
+        )
+}
+
 class EnhetsregisteretImpl(
     private val baseUrl : String = "https://data.brreg.no"
 ) : Enhetsregisteret {
