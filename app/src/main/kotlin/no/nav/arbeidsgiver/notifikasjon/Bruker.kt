@@ -58,7 +58,7 @@ object Bruker {
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         altinn: Altinn = AltinnImpl(),
-        enhetsregisteret: Enhetsregisteret = EnhetsregisteretImpl(),
+        enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
