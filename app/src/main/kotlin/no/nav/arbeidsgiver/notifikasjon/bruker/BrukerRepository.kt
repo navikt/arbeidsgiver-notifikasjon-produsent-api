@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
@@ -20,84 +19,11 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.OffsetDateTime
 import java.util.*
-
-interface BrukerModel {
-    sealed interface Tilgang {
-        data class Altinn(
-            val virksomhet: String,
-            val servicecode: String,
-            val serviceedition: String,
-        ) : Tilgang
-
-        data class AltinnReportee(
-            val virksomhet: String,
-            val fnr: String,
-        ) : Tilgang
-
-        data class AltinnRolle(
-            val virksomhet: String,
-            val roleDefinitionId: String,
-            val roleDefinitionCode: String,
-        ) : Tilgang
-    }
-
-    sealed interface Notifikasjon {
-        val id: UUID
-        val virksomhetsnummer: String
-    }
-
-    data class Beskjed(
-        val merkelapp: String,
-        val tekst: String,
-        val grupperingsid: String? = null,
-        val lenke: String,
-        val eksternId: String,
-        override val virksomhetsnummer: String,
-        val opprettetTidspunkt: OffsetDateTime,
-        override val id: UUID,
-        val klikketPaa: Boolean
-    ) : Notifikasjon
-
-    data class Oppgave(
-        val merkelapp: String,
-        val tekst: String,
-        val grupperingsid: String? = null,
-        val lenke: String,
-        val eksternId: String,
-        override val virksomhetsnummer: String,
-        val opprettetTidspunkt: OffsetDateTime,
-        override val id: UUID,
-        val klikketPaa: Boolean,
-        val tilstand: Tilstand,
-    ) : Notifikasjon {
-        @Suppress("unused")
-        /* leses fra database */
-        enum class Tilstand {
-            NY,
-            UTFOERT
-        }
-    }
-
-    data class Sak(
-        val sakId: UUID,
-        val virksomhetsnummer: String,
-        val tittel: String,
-        val lenke: String,
-        val merkelapp: String,
-        val statuser: List<SakStatus>,
-    )
-
-    data class SakStatus(
-        val sakStatusId: UUID,
-        val status: HendelseModel.SakStatus,
-        val overstyrtStatustekst: String?,
-        val tidspunkt: OffsetDateTime
-    )
-}
 
 interface BrukerRepository {
     suspend fun hentNotifikasjoner(

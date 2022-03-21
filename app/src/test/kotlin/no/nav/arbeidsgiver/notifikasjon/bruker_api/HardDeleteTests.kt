@@ -9,7 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime

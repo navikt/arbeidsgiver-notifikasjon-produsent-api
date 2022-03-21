@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.erDriftsforstyrrelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -11,28 +12,6 @@ interface TilgangerService {
     suspend fun hentTilganger(
         context: BrukerAPI.Context,
     ): Tilganger
-}
-
-data class Tilganger(
-    val tjenestetilganger: List<BrukerModel.Tilgang.Altinn> = listOf(),
-    val reportee: List<BrukerModel.Tilgang.AltinnReportee> = listOf(),
-    val rolle: List<BrukerModel.Tilgang.AltinnRolle> = listOf(),
-    val harFeil: Boolean = false,
-) {
-
-    operator fun plus(other: Tilganger) = Tilganger(
-        tjenestetilganger = this.tjenestetilganger.plus(other.tjenestetilganger),
-        reportee = this.reportee.plus(other.reportee),
-        rolle = this.rolle.plus(other.rolle),
-        harFeil = this.harFeil || other.harFeil,
-    )
-
-    companion object {
-        val EMPTY = Tilganger()
-        val FAILURE = Tilganger(harFeil = true)
-
-        fun List<Tilganger>.flatten() = this.fold(EMPTY){ x, y -> x + y }
-    }
 }
 
 

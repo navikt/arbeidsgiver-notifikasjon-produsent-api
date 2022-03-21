@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.executable.bruker_api
 import db.migration.OS
 import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub

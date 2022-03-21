@@ -18,8 +18,8 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.Altin
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger
-import no.nav.arbeidsgiver.notifikasjon.bruker.Tilganger.Companion.flatten
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger.Companion.flatten
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
 
@@ -106,7 +106,6 @@ class AltinnImpl(
                 val reporteeTilganger = async {
                     hentTilganger(fnr, selvbetjeningsToken)
                 }
-                listOf(listOf(String)).flatten()
                 return@coroutineScope tjenesteTilganger.awaitAll().flatten() + reporteeTilganger.await() + rolleTilganger.awaitAll().flatten()
             }
         }
