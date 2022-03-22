@@ -7,11 +7,18 @@ type Query {
     ): SakerResultat!
     whoami: String
 }
+
 type SakerResultat {
     saker: [Sak!]!
+
+    """
+    Antall saker for gitt filter, men uavhengig av offset/limit.
+    """
     totaltAntallSaker: Int!
+
     feilAltinn: Boolean!
 }
+
 type Sak {
     id: ID!
     virksomhet: Virksomhet!

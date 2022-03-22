@@ -105,18 +105,27 @@ class QuerySakerTests : DescribeSpec({
             brukerRepository.opprettSakMedTidspunkt(nyesteId, Duration.ofHours(3))
 
             it("nyeste sak først") {
-                val sak = engine.hentSaker(offset = 0).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
-                sak.id shouldBe nyesteId
+                val response = engine.hentSaker(offset = 0, limit = 1)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe nyesteId
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
 
             it("mellomste sak ved offset 1") {
-                val sak = engine.hentSaker(offset = 1).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
-                sak.id shouldBe mellomsteId
+                val response = engine.hentSaker(offset = 1, limit = 1)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe mellomsteId
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
 
             it("eldste sak ved offset 2") {
-                val sak = engine.hentSaker(offset = 2).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
-                sak.id shouldBe eldsteId
+                val response = engine.hentSaker(offset = 2, limit = 1)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe eldsteId
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
+            it("utenfor offset") {
+                val response = engine.hentSaker(offset = 3, limit = 1)
+                response.getTypedContent<List<Any>>("saker/saker") should beEmpty()
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
         }
     }
