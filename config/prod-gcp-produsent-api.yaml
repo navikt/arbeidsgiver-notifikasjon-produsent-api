@@ -28,9 +28,6 @@ spec:
           namespace: arbeidsgiver
           cluster: prod-fss
 
-        - application: permitteringsportal-api
-          namespace: permittering-og-nedbemanning
-          cluster: prod-gcp
   azure:
     application:
       enabled: true

@@ -55,7 +55,7 @@ spec:
           namespace: team-esyfo
           cluster: dev-fss
 
-        - application: permitteringsportal-api
+        - application: permitteringsmelding-notifikasjon
           namespace: permittering-og-nedbemanning
           cluster: dev-gcp
   envFrom:

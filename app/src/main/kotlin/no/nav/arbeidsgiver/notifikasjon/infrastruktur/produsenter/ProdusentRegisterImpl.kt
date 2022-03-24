@@ -68,10 +68,10 @@ val ESYFO = Produsent(
 )
 
 val PERMITTERING = Produsent(
-    id = "permitteringsportal-api",
+    id = "permitteringsmelding-notifikasjon",
     accessPolicy = basedOnEnv(
-        prod = { listOf("prod-gcp:permittering-og-nedbemanning:permitteringsportal-api") },
-        other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsportal-api") },
+        prod = { listOf() },
+        other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon") }
     ),
     tillatteMerkelapper = listOf("Permittering"),
     tillatteMottakere = listOf(
