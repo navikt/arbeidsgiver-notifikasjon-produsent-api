@@ -40,8 +40,9 @@ interface BrukerRepository {
         fnr: String,
         virksomhetsnummer: String,
         tilganger: Tilganger,
+        filter: String?,
         offset: Int,
-        limit: Int
+        limit: Int,
     ): HentSakerResultat
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -193,6 +194,7 @@ class BrukerRepositoryImpl(
         fnr: String,
         virksomhetsnummer: String,
         tilganger: Tilganger,
+        filter: String?,
         offset: Int,
         limit: Int,
     ): BrukerRepository.HentSakerResultat = timer.coRecord {
@@ -217,6 +219,16 @@ class BrukerRepositoryImpl(
             )
         }.filter { it.virksomhetsnummer == virksomhetsnummer }
 
+        val filterSql = when (filter) {
+            null -> ""
+            else -> """
+                where to_tsvector('norwegian', 
+                    tittel || ' ' || 
+                    (statuser -> 0 ->> 'status') || ' ' || 
+                    coalesce(statuser -> 0 ->> 'overstyrtStatustekst', '')
+                ) @@ websearch_to_tsquery('norwegian', ?)
+            """.trimIndent()
+        }
         val rows = database.nonTransactionalExecuteQuery(
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
@@ -288,6 +300,7 @@ class BrukerRepositoryImpl(
                         from mine_saker as ms
                         join sak as s on s.id = ms.sak_id
                         join sak_status_json as status_json on s.id = status_json.sak_id
+                        $filterSql
                     ),
                     mine_saker_paginert as (
                         table mine_saker_ikke_paginert
@@ -305,6 +318,7 @@ class BrukerRepositoryImpl(
                 jsonb(tilgangerAltinnRolleMottaker)
                 string(fnr)
                 string(virksomhetsnummer)
+                filter?.let { string(filter) }
                 integer(offset)
                 integer(limit)
             }
