@@ -259,7 +259,7 @@ object BrukerAPI {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
-            val filter = env.getArgumentOrDefault<String>("filter", null)
+            val tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null)
             val offset = env.getArgumentOrDefault("offset", 0) ?: 0
             val limit = env.getArgumentOrDefault("limit", 3) ?: 3
             val tilganger = tilgangerService.hentTilganger(context)
@@ -267,7 +267,7 @@ object BrukerAPI {
                 fnr = context.fnr,
                 virksomhetsnummer = virksomhetsnummer,
                 tilganger = tilganger,
-                filter = filter,
+                tekstsoek = tekstsoek,
                 offset = offset,
                 limit = limit,
             )

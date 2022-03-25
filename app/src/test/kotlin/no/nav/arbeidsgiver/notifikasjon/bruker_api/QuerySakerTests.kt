@@ -139,21 +139,21 @@ class QuerySakerTests : DescribeSpec({
             val sak2 = brukerRepository.opprettSakForTekstsøk("donald duck er permittert", FERDIG, "saken er avblåst")
 
             it("søk på tittel returnerer riktig sak") {
-                val response = engine.hentSaker(filter = "pippi")
+                val response = engine.hentSaker(tekstsoek = "pippi")
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 1
                 saker.first().id shouldBe sak1.sakId
             }
 
             it("søk på status returnerer riktig sak") {
-                val response = engine.hentSaker(filter = "ferdig")
+                val response = engine.hentSaker(tekstsoek = "ferdig")
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 1
                 saker.first().id shouldBe sak2.sakId
             }
 
             it("søk på statustekst returnerer riktig sak") {
-                val response = engine.hentSaker(filter = "avblåst")
+                val response = engine.hentSaker(tekstsoek = "avblåst")
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 1
                 saker.first().id shouldBe sak2.sakId
@@ -229,12 +229,12 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
 }
 
 fun TestApplicationEngine.hentSaker(
-    filter: String? = null,
+    tekstsoek: String? = null,
     offset: Int? = null,
     limit: Int? = null,
 ) = brukerApi(GraphQLRequest("""
-    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}offset: Int, ${'$'}limit: Int, ${'$'}filter: String){
-        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, offset: ${'$'}offset, limit: ${'$'}limit, filter: ${'$'}filter) {
+    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}tekstsoek: String, ${'$'}offset: Int, ${'$'}limit: Int){
+        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, tekstsoek: ${'$'}tekstsoek, offset: ${'$'}offset, limit: ${'$'}limit) {
             saker {
                 id
                 tittel
@@ -258,7 +258,7 @@ fun TestApplicationEngine.hentSaker(
     "hentSaker",
     mapOf(
         "virksomhetsnummer" to "42",
-        "filter" to filter,
+        "tekstsoek" to tekstsoek,
         "offset" to offset,
         "limit" to limit,
     )

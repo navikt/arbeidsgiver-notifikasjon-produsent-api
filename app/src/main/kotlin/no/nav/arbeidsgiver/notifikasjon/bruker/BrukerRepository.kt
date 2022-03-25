@@ -40,7 +40,7 @@ interface BrukerRepository {
         fnr: String,
         virksomhetsnummer: String,
         tilganger: Tilganger,
-        filter: String?,
+        tekstsoek: String?,
         offset: Int,
         limit: Int,
     ): HentSakerResultat
@@ -194,7 +194,7 @@ class BrukerRepositoryImpl(
         fnr: String,
         virksomhetsnummer: String,
         tilganger: Tilganger,
-        filter: String?,
+        tekstsoek: String?,
         offset: Int,
         limit: Int,
     ): BrukerRepository.HentSakerResultat = timer.coRecord {
@@ -219,7 +219,7 @@ class BrukerRepositoryImpl(
             )
         }.filter { it.virksomhetsnummer == virksomhetsnummer }
 
-        val filterSql = when (filter) {
+        val tekstsoekSql = when (tekstsoek) {
             null -> ""
             else -> """
                 where to_tsvector('norwegian', 
@@ -300,7 +300,7 @@ class BrukerRepositoryImpl(
                         from mine_saker as ms
                         join sak as s on s.id = ms.sak_id
                         join sak_status_json as status_json on s.id = status_json.sak_id
-                        $filterSql
+                        $tekstsoekSql
                     ),
                     mine_saker_paginert as (
                         table mine_saker_ikke_paginert
@@ -318,7 +318,7 @@ class BrukerRepositoryImpl(
                 jsonb(tilgangerAltinnRolleMottaker)
                 string(fnr)
                 string(virksomhetsnummer)
-                filter?.let { string(filter) }
+                tekstsoek?.let { string(tekstsoek) }
                 integer(offset)
                 integer(limit)
             }
