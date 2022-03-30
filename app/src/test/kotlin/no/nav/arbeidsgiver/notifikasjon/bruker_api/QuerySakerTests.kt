@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
@@ -11,8 +12,13 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakStatus
-import no.nav.arbeidsgiver.notifikasjon.bruker.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakStatus.FERDIG
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
@@ -94,7 +100,7 @@ class QuerySakerTests : DescribeSpec({
             }
         }
 
-        context("med offset og limit angitt") {
+        context("paginering med offset og limit angitt") {
             val eldsteId = uuid("2")
             val mellomsteId = uuid("1")
             val nyesteId = uuid("3")
@@ -104,22 +110,90 @@ class QuerySakerTests : DescribeSpec({
             brukerRepository.opprettSakMedTidspunkt(nyesteId, Duration.ofHours(3))
 
             it("nyeste sak først") {
-                val sak = engine.hentSaker(offset = 0).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
-                sak.id shouldBe nyesteId
+                val response = engine.hentSaker(offset = 0, limit = 1)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe nyesteId
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
 
             it("mellomste sak ved offset 1") {
-                val sak = engine.hentSaker(offset = 1).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
-                sak.id shouldBe mellomsteId
+                val response = engine.hentSaker(offset = 1, limit = 1)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe mellomsteId
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
 
             it("eldste sak ved offset 2") {
-                val sak = engine.hentSaker(offset = 2).getTypedContent<BrukerAPI.Sak>("saker/saker/0")
-                sak.id shouldBe eldsteId
+                val response = engine.hentSaker(offset = 2, limit = 1)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe eldsteId
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
+            it("utenfor offset") {
+                val response = engine.hentSaker(offset = 3, limit = 1)
+                response.getTypedContent<List<Any>>("saker/saker") should beEmpty()
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+        }
+
+        context("tekstsøk") {
+            val sak1 = brukerRepository.opprettSakForTekstsøk("pippi langstrømpe er friskmeldt")
+            val sak2 = brukerRepository.opprettSakForTekstsøk("donald duck er permittert", FERDIG, "saken er avblåst")
+
+            it("søk på tittel returnerer riktig sak") {
+                val response = engine.hentSaker(tekstsoek = "pippi")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak1.sakId
+            }
+
+            it("søk på status returnerer riktig sak") {
+                val response = engine.hentSaker(tekstsoek = "ferdig")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak2.sakId
+            }
+
+            it("søk på statustekst returnerer riktig sak") {
+                val response = engine.hentSaker(tekstsoek = "avblåst")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak2.sakId
             }
         }
     }
 })
+
+private suspend fun BrukerRepository.opprettSakForTekstsøk(
+    tittel: String,
+    status: SakStatus = SakStatus.MOTTATT,
+    overstyrStatustekst: String? = null,
+): SakOpprettet {
+    val sakOpprettet = SakOpprettet(
+        hendelseId = UUID.randomUUID(),
+        virksomhetsnummer = "42",
+        produsentId = "test",
+        kildeAppNavn = "test",
+        sakId = UUID.randomUUID(),
+        grupperingsid = UUID.randomUUID().toString(),
+        merkelapp = "tag",
+        mottakere = listOf(AltinnMottaker("5441", "1", "42")),
+        tittel = tittel,
+        lenke = "#foo",
+    )
+    oppdaterModellEtterHendelse(sakOpprettet)
+    oppdaterModellEtterHendelse(NyStatusSak(
+        hendelseId = UUID.randomUUID(),
+        virksomhetsnummer = sakOpprettet.virksomhetsnummer,
+        produsentId = sakOpprettet.produsentId,
+        kildeAppNavn = sakOpprettet.kildeAppNavn,
+        sakId = sakOpprettet.sakId,
+        status = status,
+        overstyrStatustekstMed = overstyrStatustekst,
+        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        mottattTidspunkt = OffsetDateTime.now(),
+        idempotensKey = IdempotenceKey.initial(),
+    ))
+    return sakOpprettet
+}
 
 private suspend fun BrukerRepository.opprettSakMedTidspunkt(
     sakId: UUID,
@@ -155,11 +229,12 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
 }
 
 fun TestApplicationEngine.hentSaker(
+    tekstsoek: String? = null,
     offset: Int? = null,
     limit: Int? = null,
 ) = brukerApi(GraphQLRequest("""
-    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}offset: Int, ${'$'}limit: Int){
-        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, offset: ${'$'}offset, limit: ${'$'}limit) {
+    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}tekstsoek: String, ${'$'}offset: Int, ${'$'}limit: Int){
+        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, tekstsoek: ${'$'}tekstsoek, offset: ${'$'}offset, limit: ${'$'}limit) {
             saker {
                 id
                 tittel
@@ -183,6 +258,7 @@ fun TestApplicationEngine.hentSaker(
     "hentSaker",
     mapOf(
         "virksomhetsnummer" to "42",
+        "tekstsoek" to tekstsoek,
         "offset" to offset,
         "limit" to limit,
     )

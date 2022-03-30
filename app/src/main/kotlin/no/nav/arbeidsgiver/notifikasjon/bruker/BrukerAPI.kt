@@ -259,17 +259,19 @@ object BrukerAPI {
         coDataFetcher("saker") { env ->
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
+            val tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null)
             val offset = env.getArgumentOrDefault("offset", 0) ?: 0
             val limit = env.getArgumentOrDefault("limit", 3) ?: 3
-
             val tilganger = tilgangerService.hentTilganger(context)
-            val saker = brukerRepository.hentSaker(
+            val sakerResultat = brukerRepository.hentSaker(
                 fnr = context.fnr,
                 virksomhetsnummer = virksomhetsnummer,
                 tilganger = tilganger,
+                tekstsoek = tekstsoek,
                 offset = offset,
                 limit = limit,
-            ).map {
+            )
+            val saker = sakerResultat.saker.map {
                 Sak(
                     id = it.sakId,
                     tittel = it.tittel,
@@ -292,12 +294,10 @@ object BrukerAPI {
             SakerResultat(
                 saker = saker,
                 feilAltinn = tilganger.harFeil,
-                totaltAntallSaker = saker.size, // TODO: fiks total fra db
+                totaltAntallSaker = sakerResultat.totaltAntallSaker
             )
-
         }
     }
-
 
     private fun TypeRuntimeWiring.Builder.mutationBrukerKlikketPa(
         brukerRepository: BrukerRepository,

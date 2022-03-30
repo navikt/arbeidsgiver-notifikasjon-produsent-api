@@ -4,14 +4,22 @@ type Query {
         virksomhetsnummer: String!
         offset: Int
         limit: Int
+        tekstsoek: String
     ): SakerResultat!
     whoami: String
 }
+
 type SakerResultat {
     saker: [Sak!]!
+
+    """
+    Antall saker for gitt filter, men uavhengig av offset/limit.
+    """
     totaltAntallSaker: Int!
+
     feilAltinn: Boolean!
 }
+
 type Sak {
     id: ID!
     virksomhet: Virksomhet!
