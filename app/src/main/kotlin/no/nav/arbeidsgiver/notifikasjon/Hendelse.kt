@@ -40,7 +40,8 @@ object HendelseModel {
     }
 
     @JsonTypeName("SakOpprettet")
-    data class SakOpprettet(
+    data class SakOpprettet
+    @JsonIgnore constructor(
         override val hendelseId: UUID,
         override val virksomhetsnummer: String,
         override val produsentId: String,
@@ -52,6 +53,8 @@ object HendelseModel {
         val mottakere: List<Mottaker>,
         val tittel: String,
         val lenke: String,
+        val oppgittTidspunkt: OffsetDateTime?,
+        val mottattTidspunkt: OffsetDateTime,
     ) : Hendelse(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
@@ -60,6 +63,46 @@ object HendelseModel {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
             }
+        }
+
+        companion object {
+            // Denne konstruktøren har default properties, og støtter historiske
+            // JSON-felter man kan finne i kafka-topicen.
+            // Denne konstruktøren skal ikke brukes i vår kode, fordi da er det lett å gå glipp
+            // av å initialisere viktige felt.
+            @JsonCreator
+            @JvmStatic
+            fun jsonConstructor(
+                hendelseId: UUID,
+                virksomhetsnummer: String,
+                produsentId: String,
+                kildeAppNavn: String,
+                sakId: UUID,
+                grupperingsid: String,
+                merkelapp: String,
+                mottakere: List<Mottaker>,
+                tittel: String,
+                lenke: String,
+
+                /* I test-miljøet finnes events uten disse to propertiene. Men i prod, så har alle
+                * begge properties satt. Så hvis vi rydder i dev-miljøet, så kan vi fjerne hele
+                * custom-deserializeren. */
+                oppgittTidspunkt: OffsetDateTime?,
+                mottattTidspunkt: OffsetDateTime?,
+            ) = SakOpprettet(
+                hendelseId = hendelseId,
+                virksomhetsnummer = virksomhetsnummer,
+                produsentId = produsentId,
+                kildeAppNavn = kildeAppNavn,
+                sakId = sakId,
+                grupperingsid = grupperingsid,
+                merkelapp = merkelapp,
+                mottakere = mottakere,
+                tittel = tittel,
+                lenke = lenke,
+                oppgittTidspunkt = oppgittTidspunkt,
+                mottattTidspunkt = mottattTidspunkt ?: OffsetDateTime.now(),
+            )
         }
     }
 
