@@ -16,6 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import java.lang.RuntimeException
 import java.time.Instant
 
 object BigqueryExporter {
@@ -40,13 +41,17 @@ object BigqueryExporter {
                     )
                 )
 
-            bigquery.insertAll(
+            val response = bigquery.insertAll(
                 InsertAllRequest.of(
                     "notifikasjon",
                     "hendelser",
                     listOf(row),
                 )
             )
+
+            if (response.hasErrors()) {
+                throw RuntimeException("Insertion failed: ${response.insertErrors}")
+            }
         }
 
         runBlocking(Dispatchers.Default) {
