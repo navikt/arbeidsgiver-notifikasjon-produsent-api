@@ -37,7 +37,7 @@ object BigqueryExporter {
                     mapOf(
                         "timestamp" to kafkaTimestamp.toString(),
                         "key" to hendelse.hendelseId.toString(),
-                        "message" to laxObjectMapper.writeValueAsString(hendelse),
+                        "event" to laxObjectMapper.writeValueAsString(hendelse),
                     )
                 )
 
