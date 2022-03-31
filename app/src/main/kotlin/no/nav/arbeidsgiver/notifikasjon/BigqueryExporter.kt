@@ -1,5 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import com.google.cloud.bigquery.BigQueryOptions
+import com.google.cloud.bigquery.InsertAllRequest
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -11,25 +13,52 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import java.time.Instant
 
-object ReplayValidator {
+object BigqueryExporter {
     val log = logger()
 
     fun main(
         httpPort: Int = 8080
     ) {
+
+        val bigquery = BigQueryOptions.newBuilder()
+            .setProjectId(System.getenv("GCP_TEAM_PROJECT_ID"))
+            .build()
+            .service
+
+        fun insert(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
+            val row = InsertAllRequest.RowToInsert.of(
+                    hendelse.hendelseId.toString(),
+                    mapOf(
+                        "kafka_timestamp" to kafkaTimestamp.toString(),
+                        "key" to hendelse.hendelseId.toString(),
+                        "message" to laxObjectMapper.writeValueAsString(hendelse),
+                    )
+                )
+
+            bigquery.insertAll(
+                InsertAllRequest.of(
+                    "notifikasjon",
+                    "hendelser",
+                    listOf(row),
+                )
+            )
+        }
+
         runBlocking(Dispatchers.Default) {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {
                 val kafkaConsumer = createKafkaConsumer {
-                    put(ConsumerConfig.GROUP_ID_CONFIG, "replay-validator")
+                    put(ConsumerConfig.GROUP_ID_CONFIG, "bigquery-exporter")
                 }
                 kafkaConsumer.seekToBeginningOnAssignment()
-                kafkaConsumer.forEachEvent { _ ->
-                    // noop. implicitly validated
+                kafkaConsumer.forEachEvent { hendelse, metadata ->
+                    insert(hendelse, metadata.timestamp)
                 }
             }
 
