@@ -75,7 +75,7 @@ object HttpAuthProviders {
                 }
 
                 validate {
-                    BrukerPrincipal(fnr = it.payload.subject)
+                    BrukerPrincipal(fnr = it.payload.getClaim("pid").asString())
                 }
             }
         )
