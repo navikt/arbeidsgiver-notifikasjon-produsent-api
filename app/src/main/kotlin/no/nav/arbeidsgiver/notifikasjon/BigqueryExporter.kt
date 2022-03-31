@@ -35,7 +35,7 @@ object BigqueryExporter {
             val row = InsertAllRequest.RowToInsert.of(
                     hendelse.hendelseId.toString(),
                     mapOf(
-                        "kafka_timestamp" to kafkaTimestamp.toString(),
+                        "timestamp" to kafkaTimestamp.toString(),
                         "key" to hendelse.hendelseId.toString(),
                         "message" to laxObjectMapper.writeValueAsString(hendelse),
                     )
