@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.google.cloud.bigquery.BigQueryOptions
 import com.google.cloud.bigquery.InsertAllRequest
+import com.google.cloud.bigquery.QueryJobConfiguration
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -21,6 +22,9 @@ import java.time.Instant
 
 object BigqueryExporter {
     val log = logger()
+
+    const val DATASET = "notifikasjon"
+    const val TABLE = "hendelser"
 
     fun main(
         httpPort: Int = 8080
@@ -42,11 +46,7 @@ object BigqueryExporter {
                 )
 
             val response = bigquery.insertAll(
-                InsertAllRequest.of(
-                    "notifikasjon",
-                    "hendelser",
-                    listOf(row),
-                )
+                InsertAllRequest.of(DATASET, TABLE, listOf(row))
             )
 
             if (response.hasErrors()) {
@@ -58,9 +58,14 @@ object BigqueryExporter {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {
+
+
+
+
                 val kafkaConsumer = createKafkaConsumer {
                     put(ConsumerConfig.GROUP_ID_CONFIG, "bigquery-exporter")
                 }
+
                 kafkaConsumer.seekToBeginningOnAssignment()
                 kafkaConsumer.forEachEvent { hendelse, metadata ->
                     insert(hendelse, metadata.timestamp)

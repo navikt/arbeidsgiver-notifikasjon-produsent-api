@@ -1,5 +1,5 @@
 apiVersion: nais.io/v1alpha1
-kind: Application
+kind: Naisjob
 metadata:
   name: notifikasjon-bigquery-exporter-2
   namespace: fager
@@ -7,6 +7,7 @@ metadata:
     team: fager
 spec:
   image: {{image}}
+  schedule: "0 1 * * *"
   liveness:
     path: /internal/alive
   readiness:
@@ -19,7 +20,6 @@ spec:
     path: /internal/metrics
   kafka:
     pool: nav-dev
-
   gcp:
     bigQueryDatasets:
       - name: notifikasjon
