@@ -58,6 +58,8 @@ class QuerySakerTests : DescribeSpec({
             mottakere = listOf(AltinnMottaker("5441", "1", "42")),
             tittel = "er det no sak",
             lenke = "#foo",
+            oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+            mottattTidspunkt = OffsetDateTime.now(),
         )
         val statusSak = NyStatusSak(
             hendelseId = uuid("1"),
@@ -178,6 +180,8 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
         mottakere = listOf(AltinnMottaker("5441", "1", "42")),
         tittel = tittel,
         lenke = "#foo",
+        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        mottattTidspunkt = OffsetDateTime.now(),
     )
     oppdaterModellEtterHendelse(sakOpprettet)
     oppdaterModellEtterHendelse(NyStatusSak(
@@ -211,6 +215,8 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
         mottakere = listOf(AltinnMottaker("5441", "1", "42")),
         tittel = "er det no sak",
         lenke = "#foo",
+        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        mottattTidspunkt = OffsetDateTime.now(),
     )
     val status = NyStatusSak(
         hendelseId = UUID.randomUUID(),
