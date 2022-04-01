@@ -25,8 +25,6 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.security.MessageDigest
-import java.time.OffsetDateTime
-import java.time.ZoneId
 import java.util.*
 
 /* potensielle målinger:
