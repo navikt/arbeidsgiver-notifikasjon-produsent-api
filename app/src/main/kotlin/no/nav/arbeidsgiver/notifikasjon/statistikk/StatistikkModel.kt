@@ -399,7 +399,7 @@ class StatistikkModel(
                     uuid(hendelse.sakId)
                     string(hendelse.merkelapp)
                     string(hendelse.mottakere.oppsummering())
-                    timestamptz(OffsetDateTime.now(ZoneId.systemDefault())) // TODO: set faktisk tidspunkt
+                    timestamptz(hendelse.oppgittTidspunkt ?: hendelse.mottattTidspunkt)
                 }
             }
             is NyStatusSak -> {
