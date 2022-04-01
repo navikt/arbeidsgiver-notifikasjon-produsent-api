@@ -22,6 +22,7 @@ object BrukerAPI {
     private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-bruker-api"
 
     private val notifikasjonerHentetCount = Health.meterRegistry.counter("notifikasjoner_hentet")
+    private val sakerHentetCount = Health.meterRegistry.counter("saker_hentet")
 
     data class Context(
         val fnr: String,
@@ -290,7 +291,7 @@ object BrukerAPI {
                     }.first(),
                 )
             }
-
+            sakerHentetCount.increment(saker.size.toDouble())
             SakerResultat(
                 saker = saker,
                 feilAltinn = tilganger.harFeil,
