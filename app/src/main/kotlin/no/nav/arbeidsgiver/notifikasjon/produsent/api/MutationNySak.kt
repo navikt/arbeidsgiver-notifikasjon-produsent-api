@@ -63,13 +63,15 @@ class MutationNySak(
     ): NySakResultat {
         val produsent = hentProdusent(context) { error -> return error }
         val sakId = UUID.randomUUID()
+        val mottattTidspunkt = OffsetDateTime.now()
 
         val sakOpprettetHendelse = try {
             nySak.somSakOpprettetHendelse(
                 id = sakId,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
-                finnRolleId = produsentRepository.altinnRolle::hentAltinnrolle
+                finnRolleId = produsentRepository.altinnRolle::hentAltinnrolle,
+                mottattTidspunkt = mottattTidspunkt,
             )
         } catch (e: UkjentRolleException) {
             return Error.UkjentRolle(e.message!!)
@@ -80,6 +82,7 @@ class MutationNySak(
             sakId = sakId,
             produsentId = produsent.id,
             kildeAppNavn = context.appName,
+            mottattTidspunkt = mottattTidspunkt,
         )
 
         tilgangsstyrNyNotifikasjon(
@@ -139,6 +142,7 @@ class MutationNySak(
             produsentId: String,
             kildeAppNavn: String,
             finnRolleId: suspend (String) -> AltinnRolle?,
+            mottattTidspunkt: OffsetDateTime,
         ) = SakOpprettet(
             hendelseId = id,
             virksomhetsnummer = virksomhetsnummer,
@@ -150,6 +154,8 @@ class MutationNySak(
             mottakere = mottakere.map { it.tilDomene(virksomhetsnummer, finnRolleId) },
             tittel = tittel,
             lenke = lenke,
+            oppgittTidspunkt = status.tidspunkt,
+            mottattTidspunkt = mottattTidspunkt,
         )
 
         fun somNyStatusSakHendelse(
@@ -157,6 +163,7 @@ class MutationNySak(
             sakId: UUID,
             produsentId: String,
             kildeAppNavn: String,
+            mottattTidspunkt: OffsetDateTime,
         ) = NyStatusSak(
             hendelseId = hendelseId,
             virksomhetsnummer = virksomhetsnummer,
@@ -166,7 +173,7 @@ class MutationNySak(
             status = status.status.hendelseType,
             overstyrStatustekstMed = status.overstyrStatustekstMed,
             oppgittTidspunkt = status.tidspunkt,
-            mottattTidspunkt = OffsetDateTime.now(),
+            mottattTidspunkt = mottattTidspunkt,
             idempotensKey = IdempotenceKey.initial()
         )
     }

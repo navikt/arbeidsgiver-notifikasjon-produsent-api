@@ -349,6 +349,8 @@ object EksempelHendelse {
         ),
         tittel = "foo",
         lenke = "#foo",
+        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        mottattTidspunkt = OffsetDateTime.now(),
     )
     val NyStatusSak = HendelseModel.NyStatusSak(
         hendelseId = uuid("1"),
