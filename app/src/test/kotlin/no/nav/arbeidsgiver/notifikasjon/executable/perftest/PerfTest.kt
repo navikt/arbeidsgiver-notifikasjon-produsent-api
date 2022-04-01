@@ -9,7 +9,9 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
 import kotlinx.coroutines.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.FAGER_TESTPRODUSENT
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import java.lang.System.currentTimeMillis
 import java.time.Instant
 import kotlin.random.Random
@@ -17,7 +19,9 @@ import kotlin.system.measureTimeMillis
 
 fun main() = runBlocking {
     client.use {
-        nyBeskjed(10, Api.PRODUSENT_GCP)
+        //nyBeskjed(1, Api.PRODUSENT_GCP)
+        nySak(3, Api.PRODUSENT_GCP)
+
         //hentNotifikasjoner(1, Api.BRUKER_GCP)
     }
 }
@@ -37,7 +41,8 @@ const val selvbetjeningToken =
 val tokenDingsToken : String = runBlocking {
     client.post<HttpResponse>("https://fakedings.dev-gcp.nais.io/fake/custom") {
         contentType(FormUrlEncoded)
-        body = "sub=someproducer&aud=produsent-api"
+        body = "azp=dev-gcp:fager:notifikasjon-test-produsent\n" +
+                "\n&aud=produsent-api"
     }.readText()
 }
 
@@ -130,7 +135,11 @@ suspend fun hentNotifikasjoner(count: Int, api: Api = Api.BRUKER_GCP) {
 suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
     val run = Instant.now()
     val eksterIder = generateSequence(1) { it + 1 }.iterator()
-    val tjenester = MottakerRegister.servicecodeDefinisjoner.asSequence().looping().iterator()
+    val tjenester = FAGER_TESTPRODUSENT.tillatteMottakere
+        .filterIsInstance<ServicecodeDefinisjon>()
+        .asSequence()
+        .looping()
+        .iterator()
     val virksomhetsnummere = ("0123456789".map { it.toString().repeat(9) } + listOf("910825631"))
         .asSequence()
         .looping()
@@ -143,28 +152,80 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
                 append(HttpHeaders.ContentType, "application/json")
                 append(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
             }
-
             body = """{
                      "query": "mutation {
                           nyBeskjed(nyBeskjed: {
                               notifikasjon: {
                                 lenke: \"https://min-side-arbeidsgiver.dev.nav.no/min-side-arbeidsgiver/?bedrift=$virksomhet\",
-                                tekst: \"Du kan nå søke om Lønnstilskudd. Følg lenken for å finne ut mer.\",
-                                merkelapp: \"tiltak\",
+                                tekst: \"Dette er en test.\",
+                                merkelapp: \"fager\",
                               }
                               mottaker: {
                                   altinn: {
                                       serviceCode: \"$tjenesteKode\",
                                       serviceEdition: \"$tjenesteVersjon\",
-                                      virksomhetsnummer: \"$virksomhet\"
                                   }
                               },
                               metadata: {
                                 eksternId: \"$run-${eksterIder.next()}\"
+                                virksomhetsnummer: \"$virksomhet\"
+
                               }
                           }) {
                               __typename
                               ... on NyBeskjedVellykket {
+                                id
+                              }
+                              ... on Error {
+                                feilmelding
+                              }
+                          }
+                     }"
+                    }""".trimMarginAndNewline()
+        }
+    }
+}
+
+suspend fun nySak(count: Int, api: Api = Api.PRODUSENT_GCP) {
+    val navn = listOf("Tor", "Per", "Ragnhild", "Muhammed", "Sara", "Alex", "Nina")
+    val typeSak = listOf("er syk", "har lønnstilskudd", "har mentortilskudd")
+    fun genererTittel() = "${navn.random()} ${typeSak.random()}."
+    val tjenester = FAGER_TESTPRODUSENT.tillatteMottakere.take(1)
+        .filterIsInstance<ServicecodeDefinisjon>()
+        .asSequence()
+        .looping()
+        .iterator()
+    val virksomhetsnummere = listOf("910825585")//+ ("0123456789".map { it.toString().repeat(9) })
+        .asSequence()
+        .looping()
+        .iterator()
+    concurrentWithStats("nySak", count) {
+        val (tjenesteKode, tjenesteVersjon) = tjenester.next()
+        val virksomhet = virksomhetsnummere.next()
+        client.post<HttpResponse>(api.url) {
+            headers {
+                append(HttpHeaders.ContentType, "application/json")
+                append(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
+            }
+            body = """{
+                     "query": "mutation {
+                          nySak(
+                              grupperingsid: \"${java.util.UUID.randomUUID()}\"
+                              merkelapp: \"fager\"
+                              virksomhetsnummer: \"$virksomhet\"
+                              mottakere: [
+                                  {altinn: {
+                                      serviceCode: \"$tjenesteKode\",
+                                      serviceEdition: \"$tjenesteVersjon\"
+                                  }}
+                              ]
+                              
+                              tittel: \"${genererTittel()}\",                              
+                              lenke: \"https://min-side-arbeidsgiver.dev.nav.no/min-side-arbeidsgiver/?bedrift=$virksomhet\",
+                              initiell_status: MOTTATT
+                          ) {
+                              __typename
+                              ... on NySakVellykket {
                                 id
                               }
                               ... on Error {
