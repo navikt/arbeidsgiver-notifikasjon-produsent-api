@@ -36,3 +36,6 @@ spec:
     - application: notifikasjon-devops
       team: fager
       access: read
+    - application: notifikasjon-bigquery-exporter
+      team: fager
+      access: read
