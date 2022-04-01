@@ -25,6 +25,8 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.security.MessageDigest
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.util.*
 
 /* potensielle målinger:
@@ -202,6 +204,26 @@ class StatistikkModel(
         )
     }
 
+    suspend fun antallSaker(): List<MultiGauge.Row<Number>> {
+        return database.nonTransactionalExecuteQuery(
+            """
+                select produsent_id, merkelapp, mottaker, count(*) as antall
+                from sak
+                group by (produsent_id, merkelapp, mottaker)
+            """,
+            transform = {
+                MultiGauge.Row.of(
+                    Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
+                        "merkelapp", this.getString("merkelapp"),
+                        "mottaker", this.getString("mottaker"),
+                    ),
+                    this.getInt("antall")
+                )
+            }
+        )
+    }
+
     suspend fun antallVarsler(): List<MultiGauge.Row<Number>> {
         return database.nonTransactionalExecuteQuery(
             """
@@ -364,7 +386,22 @@ class StatistikkModel(
                 // noop
             }
 
-            is SakOpprettet,
+            is SakOpprettet -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    insert into sak 
+                        (produsent_id, sak_id, merkelapp, mottaker, opprettet_tidspunkt)
+                    values (?, ?, ?, ?, ?)
+                    on conflict on constraint sak_pkey do nothing;
+                    """
+                ) {
+                    string(hendelse.produsentId)
+                    uuid(hendelse.sakId)
+                    string(hendelse.merkelapp)
+                    string(hendelse.mottakere.oppsummering())
+                    timestamptz(OffsetDateTime.now(ZoneId.systemDefault())) // TODO: set faktisk tidspunkt
+                }
+            }
             is NyStatusSak -> {
                 log.error("mottok hendelse som ikke enda er støttet {}", hendelse.javaClass.simpleName)
             }
