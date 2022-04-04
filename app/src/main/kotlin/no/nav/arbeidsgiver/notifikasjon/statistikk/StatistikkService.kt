@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.statistikk
 import io.micrometer.core.instrument.MultiGauge
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HendelseMetadata
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 
 interface StatistikkService {
     suspend fun håndterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
@@ -15,31 +15,31 @@ class StatistikkServiceImpl(
 
     private val antallNotifikasjoner = MultiGauge.builder("antall_notifikasjoner")
         .description("Antall notifikasjoner")
-        .register(Health.meterRegistry)
+        .register(Metrics.meterRegistry)
 
     private val antallSaker = MultiGauge.builder("antall_saker")
         .description("Antall saker")
-        .register(Health.meterRegistry)
+        .register(Metrics.meterRegistry)
 
     private val antallUnikeTekster = MultiGauge.builder("antall_unike_tekster")
         .description("Unike tekster")
-        .register(Health.meterRegistry)
+        .register(Metrics.meterRegistry)
 
     private val antallKlikk = MultiGauge.builder("antall_klikk")
         .description("Antall klikk på notifikasjon")
-        .register(Health.meterRegistry)
+        .register(Metrics.meterRegistry)
 
     private val antallKlikketPaa = MultiGauge.builder("antall_klikket_paa")
         .description("Antall notifikasjoner som er klikket på")
-        .register(Health.meterRegistry)
+        .register(Metrics.meterRegistry)
 
     private val antallUtførte = MultiGauge.builder("antall_utforte")
         .description("Antall utførte (med histogram)")
-        .register(Health.meterRegistry)
+        .register(Metrics.meterRegistry)
 
     private val antallVarsler = MultiGauge.builder("antall_varsler")
         .description("Antall varsler")
-        .register(Health.meterRegistry)
+        .register(Metrics.meterRegistry)
 
     override suspend fun håndterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         statistikkModel.oppdaterModellEtterHendelse(hendelse, metadata)

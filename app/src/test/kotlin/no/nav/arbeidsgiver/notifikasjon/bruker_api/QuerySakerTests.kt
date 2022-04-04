@@ -6,22 +6,25 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
-import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakStatus.FERDIG
+import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.*
@@ -31,19 +34,12 @@ class QuerySakerTests : DescribeSpec({
     val brukerRepository = BrukerRepositoryImpl(database)
 
     val engine = ktorBrukerTestServer(
-        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            tilgangerService = TilgangerServiceImpl(
-                altinn = AltinnStub("0".repeat(11) to Tilganger(
-                    tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1")),
-                    listOf(),
-                    listOf(),
-                )),
-                altinnRolleService = mockk(relaxed = true),
-            ),
-            enhetsregisteret = EnhetsregisteretStub("42" to "el virksomhete"),
-            brukerRepository = brukerRepository,
-            kafkaProducer = mockk()
-        )
+        altinn = AltinnStub("0".repeat(11) to Tilganger(
+            tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1")),
+            listOf(),
+            listOf(),
+        )),
+        brukerRepository = brukerRepository,
     )
 
     describe("Query.saker") {

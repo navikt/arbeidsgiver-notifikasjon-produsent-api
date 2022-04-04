@@ -10,21 +10,31 @@ import io.ktor.metrics.micrometer.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
 import io.ktor.util.pipeline.*
-import io.micrometer.core.instrument.binder.jvm.*
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produceMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.Executors
@@ -57,29 +67,60 @@ private val graphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1
     .produceMetrics("graphql-workers")
     .asCoroutineDispatcher()
 
-fun Application.installMetrics() {
-    install(MicrometerMetrics) {
-        registry = Health.meterRegistry
-        distributionStatisticConfig = DistributionStatisticConfig.Builder()
-            .percentilesHistogram(true)
-            .build()
-        meterBinders = listOf(
-            ClassLoaderMetrics(),
-            JvmMemoryMetrics(),
-            JvmGcMetrics(),
-            ProcessorMetrics(),
-            JvmThreadMetrics(),
-            LogbackMetrics()
-        )
+fun CoroutineScope.launchHttpServer(
+    httpPort: Int,
+    customRoute: Routing.() -> Unit = {},
+    application: Application.() -> Unit = { baseSetup(listOf(), customRoute) }
+) {
+    launch {
+        embeddedServer(Netty, port = httpPort, configure = {
+            connectionGroupSize = 16
+            callGroupSize = 16
+            workerGroupSize = 16
+        }) {
+            application()
+        }
+            .start(wait = true)
     }
 }
 
-fun <T : WithCoroutineScope> Application.httpServerSetup(
+fun <T: WithCoroutineScope> CoroutineScope.launchGraphqlServer(
+    httpPort: Int,
+    authProviders: List<JWTAuthentication> = listOf(),
+    extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
+    graphql: Deferred<TypedGraphQL<T>>,
+) {
+    launchHttpServer(httpPort) {
+        graphqlSetup(authProviders, extractContext, graphql)
+    }
+}
+
+fun <T : WithCoroutineScope> Application.graphqlSetup(
     authProviders: List<JWTAuthentication>,
     extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
     graphql: Deferred<TypedGraphQL<T>>,
 ) {
+    baseSetup(authProviders = authProviders) {
+        authenticate(authProviders) {
+            route("api") {
+                post("graphql") {
+                    withContext(this.coroutineContext + graphQLDispatcher) {
+                        val context = extractContext()
+                        val request = call.receive<GraphQLRequest>()
+                        val result = graphql.await().execute(request, context)
+                        call.respond(result)
+                    }
+                }
+            }
+        }
+    }
+}
 
+
+fun Application.baseSetup(
+    authProviders: List<JWTAuthentication>,
+    customRoute: Routing.() -> Unit,
+) {
     install(CORS) {
         /* TODO: log when reject */
         allowNonSimpleContentTypes = true
@@ -94,7 +135,20 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
         }
     }
 
-    installMetrics()
+    install(MicrometerMetrics) {
+        registry = Metrics.meterRegistry
+        distributionStatisticConfig = DistributionStatisticConfig.Builder()
+            .percentilesHistogram(true)
+            .build()
+        meterBinders = listOf(
+            ClassLoaderMetrics(),
+            JvmMemoryMetrics(),
+            JvmGcMetrics(),
+            ProcessorMetrics(),
+            JvmThreadMetrics(),
+            LogbackMetrics()
+        )
+    }
 
     install(CallId) {
         retrieveFromHeader(HttpHeaders.XRequestId)
@@ -168,95 +222,31 @@ fun <T : WithCoroutineScope> Application.httpServerSetup(
     routing {
         trace { application.log.trace(it.buildText()) }
 
-        authenticate(authProviders) {
-            route("api") {
-                post("graphql") {
-                    withContext(this.coroutineContext + graphQLDispatcher) {
-                        val context = extractContext()
-                        val request = call.receive<GraphQLRequest>()
-                        val result = graphql.await().execute(request, context)
-                        call.respond(result)
-                    }
+        customRoute()
+
+        route("internal") {
+            get("alive") {
+                if (Health.alive) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.ServiceUnavailable, Health.report)
+                }
+            }
+
+            get("ready") {
+                if (Health.ready) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.ServiceUnavailable, Health.report)
+                }
+            }
+
+            get("metrics") {
+                withContext<Unit>(coroutineContext + metricsDispatcher) {
+                    call.respond<String>(Metrics.meterRegistry.scrape())
                 }
             }
         }
-
-        get("ide") {
-            call.respondBytes(graphiqlHTML, ContentType.Text.Html)
-        }
-
-        internalRoutes()
     }
 }
 
-fun Route.internalRoutes() {
-    route("internal") {
-        get("alive") {
-            if (Health.alive) {
-                call.respond(HttpStatusCode.OK)
-            } else {
-                call.respond(
-                    HttpStatusCode.ServiceUnavailable,
-                    Health.subsystemAlive.toString()
-                )
-            }
-        }
-
-        get("ready") {
-            if (Health.ready) {
-                call.respond(HttpStatusCode.OK)
-            } else {
-                call.respond(
-                    HttpStatusCode.ServiceUnavailable,
-                    Health.subsystemReady.toString()
-                )
-            }
-        }
-
-        get("metrics") {
-            withContext(this.coroutineContext + metricsDispatcher) {
-                call.respond(Health.meterRegistry.scrape())
-            }
-        }
-    }
-}
-
-private val graphiqlHTML: ByteArray =
-    """
-    <html>
-      <head>
-        <title>GraphQL explorer</title>
-        <link href="https://unpkg.com/graphiql/graphiql.min.css" rel="stylesheet" />
-      </head>
-      <body style="margin: 0;">
-        <div id="graphiql" style="height: 100vh;"></div>
-
-        <script
-          crossorigin
-          src="https://unpkg.com/react/umd/react.production.min.js"
-        ></script>
-        <script
-          crossorigin
-          src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"
-        ></script>
-        <script
-          crossorigin
-          src="https://unpkg.com/graphiql/graphiql.min.js"
-        ></script>
-
-        <script>
-          const fetcher = GraphiQL.createFetcher({
-            url: '/api/graphql', 
-            enableIncrementalDelivery: false
-          });
-
-          ReactDOM.render(
-            React.createElement(GraphiQL, { fetcher: fetcher }),
-            document.getElementById('graphiql'),
-          );
-        </script>
-      </body>
-    </html>
-    """
-        .trimIndent()
-        .toByteArray()

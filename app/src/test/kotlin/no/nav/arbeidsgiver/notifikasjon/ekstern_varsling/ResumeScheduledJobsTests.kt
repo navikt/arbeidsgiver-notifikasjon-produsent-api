@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.*
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid

@@ -8,36 +8,46 @@ import io.ktor.http.*
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnRolleServiceStub
+import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
+import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 
 class FeilhåndteringTests : DescribeSpec({
     val queryModel: BrukerRepositoryImpl = mockk()
 
-    val altinn: Altinn = mockk()
+    val suspendingAltinnClient: SuspendingAltinnClient = mockk()
 
     val engine = ktorBrukerTestServer(
-        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            tilgangerService = TilgangerServiceImpl(
-                altinn = altinn,
-                altinnRolleService = mockk(),
+        tilgangerService = TilgangerServiceImpl(
+            altinn = AltinnImpl(
+                suspendingAltinnClient
             ),
-            enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
-            brukerRepository = queryModel,
-            kafkaProducer = mockk(),
-        )
+            altinnRolleService = AltinnRolleServiceStub(),
+        ),
+        brukerRepository = queryModel,
     )
 
     describe("graphql bruker-api feilhåndtering errors tilganger") {
         context("Feil Altinn, DigiSyfo ok") {
 
             coEvery {
-                altinn.hentTilganger(any(), any(), any(), any())
-            } throws RuntimeException("Mock failure")
+                suspendingAltinnClient.hentOrganisasjoner(any(), any(), any(), any(), any())
+            } returns null
+
+            coEvery {
+                suspendingAltinnClient.hentOrganisasjoner(any(), any(), any())
+            } returns null
+
+            coEvery {
+                suspendingAltinnClient.hentReportees(any(), any())
+            } returns null
 
             coEvery {
                 queryModel.hentNotifikasjoner(any(), any())

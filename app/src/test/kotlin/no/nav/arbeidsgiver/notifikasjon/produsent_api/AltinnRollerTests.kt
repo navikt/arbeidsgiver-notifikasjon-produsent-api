@@ -5,10 +5,10 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
@@ -16,7 +16,7 @@ class AltinnRollerTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepo = ProdusentRepositoryImpl(database)
     val rolleRepository = produsentRepo.altinnRolle
-    val altinn = mockk<Altinn>()
+    val altinn = mockk<AltinnRolleClient>()
     val altinnservice = AltinnRolleServiceImpl(altinn, rolleRepository)
 
     describe("oppførsel Altinnroller") {

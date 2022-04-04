@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -32,7 +33,7 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
                 altinn = AltinnStub(),
                 altinnRolleService = mockk(),
             ),
-            enhetsregisteret = EnhetsregisteretStub(),
+            virksomhetsinfoService = VirksomhetsinfoService(EnhetsregisteretStub()),
             brukerRepository = queryModel,
             kafkaProducer = kafkaProducer,
         ),

@@ -34,7 +34,7 @@ data class JWTAuthentication(
 object HttpAuthProviders {
     val log = logger()
 
-    val httpClient = HttpClient(Apache) {
+    private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer()
         }
@@ -147,27 +147,28 @@ object HttpAuthProviders {
             }
         )
     }
-}
 
-fun Verification.`with id-porten login level 4`() {
-    withClaim("acr", "Level4")
-}
-
-fun JWTAuthenticationProvider.Configuration.verifier(
-    audience: String,
-    discoveryUrl: String,
-    additionalVerification: Verification.() -> Unit = {},
-) {
-    val metaData = runBlocking {
-        HttpAuthProviders.httpClient.get<AuthorizationServerMetaData>(discoveryUrl)
+    private fun JWTAuthenticationProvider.Configuration.verifier(
+        audience: String,
+        discoveryUrl: String,
+        additionalVerification: Verification.() -> Unit = {},
+    ) {
+        val metaData = runBlocking {
+            httpClient.get<AuthorizationServerMetaData>(discoveryUrl)
+        }
+        verifier(
+            issuer = metaData.issuer,
+            jwksUri = metaData.jwks_uri,
+            audience = audience,
+            additionalVerification = additionalVerification,
+        )
     }
-    verifier(
-        issuer = metaData.issuer,
-        jwksUri = metaData.jwks_uri,
-        audience = audience,
-        additionalVerification = additionalVerification,
-    )
+
+    private fun Verification.`with id-porten login level 4`() {
+        withClaim("acr", "Level4")
+    }
 }
+
 
 fun JWTAuthenticationProvider.Configuration.verifier(
     issuer: String,

@@ -6,7 +6,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
@@ -100,6 +99,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     }
                 }
             } catch (e: Done) {
+                // empty
             }
 
             it("message received from kafka") {

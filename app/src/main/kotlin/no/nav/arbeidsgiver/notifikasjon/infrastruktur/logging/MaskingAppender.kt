@@ -4,8 +4,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.AppenderBase
 
-class MaskingAppender(
-) : AppenderBase<ILoggingEvent>() {
+class MaskingAppender: AppenderBase<ILoggingEvent>() {
 
     var appender: Appender<ILoggingEvent>? = null
 

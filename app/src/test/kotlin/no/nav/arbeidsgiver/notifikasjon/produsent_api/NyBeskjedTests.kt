@@ -10,7 +10,7 @@ import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.Produsent
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyBeskjed
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI

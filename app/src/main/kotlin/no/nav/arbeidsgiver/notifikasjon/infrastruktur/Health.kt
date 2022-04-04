@@ -1,47 +1,55 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import ch.qos.logback.core.util.OptionHelper.getEnv
-import io.micrometer.core.instrument.Clock
-import io.micrometer.core.instrument.Timer
-import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
-import io.micrometer.prometheus.PrometheusConfig
-import io.micrometer.prometheus.PrometheusMeterRegistry
-import io.prometheus.client.CollectorRegistry
+import io.ktor.util.collections.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health.SubsystemImpl.Companion.alive
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health.SubsystemImpl.Companion.ready
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health.SubsystemImpl.Companion.report
 import java.time.Duration
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.concurrent.timer
-
-enum class Subsystem {
-    DATABASE
-}
 
 object Health {
+    val database: Subsystem by lazy {
+        subsystem("database")
+    }
+
     private val log = logger()
 
-    val clock: Clock = Clock.SYSTEM
+    private val subsystems = ConcurrentList<SubsystemImpl>()
 
-    val meterRegistry = PrometheusMeterRegistry(
-        PrometheusConfig.DEFAULT,
-        CollectorRegistry.defaultRegistry,
-        clock
-    )
+    val alive: Boolean get() = subsystems.alive
+    val ready: Boolean get() = subsystems.ready
+    val report: String get() = subsystems.report
 
-    val subsystemAlive = ConcurrentHashMap(mapOf(
-        Subsystem.DATABASE to true
-    ))
+    fun subsystem(name: String): Subsystem =
+        SubsystemImpl(name).also {
+            subsystems.add(it)
+        }
 
-    val alive
-        get() = subsystemAlive.all { it.value }
+    interface Subsystem {
+        fun isDead()
+        fun isReady()
+    }
 
-    val subsystemReady = ConcurrentHashMap(mapOf(
-        Subsystem.DATABASE to false
-    ))
+    private class SubsystemImpl(private val name: String): Subsystem {
+        private val alive = AtomicBoolean(true)
+        private val ready = AtomicBoolean(false)
 
-    val ready
-        get() = subsystemReady.all { it.value }
+        override fun isDead() = alive.set(false)
+        override fun isReady() = ready.set(true)
+
+        override fun toString() = "{$name alive: $alive ready: $ready}"
+
+        companion object {
+            val List<SubsystemImpl>.alive: Boolean
+                get() = all { it.alive.get() }
+
+            val List<SubsystemImpl>.ready: Boolean
+                get() = all { it.ready.get() }
+
+            val List<SubsystemImpl>.report: String
+                get() = joinToString(prefix = "[", separator = ", ", postfix = "]")
+        }
+    }
 
     private val terminatingAtomic = AtomicBoolean(false)
 
@@ -62,45 +70,9 @@ object Health {
                 try {
                     sleep(shutdownTimeout.toMillis())
                 } catch (e: Exception) {
+                    // nothing to do
                 }
             }
         })
-    }
-}
-
-suspend fun <T> Timer.coRecord(body: suspend () -> T): T {
-    val start = Health.clock.monotonicTime()
-    try {
-        return body()
-    } finally {
-        val end = Health.clock.monotonicTime()
-        this.record(end - start, TimeUnit.NANOSECONDS)
-    }
-}
-
-fun <T: ExecutorService> T.produceMetrics(name: String): T {
-    ExecutorServiceMetrics(this, name, emptyList())
-        .bindTo(Health.meterRegistry);
-    return this
-}
-
-
-private val timerRegistry = ConcurrentHashMap<Pair<String, Set<Pair<String, String>>>, Timer>()
-
-fun getTimer(
-    name: String,
-    tags: Set<Pair<String, String>>,
-    description: String,
-): Timer {
-    return timerRegistry.computeIfAbsent(Pair(name, tags)) {
-        val tagsArray =
-            tags.toList()
-                .flatMap { (tagName, tagValue) -> listOf(tagName, tagValue) }
-                .toTypedArray()
-        Timer.builder(name)
-            .tags(*tagsArray)
-            .description(description)
-            .publishPercentiles(0.5, 0.8, 0.9, 0.99)
-            .register(Health.meterRegistry)
     }
 }

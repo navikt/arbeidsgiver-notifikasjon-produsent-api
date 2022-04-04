@@ -9,9 +9,15 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Scalars
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.createGraphQL
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
@@ -21,8 +27,8 @@ import java.util.*
 object BrukerAPI {
     private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-bruker-api"
 
-    private val notifikasjonerHentetCount = Health.meterRegistry.counter("notifikasjoner_hentet")
-    private val sakerHentetCount = Health.meterRegistry.counter("saker_hentet")
+    private val notifikasjonerHentetCount = Metrics.meterRegistry.counter("notifikasjoner_hentet")
+    private val sakerHentetCount = Metrics.meterRegistry.counter("saker_hentet")
 
     data class Context(
         val fnr: String,
@@ -139,13 +145,12 @@ object BrukerAPI {
     )
 
     fun createBrukerGraphQL(
-        enhetsregisteret: Enhetsregisteret,
+        virksomhetsinfoService: VirksomhetsinfoService,
         brukerRepository: BrukerRepository,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
         tilgangerService: TilgangerService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
-
             scalar(Scalars.ISO8601DateTime)
 
             resolveSubtypes<Notifikasjon>()
@@ -168,19 +173,19 @@ object BrukerAPI {
 
                 wire("Oppgave") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Notifikasjon.Oppgave>(enhetsregisteret, env)
+                        fetchVirksomhet<Notifikasjon.Oppgave>(virksomhetsinfoService, env)
                     }
                 }
 
                 wire("Beskjed") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Notifikasjon.Beskjed>(enhetsregisteret, env)
+                        fetchVirksomhet<Notifikasjon.Beskjed>(virksomhetsinfoService, env)
                     }
                 }
 
                 wire("Sak") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Sak>(enhetsregisteret, env)
+                        fetchVirksomhet<Sak>(virksomhetsinfoService, env)
                     }
                 }
             }
@@ -331,17 +336,17 @@ object BrukerAPI {
     }
 
     private suspend fun <T : WithVirksomhet> fetchVirksomhet(
-        enhetsregisteret: Enhetsregisteret,
+        virksomhetsnavnService: VirksomhetsinfoService,
         env: DataFetchingEnvironment
     ): Virksomhet {
         val source = env.getSource<T>()
         return if (env.selectionSet.contains("Virksomhet.navn")) {
-            enhetsregisteret.hentUnderenhet(source.virksomhet.virksomhetsnummer).let { enhet ->
-                Virksomhet(
-                    virksomhetsnummer = enhet.organisasjonsnummer,
-                    navn = enhet.navn
-                )
-            }
+            val virksomhetsnummer = source.virksomhet.virksomhetsnummer
+            val underenhet = virksomhetsnavnService.findUnderenhet(virksomhetsnummer)
+            Virksomhet(
+                virksomhetsnummer = virksomhetsnummer,
+                navn = underenhet.navn,
+            )
         } else {
             source.virksomhet
         }

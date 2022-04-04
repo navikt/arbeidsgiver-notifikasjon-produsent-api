@@ -9,12 +9,13 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingAltinnrettigheterProxyKlient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
 
 @Suppress("HttpUrlsUsage")
 class AltinnImplTests : DescribeSpec({
-    val klient = mockk<NonBlockingAltinnrettigheterProxyKlient>()
+    val klient = mockk<SuspendingAltinnClient>()
     val altinn = AltinnImpl(klient)
 
     describe("Altinn#hentTilganger") {

@@ -3,7 +3,10 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
@@ -40,12 +43,21 @@ class Database private constructor(
             get() = "jdbc:postgresql://$host:$port/$database?${jdbcOpts.entries.joinToString("&")}"
     }
 
-    suspend fun close() {
+    fun close() {
         dataSource.close()
     }
 
     companion object {
         private val log = logger()
+
+        fun config(name: String) = Config(
+            host = System.getenv("DB_HOST") ?: "localhost",
+            port = System.getenv("DB_PORT") ?: "5432",
+            username = System.getenv("DB_USERNAME") ?: "postgres",
+            password = System.getenv("DB_PASSWORD") ?: "postgres",
+            database = System.getenv("DB_DATABASE") ?: name.replace('_', '-'),
+            migrationLocations = "db/migration/$name",
+        )
 
         private fun Config.asHikariConfig(): HikariConfig {
             val config = this
@@ -99,6 +111,19 @@ class Database private constructor(
             } catch (e: Exception) {
                 log.info("attempting database connection: fail with exception", e)
                 false
+            }
+        }
+
+        fun CoroutineScope.openDatabaseAsync(subsystem: Health.Subsystem, config: Config): Deferred<Database> {
+            return async {
+                try {
+                    openDatabase(config).also {
+                        subsystem.isReady()
+                    }
+                } catch (e: Exception) {
+                    subsystem.isDead()
+                    throw e
+                }
             }
         }
     }

@@ -10,7 +10,6 @@ import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.FAGER_TESTPRODUSENT
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import java.lang.System.currentTimeMillis
 import java.time.Instant

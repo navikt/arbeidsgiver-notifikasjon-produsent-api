@@ -8,8 +8,10 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import java.time.Duration
@@ -39,9 +41,27 @@ private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
         this.poll()
     }.toList()
 
-fun createKafkaConsumer(configure: Properties.() -> Unit = {}): CoroutineKafkaConsumer<KafkaKey, Hendelse> {
-    return createAndSubscribeKafkaConsumer(TOPIC, configure = configure)
-}
+suspend inline fun forEachHendelse(groupId: String, crossinline body: suspend (Hendelse, HendelseMetadata) -> Unit) =
+    if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
+        Produsent.log.info("KafkaConsumer er deaktivert.")
+    } else {
+        createKafkaConsumer(groupId).forEachEvent { hendelse, metadata ->
+            body(hendelse, metadata)
+        }
+    }
+
+suspend inline fun forEachHendelse(groupId: String, crossinline body: suspend (Hendelse) -> Unit) =
+    forEachHendelse(groupId) { hendelse, _ ->
+        body(hendelse)
+    }
+
+fun createKafkaConsumer(groupId: String) =
+    createKafkaConsumer {
+        put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+    }
+
+fun createKafkaConsumer(configure: Properties.() -> Unit = {}) =
+    createAndSubscribeKafkaConsumer<KafkaKey, Hendelse>(TOPIC, configure = configure)
 
 fun <K, V> createAndSubscribeKafkaConsumer(
     vararg topic: String,
@@ -52,7 +72,7 @@ fun <K, V> createAndSubscribeKafkaConsumer(
         configure()
     }
     val kafkaConsumer = KafkaConsumer<K, V>(properties)
-    KafkaClientMetrics(kafkaConsumer).bindTo(Health.meterRegistry)
+    KafkaClientMetrics(kafkaConsumer).bindTo(Metrics.meterRegistry)
     kafkaConsumer.subscribe(topic.asList())
     return CoroutineKafkaConsumerImpl(kafkaConsumer)
 }
@@ -150,7 +170,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
     private fun retriesForPartition(partition: Int) =
         retriesPerPartition.getOrPut(partition) {
             AtomicInteger(0).also { retries ->
-                Health.meterRegistry.gauge(
+                Metrics.meterRegistry.gauge(
                     "kafka_consumer_retries_per_partition",
                     Tags.of(Tag.of("partition", partition.toString())),
                     retries

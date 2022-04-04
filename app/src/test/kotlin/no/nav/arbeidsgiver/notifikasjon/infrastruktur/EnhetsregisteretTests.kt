@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.mockserver.MockServerListener
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
 import org.mockserver.client.MockServerClient
 import org.mockserver.model.HttpRequest
 import org.mockserver.model.HttpResponse
@@ -15,7 +16,6 @@ class EnhetsregisteretTests : DescribeSpec({
 
     val host = "localhost"
     val port = 1111
-    val brreg = EnhetsregisteretImpl("http://$host:$port")
     val mockServerClient = MockServerClient(host, port)
     fun mockBrregResponse(
         withContentType: HttpResponse?
@@ -37,15 +37,16 @@ class EnhetsregisteretTests : DescribeSpec({
                     .withBody(enhetJson, Charsets.UTF_8)
                     .withContentType(MediaType.APPLICATION_JSON)
             )
-            val enhet = brreg.hentUnderenhet(orgnr)
 
+            val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
+            val enhet = brreg.findUnderenhet(orgnr)
 
             it("inneholder navn på enhet") {
                 enhet.navn shouldBe "ARBEIDS- OG VELFERDSETATEN"
             }
 
             context("når det gjøres flere kall til samme enhet") {
-                val enhet2 = brreg.hentUnderenhet(orgnr)
+                val enhet2 = brreg.findUnderenhet(orgnr)
 
                 it("enhet er samme instans") {
                     enhet2 shouldBeSameInstanceAs enhet
@@ -53,9 +54,9 @@ class EnhetsregisteretTests : DescribeSpec({
             }
         }
         context("når enhet ikke finnes") {
+            val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
             mockBrregResponse(HttpResponse.notFoundResponse())
-            brreg.cache.clear()
-            val enhet = brreg.hentUnderenhet(orgnr)
+            val enhet = brreg.findUnderenhet(orgnr)
 
             it("inneholder ikke navn på enhet") {
                 enhet.navn shouldBe ""
@@ -64,12 +65,12 @@ class EnhetsregisteretTests : DescribeSpec({
 
         /* hvis api-et er nede, hender det de returnerer html >:( */
         context("når ereg returnerer html") {
+            val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
             mockBrregResponse(
                 HttpResponse.response()
                     .withBody("<html>hello world </html>")
                     .withContentType(MediaType.TEXT_HTML))
-            brreg.cache.clear()
-            val enhet = brreg.hentUnderenhet(orgnr)
+            val enhet = brreg.findUnderenhet(orgnr)
 
             it("inneholder ikke navn på enhet") {
                 enhet.navn shouldBe ""

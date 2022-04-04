@@ -10,15 +10,45 @@ import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerService
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent_api.stubProdusentRegister
 import org.intellij.lang.annotations.Language
+
+fun Spec.ktorBrukerTestServer(
+    enhetsregisteret: Enhetsregisteret = EnhetsregisteretStub(),
+    virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
+    brukerRepository: BrukerRepository = mockk(relaxed = true),
+    kafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse> = mockk(relaxed = true),
+    altinn: Altinn = AltinnStub(),
+    altinnRolleService: AltinnRolleService = AltinnRolleServiceStub(),
+    tilgangerService: TilgangerService = TilgangerServiceImpl(altinn, altinnRolleService),
+    environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {},
+) =
+    ktorBrukerTestServer(
+        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
+            virksomhetsinfoService = virksomhetsinfoService,
+            brukerRepository= brukerRepository,
+            kafkaProducer = kafkaProducer,
+            tilgangerService = tilgangerService,
+        ),
+        environment = environment
+    )
 
 fun Spec.ktorBrukerTestServer(
     brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
@@ -28,7 +58,7 @@ fun Spec.ktorBrukerTestServer(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
     listener(KtorTestListener(engine) {
-        httpServerSetup(
+        graphqlSetup(
             authProviders = listOf(LOCALHOST_BRUKER_AUTHENTICATION),
             extractContext = extractBrukerContext,
             graphql = CompletableDeferred(brukerGraphQL),
@@ -46,7 +76,7 @@ fun Spec.ktorProdusentTestServer(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
     listener(KtorTestListener(engine) {
-        httpServerSetup(
+        graphqlSetup(
             authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
             extractContext = extractProdusentContext(produsentRegister),
             graphql = CompletableDeferred(produsentGraphQL)
@@ -77,12 +107,12 @@ const val BRUKER_HOST = "ag-notifikasjon-bruker-api.invalid"
 
 /* Issue tokens as localhost for unit testing */
 object LocalhostIssuer {
-    val issuer = "localhost"
-    val algorithm = Algorithm.none()
-    val brukerAudience = "localhost:bruker-api"
-    val produsentAudience = "localhost:bruker-api"
+    private const val issuer = "localhost"
+    val algorithm: Algorithm? = Algorithm.none()
+    private const val brukerAudience = "localhost:bruker-api"
+    private const val produsentAudience = "localhost:bruker-api"
 
-    fun issueToken(
+    private fun issueToken(
         sub: String,
         audience: String,
         azp: String? = null

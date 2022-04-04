@@ -17,8 +17,8 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleRepository
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.time.OffsetDateTime
 import java.util.*
@@ -269,11 +269,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: NyStatusSak) {
         database.transaction {
             val sakId = finnDbSakId(nyStatusSak.sakId)
-
-            if (sakId == null) {
-                // log? metric?
-                return@transaction
-            }
+                ?: return@transaction /* log? metric? */
 
             executeUpdate("""
                 insert into sak_status

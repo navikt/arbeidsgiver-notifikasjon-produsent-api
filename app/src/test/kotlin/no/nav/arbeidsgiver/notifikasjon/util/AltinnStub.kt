@@ -1,9 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleService
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.AltinnRolleDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 
 open class AltinnStub(
@@ -26,8 +27,14 @@ open class AltinnStub(
         roller: Iterable<AltinnRolle>,
     ): Tilganger =
         hentAlleTilgangerImpl(fnr, selvbetjeningsToken)
+}
 
-    override suspend fun hentRoller(): List<AltinnRolle> {
-        return listOf(AltinnRolle("195", "DAGL"), AltinnRolle("196", "BOBE"))
+class AltinnRolleServiceStub : AltinnRolleService {
+    override suspend fun lastRollerFraAltinn() {
+        // noop
     }
+
+    override suspend fun hentRoller(rolleDefinisjoner: Iterable<AltinnRolleDefinisjon>): Iterable<AltinnRolle> =
+        listOf(AltinnRolle("195", "DAGL"), AltinnRolle("196", "BOBE"))
+            .filter { it.RoleDefinitionCode in rolleDefinisjoner.map(AltinnRolleDefinisjon::roleCode) }
 }

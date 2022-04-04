@@ -1,7 +1,5 @@
-package no.nav.arbeidsgiver.notifikasjon.altinn_roller
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.AltinnRolleDefinisjon
 
 interface AltinnRolleService {
@@ -10,7 +8,7 @@ interface AltinnRolleService {
 }
 
 class AltinnRolleServiceImpl(
-    val altinn: Altinn,
+    private val altinnRolleClient: AltinnRolleClient,
     private val altinnRolleRepository: AltinnRolleRepository,
 ) : AltinnRolleService {
 
@@ -18,7 +16,7 @@ class AltinnRolleServiceImpl(
     private var alleRollerByCode: Map<String, AltinnRolle>? = null
 
     override suspend fun lastRollerFraAltinn() {
-        val ferskeRollerFraAltinn = altinn.hentRoller()
+        val ferskeRollerFraAltinn = altinnRolleClient.hentRoller().orEmpty()
         val eksisterendeRollerFraDb = altinnRolleRepository.hentAlleAltinnRoller()
         val nyeRoller = ferskeRollerFraAltinn - eksisterendeRollerFraDb.toSet()
         altinnRolleRepository.leggTilAltinnRoller(nyeRoller)
@@ -33,9 +31,9 @@ class AltinnRolleServiceImpl(
     }
 
     private suspend fun hentOgSettAlleRollerByCode(): Map<String, AltinnRolle> {
-        return altinnRolleRepository.hentAlleAltinnRoller().associateBy(AltinnRolle::RoleDefinitionCode).also {
-            alleRollerByCode = it
-        }
+        return altinnRolleRepository.hentAlleAltinnRoller()
+            .associateBy(AltinnRolle::RoleDefinitionCode).also {
+                alleRollerByCode = it
+            }
     }
-
 }

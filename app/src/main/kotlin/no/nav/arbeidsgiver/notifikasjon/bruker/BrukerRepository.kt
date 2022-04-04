@@ -17,8 +17,8 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleRepository
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -54,7 +54,7 @@ interface BrukerRepository {
 class BrukerRepositoryImpl(
     private val database: Database
 ) : BrukerRepository {
-    private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
+    private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
     override val altinnRolle: AltinnRolleRepository = AltinnRolleRepositoryImpl(database)
 
     override suspend fun hentNotifikasjoner(

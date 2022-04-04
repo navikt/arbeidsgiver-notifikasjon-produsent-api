@@ -22,9 +22,9 @@ object MigrationOps {
 }
 
 object OS {
-    val log = logger()
+    private val log = logger()
 
-    var cwd : String by Delegates.observable("") {
+    private var cwd : String by Delegates.observable("") {
             _, old, new ->
         log.warn("cwd changed: $old -> $new")
     }

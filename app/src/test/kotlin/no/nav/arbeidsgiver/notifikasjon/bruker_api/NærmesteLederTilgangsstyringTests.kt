@@ -6,12 +6,15 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.Bruker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.bruker.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
@@ -55,11 +58,13 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098571"),
         ).also { model.oppdaterModellEtterHendelse(it) }
 
-        val beskjed2 = beskjedOpprettet(
-            eksternId = "2",
-            mottaker = mottaker2,
-            id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098572"),
-        ).also { model.oppdaterModellEtterHendelse(it) }
+        model.oppdaterModellEtterHendelse(
+            beskjedOpprettet(
+                eksternId = "2",
+                mottaker = mottaker2,
+                id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098572"),
+            )
+        )
 
         val beskjed3 = beskjedOpprettet(
             eksternId = "3",
@@ -82,7 +87,7 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             )
         )
         it("får notifikasjon om nåværende ansatt") {
-            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY, /* ansatte(mottaker1) */)
+            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
             notifikasjoner shouldHaveSize 1
             val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
             beskjed.id shouldBe beskjed1.notifikasjonId
