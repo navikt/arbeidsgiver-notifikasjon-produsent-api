@@ -17,7 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
-import no.nav.arbeidsgiver.notifikasjon.produsent_api.stubProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.stubProdusentRegister
 import org.intellij.lang.annotations.Language
 
 fun Spec.ktorBrukerTestServer(

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.produsent_api
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
