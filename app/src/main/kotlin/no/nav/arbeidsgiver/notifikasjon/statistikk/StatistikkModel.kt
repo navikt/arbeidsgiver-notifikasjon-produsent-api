@@ -379,6 +379,16 @@ class StatistikkModel(
                     timestamp_utc(hendelse.deletedAt)
                     uuid(hendelse.aggregateId)
                 }
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    update sak 
+                        set soft_deleted_tidspunkt = ?
+                        where sak_id = ?
+                    """
+                ) {
+                    timestamp_utc(hendelse.deletedAt)
+                    uuid(hendelse.aggregateId)
+                }
             }
             is HardDelete -> {
                 // noop

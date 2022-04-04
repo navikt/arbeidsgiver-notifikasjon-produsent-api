@@ -1,11 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.statistikk
 
 import com.fasterxml.jackson.databind.node.NullNode
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID
@@ -146,6 +148,23 @@ class StatistikkModelTests : DescribeSpec({
                 antallUtførteGauge.register(model.antallUtførteHistogram(), true)
                 val utførteOgKlikketPaa = meterRegistry.get("antall_utforte").tag("klikket_paa", "t").gauge().value()
                 utførteOgKlikketPaa shouldBe 1
+            }
+        }
+
+        context("SoftDelete") {
+            val softdelete = HendelseModel.SoftDelete(
+                virksomhetsnummer = "42",
+                aggregateId = UUID.randomUUID(),
+                hendelseId = UUID.randomUUID(),
+                produsentId = "42",
+                kildeAppNavn = "test:app",
+                deletedAt = OffsetDateTime.now()
+            )
+
+            it("Feiler ikke dersom det ikke finnes noe tilhørende sak eller notifikasjon") {
+                shouldNotThrowAny {
+                    model.oppdaterModellEtterHendelse(softdelete, HendelseMetadata(now()))
+                }
             }
         }
     }
