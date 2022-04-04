@@ -12,6 +12,7 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
 import kotlinx.coroutines.delay
+import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu

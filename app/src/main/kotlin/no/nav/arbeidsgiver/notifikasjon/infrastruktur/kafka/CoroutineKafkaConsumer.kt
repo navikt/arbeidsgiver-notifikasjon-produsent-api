@@ -11,7 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
-import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.Produsent
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import java.time.Duration

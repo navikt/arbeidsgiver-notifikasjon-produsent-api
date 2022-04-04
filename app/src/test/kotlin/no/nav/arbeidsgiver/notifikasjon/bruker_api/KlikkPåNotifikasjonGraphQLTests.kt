@@ -9,12 +9,10 @@ import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -25,19 +23,7 @@ import java.util.*
 
 class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
     val queryModel: BrukerRepositoryImpl = mockk(relaxed = true)
-    val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = mockk()
-
-    val engine = ktorBrukerTestServer(
-        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            tilgangerService = TilgangerServiceImpl(
-                altinn = AltinnStub(),
-                altinnRolleService = mockk(),
-            ),
-            virksomhetsinfoService = VirksomhetsinfoService(EnhetsregisteretStub()),
-            brukerRepository = queryModel,
-            kafkaProducer = kafkaProducer,
-        ),
-    )
+    val engine = ktorBrukerTestServer(brukerRepository = queryModel)
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
     coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(any<BrukerKlikket>()) } returns Unit

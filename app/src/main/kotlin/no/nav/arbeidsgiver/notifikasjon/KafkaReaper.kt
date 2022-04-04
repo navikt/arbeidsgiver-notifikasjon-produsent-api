@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
+package no.nav.arbeidsgiver.notifikasjon
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -11,6 +11,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaperModelImpl
+import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaperServiceImpl
 
 object KafkaReaper {
     val log = logger()

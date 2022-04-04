@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
+package no.nav.arbeidsgiver.notifikasjon
 
 import io.ktor.application.*
 import io.ktor.http.*
@@ -10,6 +10,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlient
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientImpl
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientLogging
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientMedFilter
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingRepository
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingService
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.LokalOsloTidImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health

@@ -8,7 +8,7 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 

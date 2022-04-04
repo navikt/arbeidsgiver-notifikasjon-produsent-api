@@ -39,23 +39,15 @@ fun Spec.ktorBrukerTestServer(
     altinnRolleService: AltinnRolleService = AltinnRolleServiceStub(),
     tilgangerService: TilgangerService = TilgangerServiceImpl(altinn, altinnRolleService),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {},
-) =
-    ktorBrukerTestServer(
-        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            virksomhetsinfoService = virksomhetsinfoService,
-            brukerRepository= brukerRepository,
-            kafkaProducer = kafkaProducer,
-            tilgangerService = tilgangerService,
-        ),
-        environment = environment
-    )
-
-fun Spec.ktorBrukerTestServer(
-    brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
-    environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
     val engine = TestApplicationEngine(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
+    )
+    val brukerGraphQL = BrukerAPI.createBrukerGraphQL(
+        virksomhetsinfoService = virksomhetsinfoService,
+        brukerRepository= brukerRepository,
+        kafkaProducer = kafkaProducer,
+        tilgangerService = tilgangerService,
     )
     listener(KtorTestListener(engine) {
         graphqlSetup(

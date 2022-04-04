@@ -9,12 +9,10 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.QueryMineNotifikasjoner
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyBeskjed
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyOppgave
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
