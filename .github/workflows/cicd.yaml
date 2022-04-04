@@ -1,9 +1,9 @@
 name: ci/cd
 on:
   push:
-    paths-ignore:
-      - 'docs/**'
-      - 'http/**'
+    paths:
+      - 'app/**'
+      - 'config/**'
   pull_request:
   workflow_dispatch:
 

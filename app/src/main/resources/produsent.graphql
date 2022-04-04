@@ -435,7 +435,7 @@ type Mutation {
         eksternId: ID!
     ): SoftDeleteNotifikasjonResultat!
     @deprecated(reason:
-    "Using the type ID for `eksternId` can lead to unexpected behaviour. Use softDeleteNotifikasjonByEksternId instead."
+    "Using the type ID for `eksternId` can lead to unexpected behaviour. Use softDeleteNotifikasjonByEksternId_V2 instead."
     )
 
     """
