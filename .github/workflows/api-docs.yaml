@@ -41,7 +41,7 @@ jobs:
               title: '[bot] update api documentation for github pages',
               owner,
               repo,
-              head: 'refs/head/docs/${{github.sha}}',
+              head: 'docs/${{github.sha}}',
               base: 'main',
               body: [
                 'Change in produsent-api graphql schema detected.',
