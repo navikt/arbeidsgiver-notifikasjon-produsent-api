@@ -372,10 +372,6 @@ class BrukerRepositoryImpl(
             executeUpdate(""" DELETE FROM sak WHERE id = ?;""") {
                 uuid(aggregateId)
             }
-
-            executeUpdate(""" DELETE FROM sak_status WHERE sak_id = ?;""") {
-                uuid(aggregateId)
-            }
         }
     }
 
