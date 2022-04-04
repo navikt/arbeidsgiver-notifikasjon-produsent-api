@@ -1,0 +1,29 @@
+name: Automatic api documentation update
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - app/src/main/resources/produsent.graphql
+  workflow_dispatch:
+
+jobs:
+  foo:
+    runs-on: 'ubuntu-latest'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - run: >
+          npx graphql-markdown 
+            --heading-level=2 
+            --no-title 
+            --update-file docs/api.md 
+            app/src/main/resources/produsent.graphql
+      - run: |
+          git config --global user.name 'github-action-api-docs'
+          git config --global user.email 'github-actions-api-docs[bot]@users.noreply.github.com'
+          git add docs/api.md
+          git commit -m "Graphql changed. Update api documentation."
+          git push
