@@ -13,7 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-class MutationSoftDeleteNotifikasjon(
+internal class MutationSoftDeleteNotifikasjon(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
