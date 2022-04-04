@@ -41,11 +41,13 @@ object ProdusentAPI {
                 }
 
                 QueryMineNotifikasjoner(produsentRepository).wire(this)
-                MutationHardDelete(kafkaProducer, produsentRepository).wire(this)
+                MutationHardDeleteSak(kafkaProducer, produsentRepository).wire(this)
+                MutationHardDeleteNotifikasjon(kafkaProducer, produsentRepository).wire(this)
                 MutationNyBeskjed(kafkaProducer, produsentRepository).wire(this)
                 MutationNyOppgave(kafkaProducer, produsentRepository).wire(this)
                 MutationOppgaveUtfoert(kafkaProducer, produsentRepository).wire(this)
-                MutationSoftDelete(kafkaProducer, produsentRepository).wire(this)
+                MutationSoftDeleteSak(kafkaProducer, produsentRepository).wire(this)
+                MutationSoftDeleteNotifikasjon(kafkaProducer, produsentRepository).wire(this)
                 MutationNySak(kafkaProducer, produsentRepository).wire(this)
                 MutationNyStatusSak(kafkaProducer, produsentRepository).wire(this)
             }

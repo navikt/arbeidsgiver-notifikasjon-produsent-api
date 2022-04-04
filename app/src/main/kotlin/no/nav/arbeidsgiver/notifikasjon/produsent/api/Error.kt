@@ -20,8 +20,10 @@ sealed class Error {
         TilgangsstyringError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
-        MutationSoftDelete.SoftDeleteNotifikasjonResultat,
-        MutationHardDelete.HardDeleteNotifikasjonResultat,
+        MutationSoftDeleteSak.SoftDeleteSakResultat,
+        MutationHardDeleteSak.HardDeleteSakResultat,
+        MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
+        MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationNyStatusSak.NyStatusSakResultat
 
     @JsonTypeName("UkjentProdusent")
@@ -31,8 +33,10 @@ sealed class Error {
         TilgangsstyringError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
-        MutationSoftDelete.SoftDeleteNotifikasjonResultat,
-        MutationHardDelete.HardDeleteNotifikasjonResultat,
+        MutationSoftDeleteSak.SoftDeleteSakResultat,
+        MutationHardDeleteSak.HardDeleteSakResultat,
+        MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
+        MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationNySak.NySakResultat,
         MutationNyStatusSak.NyStatusSakResultat
 
@@ -69,8 +73,8 @@ sealed class Error {
     ) :
         Error(),
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
-        MutationSoftDelete.SoftDeleteNotifikasjonResultat,
-        MutationHardDelete.HardDeleteNotifikasjonResultat
+        MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
+        MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat
 
     @JsonTypeName("UkjentRolle")
     data class UkjentRolle(
@@ -84,6 +88,8 @@ sealed class Error {
     data class SakFinnesIkke(
         override val feilmelding: String,
     ):  Error(),
-        MutationNyStatusSak.NyStatusSakResultat
+        MutationNyStatusSak.NyStatusSakResultat,
+        MutationSoftDeleteSak.SoftDeleteSakResultat,
+        MutationHardDeleteSak.HardDeleteSakResultat
 }
 
