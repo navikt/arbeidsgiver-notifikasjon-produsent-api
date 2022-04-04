@@ -6,7 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 
-class HendelseDispatcher(
+internal class HendelseDispatcher(
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse>,
     private val produsentRepository: ProdusentRepository,
 ) {

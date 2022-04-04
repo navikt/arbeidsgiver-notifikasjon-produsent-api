@@ -15,7 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-class MutationNyStatusSak(
+internal class MutationNyStatusSak(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {

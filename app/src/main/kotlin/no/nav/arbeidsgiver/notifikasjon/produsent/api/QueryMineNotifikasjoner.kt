@@ -11,8 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-
-class QueryMineNotifikasjoner(
+internal class QueryMineNotifikasjoner(
     private val produsentRepository: ProdusentRepository,
 ) {
     fun wire(runtime: RuntimeWiring.Builder) {
@@ -311,12 +310,12 @@ class QueryMineNotifikasjoner(
     }
 }
 
-val QueryMineNotifikasjoner.Notifikasjon.metadata: QueryMineNotifikasjoner.Metadata
+internal val QueryMineNotifikasjoner.Notifikasjon.metadata: QueryMineNotifikasjoner.Metadata
     get() = when (this) {
         is QueryMineNotifikasjoner.Notifikasjon.Beskjed -> this.metadata
         is QueryMineNotifikasjoner.Notifikasjon.Oppgave -> this.metadata
     }
 
-val QueryMineNotifikasjoner.Notifikasjon.id: UUID
+internal val QueryMineNotifikasjoner.Notifikasjon.id: UUID
     get() = this.metadata.id
 
