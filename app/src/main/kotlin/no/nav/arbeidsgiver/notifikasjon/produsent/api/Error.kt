@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
-sealed class Error {
+internal sealed class Error {
     abstract val feilmelding: String
 
     sealed interface TilgangsstyringError :

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.produsent_api
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.core.spec.style.DescribeSpec
@@ -15,8 +15,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.QueryMineNotifikasjoner
-import no.nav.arbeidsgiver.notifikasjon.produsent_api.NyNotifikasjonInputType.nyBeskjed
-import no.nav.arbeidsgiver.notifikasjon.produsent_api.NyNotifikasjonInputType.nyOppgave
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyBeskjed
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyOppgave
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase

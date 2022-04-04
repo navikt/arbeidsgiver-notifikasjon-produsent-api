@@ -22,7 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-class MutationNySak(
+internal class MutationNySak(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
@@ -179,7 +179,7 @@ class MutationNySak(
     ) : NySakResultat
 }
 
-fun MutationNySak.NySakInput.erDuplikatAv(eksisterende: ProdusentModel.Sak): Boolean {
+internal fun MutationNySak.NySakInput.erDuplikatAv(eksisterende: ProdusentModel.Sak): Boolean {
     val initialOppdatering = eksisterende.statusoppdateringer.find {
         it.idempotencyKey == IdempotenceKey.initial()
     }

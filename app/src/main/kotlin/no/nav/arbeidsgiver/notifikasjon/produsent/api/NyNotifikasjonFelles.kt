@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
-data class EksterntVarselInput(
+internal data class EksterntVarselInput(
     val sms: Sms?,
     val epost: Epost?,
 ) {
@@ -107,7 +107,7 @@ data class EksterntVarselInput(
     }
 }
 
-data class NaermesteLederMottakerInput(
+internal data class NaermesteLederMottakerInput(
     val naermesteLederFnr: String,
     val ansattFnr: String,
 ) {
@@ -119,7 +119,7 @@ data class NaermesteLederMottakerInput(
         )
 }
 
-data class AltinnRolleMottakerInput(
+internal data class AltinnRolleMottakerInput(
     val roleDefinitionCode: String,
 ) {
     suspend fun tilDomene(
@@ -134,7 +134,7 @@ data class AltinnRolleMottakerInput(
         )
 }
 
-data class AltinnMottakerInput(
+internal data class AltinnMottakerInput(
     val serviceCode: String,
     val serviceEdition: String,
 ) {
@@ -146,7 +146,7 @@ data class AltinnMottakerInput(
         )
 }
 
-data class AltinnReporteeMottakerInput(
+internal data class AltinnReporteeMottakerInput(
     val fnr: String,
 ) {
     fun tilDomene(virksomhetsnummer: String): Mottaker =
@@ -156,10 +156,10 @@ data class AltinnReporteeMottakerInput(
         )
 }
 
-class UkjentRolleException(message: String) : RuntimeException(message)
+internal class UkjentRolleException(message: String) : RuntimeException(message)
 
 
-data class MottakerInput(
+internal data class MottakerInput(
     val altinn: AltinnMottakerInput?,
     val altinnReportee: AltinnReporteeMottakerInput?,
     val naermesteLeder: NaermesteLederMottakerInput?,
@@ -181,18 +181,18 @@ data class MottakerInput(
     }
 }
 
-data class MetadataInput(
+internal data class MetadataInput(
     val grupperingsid: String?,
     val eksternId: String,
     val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
     val virksomhetsnummer: String,
 )
 
-data class NyEksternVarselResultat(
+internal data class NyEksternVarselResultat(
     val id: UUID,
 )
 
-fun EksterntVarselInput.SendetidspunktInput.somSakOpprettetHendelse(): Pair<EksterntVarselSendingsvindu, LocalDateTime?> {
+internal fun EksterntVarselInput.SendetidspunktInput.somSakOpprettetHendelse(): Pair<EksterntVarselSendingsvindu, LocalDateTime?> {
     val sendevindu = this.sendevindu?.somDomene ?: EksterntVarselSendingsvindu.SPESIFISERT
 
     if (sendevindu == EksterntVarselSendingsvindu.SPESIFISERT) {

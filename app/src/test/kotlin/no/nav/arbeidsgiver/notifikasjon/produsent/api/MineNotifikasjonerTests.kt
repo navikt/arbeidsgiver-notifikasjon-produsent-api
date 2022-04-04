@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.produsent_api
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.DescribeSpec

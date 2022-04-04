@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.produsent_api
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
@@ -8,11 +8,11 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyBeskjed
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyOppgave
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
@@ -23,7 +23,7 @@ import kotlin.time.toJavaDuration
 
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
-class NyBeskjedTests : DescribeSpec({
+class NyOppgaveTests : DescribeSpec({
     val embeddedKafka = embeddedKafka()
 
     val database = testDatabase(Produsent.databaseConfig)
@@ -40,7 +40,7 @@ class NyBeskjedTests : DescribeSpec({
         val response = engine.produsentApi(
             """
                     mutation {
-                        nyBeskjed(nyBeskjed: {
+                        nyOppgave(nyOppgave: {
                             mottaker: {
                                 naermesteLeder: {
                                     naermesteLederFnr: "12345678910",
@@ -56,10 +56,11 @@ class NyBeskjedTests : DescribeSpec({
                                 eksternId: "heu",
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                                 virksomhetsnummer: "42"
+
                             }
                         }) {
                             __typename
-                            ... on NyBeskjedVellykket {
+                            ... on NyOppgaveVellykket {
                                 id
                                 eksterneVarsler {
                                     id
@@ -79,18 +80,18 @@ class NyBeskjedTests : DescribeSpec({
         }
 
         it("respons inneholder forventet data") {
-            val nyBeskjed = response.getTypedContent<MutationNyBeskjed.NyBeskjedResultat>("nyBeskjed")
-            nyBeskjed should beOfType<MutationNyBeskjed.NyBeskjedVellykket>()
+            val nyOppgave = response.getTypedContent<MutationNyOppgave.NyOppgaveResultat>("nyOppgave")
+            nyOppgave should beOfType<MutationNyOppgave.NyOppgaveVellykket>()
         }
 
         it("sends message to kafka") {
             val consumer = embeddedKafka.newConsumer()
             val poll = consumer.poll(seconds(5).toJavaDuration())
             val value = poll.last().value()
-            value should beOfType<BeskjedOpprettet>()
-            val event = value as BeskjedOpprettet
-            val nyBeskjed = response.getTypedContent<MutationNyBeskjed.NyBeskjedVellykket>("nyBeskjed")
-            event.notifikasjonId shouldBe nyBeskjed.id
+            value should beOfType<OppgaveOpprettet>()
+            val event = value as OppgaveOpprettet
+            val nyOppgave = response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            event.notifikasjonId shouldBe nyOppgave.id
             event.lenke shouldBe "https://foo.bar"
             event.tekst shouldBe "hello world"
             event.merkelapp shouldBe "tag"
@@ -103,8 +104,10 @@ class NyBeskjedTests : DescribeSpec({
         }
 
         it("updates produsent modell") {
-            val id = response.getTypedContent<UUID>("nyBeskjed/id")
-            produsentRepository.hentNotifikasjon(id) shouldNot beNull()
+            it("updates produsent modell") {
+                val id = response.getTypedContent<UUID>("nyOppgave/id")
+                produsentRepository.hentNotifikasjon(id) shouldNot beNull()
+            }
         }
     }
 })

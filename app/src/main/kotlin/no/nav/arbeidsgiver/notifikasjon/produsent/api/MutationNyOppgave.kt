@@ -14,7 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.util.*
 
-class MutationNyOppgave(
+internal class MutationNyOppgave(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {

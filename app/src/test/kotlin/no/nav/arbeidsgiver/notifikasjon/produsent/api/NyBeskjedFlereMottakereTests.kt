@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.produsent_api
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.convertValue
@@ -32,8 +32,10 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
     )
 
     describe("sender ingen mottakere") {
-        val response = engine.produsentApi(nyBeskjed("""
-        """))
+        val response = engine.produsentApi(
+            nyBeskjed("""
+        """)
+        )
         it("response should have error") {
             val errors = response.getGraphqlErrors()
             errors shouldNot beEmpty()
@@ -41,14 +43,16 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
     }
 
     describe("sender 1 mottaker i 'mottaker'") {
-        val response = engine.produsentApi(nyBeskjed("""
+        val response = engine.produsentApi(
+            nyBeskjed("""
             mottaker: {
                 altinn: {
                     serviceCode: "5441"
                     serviceEdition: "1"
                 }
             }
-        """))
+        """)
+        )
         it("no error in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
@@ -71,7 +75,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
     }
 
     describe("sender 1 mottaker i 'mottakere'") {
-        val response = engine.produsentApi(nyBeskjed("""
+        val response = engine.produsentApi(
+            nyBeskjed("""
             mottakere: [
                 {
                     altinn: {
@@ -80,7 +85,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """))
+        """)
+        )
         it("no error in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
@@ -101,7 +107,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
         }
     }
     describe("sender 2 mottakere i 'mottakere'") {
-        val response = engine.produsentApi(nyBeskjed("""
+        val response = engine.produsentApi(
+            nyBeskjed("""
             mottakere: [
                 {
                     altinn: {
@@ -116,7 +123,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """))
+        """)
+        )
         it("no errors in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
@@ -143,7 +151,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
     }
 
     describe("sender 2 mottaker, en i 'mottaker' og en i 'mottakere'") {
-        val response = engine.produsentApi(nyBeskjed("""
+        val response = engine.produsentApi(
+            nyBeskjed("""
             mottaker: {
                 altinn: {
                     serviceCode: "5441"
@@ -158,7 +167,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """))
+        """)
+        )
         it("no errors in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
@@ -185,7 +195,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
     }
 
     describe("sender 3 mottakere i 'mottakere'") {
-        val response = engine.produsentApi(nyBeskjed("""
+        val response = engine.produsentApi(
+            nyBeskjed("""
             mottakere: [
                 {
                     altinn: {
@@ -205,7 +216,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """))
+        """)
+        )
         it("no errors in response") {
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
@@ -262,7 +274,7 @@ fun nyBeskjed(fragment: String) = """
             }
         """
 
-fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifikasjoner.Mottaker> {
+internal fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifikasjoner.Mottaker> {
     return this.produsentApi("""
         query {
             mineNotifikasjoner(merkelapp: "tag") {

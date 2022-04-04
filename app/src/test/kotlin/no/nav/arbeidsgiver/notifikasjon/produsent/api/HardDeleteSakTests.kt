@@ -1,15 +1,15 @@
 @file:Suppress("NAME_SHADOWING")
 
-package no.nav.arbeidsgiver.notifikasjon.produsent_api
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -23,15 +23,15 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
+// Legg til en test for sletting av én av flere rader i database
 
-class SoftDeleteSakTests : DescribeSpec({
-
+class HardDeleteSakTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
-    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>()) } returns Unit
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -77,17 +77,18 @@ class SoftDeleteSakTests : DescribeSpec({
         sakId = uuid2,
     )
 
-    describe("Sak SoftDelete-oppførsel") {
-        context("Eksisterende sak blir markert som slettet") {
+    describe("HardDelete-oppførsel Sak") {
+        context("Eksisterende sak blir slettet") {
+
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet)
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet2)
 
             val response = engine.produsentApi(
                 """
                 mutation {
-                    softDeleteSak(id: "$uuid") {
+                    hardDeleteSak(id: "$uuid") {
                         __typename
-                        ... on SoftDeleteSakVellykket {
+                        ... on HardDeleteSakVellykket {
                             id
                         }
                         ... on Error {
@@ -100,31 +101,31 @@ class SoftDeleteSakTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationSoftDeleteSak.SoftDeleteSakVellykket>("softDeleteSak")
+                    response.getTypedContent<MutationHardDeleteSak.HardDeleteSakVellykket>("hardDeleteSak")
                 vellykket.id shouldBe uuid
             }
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>())
                 }
             }
 
-            it("har slettet-status i modellen") {
-                val notifikasjon = produsentModel.hentSak(uuid)!!
-                notifikasjon.deletedAt shouldNotBe null
+            it("har blitt fjernet fra modellen") {
+                val sak = produsentModel.hentSak(uuid)
+                sak shouldBe null
             }
-            it("notifikasjon2 har ikke slettet-status i modellen") {
-                val notifikasjon = produsentModel.hentSak(uuid2)!!
-                notifikasjon.deletedAt shouldBe null
+            it("sak2 har ikke blitt fjernet fra modellen") {
+                val sak = produsentModel.hentSak(uuid2)
+                sak shouldNotBe null
             }
         }
 
-        context("Oppgave mangler") {
+        context("Sak mangler") {
             val response = engine.produsentApi(
                 """
                 mutation {
-                    softDeleteSak(id: "$uuid") {
+                    hardDeleteSak(id: "$uuid") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -135,17 +136,17 @@ class SoftDeleteSakTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.SakFinnesIkke>("softDeleteSak")
+                response.getTypedContent<Error.SakFinnesIkke>("hardDeleteSak")
             }
         }
 
-        context("Oppgave med feil merkelapp") {
+        context("Sak med feil merkelapp") {
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet.copy(merkelapp = "feil merkelapp"))
 
             val response = engine.produsentApi(
                 """
                 mutation {
-                    softDeleteSak(id: "$uuid") {
+                    hardDeleteSak(id: "$uuid") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -156,14 +157,13 @@ class SoftDeleteSakTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.UgyldigMerkelapp>("softDeleteSak")
+                response.getTypedContent<Error.UgyldigMerkelapp>("hardDeleteSak")
             }
         }
     }
 
-    describe("softDeleteSakByGrupperingsid-oppførsel") {
-
-        context("Eksisterende oppgave blir markert som slettet") {
+    describe("hardDeleteSakByEksternId-oppførsel") {
+        context("Eksisterende sak blir slettet") {
 
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet)
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet2)
@@ -171,9 +171,9 @@ class SoftDeleteSakTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    softDeleteSakByGrupperingsid(grupperingsid: "$grupperingsid", merkelapp: "$merkelapp") {
+                    hardDeleteSakByGrupperingsid(grupperingsid: "$grupperingsid", merkelapp: "$merkelapp") {
                         __typename
-                        ... on SoftDeleteSakVellykket {
+                        ... on HardDeleteSakVellykket {
                             id
                         }
                         ... on Error {
@@ -185,32 +185,32 @@ class SoftDeleteSakTests : DescribeSpec({
             )
 
             it("returnerer tilbake id-en") {
-                val vellykket =
-                    response.getTypedContent<MutationSoftDeleteSak.SoftDeleteSakVellykket>("softDeleteSakByGrupperingsid")
+                val vellykket = response.getTypedContent<MutationHardDeleteSak.HardDeleteSakVellykket>("hardDeleteSakByGrupperingsid")
                 vellykket.id shouldBe uuid
             }
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>())
                 }
             }
 
-            it("har fått slettet tidspunkt") {
-                val notifikasjon = produsentModel.hentSak(uuid)!!
-                notifikasjon.deletedAt shouldNotBe null
+            it("finnes ikke i modellen") {
+                val sak = produsentModel.hentSak(uuid)
+                sak shouldBe null
             }
-            it("oppgave 2 har ikke fått slettet tidspunkt") {
-                val notifikasjon = produsentModel.hentSak(uuid2)!!
-                notifikasjon.deletedAt shouldBe null
+
+            it("sak2 finnes fortsatt i modellen") {
+                val sak = produsentModel.hentSak(uuid2)
+                sak shouldNotBe null
             }
         }
 
-        context("Oppgave mangler") {
+        context("Sak mangler") {
             val response = engine.produsentApi(
                 """
                 mutation {
-                    softDeleteSakByGrupperingsid(grupperingsid: "$grupperingsid", merkelapp: "$merkelapp") {
+                    hardDeleteSakByGrupperingsid(grupperingsid: "$grupperingsid", merkelapp: "$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -221,18 +221,17 @@ class SoftDeleteSakTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.SakFinnesIkke>("softDeleteSakByGrupperingsid")
+                response.getTypedContent<Error.SakFinnesIkke>("hardDeleteSakByGrupperingsid")
             }
         }
 
-        context("Oppgave med feil merkelapp men riktig grupperingsid") {
-
+        context("Sak med feil merkelapp men riktig eksternId") {
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet)
 
             val response = engine.produsentApi(
                 """
                 mutation {
-                    softDeleteSakByGrupperingsid(grupperingsid: "$grupperingsid", merkelapp: "nope$merkelapp") {
+                    hardDeleteSakByGrupperingsid(grupperingsid: "$grupperingsid", merkelapp: "nope$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -243,17 +242,17 @@ class SoftDeleteSakTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.SakFinnesIkke>("softDeleteSakByGrupperingsid")
+                response.getTypedContent<Error.SakFinnesIkke>("hardDeleteSakByGrupperingsid")
             }
         }
 
-        context("Oppgave med feil grupperingsid men riktig merkelapp") {
+        context("Sak med feil grupperingsid men riktig merkelapp") {
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet)
 
             val response = engine.produsentApi(
                 """
                 mutation {
-                    softDeleteSakByGrupperingsid(grupperingsid: "nope$grupperingsid", merkelapp: "$merkelapp") {
+                    hardDeleteSakByGrupperingsid(grupperingsid: "nope$grupperingsid", merkelapp: "$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -264,7 +263,7 @@ class SoftDeleteSakTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.SakFinnesIkke>("softDeleteSakByGrupperingsid")
+                response.getTypedContent<Error.SakFinnesIkke>("hardDeleteSakByGrupperingsid")
             }
         }
     }
