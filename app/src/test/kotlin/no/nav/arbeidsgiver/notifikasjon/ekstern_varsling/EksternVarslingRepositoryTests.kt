@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.node.NullNode
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldHaveSize
@@ -12,6 +13,7 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
 import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
@@ -21,6 +23,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
 import java.time.OffsetDateTime
+import java.util.*
 
 class EksternVarslingRepositoryTests: DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
@@ -277,6 +280,24 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             response as AltinnVarselKlient.AltinnResponse.Feil
             response.feilkode shouldBe "1"
             response.feilmelding shouldBe "hallo"
+        }
+    }
+
+    describe("Hard delete event for sak") {
+        val hardDelete =
+            HendelseModel.HardDelete(
+                virksomhetsnummer = "42",
+                aggregateId = UUID.randomUUID(),
+                hendelseId = UUID.randomUUID(),
+                produsentId = "42",
+                kildeAppNavn = "test:app",
+                deletedAt = OffsetDateTime.now()
+            )
+
+        it("oppdater modell etter hendelse feiler ikke") {
+            shouldNotThrowAny {
+                repository.oppdaterModellEtterHendelse(hardDelete)
+            }
         }
     }
 })
