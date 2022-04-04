@@ -31,10 +31,10 @@ class MutationHardDeleteSak(
                     id = env.getTypedArgument("id")
                 )
             }
-            coDataFetcher("hardDeleteSakByEksternId") { env ->
+            coDataFetcher("hardDeleteSakByGrupperingsid") { env ->
                 hardDelete(
                     context = env.getContext(),
-                    eksternId = env.getTypedArgument("eksternId"),
+                    grupperingsid = env.getTypedArgument("grupperingsid"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )
             }
@@ -59,10 +59,10 @@ class MutationHardDeleteSak(
 
     private suspend fun hardDelete(
         context: ProdusentAPI.Context,
-        eksternId: String,
+        grupperingsid: String,
         merkelapp: String,
     ): HardDeleteSakResultat {
-        val sak = hentSak(produsentRepository, eksternId, merkelapp) { error -> return error }
+        val sak = hentSak(produsentRepository, grupperingsid, merkelapp) { error -> return error }
         return hardDelete(context, sak)
     }
 

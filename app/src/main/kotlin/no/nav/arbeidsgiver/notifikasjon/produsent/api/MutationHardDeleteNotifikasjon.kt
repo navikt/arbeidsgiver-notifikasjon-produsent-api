@@ -38,6 +38,14 @@ class MutationHardDeleteNotifikasjon(
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )
             }
+
+            coDataFetcher("hardDeleteNotifikasjonByEksternId_V2") { env ->
+                hardDelete(
+                    context = env.getContext(),
+                    eksternId = env.getTypedArgument("eksternId"),
+                    merkelapp = env.getTypedArgument("merkelapp"),
+                )
+            }
         }
     }
 

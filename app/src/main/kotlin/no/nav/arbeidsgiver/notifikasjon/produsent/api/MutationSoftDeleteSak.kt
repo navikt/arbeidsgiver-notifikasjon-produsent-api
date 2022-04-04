@@ -31,10 +31,10 @@ class MutationSoftDeleteSak(
                     id = env.getTypedArgument("id")
                 )
             }
-            coDataFetcher("softDeleteSakByEksternId") { env ->
+            coDataFetcher("softDeleteSakByGrupperingsid") { env ->
                 softDelete(
                     context = env.getContext(),
-                    eksternId = env.getTypedArgument("eksternId"),
+                    grupperingsid = env.getTypedArgument("grupperingsid"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )
             }
@@ -59,10 +59,10 @@ class MutationSoftDeleteSak(
 
     private suspend fun softDelete(
         context: ProdusentAPI.Context,
-        eksternId: String,
+        grupperingsid: String,
         merkelapp: String,
     ): SoftDeleteSakResultat {
-        val sak = hentSak(produsentRepository, eksternId, merkelapp) { error -> return error }
+        val sak = hentSak(produsentRepository, grupperingsid, merkelapp) { error -> return error }
         return softDelete(context, sak)
     }
 

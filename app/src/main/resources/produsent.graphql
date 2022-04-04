@@ -21,8 +21,6 @@ Vi tolker tidspunktet som Oslo-tid ('Europe/Oslo').
 """
 scalar ISO8601LocalDateTime
 
-# scalar NotifikasjonCursor
-
 """
 Tilstanden til en oppgave.
 """
@@ -436,6 +434,24 @@ type Mutation {
         """
         eksternId: ID!
     ): SoftDeleteNotifikasjonResultat!
+    @deprecated(reason:
+    "Using the type ID for `eksternId` can lead to unexpected behaviour. Use softDeleteNotifikasjonByEksternId instead."
+    )
+
+    """
+    Se dokumentasjon for `softDeleteNotifikasjon(id)`.
+    """
+    softDeleteNotifikasjonByEksternId_V2(
+        """
+        Merkelappen som dere ga oss da dere opprettet notifikasjonen.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som dere ga oss da dere opprettet notifikasjonen.
+        """
+        eksternId: String!
+    ): SoftDeleteNotifikasjonResultat!
 
     """
     Sletter en notifikasjon og tilhørende data helt fra databasen og kafka.
@@ -461,6 +477,24 @@ type Mutation {
         """
         eksternId: ID!
     ): HardDeleteNotifikasjonResultat!
+    @deprecated(reason:
+    "Using the type ID for `eksternId` can lead to unexpected behaviour. Use hardDeleteNotifikasjonByEksternId_V2 instead."
+    )
+
+    """
+    Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
+    """
+    hardDeleteNotifikasjonByEksternId_V2(
+        """
+        Merkelappen som dere ga oss da dere opprettet notifikasjonen.
+        """
+        merkelapp: String!
+
+        """
+        ID-en som dere ga oss da dere opprettet notifikasjonen.
+        """
+        eksternId: String!
+    ): HardDeleteNotifikasjonResultat!
 
     """
     Markerer en sak som slettet (soft delete).
@@ -476,7 +510,7 @@ type Mutation {
     """
     Se dokumentasjon for `softDeleteSak(id)`.
     """
-    softDeleteSakByEksternId(
+    softDeleteSakByGrupperingsid(
         """
         Merkelappen som dere ga oss da dere opprettet saken.
         """
@@ -500,7 +534,7 @@ type Mutation {
     """
     Se dokumentasjon for `hardDeleteSak(id)`.
     """
-    hardDeleteSakByEksternId(
+    hardDeleteSakByGrupperingsid(
         """
         Merkelappen som dere ga oss da dere opprettet saken.
         """
