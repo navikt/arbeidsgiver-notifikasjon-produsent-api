@@ -368,6 +368,10 @@ class BrukerRepositoryImpl(
             executeUpdate("""DELETE FROM brukerklikk WHERE notifikasjonsid = ?;""") {
                 uuid(aggregateId)
             }
+
+            executeUpdate(""" DELETE FROM sak WHERE id = ?;""") {
+                uuid(aggregateId)
+            }
         }
     }
 
