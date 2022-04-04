@@ -10,7 +10,11 @@ sealed class Error {
     sealed interface TilgangsstyringError :
         MutationNyBeskjed.NyBeskjedResultat,
         MutationNyOppgave.NyOppgaveResultat,
-        MutationNySak.NySakResultat
+        MutationNySak.NySakResultat,
+        MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
+        MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
+        MutationHardDeleteSak.HardDeleteSakResultat,
+        MutationSoftDeleteSak.SoftDeleteSakResultat
 
     @JsonTypeName("UgyldigMerkelapp")
     data class UgyldigMerkelapp(

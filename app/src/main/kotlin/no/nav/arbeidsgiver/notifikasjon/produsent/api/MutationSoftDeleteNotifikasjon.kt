@@ -3,22 +3,18 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
 class MutationSoftDeleteNotifikasjon(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
     fun wire(runtime: RuntimeWiring.Builder) {
@@ -77,8 +73,7 @@ class MutationSoftDeleteNotifikasjon(
         context: ProdusentAPI.Context,
         notifikasjon: ProdusentModel.Notifikasjon,
     ): SoftDeleteNotifikasjonResultat {
-        val produsent = hentProdusent(context) { error -> return error }
-        tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+        val produsent = tilgangsstyrProdusent(context, notifikasjon.merkelapp) { error -> return error }
 
         val softDelete = SoftDelete(
             hendelseId = UUID.randomUUID(),
@@ -89,8 +84,7 @@ class MutationSoftDeleteNotifikasjon(
             kildeAppNavn = context.appName
         )
 
-        kafkaProducer.sendHendelse(softDelete)
-        produsentRepository.oppdaterModellEtterHendelse(softDelete)
+        hendelseDispatcher.send(softDelete)
         return SoftDeleteNotifikasjonVellykket(notifikasjon.id)
     }
 }

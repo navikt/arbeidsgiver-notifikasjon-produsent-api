@@ -116,4 +116,12 @@ inline fun tilgangsstyrMerkelapp(
     }
 }
 
-
+inline fun tilgangsstyrProdusent(
+    context: ProdusentAPI.Context,
+    merkelapp: String,
+    onError: (error: Error.TilgangsstyringError) -> Nothing
+): Produsent  {
+    val produsent = hentProdusent(context) { error -> onError(error) }
+    tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
+    return produsent
+}

@@ -5,22 +5,18 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import io.micrometer.core.instrument.Counter
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
 
 class MutationOppgaveUtfoert(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
     private val oppgaveUtfoertByEksternIdCalls = Counter.builder("graphql.mutation")
@@ -100,8 +96,7 @@ class MutationOppgaveUtfoert(
             kildeAppNavn = context.appName
         )
 
-        kafkaProducer.sendHendelse(utførtHendelse)
-        produsentRepository.oppdaterModellEtterHendelse(utførtHendelse)
+        hendelseDispatcher.send(utførtHendelse)
         return OppgaveUtfoertVellykket(notifikasjon.id)
     }
 }

@@ -4,21 +4,17 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
 class MutationHardDeleteNotifikasjon(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
     fun wire(runtime: RuntimeWiring.Builder) {
@@ -78,8 +74,7 @@ class MutationHardDeleteNotifikasjon(
         context: ProdusentAPI.Context,
         notifikasjon: ProdusentModel.Notifikasjon,
     ): HardDeleteNotifikasjonResultat {
-        val produsent = hentProdusent(context) { error -> return error }
-        tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+        val produsent = tilgangsstyrProdusent(context, notifikasjon.merkelapp) { error -> return error }
 
         val hardDelete = HardDelete(
             hendelseId = UUID.randomUUID(),
@@ -89,9 +84,7 @@ class MutationHardDeleteNotifikasjon(
             produsentId = produsent.id,
             kildeAppNavn = context.appName
         )
-
-        kafkaProducer.sendHendelse(hardDelete)
-        produsentRepository.oppdaterModellEtterHendelse(hardDelete)
+        hendelseDispatcher.send(hardDelete)
         return HardDeleteNotifikasjonVellykket(notifikasjon.id)
     }
 }

@@ -6,7 +6,6 @@ import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
@@ -17,9 +16,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -27,7 +23,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class MutationNySak(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
     private val log = logger()
@@ -99,10 +95,7 @@ class MutationNySak(
         return when {
             eksisterende == null -> {
                 log.info("oppretter ny sak med id $sakId")
-                kafkaProducer.sendHendelse(sakOpprettetHendelse)
-                kafkaProducer.sendHendelse(statusoppdateringHendelse)
-                produsentRepository.oppdaterModellEtterHendelse(sakOpprettetHendelse)
-                produsentRepository.oppdaterModellEtterHendelse(statusoppdateringHendelse)
+                hendelseDispatcher.send(sakOpprettetHendelse, statusoppdateringHendelse)
                 NySakVellykket(
                     id = sakId,
                 )
@@ -110,8 +103,7 @@ class MutationNySak(
             nySak.erDuplikatAv(eksisterende) -> {
                 if (eksisterende.statusoppdateringIkkeRegistrert()) {
                     log.info("statusoppdatering ikke registrert for duplisert opprettelse av sak med id ${eksisterende.id}")
-                    kafkaProducer.sendHendelse(statusoppdateringHendelse)
-                    produsentRepository.oppdaterModellEtterHendelse(statusoppdateringHendelse)
+                    hendelseDispatcher.send(statusoppdateringHendelse)
                 } else {
                     log.info("duplisert opprettelse av sak med id ${eksisterende.id}")
                 }

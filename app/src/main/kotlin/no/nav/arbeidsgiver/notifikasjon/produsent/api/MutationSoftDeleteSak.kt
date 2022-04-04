@@ -3,22 +3,18 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
 class MutationSoftDeleteSak(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
     fun wire(runtime: RuntimeWiring.Builder) {
@@ -70,8 +66,7 @@ class MutationSoftDeleteSak(
         context: ProdusentAPI.Context,
         sak: ProdusentModel.Sak,
     ): SoftDeleteSakResultat {
-        val produsent = hentProdusent(context) { error -> return error }
-        tilgangsstyrMerkelapp(produsent, sak.merkelapp) { error -> return error }
+        val produsent = tilgangsstyrProdusent(context, sak.merkelapp) { error -> return error }
 
         val softDelete = SoftDelete(
             hendelseId = UUID.randomUUID(),
@@ -82,8 +77,7 @@ class MutationSoftDeleteSak(
             kildeAppNavn = context.appName
         )
 
-        kafkaProducer.sendHendelse(softDelete)
-        produsentRepository.oppdaterModellEtterHendelse(softDelete)
+        hendelseDispatcher.send(softDelete)
         return SoftDeleteSakVellykket(sak.id)
     }
 }

@@ -22,6 +22,8 @@ object ProdusentAPI {
         produsentRepository: ProdusentRepository,
     ): TypedGraphQL<Context> {
 
+        val hendelseDispatcher = HendelseDispatcher(kafkaProducer, produsentRepository)
+
         fun queryWhoami(env: DataFetchingEnvironment): String {
             // TODO: returner hele context objectet som struct
             return env.getContext<Context>().appName
@@ -41,15 +43,15 @@ object ProdusentAPI {
                 }
 
                 QueryMineNotifikasjoner(produsentRepository).wire(this)
-                MutationHardDeleteSak(kafkaProducer, produsentRepository).wire(this)
-                MutationHardDeleteNotifikasjon(kafkaProducer, produsentRepository).wire(this)
-                MutationNyBeskjed(kafkaProducer, produsentRepository).wire(this)
-                MutationNyOppgave(kafkaProducer, produsentRepository).wire(this)
-                MutationOppgaveUtfoert(kafkaProducer, produsentRepository).wire(this)
-                MutationSoftDeleteSak(kafkaProducer, produsentRepository).wire(this)
-                MutationSoftDeleteNotifikasjon(kafkaProducer, produsentRepository).wire(this)
-                MutationNySak(kafkaProducer, produsentRepository).wire(this)
-                MutationNyStatusSak(kafkaProducer, produsentRepository).wire(this)
+                MutationHardDeleteSak(hendelseDispatcher, produsentRepository).wire(this)
+                MutationHardDeleteNotifikasjon(hendelseDispatcher, produsentRepository).wire(this)
+                MutationNyBeskjed(hendelseDispatcher, produsentRepository).wire(this)
+                MutationNyOppgave(hendelseDispatcher, produsentRepository).wire(this)
+                MutationOppgaveUtfoert(hendelseDispatcher, produsentRepository).wire(this)
+                MutationSoftDeleteSak(hendelseDispatcher, produsentRepository).wire(this)
+                MutationSoftDeleteNotifikasjon(hendelseDispatcher, produsentRepository).wire(this)
+                MutationNySak(hendelseDispatcher, produsentRepository).wire(this)
+                MutationNyStatusSak(hendelseDispatcher, produsentRepository).wire(this)
             }
         )
     }
