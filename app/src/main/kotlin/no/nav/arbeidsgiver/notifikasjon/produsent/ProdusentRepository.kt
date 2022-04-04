@@ -294,26 +294,48 @@ class ProdusentRepositoryImpl(
 
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
-        database.nonTransactionalExecuteUpdate(
-            """
-            DELETE FROM notifikasjon 
-            WHERE id = ?
-            """
-        ) {
-            uuid(hardDelete.aggregateId)
+        database.transaction {
+            executeUpdate(
+                """
+                DELETE FROM notifikasjon
+                WHERE id = ?
+                """
+            ) {
+                uuid(hardDelete.aggregateId)
+            }
+            executeUpdate(
+                """
+                DELETE FROM sak
+                WHERE id = ?
+                """
+            ) {
+                uuid(hardDelete.aggregateId)
+            }
         }
     }
 
     private suspend fun oppdaterModellEtterSoftDelete(softDelete: SoftDelete) {
-        database.nonTransactionalExecuteUpdate(
-            """
-            UPDATE notifikasjon
-            SET deleted_at = ? 
-            WHERE id = ?
-            """
-        ) {
-            timestamptz(softDelete.deletedAt)
-            uuid(softDelete.aggregateId)
+        database.transaction {
+            executeUpdate(
+                """
+                UPDATE notifikasjon
+                SET deleted_at = ?
+                WHERE id = ?
+                """
+            ) {
+                timestamptz(softDelete.deletedAt)
+                uuid(softDelete.aggregateId)
+            }
+           executeUpdate(
+                """
+                UPDATE sak
+                SET deleted_at = ?
+                WHERE id = ?
+                """
+            ) {
+                timestamptz(softDelete.deletedAt)
+                uuid(softDelete.aggregateId)
+            }
         }
     }
 

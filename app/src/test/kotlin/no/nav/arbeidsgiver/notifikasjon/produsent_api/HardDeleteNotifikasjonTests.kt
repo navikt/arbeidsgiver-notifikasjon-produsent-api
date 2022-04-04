@@ -104,7 +104,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationHardDelete.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjon")
+                    response.getTypedContent<MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjon")
                 vellykket.id shouldBe uuid
             }
 
@@ -289,7 +289,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationHardDelete.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjonByEksternId")
+                    response.getTypedContent<MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjonByEksternId")
                 vellykket.id shouldBe uuid
             }
 

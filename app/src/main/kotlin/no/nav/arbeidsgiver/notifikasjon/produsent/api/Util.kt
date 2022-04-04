@@ -7,6 +7,30 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
 
+suspend inline fun hentSak(
+    produsentRepository: ProdusentRepository,
+    id: UUID,
+    onError: (Error.SakFinnesIkke) -> Nothing
+): ProdusentModel.Sak {
+    return produsentRepository.hentSak(id)
+        ?: onError(
+            Error.SakFinnesIkke("Sak med id $id finnes ikke")
+        )
+}
+
+
+suspend inline fun hentSak(
+    produsentRepository: ProdusentRepository,
+    eksternId: String,
+    merkelapp: String,
+    onError: (Error.SakFinnesIkke) -> Nothing
+): ProdusentModel.Sak {
+    return produsentRepository.hentSak(eksternId, merkelapp)
+        ?: onError(
+            Error.SakFinnesIkke("Sak med grupperingsid $eksternId og merkelapp $merkelapp finnes ikke")
+        )
+}
+
 suspend inline fun hentNotifikasjon(
     produsentRepository: ProdusentRepository,
     id: UUID,
@@ -92,4 +116,12 @@ inline fun tilgangsstyrMerkelapp(
     }
 }
 
-
+inline fun tilgangsstyrProdusent(
+    context: ProdusentAPI.Context,
+    merkelapp: String,
+    onError: (error: Error.TilgangsstyringError) -> Nothing
+): Produsent  {
+    val produsent = hentProdusent(context) { error -> onError(error) }
+    tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
+    return produsent
+}
