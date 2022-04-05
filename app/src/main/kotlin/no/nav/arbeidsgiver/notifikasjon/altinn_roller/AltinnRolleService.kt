@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.altinn_roller
 
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.AltinnRolleDefinisjon
 
@@ -10,7 +9,7 @@ interface AltinnRolleService {
 }
 
 class AltinnRolleServiceImpl(
-    val altinn: Altinn,
+    private val altinnRolleClient: AltinnRolleClient,
     private val altinnRolleRepository: AltinnRolleRepository,
 ) : AltinnRolleService {
 
@@ -18,7 +17,7 @@ class AltinnRolleServiceImpl(
     private var alleRollerByCode: Map<String, AltinnRolle>? = null
 
     override suspend fun lastRollerFraAltinn() {
-        val ferskeRollerFraAltinn = altinn.hentRoller()
+        val ferskeRollerFraAltinn = altinnRolleClient.hentRoller().orEmpty()
         val eksisterendeRollerFraDb = altinnRolleRepository.hentAlleAltinnRoller()
         val nyeRoller = ferskeRollerFraAltinn - eksisterendeRollerFraDb.toSet()
         altinnRolleRepository.leggTilAltinnRoller(nyeRoller)

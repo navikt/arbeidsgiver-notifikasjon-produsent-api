@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
@@ -26,8 +25,4 @@ open class AltinnStub(
         roller: Iterable<AltinnRolle>,
     ): Tilganger =
         hentAlleTilgangerImpl(fnr, selvbetjeningsToken)
-
-    override suspend fun hentRoller(): List<AltinnRolle> {
-        return listOf(AltinnRolle("195", "DAGL"), AltinnRolle("196", "BOBE"))
-    }
 }

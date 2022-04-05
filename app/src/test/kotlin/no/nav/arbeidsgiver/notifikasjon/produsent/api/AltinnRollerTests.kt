@@ -6,8 +6,8 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.Produsent
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -16,12 +16,12 @@ class AltinnRollerTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepo = ProdusentRepositoryImpl(database)
     val rolleRepository = produsentRepo.altinnRolle
-    val altinn = mockk<Altinn>()
-    val altinnservice = AltinnRolleServiceImpl(altinn, rolleRepository)
+    val altinnRolleClient = mockk<AltinnRolleClient>()
+    val altinnservice = AltinnRolleServiceImpl(altinnRolleClient, rolleRepository)
 
     describe("oppførsel Altinnroller") {
         val altinnRoller = listOf(AltinnRolle("195", "DAGL"), AltinnRolle("196", "BOBE"))
-        coEvery { altinn.hentRoller() } returns altinnRoller
+        coEvery { altinnRolleClient.hentRoller() } returns altinnRoller
 
         context("altinnroller har ikke blitt lastet til tabell") {
 
@@ -49,7 +49,7 @@ class AltinnRollerTests : DescribeSpec({
             }
 
             it("altinnservice kaster en feil når en rolleid har fått ny rollekode") {
-                coEvery { altinn.hentRoller() } returns listOf(AltinnRolle("195", "DOGL"))
+                coEvery { altinnRolleClient.hentRoller() } returns listOf(AltinnRolle("195", "DOGL"))
                 shouldThrowAny { altinnservice.lastRollerFraAltinn() }
             }
         }

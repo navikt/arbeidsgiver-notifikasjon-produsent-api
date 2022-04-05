@@ -10,10 +10,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
@@ -36,27 +33,10 @@ interface Altinn {
         tjenester: Iterable<ServicecodeDefinisjon>,
         roller: Iterable<AltinnRolle>,
     ): Tilganger
-
-    suspend fun hentRoller(): List<AltinnRolle>
 }
 
 val nonBlockingAltinnrettigheterProxyKlient = NonBlockingAltinnrettigheterProxyKlient(
-    AltinnrettigheterProxyKlient(
-        AltinnrettigheterProxyKlientConfig(
-            ProxyConfig(
-                url = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/",
-                consumerId = "notifikasjon-bruker-api",
-            ),
-            AltinnConfig(
-                url = basedOnEnv(
-                    prod = { "https://api-gw.oera.no" },
-                    other = { "https://api-gw-q1.oera.no" },
-                ),
-                altinnApiKey = System.getenv("ALTINN_HEADER") ?: "default",
-                altinnApiGwApiKey = System.getenv("APIGW_HEADER") ?: "default",
-            )
-        )
-    )
+    AltinnrettigheterProxyKlient(AltinnConfig.config)
 )
 
 class AltinnImpl(
@@ -217,34 +197,6 @@ class AltinnImpl(
             return Tilganger.FAILURE
         }
     }
-
-    override suspend fun hentRoller(): List<AltinnRolle> {
-        val baseUrl = basedOnEnv(
-            prod = { "https://api-gw.oera.no" },
-            other = { "https://api-gw-q1.oera.no" }
-        )
-        val altinnApiKey = System.getenv("ALTINN_HEADER") ?: "default"
-        val altinnApiGwApiKey = System.getenv("APIGW_HEADER") ?: "default"
-        val url = "${baseUrl}/ekstern/altinn/api/serviceowner/roledefinitions?ForceEIAuthentication&language=1044"
-
-        try {
-            return httpClient.get(url) {
-                headers {
-                    append("X-NAV-APIKEY", altinnApiGwApiKey)
-                    append("APIKEY", altinnApiKey)
-                }
-            }
-        } catch (e: ResponseException) {
-            val melding = "Hent roller fra altinn feiler med " +
-                    "${e.response.status.value} '${e.response.status.description}'"
-            log.warn(melding)
-            throw AltinnrettigheterProxyKlientFallbackException(melding, e)
-        } catch (e: Exception) {
-            val melding = "Fallback kall mot Altinn feiler med exception: '${e.message}' "
-            log.warn(melding, e)
-            throw AltinnrettigheterProxyKlientFallbackException(melding, e)
-        }
-    }
 }
 
 fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolean {
@@ -260,6 +212,5 @@ fun AltinnrettigheterProxyKlientFallbackException.erDriftsforstyrrelse(): Boolea
             }
         }
         else -> false
-
     }
 }
