@@ -32,13 +32,12 @@ class EnhetsregisteretTests : DescribeSpec({
 
     describe("Brreg#hentEnhet") {
         context("når enhet finnes") {
+            val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
             mockBrregResponse(
                 HttpResponse.response()
                     .withBody(enhetJson, Charsets.UTF_8)
                     .withContentType(MediaType.APPLICATION_JSON)
             )
-
-            val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
             val enhet = brreg.findUnderenhet(orgnr)
 
             it("inneholder navn på enhet") {
