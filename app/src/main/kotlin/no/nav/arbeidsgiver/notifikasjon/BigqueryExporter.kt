@@ -18,7 +18,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import java.lang.RuntimeException
 import java.time.Instant
 import java.util.*
 
@@ -51,13 +50,19 @@ object BigqueryExporter {
         }
 
         fun insert(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
+            val json = laxObjectMapper.writeValueAsString(hendelse)
+            val eventType = laxObjectMapper.readTree(json).at("/@type").asText()
             val row = InsertAllRequest.RowToInsert.of(
                     hendelse.hendelseId.toString(),
                     mapOf(
                         "timestamp" to kafkaTimestamp.toString(),
                         "key" to hendelse.hendelseId.toString(),
                         "aggregate_id" to hendelse.aggregateId.toString(),
-                        "event" to laxObjectMapper.writeValueAsString(hendelse),
+                        "event" to json,
+                        "type" to eventType,
+                        "virksomhetsnummer" to hendelse.virksomhetsnummer,
+                        "produsentId" to hendelse.produsentId,
+                        "kildeAppNavn" to hendelse.kildeAppNavn,
                     )
                 )
 
