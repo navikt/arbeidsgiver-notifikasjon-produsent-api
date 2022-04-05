@@ -28,15 +28,7 @@ import java.time.Duration
 
 object Bruker {
     val log = logger()
-
-    val databaseConfig = Database.Config(
-        host = System.getenv("DB_HOST") ?: "localhost",
-        port = System.getenv("DB_PORT") ?: "5432",
-        username = System.getenv("DB_USERNAME") ?: "postgres",
-        password = System.getenv("DB_PASSWORD") ?: "postgres",
-        database = System.getenv("DB_DATABASE") ?: "bruker-model",
-        migrationLocations = "db/migration/bruker_model",
-    )
+    val databaseConfig = Database.config("bruker_model")
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
