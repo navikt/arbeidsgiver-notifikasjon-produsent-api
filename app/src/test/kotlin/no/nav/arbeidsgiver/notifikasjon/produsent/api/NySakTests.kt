@@ -22,10 +22,8 @@ class NySakTests: DescribeSpec({
     val produsentRepository = ProdusentRepositoryImpl(database)
 
     val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = embeddedKafka.newProducer(),
-            produsentRepository = produsentRepository,
-        )
+        kafkaProducer = embeddedKafka.newProducer(),
+        produsentRepository = produsentRepository,
     )
 
     describe("opprett nySak") {

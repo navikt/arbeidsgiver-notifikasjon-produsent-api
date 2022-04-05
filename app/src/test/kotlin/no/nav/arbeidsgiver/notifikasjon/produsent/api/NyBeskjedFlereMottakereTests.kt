@@ -9,7 +9,6 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.ktor.server.testing.*
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
@@ -25,10 +24,7 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
     val produsentRepository = ProdusentRepositoryImpl(database)
 
     val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = mockk(relaxed = true),
-            produsentRepository = produsentRepository,
-        )
+        produsentRepository = produsentRepository,
     )
 
     describe("sender ingen mottakere") {

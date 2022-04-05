@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
@@ -23,12 +22,7 @@ import kotlin.time.ExperimentalTime
 class MineNotifikasjonerTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)
-    val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = mockk(),
-            produsentRepository = produsentModel
-        )
-    )
+    val engine = ktorProdusentTestServer(produsentRepository = produsentModel)
     val virksomhetsnummer = "123"
     val merkelapp = "tag"
     val mottaker = AltinnMottaker(

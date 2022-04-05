@@ -20,12 +20,17 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.BrukerPrincipal
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.ProdusentPrincipal
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.graphqlSetup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.stubProdusentRegister
 import org.intellij.lang.annotations.Language
@@ -38,7 +43,7 @@ fun Spec.ktorBrukerTestServer(
     altinn: Altinn = AltinnStub(),
     altinnRolleService: AltinnRolleService = AltinnRolleServiceStub(),
     tilgangerService: TilgangerService = TilgangerServiceImpl(altinn, altinnRolleService),
-    environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {},
+    environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
     val engine = TestApplicationEngine(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
@@ -61,12 +66,14 @@ fun Spec.ktorBrukerTestServer(
 
 fun Spec.ktorProdusentTestServer(
     produsentRegister: ProdusentRegister = stubProdusentRegister,
-    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context> = mockk(),
+    kafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse> = mockk(relaxed = true),
+    produsentRepository: ProdusentRepository = mockk(relaxed = true),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
     val engine = TestApplicationEngine(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
+    val produsentGraphQL = ProdusentAPI.newGraphQL(kafkaProducer, produsentRepository)
     listener(KtorTestListener(engine) {
         graphqlSetup(
             authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),

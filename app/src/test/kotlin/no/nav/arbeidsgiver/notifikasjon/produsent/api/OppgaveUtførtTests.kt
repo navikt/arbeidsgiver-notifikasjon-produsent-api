@@ -36,10 +36,8 @@ class OppgaveUtførtTests : DescribeSpec({
     }
 
     val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = kafkaProducer,
-            produsentRepository = produsentModel
-        )
+        kafkaProducer = kafkaProducer,
+        produsentRepository = produsentModel
     )
 
 
