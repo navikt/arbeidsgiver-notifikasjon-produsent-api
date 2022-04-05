@@ -10,8 +10,15 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Scalars
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.createGraphQL
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
@@ -21,8 +28,8 @@ import java.util.*
 object BrukerAPI {
     private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-bruker-api"
 
-    private val notifikasjonerHentetCount = Health.meterRegistry.counter("notifikasjoner_hentet")
-    private val sakerHentetCount = Health.meterRegistry.counter("saker_hentet")
+    private val notifikasjonerHentetCount = Metrics.meterRegistry.counter("notifikasjoner_hentet")
+    private val sakerHentetCount = Metrics.meterRegistry.counter("saker_hentet")
 
     data class Context(
         val fnr: String,

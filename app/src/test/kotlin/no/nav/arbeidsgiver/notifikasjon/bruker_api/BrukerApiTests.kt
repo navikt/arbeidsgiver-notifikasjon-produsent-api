@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health.meterRegistry
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 import java.util.*

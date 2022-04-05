@@ -42,7 +42,7 @@ class EnhetsregisteretImpl(
 ) : Enhetsregisteret {
     private val log = logger()
 
-    private val timer = Health.meterRegistry.timer("brreg_hent_organisasjon")
+    private val timer = Metrics.meterRegistry.timer("brreg_hent_organisasjon")
 
     private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
