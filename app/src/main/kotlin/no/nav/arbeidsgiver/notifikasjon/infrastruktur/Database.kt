@@ -3,7 +3,10 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
@@ -108,6 +111,19 @@ class Database private constructor(
             } catch (e: Exception) {
                 log.info("attempting database connection: fail with exception", e)
                 false
+            }
+        }
+
+        fun CoroutineScope.openDatabaseAsync(config: Config): Deferred<Database> {
+            return async {
+                try {
+                    openDatabase(config).also {
+                        Health.subsystemReady[Subsystem.DATABASE] = true
+                    }
+                } catch (e: Exception) {
+                    Health.subsystemAlive[Subsystem.DATABASE] = false
+                    throw e
+                }
             }
         }
     }

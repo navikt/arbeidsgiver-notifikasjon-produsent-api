@@ -22,8 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingReposito
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingService
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.LokalOsloTidImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.TimedContentConverter
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
@@ -40,15 +39,9 @@ object EksternVarsling {
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
+            val database = openDatabaseAsync(databaseConfig)
             val eksternVarslingModelAsync = async {
-                try {
-                    val database = Database.openDatabase(databaseConfig)
-                    Health.subsystemReady[Subsystem.DATABASE] = true
-                    EksternVarslingRepository(database)
-                } catch (e: Exception) {
-                    Health.subsystemAlive[Subsystem.DATABASE] = false
-                    throw e
-                }
+                EksternVarslingRepository(database.await())
             }
 
             launch {
