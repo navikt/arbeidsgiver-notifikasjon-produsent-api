@@ -11,7 +11,7 @@ class VirksomhetsinfoService(
         enhetsregisteret.hentUnderenhet(orgnr)
     }
 
-    suspend fun findUnderenhet(virksomhetsnummer: String): Underenhet =
+    suspend fun hentUnderenhet(virksomhetsnummer: String): Underenhet =
         cache.get(virksomhetsnummer)
 
     fun addUnderenhet(underenhet: Underenhet) {

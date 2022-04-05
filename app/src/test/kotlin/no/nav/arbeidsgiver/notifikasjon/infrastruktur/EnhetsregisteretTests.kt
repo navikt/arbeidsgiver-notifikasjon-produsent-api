@@ -38,14 +38,14 @@ class EnhetsregisteretTests : DescribeSpec({
                     .withBody(enhetJson, Charsets.UTF_8)
                     .withContentType(MediaType.APPLICATION_JSON)
             )
-            val enhet = brreg.findUnderenhet(orgnr)
+            val enhet = brreg.hentUnderenhet(orgnr)
 
             it("inneholder navn på enhet") {
                 enhet.navn shouldBe "ARBEIDS- OG VELFERDSETATEN"
             }
 
             context("når det gjøres flere kall til samme enhet") {
-                val enhet2 = brreg.findUnderenhet(orgnr)
+                val enhet2 = brreg.hentUnderenhet(orgnr)
 
                 it("enhet er samme instans") {
                     enhet2 shouldBeSameInstanceAs enhet
@@ -55,7 +55,7 @@ class EnhetsregisteretTests : DescribeSpec({
         context("når enhet ikke finnes") {
             val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
             mockBrregResponse(HttpResponse.notFoundResponse())
-            val enhet = brreg.findUnderenhet(orgnr)
+            val enhet = brreg.hentUnderenhet(orgnr)
 
             it("inneholder ikke navn på enhet") {
                 enhet.navn shouldBe ""
@@ -69,7 +69,7 @@ class EnhetsregisteretTests : DescribeSpec({
                 HttpResponse.response()
                     .withBody("<html>hello world </html>")
                     .withContentType(MediaType.TEXT_HTML))
-            val enhet = brreg.findUnderenhet(orgnr)
+            val enhet = brreg.hentUnderenhet(orgnr)
 
             it("inneholder ikke navn på enhet") {
                 enhet.navn shouldBe ""

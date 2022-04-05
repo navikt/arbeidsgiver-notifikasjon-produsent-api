@@ -336,16 +336,15 @@ object BrukerAPI {
     }
 
     private suspend fun <T : WithVirksomhet> fetchVirksomhet(
-        virksomhetsnavnService: VirksomhetsinfoService,
-        env: DataFetchingEnvironment
+        virksomhetsinfoService: VirksomhetsinfoService,
+        env: DataFetchingEnvironment,
     ): Virksomhet {
         val source = env.getSource<T>()
         return if (env.selectionSet.contains("Virksomhet.navn")) {
-            val virksomhetsnummer = source.virksomhet.virksomhetsnummer
-            val underenhet = virksomhetsnavnService.findUnderenhet(virksomhetsnummer)
+            val underenhet = virksomhetsinfoService.hentUnderenhet(source.virksomhet.virksomhetsnummer)
             Virksomhet(
-                virksomhetsnummer = virksomhetsnummer,
-                navn = underenhet.navn,
+                virksomhetsnummer = underenhet.organisasjonsnummer,
+                navn = underenhet.navn
             )
         } else {
             source.virksomhet

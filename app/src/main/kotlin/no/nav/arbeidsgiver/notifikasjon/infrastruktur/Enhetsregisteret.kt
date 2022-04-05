@@ -50,7 +50,7 @@ class EnhetsregisteretImpl(
         expectSuccess = false
     }
 
-    override suspend fun hentUnderenhet(orgnr: String): Enhetsregisteret.Underenhet = timer.coRecord {
+    override suspend fun hentUnderenhet(orgnr: String) = timer.coRecord {
         val response: HttpResponse = try {
             httpClient.get("$baseUrl/enhetsregisteret/api/underenheter/$orgnr")
         } catch (e: Exception) {
