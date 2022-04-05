@@ -31,7 +31,6 @@ object KafkaReaper {
                     reaperModelAsync.await(),
                     createKafkaProducer()
                 )
-
                 forEachHendelse("reaper-model-builder") { hendelse ->
                     kafkaReaperService.håndterHendelse(hendelse)
                 }

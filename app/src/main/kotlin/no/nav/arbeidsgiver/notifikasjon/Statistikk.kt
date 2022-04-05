@@ -1,5 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import io.ktor.routing.*
+import io.ktor.server.engine.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch

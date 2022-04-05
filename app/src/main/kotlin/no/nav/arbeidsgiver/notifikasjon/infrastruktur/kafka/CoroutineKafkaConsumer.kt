@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
-import no.nav.arbeidsgiver.notifikasjon.Produsent
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import java.time.Duration
@@ -42,12 +41,8 @@ private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
     }.toList()
 
 suspend inline fun forEachHendelse(groupId: String, crossinline body: suspend (Hendelse, HendelseMetadata) -> Unit) =
-    if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
-        Produsent.log.info("KafkaConsumer er deaktivert.")
-    } else {
-        createKafkaConsumer(groupId).forEachEvent { hendelse, metadata ->
-            body(hendelse, metadata)
-        }
+    createKafkaConsumer(groupId).forEachEvent { hendelse, metadata ->
+        body(hendelse, metadata)
     }
 
 suspend inline fun forEachHendelse(groupId: String, crossinline body: suspend (Hendelse) -> Unit) =
