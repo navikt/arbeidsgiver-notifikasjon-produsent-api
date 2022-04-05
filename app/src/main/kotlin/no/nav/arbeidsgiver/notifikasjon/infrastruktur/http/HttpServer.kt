@@ -19,12 +19,12 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.Executors
@@ -59,7 +59,7 @@ private val graphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1
 
 fun Application.installMetrics() {
     install(MicrometerMetrics) {
-        registry = Health.meterRegistry
+        registry = Metrics.meterRegistry
         distributionStatisticConfig = DistributionStatisticConfig.Builder()
             .percentilesHistogram(true)
             .build()
@@ -215,7 +215,7 @@ fun Route.internalRoutes() {
 
         get("metrics") {
             withContext(this.coroutineContext + metricsDispatcher) {
-                call.respond(Health.meterRegistry.scrape())
+                call.respond(Metrics.meterRegistry.scrape())
             }
         }
     }

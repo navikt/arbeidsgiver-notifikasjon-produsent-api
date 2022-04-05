@@ -6,7 +6,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
@@ -106,9 +106,9 @@ class EksternVarslingService(
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
 ) {
     private val log = logger()
-    private val emergencyBreakGauge = Health.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
-    private val jobQueueSizeGauge = Health.meterRegistry.gauge("jobqueue.size", AtomicInteger(0))!!
-    private val waitQueueSizeGauge = Health.meterRegistry.gauge("waitqueue.size", AtomicInteger(0))!!
+    private val emergencyBreakGauge = Metrics.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
+    private val jobQueueSizeGauge = Metrics.meterRegistry.gauge("jobqueue.size", AtomicInteger(0))!!
+    private val waitQueueSizeGauge = Metrics.meterRegistry.gauge("waitqueue.size", AtomicInteger(0))!!
 
     fun start(coroutineScope: CoroutineScope): Job {
         return coroutineScope.launch {

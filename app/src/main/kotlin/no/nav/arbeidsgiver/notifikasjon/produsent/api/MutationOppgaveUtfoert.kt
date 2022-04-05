@@ -6,7 +6,7 @@ import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
@@ -21,7 +21,7 @@ internal class MutationOppgaveUtfoert(
 ) {
     private val oppgaveUtfoertByEksternIdCalls = Counter.builder("graphql.mutation")
             .tag("field", "oppgaveUtfoertByEksternId")
-            .register(Health.meterRegistry)
+            .register(Metrics.meterRegistry)
 
     fun wire(runtime: RuntimeWiring.Builder) {
         runtime.resolveSubtypes<OppgaveUtfoertResultat>()

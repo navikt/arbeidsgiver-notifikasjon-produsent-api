@@ -20,7 +20,11 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.OffsetDateTime
 import java.util.*
@@ -54,7 +58,7 @@ interface BrukerRepository {
 class BrukerRepositoryImpl(
     private val database: Database
 ) : BrukerRepository {
-    private val timer = Health.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
+    private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
     override val altinnRolle: AltinnRolleRepository = AltinnRolleRepositoryImpl(database)
 
     override suspend fun hentNotifikasjoner(

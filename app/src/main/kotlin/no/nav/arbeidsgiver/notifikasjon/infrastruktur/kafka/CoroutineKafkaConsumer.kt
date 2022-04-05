@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
 import org.apache.kafka.clients.consumer.*
@@ -52,7 +53,7 @@ fun <K, V> createAndSubscribeKafkaConsumer(
         configure()
     }
     val kafkaConsumer = KafkaConsumer<K, V>(properties)
-    KafkaClientMetrics(kafkaConsumer).bindTo(Health.meterRegistry)
+    KafkaClientMetrics(kafkaConsumer).bindTo(Metrics.meterRegistry)
     kafkaConsumer.subscribe(topic.asList())
     return CoroutineKafkaConsumerImpl(kafkaConsumer)
 }
@@ -150,7 +151,7 @@ class CoroutineKafkaConsumerImpl<K, V>(
     private fun retriesForPartition(partition: Int) =
         retriesPerPartition.getOrPut(partition) {
             AtomicInteger(0).also { retries ->
-                Health.meterRegistry.gauge(
+                Metrics.meterRegistry.gauge(
                     "kafka_consumer_retries_per_partition",
                     Tags.of(Tag.of("partition", partition.toString())),
                     retries

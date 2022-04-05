@@ -64,7 +64,7 @@ class AltinnImpl(
 ) : Altinn {
     private val log = logger()
 
-    private val timer = Health.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
+    private val timer = Metrics.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
 
     private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {

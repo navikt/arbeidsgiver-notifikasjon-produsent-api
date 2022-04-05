@@ -4,7 +4,7 @@ import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.OrgnrPartitioner.Companion.partitionOfOrgnr
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
@@ -23,7 +23,7 @@ fun createKafkaProducer(configure: Properties.() -> Unit = {}): CoroutineKafkaPr
         configure()
     }
     val kafkaProducer = KafkaProducer<KafkaKey, Hendelse>(properties)
-    KafkaClientMetrics(kafkaProducer).bindTo(Health.meterRegistry)
+    KafkaClientMetrics(kafkaProducer).bindTo(Metrics.meterRegistry)
     return CoroutineKafkaProducerImpl(kafkaProducer)
 }
 
