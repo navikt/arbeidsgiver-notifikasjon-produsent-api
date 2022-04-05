@@ -35,7 +35,6 @@ object EksternVarsling {
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(Health.database, databaseConfig)
-
             val eksternVarslingModelAsync = async {
                 EksternVarslingRepository(database.await())
             }

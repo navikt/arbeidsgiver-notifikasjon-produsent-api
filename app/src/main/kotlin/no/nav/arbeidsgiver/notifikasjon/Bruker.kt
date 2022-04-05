@@ -67,7 +67,6 @@ object Bruker {
     ) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(Health.database, databaseConfig)
-
             val brukerRepositoryAsync = async {
                 BrukerRepositoryImpl(database.await())
             }

@@ -21,7 +21,6 @@ object KafkaReaper {
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(Health.database, databaseConfig)
-
             val reaperModelAsync = async {
                 KafkaReaperModelImpl(database.await())
             }
