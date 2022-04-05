@@ -14,14 +14,22 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.NarmesteLederLeesahDeserializer
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createAndSubscribeKafkaConsumer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.time.Duration
 
@@ -66,17 +74,9 @@ object Bruker {
             }
 
             launch {
-                if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
-                    log.info("KafkaConsumer er deaktivert.")
-                } else {
-                    val kafkaConsumer = createKafkaConsumer {
-                        put(ConsumerConfig.GROUP_ID_CONFIG, "bruker-model-builder")
-                    }
-                    val brukerRepository = brukerRepositoryAsync.await()
-
-                    kafkaConsumer.forEachEvent { event ->
-                        brukerRepository.oppdaterModellEtterHendelse(event)
-                    }
+                val brukerRepository = brukerRepositoryAsync.await()
+                forEachHendelse("bruker-model-builder") { event ->
+                    brukerRepository.oppdaterModellEtterHendelse(event)
                 }
             }
 

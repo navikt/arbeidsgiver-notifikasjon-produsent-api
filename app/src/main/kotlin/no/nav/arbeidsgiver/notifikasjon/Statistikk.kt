@@ -3,14 +3,20 @@ package no.nav.arbeidsgiver.notifikasjon
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import kotlinx.coroutines.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkModel
-import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkServiceImpl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
-import org.apache.kafka.clients.consumer.ConsumerConfig
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkModel
+import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkServiceImpl
 import java.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -39,18 +45,9 @@ object Statistikk {
             }
 
             launch {
-                if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
-                    log.info("KafkaConsumer er deaktivert.")
-                } else {
-                    val kafkaConsumer = createKafkaConsumer {
-                        put(ConsumerConfig.GROUP_ID_CONFIG, "statistikk-model-builder-1")
-                    }
-
-                    val statistikkService = statistikkServiceAsync.await()
-
-                    kafkaConsumer.forEachEvent { hendelse, metadata ->
-                        statistikkService.håndterHendelse(hendelse, metadata)
-                    }
+                val statistikkService = statistikkServiceAsync.await()
+                forEachHendelse("statistikk-model-builder-1") { hendelse, metadata ->
+                    statistikkService.håndterHendelse(hendelse, metadata)
                 }
             }
 
