@@ -26,19 +26,9 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 
 object EksternVarsling {
     val log = logger()
+    val databaseConfig = Database.config("ekstern_varsling_model")
 
-    val databaseConfig = Database.Config(
-        host = System.getenv("DB_HOST") ?: "localhost",
-        port = System.getenv("DB_PORT") ?: "5432",
-        username = System.getenv("DB_USERNAME") ?: "postgres",
-        password = System.getenv("DB_PASSWORD") ?: "postgres",
-        database = System.getenv("DB_DATABASE") ?: "ekstern-varsling-model",
-        migrationLocations = "db/migration/ekstern_varsling_model",
-    )
-
-    fun main(
-        httpPort: Int = 8080
-    ) {
+    fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val eksternVarslingModelAsync = async {
                 try {

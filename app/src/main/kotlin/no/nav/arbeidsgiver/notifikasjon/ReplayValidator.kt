@@ -17,9 +17,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 object ReplayValidator {
     val log = logger()
 
-    fun main(
-        httpPort: Int = 8080
-    ) {
+    fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             Health.subsystemReady[Subsystem.DATABASE] = true
 

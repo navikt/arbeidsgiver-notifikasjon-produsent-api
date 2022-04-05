@@ -16,20 +16,10 @@ import kotlin.time.ExperimentalTime
 
 object Statistikk {
     val log = logger()
-
-    val databaseConfig = Database.Config(
-        host = System.getenv("DB_HOST") ?: "localhost",
-        port = System.getenv("DB_PORT") ?: "5432",
-        username = System.getenv("DB_USERNAME") ?: "postgres",
-        password = System.getenv("DB_PASSWORD") ?: "postgres",
-        database = System.getenv("DB_DATABASE") ?: "statistikk-model",
-        migrationLocations = "db/migration/statistikk_model",
-    )
+    val databaseConfig = Database.config("statistikk_model")
 
     @OptIn(ExperimentalTime::class)
-    fun main(
-        httpPort: Int = 8080
-    ) {
+    fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val statistikkModelAsync = async {
                 try {

@@ -47,6 +47,15 @@ class Database private constructor(
     companion object {
         private val log = logger()
 
+        fun config(name: String) = Config(
+            host = System.getenv("DB_HOST") ?: "localhost",
+            port = System.getenv("DB_PORT") ?: "5432",
+            username = System.getenv("DB_USERNAME") ?: "postgres",
+            password = System.getenv("DB_PASSWORD") ?: "postgres",
+            database = System.getenv("DB_DATABASE") ?: name.replace('_', '-'),
+            migrationLocations = "db/migration/$name",
+        )
+
         private fun Config.asHikariConfig(): HikariConfig {
             val config = this
             return HikariConfig().apply {
