@@ -25,11 +25,11 @@ import java.util.*
 object BigqueryExporter {
     val log = logger()
 
-    const val DATASET = "notifikasjon"
-    const val TABLE = "hendelser"
-    const val DELETE_QUERY = """
+    private const val DATASET = "notifikasjon"
+    private const val TABLE = "hendelser"
+    private const val DELETE_QUERY = """
         DELETE FROM `$DATASET.$TABLE` 
-        WHERE key = @key
+        WHERE aggregate_id = @aggregate_id
     """
 
     fun main(
@@ -45,12 +45,10 @@ object BigqueryExporter {
         fun delete(aggregateId: UUID) {
             bigquery.query(
                 QueryJobConfiguration.newBuilder(DELETE_QUERY)
-                    .addNamedParameter("key", QueryParameterValue.string(aggregateId.toString()))
+                    .addNamedParameter("aggregate_id", QueryParameterValue.string(aggregateId.toString()))
                     .build()
             )
         }
-
-        delete(UUID.fromString("9b0b4dec-358c-4376-9676-251d4a6580f8"))
 
         fun insert(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
             val row = InsertAllRequest.RowToInsert.of(
@@ -58,6 +56,7 @@ object BigqueryExporter {
                     mapOf(
                         "timestamp" to kafkaTimestamp.toString(),
                         "key" to hendelse.hendelseId.toString(),
+                        "aggregate_id" to hendelse.aggregateId.toString(),
                         "event" to laxObjectMapper.writeValueAsString(hendelse),
                     )
                 )
@@ -79,10 +78,14 @@ object BigqueryExporter {
                     put(ConsumerConfig.GROUP_ID_CONFIG, "bigquery-exporter")
                 }
 
-                //kafkaConsumer.seekToBeginningOnAssignment()
-//                kafkaConsumer.forEachEvent { hendelse, metadata ->
-//                    insert(hendelse, metadata.timestamp)
-//                }
+                kafkaConsumer.seekToBeginningOnAssignment()
+                kafkaConsumer.forEachEvent { hendelse, metadata ->
+                    if (hendelse is HendelseModel.HardDelete) {
+                        delete(hendelse.aggregateId)
+                    } else {
+                        insert(hendelse, metadata.timestamp)
+                    }
+                }
             }
 
             launch {
