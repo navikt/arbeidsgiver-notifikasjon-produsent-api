@@ -15,7 +15,6 @@ class EnhetsregisteretTests : DescribeSpec({
 
     val host = "localhost"
     val port = 1111
-    val brreg = EnhetsregisteretImpl("http://$host:$port")
     val mockServerClient = MockServerClient(host, port)
     fun mockBrregResponse(
         withContentType: HttpResponse?
@@ -32,6 +31,7 @@ class EnhetsregisteretTests : DescribeSpec({
 
     describe("Brreg#hentEnhet") {
         context("når enhet finnes") {
+            val brreg = EnhetsregisteretImpl("http://$host:$port")
             mockBrregResponse(
                 HttpResponse.response()
                     .withBody(enhetJson, Charsets.UTF_8)
@@ -53,8 +53,8 @@ class EnhetsregisteretTests : DescribeSpec({
             }
         }
         context("når enhet ikke finnes") {
+            val brreg = EnhetsregisteretImpl("http://$host:$port")
             mockBrregResponse(HttpResponse.notFoundResponse())
-            brreg.cache.clear()
             val enhet = brreg.hentUnderenhet(orgnr)
 
             it("inneholder ikke navn på enhet") {
@@ -64,11 +64,11 @@ class EnhetsregisteretTests : DescribeSpec({
 
         /* hvis api-et er nede, hender det de returnerer html >:( */
         context("når ereg returnerer html") {
+            val brreg = EnhetsregisteretImpl("http://$host:$port")
             mockBrregResponse(
                 HttpResponse.response()
                     .withBody("<html>hello world </html>")
                     .withContentType(MediaType.TEXT_HTML))
-            brreg.cache.clear()
             val enhet = brreg.hentUnderenhet(orgnr)
 
             it("inneholder ikke navn på enhet") {
