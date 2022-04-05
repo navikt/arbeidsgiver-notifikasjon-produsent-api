@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import no.nav.arbeidsgiver.notifikasjon.Bruker
@@ -19,6 +20,7 @@ import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
+@DoNotParallelize
 class HardDeleteTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)

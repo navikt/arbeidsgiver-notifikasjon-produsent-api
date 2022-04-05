@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.throwables.shouldNotThrowAny
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldHaveSize
@@ -25,6 +26,7 @@ import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.*
 
+@DoNotParallelize
 class EksternVarslingRepositoryTests: DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)

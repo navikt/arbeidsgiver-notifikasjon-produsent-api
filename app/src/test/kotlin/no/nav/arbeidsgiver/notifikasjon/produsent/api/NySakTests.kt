@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
@@ -13,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
+@DoNotParallelize
 class NySakTests: DescribeSpec({
     val embeddedKafka = embeddedKafka()
 

@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.assertions.throwables.shouldThrowAny
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -12,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
+@DoNotParallelize
 class AltinnRollerTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepo = ProdusentRepositoryImpl(database)

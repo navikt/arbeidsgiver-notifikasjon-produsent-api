@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
@@ -11,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 
+@DoNotParallelize
 class EmergencyBreakTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)

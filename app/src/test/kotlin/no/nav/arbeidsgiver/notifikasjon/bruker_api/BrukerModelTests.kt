@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
 import no.nav.arbeidsgiver.notifikasjon.Bruker
@@ -15,6 +16,7 @@ import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
+@DoNotParallelize
 class BrukerModelTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)

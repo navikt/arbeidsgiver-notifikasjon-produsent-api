@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
@@ -21,6 +22,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 
+@DoNotParallelize
 class OppgaveUtførtTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)

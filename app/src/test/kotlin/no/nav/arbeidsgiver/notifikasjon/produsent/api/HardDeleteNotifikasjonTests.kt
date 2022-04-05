@@ -3,6 +3,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.databind.JsonNode
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -26,6 +27,7 @@ import java.util.*
 
 // Legg til en test for sletting av én av flere rader i database
 
+@DoNotParallelize
 class HardDeleteNotifikasjonTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)

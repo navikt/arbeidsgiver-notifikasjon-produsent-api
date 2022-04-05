@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -29,6 +30,7 @@ import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.*
 
+@DoNotParallelize
 class QuerySakerTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val brukerRepository = BrukerRepositoryImpl(database)

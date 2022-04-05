@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -15,6 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
+@DoNotParallelize
 class NyOppgaveFlereMottakereTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)

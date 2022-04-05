@@ -1,12 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
 import io.kotest.core.datatest.forAll
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.KafkaReaper
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
+@DoNotParallelize
 class KafkaReaperModelTest : DescribeSpec({
     val database = testDatabase(KafkaReaper.databaseConfig)
     val model = KafkaReaperModelImpl(database)

@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.nulls.beNull
@@ -21,6 +22,7 @@ import kotlin.time.toJavaDuration
 
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
+@DoNotParallelize
 class NyBeskjedTests : DescribeSpec({
     val embeddedKafka = embeddedKafka()
 

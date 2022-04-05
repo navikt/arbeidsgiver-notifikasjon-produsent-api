@@ -2,6 +2,7 @@
 
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -24,6 +25,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 
+@DoNotParallelize
 class SoftDeleteSakTests : DescribeSpec({
 
     val database = testDatabase(Produsent.databaseConfig)

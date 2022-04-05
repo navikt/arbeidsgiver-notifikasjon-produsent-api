@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
@@ -14,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 import java.util.*
 
+@DoNotParallelize
 class AltinnReporteeTilgangsstyringTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerRepositoryImpl(database)

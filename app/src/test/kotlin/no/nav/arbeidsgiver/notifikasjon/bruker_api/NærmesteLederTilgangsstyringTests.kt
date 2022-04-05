@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldContain
@@ -21,6 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
 
+@DoNotParallelize
 class NærmesteLederTilgangsstyringTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerRepositoryImpl(database)

@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.statistikk
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.datatest.forAll
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MultiGauge
@@ -28,6 +29,7 @@ import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
+@DoNotParallelize
 class StatistikkModelTests : DescribeSpec({
     val database = testDatabase(Statistikk.databaseConfig)
     val model = StatistikkModel(database)

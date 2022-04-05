@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.Bruker
@@ -9,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.LocalDate
 import java.util.*
 
+@DoNotParallelize
 class NærmesteLederModelTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val model = NærmesteLederModelImpl(database)

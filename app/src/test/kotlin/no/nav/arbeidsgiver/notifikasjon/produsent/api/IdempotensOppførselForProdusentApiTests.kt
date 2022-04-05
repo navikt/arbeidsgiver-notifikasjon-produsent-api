@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -9,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
+@DoNotParallelize
 class IdempotensOppførselForProdusentApiTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val queryModel = ProdusentRepositoryImpl(database)

@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.timing.eventually
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -23,6 +24,7 @@ import kotlin.time.ExperimentalTime
 
 class Done : Throwable("done")
 
+@DoNotParallelize
 @OptIn(ExperimentalTime::class)
 class EksternVarslingServiceTests : DescribeSpec({
     val log = logger()

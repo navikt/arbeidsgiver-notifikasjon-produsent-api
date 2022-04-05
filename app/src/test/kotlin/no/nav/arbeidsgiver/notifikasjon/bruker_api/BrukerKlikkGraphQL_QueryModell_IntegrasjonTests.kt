@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker_api
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
@@ -16,6 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
+@DoNotParallelize
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)

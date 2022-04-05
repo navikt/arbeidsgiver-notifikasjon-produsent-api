@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.convertValue
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -18,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
+@DoNotParallelize
 class NyBeskjedFlereMottakereTests: DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)

@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.*
 import io.kotest.matchers.shouldBe
@@ -11,6 +12,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 
+@DoNotParallelize
 class ResumeScheduledJobsTests: DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
