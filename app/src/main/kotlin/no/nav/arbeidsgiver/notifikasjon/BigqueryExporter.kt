@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import com.google.cloud.bigquery.BigQueryOptions
 import com.google.cloud.bigquery.InsertAllRequest
 import com.google.cloud.bigquery.QueryJobConfiguration
+import com.google.cloud.bigquery.QueryParameterValue
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -19,12 +20,17 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.lang.RuntimeException
 import java.time.Instant
+import java.util.*
 
 object BigqueryExporter {
     val log = logger()
 
     const val DATASET = "notifikasjon"
     const val TABLE = "hendelser"
+    const val DELETE_QUERY = """
+        DELETE FROM `$DATASET.$TABLE` 
+        WHERE key = @key
+    """
 
     fun main(
         httpPort: Int = 8080
@@ -34,6 +40,17 @@ object BigqueryExporter {
             .setProjectId(System.getenv("GCP_TEAM_PROJECT_ID"))
             .build()
             .service
+
+
+        fun delete(aggregateId: UUID) {
+            bigquery.query(
+                QueryJobConfiguration.newBuilder(DELETE_QUERY)
+                    .addNamedParameter("key", QueryParameterValue.string(aggregateId.toString()))
+                    .build()
+            )
+        }
+
+        delete(UUID.fromString("9b0b4dec-358c-4376-9676-251d4a6580f8"))
 
         fun insert(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
             val row = InsertAllRequest.RowToInsert.of(
@@ -58,18 +75,14 @@ object BigqueryExporter {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {
-
-
-
-
                 val kafkaConsumer = createKafkaConsumer {
                     put(ConsumerConfig.GROUP_ID_CONFIG, "bigquery-exporter")
                 }
 
-                kafkaConsumer.seekToBeginningOnAssignment()
-                kafkaConsumer.forEachEvent { hendelse, metadata ->
-                    insert(hendelse, metadata.timestamp)
-                }
+                //kafkaConsumer.seekToBeginningOnAssignment()
+//                kafkaConsumer.forEachEvent { hendelse, metadata ->
+//                    insert(hendelse, metadata.timestamp)
+//                }
             }
 
             launch {
