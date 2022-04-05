@@ -1,7 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -14,7 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDat
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
@@ -73,20 +71,13 @@ object Produsent {
                 )
             }
 
-            launch {
-                val httpServer = embeddedServer(Netty, port = httpPort, configure = {
-                    connectionGroupSize = 16
-                    callGroupSize = 16
-                    workerGroupSize = 16
-                }) {
-                    httpServerSetup(
-                        authProviders = authProviders,
-                        extractContext = extractProdusentContext(produsentRegister),
-                        graphql = graphql
-                    )
-                }
-                httpServer.start(wait = true)
-            }
+            launchGraphqlServer(
+                httpPort = httpPort,
+                authProviders = authProviders,
+                extractContext = extractProdusentContext(produsentRegister),
+                graphql = graphql
+            )
+
             launch {
                 launchProcessingLoop(
                     "last Altinnroller",

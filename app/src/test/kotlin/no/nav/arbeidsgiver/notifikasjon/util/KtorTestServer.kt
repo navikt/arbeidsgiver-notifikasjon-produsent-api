@@ -28,7 +28,7 @@ fun Spec.ktorBrukerTestServer(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
     listener(KtorTestListener(engine) {
-        httpServerSetup(
+        graphqlSetup(
             authProviders = listOf(LOCALHOST_BRUKER_AUTHENTICATION),
             extractContext = extractBrukerContext,
             graphql = CompletableDeferred(brukerGraphQL),
@@ -46,7 +46,7 @@ fun Spec.ktorProdusentTestServer(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
     listener(KtorTestListener(engine) {
-        httpServerSetup(
+        graphqlSetup(
             authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
             extractContext = extractProdusentContext(produsentRegister),
             graphql = CompletableDeferred(produsentGraphQL)

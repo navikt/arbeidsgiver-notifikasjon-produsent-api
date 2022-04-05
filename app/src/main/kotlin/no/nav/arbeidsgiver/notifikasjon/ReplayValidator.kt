@@ -1,17 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import io.ktor.routing.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import kotlin.collections.set
 
 object ReplayValidator {
     val log = logger()
@@ -28,14 +25,7 @@ object ReplayValidator {
                 }
             }
 
-            launch {
-                embeddedServer(Netty, port = httpPort) {
-                    installMetrics()
-                    routing {
-                        internalRoutes()
-                    }
-                }.start(wait = true)
-            }
+            launchHttpServer(httpPort = httpPort)
         }
     }
 }

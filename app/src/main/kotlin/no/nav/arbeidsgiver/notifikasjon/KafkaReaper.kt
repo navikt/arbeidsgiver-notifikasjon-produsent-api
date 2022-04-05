@@ -1,16 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import io.ktor.routing.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -38,14 +34,7 @@ object KafkaReaper {
                 }
             }
 
-            launch {
-                embeddedServer(Netty, port = httpPort) {
-                    installMetrics()
-                    routing {
-                        internalRoutes()
-                    }
-                }.start(wait = true)
-            }
+            launchHttpServer(httpPort = httpPort)
         }
     }
 }
