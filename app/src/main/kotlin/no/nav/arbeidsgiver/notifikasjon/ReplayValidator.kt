@@ -12,7 +12,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import org.apache.kafka.clients.consumer.ConsumerConfig
 
 object ReplayValidator {
     val log = logger()
@@ -22,9 +21,7 @@ object ReplayValidator {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {
-                val kafkaConsumer = createKafkaConsumer {
-                    put(ConsumerConfig.GROUP_ID_CONFIG, "replay-validator")
-                }
+                val kafkaConsumer = createKafkaConsumer("replay-validator")
                 kafkaConsumer.seekToBeginningOnAssignment()
                 kafkaConsumer.forEachEvent { _ ->
                     // noop. implicitly validated

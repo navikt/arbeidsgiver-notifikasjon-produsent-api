@@ -40,9 +40,23 @@ private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
         this.poll()
     }.toList()
 
-fun createKafkaConsumer(configure: Properties.() -> Unit = {}): CoroutineKafkaConsumer<KafkaKey, Hendelse> {
-    return createAndSubscribeKafkaConsumer(TOPIC, configure = configure)
-}
+suspend inline fun forEachHendelse(groupId: String, crossinline body: suspend (Hendelse, HendelseMetadata) -> Unit) =
+    createKafkaConsumer(groupId).forEachEvent { hendelse, metadata ->
+        body(hendelse, metadata)
+    }
+
+suspend inline fun forEachHendelse(groupId: String, crossinline body: suspend (Hendelse) -> Unit) =
+    forEachHendelse(groupId) { hendelse, _ ->
+        body(hendelse)
+    }
+
+fun createKafkaConsumer(groupId: String) =
+    createKafkaConsumer {
+        put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+    }
+
+fun createKafkaConsumer(configure: Properties.() -> Unit = {}) =
+    createAndSubscribeKafkaConsumer<KafkaKey, Hendelse>(TOPIC, configure = configure)
 
 fun <K, V> createAndSubscribeKafkaConsumer(
     vararg topic: String,

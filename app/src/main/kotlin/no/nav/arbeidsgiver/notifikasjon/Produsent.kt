@@ -7,18 +7,23 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_REGISTER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
-import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.time.Duration
 
 object Produsent {
@@ -62,17 +67,9 @@ object Produsent {
             }
 
             launch {
-                if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
-                    log.info("KafkaConsumer er deaktivert.")
-                } else {
-                    val kafkaConsumer = createKafkaConsumer {
-                        put(ConsumerConfig.GROUP_ID_CONFIG, "produsent-model-builder")
-                    }
-                    val produsentRepository = produsentRepositoryAsync.await()
-
-                    kafkaConsumer.forEachEvent { event ->
-                        produsentRepository.oppdaterModellEtterHendelse(event)
-                    }
+                val produsentRepository = produsentRepositoryAsync.await()
+                forEachHendelse("produsent-model-builder") { event ->
+                    produsentRepository.oppdaterModellEtterHendelse(event)
                 }
             }
 

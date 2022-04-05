@@ -14,14 +14,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlient
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientImpl
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientLogging
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientMedFilter
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingRepository
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingService
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.LokalOsloTidImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.TimedContentConverter
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
-import org.apache.kafka.clients.consumer.ConsumerConfig
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 
 
 object EksternVarsling {
@@ -42,18 +52,9 @@ object EksternVarsling {
             }
 
             launch {
-                // Hvorfor er det nyttig å kunne skru av? Brukes det?
-                if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
-                    log.info("KafkaConsumer er deaktivert.")
-                } else {
-                    val kafkaConsumer = createKafkaConsumer {
-                        put(ConsumerConfig.GROUP_ID_CONFIG, "ekstern-varsling-model-builder")
-                    }
-                    val eksternVarslingModel = eksternVarslingModelAsync.await()
-
-                    kafkaConsumer.forEachEvent { event ->
-                        eksternVarslingModel.oppdaterModellEtterHendelse(event)
-                    }
+                val eksternVarslingModel = eksternVarslingModelAsync.await()
+                forEachHendelse("ekstern-varsling-model-builder") { event ->
+                    eksternVarslingModel.oppdaterModellEtterHendelse(event)
                 }
             }
 
