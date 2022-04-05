@@ -26,7 +26,6 @@ import java.time.Duration
 
 object Produsent {
     val log = logger()
-
     val databaseConfig = Database.config("produsent_model")
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {

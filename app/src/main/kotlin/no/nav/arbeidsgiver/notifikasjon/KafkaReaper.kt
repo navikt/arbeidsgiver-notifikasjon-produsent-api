@@ -16,7 +16,6 @@ import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaperServiceImpl
 
 object KafkaReaper {
     val log = logger()
-
     val databaseConfig = Database.config("kafka_reaper_model")
 
     fun main(httpPort: Int = 8080) {

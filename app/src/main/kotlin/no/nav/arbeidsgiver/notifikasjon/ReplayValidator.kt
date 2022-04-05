@@ -10,9 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 object ReplayValidator {
     val log = logger()
 
-    fun main(
-        httpPort: Int = 8080
-    ) {
+    fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             launch {
                 val kafkaConsumer = createKafkaConsumer("replay-validator")
