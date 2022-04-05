@@ -52,7 +52,13 @@ object EksternVarsling {
                     eksternVarslingRepository = eksternVarslingRepository,
                     altinnVarselKlient = basedOnEnv(
                         prod = { AltinnVarselKlientImpl() },
-                        dev = { AltinnVarselKlientMedFilter(eksternVarslingRepository, AltinnVarselKlientImpl(), AltinnVarselKlientLogging()) },
+                        dev = {
+                            AltinnVarselKlientMedFilter(
+                                eksternVarslingRepository,
+                                AltinnVarselKlientImpl(),
+                                AltinnVarselKlientLogging()
+                            )
+                        },
                         other = { AltinnVarselKlientLogging() },
                     ),
                     kafkaProducer = createKafkaProducer(),

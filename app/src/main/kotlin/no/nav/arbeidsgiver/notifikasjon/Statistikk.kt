@@ -47,7 +47,7 @@ object Statistikk {
                 }
             }
 
-            launchHttpServer(httpPort)
+            launchHttpServer(httpPort = httpPort)
         }
     }
 }

@@ -35,7 +35,7 @@ object KafkaReaper {
                 }
             }
 
-            launchHttpServer(httpPort)
+            launchHttpServer(httpPort = httpPort)
         }
     }
 }

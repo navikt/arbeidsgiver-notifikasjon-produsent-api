@@ -20,7 +20,7 @@ object ReplayValidator {
                 }
             }
 
-            launchHttpServer(httpPort)
+            launchHttpServer(httpPort = httpPort)
         }
     }
 }
