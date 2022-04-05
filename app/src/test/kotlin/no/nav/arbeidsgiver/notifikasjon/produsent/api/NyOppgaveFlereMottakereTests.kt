@@ -5,12 +5,9 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.QueryMineNotifikasjoner
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
@@ -22,10 +19,7 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
     val produsentRepository = ProdusentRepositoryImpl(database)
 
     val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = mockk(relaxed = true),
-            produsentRepository = produsentRepository,
-        )
+        produsentRepository = produsentRepository,
     )
 
     describe("sender ingen mottakere") {

@@ -7,8 +7,6 @@ import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.SaksStatus
 import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
@@ -22,10 +20,8 @@ class NySakTests: DescribeSpec({
     val produsentRepository = ProdusentRepositoryImpl(database)
 
     val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = embeddedKafka.newProducer(),
-            produsentRepository = produsentRepository,
-        )
+        kafkaProducer = embeddedKafka.newProducer(),
+        produsentRepository = produsentRepository,
     )
 
     describe("opprett nySak") {

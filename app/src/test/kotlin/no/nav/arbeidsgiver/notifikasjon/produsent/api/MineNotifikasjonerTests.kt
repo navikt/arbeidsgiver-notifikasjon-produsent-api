@@ -3,15 +3,11 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.QueryMineNotifikasjoner
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -24,12 +20,7 @@ import kotlin.time.ExperimentalTime
 class MineNotifikasjonerTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)
-    val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = mockk(),
-            produsentRepository = produsentModel
-        )
-    )
+    val engine = ktorProdusentTestServer(produsentRepository = produsentModel)
     val virksomhetsnummer = "123"
     val merkelapp = "tag"
     val mottaker = AltinnMottaker(

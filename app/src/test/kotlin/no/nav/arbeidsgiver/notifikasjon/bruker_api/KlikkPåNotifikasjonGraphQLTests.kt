@@ -9,11 +9,10 @@ import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
 import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -27,15 +26,8 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
     val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = mockk()
 
     val engine = ktorBrukerTestServer(
-        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            tilgangerService = TilgangerServiceImpl(
-                altinn = AltinnStub(),
-                altinnRolleService = mockk(),
-            ),
-            enhetsregisteret = EnhetsregisteretStub(),
-            brukerRepository = queryModel,
-            kafkaProducer = kafkaProducer,
-        ),
+        brukerRepository = queryModel,
+        kafkaProducer = kafkaProducer,
     )
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)

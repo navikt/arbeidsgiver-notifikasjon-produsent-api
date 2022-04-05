@@ -12,9 +12,11 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyOppgave
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
+import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
@@ -30,10 +32,8 @@ class NyOppgaveTests : DescribeSpec({
     val produsentRepository = ProdusentRepositoryImpl(database)
 
     val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = embeddedKafka.newProducer(),
-            produsentRepository = produsentRepository,
-        )
+        kafkaProducer = embeddedKafka.newProducer(),
+        produsentRepository = produsentRepository,
     )
 
     describe("produsent-api happy path") {

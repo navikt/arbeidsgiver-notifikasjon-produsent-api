@@ -9,9 +9,10 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -19,15 +20,7 @@ class BrukerApiTests : DescribeSpec({
     val queryModel: BrukerRepositoryImpl = mockk()
 
     val engine = ktorBrukerTestServer(
-        brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-            tilgangerService = TilgangerServiceImpl(
-                altinn = AltinnStub(),
-                altinnRolleService = mockk(),
-            ),
-            enhetsregisteret = EnhetsregisteretStub("43" to "el virksomhete"),
-            brukerRepository = queryModel,
-            kafkaProducer = mockk()
-        )
+        brukerRepository = queryModel,
     )
 
     describe("graphql bruker-api") {

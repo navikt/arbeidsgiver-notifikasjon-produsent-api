@@ -7,9 +7,6 @@ import io.kotest.matchers.types.beOfType
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationNyBeskjed
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import kotlin.time.ExperimentalTime
@@ -18,12 +15,9 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class TilgangsstyringTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = mockk(),
-            produsentRepository = mockk {
-                every { altinnRolle } returns mockk()
-            }
-        )
+        produsentRepository = mockk {
+            every { altinnRolle } returns mockk()
+        }
     )
 
     describe("tilgangsstyring av produsent-api") {
