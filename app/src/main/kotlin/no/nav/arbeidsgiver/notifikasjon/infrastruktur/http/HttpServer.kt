@@ -116,7 +116,6 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
     }
 }
 
-
 fun Application.baseSetup(
     authProviders: List<JWTAuthentication>,
     customRoute: Routing.() -> Unit,
@@ -242,11 +241,10 @@ fun Application.baseSetup(
             }
 
             get("metrics") {
-                withContext<Unit>(coroutineContext + metricsDispatcher) {
+                withContext(coroutineContext + metricsDispatcher) {
                     call.respond<String>(Metrics.meterRegistry.scrape())
                 }
             }
         }
     }
 }
-
