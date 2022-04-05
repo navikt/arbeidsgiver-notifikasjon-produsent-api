@@ -202,6 +202,26 @@ class StatistikkModel(
         )
     }
 
+    suspend fun antallSaker(): List<MultiGauge.Row<Number>> {
+        return database.nonTransactionalExecuteQuery(
+            """
+                select produsent_id, merkelapp, mottaker, count(*) as antall
+                from sak
+                group by (produsent_id, merkelapp, mottaker)
+            """,
+            transform = {
+                MultiGauge.Row.of(
+                    Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
+                        "merkelapp", this.getString("merkelapp"),
+                        "mottaker", this.getString("mottaker"),
+                    ),
+                    this.getInt("antall")
+                )
+            }
+        )
+    }
+
     suspend fun antallVarsler(): List<MultiGauge.Row<Number>> {
         return database.nonTransactionalExecuteQuery(
             """
@@ -359,12 +379,37 @@ class StatistikkModel(
                     timestamp_utc(hendelse.deletedAt)
                     uuid(hendelse.aggregateId)
                 }
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    update sak 
+                        set soft_deleted_tidspunkt = ?
+                        where sak_id = ?
+                    """
+                ) {
+                    timestamp_utc(hendelse.deletedAt)
+                    uuid(hendelse.aggregateId)
+                }
             }
             is HardDelete -> {
                 // noop
             }
 
-            is SakOpprettet,
+            is SakOpprettet -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    insert into sak 
+                        (produsent_id, sak_id, merkelapp, mottaker, opprettet_tidspunkt)
+                    values (?, ?, ?, ?, ?)
+                    on conflict on constraint sak_pkey do nothing;
+                    """
+                ) {
+                    string(hendelse.produsentId)
+                    uuid(hendelse.sakId)
+                    string(hendelse.merkelapp)
+                    string(hendelse.mottakere.oppsummering())
+                    timestamptz(hendelse.oppgittTidspunkt ?: hendelse.mottattTidspunkt)
+                }
+            }
             is NyStatusSak -> {
                 log.error("mottok hendelse som ikke enda er støttet {}", hendelse.javaClass.simpleName)
             }

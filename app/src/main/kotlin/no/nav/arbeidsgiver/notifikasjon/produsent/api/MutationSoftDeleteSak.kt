@@ -3,38 +3,34 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-class MutationSoftDelete(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+internal class MutationSoftDeleteSak(
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
     fun wire(runtime: RuntimeWiring.Builder) {
-        runtime.resolveSubtypes<SoftDeleteNotifikasjonResultat>()
+        runtime.resolveSubtypes<SoftDeleteSakResultat>()
 
         runtime.wire("Mutation") {
-            coDataFetcher("softDeleteNotifikasjon") { env ->
+            coDataFetcher("softDeleteSak") { env ->
                 softDelete(
                     context = env.getContext(),
                     id = env.getTypedArgument("id")
                 )
             }
-            coDataFetcher("softDeleteNotifikasjonByEksternId") { env ->
+            coDataFetcher("softDeleteSakByGrupperingsid") { env ->
                 softDelete(
                     context = env.getContext(),
-                    eksternId = env.getTypedArgument("eksternId"),
+                    grupperingsid = env.getTypedArgument("grupperingsid"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )
             }
@@ -42,48 +38,46 @@ class MutationSoftDelete(
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
-    sealed interface SoftDeleteNotifikasjonResultat
+    sealed interface SoftDeleteSakResultat
 
-    @JsonTypeName("SoftDeleteNotifikasjonVellykket")
-    data class SoftDeleteNotifikasjonVellykket(
+    @JsonTypeName("SoftDeleteSakVellykket")
+    data class SoftDeleteSakVellykket(
         val id: UUID
-    ) : SoftDeleteNotifikasjonResultat
+    ) : SoftDeleteSakResultat
 
     private suspend fun softDelete(
         context: ProdusentAPI.Context,
         id: UUID,
-    ): SoftDeleteNotifikasjonResultat {
-        val notifikasjon = hentNotifikasjon(produsentRepository, id) { error -> return error }
-        return softDelete(context, notifikasjon)
+    ): SoftDeleteSakResultat {
+        val sak = hentSak(produsentRepository, id) { error -> return error }
+        return softDelete(context, sak)
     }
 
     private suspend fun softDelete(
         context: ProdusentAPI.Context,
-        eksternId: String,
+        grupperingsid: String,
         merkelapp: String,
-    ): SoftDeleteNotifikasjonResultat {
-        val notifikasjon = hentNotifikasjon(produsentRepository, eksternId, merkelapp) { error -> return error }
-        return softDelete(context, notifikasjon)
+    ): SoftDeleteSakResultat {
+        val sak = hentSak(produsentRepository, grupperingsid, merkelapp) { error -> return error }
+        return softDelete(context, sak)
     }
 
     private suspend fun softDelete(
         context: ProdusentAPI.Context,
-        notifikasjon: ProdusentModel.Notifikasjon,
-    ): SoftDeleteNotifikasjonResultat {
-        val produsent = hentProdusent(context) { error -> return error }
-        tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+        sak: ProdusentModel.Sak,
+    ): SoftDeleteSakResultat {
+        val produsent = tilgangsstyrProdusent(context, sak.merkelapp) { error -> return error }
 
         val softDelete = SoftDelete(
             hendelseId = UUID.randomUUID(),
-            aggregateId = notifikasjon.id,
-            virksomhetsnummer = notifikasjon.virksomhetsnummer,
+            aggregateId = sak.id,
+            virksomhetsnummer = sak.virksomhetsnummer,
             deletedAt = OffsetDateTime.now(),
             produsentId = produsent.id,
             kildeAppNavn = context.appName
         )
 
-        kafkaProducer.sendHendelse(softDelete)
-        produsentRepository.oppdaterModellEtterHendelse(softDelete)
-        return SoftDeleteNotifikasjonVellykket(notifikasjon.id)
+        hendelseDispatcher.send(softDelete)
+        return SoftDeleteSakVellykket(sak.id)
     }
 }

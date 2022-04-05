@@ -7,7 +7,31 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
 
-suspend inline fun hentNotifikasjon(
+internal suspend inline fun hentSak(
+    produsentRepository: ProdusentRepository,
+    id: UUID,
+    onError: (Error.SakFinnesIkke) -> Nothing
+): ProdusentModel.Sak {
+    return produsentRepository.hentSak(id)
+        ?: onError(
+            Error.SakFinnesIkke("Sak med id $id finnes ikke")
+        )
+}
+
+
+internal suspend inline fun hentSak(
+    produsentRepository: ProdusentRepository,
+    eksternId: String,
+    merkelapp: String,
+    onError: (Error.SakFinnesIkke) -> Nothing
+): ProdusentModel.Sak {
+    return produsentRepository.hentSak(eksternId, merkelapp)
+        ?: onError(
+            Error.SakFinnesIkke("Sak med grupperingsid $eksternId og merkelapp $merkelapp finnes ikke")
+        )
+}
+
+internal suspend inline fun hentNotifikasjon(
     produsentRepository: ProdusentRepository,
     id: UUID,
     onError: (Error.NotifikasjonFinnesIkke) -> Nothing
@@ -19,7 +43,7 @@ suspend inline fun hentNotifikasjon(
 }
 
 
-suspend inline fun hentNotifikasjon(
+internal suspend inline fun hentNotifikasjon(
     produsentRepository: ProdusentRepository,
     eksternId: String,
     merkelapp: String,
@@ -31,7 +55,7 @@ suspend inline fun hentNotifikasjon(
         )
 }
 
-inline fun tilgangsstyrMottaker(
+internal inline fun tilgangsstyrMottaker(
     produsent: Produsent,
     mottaker: Mottaker,
     onError: (error: Error.UgyldigMottaker) -> Nothing
@@ -48,7 +72,7 @@ inline fun tilgangsstyrMottaker(
     }
 }
 
-inline fun hentProdusent(
+internal inline fun hentProdusent(
     context: ProdusentAPI.Context,
     onMissing: (error: Error.UkjentProdusent) -> Nothing
 ): Produsent {
@@ -63,7 +87,7 @@ inline fun hentProdusent(
     }
 }
 
-inline fun tilgangsstyrNyNotifikasjon(
+internal inline fun tilgangsstyrNyNotifikasjon(
     produsent: Produsent,
     mottakere: List<Mottaker>,
     merkelapp: String,
@@ -75,7 +99,7 @@ inline fun tilgangsstyrNyNotifikasjon(
     tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
 }
 
-inline fun tilgangsstyrMerkelapp(
+internal inline fun tilgangsstyrMerkelapp(
     produsent: Produsent,
     merkelapp: Merkelapp,
     onError: (error: Error.UgyldigMerkelapp) -> Nothing
@@ -92,4 +116,12 @@ inline fun tilgangsstyrMerkelapp(
     }
 }
 
-
+internal inline fun tilgangsstyrProdusent(
+    context: ProdusentAPI.Context,
+    merkelapp: String,
+    onError: (error: Error.TilgangsstyringError) -> Nothing
+): Produsent  {
+    val produsent = hentProdusent(context) { error -> onError(error) }
+    tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
+    return produsent
+}

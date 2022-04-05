@@ -21,8 +21,6 @@ Vi tolker tidspunktet som Oslo-tid ('Europe/Oslo').
 """
 scalar ISO8601LocalDateTime
 
-# scalar NotifikasjonCursor
-
 """
 Tilstanden til en oppgave.
 """
@@ -436,6 +434,24 @@ type Mutation {
         """
         eksternId: ID!
     ): SoftDeleteNotifikasjonResultat!
+    @deprecated(reason:
+    "Using the type ID for `eksternId` can lead to unexpected behaviour. Use softDeleteNotifikasjonByEksternId_V2 instead."
+    )
+
+    """
+    Se dokumentasjon for `softDeleteNotifikasjon(id)`.
+    """
+    softDeleteNotifikasjonByEksternId_V2(
+        """
+        Merkelappen som dere ga oss da dere opprettet notifikasjonen.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som dere ga oss da dere opprettet notifikasjonen.
+        """
+        eksternId: String!
+    ): SoftDeleteNotifikasjonResultat!
 
     """
     Sletter en notifikasjon og tilhørende data helt fra databasen og kafka.
@@ -454,13 +470,81 @@ type Mutation {
         """
         Merkelappen som dere ga oss da dere opprettet notifikasjonen.
         """
-        merkelapp: String!,
+        merkelapp: String!
 
         """
         ID-en som dere ga oss da dere opprettet notifikasjonen.
         """
         eksternId: ID!
     ): HardDeleteNotifikasjonResultat!
+    @deprecated(reason:
+    "Using the type ID for `eksternId` can lead to unexpected behaviour. Use hardDeleteNotifikasjonByEksternId_V2 instead."
+    )
+
+    """
+    Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
+    """
+    hardDeleteNotifikasjonByEksternId_V2(
+        """
+        Merkelappen som dere ga oss da dere opprettet notifikasjonen.
+        """
+        merkelapp: String!
+
+        """
+        ID-en som dere ga oss da dere opprettet notifikasjonen.
+        """
+        eksternId: String!
+    ): HardDeleteNotifikasjonResultat!
+
+    """
+    Markerer en sak som slettet (soft delete).
+
+    Sak vil forsvinne helt for mottakeren: de vil ikke kunne se den på
+    noen som helst måte — som om saken aldri eksisterte.
+
+    Advarsel: det er ikke mulig å angre på denne operasjonen.
+    Advarsel: ingen notifikasjoner blir slettet, selv om de har samme grupperingsid.
+    """
+    softDeleteSak(id: ID!): SoftDeleteSakResultat!
+
+    """
+    Se dokumentasjon for `softDeleteSak(id)`.
+    """
+    softDeleteSakByGrupperingsid(
+        """
+        Merkelappen som dere ga oss da dere opprettet saken.
+        """
+        merkelapp: String!
+
+        """
+        ID-en som dere ga oss da dere opprettet saken.
+        """
+        grupperingsid: String!
+    ): SoftDeleteSakResultat!
+
+    """
+    Sletter en sak og tilhørende data helt fra databasen og kafka.
+    Formålet er å støtte juridiske krav om sletting i henhold til personvern.
+
+    Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
+    Advarsel: ingen notifikasjoner blir slettet (selv om de har samme grupperingsid).
+    """
+    hardDeleteSak(id: ID!): HardDeleteSakResultat!
+
+    """
+    Se dokumentasjon for `hardDeleteSak(id)`.
+    """
+    hardDeleteSakByGrupperingsid(
+        """
+        Merkelappen som dere ga oss da dere opprettet saken.
+        """
+        merkelapp: String!
+
+        """
+        ID-en som dere ga oss da dere opprettet saken.
+        """
+        grupperingsid: String!
+    ): HardDeleteSakResultat!
 }
 
 union SoftDeleteNotifikasjonResultat =
@@ -485,6 +569,32 @@ union HardDeleteNotifikasjonResultat =
 type HardDeleteNotifikasjonVellykket {
     """
     ID-en til oppgaven du "hard-delete"-et.
+    """
+    id: ID!
+}
+
+union SoftDeleteSakResultat =
+    | SoftDeleteSakVellykket
+    | UgyldigMerkelapp
+    | SakFinnesIkke
+    | UkjentProdusent
+
+type SoftDeleteSakVellykket {
+    """
+    ID-en til saken du "soft-delete"-et.
+    """
+    id: ID!
+}
+
+union HardDeleteSakResultat =
+    | HardDeleteSakVellykket
+    | UgyldigMerkelapp
+    | SakFinnesIkke
+    | UkjentProdusent
+
+type HardDeleteSakVellykket {
+    """
+    ID-en til saken du "hard-delete"-et.
     """
     id: ID!
 }

@@ -43,19 +43,6 @@ object HttpAuthProviders {
         }
     }
 
-    private val idportenIssuer = Regex(
-        option = RegexOption.COMMENTS,
-        pattern = """
-                ^ https://oidc .* difi .* \.no/idporten-oidc-provider/ $
-            """)
-
-    private val loginserviceIssuer = Regex(
-        option = RegexOption.COMMENTS,
-        pattern = """
-                ^ https://nav (no | test) b2c\.b2clogin\.com/ .* $
-             """
-    )
-
     val TOKEN_X by lazy {
         JWTAuthentication(
             name = "tokenx",
@@ -68,14 +55,8 @@ object HttpAuthProviders {
                 }
 
                 validate {
-                    val idp = it.payload.getClaim("idp").asString() ?: ""
-                    val fnrClaim = when {
-                        idp.matches(loginserviceIssuer) ->  "sub"
-                        idp.matches(idportenIssuer) -> "pid"
-                        else -> throw RuntimeException("Ukjent idp i TokenX-token")
-                    }
                     BrukerPrincipal(
-                        fnr = it.payload.getClaim(fnrClaim).asString()
+                        fnr = it.payload.getClaim("pid").asString()
                     )
                 }
             }
@@ -94,7 +75,7 @@ object HttpAuthProviders {
                 }
 
                 validate {
-                    BrukerPrincipal(fnr = it.payload.subject)
+                    BrukerPrincipal(fnr = it.payload.getClaim("pid").asString())
                 }
             }
         )

@@ -4,37 +4,33 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-class MutationHardDelete(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+internal class MutationHardDeleteSak(
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
     fun wire(runtime: RuntimeWiring.Builder) {
-        runtime.resolveSubtypes<HardDeleteNotifikasjonResultat>()
+        runtime.resolveSubtypes<HardDeleteSakResultat>()
 
         runtime.wire("Mutation") {
-            coDataFetcher("hardDeleteNotifikasjon") { env ->
+            coDataFetcher("hardDeleteSak") { env ->
                 hardDelete(
                     context = env.getContext(),
                     id = env.getTypedArgument("id")
                 )
             }
-            coDataFetcher("hardDeleteNotifikasjonByEksternId") { env ->
+            coDataFetcher("hardDeleteSakByGrupperingsid") { env ->
                 hardDelete(
                     context = env.getContext(),
-                    eksternId = env.getTypedArgument("eksternId"),
+                    grupperingsid = env.getTypedArgument("grupperingsid"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )
             }
@@ -42,48 +38,46 @@ class MutationHardDelete(
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
-    sealed interface HardDeleteNotifikasjonResultat
+    sealed interface HardDeleteSakResultat
 
-    @JsonTypeName("HardDeleteNotifikasjonVellykket")
-    data class HardDeleteNotifikasjonVellykket(
+    @JsonTypeName("HardDeleteSakVellykket")
+    data class HardDeleteSakVellykket(
         val id: UUID
-    ) : HardDeleteNotifikasjonResultat
+    ) : HardDeleteSakResultat
 
     private suspend fun hardDelete(
         context: ProdusentAPI.Context,
         id: UUID,
-    ): HardDeleteNotifikasjonResultat {
-        val notifikasjon = hentNotifikasjon(produsentRepository, id) { error -> return error }
-        return hardDelete(context, notifikasjon)
+    ): HardDeleteSakResultat {
+        val sak = hentSak(produsentRepository, id) { error -> return error }
+        return hardDelete(context, sak)
     }
 
     private suspend fun hardDelete(
         context: ProdusentAPI.Context,
-        eksternId: String,
+        grupperingsid: String,
         merkelapp: String,
-    ): HardDeleteNotifikasjonResultat {
-        val notifikasjon = hentNotifikasjon(produsentRepository, eksternId, merkelapp) { error -> return error }
-        return hardDelete(context, notifikasjon)
+    ): HardDeleteSakResultat {
+        val sak = hentSak(produsentRepository, grupperingsid, merkelapp) { error -> return error }
+        return hardDelete(context, sak)
     }
 
     private suspend fun hardDelete(
         context: ProdusentAPI.Context,
-        notifikasjon: ProdusentModel.Notifikasjon,
-    ): HardDeleteNotifikasjonResultat {
-        val produsent = hentProdusent(context) { error -> return error }
-        tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+        sak: ProdusentModel.Sak,
+    ): HardDeleteSakResultat {
+        val produsent = tilgangsstyrProdusent(context, sak.merkelapp) { error -> return error }
 
         val hardDelete = HardDelete(
             hendelseId = UUID.randomUUID(),
-            aggregateId = notifikasjon.id,
-            virksomhetsnummer = notifikasjon.virksomhetsnummer,
+            aggregateId = sak.id,
+            virksomhetsnummer = sak.virksomhetsnummer,
             deletedAt = OffsetDateTime.now(),
             produsentId = produsent.id,
             kildeAppNavn = context.appName
         )
 
-        kafkaProducer.sendHendelse(hardDelete)
-        produsentRepository.oppdaterModellEtterHendelse(hardDelete)
-        return HardDeleteNotifikasjonVellykket(notifikasjon.id)
+        hendelseDispatcher.send(hardDelete)
+        return HardDeleteSakVellykket(sak.id)
     }
 }

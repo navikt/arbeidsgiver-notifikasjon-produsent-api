@@ -3,23 +3,19 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelseMedKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.util.*
 
-class MutationNyOppgave(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+internal class MutationNyOppgave(
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
     private val log = logger()
@@ -111,8 +107,7 @@ class MutationNyOppgave(
         return when {
             eksisterende == null -> {
                 log.info("oppretter ny oppgave med id $id")
-                kafkaProducer.sendHendelseMedKey(id, domeneNyOppgave)
-                produsentRepository.oppdaterModellEtterHendelse(domeneNyOppgave)
+                hendelseDispatcher.send(domeneNyOppgave)
                 NyOppgaveVellykket(
                     id = id,
                     eksterneVarsler = domeneNyOppgave.eksterneVarsler.map {

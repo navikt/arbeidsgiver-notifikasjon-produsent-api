@@ -42,6 +42,7 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [DuplikatGrupperingsid](#duplikatgrupperingsid)
     * [EksterntVarsel](#eksterntvarsel)
     * [HardDeleteNotifikasjonVellykket](#harddeletenotifikasjonvellykket)
+    * [HardDeleteSakVellykket](#harddeletesakvellykket)
     * [Konflikt](#konflikt)
     * [Metadata](#metadata)
     * [NaermesteLederMottaker](#naermesteledermottaker)
@@ -59,6 +60,7 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [PageInfo](#pageinfo)
     * [SakFinnesIkke](#sakfinnesikke)
     * [SoftDeleteNotifikasjonVellykket](#softdeletenotifikasjonvellykket)
+    * [SoftDeleteSakVellykket](#softdeletesakvellykket)
     * [StatusOppdatering](#statusoppdatering)
     * [UgyldigMerkelapp](#ugyldigmerkelapp)
     * [UgyldigMottaker](#ugyldigmottaker)
@@ -98,6 +100,7 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [Error](#error)
   * [Unions](#unions)
     * [HardDeleteNotifikasjonResultat](#harddeletenotifikasjonresultat)
+    * [HardDeleteSakResultat](#harddeletesakresultat)
     * [MineNotifikasjonerResultat](#minenotifikasjonerresultat)
     * [Mottaker](#mottaker)
     * [Notifikasjon](#notifikasjon)
@@ -107,6 +110,7 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [NyStatusSakResultat](#nystatussakresultat)
     * [OppgaveUtfoertResultat](#oppgaveutfoertresultat)
     * [SoftDeleteNotifikasjonResultat](#softdeletenotifikasjonresultat)
+    * [SoftDeleteSakResultat](#softdeletesakresultat)
 
 </details>
 
@@ -513,7 +517,40 @@ Advarsel: det er ikke mulig å angre på denne operasjonen.
 <td></td>
 </tr>
 <tr>
-<td colspan="2" valign="top"><strong>softDeleteNotifikasjonByEksternId</strong></td>
+<td colspan="2" valign="top"><strong>softDeleteNotifikasjonByEksternId</strong> ⚠️</td>
+<td valign="top"><a href="#softdeletenotifikasjonresultat">SoftDeleteNotifikasjonResultat</a>!</td>
+<td>
+
+Se dokumentasjon for `softDeleteNotifikasjon(id)`.
+
+<p>⚠️ <strong>DEPRECATED</strong></p>
+<blockquote>
+
+Using the type ID for `eksternId` can lead to unexpected behaviour. Use softDeleteNotifikasjonByEksternId_V2 instead.
+
+</blockquote>
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Merkelappen som dere ga oss da dere opprettet notifikasjonen.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">eksternId</td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td>
+
+ID-en som dere ga oss da dere opprettet notifikasjonen.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>softDeleteNotifikasjonByEksternId_V2</strong></td>
 <td valign="top"><a href="#softdeletenotifikasjonresultat">SoftDeleteNotifikasjonResultat</a>!</td>
 <td>
 
@@ -532,7 +569,7 @@ Merkelappen som dere ga oss da dere opprettet notifikasjonen.
 </tr>
 <tr>
 <td colspan="2" align="right" valign="top">eksternId</td>
-<td valign="top"><a href="#id">ID</a>!</td>
+<td valign="top"><a href="#string">String</a>!</td>
 <td>
 
 ID-en som dere ga oss da dere opprettet notifikasjonen.
@@ -559,7 +596,40 @@ Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte 
 <td></td>
 </tr>
 <tr>
-<td colspan="2" valign="top"><strong>hardDeleteNotifikasjonByEksternId</strong></td>
+<td colspan="2" valign="top"><strong>hardDeleteNotifikasjonByEksternId</strong> ⚠️</td>
+<td valign="top"><a href="#harddeletenotifikasjonresultat">HardDeleteNotifikasjonResultat</a>!</td>
+<td>
+
+Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
+
+<p>⚠️ <strong>DEPRECATED</strong></p>
+<blockquote>
+
+Using the type ID for `eksternId` can lead to unexpected behaviour. Use hardDeleteNotifikasjonByEksternId_V2 instead.
+
+</blockquote>
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Merkelappen som dere ga oss da dere opprettet notifikasjonen.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">eksternId</td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td>
+
+ID-en som dere ga oss da dere opprettet notifikasjonen.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>hardDeleteNotifikasjonByEksternId_V2</strong></td>
 <td valign="top"><a href="#harddeletenotifikasjonresultat">HardDeleteNotifikasjonResultat</a>!</td>
 <td>
 
@@ -578,10 +648,102 @@ Merkelappen som dere ga oss da dere opprettet notifikasjonen.
 </tr>
 <tr>
 <td colspan="2" align="right" valign="top">eksternId</td>
-<td valign="top"><a href="#id">ID</a>!</td>
+<td valign="top"><a href="#string">String</a>!</td>
 <td>
 
 ID-en som dere ga oss da dere opprettet notifikasjonen.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>softDeleteSak</strong></td>
+<td valign="top"><a href="#softdeletesakresultat">SoftDeleteSakResultat</a>!</td>
+<td>
+
+Markerer en sak som slettet (soft delete).
+
+Sak vil forsvinne helt for mottakeren: de vil ikke kunne se den på
+noen som helst måte — som om saken aldri eksisterte.
+
+Advarsel: det er ikke mulig å angre på denne operasjonen.
+Advarsel: ingen notifikasjoner blir slettet, selv om de har samme grupperingsid.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">id</td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>softDeleteSakByGrupperingsid</strong></td>
+<td valign="top"><a href="#softdeletesakresultat">SoftDeleteSakResultat</a>!</td>
+<td>
+
+Se dokumentasjon for `softDeleteSak(id)`.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Merkelappen som dere ga oss da dere opprettet saken.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">grupperingsid</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+ID-en som dere ga oss da dere opprettet saken.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>hardDeleteSak</strong></td>
+<td valign="top"><a href="#harddeletesakresultat">HardDeleteSakResultat</a>!</td>
+<td>
+
+Sletter en sak og tilhørende data helt fra databasen og kafka.
+Formålet er å støtte juridiske krav om sletting i henhold til personvern.
+
+Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
+Advarsel: ingen notifikasjoner blir slettet (selv om de har samme grupperingsid).
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">id</td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>hardDeleteSakByGrupperingsid</strong></td>
+<td valign="top"><a href="#harddeletesakresultat">HardDeleteSakResultat</a>!</td>
+<td>
+
+Se dokumentasjon for `hardDeleteSak(id)`.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Merkelappen som dere ga oss da dere opprettet saken.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">grupperingsid</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+ID-en som dere ga oss da dere opprettet saken.
 
 </td>
 </tr>
@@ -840,6 +1002,30 @@ merkelappen.
 <td>
 
 ID-en til oppgaven du "hard-delete"-et.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### HardDeleteSakVellykket
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>id</strong></td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td>
+
+ID-en til saken du "hard-delete"-et.
 
 </td>
 </tr>
@@ -1312,6 +1498,30 @@ ID-en til oppgaven du oppdaterte.
 <td>
 
 ID-en til oppgaven du "soft-delete"-et.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### SoftDeleteSakVellykket
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>id</strong></td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td>
+
+ID-en til saken du "soft-delete"-et.
 
 </td>
 </tr>
@@ -2259,6 +2469,33 @@ av "eventual consistency" i systemet vårt.</td>
 </tbody>
 </table>
 
+#### HardDeleteSakResultat
+
+<table>
+<thead>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong><a href="#harddeletesakvellykket">HardDeleteSakVellykket</a></strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong></td>
+<td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#sakfinnesikke">SakFinnesIkke</a></strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
+</tbody>
+</table>
+
 #### MineNotifikasjonerResultat
 
 <table>
@@ -2511,6 +2748,33 @@ som ikke eksisterer.
 
 Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
 av "eventual consistency" i systemet vårt.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
+</tbody>
+</table>
+
+#### SoftDeleteSakResultat
+
+<table>
+<thead>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong><a href="#softdeletesakvellykket">SoftDeleteSakVellykket</a></strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong></td>
+<td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#sakfinnesikke">SakFinnesIkke</a></strong></td>
+<td></td>
 </tr>
 <tr>
 <td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>

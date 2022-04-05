@@ -1,16 +1,15 @@
 @file:Suppress("NAME_SHADOWING")
 
-package no.nav.arbeidsgiver.notifikasjon.produsent_api
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
@@ -24,15 +23,15 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
-// Legg til en test for sletting av én av flere rader i database
 
-class HardDeleteNotifikasjonTests : DescribeSpec({
+class SoftDeleteNotifikasjonTests : DescribeSpec({
+
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)
     val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
 
     mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
-    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>()) } returns Unit
+    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -79,9 +78,11 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
         notifikasjonId = uuid2,
     )
 
-    describe("HardDelete-oppførsel") {
+    describe("SoftDelete-oppførsel") {
 
-        context("Eksisterende oppgave blir slettet") {
+
+        context("Eksisterende oppgave blir markert som slettet") {
+
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet2)
@@ -89,9 +90,9 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteNotifikasjon(id: "$uuid") {
+                    softDeleteNotifikasjon(id: "$uuid") {
                         __typename
-                        ... on HardDeleteNotifikasjonVellykket {
+                        ... on SoftDeleteNotifikasjonVellykket {
                             id
                         }
                         ... on Error {
@@ -104,26 +105,27 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationHardDelete.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjon")
+                    response.getTypedContent<MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjon")
                 vellykket.id shouldBe uuid
             }
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>())
                 }
             }
 
-            it("har blitt fjernet fra modellen") {
-                val notifikasjon = produsentModel.hentNotifikasjon(uuid)
-                notifikasjon shouldBe null
+            it("har slettet-status i modellen") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid)!!
+                notifikasjon.deletedAt shouldNotBe null
             }
-            it("notifikasjon2 har ikke blitt fjernet fra modellen") {
-                val notifikasjon = produsentModel.hentNotifikasjon(uuid2)
-                notifikasjon shouldNotBe null
+            it("notifikasjon2 har ikke slettet-status i modellen") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid2)!!
+                notifikasjon.deletedAt shouldBe null
             }
 
-            it("mineNotifikasjoner rapporterer at notifikasjon ikke finnes") {
+
+            it("mineNotifikasjoner rapporterer som softDeleted") {
                 val response = engine.produsentApi(
                     """
                         query {
@@ -141,6 +143,19 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                                       __typename
                                       ... on Beskjed {
                                         mottaker {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
+                                        mottakere {
                                             __typename
                                             ... on AltinnMottaker {
                                                 serviceCode
@@ -185,6 +200,19 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                                                 virksomhetsnummer
                                             }
                                         }
+                                        mottakere {
+                                            __typename
+                                            ... on AltinnMottaker {
+                                                serviceCode
+                                                serviceEdition
+                                                virksomhetsnummer
+                                            }
+                                            ... on NaermesteLederMottaker {
+                                                ansattFnr
+                                                naermesteLederFnr
+                                                virksomhetsnummer
+                                            }
+                                        }
                                         metadata {
                                             __typename
                                             id
@@ -212,13 +240,13 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                     """
                 )
                 val slettetNotifikasjon =
-                    response
-                        .getTypedContent<JsonNode>("mineNotifikasjoner")["edges"]
-                        .toList()
-                        .map { it["node"] }
-                        .find { it["id"]?.asText() == uuid.toString() }
+                    response.getTypedContent<QueryMineNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
+                        .edges
+                        .map { it.node }
+                        .find { it.id == uuid }!!
 
-                slettetNotifikasjon shouldBe null
+                slettetNotifikasjon.metadata.softDeleted shouldBe true
+                slettetNotifikasjon.metadata.softDeletedAt shouldNotBe null
             }
         }
 
@@ -226,7 +254,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteNotifikasjon(id: "$uuid") {
+                    softDeleteNotifikasjon(id: "$uuid") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -237,7 +265,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjon")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("softDeleteNotifikasjon")
             }
         }
 
@@ -247,7 +275,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteNotifikasjon(id: "$uuid") {
+                    softDeleteNotifikasjon(id: "$uuid") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -258,15 +286,14 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.UgyldigMerkelapp>("hardDeleteNotifikasjon")
+                response.getTypedContent<Error.UgyldigMerkelapp>("softDeleteNotifikasjon")
             }
         }
     }
 
-    describe("hardDeleteNotifikasjonByEksternId-oppførsel") {
+    describe("softDeleteNotifikasjonByEksternId-oppførsel") {
 
-
-        context("Eksisterende oppgave blir slettet") {
+        context("Eksisterende oppgave blir markert som slettet") {
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet2)
@@ -274,9 +301,9 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
+                    softDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
                         __typename
-                        ... on HardDeleteNotifikasjonVellykket {
+                        ... on SoftDeleteNotifikasjonVellykket {
                             id
                         }
                         ... on Error {
@@ -289,24 +316,23 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationHardDelete.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjonByEksternId")
+                    response.getTypedContent<MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjonByEksternId")
                 vellykket.id shouldBe uuid
             }
 
             it("har sendt melding til kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<HardDelete>())
+                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>())
                 }
             }
 
-            it("finnes ikke i modellen") {
-                val notifikasjon = produsentModel.hentNotifikasjon(uuid)
-                notifikasjon shouldBe null
+            it("har fått slettet tidspunkt") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid)!!
+                notifikasjon.deletedAt shouldNotBe null
             }
-
-            it("oppgave2 finnes fortsatt i modellen") {
-                val notifikasjon = produsentModel.hentNotifikasjon(uuid2)
-                notifikasjon shouldNotBe null
+            it("oppgave 2 har ikke fått slettet tidspunkt") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid2)!!
+                notifikasjon.deletedAt shouldBe null
             }
         }
 
@@ -314,7 +340,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
+                    softDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -325,17 +351,18 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("softDeleteNotifikasjonByEksternId")
             }
         }
 
         context("Oppgave med feil merkelapp men riktig eksternId") {
+
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "nope$merkelapp") {
+                    softDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "nope$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -346,7 +373,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("softDeleteNotifikasjonByEksternId")
             }
         }
 
@@ -356,7 +383,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteNotifikasjonByEksternId(eksternId: "nope$eksternId", merkelapp: "$merkelapp") {
+                    softDeleteNotifikasjonByEksternId(eksternId: "nope$eksternId", merkelapp: "$merkelapp") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -367,7 +394,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             )
 
             it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("hardDeleteNotifikasjonByEksternId")
+                response.getTypedContent<Error.NotifikasjonFinnesIkke>("softDeleteNotifikasjonByEksternId")
             }
         }
     }

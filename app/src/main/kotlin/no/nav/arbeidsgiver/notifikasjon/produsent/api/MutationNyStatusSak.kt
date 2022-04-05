@@ -4,23 +4,19 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-class MutationNyStatusSak(
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+internal class MutationNyStatusSak(
+    private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
 
@@ -130,8 +126,7 @@ class MutationNyStatusSak(
                     idempotensKey = idempotencyKey,
                 )
 
-                kafkaProducer.sendHendelse(nyStatusSakHendelse)
-                produsentRepository.oppdaterModellEtterHendelse(nyStatusSakHendelse)
+                hendelseDispatcher.send(nyStatusSakHendelse)
                 NyStatusSakVellykket(
                     id = hendelseId
                 )

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.produsent_api
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest

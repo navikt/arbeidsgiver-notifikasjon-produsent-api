@@ -17,6 +17,10 @@ class StatistikkServiceImpl(
         .description("Antall notifikasjoner")
         .register(Health.meterRegistry)
 
+    private val antallSaker = MultiGauge.builder("antall_saker")
+        .description("Antall saker")
+        .register(Health.meterRegistry)
+
     private val antallUnikeTekster = MultiGauge.builder("antall_unike_tekster")
         .description("Unike tekster")
         .register(Health.meterRegistry)
@@ -43,6 +47,7 @@ class StatistikkServiceImpl(
 
     suspend fun updateGauges() {
         antallNotifikasjoner.register(statistikkModel.antallNotifikasjoner(), true)
+        antallSaker.register(statistikkModel.antallSaker(), true)
         antallUnikeTekster.register(statistikkModel.antallUnikeTekster(), true)
         antallKlikk.register(statistikkModel.antallKlikk(), true)
         antallUtførte.register(statistikkModel.antallUtførteHistogram(), true)
