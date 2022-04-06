@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.mockserver.MockServerListener
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
 import org.mockserver.client.MockServerClient
 import org.mockserver.model.HttpRequest
 import org.mockserver.model.HttpResponse
@@ -31,7 +32,7 @@ class EnhetsregisteretTests : DescribeSpec({
 
     describe("Brreg#hentEnhet") {
         context("når enhet finnes") {
-            val brreg = EnhetsregisteretImpl("http://$host:$port")
+            val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
             mockBrregResponse(
                 HttpResponse.response()
                     .withBody(enhetJson, Charsets.UTF_8)
@@ -53,7 +54,7 @@ class EnhetsregisteretTests : DescribeSpec({
             }
         }
         context("når enhet ikke finnes") {
-            val brreg = EnhetsregisteretImpl("http://$host:$port")
+            val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
             mockBrregResponse(HttpResponse.notFoundResponse())
             val enhet = brreg.hentUnderenhet(orgnr)
 
@@ -64,7 +65,7 @@ class EnhetsregisteretTests : DescribeSpec({
 
         /* hvis api-et er nede, hender det de returnerer html >:( */
         context("når ereg returnerer html") {
-            val brreg = EnhetsregisteretImpl("http://$host:$port")
+            val brreg = VirksomhetsinfoService(EnhetsregisteretImpl("http://$host:$port"))
             mockBrregResponse(
                 HttpResponse.response()
                     .withBody("<html>hello world </html>")

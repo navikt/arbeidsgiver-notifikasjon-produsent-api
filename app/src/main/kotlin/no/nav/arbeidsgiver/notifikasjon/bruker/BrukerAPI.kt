@@ -152,6 +152,7 @@ object BrukerAPI {
         tilgangerService: TilgangerService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
+            val virksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret)
 
             scalar(Scalars.ISO8601DateTime)
 
@@ -175,19 +176,19 @@ object BrukerAPI {
 
                 wire("Oppgave") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Notifikasjon.Oppgave>(enhetsregisteret, env)
+                        fetchVirksomhet<Notifikasjon.Oppgave>(virksomhetsinfoService, env)
                     }
                 }
 
                 wire("Beskjed") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Notifikasjon.Beskjed>(enhetsregisteret, env)
+                        fetchVirksomhet<Notifikasjon.Beskjed>(virksomhetsinfoService, env)
                     }
                 }
 
                 wire("Sak") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Sak>(enhetsregisteret, env)
+                        fetchVirksomhet<Sak>(virksomhetsinfoService, env)
                     }
                 }
             }
@@ -338,17 +339,16 @@ object BrukerAPI {
     }
 
     private suspend fun <T : WithVirksomhet> fetchVirksomhet(
-        enhetsregisteret: Enhetsregisteret,
+        virksomhetsinfoService: VirksomhetsinfoService,
         env: DataFetchingEnvironment
     ): Virksomhet {
         val source = env.getSource<T>()
         return if (env.selectionSet.contains("Virksomhet.navn")) {
-            enhetsregisteret.hentUnderenhet(source.virksomhet.virksomhetsnummer).let { enhet ->
-                Virksomhet(
-                    virksomhetsnummer = enhet.organisasjonsnummer,
-                    navn = enhet.navn
-                )
-            }
+            val underenhet = virksomhetsinfoService.hentUnderenhet(source.virksomhet.virksomhetsnummer)
+            Virksomhet(
+                virksomhetsnummer = underenhet.organisasjonsnummer,
+                navn = underenhet.navn
+            )
         } else {
             source.virksomhet
         }

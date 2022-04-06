@@ -50,12 +50,12 @@ class EnhetsregisteretImpl(
         expectSuccess = false
     }
 
-    val cache = SimpleLRUCache<String, Enhetsregisteret.Underenhet>(100_000) { orgnr ->
+    override suspend fun hentUnderenhet(orgnr: String) = timer.coRecord {
         val response: HttpResponse = try {
             httpClient.get("$baseUrl/enhetsregisteret/api/underenheter/$orgnr")
         } catch (e: Exception) {
             log.warn("kall mot $baseUrl feilet", e)
-            return@SimpleLRUCache Enhetsregisteret.Underenhet(orgnr, "")
+            return@coRecord Enhetsregisteret.Underenhet(orgnr, "")
         }
         if (response.status.isSuccess()) {
             try {
@@ -69,9 +69,4 @@ class EnhetsregisteretImpl(
             Enhetsregisteret.Underenhet(orgnr, "")
         }
     }
-
-    override suspend fun hentUnderenhet(orgnr: String): Enhetsregisteret.Underenhet =
-        timer.coRecord {
-            cache.get(orgnr)
-        }
 }
