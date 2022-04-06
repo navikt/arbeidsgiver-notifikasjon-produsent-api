@@ -8,8 +8,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
@@ -27,15 +26,9 @@ object Statistikk {
     @OptIn(ExperimentalTime::class)
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
+            val database = openDatabaseAsync(databaseConfig)
             val statistikkModelAsync = async {
-                try {
-                    val database = Database.openDatabase(databaseConfig)
-                    Health.subsystemReady[Subsystem.DATABASE] = true
-                    StatistikkModel(database)
-                } catch (e: Exception) {
-                    Health.subsystemAlive[Subsystem.DATABASE] = false
-                    throw e
-                }
+                StatistikkModel(database.await())
             }
 
             val statistikkServiceAsync = async {

@@ -10,8 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
@@ -55,15 +54,9 @@ object Produsent {
         altinn: Altinn = AltinnImpl(),
     ) {
         runBlocking(Dispatchers.Default) {
+            val database = openDatabaseAsync(databaseConfig)
             val produsentRepositoryAsync = async {
-                try {
-                    val database = Database.openDatabase(databaseConfig)
-                    Health.subsystemReady[Subsystem.DATABASE] = true
-                    ProdusentRepositoryImpl(database)
-                } catch (e: Exception) {
-                    Health.subsystemAlive[Subsystem.DATABASE] = false
-                    throw e
-                }
+                ProdusentRepositoryImpl(database.await())
             }
 
             launch {

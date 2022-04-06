@@ -17,9 +17,8 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
@@ -62,15 +61,9 @@ object Bruker {
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
+            val database = openDatabaseAsync(databaseConfig)
             val brukerRepositoryAsync = async {
-                try {
-                    val database = Database.openDatabase(databaseConfig)
-                    Health.subsystemReady[Subsystem.DATABASE] = true
-                    BrukerRepositoryImpl(database)
-                } catch (e: Exception) {
-                    Health.subsystemAlive[Subsystem.DATABASE] = false
-                    throw e
-                }
+                BrukerRepositoryImpl(database.await())
             }
 
             launch {
@@ -81,14 +74,7 @@ object Bruker {
             }
 
             val nærmesteLederModelAsync = async {
-                try {
-                    val database = Database.openDatabase(databaseConfig)
-                    Health.subsystemReady[Subsystem.DATABASE] = true
-                    NærmesteLederModelImpl(database)
-                } catch (e: Exception) {
-                    Health.subsystemAlive[Subsystem.DATABASE] = false
-                    throw e
-                }
+                NærmesteLederModelImpl(database.await())
             }
 
             val altinnRolleService = async<AltinnRolleService> {
