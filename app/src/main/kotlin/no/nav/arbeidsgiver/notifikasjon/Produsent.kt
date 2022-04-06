@@ -4,9 +4,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
@@ -49,7 +49,7 @@ object Produsent {
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         httpPort: Int = 8080,
         produsentRegister: ProdusentRegister = PRODUSENT_REGISTER,
-        altinn: Altinn = AltinnImpl(),
+        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
     ) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
@@ -79,11 +79,12 @@ object Produsent {
             )
 
             launch {
+                val altinnRolleService = AltinnRolleServiceImpl(altinnRolleClient, produsentRepositoryAsync.await().altinnRolle)
                 launchProcessingLoop(
                     "last Altinnroller",
                     pauseAfterEach = Duration.ofDays(1),
                 ) {
-                    AltinnRolleServiceImpl(altinn, produsentRepositoryAsync.await().altinnRolle).lastRollerFraAltinn()
+                    altinnRolleService.lastRollerFraAltinn()
                 }
             }
         }

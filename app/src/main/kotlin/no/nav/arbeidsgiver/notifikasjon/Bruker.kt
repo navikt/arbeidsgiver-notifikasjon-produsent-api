@@ -4,6 +4,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
@@ -54,6 +56,7 @@ object Bruker {
 
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
+        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
         altinn: Altinn = AltinnImpl(),
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         httpPort: Int = 8080
@@ -76,7 +79,7 @@ object Bruker {
             }
 
             val altinnRolleService = async<AltinnRolleService> {
-                AltinnRolleServiceImpl(altinn, brukerRepositoryAsync.await().altinnRolle)
+                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
             }
 
             launch {
