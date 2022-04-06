@@ -19,7 +19,6 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.BrukerPrincipal
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.ProdusentPrincipal
@@ -28,7 +27,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentConte
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.graphqlSetup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -106,12 +104,12 @@ const val BRUKER_HOST = "ag-notifikasjon-bruker-api.invalid"
 
 /* Issue tokens as localhost for unit testing */
 object LocalhostIssuer {
-    val issuer = "localhost"
-    val algorithm = Algorithm.none()
-    val brukerAudience = "localhost:bruker-api"
-    val produsentAudience = "localhost:bruker-api"
+    private const val issuer = "localhost"
+    val algorithm: Algorithm = Algorithm.none()
+    private const val brukerAudience = "localhost:bruker-api"
+    private const val produsentAudience = "localhost:bruker-api"
 
-    fun issueToken(
+    private fun issueToken(
         sub: String,
         audience: String,
         azp: String? = null

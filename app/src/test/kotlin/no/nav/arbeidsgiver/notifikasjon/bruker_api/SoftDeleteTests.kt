@@ -71,12 +71,6 @@ class SoftDeleteTests : DescribeSpec({
                 )
             )
 
-            val ansatte = listOf(NærmesteLederModel.NærmesteLederFor(
-                ansattFnr = mottaker.ansattFnr,
-                virksomhetsnummer = mottaker.virksomhetsnummer,
-            ))
-
-
             val notifikasjoner =
                 queryModel.hentNotifikasjoner(
                     mottaker.naermesteLederFnr,

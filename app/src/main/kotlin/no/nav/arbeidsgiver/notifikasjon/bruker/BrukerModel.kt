@@ -78,9 +78,9 @@ object BrukerModel {
     )
 
     data class Tilganger(
-        val tjenestetilganger: List<BrukerModel.Tilgang.Altinn> = listOf(),
-        val reportee: List<BrukerModel.Tilgang.AltinnReportee> = listOf(),
-        val rolle: List<BrukerModel.Tilgang.AltinnRolle> = listOf(),
+        val tjenestetilganger: List<Tilgang.Altinn> = listOf(),
+        val reportee: List<Tilgang.AltinnReportee> = listOf(),
+        val rolle: List<Tilgang.AltinnRolle> = listOf(),
         val harFeil: Boolean = false,
     ) {
 

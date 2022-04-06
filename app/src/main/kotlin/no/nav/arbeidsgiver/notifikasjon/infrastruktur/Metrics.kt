@@ -32,7 +32,7 @@ suspend fun <T> Timer.coRecord(body: suspend () -> T): T {
 
 fun <T: ExecutorService> T.produceMetrics(name: String): T {
     ExecutorServiceMetrics(this, name, emptyList())
-        .bindTo(Metrics.meterRegistry);
+        .bindTo(Metrics.meterRegistry)
     return this
 }
 

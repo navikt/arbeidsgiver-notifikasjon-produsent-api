@@ -79,7 +79,10 @@ object Produsent {
             )
 
             launch {
-                val altinnRolleService = AltinnRolleServiceImpl(altinnRolleClient, produsentRepositoryAsync.await().altinnRolle)
+                val altinnRolleService = AltinnRolleServiceImpl(
+                    altinnRolleClient,
+                    produsentRepositoryAsync.await().altinnRolle
+                )
                 launchProcessingLoop(
                     "last Altinnroller",
                     pauseAfterEach = Duration.ofDays(1),

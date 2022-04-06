@@ -37,7 +37,7 @@ class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
         env.tearDown()
     }
 
-    var groupIdCounter = AtomicInteger(0)
+    private var groupIdCounter = AtomicInteger(0)
 
     override fun newConsumer() =
         createKafkaConsumer {
