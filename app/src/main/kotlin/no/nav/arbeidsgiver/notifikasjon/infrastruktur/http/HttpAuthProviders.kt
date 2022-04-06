@@ -32,7 +32,7 @@ data class JWTAuthentication(
 )
 
 object HttpAuthProviders {
-    val log = logger()
+    private val log = logger()
 
     private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
@@ -148,6 +148,10 @@ object HttpAuthProviders {
         )
     }
 
+    fun Verification.`with id-porten login level 4`() {
+        withClaim("acr", "Level4")
+    }
+
     private fun JWTAuthenticationProvider.Configuration.verifier(
         audience: String,
         discoveryUrl: String,
@@ -164,43 +168,37 @@ object HttpAuthProviders {
         )
     }
 
-    private fun Verification.`with id-porten login level 4`() {
-        withClaim("acr", "Level4")
+    private fun JWTAuthenticationProvider.Configuration.verifier(
+        issuer: String,
+        jwksUri: String,
+        audience: String,
+        additionalVerification: Verification.() -> Unit = {},
+    ) {
+        log.info("configuring authentication $name with issuer: $issuer, jwksUri: $jwksUri, audience: $audience")
+
+        val jwkProvider = JwkProviderBuilder(URL(jwksUri))
+            .cached(10, 24, TimeUnit.HOURS)
+            .rateLimited(
+                10,
+                1,
+                TimeUnit.MINUTES
+            )
+            .build()
+
+        verifier(jwkProvider, issuer) {
+            withAudience(audience)
+            additionalVerification()
+        }
     }
+
+    /* Fields from https://datatracker.ietf.org/doc/html/rfc8414 */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class AuthorizationServerMetaData(
+        val issuer: String,
+        val jwks_uri: String,
+        val id_token_signing_alg_values_supported: List<String>? = null,
+    )
 }
-
-
-fun JWTAuthenticationProvider.Configuration.verifier(
-    issuer: String,
-    jwksUri: String,
-    audience: String,
-    additionalVerification: Verification.() -> Unit = {},
-) {
-    HttpAuthProviders.log.info("configuring authentication $name with issuer: $issuer, jwksUri: $jwksUri, audience: $audience")
-
-    val jwkProvider = JwkProviderBuilder(URL(jwksUri))
-        .cached(10, 24, TimeUnit.HOURS)
-        .rateLimited(
-            10,
-            1,
-            TimeUnit.MINUTES
-        )
-        .build()
-
-    verifier(jwkProvider, issuer) {
-        withAudience(audience)
-        additionalVerification()
-    }
-}
-
-
-/* Fields from https://datatracker.ietf.org/doc/html/rfc8414 */
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class AuthorizationServerMetaData(
-    val issuer: String,
-    val jwks_uri: String,
-    val id_token_signing_alg_values_supported: List<String>? = null,
-)
 
 fun Authentication.Configuration.configureProviders(providers: Iterable<JWTAuthentication>) {
     for ((name, config) in providers) {

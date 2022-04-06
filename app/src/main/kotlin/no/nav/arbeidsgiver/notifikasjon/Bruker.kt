@@ -87,22 +87,19 @@ object Bruker {
             }
 
             launch {
-                if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
-                    log.info("KafkaConsumer er deaktivert.")
-                } else {
-                    val nærmesteLederModel = nærmesteLederModelAsync.await()
-                    val nærmesteLederLeesahTopic = "teamsykmelding.syfo-narmesteleder-leesah"
-                    val nærmesteLederKafkaConsumer = createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
-                            putAll(
-                                mapOf(
-                                    ConsumerConfig.GROUP_ID_CONFIG to "notifikasjon-bruker-api-narmesteleder-model-builder",
-                                    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
-                                )
+                val nærmesteLederLeesahTopic = "teamsykmelding.syfo-narmesteleder-leesah"
+                val nærmesteLederKafkaConsumer = createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
+                        putAll(
+                            mapOf(
+                                ConsumerConfig.GROUP_ID_CONFIG to "notifikasjon-bruker-api-narmesteleder-model-builder",
+                                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
                             )
-                        }
-                    nærmesteLederKafkaConsumer.forEachEvent { event ->
-                        nærmesteLederModel.oppdaterModell(event)
+                        )
                     }
+                val nærmesteLederModel = nærmesteLederModelAsync.await()
+
+                nærmesteLederKafkaConsumer.forEachEvent { event ->
+                    nærmesteLederModel.oppdaterModell(event)
                 }
             }
 

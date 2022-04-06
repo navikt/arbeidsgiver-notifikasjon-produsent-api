@@ -107,7 +107,7 @@ const val BRUKER_HOST = "ag-notifikasjon-bruker-api.invalid"
 /* Issue tokens as localhost for unit testing */
 object LocalhostIssuer {
     private const val issuer = "localhost"
-    val algorithm: Algorithm? = Algorithm.none()
+    val algorithm: Algorithm = Algorithm.none()
     private const val brukerAudience = "localhost:bruker-api"
     private const val produsentAudience = "localhost:bruker-api"
 

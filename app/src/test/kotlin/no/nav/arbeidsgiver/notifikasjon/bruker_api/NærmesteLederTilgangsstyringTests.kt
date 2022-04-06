@@ -60,13 +60,11 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098571"),
         ).also { model.oppdaterModellEtterHendelse(it) }
 
-        model.oppdaterModellEtterHendelse(
-            beskjedOpprettet(
-                eksternId = "2",
-                mottaker = mottaker2,
-                id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098572"),
-            )
-        )
+        beskjedOpprettet(
+            eksternId = "2",
+            mottaker = mottaker2,
+            id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098572"),
+        ).also { model.oppdaterModellEtterHendelse(it) }
 
         val beskjed3 = beskjedOpprettet(
             eksternId = "3",

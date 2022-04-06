@@ -30,10 +30,11 @@ class AltinnRolleServiceImpl(
         }
     }
 
-    private suspend fun hentOgSettAlleRollerByCode(): Map<String, AltinnRolle> {
-        return altinnRolleRepository.hentAlleAltinnRoller()
-            .associateBy(AltinnRolle::RoleDefinitionCode).also {
+    private suspend fun hentOgSettAlleRollerByCode(): Map<String, AltinnRolle> =
+        altinnRolleRepository
+            .hentAlleAltinnRoller()
+            .associateBy(AltinnRolle::RoleDefinitionCode)
+            .also {
                 alleRollerByCode = it
             }
-    }
 }

@@ -268,9 +268,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: NyStatusSak) {
         database.transaction {
-            val sakId = finnDbSakId(nyStatusSak.sakId)
-                ?: return@transaction /* log? metric? */
-
+            val sakId = finnDbSakId(nyStatusSak.sakId) ?: return@transaction // log? metric?
             executeUpdate("""
                 insert into sak_status
                 (id, idempotence_key, sak_id, status, overstyr_statustekst_med, tidspunkt_oppgitt, tidspunkt_mottatt)
