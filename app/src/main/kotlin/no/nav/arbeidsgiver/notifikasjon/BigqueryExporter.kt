@@ -82,7 +82,6 @@ object BigqueryExporter {
                     put(ConsumerConfig.GROUP_ID_CONFIG, "bigquery-exporter")
                 }
 
-                kafkaConsumer.seekToBeginningOnAssignment()
                 kafkaConsumer.forEachEvent { hendelse, metadata ->
                     if (hendelse is HendelseModel.HardDelete) {
                         delete(hendelse.aggregateId)
