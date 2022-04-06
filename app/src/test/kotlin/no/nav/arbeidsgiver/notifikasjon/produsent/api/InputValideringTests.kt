@@ -4,8 +4,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldContainIgnoringCase
-import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import kotlin.time.ExperimentalTime
@@ -13,12 +11,7 @@ import kotlin.time.ExperimentalTime
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class InputValideringTests : DescribeSpec({
-    val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = mockk(),
-            produsentRepository = mockk()
-        )
-    )
+    val engine = ktorProdusentTestServer()
 
     describe("input-validering av produsent-api") {
         context("når tekst er over 300 tegn") {

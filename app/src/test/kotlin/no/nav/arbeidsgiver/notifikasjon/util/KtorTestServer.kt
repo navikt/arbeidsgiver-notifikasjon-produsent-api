@@ -10,22 +10,49 @@ import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerService
+import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.BrukerPrincipal
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.ProdusentPrincipal
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.graphqlSetup
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.stubProdusentRegister
 import org.intellij.lang.annotations.Language
 
 fun Spec.ktorBrukerTestServer(
-    brukerGraphQL: TypedGraphQL<BrukerAPI.Context> = mockk(),
+    enhetsregisteret: Enhetsregisteret = EnhetsregisteretStub(),
+    brukerRepository: BrukerRepository = mockk(relaxed = true),
+    kafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse> = mockk(relaxed = true),
+    altinn: Altinn = AltinnStub(),
+    altinnRolleService: AltinnRolleService = mockk(relaxed = true),
+    tilgangerService: TilgangerService = TilgangerServiceImpl(altinn, altinnRolleService),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
     val engine = TestApplicationEngine(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
+    )
+    val brukerGraphQL = BrukerAPI.createBrukerGraphQL(
+        enhetsregisteret = enhetsregisteret,
+        brukerRepository= brukerRepository,
+        kafkaProducer = kafkaProducer,
+        tilgangerService = tilgangerService,
     )
     listener(KtorTestListener(engine) {
         graphqlSetup(
@@ -39,12 +66,14 @@ fun Spec.ktorBrukerTestServer(
 
 fun Spec.ktorProdusentTestServer(
     produsentRegister: ProdusentRegister = stubProdusentRegister,
-    produsentGraphQL: TypedGraphQL<ProdusentAPI.Context> = mockk(),
+    kafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse> = mockk(relaxed = true),
+    produsentRepository: ProdusentRepository = mockk(relaxed = true),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
     val engine = TestApplicationEngine(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
+    val produsentGraphQL = ProdusentAPI.newGraphQL(kafkaProducer, produsentRepository)
     listener(KtorTestListener(engine) {
         graphqlSetup(
             authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),

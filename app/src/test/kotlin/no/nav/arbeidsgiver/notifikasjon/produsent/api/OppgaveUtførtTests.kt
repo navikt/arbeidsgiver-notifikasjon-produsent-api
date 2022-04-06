@@ -12,11 +12,8 @@ import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationOppgaveUtfoert
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -37,10 +34,8 @@ class OppgaveUtførtTests : DescribeSpec({
     }
 
     val engine = ktorProdusentTestServer(
-        produsentGraphQL = ProdusentAPI.newGraphQL(
-            kafkaProducer = kafkaProducer,
-            produsentRepository = produsentModel
-        )
+        kafkaProducer = kafkaProducer,
+        produsentRepository = produsentModel
     )
 
 
