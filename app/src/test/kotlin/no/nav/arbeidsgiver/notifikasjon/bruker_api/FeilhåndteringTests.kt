@@ -10,7 +10,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnRolleServiceStub
@@ -21,22 +20,17 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 
 class FeilhåndteringTests : DescribeSpec({
     val queryModel: BrukerRepositoryImpl = mockk()
-
-    val suspendingAltinnClient: SuspendingAltinnClient = mockk()
-
+    val suspendingAltinnClient = mockk<SuspendingAltinnClient>()
     val engine = ktorBrukerTestServer(
-        tilgangerService = TilgangerServiceImpl(
-            altinn = AltinnImpl(
-                suspendingAltinnClient
-            ),
-            altinnRolleService = AltinnRolleServiceStub(),
+        altinn = AltinnImpl(
+            suspendingAltinnClient
         ),
+        altinnRolleService = AltinnRolleServiceStub(),
         brukerRepository = queryModel,
     )
 
     describe("graphql bruker-api feilhåndtering errors tilganger") {
         context("Feil Altinn, DigiSyfo ok") {
-
             coEvery {
                 suspendingAltinnClient.hentOrganisasjoner(any(), any(), any(), any(), any())
             } returns null
