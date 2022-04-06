@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
@@ -57,7 +58,8 @@ object Bruker {
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
-        altinn: Altinn = AltinnImpl(),
+        suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(),
+        altinn: Altinn = AltinnImpl(suspendingAltinnClient),
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         httpPort: Int = 8080
     ) {
