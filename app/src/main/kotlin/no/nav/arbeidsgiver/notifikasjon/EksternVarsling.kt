@@ -1,14 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon
 
 import io.ktor.application.*
-import io.ktor.features.*
 import io.ktor.http.*
-import io.ktor.jackson.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import io.ktor.util.pipeline.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -24,9 +20,7 @@ import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.LokalOsloTidImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.TimedContentConverter
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
@@ -57,7 +51,13 @@ object EksternVarsling {
                     eksternVarslingRepository = eksternVarslingRepository,
                     altinnVarselKlient = basedOnEnv(
                         prod = { AltinnVarselKlientImpl() },
-                        dev = { AltinnVarselKlientMedFilter(eksternVarslingRepository, AltinnVarselKlientImpl(), AltinnVarselKlientLogging()) },
+                        dev = {
+                            AltinnVarselKlientMedFilter(
+                                eksternVarslingRepository,
+                                AltinnVarselKlientImpl(),
+                                AltinnVarselKlientLogging()
+                            )
+                        },
                         other = { AltinnVarselKlientLogging() },
                     ),
                     kafkaProducer = createKafkaProducer(),
@@ -66,32 +66,25 @@ object EksternVarsling {
                 service.start(this)
             }
 
-            launch {
-                embeddedServer(Netty, port = httpPort) {
-                    installMetrics()
-                    install(ContentNegotiation) {
-                        register(ContentType.Application.Json, TimedContentConverter(JacksonConverter(laxObjectMapper)))
+            launchHttpServer(
+                httpPort = httpPort,
+                customRoute = {
+                    val internalTestClient = basedOnEnv(
+                        prod = { AltinnVarselKlientImpl() },
+                        dev = { AltinnVarselKlientImpl() },
+                        other = { AltinnVarselKlientLogging() }
+                    )
+                    get("/internal/send_sms") {
+                        testSms(internalTestClient)
                     }
-                    routing {
-                        internalRoutes()
-
-                        val internalTestClient = basedOnEnv(
-                            prod = { AltinnVarselKlientImpl() },
-                            dev = { AltinnVarselKlientImpl() },
-                            other = { AltinnVarselKlientLogging() }
-                        )
-                        get("/internal/send_sms") {
-                            testSms(internalTestClient)
-                        }
-                        get("/internal/send_epost") {
-                            testEpost(internalTestClient)
-                        }
-                        post("/internal/update_emergency_brake") {
-                            updateEmergencyBrake(eksternVarslingModelAsync.await())
-                        }
+                    get("/internal/send_epost") {
+                        testEpost(internalTestClient)
                     }
-                }.start(wait = true)
-            }
+                    post("/internal/update_emergency_brake") {
+                        updateEmergencyBrake(eksternVarslingModelAsync.await())
+                    }
+                }
+            )
         }
     }
 }

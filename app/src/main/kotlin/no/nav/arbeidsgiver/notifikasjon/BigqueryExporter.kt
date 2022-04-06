@@ -4,22 +4,21 @@ import com.google.cloud.bigquery.BigQueryOptions
 import com.google.cloud.bigquery.InsertAllRequest
 import com.google.cloud.bigquery.QueryJobConfiguration
 import com.google.cloud.bigquery.QueryParameterValue
-import io.ktor.routing.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.installMetrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.internalRoutes
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.time.Instant
 import java.util.*
+import kotlin.collections.listOf
+import kotlin.collections.mapOf
+import kotlin.collections.set
 
 object BigqueryExporter {
     val log = logger()
@@ -93,14 +92,7 @@ object BigqueryExporter {
                 }
             }
 
-            launch {
-                embeddedServer(Netty, port = httpPort) {
-                    installMetrics()
-                    routing {
-                        internalRoutes()
-                    }
-                }.start(wait = true)
-            }
+            launchHttpServer(httpPort = httpPort)
         }
     }
 }

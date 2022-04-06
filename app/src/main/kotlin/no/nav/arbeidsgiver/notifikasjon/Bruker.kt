@@ -1,7 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -23,7 +21,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.httpServerSetup
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createAndSubscribeKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
@@ -116,20 +114,12 @@ object Bruker {
                 )
             }
 
-            launch {
-                val httpServer = embeddedServer(Netty, port = httpPort, configure = {
-                    connectionGroupSize = 16
-                    callGroupSize = 16
-                    workerGroupSize = 16
-                }) {
-                    httpServerSetup(
-                        authProviders = authProviders,
-                        extractContext = extractBrukerContext,
-                        graphql = graphql,
-                    )
-                }
-                httpServer.start(wait = true)
-            }
+            launchGraphqlServer(
+                httpPort = httpPort,
+                authProviders = authProviders,
+                extractContext = extractBrukerContext,
+                graphql = graphql,
+            )
 
             launch {
                 launchProcessingLoop(
