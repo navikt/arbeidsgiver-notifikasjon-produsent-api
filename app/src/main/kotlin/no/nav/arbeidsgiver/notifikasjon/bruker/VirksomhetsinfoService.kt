@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret.Underenhet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SimpleLRUCache
@@ -13,4 +14,12 @@ class VirksomhetsinfoService(
 
     suspend fun hentUnderenhet(virksomhetsnummer: String): Underenhet =
         cache.get(virksomhetsnummer)
+
+    fun altinnObserver(altinnReportee: AltinnReportee) {
+        val virksomhetsnummer = altinnReportee.organizationNumber ?: return
+        cache.put(virksomhetsnummer, Underenhet(
+            navn = altinnReportee.name,
+            organisasjonsnummer = virksomhetsnummer,
+        ))
+    }
 }

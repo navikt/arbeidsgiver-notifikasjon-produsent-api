@@ -18,6 +18,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 
 class SuspendingAltinnClient(
     private val blockingClient: AltinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(AltinnConfig.config),
+    private val observer: (AltinnReportee) -> Unit,
 ) {
     private val log = logger()
 
@@ -45,6 +46,9 @@ class SuspendingAltinnClient(
                 )
             }
         }
+            .apply {
+                this?.onEach(observer)
+            }
 
     suspend fun hentOrganisasjoner(
         selvbetjeningToken: SelvbetjeningToken,
@@ -60,6 +64,9 @@ class SuspendingAltinnClient(
                 )
             }
         }
+            .apply {
+                this?.onEach(observer)
+            }
 
 
     private suspend fun <T> withErrorHandler(body: suspend () -> List<T>): List<T>? =
