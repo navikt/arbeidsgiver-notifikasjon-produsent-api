@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.executable.produsent_api
 
-import db.migration.OS
 import no.nav.arbeidsgiver.notifikasjon.Produsent as ProdusentMain
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.FAGER_TESTPRODUSENT
@@ -11,7 +10,6 @@ import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_PRODUSENT_AUTHENTICATION
 
 /* Produsent api */
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
-    OS.setupLocal()
     ProdusentMain.main(
         httpPort = 8081,
         authProviders = listOf(
