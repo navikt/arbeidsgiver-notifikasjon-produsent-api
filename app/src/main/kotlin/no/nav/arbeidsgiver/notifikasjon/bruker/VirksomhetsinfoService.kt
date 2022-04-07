@@ -3,12 +3,12 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret.Underenhet
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SimpleLRUCache
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.FunkyCache
 
 class VirksomhetsinfoService(
     enhetsregisteret: Enhetsregisteret,
 ) {
-    private val cache = SimpleLRUCache<String, Underenhet>(100_000) { orgnr ->
+    private val cache = FunkyCache<String, Underenhet>(100_000) { orgnr ->
         enhetsregisteret.hentUnderenhet(orgnr)
     }
 

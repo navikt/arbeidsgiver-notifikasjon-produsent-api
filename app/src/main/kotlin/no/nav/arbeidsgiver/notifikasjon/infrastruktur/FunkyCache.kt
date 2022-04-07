@@ -6,7 +6,17 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 
-class SimpleLRUCache<K: Any, V>(maxCapacity : Int, val loader: suspend (K) -> V) {
+/**
+ * A bit funky combination of LRU and expiry cache. They don't really mesh
+ * with this simple implementation.
+ *
+ * 1) If full, it deletes the least recently accessed element.
+ * 2) It never returns an "expired" value.
+ * 3) Space-usage is not optimal, because recently used but expired elements are not removed until it either:
+ *    a) it becomes the least recently used, or
+ *    b) it is accessed.
+ */
+class FunkyCache<K: Any, V>(maxCapacity : Int, val loader: suspend (K) -> V) {
     private val cache = ExpiringMap<K, V>(maxCapacity)
     private val mutexes = MutexMap<K>()
 
@@ -44,7 +54,7 @@ private class ExpiringMap<K, V>(
     )
 
     private class ValueWithExpiry<T>(val value: T) {
-        val expires: Instant = Instant.now() + Duration.ofHours(12)
+        private val expires: Instant = Instant.now() + Duration.ofHours(12)
         val expired: Boolean
             get() = Instant.now().isAfter(expires)
     }

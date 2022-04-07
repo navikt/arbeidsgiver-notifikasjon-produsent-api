@@ -11,7 +11,7 @@ class SimpleLRUCacheTests: DescribeSpec({
     describe("lru cache") {
         val callCounter = AtomicInteger()
 
-        val cache = SimpleLRUCache<String, Int>(100) {
+        val cache = FunkyCache<String, Int>(100) {
             delay(10)
             callCounter.incrementAndGet()
             0
