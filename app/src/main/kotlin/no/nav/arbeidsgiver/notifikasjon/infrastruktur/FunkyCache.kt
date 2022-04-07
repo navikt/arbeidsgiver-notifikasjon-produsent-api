@@ -17,28 +17,37 @@ import java.util.*
  *    b) it is accessed.
  */
 class FunkyCache<K: Any, V>(maxCapacity : Int, val loader: suspend (K) -> V) {
+    private val log = logger()
     private val cache = ExpiringMap<K, V>(maxCapacity)
     private val mutexes = MutexMap<K>()
 
-    suspend fun get(key: K) : V =
-        mutexes.withLock(key) {
+    suspend fun get(key: K) : V {
+        val value = mutexes.withLock(key) {
             cache[key] ?: loader(key).also {
                 cache[key] = it
             }
         }
+        log.debug("cache($this)['$key'] => $value")
+        return value
+    }
 
-    fun put(key: K, value: V) {
-        cache[key] = value
+    suspend fun put(key: K, value: V) {
+        log.debug("cache($this)['$key'] = $value")
+        mutexes.withLock(key) {
+            cache[key] = value
+        }
     }
 }
 
 private class MutexMap<K> {
+    private val log = logger()
     private val mutexes: MutableMap<K, Mutex> = Collections.synchronizedMap(WeakHashMap())
 
     private fun getMutex(key: K): Mutex = mutexes.computeIfAbsent(key) { Mutex() }
 
     suspend fun <T> withLock(key: K, body: suspend () -> T): T =
         getMutex(key).withLock {
+            log.debug("Mutex($this)(key:$key).withLock()")
             body()
         }
 }
@@ -46,6 +55,7 @@ private class MutexMap<K> {
 private class ExpiringMap<K, V>(
     private val maxCapacity: Int
 ) {
+    private val log = logger()
     private val expiryMap = Collections.synchronizedMap(
         object : LinkedHashMap<K, ValueWithExpiry<V>>(16, .75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, ValueWithExpiry<V>>) =
@@ -60,11 +70,13 @@ private class ExpiringMap<K, V>(
     }
 
     operator fun set(key: K, value: V) {
+        log.debug("ExpiringMap($this).set($key, $value)")
         expiryMap[key] = ValueWithExpiry(value)
     }
 
     operator fun get(key: K): V? {
         val value = expiryMap[key]
+        log.debug("ExpiringMap($this).get($key) => ${value?.value} (expired? => ${value?.expired})")
         return when {
             value == null -> null
             value.expired -> null
