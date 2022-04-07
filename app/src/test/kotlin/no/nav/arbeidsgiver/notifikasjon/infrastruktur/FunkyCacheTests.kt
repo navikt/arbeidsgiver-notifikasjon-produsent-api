@@ -7,7 +7,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicInteger
 
-class SimpleLRUCacheTests: DescribeSpec({
+class FunkyCacheTests: DescribeSpec({
     describe("lru cache") {
         val callCounter = AtomicInteger()
 
