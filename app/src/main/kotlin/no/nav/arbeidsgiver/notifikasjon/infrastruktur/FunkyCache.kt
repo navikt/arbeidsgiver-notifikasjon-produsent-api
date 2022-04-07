@@ -27,7 +27,7 @@ class FunkyCache<K: Any, V>(maxCapacity : Int, val loader: suspend (K) -> V) {
             }
         }
 
-    fun put(key: K, value: V) {
+    suspend fun put(key: K, value: V) = mutexes.withLock(key) {
         cache[key] = value
     }
 }
