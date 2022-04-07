@@ -23,12 +23,7 @@ class VirksomhetsinfoService(
 
     fun altinnObserver(altinnReportee: AltinnReportee) {
         log.debug("observe altinn $altinnReportee")
-        val virksomhetsnummer = altinnReportee.organizationNumber
-        if (virksomhetsnummer == null) {
-            log.debug("altinnReportee.organizationNumber == null for $altinnReportee")
-            return
-        }
-        log.debug("put in cache $altinnReportee")
+        val virksomhetsnummer = altinnReportee.organizationNumber ?: return
         cache.put(virksomhetsnummer, Underenhet(
             navn = altinnReportee.name,
             organisasjonsnummer = virksomhetsnummer,
