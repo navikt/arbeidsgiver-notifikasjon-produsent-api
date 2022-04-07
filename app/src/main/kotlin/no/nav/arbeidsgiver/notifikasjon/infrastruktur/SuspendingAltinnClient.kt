@@ -6,6 +6,9 @@ import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.toList
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
@@ -18,7 +21,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 
 class SuspendingAltinnClient(
     private val blockingClient: AltinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(AltinnConfig.config),
-    private val observer: (AltinnReportee) -> Unit,
+    private val observer: suspend (AltinnReportee) -> Unit,
 ) {
     private val log = logger()
 
@@ -47,7 +50,7 @@ class SuspendingAltinnClient(
             }
         }
             .apply {
-                this?.onEach(observer)
+                this?.asFlow()?.onEach(observer)?.toList()
             }
 
     suspend fun hentOrganisasjoner(
@@ -65,7 +68,7 @@ class SuspendingAltinnClient(
             }
         }
             .apply {
-                this?.onEach(observer)
+                this?.asFlow()?.onEach(observer)?.toList()
             }
 
 
