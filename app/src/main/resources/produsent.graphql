@@ -293,7 +293,7 @@ type Mutation {
         NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
         til en notifikasjon. De tilgangsstyres hver for seg.
         """
-        mottakere: [MottakerInput!]!
+        mottakere: [MottakerInput!]! @Validate
 
         """En tittel på saken, som vises til brukeren."""
         tittel: String!
@@ -321,7 +321,7 @@ type Mutation {
         """
         Oppgi dersom dere ønsker at hard delete skal skeduleres
         """
-        hardDelete: FutureTemporalInput
+        hardDelete: FutureTemporalInput @Validate
     ): NySakResultat!
 
     nyStatusSak(
@@ -921,7 +921,7 @@ input MetadataInput {
 }
 
 input FutureTemporalInput @ExactlyOneFieldGiven {
-    etter: ISO8601LocalDateTime
+    den: ISO8601LocalDateTime
     om: ISO8601Duration
 }
 

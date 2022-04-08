@@ -39,6 +39,11 @@ object HendelseModel {
         val sakId: UUID
     }
 
+    sealed interface LocalDateTimeOrDuration {
+        data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration
+        data class Duration(val value: java.time.Duration): LocalDateTimeOrDuration
+    }
+
     @JsonTypeName("SakOpprettet")
     data class SakOpprettet
     @JsonIgnore constructor(
@@ -55,6 +60,7 @@ object HendelseModel {
         val lenke: String,
         val oppgittTidspunkt: OffsetDateTime?,
         val mottattTidspunkt: OffsetDateTime,
+        val hardDelete: LocalDateTimeOrDuration?,
     ) : Hendelse(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
@@ -89,6 +95,7 @@ object HendelseModel {
                 * custom-deserializeren. */
                 oppgittTidspunkt: OffsetDateTime?,
                 mottattTidspunkt: OffsetDateTime?,
+                hardDelete: LocalDateTimeOrDuration?,
             ) = SakOpprettet(
                 hendelseId = hendelseId,
                 virksomhetsnummer = virksomhetsnummer,
@@ -102,6 +109,7 @@ object HendelseModel {
                 lenke = lenke,
                 oppgittTidspunkt = oppgittTidspunkt,
                 mottattTidspunkt = mottattTidspunkt ?: OffsetDateTime.now(),
+                hardDelete = hardDelete,
             )
         }
     }

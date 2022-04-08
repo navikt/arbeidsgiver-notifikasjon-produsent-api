@@ -351,6 +351,7 @@ object EksempelHendelse {
         lenke = "#foo",
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
     )
     val NyStatusSak = HendelseModel.NyStatusSak(
         hendelseId = uuid("1"),

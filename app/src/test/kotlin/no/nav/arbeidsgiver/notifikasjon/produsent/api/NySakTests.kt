@@ -4,23 +4,24 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.instanceOf
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
+import no.nav.arbeidsgiver.notifikasjon.util.StubbedKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import java.time.LocalDateTime
 import java.util.*
 
 class NySakTests: DescribeSpec({
-    val embeddedKafka = embeddedKafka()
-
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
-
+    val stubbedKafkaProducer = StubbedKafkaProducer()
     val engine = ktorProdusentTestServer(
-        kafkaProducer = embeddedKafka.newProducer(),
+        kafkaProducer = stubbedKafkaProducer,
         produsentRepository = produsentRepository,
     )
 
@@ -87,6 +88,20 @@ class NySakTests: DescribeSpec({
         it("should be fail because status is different") {
             response7.getTypedContent<String>("$.nySak.__typename") shouldBe "DuplikatGrupperingsid"
         }
+
+        val response8 = engine.nySak(
+            hardDelete = LocalDateTime.now()
+        )
+        it("should be successful") {
+            response8.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
+        }
+        it("should have hard delete in kafka message") {
+            val hendelse = stubbedKafkaProducer.records
+                .map { it.value() }
+                .filterIsInstance<HendelseModel.SakOpprettet>()
+                .last()
+            hendelse.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
+        }
     }
 })
 
@@ -96,6 +111,7 @@ private fun TestApplicationEngine.nySak(
     status: SaksStatus = SaksStatus.MOTTATT,
     tittel: String = "tittel",
     lenke: String = "lenke",
+    hardDelete: LocalDateTime? = null,
 ) =
     produsentApi(
         """
@@ -114,6 +130,10 @@ private fun TestApplicationEngine.nySak(
                     tidspunkt: "2020-01-01T01:01Z"
                     tittel: "$tittel"
                     lenke: "$lenke"
+                    ${hardDelete?.let {"""
+                        |hardDelete: {
+                        |  den: "$it"
+                        |}""".trimMargin()} ?: ""}
                 ) {
                     __typename
                     ... on NySakVellykket {

@@ -119,6 +119,7 @@ class HardDeleteTests : DescribeSpec({
             produsentId = "",
             mottattTidspunkt = OffsetDateTime.now(),
             oppgittTidspunkt = null,
+            hardDelete = null,
         )
         val opprettStatusEvent = fun (id: UUID) = HendelseModel.NyStatusSak(
             hendelseId = id,

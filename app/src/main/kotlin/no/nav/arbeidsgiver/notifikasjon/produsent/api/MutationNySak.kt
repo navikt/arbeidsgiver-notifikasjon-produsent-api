@@ -46,7 +46,8 @@ internal class MutationNySak(
                             status = env.getTypedArgument("initiell_status"),
                             tidspunkt = env.getTypedArgumentOrNull("tidspunkt"),
                             overstyrStatustekstMed = env.getTypedArgumentOrNull("overstyrStatustekstMed"),
-                        )
+                        ),
+                        hardDelete = env.getTypedArgumentOrNull("hardDelete"),
                     )
                 )
             }
@@ -128,6 +129,7 @@ internal class MutationNySak(
         val tittel: String,
         val lenke: String,
         val status: SaksStatusInput,
+        val hardDelete: FutureTemporalInput?,
     ) {
         suspend fun somSakOpprettetHendelse(
             id: UUID,
@@ -148,6 +150,7 @@ internal class MutationNySak(
             lenke = lenke,
             oppgittTidspunkt = status.tidspunkt,
             mottattTidspunkt = mottattTidspunkt,
+            hardDelete = hardDelete?.tilDomene(),
         )
 
         fun somNyStatusSakHendelse(

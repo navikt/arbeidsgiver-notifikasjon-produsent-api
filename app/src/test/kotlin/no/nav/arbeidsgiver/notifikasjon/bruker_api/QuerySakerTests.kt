@@ -56,6 +56,7 @@ class QuerySakerTests : DescribeSpec({
             lenke = "#foo",
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
+            hardDelete = null,
         )
         val statusSak = NyStatusSak(
             hendelseId = uuid("1"),
@@ -178,6 +179,7 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
         lenke = "#foo",
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
     )
     oppdaterModellEtterHendelse(sakOpprettet)
     oppdaterModellEtterHendelse(NyStatusSak(
@@ -213,6 +215,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
         lenke = "#foo",
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
     )
     val status = NyStatusSak(
         hendelseId = UUID.randomUUID(),
