@@ -319,7 +319,7 @@ type Mutation {
         overstyrStatustekstMed: String
 
         """
-        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
         """
         hardDelete: SkedulertHardDeleteInput
     ): NySakResultat!
@@ -343,7 +343,7 @@ type Mutation {
         overstyrStatustekstMed: String
 
         """
-        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
         """
         hardDelete: SkedulertHardDeleteInput
     ): NyStatusSakResultat!
@@ -369,7 +369,7 @@ type Mutation {
         overstyrStatustekstMed: String
 
         """
-        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
         """
         hardDelete: SkedulertHardDeleteInput
     ): NyStatusSakResultat!
@@ -394,7 +394,7 @@ type Mutation {
         id: ID!
 
         """
-        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
         """
         hardDelete: SkedulertHardDeleteInput
     ): OppgaveUtfoertResultat!
@@ -414,7 +414,7 @@ type Mutation {
         eksternId: ID!
 
         """
-        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
         """
         hardDelete: SkedulertHardDeleteInput
     ): OppgaveUtfoertResultat!
@@ -437,7 +437,7 @@ type Mutation {
         eksternId: String!
 
         """
-        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
         """
         hardDelete: SkedulertHardDeleteInput
     ): OppgaveUtfoertResultat!
@@ -915,23 +915,25 @@ input MetadataInput {
     grupperingsid: String
 
     """
-    Dersom dere vet når notifikasjonen skal slettes ved opprettelsestidspunkt kan det skeduleres med dette feltet.
+    Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
     """
     hardDelete: SkedulertHardDeleteInput
 }
 
+"""
+Dersom dere vet at saken/notifikasjonen senere skal slettes helt kan det angis her.
+
+Ved en ny statusoppdatering på sak eller fullføring av oppgave kan det angis en skedulert sletting.
+TODO: dokumenter hvordan ny sletting påvirker eksisterende..
+"""
 input SkedulertHardDeleteInput @ExactlyOneFieldGiven {
     """
-    Dersom dere vet at saken/notifikasjonen skal slettes helt etter et gitt tidspunkt kan det angis her.
     Det vil bli utført en hardDelete når det angitte tidspunktet har passert.
-    Dersom en oppdatering gjøres med en ny slett angitt så vil den overstyre tidligere angitt sletting.
     """
     etter: ISO8601LocalDateTime
 
     """
-    Dersom dere vet at saken/notifikasjonen skal slettes helt etter en gitt periode kan det angis her.
     Det vil bli utført en hardDelete når den angitte tiden har passert. Tiden er relativ til tidpunkt/opprettetTidspunkt.
-    Dersom en oppdatering gjøres med en ny slett angitt så vil den overstyre tidligere angitt sletting.
     """
     om: ISO8601Duration
 }
