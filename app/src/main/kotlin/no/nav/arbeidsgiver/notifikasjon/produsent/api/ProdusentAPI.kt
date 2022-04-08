@@ -35,6 +35,7 @@ object ProdusentAPI {
 
                 scalar(Scalars.ISO8601DateTime)
                 scalar(Scalars.ISO8601LocalDateTime)
+                scalar(Scalars.ISO8601Duration)
 
                 resolveSubtypes<Error>()
 

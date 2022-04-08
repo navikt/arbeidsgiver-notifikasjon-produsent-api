@@ -22,6 +22,13 @@ Vi tolker tidspunktet som Oslo-tid ('Europe/Oslo').
 scalar ISO8601LocalDateTime
 
 """
+DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
+
+Er representert som String.
+"""
+scalar ISO8601Duration
+
+"""
 Tilstanden til en oppgave.
 """
 enum OppgaveTilstand {
@@ -310,6 +317,11 @@ type Mutation {
         til brukeren. Se `SaksStatus` for default tekster.
         """
         overstyrStatustekstMed: String
+
+        """
+        Dersom dere vet når saken skal slettes ved opprettelsestidspunkt kan det skeduleres med dette feltet.
+        """
+        slett: SkedulertSlettingInput
     ): NySakResultat!
 
     nyStatusSak(
@@ -876,6 +888,25 @@ input MetadataInput {
     Ta kontakt med #arbeidsgiver-notifikasjon på slack for å melde interesse!
     """
     grupperingsid: String
+
+    """
+    Dersom dere vet når notifikasjonen skal slettes ved opprettelsestidspunkt kan det skeduleres med dette feltet.
+    """
+    slett: SkedulertSlettingInput
+}
+
+input SkedulertSlettingInput @ExactlyOneFieldGiven {
+    """
+    Dersom dere vet at saken/notifikasjonen skal slettes helt etter et gitt tidspunkt kan det angis her.
+    Det vil bli utført en hardDelete når det angitte tidspunktet har passert.
+    """
+    etter: ISO8601LocalDateTime
+
+    """
+    Dersom dere vet at saken/notifikasjonen skal slettes helt etter en gitt periode kan det angis her.
+    Det vil bli utført en hardDelete når den angitte tiden har passert. Tiden er relativ til tidpunkt/opprettetTidspunkt.
+    """
+    om: ISO8601Duration
 }
 
 union NyOppgaveResultat =
