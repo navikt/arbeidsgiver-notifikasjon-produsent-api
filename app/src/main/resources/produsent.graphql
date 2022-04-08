@@ -319,9 +319,9 @@ type Mutation {
         overstyrStatustekstMed: String
 
         """
-        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
+        Oppgi dersom dere ønsker at hard delete skal skeduleres
         """
-        hardDelete: SkedulertHardDeleteInput
+        hardDelete: FutureTemporalInput
     ): NySakResultat!
 
     nyStatusSak(
@@ -343,9 +343,9 @@ type Mutation {
         overstyrStatustekstMed: String
 
         """
-        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: SkedulertHardDeleteInput
+        hardDelete: HardDeleteUpdateInput
     ): NyStatusSakResultat!
 
     nyStatusSakByGrupperingsid(
@@ -369,9 +369,9 @@ type Mutation {
         overstyrStatustekstMed: String
 
         """
-        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: SkedulertHardDeleteInput
+        hardDelete: HardDeleteUpdateInput
     ): NyStatusSakResultat!
 
     """
@@ -394,9 +394,9 @@ type Mutation {
         id: ID!
 
         """
-        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: SkedulertHardDeleteInput
+        hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
 
     """
@@ -414,9 +414,9 @@ type Mutation {
         eksternId: ID!
 
         """
-        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: SkedulertHardDeleteInput
+        hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
     @deprecated(reason:
         "Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead."
@@ -437,9 +437,9 @@ type Mutation {
         eksternId: String!
 
         """
-        Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: SkedulertHardDeleteInput
+        hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
 
 
@@ -915,27 +915,40 @@ input MetadataInput {
     grupperingsid: String
 
     """
-    Se: [SkedulertHardDeleteInput typen](#skedulertharddeleteinput)
+    Oppgi dersom dere ønsker at hard delete skal skeduleres
     """
-    hardDelete: SkedulertHardDeleteInput
+    hardDelete: FutureTemporalInput
+}
+
+input FutureTemporalInput @ExactlyOneFieldGiven {
+    etter: ISO8601LocalDateTime
+    om: ISO8601Duration
 }
 
 """
 Dersom dere vet at saken/notifikasjonen senere skal slettes helt kan det angis her.
-
-Ved en ny statusoppdatering på sak eller fullføring av oppgave kan det angis en skedulert sletting.
-TODO: dokumenter hvordan ny sletting påvirker eksisterende..
 """
-input SkedulertHardDeleteInput @ExactlyOneFieldGiven {
+input HardDeleteUpdateInput {
     """
     Det vil bli utført en hardDelete når det angitte tidspunktet har passert.
     """
-    etter: ISO8601LocalDateTime
+    nyTid: FutureTemporalInput!
 
     """
-    Det vil bli utført en hardDelete når den angitte tiden har passert. Tiden er relativ til tidpunkt/opprettetTidspunkt.
+    hvis det finnes fremtidig sletting hvordan skal vi håndtere dette
     """
-    om: ISO8601Duration
+    strategi: NyTidStrategi
+}
+
+enum NyTidStrategi {
+    """
+    Vi bruker den tiden som er lengst i fremtiden.
+    """
+    FORLENG
+    """
+    Vi bruker den nye tiden uansett.
+    """
+    OVERSKRIV
 }
 
 union NyOppgaveResultat =
