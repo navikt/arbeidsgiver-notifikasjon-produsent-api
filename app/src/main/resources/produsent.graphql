@@ -937,7 +937,7 @@ input HardDeleteUpdateInput {
     """
     hvis det finnes fremtidig sletting hvordan skal vi håndtere dette
     """
-    strategi: NyTidStrategi
+    strategi: NyTidStrategi!
 }
 
 enum NyTidStrategi {
