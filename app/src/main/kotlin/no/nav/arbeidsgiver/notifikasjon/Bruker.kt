@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.NarmesteLederLeesahDeserializer
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
@@ -58,9 +59,12 @@ object Bruker {
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
-        suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(),
-        altinn: Altinn = AltinnImpl(suspendingAltinnClient),
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
+        virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
+        suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
+            observer = virksomhetsinfoService::altinnObserver
+        ),
+        altinn: Altinn = AltinnImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
@@ -107,10 +111,10 @@ object Bruker {
                     altinnRolleService = altinnRolleService.await(),
                 )
                 BrukerAPI.createBrukerGraphQL(
-                    enhetsregisteret = enhetsregisteret,
                     brukerRepository = brukerRepositoryAsync.await(),
                     kafkaProducer = createKafkaProducer(),
                     tilgangerService = tilgangerService,
+                    virksomhetsinfoService = virksomhetsinfoService,
                 )
             }
 

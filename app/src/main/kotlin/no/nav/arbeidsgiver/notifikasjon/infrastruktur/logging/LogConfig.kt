@@ -12,6 +12,7 @@ import ch.qos.logback.core.spi.ContextAware
 import ch.qos.logback.core.spi.ContextAwareBase
 import ch.qos.logback.core.spi.LifeCycle
 import net.logstash.logback.encoder.LogstashEncoder
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 
 @Suppress("unused") /* see resources/META-INF/services/ch.qos.logback.classic.spi */
 class LogConfig : ContextAwareBase(), Configurator {
@@ -33,7 +34,10 @@ class LogConfig : ContextAwareBase(), Configurator {
         }
 
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
-            level = Level.INFO
+            level = basedOnEnv(
+                prod = { Level.INFO },
+                other = { Level.DEBUG }
+            )
             addAppender(rootAppender)
         }
 
