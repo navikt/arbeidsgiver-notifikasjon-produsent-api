@@ -22,7 +22,7 @@ Vi tolker tidspunktet som Oslo-tid ('Europe/Oslo').
 scalar ISO8601LocalDateTime
 
 """
-DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
+Duration ISO8601-standaren. F.eks. 'P2DT3H4M'.
 
 Er representert som String.
 """
@@ -319,9 +319,9 @@ type Mutation {
         overstyrStatustekstMed: String
 
         """
-        Dersom dere vet når saken skal slettes ved opprettelsestidspunkt kan det skeduleres med dette feltet.
+        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
         """
-        slett: SkedulertSlettingInput
+        hardDelete: SkedulertHardDeleteInput
     ): NySakResultat!
 
     nyStatusSak(
@@ -341,6 +341,11 @@ type Mutation {
         til brukeren. Se `SaksStatus` for default tekster.
         """
         overstyrStatustekstMed: String
+
+        """
+        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        """
+        hardDelete: SkedulertHardDeleteInput
     ): NyStatusSakResultat!
 
     nyStatusSakByGrupperingsid(
@@ -362,6 +367,11 @@ type Mutation {
         til brukeren. Se `SaksStatus` for default tekster.
         """
         overstyrStatustekstMed: String
+
+        """
+        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        """
+        hardDelete: SkedulertHardDeleteInput
     ): NyStatusSakResultat!
 
     """
@@ -382,6 +392,11 @@ type Mutation {
         ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
         """
         id: ID!
+
+        """
+        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        """
+        hardDelete: SkedulertHardDeleteInput
     ): OppgaveUtfoertResultat!
 
     """
@@ -397,6 +412,11 @@ type Mutation {
         ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
         """
         eksternId: ID!
+
+        """
+        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        """
+        hardDelete: SkedulertHardDeleteInput
     ): OppgaveUtfoertResultat!
     @deprecated(reason:
         "Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead."
@@ -415,6 +435,11 @@ type Mutation {
         ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
         """
         eksternId: String!
+
+        """
+        For detaljer se dokumentasjon på SkedulertHardDeleteInput typen
+        """
+        hardDelete: SkedulertHardDeleteInput
     ): OppgaveUtfoertResultat!
 
 
@@ -892,19 +917,21 @@ input MetadataInput {
     """
     Dersom dere vet når notifikasjonen skal slettes ved opprettelsestidspunkt kan det skeduleres med dette feltet.
     """
-    slett: SkedulertSlettingInput
+    hardDelete: SkedulertHardDeleteInput
 }
 
-input SkedulertSlettingInput @ExactlyOneFieldGiven {
+input SkedulertHardDeleteInput @ExactlyOneFieldGiven {
     """
     Dersom dere vet at saken/notifikasjonen skal slettes helt etter et gitt tidspunkt kan det angis her.
     Det vil bli utført en hardDelete når det angitte tidspunktet har passert.
+    Dersom en oppdatering gjøres med en ny slett angitt så vil den overstyre tidligere angitt sletting.
     """
     etter: ISO8601LocalDateTime
 
     """
     Dersom dere vet at saken/notifikasjonen skal slettes helt etter en gitt periode kan det angis her.
     Det vil bli utført en hardDelete når den angitte tiden har passert. Tiden er relativ til tidpunkt/opprettetTidspunkt.
+    Dersom en oppdatering gjøres med en ny slett angitt så vil den overstyre tidligere angitt sletting.
     """
     om: ISO8601Duration
 }
