@@ -44,6 +44,7 @@ object Health {
                 try {
                     sleep(shutdownTimeout.toMillis())
                 } catch (e: Exception) {
+                    // nothing to do
                 }
             }
         })
