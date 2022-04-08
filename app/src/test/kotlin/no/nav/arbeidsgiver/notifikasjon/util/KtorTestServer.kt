@@ -12,10 +12,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
-import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerService
-import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
@@ -47,10 +44,10 @@ fun Spec.ktorBrukerTestServer(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
     val brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-        enhetsregisteret = enhetsregisteret,
         brukerRepository= brukerRepository,
         kafkaProducer = kafkaProducer,
         tilgangerService = tilgangerService,
+        virksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
     )
     listener(KtorTestListener(engine) {
         graphqlSetup(

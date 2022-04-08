@@ -111,10 +111,10 @@ object Bruker {
                     altinnRolleService = altinnRolleService.await(),
                 )
                 BrukerAPI.createBrukerGraphQL(
-                    enhetsregisteret = enhetsregisteret,
                     brukerRepository = brukerRepositoryAsync.await(),
                     kafkaProducer = createKafkaProducer(),
                     tilgangerService = tilgangerService,
+                    virksomhetsinfoService = virksomhetsinfoService,
                 )
             }
 

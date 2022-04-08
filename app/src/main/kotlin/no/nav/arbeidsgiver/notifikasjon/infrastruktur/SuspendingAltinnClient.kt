@@ -46,9 +46,7 @@ class SuspendingAltinnClient(
                 )
             }
         }
-            .apply {
-                this?.onEach(observer)
-            }
+            ?.onEach(observer)
 
     suspend fun hentOrganisasjoner(
         selvbetjeningToken: SelvbetjeningToken,
@@ -64,10 +62,7 @@ class SuspendingAltinnClient(
                 )
             }
         }
-            .apply {
-                this?.onEach(observer)
-            }
-
+            ?.onEach(observer)
 
     private suspend fun <T> withErrorHandler(body: suspend () -> List<T>): List<T>? =
         try {
