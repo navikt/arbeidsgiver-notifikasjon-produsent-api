@@ -21,7 +21,7 @@ class VirksomhetsinfoService(
             log.debug("hentUnderenhet($virksomhetsnummer) -> $it")
         }
 
-    suspend fun altinnObserver(altinnReportee: AltinnReportee) {
+    fun altinnObserver(altinnReportee: AltinnReportee) {
         log.debug("observe altinn $altinnReportee")
         val virksomhetsnummer = altinnReportee.organizationNumber ?: return
         cache.put(virksomhetsnummer, Underenhet(
