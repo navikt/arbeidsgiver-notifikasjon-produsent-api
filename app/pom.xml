@@ -10,7 +10,7 @@
 
     <properties>
         <kotlin.version>1.6.10</kotlin.version>
-        <ktor.version>1.6.8</ktor.version>
+        <ktor.version>2.0.0</ktor.version>
         <kotest.version>4.6.0</kotest.version>
         <cxf.version>3.5.0</cxf.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
@@ -142,7 +142,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>6.6</version>
+            <version>7.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
