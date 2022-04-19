@@ -47,6 +47,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 kildeAppNavn = "",
                 produsentId = "",
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
         )
         val uuid2 = UUID.randomUUID()

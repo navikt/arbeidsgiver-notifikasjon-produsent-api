@@ -66,6 +66,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 produsentId = "",
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -137,6 +138,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 produsentId = "",
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -224,6 +226,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 produsentId = "",
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -295,6 +298,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 produsentId = "",
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -332,6 +336,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 produsentId = "",
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)

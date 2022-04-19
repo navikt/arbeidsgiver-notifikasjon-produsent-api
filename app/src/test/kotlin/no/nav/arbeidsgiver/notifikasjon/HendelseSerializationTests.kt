@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 /** Unit tests for historical and current formats that
@@ -34,6 +35,7 @@ class HendelseSerializationTests : DescribeSpec({
             lenke = "",
             opprettetTidspunkt = OffsetDateTime.parse("2000-01-01T01:01+01"),
             eksterneVarsler = listOf(),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52"))
         )
 
 
@@ -103,6 +105,7 @@ class HendelseSerializationTests : DescribeSpec({
             lenke = "",
             opprettetTidspunkt = OffsetDateTime.parse("2000-01-01T01:01+01"),
             eksterneVarsler = listOf(),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52"))
         )
 
 

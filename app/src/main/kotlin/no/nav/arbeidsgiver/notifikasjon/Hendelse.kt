@@ -39,8 +39,11 @@ object HendelseModel {
         val sakId: UUID
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed interface LocalDateTimeOrDuration {
+        @JsonTypeName("LocalDateTime")
         data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration
+        @JsonTypeName("Duration")
         data class Duration(val value: java.time.Duration): LocalDateTimeOrDuration
     }
 
@@ -214,6 +217,7 @@ object HendelseModel {
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
+        val hardDelete: LocalDateTimeOrDuration?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -242,6 +246,7 @@ object HendelseModel {
                 lenke: String,
                 opprettetTidspunkt: OffsetDateTime,
                 eksterneVarsler: List<EksterntVarsel> = listOf(),
+                hardDelete: LocalDateTimeOrDuration?,
             ) = OppgaveOpprettet(
                 virksomhetsnummer = virksomhetsnummer,
                 notifikasjonId = notifikasjonId,
@@ -256,6 +261,7 @@ object HendelseModel {
                 lenke = lenke,
                 opprettetTidspunkt = opprettetTidspunkt,
                 eksterneVarsler = eksterneVarsler,
+                hardDelete = hardDelete,
             )
         }
     }

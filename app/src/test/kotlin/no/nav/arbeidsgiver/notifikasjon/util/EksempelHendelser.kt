@@ -179,7 +179,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = null,
     )
     val OppgaveOpprettet_2_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -223,7 +224,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = null,
     )
     val OppgaveOpprettet_3_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -271,7 +273,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = null,
     )
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",

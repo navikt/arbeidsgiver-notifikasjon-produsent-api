@@ -22,6 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -64,7 +65,8 @@ class EksternVarslingRepositoryTests: DescribeSpec({
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = null,
     )
 
     describe("Getting and deleting jobs") {

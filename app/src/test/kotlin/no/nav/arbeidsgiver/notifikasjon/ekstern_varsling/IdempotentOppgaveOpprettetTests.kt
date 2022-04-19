@@ -41,6 +41,7 @@ class IdempotentOppgaveOpprettetTests: DescribeSpec({
         opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+01"),
         eksterneVarsler = listOf(smsVarsel),
         grupperingsid = null,
+        hardDelete = null,
     )
 
     describe("mutual exclusive access to ekstern_varsel") {
