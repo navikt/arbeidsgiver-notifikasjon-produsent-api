@@ -6,20 +6,17 @@ import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
 class NyStatusSakTests: DescribeSpec({
-    val embeddedKafka = embeddedKafka()
+    val stubbedKafkaProducer = StubbedKafkaProducer()
 
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
 
     val engine = ktorProdusentTestServer(
-        kafkaProducer = embeddedKafka.newProducer(),
+        kafkaProducer = stubbedKafkaProducer,
         produsentRepository = produsentRepository,
     )
 

@@ -90,6 +90,7 @@ class NySakTests: DescribeSpec({
         }
 
         val response8 = engine.nySak(
+            grupperingsid = "3",
             hardDelete = LocalDateTime.now()
         )
         it("should be successful") {
