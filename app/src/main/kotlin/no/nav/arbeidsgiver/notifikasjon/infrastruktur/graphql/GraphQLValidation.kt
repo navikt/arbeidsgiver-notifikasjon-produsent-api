@@ -7,7 +7,6 @@ import graphql.language.SourceLocation
 import graphql.schema.*
 import graphql.schema.idl.SchemaDirectiveWiring
 import graphql.schema.idl.SchemaDirectiveWiringEnvironment
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 
 object ValidateDirective : SchemaDirectiveWiring {
 
@@ -52,11 +51,9 @@ object ValidateDirective : SchemaDirectiveWiring {
             is GraphQLInputObjectType -> this.createValidator(path)
             is GraphQLScalarType -> null
             is GraphQLList -> this.createValidator(path)
-            is GraphQLEnumType -> this.createValidator(path)
+            is GraphQLEnumType -> null
             else -> throw Error("Unexpected graphql type ${this.javaClass.canonicalName} in ${path.joinToString(", ")}")
         }
-
-    private fun GraphQLEnumType.createValidator(path: Path): Validator? = null
 
     private fun GraphQLList.createValidator(path: Path): Validator? =
         (this.wrappedType as GraphQLInputType)

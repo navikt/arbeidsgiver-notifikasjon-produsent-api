@@ -14,11 +14,13 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.NarmesteLederLeesahDeserializer
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
@@ -57,8 +59,12 @@ object Bruker {
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
-        altinn: Altinn = AltinnImpl(),
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
+        virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
+        suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
+            observer = virksomhetsinfoService::altinnObserver
+        ),
+        altinn: Altinn = AltinnImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
@@ -83,24 +89,19 @@ object Bruker {
             }
 
             launch {
-                if (System.getenv("ENABLE_KAFKA_CONSUMERS") == "false") {
-                    log.info("KafkaConsumer er deaktivert.")
-                } else {
-                    val nærmesteLederLeesahTopic = "teamsykmelding.syfo-narmesteleder-leesah"
-                    val nærmesteLederKafkaConsumer =
-                        createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
-                            putAll(
-                                mapOf(
-                                    ConsumerConfig.GROUP_ID_CONFIG to "notifikasjon-bruker-api-narmesteleder-model-builder",
-                                    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
-                                )
+                val nærmesteLederLeesahTopic = "teamsykmelding.syfo-narmesteleder-leesah"
+                val nærmesteLederKafkaConsumer = createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
+                        putAll(
+                            mapOf(
+                                ConsumerConfig.GROUP_ID_CONFIG to "notifikasjon-bruker-api-narmesteleder-model-builder",
+                                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
                             )
-                        }
-                    val nærmesteLederModel = nærmesteLederModelAsync.await()
-
-                    nærmesteLederKafkaConsumer.forEachEvent { event ->
-                        nærmesteLederModel.oppdaterModell(event)
+                        )
                     }
+                val nærmesteLederModel = nærmesteLederModelAsync.await()
+
+                nærmesteLederKafkaConsumer.forEachEvent { event ->
+                    nærmesteLederModel.oppdaterModell(event)
                 }
             }
 
@@ -110,10 +111,10 @@ object Bruker {
                     altinnRolleService = altinnRolleService.await(),
                 )
                 BrukerAPI.createBrukerGraphQL(
-                    enhetsregisteret = enhetsregisteret,
                     brukerRepository = brukerRepositoryAsync.await(),
                     kafkaProducer = createKafkaProducer(),
                     tilgangerService = tilgangerService,
+                    virksomhetsinfoService = virksomhetsinfoService,
                 )
             }
 
@@ -124,13 +125,11 @@ object Bruker {
                 graphql = graphql,
             )
 
-            launch {
-                launchProcessingLoop(
-                    "last Altinnroller",
-                    pauseAfterEach = Duration.ofDays(1),
-                ) {
-                    altinnRolleService.await().lastRollerFraAltinn()
-                }
+            launchProcessingLoop(
+                "last Altinnroller",
+                pauseAfterEach = Duration.ofDays(1),
+            ) {
+                altinnRolleService.await().lastRollerFraAltinn()
             }
         }
     }

@@ -100,6 +100,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     }
                 }
             } catch (e: Done) {
+                // nothing to do
             }
 
             it("message received from kafka") {

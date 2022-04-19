@@ -9,7 +9,6 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Scalars
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
@@ -146,14 +145,12 @@ object BrukerAPI {
     )
 
     fun createBrukerGraphQL(
-        enhetsregisteret: Enhetsregisteret,
         brukerRepository: BrukerRepository,
         kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
         tilgangerService: TilgangerService,
+        virksomhetsinfoService: VirksomhetsinfoService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
-            val virksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret)
-
             scalar(Scalars.ISO8601DateTime)
 
             resolveSubtypes<Notifikasjon>()

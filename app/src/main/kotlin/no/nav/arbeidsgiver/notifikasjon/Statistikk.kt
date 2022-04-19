@@ -23,14 +23,9 @@ object Statistikk {
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
-            val statistikkModelAsync = async {
-                StatistikkModel(database.await())
-            }
 
             val statistikkServiceAsync = async {
-                StatistikkServiceImpl(
-                    statistikkModelAsync.await()
-                )
+                StatistikkServiceImpl(StatistikkModel(database.await()))
             }
 
             launch {

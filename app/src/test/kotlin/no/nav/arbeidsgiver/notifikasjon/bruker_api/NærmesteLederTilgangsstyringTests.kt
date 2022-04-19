@@ -55,7 +55,7 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098571"),
         ).also { model.oppdaterModellEtterHendelse(it) }
 
-        val beskjed2 = beskjedOpprettet(
+        beskjedOpprettet(
             eksternId = "2",
             mottaker = mottaker2,
             id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098572"),
@@ -82,7 +82,7 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             )
         )
         it("får notifikasjon om nåværende ansatt") {
-            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY, /* ansatte(mottaker1) */)
+            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
             notifikasjoner shouldHaveSize 1
             val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
             beskjed.id shouldBe beskjed1.notifikasjonId

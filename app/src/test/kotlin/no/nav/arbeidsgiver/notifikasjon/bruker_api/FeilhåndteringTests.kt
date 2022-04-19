@@ -10,7 +10,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
@@ -18,20 +19,24 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 
 class FeilhåndteringTests : DescribeSpec({
     val queryModel: BrukerRepositoryImpl = mockk()
-    val altinn: Altinn = mockk()
+    val suspendingAltinnClient = mockk<SuspendingAltinnClient>()
 
     val engine = ktorBrukerTestServer(
-        altinn = altinn,
+        altinn = AltinnImpl(suspendingAltinnClient),
         brukerRepository = queryModel,
     )
 
     describe("graphql bruker-api feilhåndtering errors tilganger") {
         context("Feil Altinn, DigiSyfo ok") {
-
             coEvery {
-                altinn.hentTilganger(any(), any(), any(), any())
-            } throws RuntimeException("Mock failure")
-
+                suspendingAltinnClient.hentOrganisasjoner(any(), any(), any(), any(), any())
+            } returns null
+            coEvery {
+                suspendingAltinnClient.hentOrganisasjoner(any(), any(), any())
+            } returns null
+            coEvery {
+                suspendingAltinnClient.hentReportees(any(), any())
+            } returns null
             coEvery {
                 queryModel.hentNotifikasjoner(any(), any())
             } returns listOf()
