@@ -81,6 +81,19 @@ val PERMITTERING = Produsent(
     )
 )
 
+val FRITAKAGP = Produsent(
+    id = "fritakagp",
+    accessPolicy = basedOnEnv(
+        prod = { listOf() },
+        other = { listOf("dev-gcp:helsearbeidsgiver:fritakagp") },
+    ),
+    tillatteMerkelapper = listOf("Refusjon"),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+    )
+)
+
+
 val PRODUSENT_LIST = basedOnEnv(
     prod = {
         listOf(
@@ -93,6 +106,7 @@ val PRODUSENT_LIST = basedOnEnv(
             ARBEIDSGIVER_TILTAK,
             ESYFO,
             PERMITTERING,
+            FRITAKAGP,
         )
     }
 )
