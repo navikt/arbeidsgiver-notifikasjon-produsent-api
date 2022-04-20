@@ -276,6 +276,7 @@ object HendelseModel {
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
+        val hardDelete: HardDeleteUpdate?,
     ) : Hendelse(), Notifikasjon {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
@@ -402,6 +403,12 @@ object HendelseModel {
         val sendeTidspunkt: LocalDateTime?,
     ) : EksterntVarsel()
 
+    @JsonTypeName("hardDeleteUpdate")
+    data class HardDeleteUpdate(
+        val nyTid: LocalDateTimeOrDuration,
+        val strategi: NyTidStrategi,
+    )
+
     enum class EksterntVarselSendingsvindu {
         /* Notifikasjonen sendes uten opphold fra vår side. Merk at underleverandører (Altinn) har eget vindu for utsendig
      * av SMS, og vi vil ikke overstyre det.
@@ -424,6 +431,11 @@ object HendelseModel {
         MOTTATT,
         UNDER_BEHANDLING,
         FERDIG;
+    }
+
+    enum class NyTidStrategi {
+        FORLENG,
+        OVERSKRIV;
     }
 }
 

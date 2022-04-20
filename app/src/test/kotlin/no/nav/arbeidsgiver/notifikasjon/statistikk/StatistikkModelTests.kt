@@ -114,6 +114,7 @@ class StatistikkModelTests : DescribeSpec({
             notifikasjonId = bestilling.notifikasjonId,
             kildeAppNavn = "",
             produsentId = "",
+            hardDelete = null,
         )
 
 

@@ -97,8 +97,7 @@ class NySakTests: DescribeSpec({
             response8.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
         }
         it("should have hard delete in kafka message") {
-            val hendelse = stubbedKafkaProducer.records
-                .map { it.value() }
+            val hendelse = stubbedKafkaProducer.hendelser
                 .filterIsInstance<HendelseModel.SakOpprettet>()
                 .last()
             hendelse.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)

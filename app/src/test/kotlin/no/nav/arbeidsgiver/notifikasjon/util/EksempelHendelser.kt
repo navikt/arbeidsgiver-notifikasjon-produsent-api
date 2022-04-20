@@ -229,7 +229,7 @@ object EksempelHendelse {
                 sendeTidspunkt = null
             )
         ),
-        hardDelete = null,
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val OppgaveOpprettet_3_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -278,7 +278,7 @@ object EksempelHendelse {
                 sendeTidspunkt = null
             )
         ),
-        hardDelete = null,
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",
@@ -286,6 +286,10 @@ object EksempelHendelse {
         hendelseId = uuid("2"),
         produsentId = "1",
         kildeAppNavn = "1",
+        hardDelete = HendelseModel.HardDeleteUpdate(
+            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+        )
     )
     val SoftDelete = HendelseModel.SoftDelete(
         virksomhetsnummer = "1",

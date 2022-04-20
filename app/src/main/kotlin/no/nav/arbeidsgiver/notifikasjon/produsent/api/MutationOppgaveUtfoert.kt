@@ -7,10 +7,7 @@ import graphql.schema.idl.RuntimeWiring
 import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
@@ -31,6 +28,7 @@ internal class MutationOppgaveUtfoert(
                 oppgaveUtført(
                     context = env.getContext(),
                     id = env.getTypedArgument("id"),
+                    hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
                 )
             }
             coDataFetcher("oppgaveUtfoertByEksternId") { env ->
@@ -48,6 +46,7 @@ internal class MutationOppgaveUtfoert(
             context = env.getContext(),
             eksternId = env.getTypedArgument("eksternId"),
             merkelapp = env.getTypedArgument("merkelapp"),
+            hardDelete = env.getTypedArgumentOrNull("hardDelete")
         )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -61,23 +60,26 @@ internal class MutationOppgaveUtfoert(
     private suspend fun oppgaveUtført(
         context: ProdusentAPI.Context,
         id: UUID,
+        hardDelete: HardDeleteUpdateInput?,
     ): OppgaveUtfoertResultat {
         val notifikasjon = hentNotifikasjon(produsentRepository, id) { error -> return error }
-        return oppgaveUtført(context, notifikasjon)
+        return oppgaveUtført(context, notifikasjon, hardDelete)
     }
 
     private suspend fun oppgaveUtført(
         context: ProdusentAPI.Context,
         eksternId: String,
         merkelapp: String,
+        hardDelete: HardDeleteUpdateInput?,
     ): OppgaveUtfoertResultat {
         val notifikasjon = hentNotifikasjon(produsentRepository, eksternId, merkelapp) { error -> return error }
-        return oppgaveUtført(context, notifikasjon)
+        return oppgaveUtført(context, notifikasjon, hardDelete)
     }
 
     private suspend fun oppgaveUtført(
         context: ProdusentAPI.Context,
         notifikasjon: ProdusentModel.Notifikasjon,
+        hardDelete: HardDeleteUpdateInput?,
     ): OppgaveUtfoertResultat {
 
         if (notifikasjon !is ProdusentModel.Oppgave) {
@@ -93,7 +95,8 @@ internal class MutationOppgaveUtfoert(
             notifikasjonId = notifikasjon.id,
             virksomhetsnummer = notifikasjon.virksomhetsnummer,
             produsentId = produsent.id,
-            kildeAppNavn = context.appName
+            kildeAppNavn = context.appName,
+            hardDelete = hardDelete?.tilDomene()
         )
 
         hendelseDispatcher.send(utførtHendelse)

@@ -9,6 +9,8 @@ import org.apache.kafka.clients.producer.RecordMetadata
 
 class StubbedKafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse> {
     val records = mutableListOf<ProducerRecord<KafkaKey, HendelseModel.Hendelse>>()
+    val hendelser: List<HendelseModel.Hendelse>
+        get() = records.map(ProducerRecord<KafkaKey, HendelseModel.Hendelse>::value)
 
     override suspend fun send(record: ProducerRecord<KafkaKey, HendelseModel.Hendelse>): RecordMetadata {
         records.add(record)

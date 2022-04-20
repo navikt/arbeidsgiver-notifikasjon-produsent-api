@@ -18,3 +18,18 @@ data class FutureTemporalInput(
         throw RuntimeException("Feil format")
     }
 }
+data class HardDeleteUpdateInput(
+    val nyTid: FutureTemporalInput,
+    val strategi: NyTidStrategi,
+) {
+    fun tilDomene(): HendelseModel.HardDeleteUpdate =
+        HendelseModel.HardDeleteUpdate(
+            nyTid = nyTid.tilDomene(),
+            strategi = strategi.hendelseType
+        )
+}
+
+enum class NyTidStrategi(val hendelseType: HendelseModel.NyTidStrategi) {
+    FORLENG(HendelseModel.NyTidStrategi.FORLENG),
+    OVERSKRIV(HendelseModel.NyTidStrategi.OVERSKRIV);
+}
