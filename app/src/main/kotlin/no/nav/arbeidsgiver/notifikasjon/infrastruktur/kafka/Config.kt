@@ -1,5 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
@@ -20,6 +22,8 @@ const val TOPIC = "fager.notifikasjon"
 
 private val strictObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
+    disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+    disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
 }
 
 interface JsonSerializer<T> : Serializer<T> {
