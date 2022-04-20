@@ -66,6 +66,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 kildeAppNavn = "",
                 produsentId = "",
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
         )
         val uuid3 = UUID.randomUUID()
@@ -84,6 +85,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 produsentId = "",
                 kildeAppNavn = "",
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
         )
         val uuid4 = UUID.randomUUID()
@@ -102,6 +104,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 produsentId = "",
                 kildeAppNavn = "",
                 eksterneVarsler = listOf(),
+                hardDelete = null,
             )
         )
     }

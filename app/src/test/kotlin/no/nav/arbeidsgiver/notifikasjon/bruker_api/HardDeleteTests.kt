@@ -48,6 +48,7 @@ class HardDeleteTests : DescribeSpec({
             kildeAppNavn = "",
             produsentId = "",
             eksterneVarsler = listOf(),
+            hardDelete = null,
         )
 
         val hardDeleteEvent = HardDelete(

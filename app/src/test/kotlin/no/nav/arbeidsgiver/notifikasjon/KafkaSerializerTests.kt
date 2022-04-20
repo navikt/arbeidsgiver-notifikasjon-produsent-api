@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.ValueDeserializer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.ValueSerializer
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -38,6 +39,7 @@ class KafkaSerializerTests : DescribeSpec({
                 produsentId = "",
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
+                hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52"))
             )
 
             it("serde preservers all values") {

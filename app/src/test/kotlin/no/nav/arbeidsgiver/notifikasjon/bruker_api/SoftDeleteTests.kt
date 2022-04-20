@@ -46,6 +46,7 @@ class SoftDeleteTests : DescribeSpec({
             kildeAppNavn = "",
             produsentId = "",
             eksterneVarsler = listOf(),
+            hardDelete = null,
         )
 
         val softDeleteEvent = SoftDelete(

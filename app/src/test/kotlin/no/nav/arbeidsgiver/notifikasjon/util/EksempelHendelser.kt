@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 
@@ -50,7 +51,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val BeskjedOpprettet_2_Mottakere = BeskjedOpprettet(
         virksomhetsnummer = "1",
@@ -94,7 +96,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val BeskjedOpprettet_3_Mottakere = BeskjedOpprettet(
         virksomhetsnummer = "1",
@@ -142,7 +145,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val OppgaveOpprettet = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -180,7 +184,7 @@ object EksempelHendelse {
                 sendeTidspunkt = null
             )
         ),
-        hardDelete = null,
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val OppgaveOpprettet_2_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",

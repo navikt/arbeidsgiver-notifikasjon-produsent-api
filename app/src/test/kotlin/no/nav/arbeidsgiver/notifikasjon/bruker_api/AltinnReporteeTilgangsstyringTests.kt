@@ -35,6 +35,7 @@ class AltinnReporteeTilgangsstyringTests : DescribeSpec({
         opprettetTidspunkt = OffsetDateTime.parse("2020-02-02T02:02:02+02"),
         eksterneVarsler  = listOf(),
         grupperingsid = null,
+        hardDelete = null,
     )
 
     describe("Tilgangsstyring med altinn reportee") {
