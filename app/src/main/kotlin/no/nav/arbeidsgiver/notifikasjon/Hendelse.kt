@@ -404,7 +404,6 @@ object HendelseModel {
         val sendeTidspunkt: LocalDateTime?,
     ) : EksterntVarsel()
 
-    @JsonTypeName("hardDeleteUpdate")
     data class HardDeleteUpdate(
         val nyTid: LocalDateTimeOrDuration,
         val strategi: NyTidStrategi,
