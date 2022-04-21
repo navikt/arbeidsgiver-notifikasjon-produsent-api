@@ -58,5 +58,9 @@ spec:
         - application: permitteringsmelding-notifikasjon
           namespace: permittering-og-nedbemanning
           cluster: dev-gcp
+
+        - application: fritakagp
+          namespace: helsearbeidsgiver
+          cluster: dev-gcp
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
