@@ -169,7 +169,8 @@ internal class MutationNySak(
             overstyrStatustekstMed = status.overstyrStatustekstMed,
             oppgittTidspunkt = status.tidspunkt,
             mottattTidspunkt = mottattTidspunkt,
-            idempotensKey = IdempotenceKey.initial()
+            idempotensKey = IdempotenceKey.initial(),
+            hardDelete = null,
         )
     }
 

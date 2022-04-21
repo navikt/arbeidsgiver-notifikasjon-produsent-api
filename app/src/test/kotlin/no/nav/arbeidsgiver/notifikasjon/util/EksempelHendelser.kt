@@ -375,6 +375,10 @@ object EksempelHendelse {
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
         idempotensKey = IdempotenceKey.initial(),
+        hardDelete = HendelseModel.HardDeleteUpdate(
+            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+        ),
     )
 
     val Alle: List<Hendelse> = listOf(

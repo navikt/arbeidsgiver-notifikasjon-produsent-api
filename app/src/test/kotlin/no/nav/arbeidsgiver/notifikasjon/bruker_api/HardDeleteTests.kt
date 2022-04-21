@@ -133,6 +133,7 @@ class HardDeleteTests : DescribeSpec({
             status = HendelseModel.SakStatus.MOTTATT,
             overstyrStatustekstMed = null,
             idempotensKey = IdempotenceKey.initial(),
+            hardDelete = null,
         )
 
         val hardDeleteEvent = HardDelete(

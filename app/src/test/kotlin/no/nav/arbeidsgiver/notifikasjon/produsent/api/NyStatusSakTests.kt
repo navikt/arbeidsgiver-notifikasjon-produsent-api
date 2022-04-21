@@ -1,12 +1,16 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.beInstanceOf
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
+import java.time.LocalDateTime
 import java.util.*
 
 class NyStatusSakTests: DescribeSpec({
@@ -58,7 +62,6 @@ class NyStatusSakTests: DescribeSpec({
             id3 shouldNotBe id1
         }
 
-
         val r4 = engine.nyStatusSak(
             id = sakId,
             SaksStatus.MOTTATT,
@@ -67,6 +70,18 @@ class NyStatusSakTests: DescribeSpec({
         it("avvist siden status er annerledes") {
             r4.getTypedContent<String>("$.nyStatusSak.__typename") shouldBe "Konflikt"
         }
+
+        val r5 = engine.nyStatusSak(
+            id = sakId,
+            SaksStatus.FERDIG,
+            hardDelete = LocalDateTime.MAX
+        )
+        it("vellyket oppdatering med harddelete satt i kafka") {
+            r5.getTypedContent<String>("$.nyStatusSak.__typename") shouldBe "NyStatusSakVellykket"
+            val hendelse = stubbedKafkaProducer.hendelser.last()
+            hendelse should beInstanceOf<HendelseModel.NyStatusSak>()
+            (hendelse as HendelseModel.NyStatusSak).hardDelete shouldNotBe null
+        }
     }
 })
 
@@ -74,6 +89,7 @@ private fun TestApplicationEngine.nyStatusSak(
     id: UUID,
     status: SaksStatus,
     idempotencyKey: String? = null,
+    hardDelete: LocalDateTime? = null,
 ): TestApplicationResponse {
     return produsentApi(
         """
@@ -82,6 +98,15 @@ private fun TestApplicationEngine.nyStatusSak(
                     id: "$id"
                     idempotencyKey: ${idempotencyKey?.let { "\"$it\"" }}
                     ny_status: $status
+                    ${hardDelete?.let {"""
+                        hardDelete: {
+                            nyTid: {
+                                den: "$it"
+                            }
+                            strategi: OVERSKRIV
+                        }
+                    """.trimIndent()
+                    } ?: ""}
                 ) {
                     __typename
                     ... on NyStatusSakVellykket {
