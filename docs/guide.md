@@ -408,10 +408,40 @@ mutation OpprettSakMedAutomatiskSletting {
     lenke: "https://dev.nav.no/avtale/12345"
   ) {
     __typename
-    
   }
 }
 ```
+
+Når du oppgir et intervall, som 5 månder over, så regnes det ut fra `tidspunkt`-feltet hvis det er oppgitt,  ellers fra tidspunktet vi mottok saken/notifikasjonen. Hvis du ønsker å beregne dato selv, så kan du skrive
+`den: "2020-01-01T12:30Z` i stede for `om: "T5M"`.
+
+Hvis du oppdaterer en oppgave eller en sak, så kan du også skedulere automatisk hard delete. Her er et eksempel hvor vi forlenger slettetiden på saken over med 5 månder.
+
+```graphql
+mutation OppdaterSakMedAutomatiskSletting {
+  nyStatusSakByGrupperingsid(
+    hardDelete: {
+      nyTid: {
+          om: "P5M"
+      }
+      strategi: FORLENG
+    }
+    grupperingsid: "12345"
+    merkelapp: "Tiltak"
+    ny_status: UNDER_BEHANDLING
+  ) {
+    __typename
+  }
+}
+```
+
+Dere kan skedulere slettingen i en status-oppdatering, uavhengig av om dere har 
+skedulert sletting tidligere. Men dere må oppgi `strategi`, som forteller oss
+hvordan vi skal håndtere andre skeduleringer dere eventult har gjort:
+
+- `FORLENG` vil forlenge tiden før sletting.
+- `OVERSKRIV` vil overskrive eventuelt tidligere skeduleringer.
+
 
 ## Hvordan slette notifikasjoner og saker manuelt
 En soft-delete markerer en notifikasjon eller sak som slettet i våre systemer. Det er ikke mulig
