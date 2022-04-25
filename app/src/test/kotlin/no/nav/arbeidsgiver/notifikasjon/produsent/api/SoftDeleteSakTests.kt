@@ -68,6 +68,7 @@ class SoftDeleteSakTests : DescribeSpec({
         mottattTidspunkt = opprettetTidspunkt,
         kildeAppNavn = "",
         produsentId = "",
+        hardDelete = null,
     )
     val sakOpprettet2 = sakOpprettet.copy(
         grupperingsid = grupperingsid2,

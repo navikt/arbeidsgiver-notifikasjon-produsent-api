@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 
@@ -50,7 +51,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val BeskjedOpprettet_2_Mottakere = BeskjedOpprettet(
         virksomhetsnummer = "1",
@@ -94,7 +96,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val BeskjedOpprettet_3_Mottakere = BeskjedOpprettet(
         virksomhetsnummer = "1",
@@ -142,7 +145,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val OppgaveOpprettet = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -179,7 +183,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val OppgaveOpprettet_2_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -223,7 +228,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val OppgaveOpprettet_3_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -271,7 +277,8 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
-        )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
     )
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",
@@ -279,6 +286,10 @@ object EksempelHendelse {
         hendelseId = uuid("2"),
         produsentId = "1",
         kildeAppNavn = "1",
+        hardDelete = HendelseModel.HardDeleteUpdate(
+            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+        )
     )
     val SoftDelete = HendelseModel.SoftDelete(
         virksomhetsnummer = "1",
@@ -351,6 +362,7 @@ object EksempelHendelse {
         lenke = "#foo",
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
     )
     val NyStatusSak = HendelseModel.NyStatusSak(
         hendelseId = uuid("1"),
@@ -363,6 +375,10 @@ object EksempelHendelse {
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
         idempotensKey = IdempotenceKey.initial(),
+        hardDelete = HendelseModel.HardDeleteUpdate(
+            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+        ),
     )
 
     val Alle: List<Hendelse> = listOf(

@@ -48,6 +48,7 @@ class HardDeleteTests : DescribeSpec({
             kildeAppNavn = "",
             produsentId = "",
             eksterneVarsler = listOf(),
+            hardDelete = null,
         )
 
         val hardDeleteEvent = HardDelete(
@@ -119,6 +120,7 @@ class HardDeleteTests : DescribeSpec({
             produsentId = "",
             mottattTidspunkt = OffsetDateTime.now(),
             oppgittTidspunkt = null,
+            hardDelete = null,
         )
         val opprettStatusEvent = fun (id: UUID) = HendelseModel.NyStatusSak(
             hendelseId = id,
@@ -131,6 +133,7 @@ class HardDeleteTests : DescribeSpec({
             status = HendelseModel.SakStatus.MOTTATT,
             overstyrStatustekstMed = null,
             idempotensKey = IdempotenceKey.initial(),
+            hardDelete = null,
         )
 
         val hardDeleteEvent = HardDelete(

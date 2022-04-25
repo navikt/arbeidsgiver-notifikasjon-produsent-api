@@ -131,4 +131,5 @@ fun beskjedOpprettet(mottaker: Mottaker, id: UUID, eksternId: String) = BeskjedO
     produsentId = "",
     grupperingsid = null,
     eksterneVarsler = listOf(),
+    hardDelete = null,
 )

@@ -2,10 +2,10 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
 import graphql.language.StringValue
 import graphql.schema.*
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAccessor
 import java.time.temporal.TemporalQuery
 
@@ -14,13 +14,23 @@ inline fun <reified T: TemporalAccessor> dateTimeScalar(
     name: String,
     dateTimeFormatter: DateTimeFormatter,
     temporalQuery: TemporalQuery<T>,
+): GraphQLScalarType = toFromStringScalar(
+    name = name,
+    parser = {  dateTimeFormatter.parse(it, temporalQuery) },
+    printer = { dateTimeFormatter.format(it) }
+)
+
+inline fun <reified T: Any> toFromStringScalar(
+    name: String,
+    crossinline parser: (value: String) -> T,
+    crossinline printer: (T) -> String = { it.toString() },
 ): GraphQLScalarType =
     GraphQLScalarType.newScalar()
         .name(name)
         .coercing(object: Coercing<T, String> {
             override fun serialize(obj: Any): String {
                 if (obj is T) {
-                    return dateTimeFormatter.format(obj)
+                    return printer(obj)
                 } else {
                     throw CoercingSerializeException("unsupported value for $name coersion: $obj")
                 }
@@ -29,8 +39,8 @@ inline fun <reified T: TemporalAccessor> dateTimeScalar(
             override fun parseLiteral(input: Any): T =
                 if (input is StringValue)
                     try {
-                        dateTimeFormatter.parse(input.value, temporalQuery)
-                    } catch (e: DateTimeParseException) {
+                        parser(input.value)
+                    } catch (e: Exception) {
                         throw CoercingParseLiteralException(e)
                     }
                 else
@@ -39,8 +49,8 @@ inline fun <reified T: TemporalAccessor> dateTimeScalar(
             override fun parseValue(input: Any): T =
                 if (input is String)
                     try {
-                        dateTimeFormatter.parse(input, temporalQuery)
-                    } catch (e: DateTimeParseException) {
+                        parser(input)
+                    } catch (e: Exception) {
                         throw CoercingParseValueException(e)
                     }
                 else
@@ -63,4 +73,9 @@ object Scalars {
             dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME,
             temporalQuery = LocalDateTime::from
         )
+
+    val ISO8601Duration: GraphQLScalarType = toFromStringScalar(
+        name = "ISO8601Duration",
+        parser = Duration::parse
+    )
 }

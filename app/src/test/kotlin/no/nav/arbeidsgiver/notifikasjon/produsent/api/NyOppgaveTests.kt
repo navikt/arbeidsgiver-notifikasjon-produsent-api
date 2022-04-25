@@ -7,7 +7,9 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.types.beOfType
+import io.kotest.matchers.types.instanceOf
 import io.ktor.http.*
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.Produsent
@@ -56,7 +58,9 @@ class NyOppgaveTests : DescribeSpec({
                                 eksternId: "heu",
                                 opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
                                 virksomhetsnummer: "42"
-
+                                hardDelete: {
+                                  den: "2019-10-13T07:20:50.52"
+                                }
                             }
                         }) {
                             __typename
@@ -101,6 +105,7 @@ class NyOppgaveTests : DescribeSpec({
                 virksomhetsnummer = "42"
             )
             event.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
+            event.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
         }
 
         it("updates produsent modell") {

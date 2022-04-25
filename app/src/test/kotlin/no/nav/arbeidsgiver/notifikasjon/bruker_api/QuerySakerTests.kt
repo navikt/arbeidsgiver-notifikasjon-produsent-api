@@ -56,6 +56,7 @@ class QuerySakerTests : DescribeSpec({
             lenke = "#foo",
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
+            hardDelete = null,
         )
         val statusSak = NyStatusSak(
             hendelseId = uuid("1"),
@@ -68,6 +69,7 @@ class QuerySakerTests : DescribeSpec({
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
             idempotensKey = IdempotenceKey.initial(),
+            hardDelete = null,
         )
 
         context("med sak opprettet men ingen status") {
@@ -178,6 +180,7 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
         lenke = "#foo",
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
     )
     oppdaterModellEtterHendelse(sakOpprettet)
     oppdaterModellEtterHendelse(NyStatusSak(
@@ -191,6 +194,7 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
         idempotensKey = IdempotenceKey.initial(),
+        hardDelete = null,
     ))
     return sakOpprettet
 }
@@ -213,6 +217,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
         lenke = "#foo",
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
     )
     val status = NyStatusSak(
         hendelseId = UUID.randomUUID(),
@@ -225,6 +230,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
         mottattTidspunkt = mottattTidspunkt.plus(shift),
         idempotensKey = IdempotenceKey.initial(),
         oppgittTidspunkt = null,
+        hardDelete = null,
     )
     oppdaterModellEtterHendelse(sak)
     oppdaterModellEtterHendelse(status)

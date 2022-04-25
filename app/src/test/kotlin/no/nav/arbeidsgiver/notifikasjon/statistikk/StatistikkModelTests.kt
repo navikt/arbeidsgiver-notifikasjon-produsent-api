@@ -75,7 +75,8 @@ class StatistikkModelTests : DescribeSpec({
             virksomhetsnummer = "1337",
             kildeAppNavn = "",
             produsentId = "",
-            eksterneVarsler = listOf(epostBestilling, smsBestilling, smsBestilling2)
+            eksterneVarsler = listOf(epostBestilling, smsBestilling, smsBestilling2),
+            hardDelete = null,
         )
         val epostFeilet = EksterntVarselFeilet(
             virksomhetsnummer = bestilling.virksomhetsnummer,
@@ -113,6 +114,7 @@ class StatistikkModelTests : DescribeSpec({
             notifikasjonId = bestilling.notifikasjonId,
             kildeAppNavn = "",
             produsentId = "",
+            hardDelete = null,
         )
 
 

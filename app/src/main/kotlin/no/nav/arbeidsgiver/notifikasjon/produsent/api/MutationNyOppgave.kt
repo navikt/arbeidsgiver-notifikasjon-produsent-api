@@ -62,7 +62,8 @@ internal class MutationNyOppgave(
                 kildeAppNavn = kildeAppNavn,
                 eksterneVarsler = eksterneVarsler.map {
                     it.tilDomene(metadata.virksomhetsnummer)
-                }
+                },
+                hardDelete = metadata.hardDelete?.tilDomene(),
             )
         }
     }

@@ -39,6 +39,14 @@ object HendelseModel {
         val sakId: UUID
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    sealed interface LocalDateTimeOrDuration {
+        @JsonTypeName("LocalDateTime")
+        data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration
+        @JsonTypeName("Duration")
+        data class Duration(val value: java.time.Duration): LocalDateTimeOrDuration
+    }
+
     @JsonTypeName("SakOpprettet")
     data class SakOpprettet
     @JsonIgnore constructor(
@@ -55,6 +63,7 @@ object HendelseModel {
         val lenke: String,
         val oppgittTidspunkt: OffsetDateTime?,
         val mottattTidspunkt: OffsetDateTime,
+        val hardDelete: LocalDateTimeOrDuration?,
     ) : Hendelse(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
@@ -89,6 +98,7 @@ object HendelseModel {
                 * custom-deserializeren. */
                 oppgittTidspunkt: OffsetDateTime?,
                 mottattTidspunkt: OffsetDateTime?,
+                hardDelete: LocalDateTimeOrDuration?,
             ) = SakOpprettet(
                 hendelseId = hendelseId,
                 virksomhetsnummer = virksomhetsnummer,
@@ -102,6 +112,7 @@ object HendelseModel {
                 lenke = lenke,
                 oppgittTidspunkt = oppgittTidspunkt,
                 mottattTidspunkt = mottattTidspunkt ?: OffsetDateTime.now(),
+                hardDelete = hardDelete,
             )
         }
     }
@@ -119,6 +130,7 @@ object HendelseModel {
         val oppgittTidspunkt: OffsetDateTime?,
         val mottattTidspunkt: OffsetDateTime,
         val idempotensKey: String,
+        val hardDelete: HardDeleteUpdate?,
     ) : Hendelse(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
@@ -140,6 +152,7 @@ object HendelseModel {
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
+        val hardDelete: LocalDateTimeOrDuration?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -172,6 +185,7 @@ object HendelseModel {
                 lenke: String,
                 opprettetTidspunkt: OffsetDateTime,
                 eksterneVarsler: List<EksterntVarsel> = listOf(),
+                hardDelete: LocalDateTimeOrDuration?,
             ) = BeskjedOpprettet(
                 virksomhetsnummer = virksomhetsnummer,
                 notifikasjonId = notifikasjonId,
@@ -185,7 +199,8 @@ object HendelseModel {
                 grupperingsid = grupperingsid,
                 lenke = lenke,
                 opprettetTidspunkt = opprettetTidspunkt,
-                eksterneVarsler = eksterneVarsler
+                eksterneVarsler = eksterneVarsler,
+                hardDelete = hardDelete,
             )
         }
     }
@@ -206,6 +221,7 @@ object HendelseModel {
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
+        val hardDelete: LocalDateTimeOrDuration?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -234,6 +250,7 @@ object HendelseModel {
                 lenke: String,
                 opprettetTidspunkt: OffsetDateTime,
                 eksterneVarsler: List<EksterntVarsel> = listOf(),
+                hardDelete: LocalDateTimeOrDuration?,
             ) = OppgaveOpprettet(
                 virksomhetsnummer = virksomhetsnummer,
                 notifikasjonId = notifikasjonId,
@@ -248,6 +265,7 @@ object HendelseModel {
                 lenke = lenke,
                 opprettetTidspunkt = opprettetTidspunkt,
                 eksterneVarsler = eksterneVarsler,
+                hardDelete = hardDelete,
             )
         }
     }
@@ -259,6 +277,7 @@ object HendelseModel {
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
+        val hardDelete: HardDeleteUpdate?,
     ) : Hendelse(), Notifikasjon {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
@@ -385,6 +404,11 @@ object HendelseModel {
         val sendeTidspunkt: LocalDateTime?,
     ) : EksterntVarsel()
 
+    data class HardDeleteUpdate(
+        val nyTid: LocalDateTimeOrDuration,
+        val strategi: NyTidStrategi,
+    )
+
     enum class EksterntVarselSendingsvindu {
         /* Notifikasjonen sendes uten opphold fra vår side. Merk at underleverandører (Altinn) har eget vindu for utsendig
      * av SMS, og vi vil ikke overstyre det.
@@ -407,6 +431,11 @@ object HendelseModel {
         MOTTATT,
         UNDER_BEHANDLING,
         FERDIG;
+    }
+
+    enum class NyTidStrategi {
+        FORLENG,
+        OVERSKRIV;
     }
 }
 

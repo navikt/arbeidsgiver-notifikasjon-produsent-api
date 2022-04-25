@@ -186,6 +186,7 @@ internal data class MetadataInput(
     val eksternId: String,
     val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
     val virksomhetsnummer: String,
+    val hardDelete: FutureTemporalInput?,
 )
 
 internal data class NyEksternVarselResultat(

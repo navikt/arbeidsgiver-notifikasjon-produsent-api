@@ -42,6 +42,7 @@ class EmergencyBreakTests : DescribeSpec({
                 sendeTidspunkt = null,
             )
         ),
+        hardDelete = null,
     )
 
 

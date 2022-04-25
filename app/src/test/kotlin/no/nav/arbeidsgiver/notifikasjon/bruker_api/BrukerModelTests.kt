@@ -41,6 +41,7 @@ class BrukerModelTests : DescribeSpec({
             kildeAppNavn = "",
             produsentId = "",
             eksterneVarsler = listOf(),
+            hardDelete = null,
         )
 
 

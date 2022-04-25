@@ -77,6 +77,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                     sendeTidspunkt = null,
                 )),
+                hardDelete = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -136,6 +137,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
                     sendeTidspunkt = null,
                 )),
+                hardDelete = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -180,6 +182,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
                     sendeTidspunkt = null,
                 )),
+                hardDelete = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -224,6 +227,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
                     sendeTidspunkt = null,
                 )),
+                hardDelete = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -268,6 +272,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
                     sendeTidspunkt = null,
                 )),
+                hardDelete = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -312,6 +317,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
                     sendeTidspunkt = LocalDateTime.now().minusMinutes(5),
                 )),
+                hardDelete = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -355,6 +361,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
                     sendeTidspunkt = LocalDateTime.now().plusMinutes(5),
                 )),
+                hardDelete = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""

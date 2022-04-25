@@ -69,6 +69,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         produsentId = "",
         grupperingsid = null,
         eksterneVarsler = listOf(),
+        hardDelete = null,
     )
     val oppgaveOpprettet2 = oppgaveOpprettet.copy(
         eksternId = eksternId2,

@@ -22,6 +22,13 @@ Vi tolker tidspunktet som Oslo-tid ('Europe/Oslo').
 scalar ISO8601LocalDateTime
 
 """
+Duration ISO8601-standaren. F.eks. 'P2DT3H4M'.
+
+Er representert som String.
+"""
+scalar ISO8601Duration
+
+"""
 Tilstanden til en oppgave.
 """
 enum OppgaveTilstand {
@@ -286,7 +293,7 @@ type Mutation {
         NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
         til en notifikasjon. De tilgangsstyres hver for seg.
         """
-        mottakere: [MottakerInput!]!
+        mottakere: [MottakerInput!]! @Validate
 
         """En tittel på saken, som vises til brukeren."""
         tittel: String!
@@ -310,6 +317,11 @@ type Mutation {
         til brukeren. Se `SaksStatus` for default tekster.
         """
         overstyrStatustekstMed: String
+
+        """
+        Oppgi dersom dere ønsker at hard delete skal skeduleres
+        """
+        hardDelete: FutureTemporalInput @Validate
     ): NySakResultat!
 
     nyStatusSak(
@@ -329,6 +341,11 @@ type Mutation {
         til brukeren. Se `SaksStatus` for default tekster.
         """
         overstyrStatustekstMed: String
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
     ): NyStatusSakResultat!
 
     nyStatusSakByGrupperingsid(
@@ -350,6 +367,11 @@ type Mutation {
         til brukeren. Se `SaksStatus` for default tekster.
         """
         overstyrStatustekstMed: String
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
     ): NyStatusSakResultat!
 
     """
@@ -370,6 +392,11 @@ type Mutation {
         ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
         """
         id: ID!
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
 
     """
@@ -385,6 +412,11 @@ type Mutation {
         ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
         """
         eksternId: ID!
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
     @deprecated(reason:
         "Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead."
@@ -403,6 +435,11 @@ type Mutation {
         ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
         """
         eksternId: String!
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
 
 
@@ -876,6 +913,42 @@ input MetadataInput {
     Ta kontakt med #arbeidsgiver-notifikasjon på slack for å melde interesse!
     """
     grupperingsid: String
+
+    """
+    Oppgi dersom dere ønsker at hard delete skal skeduleres
+    """
+    hardDelete: FutureTemporalInput
+}
+
+input FutureTemporalInput @ExactlyOneFieldGiven {
+    den: ISO8601LocalDateTime
+    om: ISO8601Duration
+}
+
+"""
+Dersom dere vet at saken/notifikasjonen senere skal slettes helt kan det angis her.
+"""
+input HardDeleteUpdateInput {
+    """
+    Det vil bli utført en hardDelete når det angitte tidspunktet har passert.
+    """
+    nyTid: FutureTemporalInput!
+
+    """
+    hvis det finnes fremtidig sletting hvordan skal vi håndtere dette
+    """
+    strategi: NyTidStrategi!
+}
+
+enum NyTidStrategi {
+    """
+    Vi bruker den tiden som er lengst i fremtiden.
+    """
+    FORLENG
+    """
+    Vi bruker den nye tiden uansett.
+    """
+    OVERSKRIV
 }
 
 union NyOppgaveResultat =
