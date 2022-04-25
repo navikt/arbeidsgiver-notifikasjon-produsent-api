@@ -373,8 +373,8 @@ med variabler
 ```
 
 ## Hvordan slette notifikasjoner og saker automatisk
-For å slette en notifikasjon helt, både fra databaser og kafka-topics, så kan dere
-bruker `hardDeleteNotifikasjon`. Da slettes informasjonen knyttet til notifikasjonen
+For å slette en notifikasjon helt, både fra databaser og kafka-topics, så må dere
+bruke hard delete. Da slettes informasjonen knyttet til notifikasjonen
 helt.
 
 - Sletting av notifikasjoner kan være forvirrende for brukere. Vi
@@ -383,7 +383,7 @@ helt.
 - Bruk soft-delete hvis dere vil skjule notifikasjonen for brukeren.
 - Bruk hard-delete hvis dere ikke lengere har hjemmel for å beholde dataen.
 
-Man skrur på automtisk sletting når man lager en sak/notifikasjon og/eller oppdaterer en.
+Dere kan skedulere automtisk hard delete når dere lager eller oppdaterer en sak eller notifikasjon.
 
 Dette eksempelet viser hvordan man automatisk sletter en sak etter 5 måneder.
 
