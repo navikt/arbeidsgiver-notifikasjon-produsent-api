@@ -75,6 +75,8 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [EksterntVarselSmsInput](#eksterntvarselsmsinput)
     * [EpostKontaktInfoInput](#epostkontaktinfoinput)
     * [EpostMottakerInput](#epostmottakerinput)
+    * [FutureTemporalInput](#futuretemporalinput)
+    * [HardDeleteUpdateInput](#harddeleteupdateinput)
     * [MetadataInput](#metadatainput)
     * [MottakerInput](#mottakerinput)
     * [NaermesteLederMottakerInput](#naermesteledermottakerinput)
@@ -86,6 +88,7 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [SmsMottakerInput](#smsmottakerinput)
   * [Enums](#enums)
     * [EksterntVarselStatus](#eksterntvarselstatus)
+    * [NyTidStrategi](#nytidstrategi)
     * [OppgaveTilstand](#oppgavetilstand)
     * [SaksStatus](#saksstatus)
     * [Sendevindu](#sendevindu)
@@ -93,6 +96,7 @@ Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de o
     * [Boolean](#boolean)
     * [ID](#id)
     * [ISO8601DateTime](#iso8601datetime)
+    * [ISO8601Duration](#iso8601duration)
     * [ISO8601LocalDateTime](#iso8601localdatetime)
     * [Int](#int)
     * [String](#string)
@@ -301,6 +305,15 @@ til brukeren. Se `SaksStatus` for default tekster.
 </td>
 </tr>
 <tr>
+<td colspan="2" align="right" valign="top">hardDelete</td>
+<td valign="top"><a href="#futuretemporalinput">FutureTemporalInput</a></td>
+<td>
+
+Oppgi dersom dere ønsker at hard delete skal skeduleres
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>nyStatusSak</strong></td>
 <td valign="top"><a href="#nystatussakresultat">NyStatusSakResultat</a>!</td>
 <td></td>
@@ -338,6 +351,15 @@ kallet på.
 
 Dette feltet er frivillig. Det lar deg overstyre hvilken tekst vi viser
 til brukeren. Se `SaksStatus` for default tekster.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">hardDelete</td>
+<td valign="top"><a href="#harddeleteupdateinput">HardDeleteUpdateInput</a></td>
+<td>
+
+Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
 
 </td>
 </tr>
@@ -388,6 +410,15 @@ til brukeren. Se `SaksStatus` for default tekster.
 </td>
 </tr>
 <tr>
+<td colspan="2" align="right" valign="top">hardDelete</td>
+<td valign="top"><a href="#harddeleteupdateinput">HardDeleteUpdateInput</a></td>
+<td>
+
+Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>nyBeskjed</strong></td>
 <td valign="top"><a href="#nybeskjedresultat">NyBeskjedResultat</a>!</td>
 <td>
@@ -434,6 +465,15 @@ ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
 </td>
 </tr>
 <tr>
+<td colspan="2" align="right" valign="top">hardDelete</td>
+<td valign="top"><a href="#harddeleteupdateinput">HardDeleteUpdateInput</a></td>
+<td>
+
+Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>oppgaveUtfoertByEksternId</strong> ⚠️</td>
 <td valign="top"><a href="#oppgaveutfoertresultat">OppgaveUtfoertResultat</a>!</td>
 <td>
@@ -467,6 +507,15 @@ ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
 </td>
 </tr>
 <tr>
+<td colspan="2" align="right" valign="top">hardDelete</td>
+<td valign="top"><a href="#harddeleteupdateinput">HardDeleteUpdateInput</a></td>
+<td>
+
+Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>oppgaveUtfoertByEksternId_V2</strong></td>
 <td valign="top"><a href="#oppgaveutfoertresultat">OppgaveUtfoertResultat</a>!</td>
 <td>
@@ -490,6 +539,15 @@ Merkelapp som oppgaven er registrert med.
 <td>
 
 ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">hardDelete</td>
+<td valign="top"><a href="#harddeleteupdateinput">HardDeleteUpdateInput</a></td>
+<td>
+
+Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
 
 </td>
 </tr>
@@ -1879,6 +1937,64 @@ deprecated. value is ignored.
 </tbody>
 </table>
 
+#### FutureTemporalInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>den</strong></td>
+<td valign="top"><a href="#iso8601localdatetime">ISO8601LocalDateTime</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>om</strong></td>
+<td valign="top"><a href="#iso8601duration">ISO8601Duration</a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### HardDeleteUpdateInput
+
+Dersom dere vet at saken/notifikasjonen senere skal slettes helt kan det angis her.
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>nyTid</strong></td>
+<td valign="top"><a href="#futuretemporalinput">FutureTemporalInput</a>!</td>
+<td>
+
+Det vil bli utført en hardDelete når det angitte tidspunktet har passert.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>strategi</strong></td>
+<td valign="top"><a href="#nytidstrategi">NyTidStrategi</a>!</td>
+<td>
+
+hvis det finnes fremtidig sletting hvordan skal vi håndtere dette
+
+</td>
+</tr>
+</tbody>
+</table>
+
 #### MetadataInput
 
 <table>
@@ -1937,6 +2053,15 @@ med alle notifikasjonene og status-oppdateringer knyttet til en sak.
 Vi kan også vurdere å implemntere API-er for dere, slik at dere enkelt kan slette
 all informasjon knyttet til en sak i et enkelt kall (f.eks. for å ivareta personvern).
 Ta kontakt med #arbeidsgiver-notifikasjon på slack for å melde interesse!
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>hardDelete</strong></td>
+<td valign="top"><a href="#futuretemporalinput">FutureTemporalInput</a></td>
+<td>
+
+Oppgi dersom dere ønsker at hard delete skal skeduleres
 
 </td>
 </tr>
@@ -2268,6 +2393,33 @@ deprecated. value is ignored.
 </tbody>
 </table>
 
+#### NyTidStrategi
+
+<table>
+<thead>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>FORLENG</strong></td>
+<td>
+
+Vi bruker den tiden som er lengst i fremtiden.
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>OVERSKRIV</strong></td>
+<td>
+
+Vi bruker den nye tiden uansett.
+
+</td>
+</tr>
+</tbody>
+</table>
+
 #### OppgaveTilstand
 
 Tilstanden til en oppgave.
@@ -2396,6 +2548,12 @@ The `ID` scalar type represents a unique identifier, often used to refetch an ob
 #### ISO8601DateTime
 
 DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
+
+Er representert som String.
+
+#### ISO8601Duration
+
+Duration ISO8601-standaren. F.eks. 'P2DT3H4M'.
 
 Er representert som String.
 
