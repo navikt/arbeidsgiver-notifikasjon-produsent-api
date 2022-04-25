@@ -372,9 +372,80 @@ med variabler
 }
 ```
 
-## Hvordan slette notifikasjoner
-En soft-delete markerer notifikasjonen som slettet i våre systemer. Det er ikke mulig
-å angre på en soft delete, men dataen vil ligge igjen i databasene våre, så det kan graves fram.
+## Hvordan slette notifikasjoner og saker automatisk
+For å slette en notifikasjon helt, både fra databaser og kafka-topics, så må dere
+bruke hard delete. Da slettes informasjonen knyttet til notifikasjonen
+helt.
+
+- Sletting av notifikasjoner kan være forvirrende for brukere. Vi
+  anbefaler at dere lar notifikasjonene
+  være til dere har en grunn til å slette dem.
+- Bruk soft-delete hvis dere vil skjule notifikasjonen for brukeren.
+- Bruk hard-delete hvis dere ikke lengere har hjemmel for å beholde dataen.
+
+Dere kan skedulere automtisk hard delete når dere lager eller oppdaterer en sak eller notifikasjon.
+
+Dette eksempelet viser hvordan man automatisk sletter en sak etter 5 måneder.
+
+```graphql
+mutation OpprettSakMedAutomatiskSletting {
+  nySak(
+    # Dette argumentet
+    hardDelete: {
+      om: "P5M" # Fem månder (se https://en.wikipedia.org/wiki/ISO_8601#Durations for mer info)
+    }
+    grupperingsid: "12345"
+    merkelapp: "Tiltak"
+    virksomhetsnummer: "000000000"
+    initiell_status: MOTTATT
+    mottakere: [{
+      altinn: {
+        serviceEdition: "1" 
+        serviceCode: "1" 
+      }
+    }]
+    tittel: "Du har en ny avtale"
+    lenke: "https://dev.nav.no/avtale/12345"
+  ) {
+    __typename
+  }
+}
+```
+
+Når du oppgir et intervall, som 5 månder over, så regnes det ut fra `tidspunkt`-feltet hvis det er oppgitt,  ellers fra tidspunktet vi mottok saken/notifikasjonen. Hvis du ønsker å beregne dato selv, så kan du skrive
+`den: "2020-01-01T12:30Z` i stede for `om: "T5M"`.
+
+Hvis du oppdaterer en oppgave eller en sak, så kan du også skedulere automatisk hard delete. Her er et eksempel hvor vi forlenger slettetiden på saken over med 5 månder.
+
+```graphql
+mutation OppdaterSakMedAutomatiskSletting {
+  nyStatusSakByGrupperingsid(
+    hardDelete: {
+      nyTid: {
+          om: "P5M"
+      }
+      strategi: FORLENG
+    }
+    grupperingsid: "12345"
+    merkelapp: "Tiltak"
+    ny_status: UNDER_BEHANDLING
+  ) {
+    __typename
+  }
+}
+```
+
+Dere kan skedulere slettingen i en status-oppdatering, uavhengig av om dere har 
+skedulert sletting tidligere. Men dere må oppgi `strategi`, som forteller oss
+hvordan vi skal håndtere andre skeduleringer dere eventult har gjort:
+
+- `FORLENG` vil forlenge tiden før sletting.
+- `OVERSKRIV` vil overskrive eventuelt tidligere skeduleringer.
+
+
+## Hvordan slette notifikasjoner og saker manuelt
+En soft-delete markerer en notifikasjon eller sak som slettet i våre systemer. Det er ikke mulig
+å angre på en soft delete, men dataen vil ligge igjen i databasene våre, så det kan graves fram. Eksempel på soft delete av notifikasjon:
 ```graphql
 mutation SoftDeleteNotifikasjon($id: ID!) {
     softDeleteNotifikasjon(id: $id) {
@@ -385,17 +456,16 @@ mutation SoftDeleteNotifikasjon($id: ID!) {
     }
 }
 ```
-Dere kan også spesifisere notifikasjonen med `merkelapp` og `eksternId`.
 
-For å slette en notifikasjon helt, både fra databaser og kafka-topics, så kan dere
-bruker `hardDeleteNotifikasjon`. Da slettes informasjonen knyttet til notifikasjonen
-helt.
-
-- Sletting av notifikasjoner kan være forvirrende for brukere. Vi
-  anbefaler at dere lar notifikasjonene
-  være til dere har en grunn til å slette dem.
-- Bruk soft-delete hvis dere vil skjule notifikasjonen for brukeren.
-- Bruk hard-delete hvis dere ikke lengere har hjemmel for å beholde dataen.
+Dere kan også spesifisere notifikasjonen med `merkelapp` og `eksternId` ved bruk av `softDeleteNotifikasjonByEksternId_V2`. Her er en liste over de forskjellige variantene (sak vs notifikasjon, soft vs hard, by id vs by ekstern id):
+- `softDeleteNotifikasjon(id)`
+- `softDeleteNotifikasjonByEksternId_V2(merkelapp, eksternId)`
+- `hardDeleteNotifikasjon(id)`
+- `hardDeleteNotifikasjonByEksternId_V2(merkelapp, eksternId)`
+- `softDeleteSak(id)`
+- `softDeleteSakByGrupperingsid(merkelapp, grupperingsid)`
+- `hardDeleteSak(id)`
+- `hardDeleteSakByGrupperingsid(merkelapp, grupperingsid)`
 
 ## Hvor lenge vises notifikasjonen for mottakere og lagres i loggene?
 Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere fortsatt
