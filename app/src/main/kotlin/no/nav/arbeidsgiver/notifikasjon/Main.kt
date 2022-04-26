@@ -15,7 +15,6 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         "notifikasjon-statistikk" -> Statistikk.main()
         "notifikasjon-ekstern-varsling" -> EksternVarsling.main()
         "notifikasjon-replay-validator" -> ReplayValidator.main()
-        "notifikasjon-bigquery-exporter" -> BigqueryExporter.main()
         else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
     }
 }

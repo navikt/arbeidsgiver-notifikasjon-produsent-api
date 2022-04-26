@@ -33,15 +33,6 @@ spec:
     - application: notifikasjon-replay-validator
       team: fager
       access: read
-    - application: notifikasjon-bigquery-exporter
-      team: fager
-      access: read
-    - application: notifikasjon-bigquery-exporter
-      team: fager
-      access: read
     - application: notifikasjon-devops
-      team: fager
-      access: read
-    - application: notifikasjon-bigquery-exporter
       team: fager
       access: read
