@@ -29,6 +29,7 @@ internal class MutationNyStatusSak(
             ),
             idempotencyKey = getTypedArgumentOrNull("idempotencyKey"),
             hardDelete = getTypedArgumentOrNull("hardDelete"),
+            endreLenke = getTypedArgumentOrNull("endreLenke"),
         )
 
     fun wire(runtime: RuntimeWiring.Builder) {
@@ -57,6 +58,7 @@ internal class MutationNyStatusSak(
         val status: SaksStatusInput,
         val idempotencyKey: String?,
         val hardDelete: HardDeleteUpdateInput?,
+        val endreLenke: String?,
     )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -127,6 +129,7 @@ internal class MutationNyStatusSak(
                     mottattTidspunkt = OffsetDateTime.now(),
                     idempotensKey = idempotencyKey,
                     hardDelete = status.hardDelete?.tilDomene(),
+                    endreLenke = status.endreLenke,
                 )
 
                 hendelseDispatcher.send(nyStatusSakHendelse)

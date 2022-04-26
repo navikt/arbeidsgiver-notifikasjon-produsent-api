@@ -134,6 +134,7 @@ class HardDeleteTests : DescribeSpec({
             overstyrStatustekstMed = null,
             idempotensKey = IdempotenceKey.initial(),
             hardDelete = null,
+            endreLenke = null,
         )
 
         val hardDeleteEvent = HardDelete(
