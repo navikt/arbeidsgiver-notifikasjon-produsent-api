@@ -88,11 +88,21 @@ class EndreLenkeTests : DescribeSpec({
             NyStatusSak.copy(
                 hendelseId = uuid("2"),
                 idempotensKey = IdempotenceKey.userSupplied("20202021"),
-                endreLenke = "#bar"
+                endreLenke = "#bar",
             )
         )
 
         it("Får ny lenke ") {
+            hentLenke() shouldBe "#bar"
+        }
+
+        queryModel.oppdaterModellEtterHendelse(NyStatusSak.copy(
+            hendelseId = uuid("3"),
+            idempotensKey = IdempotenceKey.userSupplied("123"),
+            endreLenke = null,
+        ))
+
+        it("status-oppdatering uten endret lenke") {
             hentLenke() shouldBe "#bar"
         }
     }
