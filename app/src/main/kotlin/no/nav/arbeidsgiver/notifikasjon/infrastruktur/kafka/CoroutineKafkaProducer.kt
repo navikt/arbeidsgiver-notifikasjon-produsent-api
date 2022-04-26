@@ -17,7 +17,7 @@ interface CoroutineKafkaProducer<K, V> {
     suspend fun tombstone(key: K, orgnr: String): RecordMetadata
 }
 
-fun createKafkaProducer(configure: Properties.() -> Unit = {}): CoroutineKafkaProducer<KafkaKey, Hendelse> {
+fun createKafkaProducer(topic: String = TOPIC, configure: Properties.() -> Unit = {}): CoroutineKafkaProducer<KafkaKey, Hendelse> {
     val properties = Properties().apply {
         putAll(PRODUCER_PROPERTIES)
         configure()

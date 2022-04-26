@@ -55,8 +55,8 @@ fun createKafkaConsumer(groupId: String) =
         put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
     }
 
-fun createKafkaConsumer(configure: Properties.() -> Unit = {}) =
-    createAndSubscribeKafkaConsumer<KafkaKey, Hendelse>(TOPIC, configure = configure)
+fun createKafkaConsumer(topic: String = TOPIC, configure: Properties.() -> Unit = {}) =
+    createAndSubscribeKafkaConsumer<KafkaKey, Hendelse>(topic, configure = configure)
 
 fun <K, V> createAndSubscribeKafkaConsumer(
     vararg topic: String,

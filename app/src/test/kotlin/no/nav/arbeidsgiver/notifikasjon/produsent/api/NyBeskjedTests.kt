@@ -14,7 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
+import no.nav.arbeidsgiver.notifikasjon.util.kafka
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
@@ -28,7 +28,7 @@ import kotlin.time.toJavaDuration
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class NyBeskjedTests : DescribeSpec({
-    val embeddedKafka = embeddedKafka()
+    val embeddedKafka = kafka()
 
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)

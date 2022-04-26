@@ -8,48 +8,58 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import no.nav.common.KafkaEnvironment
 import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
+import org.apache.kafka.clients.admin.Admin
+import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.util.concurrent.atomic.AtomicInteger
 
-fun TestConfiguration.embeddedKafka(): EmbeddedKafka =
-    EmbeddedKafkaTestListener()
+fun TestConfiguration.kafka(): TestKafka =
+    KafkaTestListener()
         .also{ listener(it) }
 
-interface EmbeddedKafka {
+interface TestKafka {
     fun newConsumer(): CoroutineKafkaConsumer<KafkaKey, Hendelse>
     fun newProducer(): CoroutineKafkaProducer<KafkaKey, Hendelse>
 }
 
-class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
-    private val env: KafkaEnvironment = KafkaEnvironment(topicNames = listOf("arbeidsgiver.notifikasjon"))
-
+class KafkaTestListener: TestListener, TestKafka {
+    private val admin: Admin
+        get() = Admin.create(
+            mapOf(
+                BOOTSTRAP_SERVERS_CONFIG to COMMON_PROPERTIES[BOOTSTRAP_SERVERS_CONFIG]
+            )
+        )
     override val name: String
-        get() = "EmbeddedKafkaListener"
+        get() = "KafkaTestListener"
 
     override suspend fun beforeSpec(spec: Spec) {
-        env.start()
-        while (env.serverPark.brokerStatus !is KafkaEnvironment.BrokerStatus.Available) {
+        val topic = "test-${topicCounter.incrementAndGet()}"
+        val result = admin.createTopics(listOf(NewTopic(topic, 1, 1)))
+        val future = result.values()[topic]!!
+        while (!future.isDone) {
             delay(100)
         }
     }
 
     override suspend fun afterSpec(spec: Spec) {
-        env.tearDown()
+        //env.tearDown()
     }
 
-    private var groupIdCounter = AtomicInteger(0)
+    private val groupIdCounter = AtomicInteger(0)
+    private val topicCounter = AtomicInteger(0)
 
     override fun newConsumer() =
         createKafkaConsumer {
             this[ConsumerConfig.GROUP_ID_CONFIG] = "test-" + groupIdCounter.getAndIncrement()
             this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
-            this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
+            this[BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
         }
 
     override fun newProducer() =
         createKafkaProducer {
             this[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = 15000
-            this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
+            this[BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
         }
 }
 

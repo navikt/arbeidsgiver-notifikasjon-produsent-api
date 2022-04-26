@@ -13,7 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
+import no.nav.arbeidsgiver.notifikasjon.util.kafka
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDateTime
@@ -28,7 +28,7 @@ class EksternVarslingServiceTests : DescribeSpec({
     val log = logger()
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
-    val kafka = embeddedKafka()
+    val kafka = kafka()
     val nå = LocalDateTime.parse("2020-01-01T01:01")
     val lokalOsloTid = mockk<LokalOsloTid> {
         every { nå() } returns nå
