@@ -28,6 +28,10 @@ spec:
           namespace: arbeidsgiver
           cluster: prod-fss
 
+        - application: permitteringsmelding-notifikasjon
+          namespace: permittering-og-nedbemanning
+          cluster: prod-gcp
+
   azure:
     application:
       enabled: true
