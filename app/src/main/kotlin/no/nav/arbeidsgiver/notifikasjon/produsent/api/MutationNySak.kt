@@ -171,7 +171,7 @@ internal class MutationNySak(
             mottattTidspunkt = mottattTidspunkt,
             idempotensKey = IdempotenceKey.initial(),
             hardDelete = null,
-            endreLenke = null,
+            nyLenkeTilSak = null,
         )
     }
 

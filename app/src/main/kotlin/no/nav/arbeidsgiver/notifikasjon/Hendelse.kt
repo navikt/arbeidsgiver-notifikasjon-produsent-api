@@ -131,7 +131,7 @@ object HendelseModel {
         val mottattTidspunkt: OffsetDateTime,
         val idempotensKey: String,
         val hardDelete: HardDeleteUpdate?,
-        val endreLenke: String?,
+        val nyLenkeTilSak: String?,
     ) : Hendelse(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId

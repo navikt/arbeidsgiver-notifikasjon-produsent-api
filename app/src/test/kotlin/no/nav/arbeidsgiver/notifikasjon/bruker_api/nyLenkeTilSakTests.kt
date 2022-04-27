@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 
-class EndreLenkeTests : DescribeSpec({
+class NyLenkeTilSakTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
 
@@ -75,7 +75,7 @@ class EndreLenkeTests : DescribeSpec({
             mottattTidspunkt = OffsetDateTime.now(),
             idempotensKey = IdempotenceKey.initial(),
             hardDelete = null,
-            endreLenke = null,
+            nyLenkeTilSak = null,
         )
         queryModel.oppdaterModellEtterHendelse(SakOpprettet)
         queryModel.oppdaterModellEtterHendelse(NyStatusSak)
@@ -88,7 +88,7 @@ class EndreLenkeTests : DescribeSpec({
             NyStatusSak.copy(
                 hendelseId = uuid("2"),
                 idempotensKey = IdempotenceKey.userSupplied("20202021"),
-                endreLenke = "#bar",
+                nyLenkeTilSak = "#bar",
             )
         )
 
@@ -99,7 +99,7 @@ class EndreLenkeTests : DescribeSpec({
         queryModel.oppdaterModellEtterHendelse(NyStatusSak.copy(
             hendelseId = uuid("3"),
             idempotensKey = IdempotenceKey.userSupplied("123"),
-            endreLenke = null,
+            nyLenkeTilSak = null,
         ))
 
         it("status-oppdatering uten endret lenke") {

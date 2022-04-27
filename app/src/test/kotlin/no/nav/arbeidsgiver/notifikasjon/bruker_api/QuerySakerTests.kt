@@ -70,7 +70,7 @@ class QuerySakerTests : DescribeSpec({
             mottattTidspunkt = OffsetDateTime.now(),
             idempotensKey = IdempotenceKey.initial(),
             hardDelete = null,
-            endreLenke = null,
+            nyLenkeTilSak = null,
         )
 
         context("med sak opprettet men ingen status") {
@@ -196,7 +196,7 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
         mottattTidspunkt = OffsetDateTime.now(),
         idempotensKey = IdempotenceKey.initial(),
         hardDelete = null,
-        endreLenke = null,
+        nyLenkeTilSak = null,
     ))
     return sakOpprettet
 }
@@ -233,7 +233,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
         idempotensKey = IdempotenceKey.initial(),
         oppgittTidspunkt = null,
         hardDelete = null,
-        endreLenke = null,
+        nyLenkeTilSak = null,
     )
     oppdaterModellEtterHendelse(sak)
     oppdaterModellEtterHendelse(status)
