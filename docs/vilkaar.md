@@ -3,7 +3,10 @@ layout: page
 title: Bruksvilkår
 permalink: /bruksvilkår/
 ---
-For at dere skal få tilgang til å produsere notifikasjoner og saker, så må dere godta bruksvilkårene beskrevet under.
+
+For å få tilgang til å produsere notifikasjoner og saker i prod må dere godkjenne bruksvilkårene.
+Dere kan få tilgang i dev uten at dere godkjenner bruksvilkårene.
+Ved å godta bruksvilkårene bekrefter dere at nødvendige juridiske vurderinger er gjort i deres team.
 
 
 ## Dere er ansvarlige for:
