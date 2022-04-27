@@ -350,7 +350,7 @@ type Mutation {
         """
         Her kan dere endre lenken til saken. F.eks hvis saken har gått fra å være en
         søknad til en kvittering, så kan det være dere har behov for å endre url som brukeren sendes til.
-        Dette feltet er frivillig.
+        Dette feltet er frivillig; er det ikke oppgitt (eller er null), så forblir lenken knyttet til saken uendret.
         """
         nyLenkeTilSak: String
 
@@ -384,7 +384,7 @@ type Mutation {
         """
         Her kan dere endre lenken til saken. F.eks hvis saken har gått fra å være en
         søknad til en kvittering, så kan det være dere har behov for å endre url som brukeren sendes til.
-        Dette feltet er frivillig.
+        Dette feltet er frivillig; er det ikke oppgitt (eller er null), så forblir lenken knyttet til saken uendret.
         """
         nyLenkeTilSak: String
     ): NyStatusSakResultat!
