@@ -279,7 +279,7 @@ Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken
 </td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">initiell_status</td>
+<td colspan="2" align="right" valign="top">initiellStatus</td>
 <td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
 <td></td>
 </tr>
@@ -329,7 +329,7 @@ Oppgi dersom dere ønsker at hard delete skal skeduleres
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">ny_status</td>
+<td colspan="2" align="right" valign="top">nyStatus</td>
 <td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
 <td></td>
 </tr>
@@ -395,7 +395,7 @@ Dette feltet er frivillig; er det ikke oppgitt (eller er null), så forblir lenk
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">ny_status</td>
+<td colspan="2" align="right" valign="top">nyStatus</td>
 <td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
 <td></td>
 </tr>
