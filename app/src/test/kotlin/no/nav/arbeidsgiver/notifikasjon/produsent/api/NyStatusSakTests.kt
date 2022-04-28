@@ -97,7 +97,7 @@ private fun TestApplicationEngine.nyStatusSak(
                 nyStatusSak(
                     id: "$id"
                     idempotencyKey: ${idempotencyKey?.let { "\"$it\"" }}
-                    ny_status: $status
+                    nyStatus: $status
                     ${hardDelete?.let {"""
                         hardDelete: {
                             nyTid: {
@@ -135,7 +135,7 @@ private fun TestApplicationEngine.nySak(
                             serviceEdition: "1"
                         }
                     }]
-                    initiell_status: $status
+                    initiellStatus: $status
                     tittel: "tittel"
                     lenke: "lenke"
                 ) {

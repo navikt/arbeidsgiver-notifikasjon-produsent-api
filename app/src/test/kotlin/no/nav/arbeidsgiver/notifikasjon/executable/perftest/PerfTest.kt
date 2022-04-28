@@ -221,7 +221,7 @@ suspend fun nySak(count: Int, api: Api = Api.PRODUSENT_GCP) {
                               
                               tittel: \"${genererTittel()}\",                              
                               lenke: \"https://min-side-arbeidsgiver.dev.nav.no/min-side-arbeidsgiver/?bedrift=$virksomhet\",
-                              initiell_status: MOTTATT
+                              initiellStatus: MOTTATT
                           ) {
                               __typename
                               ... on NySakVellykket {
