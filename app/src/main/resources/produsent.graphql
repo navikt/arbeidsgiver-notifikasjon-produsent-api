@@ -303,7 +303,7 @@ type Mutation {
 
         """
         """
-        initiell_status: SaksStatus!
+        initiellStatus: SaksStatus!
 
         """
         Når endringen skjedde. Det kan godt være i fortiden.
@@ -327,7 +327,7 @@ type Mutation {
     nyStatusSak(
         idempotencyKey: String
         id: ID!
-        ny_status: SaksStatus!
+        nyStatus: SaksStatus!
 
         """
         Når endringen skjedde. Det kan godt være i fortiden.
@@ -361,7 +361,7 @@ type Mutation {
         grupperingsid: String!
         merkelapp: String!
 
-        ny_status: SaksStatus!
+        nyStatus: SaksStatus!
 
         """
         Når endringen skjedde. Det kan godt være i fortiden.

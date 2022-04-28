@@ -43,7 +43,7 @@ internal class MutationNySak(
                         tittel = env.getTypedArgument("tittel"),
                         lenke = env.getTypedArgument("lenke"),
                         status = SaksStatusInput(
-                            status = env.getTypedArgument("initiell_status"),
+                            status = env.getTypedArgument("initiellStatus"),
                             tidspunkt = env.getTypedArgumentOrNull("tidspunkt"),
                             overstyrStatustekstMed = env.getTypedArgumentOrNull("overstyrStatustekstMed"),
                         ),

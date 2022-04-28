@@ -126,7 +126,7 @@ private fun TestApplicationEngine.nySak(
                             serviceEdition: "1"
                         }
                     }]
-                    initiell_status: $status
+                    initiellStatus: $status
                     tidspunkt: "2020-01-01T01:01Z"
                     tittel: "$tittel"
                     lenke: "$lenke"

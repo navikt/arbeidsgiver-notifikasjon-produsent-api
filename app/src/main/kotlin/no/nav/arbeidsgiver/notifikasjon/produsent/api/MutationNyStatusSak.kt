@@ -23,7 +23,7 @@ internal class MutationNyStatusSak(
     private fun DataFetchingEnvironment.getStatus() =
         NyStatusSakInput(
             status = SaksStatusInput(
-                status = getTypedArgument("ny_status"),
+                status = getTypedArgument("nyStatus"),
                 tidspunkt = getTypedArgumentOrNull("tidspunkt"),
                 overstyrStatustekstMed = getTypedArgumentOrNull("overstyrStatustekstMed"),
             ),
