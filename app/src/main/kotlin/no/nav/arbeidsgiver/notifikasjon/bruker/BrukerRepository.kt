@@ -489,6 +489,19 @@ class BrukerRepositoryImpl(
                 nullableString(nyStatusSak.overstyrStatustekstMed)
                 timestamptz(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
             }
+            if (nyStatusSak.nyLenkeTilSak != null) {
+                executeUpdate(
+                    """
+                    UPDATE sak
+                    SET lenke = ?
+                    WHERE id = ?
+                """
+                ) {
+                    string(nyStatusSak.nyLenkeTilSak)
+                    uuid(nyStatusSak.sakId)
+                }
+            }
+
         }
     }
 

@@ -379,6 +379,7 @@ object EksempelHendelse {
             nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
         ),
+        nyLenkeTilSak = null,
     )
 
     val Alle: List<Hendelse> = listOf(
