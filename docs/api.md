@@ -364,6 +364,17 @@ Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
 </td>
 </tr>
 <tr>
+<td colspan="2" align="right" valign="top">nyLenkeTilSak</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Her kan dere endre lenken til saken. F.eks hvis saken har gått fra å være en
+søknad til en kvittering, så kan det være dere har behov for å endre url som brukeren sendes til.
+Dette feltet er frivillig; er det ikke oppgitt (eller er null), så forblir lenken knyttet til saken uendret.
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>nyStatusSakByGrupperingsid</strong></td>
 <td valign="top"><a href="#nystatussakresultat">NyStatusSakResultat</a>!</td>
 <td></td>
@@ -415,6 +426,17 @@ til brukeren. Se `SaksStatus` for default tekster.
 <td>
 
 Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">nyLenkeTilSak</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Her kan dere endre lenken til saken. F.eks hvis saken har gått fra å være en
+søknad til en kvittering, så kan det være dere har behov for å endre url som brukeren sendes til.
+Dette feltet er frivillig; er det ikke oppgitt (eller er null), så forblir lenken knyttet til saken uendret.
 
 </td>
 </tr>
