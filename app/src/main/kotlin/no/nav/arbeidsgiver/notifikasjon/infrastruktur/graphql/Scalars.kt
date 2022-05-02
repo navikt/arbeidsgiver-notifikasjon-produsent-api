@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
 import graphql.language.StringValue
 import graphql.schema.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -76,6 +77,6 @@ object Scalars {
 
     val ISO8601Duration: GraphQLScalarType = toFromStringScalar(
         name = "ISO8601Duration",
-        parser = Duration::parse
+        parser = ISO8601Period::parse
     )
 }

@@ -1,12 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import java.time.Duration
 import java.time.LocalDateTime
 
 data class FutureTemporalInput(
     val den: LocalDateTime?,
-    val om: Duration?,
+    val om: ISO8601Period?,
 ) {
     fun tilDomene(): HendelseModel.LocalDateTimeOrDuration {
         if (den != null) {

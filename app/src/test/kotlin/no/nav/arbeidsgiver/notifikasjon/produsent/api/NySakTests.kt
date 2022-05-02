@@ -13,7 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.StubbedKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 class NySakTests: DescribeSpec({
@@ -91,7 +91,7 @@ class NySakTests: DescribeSpec({
 
         val response8 = engine.nySak(
             grupperingsid = "3",
-            hardDelete = LocalDateTime.now()
+            hardDeleteDen = "2020-01-01T01:01"
         )
         it("should be successful") {
             response8.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
@@ -102,6 +102,42 @@ class NySakTests: DescribeSpec({
                 .last()
             hendelse.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
         }
+
+        val response9 = engine.nySak(
+            grupperingsid = "4",
+            hardDeleteOm = "P2YT1M",
+        )
+        it("should be successful") {
+            response9.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
+        }
+        it("should have hard delete in kafka message") {
+            val hendelse = stubbedKafkaProducer.hendelser
+                .filterIsInstance<HendelseModel.SakOpprettet>()
+                .last()
+            val hardDelete = hendelse.hardDelete
+            hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.Duration::class)
+            val duration = (hardDelete as HendelseModel.LocalDateTimeOrDuration.Duration).value
+            duration.get(ChronoUnit.YEARS) shouldBe 2
+            duration.get(ChronoUnit.SECONDS) shouldBe 60
+        }
+
+        val response10 = engine.nySak(
+            grupperingsid = "5",
+            hardDeleteOm = "P2YT",
+        )
+        it("should be successful") {
+            response10.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
+        }
+        it("should have hard delete in kafka message") {
+            val hendelse = stubbedKafkaProducer.hendelser
+                .filterIsInstance<HendelseModel.SakOpprettet>()
+                .last()
+            val hardDelete = hendelse.hardDelete
+            hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.Duration::class)
+            val duration = (hardDelete as HendelseModel.LocalDateTimeOrDuration.Duration).value
+            duration.get(ChronoUnit.YEARS) shouldBe 2
+            duration.get(ChronoUnit.SECONDS) shouldBe 0
+        }
     }
 })
 
@@ -111,7 +147,8 @@ private fun TestApplicationEngine.nySak(
     status: SaksStatus = SaksStatus.MOTTATT,
     tittel: String = "tittel",
     lenke: String = "lenke",
-    hardDelete: LocalDateTime? = null,
+    hardDeleteDen: String? = null,
+    hardDeleteOm: String? = null,
 ) =
     produsentApi(
         """
@@ -130,9 +167,13 @@ private fun TestApplicationEngine.nySak(
                     tidspunkt: "2020-01-01T01:01Z"
                     tittel: "$tittel"
                     lenke: "$lenke"
-                    ${hardDelete?.let {"""
+                    ${hardDeleteDen?.let {"""
                         |hardDelete: {
                         |  den: "$it"
+                        |}""".trimMargin()} ?: ""}
+                    ${hardDeleteOm?.let {"""
+                        |hardDelete: {
+                        |  om: "$it"
                         |}""".trimMargin()} ?: ""}
                 ) {
                     __typename
