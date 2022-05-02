@@ -43,9 +43,19 @@ object HendelseModel {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed interface LocalDateTimeOrDuration {
         @JsonTypeName("LocalDateTime")
-        data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration
+        data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration {
+            override fun omOrNull() = null
+            override fun denOrNull() = value
+        }
+
         @JsonTypeName("Duration")
-        data class Duration(val value: ISO8601Period): LocalDateTimeOrDuration
+        data class Duration(val value: ISO8601Period): LocalDateTimeOrDuration {
+            override fun omOrNull() = value
+            override fun denOrNull() = null
+        }
+
+        fun omOrNull(): ISO8601Period?
+        fun denOrNull(): java.time.LocalDateTime?
     }
 
     @JsonTypeName("SakOpprettet")
@@ -68,6 +78,9 @@ object HendelseModel {
     ) : Hendelse(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
+
+        val opprettetTidspunkt: OffsetDateTime
+            get() = oppgittTidspunkt ?: mottattTidspunkt
 
         init {
             requireGraphql(mottakere.isNotEmpty()) {

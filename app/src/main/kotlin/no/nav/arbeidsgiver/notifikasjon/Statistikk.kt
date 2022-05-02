@@ -13,13 +13,11 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkModel
 import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkServiceImpl
 import java.time.Duration
-import kotlin.time.ExperimentalTime
 
 object Statistikk {
     val log = logger()
     val databaseConfig = Database.config("statistikk_model")
 
-    @OptIn(ExperimentalTime::class)
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
