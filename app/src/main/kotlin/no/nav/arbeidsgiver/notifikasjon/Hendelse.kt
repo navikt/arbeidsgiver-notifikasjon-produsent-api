@@ -292,6 +292,7 @@ object HendelseModel {
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
+        /** Brukes bare for å kunne se i hendelses-loggen når slettingen utført. */
         val deletedAt: OffsetDateTime,
     ) : Hendelse()
 
@@ -302,6 +303,7 @@ object HendelseModel {
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
+        /** Brukes bare for å kunne se i hendelses-loggen når slettingen utført. */
         val deletedAt: OffsetDateTime,
     ) : Hendelse()
 
