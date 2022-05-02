@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
 import java.time.Instant
 import java.time.LocalDateTime
@@ -44,7 +45,7 @@ object HendelseModel {
         @JsonTypeName("LocalDateTime")
         data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration
         @JsonTypeName("Duration")
-        data class Duration(val value: java.time.Duration): LocalDateTimeOrDuration
+        data class Duration(val value: ISO8601Period): LocalDateTimeOrDuration
     }
 
     @JsonTypeName("SakOpprettet")

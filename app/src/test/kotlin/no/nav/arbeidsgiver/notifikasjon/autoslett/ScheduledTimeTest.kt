@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.autoslett
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import java.time.Duration
 import java.time.Instant
 
@@ -22,7 +23,7 @@ class ScheduledTimeTest : DescribeSpec({
     describe("Spec er en duration") {
         val schedTime = ScheduledTime(
             HendelseModel.LocalDateTimeOrDuration.Duration(
-                Duration.ofHours(5)
+                ISO8601Period.parse("PT5H")
             ),
             Instant.parse("2022-04-01T12:30:00.00Z")
         )
