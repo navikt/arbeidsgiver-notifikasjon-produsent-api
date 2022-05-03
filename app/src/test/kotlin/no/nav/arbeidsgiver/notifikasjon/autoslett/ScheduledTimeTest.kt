@@ -15,7 +15,7 @@ class ScheduledTimeTest : DescribeSpec({
             val sched = ScheduledTime.parse(spec = "PT5H", base = "2022-04-01T12:30:00.00Z")
             sched.happensAt() shouldBe Instant.parse("2022-04-01T17:30:00.00Z")
         }
-        
+
         it("spec med år-duration") {
             val sched = ScheduledTime.parse(spec = "P1YT5H", base = "2022-04-01T12:30:00.00Z")
             sched.happensAt() shouldBe Instant.parse("2023-04-01T17:30:00.00Z")
