@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
-class AutoSlettIdempotensTest : DescribeSpec({
+class AutoSlettIdempotensTests : DescribeSpec({
     val database = testDatabase(AutoSlett.databaseConfig)
     val repository = AutoSlettRepository(database)
 

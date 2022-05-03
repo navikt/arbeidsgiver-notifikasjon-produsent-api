@@ -16,7 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientLoggi
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientMedFilter
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingRepository
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingService
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.LokalOsloTidImpl
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.ÅpningstiderImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
@@ -61,7 +61,7 @@ object EksternVarsling {
                         other = { AltinnVarselKlientLogging() },
                     ),
                     kafkaProducer = createKafkaProducer(),
-                    lokalOsloTid = LokalOsloTidImpl,
+                    åpningstider = ÅpningstiderImpl,
                 )
                 service.start(this)
             }

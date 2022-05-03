@@ -102,7 +102,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class EksternVarslingService(
     private val eksternVarslingRepository: EksternVarslingRepository,
     private val altinnVarselKlient: AltinnVarselKlient,
-    private val lokalOsloTid: LokalOsloTid,
+    private val åpningstider: Åpningstider,
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
 ) {
     private val log = logger()
@@ -145,7 +145,7 @@ class EksternVarslingService(
                 "resume-scheduled-work",
                 pauseAfterEach = Duration.ofMinutes(5)
             ) {
-                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(lokalOsloTid.nå())
+                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(åpningstider.nå())
                 if (rescheduledCount > 0) {
                     log.info("resumed $rescheduledCount jobs from wait queue")
                 }
@@ -200,12 +200,12 @@ class EksternVarslingService(
         when (varsel) {
             is EksternVarselTilstand.Ny -> {
                 val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
-                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> lokalOsloTid.nesteNksÅpningstid()
-                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> lokalOsloTid.nesteDagtidIkkeSøndag()
-                    EksterntVarselSendingsvindu.LØPENDE -> lokalOsloTid.nå()
+                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> åpningstider.nesteNksÅpningstid()
+                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> åpningstider.nesteDagtidIkkeSøndag()
+                    EksterntVarselSendingsvindu.LØPENDE -> åpningstider.nå()
                     EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
                 }
-                if (kalkulertSendeTidspunkt <= lokalOsloTid.nå()) {
+                if (kalkulertSendeTidspunkt <= åpningstider.nå()) {
                     altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
                         onSuccess = { response ->
                             eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)

@@ -30,7 +30,7 @@ class EksternVarslingServiceTests : DescribeSpec({
     val repository = EksternVarslingRepository(database)
     val kafka = embeddedKafka()
     val nå = LocalDateTime.parse("2020-01-01T01:01")
-    val lokalOsloTid = mockk<LokalOsloTid> {
+    val åpningstider = mockk<Åpningstider> {
         every { nå() } returns nå
     }
 
@@ -46,7 +46,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 return Result.success(AltinnVarselKlient.AltinnResponse.Ok(rå = NullNode.instance))
             }
         },
-        lokalOsloTid = lokalOsloTid,
+        åpningstider = åpningstider,
         kafkaProducer = kafka.newProducer(),
     )
 
@@ -144,7 +144,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
             """)
 
-            every { lokalOsloTid.nesteNksÅpningstid() } returns nå.minusMinutes(5)
+            every { åpningstider.nesteNksÅpningstid() } returns nå.minusMinutes(5)
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
@@ -189,7 +189,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
             """)
 
-            every { lokalOsloTid.nesteNksÅpningstid() } returns nå.plusMinutes(5)
+            every { åpningstider.nesteNksÅpningstid() } returns nå.plusMinutes(5)
             val serviceJob = service.start(this)
 
             it("reschedules") {
@@ -234,7 +234,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
             """)
 
-            every { lokalOsloTid.nesteDagtidIkkeSøndag() } returns nå.minusMinutes(5)
+            every { åpningstider.nesteDagtidIkkeSøndag() } returns nå.minusMinutes(5)
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
@@ -279,7 +279,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
             """)
 
-            every { lokalOsloTid.nesteDagtidIkkeSøndag() } returns nå.plusMinutes(5)
+            every { åpningstider.nesteDagtidIkkeSøndag() } returns nå.plusMinutes(5)
             val serviceJob = service.start(this)
 
             it("reskjedduleres") {

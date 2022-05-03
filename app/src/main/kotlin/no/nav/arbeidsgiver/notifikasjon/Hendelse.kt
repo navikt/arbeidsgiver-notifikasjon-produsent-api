@@ -56,6 +56,23 @@ object HendelseModel {
 
         fun omOrNull(): ISO8601Period?
         fun denOrNull(): java.time.LocalDateTime?
+
+        fun from(
+            localDateTime: java.time.LocalDateTime?,
+            iso8601Period: ISO8601Period?
+        ) : LocalDateTimeOrDuration {
+            if (localDateTime != null && iso8601Period != null) {
+                throw IllegalArgumentException("både localDateTime og iso8601Period kan ikke være satt")
+            }
+
+            return if (localDateTime != null) {
+                LocalDateTime(localDateTime)
+            } else if (iso8601Period != null) {
+                Duration(iso8601Period)
+            } else {
+                throw IllegalArgumentException("en av localDateTime eller iso8601Period må være satt")
+            }
+        }
     }
 
     @JsonTypeName("SakOpprettet")
@@ -149,6 +166,9 @@ object HendelseModel {
     ) : Hendelse(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
+
+        val opprettetTidspunkt: OffsetDateTime
+            get() = oppgittTidspunkt ?: mottattTidspunkt
     }
 
     @JsonTypeName("BeskjedOpprettet")

@@ -1,22 +1,20 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.temporal.ChronoUnit.MINUTES
 
-interface LokalOsloTid {
+interface Åpningstider {
     fun nå(): LocalDateTime
     fun nesteNksÅpningstid(): LocalDateTime
     fun nesteDagtidIkkeSøndag(): LocalDateTime
 }
 
-object LokalOsloTidImpl : LokalOsloTid {
-    private val norwayZoneId = ZoneId.of("Europe/Oslo")
-
-    override fun nå(): LocalDateTime = LocalDateTime.now(norwayZoneId).truncatedTo(MINUTES)
+object ÅpningstiderImpl : Åpningstider {
+    override fun nå(): LocalDateTime = LokalOsloTid.now().truncatedTo(MINUTES)
     override fun nesteDagtidIkkeSøndag(): LocalDateTime = nesteDagtidIkkeSøndag(nå())
     override fun nesteNksÅpningstid(): LocalDateTime = nesteNksÅpningstid(nå())
 
