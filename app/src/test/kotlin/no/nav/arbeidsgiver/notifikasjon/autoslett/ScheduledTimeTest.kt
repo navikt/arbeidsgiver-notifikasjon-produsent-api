@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import java.time.Instant
+import java.time.OffsetDateTime
 
 class ScheduledTimeTest : DescribeSpec({
     describe("Spec er en konkret dato") {
@@ -12,7 +13,7 @@ class ScheduledTimeTest : DescribeSpec({
             HendelseModel.LocalDateTimeOrDuration.LocalDateTime(
                 java.time.LocalDateTime.parse("2022-04-01T12:30")
             ),
-            Instant.MAX
+            OffsetDateTime.MAX
         )
         it("HappensAt regner ut riktig UTC-tidspunkt") {
             schedTime.happensAt() shouldBe Instant.parse("2022-04-01T10:30:00.00Z")
@@ -24,10 +25,21 @@ class ScheduledTimeTest : DescribeSpec({
             HendelseModel.LocalDateTimeOrDuration.Duration(
                 ISO8601Period.parse("PT5H")
             ),
-            Instant.parse("2022-04-01T12:30:00.00Z")
+            OffsetDateTime.parse("2022-04-01T12:30:00.00Z")
         )
         it("HappensAt regner ut riktig UTC-tidspunkt") {
             schedTime.happensAt() shouldBe Instant.parse("2022-04-01T17:30:00.00Z")
+        }
+    }
+    describe("Spec er en duration med år") {
+        val schedTime = ScheduledTime(
+            HendelseModel.LocalDateTimeOrDuration.Duration(
+                ISO8601Period.parse("P1YT5H")
+            ),
+            OffsetDateTime.parse("2022-04-01T12:30:00.00Z")
+        )
+        it("HappensAt regner ut riktig UTC-tidspunkt") {
+            schedTime.happensAt() shouldBe Instant.parse("2023-04-01T17:30:00.00Z")
         }
     }
 })
