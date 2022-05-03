@@ -2,44 +2,25 @@ package no.nav.arbeidsgiver.notifikasjon.autoslett
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import java.time.Instant
-import java.time.OffsetDateTime
 
 class ScheduledTimeTest : DescribeSpec({
-    describe("Spec er en konkret dato") {
-        val schedTime = ScheduledTime(
-            HendelseModel.LocalDateTimeOrDuration.LocalDateTime(
-                java.time.LocalDateTime.parse("2022-04-01T12:30")
-            ),
-            OffsetDateTime.MAX
-        )
-        it("HappensAt regner ut riktig UTC-tidspunkt") {
-            schedTime.happensAt() shouldBe Instant.parse("2022-04-01T10:30:00.00Z")
+    describe("ScheduledTimeTest#happensAt") {
+        it("spec med absolutt tidspunkt") {
+            val sched = ScheduledTime.parse(spec = "2022-04-01T12:30", base = "2022-04-01T12:30:00.00Z")
+            sched.happensAt() shouldBe Instant.parse("2022-04-01T10:30:00.00Z")
         }
-    }
 
-    describe("Spec er en duration") {
-        val schedTime = ScheduledTime(
-            HendelseModel.LocalDateTimeOrDuration.Duration(
-                ISO8601Period.parse("PT5H")
-            ),
-            OffsetDateTime.parse("2022-04-01T12:30:00.00Z")
-        )
-        it("HappensAt regner ut riktig UTC-tidspunkt") {
-            schedTime.happensAt() shouldBe Instant.parse("2022-04-01T17:30:00.00Z")
+        it("spec med timer-duration") {
+            val sched = ScheduledTime.parse(spec = "PT5H", base = "2022-04-01T12:30:00.00Z")
+            sched.happensAt() shouldBe Instant.parse("2022-04-01T17:30:00.00Z")
         }
-    }
-    describe("Spec er en duration med år") {
-        val schedTime = ScheduledTime(
-            HendelseModel.LocalDateTimeOrDuration.Duration(
-                ISO8601Period.parse("P1YT5H")
-            ),
-            OffsetDateTime.parse("2022-04-01T12:30:00.00Z")
-        )
-        it("HappensAt regner ut riktig UTC-tidspunkt") {
-            schedTime.happensAt() shouldBe Instant.parse("2023-04-01T17:30:00.00Z")
+        
+        it("spec med år-duration") {
+            val sched = ScheduledTime.parse(spec = "P1YT5H", base = "2022-04-01T12:30:00.00Z")
+            sched.happensAt() shouldBe Instant.parse("2023-04-01T17:30:00.00Z")
         }
     }
 })
+
+
