@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.arbeidsgiver.notifikasjon.AutoSlett
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.HendelseModel.LocalDateTimeOrDuration
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -20,7 +21,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
     describe("AutoSlettRepository#oppdaterModellEtterHendelse") {
         context("opprett hendelse uten hard delete") {
             it("beskjed opprettet") {
-                val hendelse = beskjedOpprettet("1","2020-01-01T01:01+00",null)
+                val hendelse = beskjedOpprettet("1", "2020-01-01T01:01+00", null)
                 repository.oppdaterModellEtterHendelse(hendelse)
 
                 it("hard delete scheduleres ikke") {
@@ -29,7 +30,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
             }
 
             it("oppgave opprettet") {
-                val hendelse = oppgaveOpprettet("2","2020-01-01T01:01+00",null)
+                val hendelse = oppgaveOpprettet("2", "2020-01-01T01:01+00", null)
                 repository.oppdaterModellEtterHendelse(hendelse)
 
                 it("hard delete scheduleres ikke") {
@@ -54,9 +55,9 @@ class AutoSlettRepositoryTests : DescribeSpec({
         context("opprett hendelse med hard delete") {
             it("beskjed opprettet") {
                 val hendelse = beskjedOpprettet(
-                    "1",
-                    "2020-01-01T01:01+00",
-                    HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52"))
+                    idsuffix = "1",
+                    opprettetTidspunkt = "2020-01-01T01:01+00",
+                    hardDelete = "2022-10-13T07:20:50.52"
                 )
                 repository.oppdaterModellEtterHendelse(hendelse)
 
@@ -67,9 +68,9 @@ class AutoSlettRepositoryTests : DescribeSpec({
 
             it("oppgave opprettet") {
                 val hendelse = oppgaveOpprettet(
-                    "2",
-                    "2020-01-01T01:01+00",
-                    HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52"))
+                    idsuffix = "2",
+                    opprettetTidspunkt = "2020-01-01T01:01+00",
+                    hardDelete = "2022-10-13T07:20:50.52"
                 )
                 repository.oppdaterModellEtterHendelse(hendelse)
 
@@ -82,7 +83,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 val hendelse = sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
-                    hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52"))
+                    hardDelete = "2022-10-13T07:20:50.52"
                 )
                 repository.oppdaterModellEtterHendelse(hendelse)
 
@@ -94,7 +95,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
 
         context("oppdater hendelse uten hard delete") {
             it("oppgave utført") {
-                val opprettHendelse = oppgaveOpprettet("1","2020-01-01T01:01+00",null)
+                val opprettHendelse = oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
                 val utførtHendelse = oppgaveUtført("1", hardDelete = null)
                 repository.oppdaterModellEtterHendelse(opprettHendelse)
                 repository.oppdaterModellEtterHendelse(utførtHendelse)
@@ -109,7 +110,8 @@ class AutoSlettRepositoryTests : DescribeSpec({
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = null
                 )
-                val nyStatusHendelse = nyStatusSak(idsuffix = "2", mottattTidspunkt = "2020-01-01T01:01+00", hardDelete = null)
+                val nyStatusHendelse =
+                    nyStatusSak(idsuffix = "2", mottattTidspunkt = "2020-01-01T01:01+00", hardDelete = null)
                 repository.oppdaterModellEtterHendelse(opprettHendelse)
                 repository.oppdaterModellEtterHendelse(nyStatusHendelse)
 
@@ -121,11 +123,13 @@ class AutoSlettRepositoryTests : DescribeSpec({
 
         context("oppdater hendelse med hard delete uten tidligere skedulert delete") {
             it("oppgave utført") {
-                val opprettHendelse = oppgaveOpprettet("1","2020-01-01T01:01+00",null)
-                val utførtHendelse = oppgaveUtført("1", hardDelete = HendelseModel.HardDeleteUpdate(
-                    nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52")),
-                    strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
-                ))
+                val opprettHendelse = oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
+                val utførtHendelse = oppgaveUtført(
+                    "1", hardDelete = HendelseModel.HardDeleteUpdate(
+                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52")),
+                        strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+                    )
+                )
                 repository.oppdaterModellEtterHendelse(opprettHendelse)
                 repository.oppdaterModellEtterHendelse(utførtHendelse)
 
@@ -139,10 +143,14 @@ class AutoSlettRepositoryTests : DescribeSpec({
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = null
                 )
-                val nyStatusHendelse = nyStatusSak(idsuffix = "2", mottattTidspunkt = "2020-01-01T01:01+00", hardDelete = HendelseModel.HardDeleteUpdate(
-                    nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52")),
-                    strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
-                ))
+                val nyStatusHendelse = nyStatusSak(
+                    idsuffix = "2",
+                    mottattTidspunkt = "2020-01-01T01:01+00",
+                    hardDelete = HendelseModel.HardDeleteUpdate(
+                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52")),
+                        strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+                    )
+                )
                 repository.oppdaterModellEtterHendelse(opprettHendelse)
                 repository.oppdaterModellEtterHendelse(nyStatusHendelse)
 
@@ -161,14 +169,15 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 val opprettHendelse = oppgaveOpprettet(
                     idsuffix = "1",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
-                    hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(opprinneligHardDelete))
+                    hardDelete = opprinneligHardDelete
                 )
                 val utførtHendelse = oppgaveUtført(
                     idsuffix = "1",
                     hardDelete = HendelseModel.HardDeleteUpdate(
-                    nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
-                    strategi = strategi,
-                ))
+                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
+                        strategi = strategi,
+                    )
+                )
                 repository.oppdaterModellEtterHendelse(opprettHendelse)
                 repository.oppdaterModellEtterHendelse(utførtHendelse)
 
@@ -187,21 +196,23 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 val opprettHendelse = oppgaveOpprettet(
                     idsuffix = "2",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
-                    hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(opprinneligHardDelete))
+                    hardDelete = opprinneligHardDelete
                 )
                 val utførtHendelse = oppgaveUtført(
                     idsuffix = "2",
                     hardDelete = HendelseModel.HardDeleteUpdate(
-                    nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
-                    strategi = strategi,
-                ))
+                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
+                        strategi = strategi,
+                    )
+                )
                 repository.oppdaterModellEtterHendelse(opprettHendelse)
                 repository.oppdaterModellEtterHendelse(utførtHendelse)
 
                 it("hard delete scheduleres") {
                     val skedulert = repository.hent(utførtHendelse.aggregateId)
                     skedulert shouldNotBe null
-                    skedulert!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(opprinneligHardDelete).atOslo().toInstant()
+                    skedulert!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(opprinneligHardDelete).atOslo()
+                        .toInstant()
                 }
             }
 
@@ -213,13 +224,13 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 val opprettHendelse = sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
-                    hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(opprinneligHardDelete))
+                    hardDelete = opprinneligHardDelete
                 )
                 val nyStatusHendelse = nyStatusSak(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = HendelseModel.HardDeleteUpdate(
-                        nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
+                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
                         strategi = strategi,
                     )
                 )
@@ -229,7 +240,8 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 it("hard delete scheduleres ikke") {
                     val skedulertHardDelete = repository.hent(nyStatusHendelse.aggregateId)
                     skedulertHardDelete shouldNotBe null
-                    skedulertHardDelete!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(nyHardDelete).atOslo().toInstant()
+                    skedulertHardDelete!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(nyHardDelete).atOslo()
+                        .toInstant()
                 }
             }
 
@@ -241,13 +253,13 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 val opprettHendelse = sakOpprettet(
                     idsuffix = "4",
                     mottattTidspunkt = "2020-01-01T01:01+00",
-                    hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(opprinneligHardDelete))
+                    hardDelete = opprinneligHardDelete
                 )
                 val nyStatusHendelse = nyStatusSak(
                     idsuffix = "4",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = HendelseModel.HardDeleteUpdate(
-                        nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
+                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
                         strategi = strategi,
                     )
                 )
@@ -257,7 +269,8 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 it("hard delete scheduleres ikke") {
                     val skedulertHardDelete = repository.hent(nyStatusHendelse.aggregateId)
                     skedulertHardDelete shouldNotBe null
-                    skedulertHardDelete!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(opprinneligHardDelete).atOslo().toInstant()
+                    skedulertHardDelete!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(opprinneligHardDelete)
+                        .atOslo().toInstant()
                 }
             }
         }
@@ -267,7 +280,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
 private fun beskjedOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
-    hardDelete: HendelseModel.LocalDateTimeOrDuration.LocalDateTime?
+    hardDelete: String?
 ) = HendelseModel.BeskjedOpprettet(
     virksomhetsnummer = idsuffix,
     notifikasjonId = uuid(idsuffix),
@@ -288,13 +301,13 @@ private fun beskjedOpprettet(
     lenke = "",
     opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
     eksterneVarsler = listOf(),
-    hardDelete = hardDelete,
+    hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
 )
 
 private fun oppgaveOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
-    hardDelete: HendelseModel.LocalDateTimeOrDuration.LocalDateTime?
+    hardDelete: String?
 ) = HendelseModel.OppgaveOpprettet(
     virksomhetsnummer = idsuffix,
     notifikasjonId = uuid(idsuffix),
@@ -315,14 +328,14 @@ private fun oppgaveOpprettet(
     lenke = "",
     opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
     eksterneVarsler = listOf(),
-    hardDelete = hardDelete,
+    hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
 )
 
 private fun sakOpprettet(
     idsuffix: String,
     mottattTidspunkt: String,
     oppgittTidspunkt: String? = null,
-    hardDelete: HendelseModel.LocalDateTimeOrDuration.LocalDateTime?
+    hardDelete: String?
 ) = HendelseModel.SakOpprettet(
     virksomhetsnummer = idsuffix,
     sakId = uuid(idsuffix),
@@ -341,7 +354,7 @@ private fun sakOpprettet(
     lenke = "",
     mottattTidspunkt = OffsetDateTime.parse(mottattTidspunkt),
     oppgittTidspunkt = oppgittTidspunkt?.let { OffsetDateTime.parse(it) },
-    hardDelete = hardDelete,
+    hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
     tittel = "",
 )
 

@@ -42,6 +42,13 @@ object HendelseModel {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed interface LocalDateTimeOrDuration {
+
+        companion object{
+            fun parse(tekst: String) =
+                if (tekst.startsWith("P")) Duration(ISO8601Period.parse(tekst))
+                else LocalDateTime(java.time.LocalDateTime.parse(tekst))
+        }
+
         @JsonTypeName("LocalDateTime")
         data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration {
             override fun omOrNull() = null
