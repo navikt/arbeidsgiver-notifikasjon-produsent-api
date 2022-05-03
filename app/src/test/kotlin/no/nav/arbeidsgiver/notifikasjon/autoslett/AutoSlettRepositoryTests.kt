@@ -1,15 +1,19 @@
 package no.nav.arbeidsgiver.notifikasjon.autoslett
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.core.spec.style.scopes.DescribeSpecContainerContext
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.arbeidsgiver.notifikasjon.AutoSlett
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.LocalDateTimeOrDuration
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import org.apache.log4j.helpers.ISO8601DateFormat
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -18,11 +22,32 @@ class AutoSlettRepositoryTests : DescribeSpec({
     val database = testDatabase(AutoSlett.databaseConfig)
     val repository = AutoSlettRepository(database)
 
+    suspend fun DescribeSpecContainerContext.oppgaveUtførtCase(opprettetTidspunkt: String, opprinneligHardDelete: String, nyHardDelete: String, strategi: HendelseModel.NyTidStrategi, expected: Instant){
+        it("oppgave utført strategi $strategi") {
+            repository.oppgaveOpprettet(
+                idsuffix = "1",
+                opprettetTidspunkt = opprettetTidspunkt,
+                hardDelete = opprinneligHardDelete
+            )
+            val utførtHendelse = repository.oppgaveUtført(
+                idsuffix = "1",
+                hardDelete = HendelseModel.HardDeleteUpdate(
+                    nyTid = LocalDateTimeOrDuration.parse(nyHardDelete),
+                    strategi = strategi,
+                )
+            )
+            it("hard delete scheduleres") {
+                val skedulert = repository.hent(utførtHendelse.aggregateId)
+                skedulert shouldNotBe null
+                skedulert!!.beregnetSlettetidspunkt shouldBe expected
+            }
+        }
+    }
+
     describe("AutoSlettRepository#oppdaterModellEtterHendelse") {
         context("opprett hendelse uten hard delete") {
             it("beskjed opprettet") {
-                val hendelse = beskjedOpprettet("1", "2020-01-01T01:01+00", null)
-                repository.oppdaterModellEtterHendelse(hendelse)
+                val hendelse = repository.beskjedOpprettet("1", "2020-01-01T01:01+00", null)
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(hendelse.aggregateId) shouldBe null
@@ -30,8 +55,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
             }
 
             it("oppgave opprettet") {
-                val hendelse = oppgaveOpprettet("2", "2020-01-01T01:01+00", null)
-                repository.oppdaterModellEtterHendelse(hendelse)
+                val hendelse = repository.oppgaveOpprettet("2", "2020-01-01T01:01+00", null)
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(hendelse.aggregateId) shouldBe null
@@ -39,12 +63,11 @@ class AutoSlettRepositoryTests : DescribeSpec({
             }
 
             it("sak opprettet") {
-                val hendelse = sakOpprettet(
+                val hendelse = repository.sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = null
                 )
-                repository.oppdaterModellEtterHendelse(hendelse)
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(hendelse.aggregateId) shouldBe null
@@ -54,12 +77,11 @@ class AutoSlettRepositoryTests : DescribeSpec({
 
         context("opprett hendelse med hard delete") {
             it("beskjed opprettet") {
-                val hendelse = beskjedOpprettet(
+                val hendelse = repository.beskjedOpprettet(
                     idsuffix = "1",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = "2022-10-13T07:20:50.52"
                 )
-                repository.oppdaterModellEtterHendelse(hendelse)
 
                 it("hard delete scheduleres") {
                     repository.hent(hendelse.aggregateId) shouldNotBe null
@@ -67,12 +89,11 @@ class AutoSlettRepositoryTests : DescribeSpec({
             }
 
             it("oppgave opprettet") {
-                val hendelse = oppgaveOpprettet(
+                val hendelse = repository.oppgaveOpprettet(
                     idsuffix = "2",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = "2022-10-13T07:20:50.52"
                 )
-                repository.oppdaterModellEtterHendelse(hendelse)
 
                 it("hard delete scheduleres") {
                     repository.hent(hendelse.aggregateId) shouldNotBe null
@@ -80,12 +101,11 @@ class AutoSlettRepositoryTests : DescribeSpec({
             }
 
             it("sak opprettet") {
-                val hendelse = sakOpprettet(
+                val hendelse = repository.sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = "2022-10-13T07:20:50.52"
                 )
-                repository.oppdaterModellEtterHendelse(hendelse)
 
                 it("hard delete scheduleres") {
                     repository.hent(hendelse.aggregateId) shouldNotBe null
@@ -95,25 +115,21 @@ class AutoSlettRepositoryTests : DescribeSpec({
 
         context("oppdater hendelse uten hard delete") {
             it("oppgave utført") {
-                val opprettHendelse = oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
-                val utførtHendelse = oppgaveUtført("1", hardDelete = null)
-                repository.oppdaterModellEtterHendelse(opprettHendelse)
-                repository.oppdaterModellEtterHendelse(utførtHendelse)
+                repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
+                val utførtHendelse = repository.oppgaveUtført("1", hardDelete = null)
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(utførtHendelse.aggregateId) shouldBe null
                 }
             }
             it("ny status sak") {
-                val opprettHendelse = sakOpprettet(
+                repository.sakOpprettet(
                     idsuffix = "2",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = null
                 )
                 val nyStatusHendelse =
-                    nyStatusSak(idsuffix = "2", mottattTidspunkt = "2020-01-01T01:01+00", hardDelete = null)
-                repository.oppdaterModellEtterHendelse(opprettHendelse)
-                repository.oppdaterModellEtterHendelse(nyStatusHendelse)
+                    repository.nyStatusSak(idsuffix = "2", mottattTidspunkt = "2020-01-01T01:01+00", hardDelete = null)
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(nyStatusHendelse.aggregateId) shouldBe null
@@ -123,36 +139,33 @@ class AutoSlettRepositoryTests : DescribeSpec({
 
         context("oppdater hendelse med hard delete uten tidligere skedulert delete") {
             it("oppgave utført") {
-                val opprettHendelse = oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
-                val utførtHendelse = oppgaveUtført(
-                    "1", hardDelete = HendelseModel.HardDeleteUpdate(
-                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52")),
+                repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
+                val utførtHendelse = repository.oppgaveUtført(
+                    "1",
+                    hardDelete = HendelseModel.HardDeleteUpdate(
+                        nyTid = LocalDateTimeOrDuration.parse("2022-10-13T07:20:50.52"),
                         strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
                     )
                 )
-                repository.oppdaterModellEtterHendelse(opprettHendelse)
-                repository.oppdaterModellEtterHendelse(utførtHendelse)
 
                 it("hard delete scheduleres") {
                     repository.hent(utførtHendelse.aggregateId) shouldNotBe null
                 }
             }
             it("ny status sak") {
-                val opprettHendelse = sakOpprettet(
+                repository.sakOpprettet(
                     idsuffix = "2",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = null
                 )
-                val nyStatusHendelse = nyStatusSak(
+                val nyStatusHendelse = repository.nyStatusSak(
                     idsuffix = "2",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = HendelseModel.HardDeleteUpdate(
-                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2022-10-13T07:20:50.52")),
+                        nyTid = LocalDateTimeOrDuration.parse("2022-10-13T07:20:50.52"),
                         strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
                     )
                 )
-                repository.oppdaterModellEtterHendelse(opprettHendelse)
-                repository.oppdaterModellEtterHendelse(nyStatusHendelse)
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(nyStatusHendelse.aggregateId) shouldNotBe null
@@ -161,81 +174,55 @@ class AutoSlettRepositoryTests : DescribeSpec({
         }
 
         context("oppdater hendelse med hard delete og tidligere skedulert delete") {
-            it("oppgave utført strategi overskriv") {
-                val opprinneligHardDelete = "2022-10-13T07:20:50.52"
-                val nyHardDelete = "2022-09-13T07:20:50.52"
-                val strategi = HendelseModel.NyTidStrategi.OVERSKRIV
 
-                val opprettHendelse = oppgaveOpprettet(
-                    idsuffix = "1",
-                    opprettetTidspunkt = "2020-01-01T01:01+00",
-                    hardDelete = opprinneligHardDelete
-                )
-                val utførtHendelse = oppgaveUtført(
-                    idsuffix = "1",
-                    hardDelete = HendelseModel.HardDeleteUpdate(
-                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
-                        strategi = strategi,
-                    )
-                )
-                repository.oppdaterModellEtterHendelse(opprettHendelse)
-                repository.oppdaterModellEtterHendelse(utførtHendelse)
+            oppgaveUtførtCase(
+                opprettetTidspunkt = "2020-01-01T01:01+00",
+                opprinneligHardDelete = "2022-10-13T07:20:50.52",
+                nyHardDelete = "2022-09-13T07:20:50.52",
+                strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+                LocalDateTime.parse("2022-09-13T07:20:50.52").atOslo().toInstant()
+            )
 
-                it("hard delete scheduleres") {
-                    val skedulert = repository.hent(utførtHendelse.aggregateId)
-                    skedulert shouldNotBe null
-                    skedulert!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(nyHardDelete).atOslo().toInstant()
-                }
-            }
+            //TODO Finne ut av når "om" skal gjelde fra (Hva er basetime?)
+            //  1. Basert på opprettelse.
+            // 2. Basert på statusoppdatering
+            // Begge varianter gir mening.
 
-            it("oppgave utført strategi forleng") {
-                val opprinneligHardDelete = "2022-10-13T07:20:50.52"
-                val nyHardDelete = "2022-09-13T07:20:50.52"
-                val strategi = HendelseModel.NyTidStrategi.FORLENG
+//            oppgaveUtførtCase(
+//                opprettetTidspunkt = "2020-01-01T01:01+00",
+//                opprinneligHardDelete = "2022-10-13T07:20:50.52",
+//                nyHardDelete = "P1YT1H",
+//                strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+//                LocalDateTime.parse("2022-10-13T07:20:50.52").atOslo().toInstant()
+//            )
 
-                val opprettHendelse = oppgaveOpprettet(
-                    idsuffix = "2",
-                    opprettetTidspunkt = "2020-01-01T01:01+00",
-                    hardDelete = opprinneligHardDelete
-                )
-                val utførtHendelse = oppgaveUtført(
-                    idsuffix = "2",
-                    hardDelete = HendelseModel.HardDeleteUpdate(
-                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
-                        strategi = strategi,
-                    )
-                )
-                repository.oppdaterModellEtterHendelse(opprettHendelse)
-                repository.oppdaterModellEtterHendelse(utførtHendelse)
+            oppgaveUtførtCase(
+                opprettetTidspunkt = "2020-01-01T01:01+00",
+                opprinneligHardDelete = "2022-10-13T07:20:50.52",
+                nyHardDelete = "2022-09-13T07:20:50.52",
+                strategi = HendelseModel.NyTidStrategi.FORLENG,
+                LocalDateTime.parse("2022-10-13T07:20:50.52").atOslo().toInstant()
 
-                it("hard delete scheduleres") {
-                    val skedulert = repository.hent(utførtHendelse.aggregateId)
-                    skedulert shouldNotBe null
-                    skedulert!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(opprinneligHardDelete).atOslo()
-                        .toInstant()
-                }
-            }
+            )
 
             it("ny status sak strategi overskriv") {
                 val opprinneligHardDelete = "2022-10-13T07:20:50.52"
                 val nyHardDelete = "2022-09-13T07:20:50.52"
                 val strategi = HendelseModel.NyTidStrategi.OVERSKRIV
 
-                val opprettHendelse = sakOpprettet(
+                repository.sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = opprinneligHardDelete
                 )
-                val nyStatusHendelse = nyStatusSak(
+                val nyStatusHendelse = repository.nyStatusSak(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = HendelseModel.HardDeleteUpdate(
-                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
+                        nyTid = LocalDateTimeOrDuration.parse(nyHardDelete),
                         strategi = strategi,
                     )
                 )
-                repository.oppdaterModellEtterHendelse(opprettHendelse)
-                repository.oppdaterModellEtterHendelse(nyStatusHendelse)
 
                 it("hard delete scheduleres ikke") {
                     val skedulertHardDelete = repository.hent(nyStatusHendelse.aggregateId)
@@ -250,21 +237,19 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 val nyHardDelete = "2022-09-13T07:20:50.52"
                 val strategi = HendelseModel.NyTidStrategi.FORLENG
 
-                val opprettHendelse = sakOpprettet(
+                repository.sakOpprettet(
                     idsuffix = "4",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = opprinneligHardDelete
                 )
-                val nyStatusHendelse = nyStatusSak(
+                val nyStatusHendelse = repository.nyStatusSak(
                     idsuffix = "4",
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = HendelseModel.HardDeleteUpdate(
-                        nyTid = LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse(nyHardDelete)),
+                        nyTid = LocalDateTimeOrDuration.parse(nyHardDelete),
                         strategi = strategi,
                     )
                 )
-                repository.oppdaterModellEtterHendelse(opprettHendelse)
-                repository.oppdaterModellEtterHendelse(nyStatusHendelse)
 
                 it("hard delete scheduleres ikke") {
                     val skedulertHardDelete = repository.hent(nyStatusHendelse.aggregateId)
@@ -277,115 +262,131 @@ class AutoSlettRepositoryTests : DescribeSpec({
     }
 })
 
-private fun beskjedOpprettet(
+private suspend fun <T : HendelseModel.Hendelse> AutoSlettRepository.oppdaterModell(hendelse: T): T =
+    hendelse.also { oppdaterModellEtterHendelse(it) }
+
+private suspend fun AutoSlettRepository.beskjedOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
     hardDelete: String?
-) = HendelseModel.BeskjedOpprettet(
-    virksomhetsnummer = idsuffix,
-    notifikasjonId = uuid(idsuffix),
-    hendelseId = UUID.randomUUID(),
-    produsentId = idsuffix,
-    kildeAppNavn = idsuffix,
-    merkelapp = idsuffix,
-    eksternId = idsuffix,
-    mottakere = listOf(
-        HendelseModel.AltinnMottaker(
-            virksomhetsnummer = idsuffix,
-            serviceCode = idsuffix,
-            serviceEdition = idsuffix
-        )
-    ),
-    tekst = idsuffix,
-    grupperingsid = null,
-    lenke = "",
-    opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
-    eksterneVarsler = listOf(),
-    hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
+): HendelseModel.BeskjedOpprettet = oppdaterModell(
+    HendelseModel.BeskjedOpprettet(
+        virksomhetsnummer = idsuffix,
+        notifikasjonId = uuid(idsuffix),
+        hendelseId = UUID.randomUUID(),
+        produsentId = idsuffix,
+        kildeAppNavn = idsuffix,
+        merkelapp = idsuffix,
+        eksternId = idsuffix,
+        mottakere = listOf(
+            HendelseModel.AltinnMottaker(
+                virksomhetsnummer = idsuffix,
+                serviceCode = idsuffix,
+                serviceEdition = idsuffix
+            )
+        ),
+        tekst = idsuffix,
+        grupperingsid = null,
+        lenke = "",
+        opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
+        eksterneVarsler = listOf(),
+        hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
+    )
 )
 
-private fun oppgaveOpprettet(
+
+private suspend fun AutoSlettRepository.oppgaveOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
     hardDelete: String?
-) = HendelseModel.OppgaveOpprettet(
-    virksomhetsnummer = idsuffix,
-    notifikasjonId = uuid(idsuffix),
-    hendelseId = UUID.randomUUID(),
-    produsentId = idsuffix,
-    kildeAppNavn = idsuffix,
-    merkelapp = idsuffix,
-    eksternId = idsuffix,
-    mottakere = listOf(
-        HendelseModel.AltinnMottaker(
-            virksomhetsnummer = idsuffix,
-            serviceCode = idsuffix,
-            serviceEdition = idsuffix
-        )
-    ),
-    tekst = idsuffix,
-    grupperingsid = null,
-    lenke = "",
-    opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
-    eksterneVarsler = listOf(),
-    hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
+): HendelseModel.OppgaveOpprettet = oppdaterModell(
+    HendelseModel.OppgaveOpprettet(
+        virksomhetsnummer = idsuffix,
+        notifikasjonId = uuid(idsuffix),
+        hendelseId = UUID.randomUUID(),
+        produsentId = idsuffix,
+        kildeAppNavn = idsuffix,
+        merkelapp = idsuffix,
+        eksternId = idsuffix,
+        mottakere = listOf(
+            HendelseModel.AltinnMottaker(
+                virksomhetsnummer = idsuffix,
+                serviceCode = idsuffix,
+                serviceEdition = idsuffix
+            )
+        ),
+        tekst = idsuffix,
+        grupperingsid = null,
+        lenke = "",
+        opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
+        eksterneVarsler = listOf(),
+        hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
+    )
 )
 
-private fun sakOpprettet(
+
+private suspend fun AutoSlettRepository.sakOpprettet(
     idsuffix: String,
     mottattTidspunkt: String,
     oppgittTidspunkt: String? = null,
     hardDelete: String?
-) = HendelseModel.SakOpprettet(
-    virksomhetsnummer = idsuffix,
-    sakId = uuid(idsuffix),
-    hendelseId = UUID.randomUUID(),
-    produsentId = idsuffix,
-    kildeAppNavn = idsuffix,
-    merkelapp = idsuffix,
-    mottakere = listOf(
-        HendelseModel.AltinnMottaker(
-            virksomhetsnummer = idsuffix,
-            serviceCode = idsuffix,
-            serviceEdition = idsuffix
-        )
-    ),
-    grupperingsid = idsuffix,
-    lenke = "",
-    mottattTidspunkt = OffsetDateTime.parse(mottattTidspunkt),
-    oppgittTidspunkt = oppgittTidspunkt?.let { OffsetDateTime.parse(it) },
-    hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
-    tittel = "",
+): HendelseModel.SakOpprettet = oppdaterModell(
+    HendelseModel.SakOpprettet(
+        virksomhetsnummer = idsuffix,
+        sakId = uuid(idsuffix),
+        hendelseId = UUID.randomUUID(),
+        produsentId = idsuffix,
+        kildeAppNavn = idsuffix,
+        merkelapp = idsuffix,
+        mottakere = listOf(
+            HendelseModel.AltinnMottaker(
+                virksomhetsnummer = idsuffix,
+                serviceCode = idsuffix,
+                serviceEdition = idsuffix
+            )
+        ),
+        grupperingsid = idsuffix,
+        lenke = "",
+        mottattTidspunkt = OffsetDateTime.parse(mottattTidspunkt),
+        oppgittTidspunkt = oppgittTidspunkt?.let { OffsetDateTime.parse(it) },
+        hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
+        tittel = "",
+    )
 )
 
-private fun oppgaveUtført(
+private suspend fun AutoSlettRepository.oppgaveUtført(
     idsuffix: String,
     hardDelete: HendelseModel.HardDeleteUpdate?
-) = HendelseModel.OppgaveUtført(
-    virksomhetsnummer = idsuffix,
-    notifikasjonId = uuid(idsuffix),
-    hendelseId = UUID.randomUUID(),
-    produsentId = idsuffix,
-    kildeAppNavn = idsuffix,
-    hardDelete = hardDelete,
+): HendelseModel.OppgaveUtført = oppdaterModell(
+    HendelseModel.OppgaveUtført(
+        virksomhetsnummer = idsuffix,
+        notifikasjonId = uuid(idsuffix),
+        hendelseId = UUID.randomUUID(),
+        produsentId = idsuffix,
+        kildeAppNavn = idsuffix,
+        hardDelete = hardDelete,
+    )
 )
 
-private fun nyStatusSak(
+private suspend fun AutoSlettRepository.nyStatusSak(
     idsuffix: String,
     mottattTidspunkt: String,
     oppgittTidspunkt: String? = null,
     hardDelete: HendelseModel.HardDeleteUpdate?
-) = HendelseModel.NyStatusSak(
-    hendelseId = UUID.randomUUID(),
-    virksomhetsnummer = idsuffix,
-    produsentId = idsuffix,
-    kildeAppNavn = idsuffix,
-    sakId = uuid(idsuffix),
-    status = HendelseModel.SakStatus.UNDER_BEHANDLING,
-    overstyrStatustekstMed = null,
-    mottattTidspunkt = OffsetDateTime.parse(mottattTidspunkt),
-    oppgittTidspunkt = oppgittTidspunkt?.let { OffsetDateTime.parse(it) },
-    idempotensKey = IdempotenceKey.initial(),
-    hardDelete = hardDelete,
-    nyLenkeTilSak = null,
+): HendelseModel.NyStatusSak = oppdaterModell(
+    HendelseModel.NyStatusSak(
+        hendelseId = UUID.randomUUID(),
+        virksomhetsnummer = idsuffix,
+        produsentId = idsuffix,
+        kildeAppNavn = idsuffix,
+        sakId = uuid(idsuffix),
+        status = HendelseModel.SakStatus.UNDER_BEHANDLING,
+        overstyrStatustekstMed = null,
+        mottattTidspunkt = OffsetDateTime.parse(mottattTidspunkt),
+        oppgittTidspunkt = oppgittTidspunkt?.let { OffsetDateTime.parse(it) },
+        idempotensKey = IdempotenceKey.initial(),
+        hardDelete = hardDelete,
+        nyLenkeTilSak = null,
+    )
 )
+

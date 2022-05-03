@@ -21,7 +21,7 @@ class AutoSlettRepository(
                 val hardDelete = hendelse.hardDelete ?: return
 
                 val aggregateType = "Beskjed"
-                val baseTime = hendelse.opprettetTidspunkt.toInstant()
+                val baseTime = hendelse.opprettetTidspunkt
                 val scheduledTime = ScheduledTime(hardDelete, baseTime)
 
                 upsert(
@@ -43,7 +43,7 @@ class AutoSlettRepository(
                 val hardDelete = hendelse.hardDelete ?: return
                 val aggregateType = "Oppgave"
 
-                val baseTime = hendelse.opprettetTidspunkt.toInstant()
+                val baseTime = hendelse.opprettetTidspunkt
                 val scheduledTime = ScheduledTime(hardDelete, baseTime)
 
                 upsert(
@@ -65,7 +65,7 @@ class AutoSlettRepository(
                 val hardDelete = hendelse.hardDelete ?: return
 
                 val aggregateType = "Sak"
-                val baseTime = hendelse.opprettetTidspunkt.toInstant()
+                val baseTime = hendelse.opprettetTidspunkt
                 val scheduledTime = ScheduledTime(hardDelete, baseTime)
                 upsert(
                     SkedulertHardDelete(
@@ -85,7 +85,7 @@ class AutoSlettRepository(
             is HendelseModel.OppgaveUtført -> {
                 val hardDelete = hendelse.hardDelete ?: return
 
-                val baseTime = Instant.now() // TODO: fix!
+                val baseTime = OffsetDateTime.now() // TODO: fix!
                 val scheduledTime = ScheduledTime(hardDelete.nyTid, baseTime)
                 val beregnetSlettetidspunkt = scheduledTime.happensAt()
 
@@ -117,7 +117,7 @@ class AutoSlettRepository(
             is HendelseModel.NyStatusSak -> {
                 val hardDelete = hendelse.hardDelete ?: return
 
-                val baseTime = hendelse.opprettetTidspunkt.toInstant()
+                val baseTime = hendelse.opprettetTidspunkt
                 val scheduledTime = ScheduledTime(hardDelete.nyTid, baseTime)
                 val beregnetSlettetidspunkt = scheduledTime.happensAt()
 
@@ -181,7 +181,7 @@ class AutoSlettRepository(
                 virksomhetsnummer = getString("virksomhetsnummer"),
                 produsentid = getString("produsentid"),
                 merkelapp = getString("merkelapp"),
-                inputBase = getObject("input_base", OffsetDateTime::class.java).toInstant(),
+                inputBase = getObject("input_base", OffsetDateTime::class.java),
                 inputOm = getString("input_om")?.let { ISO8601Period.parse(it) },
                 inputDen = getString("input_den")?.let { LocalDateTime.parse(it) },
                 beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", OffsetDateTime::class.java).toInstant(),
@@ -230,7 +230,7 @@ data class SkedulertHardDelete(
     val virksomhetsnummer: String,
     val produsentid: String,
     val merkelapp: String,
-    val inputBase: Instant,
+    val inputBase: OffsetDateTime,
     val inputOm: ISO8601Period?,
     val inputDen: LocalDateTime?,
     val beregnetSlettetidspunkt: Instant,
