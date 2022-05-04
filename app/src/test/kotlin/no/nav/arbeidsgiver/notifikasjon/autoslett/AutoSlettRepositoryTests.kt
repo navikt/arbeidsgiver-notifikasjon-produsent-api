@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.autoslett
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.core.spec.style.scopes.DescribeSpecContainerContext
@@ -103,7 +102,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
             }
 
             it("oppgave opprettet") {
-                val hendelse = repository.oppgaveOpprettet("2", "2020-01-01T01:01+00", null)
+                val hendelse = repository.oppgaveOpprettet("2", "2020-01-01T01:01+00")
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(hendelse.aggregateId) shouldBe null
@@ -163,7 +162,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
 
         context("oppdater hendelse uten hard delete") {
             it("oppgave utført") {
-                repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
+                repository.oppgaveOpprettet("1", "2020-01-01T01:01+00")
                 val utførtHendelse = repository.oppgaveUtført(
                     idsuffix = "1",
                     hardDelete = null,
@@ -194,7 +193,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
 
         context("oppdater hendelse med hard delete uten tidligere skedulert delete") {
             it("oppgave utført") {
-                repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
+                repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", merkelapp = "hei")
                 val utførtHendelse = repository.oppgaveUtført(
                     idsuffix = "1",
                     hardDelete = HendelseModel.HardDeleteUpdate(
@@ -205,7 +204,9 @@ class AutoSlettRepositoryTests : DescribeSpec({
                 )
 
                 it("hard delete scheduleres") {
-                    repository.hent(utførtHendelse.aggregateId) shouldNotBe null
+                    val skedulert = repository.hent(utførtHendelse.aggregateId)
+                    skedulert shouldNotBe null
+                    skedulert!!.merkelapp shouldBe "hei"
                 }
             }
             it("ny status sak") {
@@ -423,7 +424,8 @@ private suspend fun AutoSlettRepository.hardDelete(
 private suspend fun AutoSlettRepository.beskjedOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
-    hardDelete: String?
+    hardDelete: String? = null,
+    merkelapp: String = "merkelapp",
 ): HendelseModel.BeskjedOpprettet = oppdaterModell(
     HendelseModel.BeskjedOpprettet(
         virksomhetsnummer = idsuffix,
@@ -431,7 +433,7 @@ private suspend fun AutoSlettRepository.beskjedOpprettet(
         hendelseId = UUID.randomUUID(),
         produsentId = idsuffix,
         kildeAppNavn = idsuffix,
-        merkelapp = idsuffix,
+        merkelapp = merkelapp,
         eksternId = idsuffix,
         mottakere = listOf(
             HendelseModel.AltinnMottaker(
@@ -453,7 +455,8 @@ private suspend fun AutoSlettRepository.beskjedOpprettet(
 private suspend fun AutoSlettRepository.oppgaveOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
-    hardDelete: String?
+    merkelapp: String = "merkelapp",
+    hardDelete: String? = null,
 ): HendelseModel.OppgaveOpprettet = oppdaterModell(
     HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = idsuffix,
@@ -461,7 +464,7 @@ private suspend fun AutoSlettRepository.oppgaveOpprettet(
         hendelseId = UUID.randomUUID(),
         produsentId = idsuffix,
         kildeAppNavn = idsuffix,
-        merkelapp = idsuffix,
+        merkelapp = merkelapp,
         eksternId = idsuffix,
         mottakere = listOf(
             HendelseModel.AltinnMottaker(
@@ -484,7 +487,8 @@ private suspend fun AutoSlettRepository.sakOpprettet(
     idsuffix: String,
     mottattTidspunkt: String,
     oppgittTidspunkt: String? = null,
-    hardDelete: String?
+    merkelapp: String = "merkelapp",
+    hardDelete: String?,
 ): HendelseModel.SakOpprettet = oppdaterModell(
     HendelseModel.SakOpprettet(
         virksomhetsnummer = idsuffix,
@@ -492,7 +496,7 @@ private suspend fun AutoSlettRepository.sakOpprettet(
         hendelseId = UUID.randomUUID(),
         produsentId = idsuffix,
         kildeAppNavn = idsuffix,
-        merkelapp = idsuffix,
+        merkelapp = merkelapp,
         mottakere = listOf(
             HendelseModel.AltinnMottaker(
                 virksomhetsnummer = idsuffix,
