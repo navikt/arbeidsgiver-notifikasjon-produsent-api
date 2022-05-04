@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.autoslett
 
+import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.core.spec.style.scopes.DescribeSpecContainerContext
 import io.kotest.matchers.shouldBe
@@ -10,11 +11,10 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.LocalDateTimeOrDuration
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyTidStrategi.FORLENG
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyTidStrategi.OVERSKRIV
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -25,15 +25,17 @@ class AutoSlettRepositoryTests : DescribeSpec({
     val repository = AutoSlettRepository(database)
 
     suspend fun DescribeSpecContainerContext.oppgaveUtførtCase(
+        title: String,
         opprettetTidspunkt: String,
         opprinneligHardDelete: String,
+        utførtTidspunkt: String,
         nyHardDelete: String,
         strategi: HendelseModel.NyTidStrategi,
-        expected: String,
+        expected: Instant,
     ) {
         val nyTid = LocalDateTimeOrDuration.parse(nyHardDelete)
         val idsuffix = idsuffixes.next()
-        it("oppgave utført ${nyTid.javaClass.simpleName} strategi $strategi") {
+        it("oppgave utført $title") {
             repository.oppgaveOpprettet(
                 idsuffix = idsuffix,
                 opprettetTidspunkt = opprettetTidspunkt,
@@ -41,6 +43,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
             )
             val utførtHendelse = repository.oppgaveUtført(
                 idsuffix = idsuffix,
+                mottattTidspunkt = utførtTidspunkt,
                 hardDelete = HendelseModel.HardDeleteUpdate(
                     nyTid = nyTid,
                     strategi = strategi,
@@ -49,7 +52,7 @@ class AutoSlettRepositoryTests : DescribeSpec({
             it("hard delete scheduleres") {
                 val skedulert = repository.hent(utførtHendelse.aggregateId)
                 skedulert shouldNotBe null
-                skedulert!!.beregnetSlettetidspunkt shouldBe LocalDateTime.parse(expected).atOslo().toInstant()
+                skedulert!!.beregnetSlettetidspunkt shouldBe expected
             }
         }
     }
@@ -160,7 +163,11 @@ class AutoSlettRepositoryTests : DescribeSpec({
         context("oppdater hendelse uten hard delete") {
             it("oppgave utført") {
                 repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
-                val utførtHendelse = repository.oppgaveUtført("1", hardDelete = null)
+                val utførtHendelse = repository.oppgaveUtført(
+                    idsuffix = "1",
+                    hardDelete = null,
+                    mottattTidspunkt = "2020-01-01T01:01:01.00Z"
+                )
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(utførtHendelse.aggregateId) shouldBe null
@@ -172,8 +179,11 @@ class AutoSlettRepositoryTests : DescribeSpec({
                     mottattTidspunkt = "2020-01-01T01:01+00",
                     hardDelete = null
                 )
-                val nyStatusHendelse =
-                    repository.nyStatusSak(idsuffix = "2", mottattTidspunkt = "2020-01-01T01:01+00", hardDelete = null)
+                val nyStatusHendelse = repository.nyStatusSak(
+                    idsuffix = "2",
+                    mottattTidspunkt = "2020-01-01T01:01+00",
+                    hardDelete = null
+                )
 
                 it("hard delete scheduleres ikke") {
                     repository.hent(nyStatusHendelse.aggregateId) shouldBe null
@@ -185,11 +195,12 @@ class AutoSlettRepositoryTests : DescribeSpec({
             it("oppgave utført") {
                 repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", null)
                 val utførtHendelse = repository.oppgaveUtført(
-                    "1",
+                    idsuffix = "1",
                     hardDelete = HendelseModel.HardDeleteUpdate(
                         nyTid = LocalDateTimeOrDuration.parse("2022-10-13T07:20:50.52"),
                         strategi = OVERSKRIV,
-                    )
+                    ),
+                    mottattTidspunkt = "2020-01-01T01:01:01.00Z",
                 )
 
                 it("hard delete scheduleres") {
@@ -218,101 +229,140 @@ class AutoSlettRepositoryTests : DescribeSpec({
         }
 
         context("oppdater hendelse med hard delete og tidligere skedulert delete") {
-
             oppgaveUtførtCase(
+                title = "forleng med absolutt dato, og opprinnelig er tidligere",
                 opprettetTidspunkt = "2020-01-01T01:01+00",
-                opprinneligHardDelete = "2022-10-13T07:20:50.52",
+                opprinneligHardDelete = "2022-08-13T07:20:50.52",
                 nyHardDelete = "2022-09-13T07:20:50.52",
-                strategi = OVERSKRIV,
-                expected = "2022-09-13T07:20:50.52",
-            )
-
-            //TODO Finne ut av når "om" skal gjelde fra (Hva er basetime?)
-            // 1. Basert på opprettelse.
-            // 2. Basert på statusoppdatering
-            // Begge varianter gir mening.
-
-//            oppgaveUtførtCase(
-//                opprettetTidspunkt = "2020-01-01T01:01+00",
-//                opprinneligHardDelete = "2022-10-13T07:20:50.52",
-//                nyHardDelete = "P1YT1H",
-//                strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
-//                expected = "2022-10-13T07:20:50.52",
-//            )
-
-            oppgaveUtførtCase(
-                opprettetTidspunkt = "2020-01-01T01:01+00",
-                opprinneligHardDelete = "2022-10-13T07:20:50.52",
-                nyHardDelete = "2022-09-13T07:20:50.52",
+                utførtTidspunkt = "2020-01-01T01:01:01.42Z",
                 strategi = FORLENG,
-                expected = "2022-10-13T07:20:50.52",
+                expected = "2022-09-13T07:20:50.52".inOsloAsInstant(),
             )
 
-            sakOppdatertCase(
-                title = "overskriv med absolutt dato",
-                sakMottattTidspunkt = "2020-01-01T01:01+00",
+            oppgaveUtførtCase(
+                title = "forleng med absolutt dato, men opprinnelig er senere",
+                opprettetTidspunkt = "2020-01-01T01:01+00",
                 opprinneligHardDelete = "2022-10-13T07:20:50.52",
-                oppdateringMottattTidspunkt = "2020-01-01T01:01+00",
                 nyHardDelete = "2022-09-13T07:20:50.52",
-                strategi = OVERSKRIV,
-                expected = LocalDateTime.parse("2022-09-13T07:20:50.52").atOslo().toInstant()
+                utførtTidspunkt = "2020-01-01T01:01:01.42Z",
+                strategi = FORLENG,
+                expected = "2022-10-13T07:20:50.52".inOsloAsInstant(),
             )
 
-            sakOppdatertCase(
-                title = "overskriv med offset",
-                sakMottattTidspunkt = "2020-01-01T01:01+00",
+            oppgaveUtførtCase(
+                title = "forleng med relativ dato, men opprinnelig er senere",
+                opprettetTidspunkt = "2020-01-01T01:01+00",
                 opprinneligHardDelete = "2022-10-13T07:20:50.52",
-                oppdateringMottattTidspunkt = "2020-01-01T01:01+00",
+                utførtTidspunkt = "2021-03-04T13:37:37.37Z",
                 nyHardDelete = "P1YT1H",
-                strategi = OVERSKRIV,
-                expected = OffsetDateTime.parse("2021-01-01T02:01+00").toInstant()
+                strategi = FORLENG,
+                expected = "2022-10-13T07:20:50.52".inOsloAsInstant(),
             )
 
+            oppgaveUtførtCase(
+                title = "forleng med relativ dato, men opprinnelig er tidligere",
+                opprettetTidspunkt = "2020-01-01T01:01+00",
+                opprinneligHardDelete = "2022-10-13T07:20:50.52",
+                utførtTidspunkt = "2021-03-04T13:37:37.37Z",
+                nyHardDelete = "P1Y8MT1H",
+                strategi = FORLENG,
+                expected = Instant.parse("2022-11-04T14:37:37.37Z"),
+            )
+
+            forAll(
+                "2020-10-13T07:20:50.52",
+                "2022-10-13T07:20:50.52",
+                "2025-10-13T07:20:50.52",
+            ) { opprinneligHardDelete ->
+                oppgaveUtførtCase(
+                    title = "overskriv med absolutt dato",
+                    opprettetTidspunkt = "2020-01-01T01:01+00",
+                    opprinneligHardDelete = opprinneligHardDelete,
+                    nyHardDelete = "2022-09-13T07:20:50.52",
+                    utførtTidspunkt = "2020-01-01T01:01:01.42Z",
+                    strategi = OVERSKRIV,
+                    expected = "2022-09-13T07:20:50.52".inOsloAsInstant(),
+                )
+
+                oppgaveUtførtCase(
+                    title = "overskriv med relativ dato",
+                    opprettetTidspunkt = "2020-01-01T01:01+00",
+                    opprinneligHardDelete = "2022-10-13T07:20:50.52",
+                    utførtTidspunkt = "2021-03-04T13:37:37.37Z",
+                    nyHardDelete = "P1YT1H",
+                    strategi = OVERSKRIV,
+                    expected = Instant.parse("2022-03-04T14:37:37.37Z"),
+                )
+
+                sakOppdatertCase(
+                    title = "overskriv med absolutt dato",
+                    sakMottattTidspunkt = "2020-01-01T01:01+00",
+                    opprinneligHardDelete = opprinneligHardDelete,
+                    oppdateringMottattTidspunkt = "2020-01-01T01:01+00",
+                    nyHardDelete = "2022-09-13T07:20:50.52",
+                    strategi = OVERSKRIV,
+                    expected = "2022-09-13T07:20:50.52".inOsloAsInstant()
+                )
+
+                sakOppdatertCase(
+                    title = "overskriv med offset",
+                    sakMottattTidspunkt = "2020-01-01T01:01+00",
+                    opprinneligHardDelete = opprinneligHardDelete,
+                    oppdateringMottattTidspunkt = "2020-01-01T01:01+00",
+                    nyHardDelete = "P1YT1H",
+                    strategi = OVERSKRIV,
+                    expected = Instant.parse("2021-01-01T02:01:00.00Z"),
+                )
+            }
+
             sakOppdatertCase(
-                title = "forleng med absolutt dato, men tidligere er eldre",
+                title = "forleng med absolutt dato, men opprinnelig er senere",
                 sakMottattTidspunkt = "2020-01-01T01:01+00",
                 opprinneligHardDelete = "2022-10-13T07:20:50.52",
                 oppdateringMottattTidspunkt = "2020-01-01T01:01+00",
                 nyHardDelete = "2022-09-13T07:20:50.52",
                 strategi = FORLENG,
-                expected = LocalDateTime.parse("2022-10-13T07:20:50.52").atOslo().toInstant()
+                expected = "2022-10-13T07:20:50.52".inOsloAsInstant(),
             )
 
             sakOppdatertCase(
-                title = "forleng med absolutt dato",
+                title = "forleng med absolutt dato, og opprinnelig er tidligere",
                 sakMottattTidspunkt = "2020-01-01T01:01+00",
                 opprinneligHardDelete = "2022-10-13T07:20:50.52",
                 oppdateringMottattTidspunkt = "2020-01-01T01:01+00",
                 nyHardDelete = "2023-09-13T07:20:50.52",
                 strategi = FORLENG,
-                expected = LocalDateTime.parse("2023-09-13T07:20:50.52").atOslo().toInstant()
+                expected = "2023-09-13T07:20:50.52".inOsloAsInstant()
             )
 
             sakOppdatertCase(
-                title = "forleng med relativ dato",
+                title = "forleng med relativ dato, og opprinnelig er tidligere",
                 sakMottattTidspunkt = "2020-01-01T01:01+00",
                 opprinneligHardDelete = "2022-10-13T07:20:50.52",
                 oppdateringMottattTidspunkt = "2020-01-01T01:01+00",
                 nyHardDelete = "P3YT1H",
                 strategi = FORLENG,
-                expected = OffsetDateTime.parse("2023-01-01T02:01+00").toInstant()
+                expected = Instant.parse("2023-01-01T02:01:00.00Z"),
             )
 
             sakOppdatertCase(
-                title = "forleng med relativ dato, men tidligere er eldre",
+                title = "forleng med relativ dato, men opprinnelig er senere",
                 sakMottattTidspunkt = "2020-01-01T01:01+00",
                 opprinneligHardDelete = "2022-10-13T07:20:50.52",
                 oppdateringMottattTidspunkt = "2020-01-01T01:01+00",
                 nyHardDelete = "P1YT1H",
                 strategi = FORLENG,
-                expected = LocalDateTime.parse("2022-10-13T07:20:50.52").atOslo().toInstant()
+                expected = "2022-10-13T07:20:50.52".inOsloAsInstant()
             )
         }
     }
 })
 
-private suspend fun <T : HendelseModel.Hendelse> AutoSlettRepository.oppdaterModell(hendelse: T): T =
-    hendelse.also { oppdaterModellEtterHendelse(it) }
+private suspend fun <T : HendelseModel.Hendelse> AutoSlettRepository.oppdaterModell(
+    hendelse: T,
+    timestamp: Instant = Instant.EPOCH,
+): T =
+    hendelse.also { oppdaterModellEtterHendelse(it, timestamp) }
 
 private suspend fun AutoSlettRepository.beskjedOpprettet(
     idsuffix: String,
@@ -405,6 +455,7 @@ private suspend fun AutoSlettRepository.sakOpprettet(
 
 private suspend fun AutoSlettRepository.oppgaveUtført(
     idsuffix: String,
+    mottattTidspunkt: String,
     hardDelete: HendelseModel.HardDeleteUpdate?
 ): HendelseModel.OppgaveUtført = oppdaterModell(
     HendelseModel.OppgaveUtført(
@@ -414,7 +465,8 @@ private suspend fun AutoSlettRepository.oppgaveUtført(
         produsentId = idsuffix,
         kildeAppNavn = idsuffix,
         hardDelete = hardDelete,
-    )
+    ),
+    Instant.parse(mottattTidspunkt)
 )
 
 private suspend fun AutoSlettRepository.nyStatusSak(

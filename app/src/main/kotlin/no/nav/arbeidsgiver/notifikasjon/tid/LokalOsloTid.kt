@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.tid
 
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -11,4 +12,8 @@ object LokalOsloTid {
     fun now() : LocalDateTime = LocalDateTime.now(norwayZoneId)
 }
 
-fun LocalDateTime.atOslo() : ZonedDateTime = atZone(norwayZoneId)
+fun LocalDateTime.atOslo():  ZonedDateTime = atZone(norwayZoneId)
+
+fun String.inOsloAsInstant(): Instant =
+    LocalDateTime.parse(this).atOslo().toInstant()
+

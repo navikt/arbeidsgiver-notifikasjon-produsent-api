@@ -7,12 +7,15 @@ import java.time.OffsetDateTime
 
 class ScheduledTime(
     private val spec: LocalDateTimeOrDuration,
-    private val baseTime: OffsetDateTime
+    val baseTime: OffsetDateTime
 ) {
     fun happensAt(): Instant = when (spec) {
         is LocalDateTimeOrDuration.LocalDateTime -> spec.value.atOslo().toInstant()
         is LocalDateTimeOrDuration.Duration -> (baseTime + spec.value).toInstant()
     }
+
+    fun omOrNull() = spec.omOrNull()
+    fun denOrNull() = spec.denOrNull()
 
     companion object {
         fun parse(spec: String, base: String) = ScheduledTime(
