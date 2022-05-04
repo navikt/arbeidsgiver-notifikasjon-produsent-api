@@ -68,66 +68,52 @@ class AutoSlettRepository(
             is HendelseModel.OppgaveUtført -> {
                 val hardDelete = hendelse.hardDelete ?: return
 
-                val baseTime = timestamp.atOffset(ZoneOffset.UTC)
-                val scheduledTime = ScheduledTime(hardDelete.nyTid, baseTime)
-                val beregnetSlettetidspunkt = scheduledTime.happensAt()
-
-                val eksisterende = hent(hendelse.aggregateId)
-
-                if (
-                    eksisterende != null &&
-                    hendelse.hardDelete.strategi == FORLENG &&
-                    beregnetSlettetidspunkt.isBefore(eksisterende.beregnetSlettetidspunkt)
-                ) {
-                    return
-                }
-
                 upsert(
                     SkedulertHardDelete.fromHendelse(
                         hendelse = hendelse,
                         aggregateType = "Oppgave",
-                        scheduledTime = scheduledTime,
+                        scheduledTime = ScheduledTime(
+                            hardDelete.nyTid,
+                            timestamp.atOffset(ZoneOffset.UTC),
+                        ),
                         merkelapp = "?", // TODO
-                    )
+                    ),
+                    strategi = hendelse.hardDelete.strategi,
+                    eksisterende = hent(hendelse.aggregateId),
                 )
             }
 
             is HendelseModel.NyStatusSak -> {
                 val hardDelete = hendelse.hardDelete ?: return
-
-                val baseTime = hendelse.opprettetTidspunkt
-                val scheduledTime = ScheduledTime(hardDelete.nyTid, baseTime)
-                val beregnetSlettetidspunkt = scheduledTime.happensAt()
-
-                val eksisterende = hent(hendelse.aggregateId)
-
-                if (
-                    eksisterende != null &&
-                    hendelse.hardDelete.strategi == FORLENG &&
-                    beregnetSlettetidspunkt.isBefore(eksisterende.beregnetSlettetidspunkt)
-                ) {
-                    return
-                }
-
                 upsert(
-                    SkedulertHardDelete.fromHendelse(
+                    skedulertHardDelete = SkedulertHardDelete.fromHendelse(
                         hendelse = hendelse,
                         aggregateType = "Sak",
-                        scheduledTime = scheduledTime,
+                        scheduledTime = ScheduledTime(
+                            hardDelete.nyTid,
+                            hendelse.opprettetTidspunkt
+                        ),
                         merkelapp = "?", // TODO
-                    )
+                    ),
+                    strategi = hendelse.hardDelete.strategi,
+                    eksisterende = hent(hendelse.aggregateId),
                 )
             }
 
 
-            is HendelseModel.HardDelete -> {
-                TODO("HER SKAL RADEN SLETTES!")
-            }
-
+            is HendelseModel.HardDelete -> hardDelete(hendelse.aggregateId)
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket,
-            is HendelseModel.BrukerKlikket -> Unit
+            is HendelseModel.BrukerKlikket,
             is HendelseModel.SoftDelete -> Unit
+        }
+    }
+
+    private suspend fun hardDelete(aggregateId: UUID) {
+        database.nonTransactionalExecuteUpdate("""
+           delete from skedulert_hard_delete where aggregate_id = ? 
+        """) {
+            uuid(aggregateId)
         }
     }
 
@@ -160,6 +146,21 @@ class AutoSlettRepository(
                 beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", OffsetDateTime::class.java).toInstant(),
             )
         }.firstOrNull()
+    }
+
+    private suspend fun upsert(
+        skedulertHardDelete: SkedulertHardDelete,
+        strategi: HendelseModel.NyTidStrategi,
+        eksisterende: SkedulertHardDelete?,
+    ) {
+        if (
+            eksisterende != null &&
+            strategi == FORLENG &&
+            skedulertHardDelete.beregnetSlettetidspunkt.isBefore(eksisterende.beregnetSlettetidspunkt)
+        ) {
+            return
+        }
+        upsert(skedulertHardDelete)
     }
 
     private suspend fun upsert(skedulertHardDelete: SkedulertHardDelete) {
@@ -214,8 +215,7 @@ data class SkedulertHardDelete(
             aggregateType: String,
             merkelapp: String,
             scheduledTime: ScheduledTime,
-        ) =
-            SkedulertHardDelete(
+        ) = SkedulertHardDelete(
                 aggregateId = hendelse.aggregateId,
                 aggregateType = aggregateType,
                 virksomhetsnummer = hendelse.virksomhetsnummer,
