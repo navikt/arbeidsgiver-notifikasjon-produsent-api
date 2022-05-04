@@ -20,7 +20,7 @@ object AutoSlett {
             launch {
                 val model = AutoSlettRepository(database.await())
                 forEachHendelse("autoslett-model-builder") { hendelse, metadata ->
-                    model.oppdaterModellEtterHendelse(hendelse)
+                    model.oppdaterModellEtterHendelse(hendelse, metadata.timestamp)
                 }
             }
 

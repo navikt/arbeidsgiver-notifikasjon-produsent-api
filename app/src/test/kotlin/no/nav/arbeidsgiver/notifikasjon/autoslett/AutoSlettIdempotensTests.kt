@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.AutoSlett
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import java.time.Instant
 
 class AutoSlettIdempotensTests : DescribeSpec({
     val database = testDatabase(AutoSlett.databaseConfig)
@@ -14,8 +15,8 @@ class AutoSlettIdempotensTests : DescribeSpec({
     describe("Idempotent oppførsel") {
         forAll<HendelseModel.Hendelse>(EksempelHendelse.Alle) { hendelse ->
             it("håndterer ${hendelse::class.simpleName} med idempotens") {
-                repository.oppdaterModellEtterHendelse(hendelse)
-                repository.oppdaterModellEtterHendelse(hendelse)
+                repository.oppdaterModellEtterHendelse(hendelse, Instant.EPOCH)
+                repository.oppdaterModellEtterHendelse(hendelse, Instant.EPOCH)
             }
         }
     }

@@ -319,7 +319,9 @@ type Mutation {
         overstyrStatustekstMed: String
 
         """
-        Oppgi dersom dere ønsker at hard delete skal skeduleres
+        Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
+        tolker relative datoer basert på `opprettetTidspunkt` (eller
+        når vi mottok kallet hvis dere ikke har oppgitt `opprettetTidspunkt`).
         """
         hardDelete: FutureTemporalInput @Validate
     ): NySakResultat!
@@ -930,13 +932,27 @@ input MetadataInput {
     grupperingsid: String
 
     """
-    Oppgi dersom dere ønsker at hard delete skal skeduleres
+    Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
+    tolker relative datoer basert på `opprettetTidspunkt` (eller
+    når vi mottok kallet hvis dere ikke har oppgitt `opprettetTidspunkt`).
     """
     hardDelete: FutureTemporalInput
 }
 
+"""
+Med denne kan dere spesifiserer et konkret tidpsunkt.
+"""
 input FutureTemporalInput @ExactlyOneFieldGiven {
+    """
+    En konkret dato. I Europe/Oslo-tidssone.
+    """
     den: ISO8601LocalDateTime
+
+    """
+    Som duration-offset relativt til implisitt dato.  Dere må se
+    på dokumentasjonen til feltet hvor denne datatypen er brukt for
+    å vite hva vi bruker som implisitt dato.
+    """
     om: ISO8601Duration
 }
 
@@ -945,7 +961,10 @@ Dersom dere vet at saken/notifikasjonen senere skal slettes helt kan det angis h
 """
 input HardDeleteUpdateInput {
     """
-    Det vil bli utført en hardDelete når det angitte tidspunktet har passert.
+    Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
+    tolker relative datoer basert på tidspunkt angitt i kallet eller
+    når vi mottok kallet, hvis dere ikke har oppgitt det eller det
+    ikke er mulig å oppgi.
     """
     nyTid: FutureTemporalInput!
 
@@ -960,6 +979,7 @@ enum NyTidStrategi {
     Vi bruker den tiden som er lengst i fremtiden.
     """
     FORLENG
+
     """
     Vi bruker den nye tiden uansett.
     """
