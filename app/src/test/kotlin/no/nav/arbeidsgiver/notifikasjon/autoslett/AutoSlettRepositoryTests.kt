@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.autoslett
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.core.spec.style.scopes.DescribeSpecContainerContext
@@ -356,6 +357,50 @@ class AutoSlettRepositoryTests : DescribeSpec({
             )
         }
     }
+
+    describe("Hard delete") {
+        it("slette oppgave") {
+            val hendelse = repository.oppgaveOpprettet(
+                idsuffix = "1",
+                opprettetTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = "2022-10-13T07:20:50.52"
+            )
+
+            repository.hardDelete("1")
+
+            it("should be deleted") {
+                repository.hent(hendelse.aggregateId) shouldBe null
+            }
+        }
+
+        it("slette sak") {
+            val hendelse = repository.sakOpprettet(
+                idsuffix = "2",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = "2022-10-13T07:20:50.52"
+            )
+
+            repository.hardDelete("2")
+
+            it("should be deleted") {
+                repository.hent(hendelse.aggregateId) shouldBe null
+            }
+        }
+
+        it("ikke slette andre saker") {
+            val hendelse = repository.sakOpprettet(
+                idsuffix = "3",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = "2022-10-13T07:20:50.52"
+            )
+
+            repository.hardDelete("4")
+
+            it("should not be deleted") {
+                repository.hent(hendelse.aggregateId) shouldNotBe null
+            }
+        }
+    }
 })
 
 private suspend fun <T : HendelseModel.Hendelse> AutoSlettRepository.oppdaterModell(
@@ -363,6 +408,17 @@ private suspend fun <T : HendelseModel.Hendelse> AutoSlettRepository.oppdaterMod
     timestamp: Instant = Instant.EPOCH,
 ): T =
     hendelse.also { oppdaterModellEtterHendelse(it, timestamp) }
+
+private suspend fun AutoSlettRepository.hardDelete(
+    idsuffix: String,
+) = oppdaterModell(HendelseModel.HardDelete(
+        virksomhetsnummer = idsuffix,
+        aggregateId = uuid(idsuffix),
+        hendelseId = UUID.randomUUID(),
+        produsentId = idsuffix,
+        kildeAppNavn = "test-app",
+        deletedAt = OffsetDateTime.now(),
+))
 
 private suspend fun AutoSlettRepository.beskjedOpprettet(
     idsuffix: String,
