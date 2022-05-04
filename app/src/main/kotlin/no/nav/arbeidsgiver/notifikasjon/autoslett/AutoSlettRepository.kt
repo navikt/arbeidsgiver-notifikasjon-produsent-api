@@ -19,83 +19,46 @@ class AutoSlettRepository(
     suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, timestamp: Instant) {
         val ignored = when (hendelse) {
             is HendelseModel.BeskjedOpprettet -> {
-                val hardDelete = hendelse.hardDelete ?: return
-
+                saveAggregate(hendelse, "Beskjed", hendelse.merkelapp)
                 upsert(
-                    SkedulertHardDelete.fromHendelse(
-                        hendelse = hendelse,
-                        aggregateType = "Beskjed",
-                        scheduledTime = ScheduledTime(
-                            hardDelete,
-                            hendelse.opprettetTidspunkt
-                        ),
-                        merkelapp = hendelse.merkelapp,
-                    )
+                    aggregateId = hendelse.aggregateId,
+                    hardDelete = hendelse.hardDelete,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
                 )
             }
 
             is HendelseModel.OppgaveOpprettet -> {
-                val hardDelete = hendelse.hardDelete ?: return
-
+                saveAggregate(hendelse, "Oppgave", hendelse.merkelapp)
                 upsert(
-                    SkedulertHardDelete.fromHendelse(
-                        hendelse = hendelse,
-                        aggregateType = "Oppgave",
-                        scheduledTime = ScheduledTime(
-                            hardDelete,
-                            hendelse.opprettetTidspunkt
-                        ),
-                        merkelapp = hendelse.merkelapp,
-                    )
+                    aggregateId = hendelse.aggregateId,
+                    hardDelete = hendelse.hardDelete,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
                 )
             }
 
             is HendelseModel.SakOpprettet -> {
-                val hardDelete = hendelse.hardDelete ?: return
+                saveAggregate(hendelse, "Sak", hendelse.merkelapp)
                 upsert(
-                    SkedulertHardDelete.fromHendelse(
-                        hendelse = hendelse,
-                        aggregateType = "Sak",
-                        scheduledTime = ScheduledTime(
-                            hardDelete,
-                            hendelse.opprettetTidspunkt
-                        ),
-                        merkelapp = hendelse.merkelapp,
-                    )
+                    aggregateId = hendelse.aggregateId,
+                    hardDelete = hendelse.hardDelete,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
                 )
             }
 
             is HendelseModel.OppgaveUtført -> {
-                val hardDelete = hendelse.hardDelete ?: return
-
                 upsert(
-                    SkedulertHardDelete.fromHendelse(
-                        hendelse = hendelse,
-                        aggregateType = "Oppgave",
-                        scheduledTime = ScheduledTime(
-                            hardDelete.nyTid,
-                            timestamp.atOffset(ZoneOffset.UTC),
-                        ),
-                        merkelapp = "?", // TODO
-                    ),
-                    strategi = hendelse.hardDelete.strategi,
+                    aggregateId = hendelse.aggregateId,
+                    hardDelete = hendelse.hardDelete,
+                    opprettetTidspunkt = timestamp.atOffset(ZoneOffset.UTC),
                     eksisterende = hent(hendelse.aggregateId),
                 )
             }
 
             is HendelseModel.NyStatusSak -> {
-                val hardDelete = hendelse.hardDelete ?: return
                 upsert(
-                    skedulertHardDelete = SkedulertHardDelete.fromHendelse(
-                        hendelse = hendelse,
-                        aggregateType = "Sak",
-                        scheduledTime = ScheduledTime(
-                            hardDelete.nyTid,
-                            hendelse.opprettetTidspunkt
-                        ),
-                        merkelapp = "?", // TODO
-                    ),
-                    strategi = hendelse.hardDelete.strategi,
+                    aggregateId = hendelse.aggregateId,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
+                    hardDelete = hendelse.hardDelete,
                     eksisterende = hent(hendelse.aggregateId),
                 )
             }
@@ -109,9 +72,34 @@ class AutoSlettRepository(
         }
     }
 
+
+    private suspend fun saveAggregate(
+        hendelse: HendelseModel.Hendelse,
+        aggregateType: String,
+        merkelapp: String,
+    ) {
+        database.nonTransactionalExecuteUpdate(
+            """
+                insert into aggregate (
+                    aggregate_id, 
+                    aggregate_type, 
+                    virksomhetsnummer, 
+                    produsentid, 
+                    merkelapp
+                ) values (?, ?, ?, ?, ?) on conflict do nothing
+                """
+        ) {
+            uuid(hendelse.aggregateId)
+            string(aggregateType)
+            string(hendelse.virksomhetsnummer)
+            string(hendelse.produsentId ?: "ukjent")
+            string(merkelapp)
+        }
+    }
+
     private suspend fun hardDelete(aggregateId: UUID) {
         database.nonTransactionalExecuteUpdate("""
-           delete from skedulert_hard_delete where aggregate_id = ? 
+           delete from aggregate where aggregate_id = ? 
         """) {
             uuid(aggregateId)
         }
@@ -120,17 +108,18 @@ class AutoSlettRepository(
     suspend fun hent(aggregateId: UUID): SkedulertHardDelete? {
         return database.nonTransactionalExecuteQuery("""
             select 
-                aggregate_id,
-                aggregate_type,
-                virksomhetsnummer,
-                produsentid,
-                merkelapp,
-                beregnet_slettetidspunkt,
-                input_base,
-                input_om,
-                input_den 
+                aggregate.aggregate_id,
+                aggregate.aggregate_type,
+                aggregate.virksomhetsnummer,
+                aggregate.produsentid,
+                aggregate.merkelapp,
+                skedulert_hard_delete.beregnet_slettetidspunkt,
+                skedulert_hard_delete.input_base,
+                skedulert_hard_delete.input_om,
+                skedulert_hard_delete.input_den 
             from skedulert_hard_delete 
-            where aggregate_id = ?
+            join aggregate on aggregate.aggregate_id = skedulert_hard_delete.aggregate_id
+            where skedulert_hard_delete.aggregate_id = ?
         """, {
             uuid(aggregateId)
         }) {
@@ -149,51 +138,52 @@ class AutoSlettRepository(
     }
 
     private suspend fun upsert(
-        skedulertHardDelete: SkedulertHardDelete,
-        strategi: HendelseModel.NyTidStrategi,
+        aggregateId: UUID,
+        hardDelete: HendelseModel.HardDeleteUpdate?,
+        opprettetTidspunkt: OffsetDateTime,
         eksisterende: SkedulertHardDelete?,
     ) {
+        if (hardDelete == null) return
+        val scheduledTime = ScheduledTime(hardDelete.nyTid, opprettetTidspunkt)
         if (
             eksisterende != null &&
-            strategi == FORLENG &&
-            skedulertHardDelete.beregnetSlettetidspunkt.isBefore(eksisterende.beregnetSlettetidspunkt)
+            hardDelete.strategi == FORLENG &&
+            scheduledTime.happensAt().isBefore(eksisterende.beregnetSlettetidspunkt)
         ) {
             return
         }
-        upsert(skedulertHardDelete)
+        upsert(aggregateId, hardDelete.nyTid, opprettetTidspunkt)
     }
 
-    private suspend fun upsert(skedulertHardDelete: SkedulertHardDelete) {
+    private suspend fun upsert(
+        aggregateId: UUID,
+        hardDelete: HendelseModel.LocalDateTimeOrDuration?,
+        opprettetTidspunkt: OffsetDateTime,
+    ) {
+        if (hardDelete == null) return
+        val scheduledTime = ScheduledTime(hardDelete, opprettetTidspunkt)
         database.nonTransactionalExecuteUpdate(
             """
-                insert into skedulert_hard_delete (
-                    aggregate_id, 
-                    aggregate_type, 
-                    virksomhetsnummer, 
-                    produsentid, 
-                    merkelapp, 
-                    beregnet_slettetidspunkt, 
-                    input_base, 
-                    input_om, 
-                    input_den           
-                ) values (?, ?, ?, ?, ?, ?, ?, ?, ?) 
-                    on conflict (aggregate_id) do 
-                    update set 
-                        beregnet_slettetidspunkt = EXCLUDED.beregnet_slettetidspunkt,
-                        input_base = EXCLUDED.input_base,
-                        input_om = EXCLUDED.input_om,
-                        input_den = EXCLUDED.input_den;
-                """
+            insert into skedulert_hard_delete (
+                aggregate_id, 
+                beregnet_slettetidspunkt, 
+                input_base, 
+                input_om, 
+                input_den           
+            ) values (?, ?, ?, ?, ?) 
+                on conflict (aggregate_id) do 
+                update set 
+                    beregnet_slettetidspunkt = EXCLUDED.beregnet_slettetidspunkt,
+                    input_base = EXCLUDED.input_base,
+                    input_om = EXCLUDED.input_om,
+                    input_den = EXCLUDED.input_den;
+            """
         ) {
-            uuid(skedulertHardDelete.aggregateId)
-            string(skedulertHardDelete.aggregateType)
-            string(skedulertHardDelete.virksomhetsnummer)
-            string(skedulertHardDelete.produsentid)
-            string(skedulertHardDelete.merkelapp)
-            timestamp_utc(skedulertHardDelete.beregnetSlettetidspunkt)
-            timestamp_utc(skedulertHardDelete.inputBase)
-            nullableString(skedulertHardDelete.inputOm?.toString())
-            nullableString(skedulertHardDelete.inputDen?.toString())
+            uuid(aggregateId)
+            timestamp_utc(scheduledTime.happensAt())
+            timestamp_utc(scheduledTime.baseTime)
+            nullableString(scheduledTime.omOrNull()?.toString())
+            nullableString(scheduledTime.denOrNull()?.toString())
         }
     }
 }
@@ -208,23 +198,4 @@ data class SkedulertHardDelete(
     val inputOm: ISO8601Period?,
     val inputDen: LocalDateTime?,
     val beregnetSlettetidspunkt: Instant,
-) {
-    companion object {
-        fun fromHendelse(
-            hendelse: HendelseModel.Hendelse,
-            aggregateType: String,
-            merkelapp: String,
-            scheduledTime: ScheduledTime,
-        ) = SkedulertHardDelete(
-                aggregateId = hendelse.aggregateId,
-                aggregateType = aggregateType,
-                virksomhetsnummer = hendelse.virksomhetsnummer,
-                produsentid = hendelse.produsentId ?: "ukjent",
-                merkelapp = merkelapp,
-                inputBase = scheduledTime.baseTime,
-                inputOm = scheduledTime.omOrNull(),
-                inputDen = scheduledTime.denOrNull(),
-                beregnetSlettetidspunkt = scheduledTime.happensAt(),
-            )
-    }
-}
+)
