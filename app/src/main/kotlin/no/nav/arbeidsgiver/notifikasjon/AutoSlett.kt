@@ -10,7 +10,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
 
 object AutoSlett {
-    val log = logger()
     val databaseConfig = Database.config("autoslett_model")
 
     fun main(httpPort: Int = 8080) {

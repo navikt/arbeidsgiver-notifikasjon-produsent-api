@@ -4,7 +4,6 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyTidStrategi.FORLENG
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -14,7 +13,6 @@ import java.util.*
 class AutoSlettRepository(
     private val database: Database
 ) {
-    val log = logger()
 
     suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, timestamp: Instant) {
         val ignored = when (hendelse) {
