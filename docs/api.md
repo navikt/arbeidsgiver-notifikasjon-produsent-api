@@ -309,7 +309,9 @@ til brukeren. Se `SaksStatus` for default tekster.
 <td valign="top"><a href="#futuretemporalinput">FutureTemporalInput</a></td>
 <td>
 
-Oppgi dersom dere ønsker at hard delete skal skeduleres
+Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
+tolker relative datoer basert på `opprettetTidspunkt` (eller
+når vi mottok kallet hvis dere ikke har oppgitt `opprettetTidspunkt`).
 
 </td>
 </tr>
@@ -1961,6 +1963,8 @@ deprecated. value is ignored.
 
 #### FutureTemporalInput
 
+Med denne kan dere spesifiserer et konkret tidspunkt.
+
 <table>
 <thead>
 <tr>
@@ -1973,12 +1977,22 @@ deprecated. value is ignored.
 <tr>
 <td colspan="2" valign="top"><strong>den</strong></td>
 <td valign="top"><a href="#iso8601localdatetime">ISO8601LocalDateTime</a></td>
-<td></td>
+<td>
+
+En konkret dato. I Europe/Oslo-tidssone.
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>om</strong></td>
 <td valign="top"><a href="#iso8601duration">ISO8601Duration</a></td>
-<td></td>
+<td>
+
+Som duration-offset relativt til implisitt dato.  Dere må se
+på dokumentasjonen til feltet hvor denne datatypen er brukt for
+å vite hva vi bruker som implisitt dato.
+
+</td>
 </tr>
 </tbody>
 </table>
@@ -2001,7 +2015,10 @@ Dersom dere vet at saken/notifikasjonen senere skal slettes helt kan det angis h
 <td valign="top"><a href="#futuretemporalinput">FutureTemporalInput</a>!</td>
 <td>
 
-Det vil bli utført en hardDelete når det angitte tidspunktet har passert.
+Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
+tolker relative datoer basert på tidspunkt angitt i kallet eller
+når vi mottok kallet, hvis dere ikke har oppgitt det eller det
+ikke er mulig å oppgi.
 
 </td>
 </tr>
@@ -2083,7 +2100,9 @@ Ta kontakt med #arbeidsgiver-notifikasjon på slack for å melde interesse!
 <td valign="top"><a href="#futuretemporalinput">FutureTemporalInput</a></td>
 <td>
 
-Oppgi dersom dere ønsker at hard delete skal skeduleres
+Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
+tolker relative datoer basert på `opprettetTidspunkt` (eller
+når vi mottok kallet hvis dere ikke har oppgitt `opprettetTidspunkt`).
 
 </td>
 </tr>
