@@ -940,7 +940,7 @@ input MetadataInput {
 }
 
 """
-Med denne kan dere spesifiserer et konkret tidpsunkt.
+Med denne kan dere spesifiserer et konkret tidspunkt.
 """
 input FutureTemporalInput @ExactlyOneFieldGiven {
     """

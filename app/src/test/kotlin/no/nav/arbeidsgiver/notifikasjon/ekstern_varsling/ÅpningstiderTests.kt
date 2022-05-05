@@ -12,12 +12,12 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
-class LokalOsloTidTests: DescribeSpec({
+class ÅpningstiderTests: DescribeSpec({
     fun tidspunkt(kl: String, dag: DayOfWeek) : LocalDateTime =
         LocalDateTime.of(LocalDate.parse("2022-01-01"), LocalTime.parse(kl))
             .with(TemporalAdjusters.firstInMonth(dag))
 
-    describe("LocalDateTime.erNksÅpningstid") {
+    describe("Åpningstider.erNksÅpningstid") {
         context("når tidspunkt er innenfor NKS åningstid") {
             forAll(
                 tidspunkt("08:30", MONDAY),

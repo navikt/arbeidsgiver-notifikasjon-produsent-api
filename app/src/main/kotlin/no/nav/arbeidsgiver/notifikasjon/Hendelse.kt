@@ -50,35 +50,19 @@ object HendelseModel {
         }
 
         @JsonTypeName("LocalDateTime")
-        data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration {
-            override fun omOrNull() = null
-            override fun denOrNull() = value
-        }
+        data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration
 
         @JsonTypeName("Duration")
-        data class Duration(val value: ISO8601Period): LocalDateTimeOrDuration {
-            override fun omOrNull() = value
-            override fun denOrNull() = null
+        data class Duration(val value: ISO8601Period): LocalDateTimeOrDuration
+
+        fun omOrNull() = when(this) {
+            is LocalDateTime -> null
+            is Duration -> value
         }
 
-        fun omOrNull(): ISO8601Period?
-        fun denOrNull(): java.time.LocalDateTime?
-
-        fun from(
-            localDateTime: java.time.LocalDateTime?,
-            iso8601Period: ISO8601Period?
-        ) : LocalDateTimeOrDuration {
-            if (localDateTime != null && iso8601Period != null) {
-                throw IllegalArgumentException("både localDateTime og iso8601Period kan ikke være satt")
-            }
-
-            return if (localDateTime != null) {
-                LocalDateTime(localDateTime)
-            } else if (iso8601Period != null) {
-                Duration(iso8601Period)
-            } else {
-                throw IllegalArgumentException("en av localDateTime eller iso8601Period må være satt")
-            }
+        fun denOrNull() = when(this) {
+            is LocalDateTime -> value
+            is Duration -> null
         }
     }
 
