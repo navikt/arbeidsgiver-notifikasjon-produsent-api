@@ -103,6 +103,7 @@ object HendelseModel {
         @JsonIgnore
         override val aggregateId: UUID = sakId
 
+        @get:JsonIgnore
         val opprettetTidspunkt: OffsetDateTime
             get() = oppgittTidspunkt ?: mottattTidspunkt
 
@@ -174,6 +175,7 @@ object HendelseModel {
         @JsonIgnore
         override val aggregateId: UUID = sakId
 
+        @get:JsonIgnore
         val opprettetTidspunkt: OffsetDateTime
             get() = oppgittTidspunkt ?: mottattTidspunkt
     }
