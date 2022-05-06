@@ -1,77 +1,17 @@
 package no.nav.arbeidsgiver.notifikasjon.autoslett
 
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyTidStrategi.FORLENG
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.util.*
 
 class AutoSlettRepository(
     private val database: Database
 ) {
-
-    suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, timestamp: Instant) {
-        val ignored = when (hendelse) {
-            is HendelseModel.BeskjedOpprettet -> {
-                saveAggregate(hendelse, "Beskjed", hendelse.merkelapp)
-                upsert(
-                    aggregateId = hendelse.aggregateId,
-                    hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
-                )
-            }
-
-            is HendelseModel.OppgaveOpprettet -> {
-                saveAggregate(hendelse, "Oppgave", hendelse.merkelapp)
-                upsert(
-                    aggregateId = hendelse.aggregateId,
-                    hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
-                )
-            }
-
-            is HendelseModel.SakOpprettet -> {
-                saveAggregate(hendelse, "Sak", hendelse.merkelapp)
-                upsert(
-                    aggregateId = hendelse.aggregateId,
-                    hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
-                )
-            }
-
-            is HendelseModel.OppgaveUtført -> {
-                upsert(
-                    aggregateId = hendelse.aggregateId,
-                    hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = timestamp.atOffset(ZoneOffset.UTC),
-                    eksisterende = hent(hendelse.aggregateId),
-                )
-            }
-
-            is HendelseModel.NyStatusSak -> {
-                upsert(
-                    aggregateId = hendelse.aggregateId,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
-                    hardDelete = hendelse.hardDelete,
-                    eksisterende = hent(hendelse.aggregateId),
-                )
-            }
-
-
-            is HendelseModel.HardDelete -> hardDelete(hendelse.aggregateId)
-            is HendelseModel.EksterntVarselFeilet,
-            is HendelseModel.EksterntVarselVellykket,
-            is HendelseModel.BrukerKlikket,
-            is HendelseModel.SoftDelete -> Unit
-        }
-    }
-
-
-    private suspend fun saveAggregate(
+    suspend fun saveAggregate(
         hendelse: HendelseModel.Hendelse,
         aggregateType: String,
         merkelapp: String,
@@ -95,7 +35,7 @@ class AutoSlettRepository(
         }
     }
 
-    private suspend fun hardDelete(aggregateId: UUID) {
+    suspend fun hardDelete(aggregateId: UUID) {
         database.nonTransactionalExecuteUpdate("""
            delete from aggregate where aggregate_id = ? 
         """) {
@@ -135,31 +75,10 @@ class AutoSlettRepository(
         }.firstOrNull()
     }
 
-    private suspend fun upsert(
+    suspend fun upsert(
         aggregateId: UUID,
-        hardDelete: HendelseModel.HardDeleteUpdate?,
-        opprettetTidspunkt: OffsetDateTime,
-        eksisterende: SkedulertHardDelete?,
+        scheduledTime: ScheduledTime,
     ) {
-        if (hardDelete == null) return
-        val scheduledTime = ScheduledTime(hardDelete.nyTid, opprettetTidspunkt)
-        if (
-            eksisterende != null &&
-            hardDelete.strategi == FORLENG &&
-            scheduledTime.happensAt().isBefore(eksisterende.beregnetSlettetidspunkt)
-        ) {
-            return
-        }
-        upsert(aggregateId, hardDelete.nyTid, opprettetTidspunkt)
-    }
-
-    private suspend fun upsert(
-        aggregateId: UUID,
-        hardDelete: HendelseModel.LocalDateTimeOrDuration?,
-        opprettetTidspunkt: OffsetDateTime,
-    ) {
-        if (hardDelete == null) return
-        val scheduledTime = ScheduledTime(hardDelete, opprettetTidspunkt)
         database.nonTransactionalExecuteUpdate(
             """
             insert into skedulert_hard_delete (
