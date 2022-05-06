@@ -36,7 +36,8 @@ class LogConfig : ContextAwareBase(), Configurator {
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
             level = basedOnEnv(
                 prod = { Level.INFO },
-                other = { Level.DEBUG }
+                dev = { Level.DEBUG },
+                other = { Level.INFO }
             )
             addAppender(rootAppender)
         }
