@@ -4,6 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyTidStrategi.FORLENG
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
+import java.sql.ResultSet
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -13,6 +14,34 @@ import java.util.*
 class AutoSlettRepository(
     private val database: Database
 ) {
+
+    suspend fun hentDeSomSkalSlettes(
+        tidspunkt: Instant,
+    ): List<SkedulertHardDelete> {
+        return database.nonTransactionalExecuteQuery(
+            sql = """
+            select 
+                aggregate.aggregate_id,
+                aggregate.aggregate_type,
+                aggregate.virksomhetsnummer,
+                aggregate.produsentid,
+                aggregate.merkelapp,
+                skedulert_hard_delete.beregnet_slettetidspunkt,
+                skedulert_hard_delete.input_base,
+                skedulert_hard_delete.input_om,
+                skedulert_hard_delete.input_den 
+            from skedulert_hard_delete 
+            join aggregate on aggregate.aggregate_id = skedulert_hard_delete.aggregate_id
+            where beregnet_slettetidspunkt <= ?
+        """,
+            setup = {
+                timestamp_utc(tidspunkt)
+            },
+            transform = {
+                this.toSkedulertHardDelete()
+            }
+        )
+    }
 
     suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, timestamp: Instant) {
         val ignored = when (hendelse) {
@@ -60,7 +89,6 @@ class AutoSlettRepository(
                     eksisterende = hent(hendelse.aggregateId),
                 )
             }
-
 
             is HendelseModel.HardDelete -> hardDelete(hendelse.aggregateId)
             is HendelseModel.EksterntVarselFeilet,
@@ -121,19 +149,22 @@ class AutoSlettRepository(
         """, {
             uuid(aggregateId)
         }) {
-            SkedulertHardDelete(
-                aggregateId = getObject("aggregate_id", UUID::class.java),
-                aggregateType = getString("aggregate_type"),
-                virksomhetsnummer = getString("virksomhetsnummer"),
-                produsentid = getString("produsentid"),
-                merkelapp = getString("merkelapp"),
-                inputBase = getObject("input_base", OffsetDateTime::class.java),
-                inputOm = getString("input_om")?.let { ISO8601Period.parse(it) },
-                inputDen = getString("input_den")?.let { LocalDateTime.parse(it) },
-                beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", OffsetDateTime::class.java).toInstant(),
-            )
+            this.toSkedulertHardDelete()
         }.firstOrNull()
     }
+
+    private fun ResultSet.toSkedulertHardDelete() =
+        SkedulertHardDelete(
+            aggregateId = getObject("aggregate_id", UUID::class.java),
+            aggregateType = getString("aggregate_type"),
+            virksomhetsnummer = getString("virksomhetsnummer"),
+            produsentid = getString("produsentid"),
+            merkelapp = getString("merkelapp"),
+            inputBase = getObject("input_base", OffsetDateTime::class.java),
+            inputOm = getString("input_om")?.let { ISO8601Period.parse(it) },
+            inputDen = getString("input_den")?.let { LocalDateTime.parse(it) },
+            beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", OffsetDateTime::class.java).toInstant(),
+        )
 
     private suspend fun upsert(
         aggregateId: UUID,

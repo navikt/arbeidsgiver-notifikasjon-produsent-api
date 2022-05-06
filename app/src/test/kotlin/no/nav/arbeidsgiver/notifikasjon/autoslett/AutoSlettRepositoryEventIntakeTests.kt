@@ -20,7 +20,7 @@ import java.util.*
 
 private var idsuffixes = generateSequence(0) { it + 1 }.map { it.toString() }.iterator()
 
-class AutoSlettRepositoryTests : DescribeSpec({
+class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
     val database = testDatabase(AutoSlett.databaseConfig)
     val repository = AutoSlettRepository(database)
 
