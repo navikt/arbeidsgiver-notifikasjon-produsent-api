@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -102,7 +103,6 @@ import java.util.concurrent.atomic.AtomicInteger
 class EksternVarslingService(
     private val eksternVarslingRepository: EksternVarslingRepository,
     private val altinnVarselKlient: AltinnVarselKlient,
-    private val åpningstider: Åpningstider,
     private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
 ) {
     private val log = logger()
@@ -145,7 +145,7 @@ class EksternVarslingService(
                 "resume-scheduled-work",
                 pauseAfterEach = Duration.ofMinutes(5)
             ) {
-                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(åpningstider.nå())
+                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(LokalOsloTid.now())
                 if (rescheduledCount > 0) {
                     log.info("resumed $rescheduledCount jobs from wait queue")
                 }
@@ -200,12 +200,12 @@ class EksternVarslingService(
         when (varsel) {
             is EksternVarselTilstand.Ny -> {
                 val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
-                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> åpningstider.nesteNksÅpningstid()
-                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> åpningstider.nesteDagtidIkkeSøndag()
-                    EksterntVarselSendingsvindu.LØPENDE -> åpningstider.nå()
+                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid()
+                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag()
+                    EksterntVarselSendingsvindu.LØPENDE -> LokalOsloTid.now()
                     EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
                 }
-                if (kalkulertSendeTidspunkt <= åpningstider.nå()) {
+                if (kalkulertSendeTidspunkt <= LokalOsloTid.now()) {
                     altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
                         onSuccess = { response ->
                             eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
