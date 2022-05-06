@@ -7,27 +7,20 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit.MINUTES
 
-interface Åpningstider {
-    fun nå(): LocalDateTime
-    fun nesteNksÅpningstid(): LocalDateTime
-    fun nesteDagtidIkkeSøndag(): LocalDateTime
-}
-
-object ÅpningstiderImpl : Åpningstider {
-    override fun nå(): LocalDateTime = LokalOsloTid.now().truncatedTo(MINUTES)
-    override fun nesteDagtidIkkeSøndag(): LocalDateTime = nesteDagtidIkkeSøndag(nå())
-    override fun nesteNksÅpningstid(): LocalDateTime = nesteNksÅpningstid(nå())
+object Åpningstider {
+    fun nesteDagtidIkkeSøndag(): LocalDateTime = nesteDagtidIkkeSøndag(LokalOsloTid.now())
+    fun nesteNksÅpningstid(): LocalDateTime = nesteNksÅpningstid(LokalOsloTid.now())
 
     internal fun nesteNksÅpningstid(
         start: LocalDateTime,
     ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erNksÅpningstid)!!
 
     internal fun nesteDagtidIkkeSøndag(
-        start: LocalDateTime = nå(),
+        start: LocalDateTime = LokalOsloTid.now(),
     ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erDagtidIkkeSøndag)!!
 
     private fun tidspunkterFremover(
-        start: LocalDateTime = nå(),
+        start: LocalDateTime = LokalOsloTid.now(),
     ): Sequence<LocalDateTime> = generateSequence(start) { it.plusHours(1) }
 }
 
