@@ -51,9 +51,13 @@ spec:
           namespace: arbeidsgiver
           cluster: dev-fss
 
-        - application: esyfovarsel-job
+        - application: esyfovarsel
           namespace: team-esyfo
           cluster: dev-fss
+
+        - application: esyfovarsel
+          namespace: team-esyfo
+          cluster: dev-gcp
 
         - application: permitteringsmelding-notifikasjon
           namespace: permittering-og-nedbemanning
