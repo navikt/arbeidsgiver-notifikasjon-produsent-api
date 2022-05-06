@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Scalars
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
@@ -25,8 +26,6 @@ import java.time.OffsetDateTime
 import java.util.*
 
 object BrukerAPI {
-    private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-bruker-api"
-
     private val notifikasjonerHentetCount = Metrics.meterRegistry.counter("notifikasjoner_hentet")
     private val sakerHentetCount = Metrics.meterRegistry.counter("saker_hentet")
 
@@ -321,7 +320,7 @@ object BrukerAPI {
                 notifikasjonId = notifikasjonsid,
                 fnr = context.fnr,
                 virksomhetsnummer = virksomhetsnummer,
-                kildeAppNavn =  naisClientId
+                kildeAppNavn = NaisEnvironment.clientId,
             )
 
             kafkaProducer.sendHendelse(hendelse)

@@ -33,6 +33,8 @@ class AutoSlettRepository(
             from skedulert_hard_delete 
             join aggregate on aggregate.aggregate_id = skedulert_hard_delete.aggregate_id
             where beregnet_slettetidspunkt <= ?
+            order by beregnet_slettetidspunkt
+            limit 100
         """,
             setup = {
                 timestamp_utc(tidspunkt)
@@ -227,4 +229,14 @@ data class SkedulertHardDelete(
     val inputOm: ISO8601Period?,
     val inputDen: LocalDateTime?,
     val beregnetSlettetidspunkt: Instant,
-)
+) {
+    fun loggableToString() = mapOf(
+        "aggregateId" to aggregateId,
+        "aggregateType" to aggregateType,
+        "produsentid" to produsentid,
+        "inputBase" to inputBase,
+        "inputOm" to inputOm,
+        "inputDen" to inputDen,
+        "beregnetSlettetidspunkt" to beregnetSlettetidspunkt,
+    ).toString()
+}

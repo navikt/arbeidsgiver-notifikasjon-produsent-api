@@ -5,21 +5,23 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 enum class Subsystem {
-    DATABASE
+    DATABASE,
+    AUTOSLETT_SERVICE,
 }
 
 object Health {
     private val log = logger()
 
     val subsystemAlive = ConcurrentHashMap(mapOf(
-        Subsystem.DATABASE to true
+        Subsystem.DATABASE to true,
+        Subsystem.AUTOSLETT_SERVICE to true,
     ))
 
     val alive
         get() = subsystemAlive.all { it.value }
 
     val subsystemReady = ConcurrentHashMap(mapOf(
-        Subsystem.DATABASE to false
+        Subsystem.DATABASE to false,
     ))
 
     val ready
@@ -28,7 +30,7 @@ object Health {
     private val terminatingAtomic = AtomicBoolean(false)
 
     val terminating: Boolean
-        get() = terminatingAtomic.get()
+        get() = !alive || terminatingAtomic.get()
 
     init {
         val shutdownTimeout = basedOnEnv(
