@@ -30,11 +30,6 @@ class EksternVarslingServiceTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
     val kafka = embeddedKafka()
-    val nå = LocalDateTime.parse("2020-01-01T01:01")
-    mockkObject(Åpningstider)
-    mockkObject(LokalOsloTid)
-    every { LokalOsloTid.now() } returns nå
-
     val meldingSendt = AtomicBoolean(false)
 
     val service = EksternVarslingService(
@@ -49,6 +44,16 @@ class EksternVarslingServiceTests : DescribeSpec({
         },
         kafkaProducer = kafka.newProducer(),
     )
+
+    val nå = LocalDateTime.parse("2020-01-01T01:01")
+    beforeEach {
+        /**
+         * uten before each mister vi mockObject oppførsel i påfølgende av testene. litt usikker på hvorfor
+         */
+        mockkObject(Åpningstider)
+        mockkObject(LokalOsloTid)
+        every { LokalOsloTid.now() } returns nå
+    }
 
     describe("EksternVarslingService#start()") {
         context("LØPENDE sendingsvindu") {
