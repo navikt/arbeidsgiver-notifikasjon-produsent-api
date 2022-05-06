@@ -14,6 +14,9 @@ object LokalOsloTid {
 
 fun LocalDateTime.atOslo():  ZonedDateTime = atZone(norwayZoneId)
 
+fun Instant.asOsloLocalDateTime(): LocalDateTime =
+    this.atZone(norwayZoneId).toLocalDateTime()
+
 fun String.inOsloAsInstant(): Instant =
     LocalDateTime.parse(this).atOslo().toInstant()
 
