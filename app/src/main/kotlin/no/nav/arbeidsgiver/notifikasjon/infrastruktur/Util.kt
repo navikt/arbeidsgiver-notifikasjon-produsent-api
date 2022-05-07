@@ -50,5 +50,5 @@ class UnavailableInProduction<T>(initializer: () -> T) {
 }
 
 
-fun String.ifNotBlank(transform: (String) -> String) =
+inline fun String.ifNotBlank(transform: (String) -> String) =
     if (this.isBlank()) this else transform(this)
