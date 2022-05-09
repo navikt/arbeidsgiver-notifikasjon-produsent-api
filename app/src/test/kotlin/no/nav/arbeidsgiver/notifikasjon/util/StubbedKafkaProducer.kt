@@ -12,6 +12,8 @@ class StubbedKafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hende
     val hendelser: List<HendelseModel.Hendelse>
         get() = records.map(ProducerRecord<KafkaKey, HendelseModel.Hendelse>::value)
 
+    inline fun <reified T> hendelserOfType() = hendelser.filterIsInstance<T>()
+
     override suspend fun send(record: ProducerRecord<KafkaKey, HendelseModel.Hendelse>): RecordMetadata {
         records.add(record)
         return mockk(relaxed = true)
