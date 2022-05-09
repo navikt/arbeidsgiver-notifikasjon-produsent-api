@@ -18,12 +18,18 @@ class AutoSlettService(
 ) {
     private val log = logger()
 
-    suspend fun slettDeSomSkalSlettes(instant: Instant) {
-        val skalSlettes = repo.hentDeSomSkalSlettes(tidspunkt = instant)
+    suspend fun slettDeSomSkalSlettes(tilOgMed: Instant) {
+        val skalSlettes = repo.hentDeSomSkalSlettes(tilOgMed = tilOgMed)
 
         skalSlettes.forEach {
-            if (it.beregnetSlettetidspunkt > instant) {
+            if (it.beregnetSlettetidspunkt > tilOgMed) {
                 log.error("Beregnet slettetidspunkt kan ikke være i fremtiden. {}", it.loggableToString())
+                Health.subsystemAlive[Subsystem.AUTOSLETT_SERVICE] = false
+                return
+            }
+
+            if (NaisEnvironment.clusterName == "prod-gcp") {
+                log.error("Ikke enablet i prod-gcp i påvente av backup av topic")
                 Health.subsystemAlive[Subsystem.AUTOSLETT_SERVICE] = false
                 return
             }

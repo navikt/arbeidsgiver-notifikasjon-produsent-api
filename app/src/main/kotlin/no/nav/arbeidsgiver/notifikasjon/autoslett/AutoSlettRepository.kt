@@ -16,7 +16,7 @@ class AutoSlettRepository(
 ) {
 
     suspend fun hentDeSomSkalSlettes(
-        tidspunkt: Instant,
+        tilOgMed: Instant,
     ): List<SkedulertHardDelete> {
         return database.nonTransactionalExecuteQuery(
             sql = """
@@ -37,7 +37,7 @@ class AutoSlettRepository(
             limit 100
         """,
             setup = {
-                timestamp_utc(tidspunkt)
+                timestamp_utc(tilOgMed)
             },
             transform = {
                 this.toSkedulertHardDelete()

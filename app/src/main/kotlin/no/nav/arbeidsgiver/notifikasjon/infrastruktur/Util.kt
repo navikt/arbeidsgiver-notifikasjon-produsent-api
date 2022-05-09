@@ -10,7 +10,7 @@ fun <T> basedOnEnv(
     other: () -> T,
     dev: () -> T = other,
 ): T =
-    when (System.getenv("NAIS_CLUSTER_NAME")) {
+    when (NaisEnvironment.clusterName) {
         "prod-gcp" -> prod()
         "dev-gcp" -> dev()
         else -> other()
@@ -32,11 +32,10 @@ fun Int.toThePowerOf(exponent: Int): Long = toDouble().pow(exponent).toLong()
  *
  */
 class UnavailableInProduction<T>(initializer: () -> T) {
-    private val cluster: String = System.getenv("NAIS_CLUSTER_NAME") ?: ""
     private val value: T by lazy(initializer)
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        if (cluster == "prod-gcp") {
+        if (NaisEnvironment.clusterName == "prod-gcp") {
             throw Error(
                 """
                 Attempt at accessing property '${property.name}' in class '${thisRef?.javaClass?.canonicalName}' denied.
