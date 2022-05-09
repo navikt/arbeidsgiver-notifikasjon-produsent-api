@@ -45,7 +45,7 @@ kafka-cli kan man laste ned med `./download_kafka_cli.sh` nais aiven [installere
 
 Det er opprettet en `notifikasjon-devops` applikasjon med read access til topic i dev og prod.
 Etter nais aiven er installert kan man opprette applikasjonen. husk å ha valgt riktig context i k8s først:
-`nais aiven create notifikasjon-devops fager`
+`nais aiven create kafka notifikasjon-devops fager`
 
 
 Deretter kan man generere credentials som kan brukes med f.eks kafka-cli:
