@@ -2,7 +2,7 @@ create extension pg_trgm;
 
 create table sak_search
 (
-    id uuid primary key references sak(id),
+    id uuid primary key references sak(id) on delete cascade,
     text text not null
 );
 
