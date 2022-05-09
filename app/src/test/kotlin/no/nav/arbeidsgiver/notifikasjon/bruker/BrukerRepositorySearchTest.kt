@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 import java.util.*
 
-class BrukerRepositoryImplTest : DescribeSpec({
+class BrukerRepositorySearchTest : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val repo = BrukerRepositoryImpl(database)
 
