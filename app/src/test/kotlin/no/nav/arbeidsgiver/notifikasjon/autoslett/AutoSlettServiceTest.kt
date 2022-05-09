@@ -21,8 +21,12 @@ class AutoSlettServiceTest : DescribeSpec({
     val kafkaProducer = StubbedKafkaProducer()
     val repo = mockk<AutoSlettRepository>()
     val service = AutoSlettService(repo, kafkaProducer)
-
     val nåTidspunkt = Instant.parse("2020-01-01T20:20:01.01Z")
+
+    afterSpec {
+        Health.subsystemAlive[AUTOSLETT_SERVICE] = true
+    }
+
     describe("AutoSlettService#slettDeSomSkalSlettes") {
         context("når de som skal slettes er gyldig") {
             val skalSlettes = listOf(
