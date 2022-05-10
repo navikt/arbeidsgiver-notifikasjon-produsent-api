@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonValue
 import java.time.Duration
 import java.time.Period
@@ -10,8 +9,9 @@ import java.time.temporal.Temporal
 import java.time.temporal.TemporalAmount
 import java.time.temporal.TemporalUnit
 import java.time.temporal.UnsupportedTemporalTypeException
+import java.util.*
 
-class ISO8601Period private constructor(
+data class ISO8601Period(
     private val period: Period,
     private val duration: Duration,
 ): TemporalAmount {
