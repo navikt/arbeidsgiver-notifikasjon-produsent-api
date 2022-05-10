@@ -21,7 +21,20 @@ prod | `https://ag-notifikasjon-produsent-api.intern.nav.no/api/graphql`
 
 # GraphQL over HTTP
 
-Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de offisielle anbefalingene: [https://graphql.org/learn/serving-over-http/](https://graphql.org/learn/serving-over-http/). 
+Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON, basert på de offisielle anbefalingene: [https://graphql.org/learn/serving-over-http/](https://graphql.org/learn/serving-over-http/).
+
+> ⚠️ GraphQL returnerer alltid en ["well-formed" HTTP 200 OK](https://spec.graphql.org/October2021/#sec-Response).
+Dersom det er en eller flere valideringsfeil eller noe annet ugyldig vil det returneres informasjon om dette i [errors feltet](https://spec.graphql.org/October2021/#sec-Errors) i response body fra server.
+
+Vi anbefaler at dere angir correlationId i kall dere gjør mot APIet. Dette vil lette arbeidet med feilsøking og oppfølging.
+Vi plukker verdien ut fra en av følgende headere:
+- `X-Request-ID`
+- `X-Correlation-ID`
+- `call-id`
+- `callId`
+- `call_id`
+
+Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
 
 ## GraphQL Schema Types
 

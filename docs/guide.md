@@ -332,6 +332,8 @@ mutation OpprettNyBeskjed(
               sendevindu: NKS_AAPNINGSTID
             }
           }
+        }
+        {
           epost: {
             mottaker: {
               kontaktinfo: {
