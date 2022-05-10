@@ -5,11 +5,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
@@ -103,7 +100,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class EksternVarslingService(
     private val eksternVarslingRepository: EksternVarslingRepository,
     private val altinnVarselKlient: AltinnVarselKlient,
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+    private val hendelseProdusent: HendelseProdusent,
 ) {
     private val log = logger()
     private val emergencyBreakGauge = Metrics.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
@@ -222,7 +219,7 @@ class EksternVarslingService(
 
             is EksternVarselTilstand.Utført -> {
                 try {
-                    kafkaProducer.sendHendelse(varsel.toHendelse())
+                    hendelseProdusent.send(varsel.toHendelse())
                     eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
                 } catch (e: Exception) {
                     log.error("Exception producing kafka-kvittering", e)

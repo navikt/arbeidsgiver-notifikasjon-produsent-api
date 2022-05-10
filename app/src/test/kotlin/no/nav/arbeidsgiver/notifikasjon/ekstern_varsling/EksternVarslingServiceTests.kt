@@ -16,7 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
-import no.nav.arbeidsgiver.notifikasjon.util.StubbedKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.util.StubbedHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDateTime
@@ -28,7 +28,7 @@ import kotlin.time.ExperimentalTime
 class EksternVarslingServiceTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
-    val kafkaProducer = StubbedKafkaProducer()
+    val hendelseProdusent = StubbedHendelseProdusent()
     val meldingSendt = AtomicBoolean(false)
 
     val service = EksternVarslingService(
@@ -41,7 +41,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 return Result.success(AltinnVarselKlient.AltinnResponse.Ok(rå = NullNode.instance))
             }
         },
-        kafkaProducer = kafkaProducer,
+        hendelseProdusent = hendelseProdusent,
     )
 
     val nå = LocalDateTime.parse("2020-01-01T01:01")
@@ -100,7 +100,7 @@ class EksternVarslingServiceTests : DescribeSpec({
 
             it("message received from kafka") {
                 eventually(kotlin.time.Duration.seconds(5)) {
-                    val vellykedeVarsler = kafkaProducer.hendelserOfType<EksterntVarselVellykket>()
+                    val vellykedeVarsler = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
                     vellykedeVarsler shouldNot beEmpty()
                 }
             }

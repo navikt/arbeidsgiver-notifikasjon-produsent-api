@@ -8,30 +8,29 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
-import io.mockk.*
+import io.mockk.MockKAssertScope
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import io.mockk.unmockkAll
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
 class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
-    val queryModel: BrukerRepositoryImpl = mockk(relaxed = true)
-    val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = mockk()
+    val queryModel = mockk<BrukerRepositoryImpl>(relaxed = true)
+    val kafkaProducer = mockk<HendelseProdusent>()
 
     val engine = ktorBrukerTestServer(
         brukerRepository = queryModel,
         kafkaProducer = kafkaProducer,
     )
 
-    mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
-    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(any<BrukerKlikket>()) } returns Unit
+    coEvery { kafkaProducer.send(any<BrukerKlikket>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -89,9 +88,7 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
 
             it("Event produseres på kafka") {
                 coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(
-                        withArg(brukerKlikketMatcher)
-                    )
+                    kafkaProducer.send(withArg(brukerKlikketMatcher))
                 }
             }
 

@@ -10,8 +10,6 @@ import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.bruker.NarmesteLederLeesahDeserializer
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.TilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
@@ -26,18 +24,19 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createAndSubscribeKafkaConsumer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.time.Duration
 
 
 object Bruker {
-    val log = logger()
+    private val log = logger()
     val databaseConfig = Database.config("bruker_model")
+
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("bruker-model-builder") }
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
@@ -75,7 +74,7 @@ object Bruker {
 
             launch {
                 val brukerRepository = brukerRepositoryAsync.await()
-                forEachHendelse("bruker-model-builder") { event ->
+                hendelsesstrøm.forEach { event ->
                     brukerRepository.oppdaterModellEtterHendelse(event)
                 }
             }
@@ -89,18 +88,8 @@ object Bruker {
             }
 
             launch {
-                val nærmesteLederLeesahTopic = "teamsykmelding.syfo-narmesteleder-leesah"
-                val nærmesteLederKafkaConsumer = createAndSubscribeKafkaConsumer<String, NarmesteLederLeesah>(nærmesteLederLeesahTopic) {
-                        putAll(
-                            mapOf(
-                                ConsumerConfig.GROUP_ID_CONFIG to "notifikasjon-bruker-api-narmesteleder-model-builder",
-                                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to NarmesteLederLeesahDeserializer::class.java.canonicalName,
-                            )
-                        )
-                    }
                 val nærmesteLederModel = nærmesteLederModelAsync.await()
-
-                nærmesteLederKafkaConsumer.forEachEvent { event ->
+                NærmesteLederKafkaListener().forEach { event ->
                     nærmesteLederModel.oppdaterModell(event)
                 }
             }
@@ -112,7 +101,7 @@ object Bruker {
                 )
                 BrukerAPI.createBrukerGraphQL(
                     brukerRepository = brukerRepositoryAsync.await(),
-                    kafkaProducer = createKafkaProducer(),
+                    hendelseProdusent = lagKafkaHendelseProdusent(),
                     tilgangerService = tilgangerService,
                     virksomhetsinfoService = virksomhetsinfoService,
                 )

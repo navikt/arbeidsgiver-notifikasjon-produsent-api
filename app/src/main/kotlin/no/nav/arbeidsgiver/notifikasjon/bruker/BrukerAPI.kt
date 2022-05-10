@@ -7,8 +7,8 @@ import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Scalars
@@ -19,9 +19,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.createGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -145,7 +142,7 @@ object BrukerAPI {
 
     fun createBrukerGraphQL(
         brukerRepository: BrukerRepository,
-        kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+        hendelseProdusent: HendelseProdusent,
         tilgangerService: TilgangerService,
         virksomhetsinfoService: VirksomhetsinfoService,
     ) = TypedGraphQL<Context>(
@@ -192,7 +189,7 @@ object BrukerAPI {
             wire("Mutation") {
                 mutationBrukerKlikketPa(
                     brukerRepository = brukerRepository,
-                    kafkaProducer = kafkaProducer,
+                    hendelseProdusent = hendelseProdusent,
                 )
             }
         }
@@ -205,7 +202,7 @@ object BrukerAPI {
         coDataFetcher("notifikasjoner") { env ->
 
             val context = env.getContext<Context>()
-            val tilganger =  tilgangerService.hentTilganger(context)
+            val tilganger = tilgangerService.hentTilganger(context)
 
             val notifikasjoner = brukerRepository
                 .hentNotifikasjoner(
@@ -306,7 +303,7 @@ object BrukerAPI {
 
     private fun TypeRuntimeWiring.Builder.mutationBrukerKlikketPa(
         brukerRepository: BrukerRepository,
-        kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>,
+        hendelseProdusent: HendelseProdusent,
     ) {
         coDataFetcher("notifikasjonKlikketPaa") { env ->
             val context = env.getContext<Context>()
@@ -323,7 +320,7 @@ object BrukerAPI {
                 kildeAppNavn = NaisEnvironment.clientId,
             )
 
-            kafkaProducer.sendHendelse(hendelse)
+            hendelseProdusent.send(hendelse)
 
             brukerRepository.oppdaterModellEtterHendelse(hendelse)
 

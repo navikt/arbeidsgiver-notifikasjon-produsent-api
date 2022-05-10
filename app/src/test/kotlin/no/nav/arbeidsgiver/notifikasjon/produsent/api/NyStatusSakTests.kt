@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 class NyStatusSakTests: DescribeSpec({
-    val stubbedKafkaProducer = StubbedKafkaProducer()
+    val stubbedKafkaProducer = StubbedHendelseProdusent()
 
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)

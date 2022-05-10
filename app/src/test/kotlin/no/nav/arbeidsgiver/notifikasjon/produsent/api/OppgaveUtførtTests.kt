@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.StubbedKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.util.StubbedHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -21,7 +21,7 @@ import java.util.*
 class OppgaveUtførtTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)
-    val stubbedKafkaProducer = StubbedKafkaProducer()
+    val stubbedKafkaProducer = StubbedHendelseProdusent()
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = stubbedKafkaProducer,

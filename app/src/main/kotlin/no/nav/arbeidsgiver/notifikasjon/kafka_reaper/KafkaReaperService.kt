@@ -11,8 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 
 interface KafkaReaperService {
     suspend fun håndterHendelse(hendelse: Hendelse)
@@ -20,7 +19,7 @@ interface KafkaReaperService {
 
 class KafkaReaperServiceImpl(
     private val kafkaReaperModel: KafkaReaperModel,
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse>
+    private val kafkaProducer: HendelseProdusent,
 ) : KafkaReaperService {
 
     override suspend fun håndterHendelse(hendelse: Hendelse) {
@@ -30,7 +29,7 @@ class KafkaReaperServiceImpl(
             is HardDelete -> {
                 for (relatertHendelseId in kafkaReaperModel.alleRelaterteHendelser(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(
-                        key = relatertHendelseId.toString(),
+                        key = relatertHendelseId,
                         orgnr = hendelse.virksomhetsnummer
                     )
                     kafkaReaperModel.fjernRelasjon(relatertHendelseId)
@@ -47,7 +46,7 @@ class KafkaReaperServiceImpl(
             is EksterntVarselVellykket -> {
                 if (kafkaReaperModel.erSlettet(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(
-                        key = hendelse.hendelseId.toString(),
+                        key = hendelse.hendelseId,
                         orgnr = hendelse.virksomhetsnummer
                     )
                     kafkaReaperModel.fjernRelasjon(hendelse.hendelseId)

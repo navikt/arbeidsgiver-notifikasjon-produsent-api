@@ -2,11 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.CoroutineScope
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 
@@ -18,7 +15,7 @@ object ProdusentAPI {
     ) : WithCoroutineScope
 
     fun newGraphQL(
-        kafkaProducer: CoroutineKafkaProducer<KafkaKey, Hendelse> = createKafkaProducer(),
+        kafkaProducer: HendelseProdusent,
         produsentRepository: ProdusentRepository,
     ): TypedGraphQL<Context> {
 
