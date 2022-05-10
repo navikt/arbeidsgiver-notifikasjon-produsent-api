@@ -7,23 +7,38 @@ import io.kotest.matchers.shouldBe
 import java.time.LocalDateTime
 
 class ISO8601PeriodTest : DescribeSpec({
-    val examples = listOf(
-        "P1DT",
+    val normalFormExamples = listOf(
+        "P1D",
         "PT1H",
         "P1DT1H",
+        "P2Y",
         "P3Y6M4DT12H30M5S",
     )
     describe("ISO8601Period parse and print roundtrip") {
-        forAll<String>(examples) { duration ->
+        forAll<String>(normalFormExamples) { duration ->
             it("::parse and ::toString are inverse") {
                 ISO8601Period.parse(duration).toString() shouldBe duration
             }
         }
 
-        forAll<String>(examples.map { "\"$it\""}) { json ->
+        forAll<String>(normalFormExamples.map { "\"$it\""}) { json ->
             it("jackson serde") {
                 val obj = laxObjectMapper.readValue<ISO8601Period>(json)
                 laxObjectMapper.writeValueAsString(obj) shouldBe json
+            }
+        }
+    }
+
+    val examples = listOf(
+        "P1DT" to "P1D",
+        "P1YT" to "P1Y",
+        "P2YT" to "P2Y",
+    )
+
+    describe("ISO8601Period parse and print roundtrip") {
+        forAll<Pair<String, String>>(examples) { (duration, canonicalForm) ->
+            it("::parse and ::toString are inverse") {
+                ISO8601Period.parse(duration).toString() shouldBe canonicalForm
             }
         }
     }
