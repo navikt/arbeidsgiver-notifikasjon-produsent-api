@@ -6,10 +6,10 @@ import io.kotest.core.spec.style.scopes.DescribeSpecContainerContext
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.arbeidsgiver.notifikasjon.AutoSlett
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.LocalDateTimeOrDuration
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyTidStrategi.FORLENG
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyTidStrategi.OVERSKRIV
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.LocalDateTimeOrDuration
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.FORLENG
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.OVERSKRIV
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase

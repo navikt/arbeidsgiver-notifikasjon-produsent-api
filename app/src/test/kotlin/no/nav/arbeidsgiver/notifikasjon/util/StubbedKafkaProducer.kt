@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
 import org.apache.kafka.clients.producer.ProducerRecord
