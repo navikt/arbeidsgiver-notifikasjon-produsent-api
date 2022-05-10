@@ -9,12 +9,11 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.OrgnrPartitioner.Com
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.clients.producer.RecordMetadata
 import java.util.*
 
 interface CoroutineKafkaProducer<K, V> {
-    suspend fun send(record: ProducerRecord<K, V>): RecordMetadata
-    suspend fun tombstone(key: K, orgnr: String): RecordMetadata
+    suspend fun send(record: ProducerRecord<K, V>)
+    suspend fun tombstone(key: K, orgnr: String)
 }
 
 fun createKafkaProducer(configure: Properties.() -> Unit = {}): CoroutineKafkaProducer<KafkaKey, Hendelse> {
@@ -33,13 +32,13 @@ value class CoroutineKafkaProducerImpl<K, V>(
 ) : CoroutineKafkaProducer<K, V> {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override suspend fun send(record: ProducerRecord<K, V>): RecordMetadata {
-        return suspendCancellableCoroutine { continuation ->
-            val result = producer.send(record) { metadata, exception ->
+    override suspend fun send(record: ProducerRecord<K, V>) {
+        suspendCancellableCoroutine<Unit> { continuation ->
+            val result = producer.send(record) { _, exception ->
                 if (exception != null) {
                     continuation.cancel(exception)
                 } else {
-                    continuation.resume(metadata) {
+                    continuation.resume(Unit) {
                         /* nothing to close if canceled */
                     }
                 }
@@ -52,8 +51,8 @@ value class CoroutineKafkaProducerImpl<K, V>(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override suspend fun tombstone(key: K, orgnr: String): RecordMetadata {
-        return send(
+    override suspend fun tombstone(key: K, orgnr: String) {
+        send(
             ProducerRecord<K, V>(
                 TOPIC,
                 partitionOfOrgnr(orgnr, producer.partitionsFor(TOPIC).size),
