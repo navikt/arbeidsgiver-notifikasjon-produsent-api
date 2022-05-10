@@ -10,14 +10,19 @@ class NærmesteLederKafkaListener: NærmesteLederListener {
     private val groupId = "notifikasjon-bruker-api-narmesteleder-model-builder"
     private val deserializer = NarmesteLederLeesahDeserializer::class.java.canonicalName
 
-    private val consumer = CoroutineKafkaConsumer<String, NarmesteLederLeesah>(topic) {
-        put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+    private val consumer = CoroutineKafkaConsumer<String, NarmesteLederLeesah>(
+        topic = topic,
+        groupId = groupId,
+    ) {
         put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer)
     }
 
     override suspend fun forEach(body: suspend (NarmesteLederLeesah) -> Unit) {
-        consumer.forEachEvent { event, _ ->
-            body(event)
+        consumer.forEach { record ->
+            val value = record.value()
+            if (value != null) {
+                body(record.value())
+            }
         }
     }
 }

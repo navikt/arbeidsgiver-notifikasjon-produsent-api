@@ -16,10 +16,14 @@ import java.time.OffsetDateTime
 
 
 object EksempelHendelse {
+    private val hendelseId = generateSequence(0) { it + 1 }
+        .map { uuid(it.toString()) }
+        .iterator()
+
     val BeskjedOpprettet = BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         merkelapp = "1",
@@ -57,7 +61,7 @@ object EksempelHendelse {
     val BeskjedOpprettet_2_Mottakere = BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         merkelapp = "1",
@@ -102,7 +106,7 @@ object EksempelHendelse {
     val BeskjedOpprettet_3_Mottakere = BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         merkelapp = "1",
@@ -151,7 +155,7 @@ object EksempelHendelse {
     val OppgaveOpprettet = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         merkelapp = "1",
@@ -189,7 +193,7 @@ object EksempelHendelse {
     val OppgaveOpprettet_2_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         merkelapp = "1",
@@ -234,7 +238,7 @@ object EksempelHendelse {
     val OppgaveOpprettet_3_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         merkelapp = "1",
@@ -283,7 +287,7 @@ object EksempelHendelse {
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         hardDelete = HendelseModel.HardDeleteUpdate(
@@ -294,7 +298,7 @@ object EksempelHendelse {
     val SoftDelete = HendelseModel.SoftDelete(
         virksomhetsnummer = "1",
         aggregateId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         deletedAt = OffsetDateTime.now()
@@ -302,7 +306,7 @@ object EksempelHendelse {
     val HardDelete = HendelseModel.HardDelete(
         virksomhetsnummer = "1",
         aggregateId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         deletedAt = OffsetDateTime.now()
@@ -310,14 +314,14 @@ object EksempelHendelse {
     val BrukerKlikket = HendelseModel.BrukerKlikket(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         kildeAppNavn = "1",
         fnr = "42"
     )
     val EksterntVarselVellykket = HendelseModel.EksterntVarselVellykket(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         varselId = uuid("1"),
@@ -326,7 +330,7 @@ object EksempelHendelse {
     val EksterntVarselFeilet = HendelseModel.EksterntVarselFeilet(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
-        hendelseId = uuid("2"),
+        hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
         varselId = uuid("1"),
@@ -335,7 +339,7 @@ object EksempelHendelse {
         feilmelding = "oops"
     )
     val SakOpprettet = HendelseModel.SakOpprettet(
-        hendelseId = uuid("0"),
+        hendelseId = hendelseId.next(),
         virksomhetsnummer = "1",
         produsentId = "1",
         kildeAppNavn = "1",
@@ -365,7 +369,7 @@ object EksempelHendelse {
         hardDelete = null,
     )
     val NyStatusSak = HendelseModel.NyStatusSak(
-        hendelseId = uuid("1"),
+        hendelseId = hendelseId.next(),
         virksomhetsnummer = "1",
         produsentId = "1",
         kildeAppNavn = "1",

@@ -4,8 +4,8 @@ import io.kotest.core.TestConfiguration
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
 import kotlinx.coroutines.delay
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
 import no.nav.common.KafkaEnvironment
 import org.apache.kafka.clients.CommonClientConfigs
@@ -17,7 +17,7 @@ fun TestConfiguration.embeddedKafka(): EmbeddedKafka =
         .also{ listener(it) }
 
 interface EmbeddedKafka {
-    fun newConsumer(): CoroutineKafkaConsumer<KafkaKey, Hendelse>
+    fun newConsumer(): Hendelsesstrøm
     fun newProducer(): HendelseProdusent
 }
 
@@ -41,8 +41,9 @@ class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
     private var groupIdCounter = AtomicInteger(0)
 
     override fun newConsumer() =
-        CoroutineKafkaConsumer<KafkaKey, Hendelse>(TOPIC) {
-            this[ConsumerConfig.GROUP_ID_CONFIG] = "test-" + groupIdCounter.getAndIncrement()
+        HendelsesstrømKafkaImpl(
+            groupId = "test-" + groupIdCounter.getAndIncrement(),
+        ) {
             this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
             this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
         }
