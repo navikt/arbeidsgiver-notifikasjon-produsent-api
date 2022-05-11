@@ -1,8 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.statistikk
 
 import io.micrometer.core.instrument.MultiGauge
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HendelseMetadata
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 
 interface StatistikkService {

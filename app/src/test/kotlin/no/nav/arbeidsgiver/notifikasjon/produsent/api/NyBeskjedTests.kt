@@ -9,32 +9,33 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.types.beOfType
 import io.kotest.matchers.types.instanceOf
 import io.ktor.http.*
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.Produsent
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.toJavaDuration
 
 @Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class NyBeskjedTests : DescribeSpec({
-    val embeddedKafka = embeddedKafka()
-
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
+    val kafkaProducer = mockk<HendelseProdusent>()
+    coEvery { kafkaProducer.send(any()) } returns Unit
 
     val engine = ktorProdusentTestServer(
-        kafkaProducer = embeddedKafka.newProducer(),
+        kafkaProducer = kafkaProducer,
         produsentRepository = produsentRepository,
     )
 
@@ -88,24 +89,24 @@ class NyBeskjedTests : DescribeSpec({
             nyBeskjed should beOfType<MutationNyBeskjed.NyBeskjedVellykket>()
         }
 
+        val nyBeskjed = response.getTypedContent<MutationNyBeskjed.NyBeskjedVellykket>("nyBeskjed")
+
         it("sends message to kafka") {
-            val consumer = embeddedKafka.newConsumer()
-            val poll = consumer.poll(seconds(5).toJavaDuration())
-            val value = poll.last().value()
-            value should beOfType<BeskjedOpprettet>()
-            val event = value as BeskjedOpprettet
-            val nyBeskjed = response.getTypedContent<MutationNyBeskjed.NyBeskjedVellykket>("nyBeskjed")
-            event.notifikasjonId shouldBe nyBeskjed.id
-            event.lenke shouldBe "https://foo.bar"
-            event.tekst shouldBe "hello world"
-            event.merkelapp shouldBe "tag"
-            event.mottakere.single() shouldBe NærmesteLederMottaker(
-                naermesteLederFnr = "12345678910",
-                ansattFnr = "321",
-                virksomhetsnummer = "42"
-            )
-            event.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
-            event.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
+            coVerify {
+                kafkaProducer.send(withArg { beskjedOpprettet: BeskjedOpprettet ->
+                    beskjedOpprettet.notifikasjonId shouldBe nyBeskjed.id
+                    beskjedOpprettet.lenke shouldBe "https://foo.bar"
+                    beskjedOpprettet.tekst shouldBe "hello world"
+                    beskjedOpprettet.merkelapp shouldBe "tag"
+                    beskjedOpprettet.mottakere.single() shouldBe NærmesteLederMottaker(
+                        naermesteLederFnr = "12345678910",
+                        ansattFnr = "321",
+                        virksomhetsnummer = "42"
+                    )
+                    beskjedOpprettet.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
+                    beskjedOpprettet.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
+                })
+            }
         }
 
         it("updates produsent modell") {

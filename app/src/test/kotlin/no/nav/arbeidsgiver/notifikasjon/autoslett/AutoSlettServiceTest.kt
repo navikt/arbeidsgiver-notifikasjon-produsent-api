@@ -5,10 +5,10 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem.AUTOSLETT_SERVICE
-import no.nav.arbeidsgiver.notifikasjon.util.StubbedKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.util.StubbedHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
 import java.time.Instant
@@ -18,7 +18,7 @@ import java.util.*
 
 class AutoSlettServiceTest : DescribeSpec({
 
-    val kafkaProducer = StubbedKafkaProducer()
+    val kafkaProducer = StubbedHendelseProdusent()
     val repo = mockk<AutoSlettRepository>()
     val service = AutoSlettService(repo, kafkaProducer)
     val nåTidspunkt = Instant.parse("2020-01-01T20:20:01.01Z")

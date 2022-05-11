@@ -1,12 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.autoslett
 
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -14,7 +12,7 @@ import java.util.*
 
 class AutoSlettService(
     private val repo: AutoSlettRepository,
-    private val kafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse>,
+    private val hendelseProdusent: HendelseProdusent,
 ) {
     private val log = logger()
 
@@ -34,7 +32,7 @@ class AutoSlettService(
                 return
             }
 
-            kafkaProducer.sendHendelse(
+            hendelseProdusent.send(
                 HendelseModel.HardDelete(
                     hendelseId = UUID.randomUUID(),
                     aggregateId = it.aggregateId,

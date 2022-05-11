@@ -1,9 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import java.time.LocalDateTime
 import java.util.*
 

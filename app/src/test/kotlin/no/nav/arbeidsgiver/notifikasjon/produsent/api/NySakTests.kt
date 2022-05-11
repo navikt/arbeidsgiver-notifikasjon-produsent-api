@@ -6,10 +6,10 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
 import io.ktor.server.testing.*
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.StubbedKafkaProducer
+import no.nav.arbeidsgiver.notifikasjon.util.StubbedHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -19,7 +19,7 @@ import java.util.*
 class NySakTests: DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
-    val stubbedKafkaProducer = StubbedKafkaProducer()
+    val stubbedKafkaProducer = StubbedHendelseProdusent()
     val engine = ktorProdusentTestServer(
         kafkaProducer = stubbedKafkaProducer,
         produsentRepository = produsentRepository,
