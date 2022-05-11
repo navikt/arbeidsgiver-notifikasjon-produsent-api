@@ -3,19 +3,15 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 import no.nav.arbeidsgiver.notifikasjon.bruker.NarmesteLederLeesahDeserializer
 import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederListener
-import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.common.serialization.StringDeserializer
 
 class NærmesteLederKafkaListener: NærmesteLederListener {
-    private val topic = "teamsykmelding.syfo-narmesteleder-leesah"
-    private val groupId = "notifikasjon-bruker-api-narmesteleder-model-builder"
-    private val deserializer = NarmesteLederLeesahDeserializer::class.java.canonicalName
-
-    private val consumer = CoroutineKafkaConsumer<String, NarmesteLederLeesah>(
-        topic = topic,
-        groupId = groupId,
-    ) {
-        put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer)
-    }
+    private val consumer: CoroutineKafkaConsumer<String, NarmesteLederLeesah> = CoroutineKafkaConsumer.new(
+        topic = "teamsykmelding.syfo-narmesteleder-leesah",
+        groupId = "notifikasjon-bruker-api-narmesteleder-model-builder",
+        keyDeserializer = StringDeserializer::class.java,
+        valueDeserializer = NarmesteLederLeesahDeserializer::class.java,
+    )
 
     override suspend fun forEach(body: suspend (NarmesteLederLeesah) -> Unit) {
         consumer.forEach { record ->

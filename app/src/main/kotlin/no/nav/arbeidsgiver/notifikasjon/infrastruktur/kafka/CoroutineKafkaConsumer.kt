@@ -17,6 +17,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
+import org.apache.kafka.common.serialization.Deserializer
+import org.apache.kafka.common.serialization.StringDeserializer
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -25,15 +27,33 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
 
-class CoroutineKafkaConsumer<K, V>(
+class CoroutineKafkaConsumer<K, V>
+private constructor(
     topic: String,
     groupId: String,
+    keyDeserializer: Class<*>,
+    valueDeserializer: Class<*>,
     seekToBeginning: Boolean = false,
     private val configure: Properties.() -> Unit = {},
 ) {
+    companion object {
+        fun <K, V, KS : Deserializer<K>, VS: Deserializer<V>> new(
+            topic: String,
+            groupId: String,
+            keyDeserializer: Class<KS>,
+            valueDeserializer: Class<VS>,
+            seekToBeginning: Boolean = false,
+            configure: Properties.() -> Unit = {},
+        ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
+            topic, groupId, keyDeserializer, valueDeserializer, seekToBeginning, configure
+        )
+    }
+
     private val properties = Properties().apply {
         putAll(CONSUMER_PROPERTIES)
-        put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+        this[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = keyDeserializer.canonicalName
+        this[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = valueDeserializer.canonicalName
+        this[ConsumerConfig.GROUP_ID_CONFIG] = groupId
         configure()
     }
 

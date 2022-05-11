@@ -8,7 +8,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import java.lang.System.getenv
 import org.apache.kafka.clients.CommonClientConfigs as CommonProp
@@ -18,7 +17,7 @@ import org.apache.kafka.common.config.SslConfigs as SSLProp
 
 typealias KafkaKey = String
 
-const val TOPIC = "fager.notifikasjon"
+const val NOTIFIKASJON_TOPIC = "fager.notifikasjon"
 
 private val strictObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
@@ -71,9 +70,6 @@ val PRODUCER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
 )
 
 val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
-    ConsumerProp.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java.canonicalName,
-    ConsumerProp.VALUE_DESERIALIZER_CLASS_CONFIG to ValueDeserializer::class.java.canonicalName,
-
     ConsumerProp.AUTO_OFFSET_RESET_CONFIG to "earliest",
     ConsumerProp.MAX_POLL_RECORDS_CONFIG to 50,
     ConsumerProp.MAX_POLL_INTERVAL_MS_CONFIG to Int.MAX_VALUE,

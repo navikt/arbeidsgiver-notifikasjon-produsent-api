@@ -7,6 +7,8 @@ import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
+import no.nav.arbeidsgiver.notifikasjon.kafka_backup.RawKafkaReader
+import no.nav.arbeidsgiver.notifikasjon.kafka_backup.RawKafkaReaderImpl
 import no.nav.common.KafkaEnvironment
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -18,11 +20,12 @@ fun TestConfiguration.embeddedKafka(): EmbeddedKafka =
 
 interface EmbeddedKafka {
     fun newConsumer(): Hendelsesstrøm
+    fun newRawConsumer(): RawKafkaReader
     fun newProducer(): HendelseProdusent
 }
 
 class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
-    private val env: KafkaEnvironment = KafkaEnvironment(topicNames = listOf("arbeidsgiver.notifikasjon"))
+    private val env: KafkaEnvironment = KafkaEnvironment(topicNames = listOf("fager.notifikasjon"))
 
     override val name: String
         get() = "EmbeddedKafkaListener"
@@ -47,6 +50,11 @@ class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
             this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
             this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
         }
+
+    override fun newRawConsumer() = RawKafkaReaderImpl(
+        topic = "fager.notifikasjon",
+        groupId = "test-" + groupIdCounter.getAndIncrement()
+    )
 
     override fun newProducer() =
         lagKafkaHendelseProdusent {
