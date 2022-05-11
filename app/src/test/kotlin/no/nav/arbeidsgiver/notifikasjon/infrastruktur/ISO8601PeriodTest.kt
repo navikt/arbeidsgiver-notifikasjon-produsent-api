@@ -7,23 +7,35 @@ import io.kotest.matchers.shouldBe
 import java.time.LocalDateTime
 
 class ISO8601PeriodTest : DescribeSpec({
-    val examples = listOf(
-        "P1DT",
+    val simpleExamples = listOf(
+        "P",
+        "P1D",
         "PT1H",
         "P1DT1H",
+        "P2Y",
         "P3Y6M4DT12H30M5S",
     )
-    describe("ISO8601Period parse and print roundtrip") {
-        forAll<String>(examples) { duration ->
-            it("::parse and ::toString are inverse") {
-                ISO8601Period.parse(duration).toString() shouldBe duration
-            }
-        }
+    val complexExamples = listOf(
+        "PT" to "P",
+        "P1DT" to "P1D",
+        "P1YT" to "P1Y",
+        "P2YT" to "P2Y",
+    )
+    val examples = simpleExamples.map { it to it } + complexExamples
 
-        forAll<String>(examples.map { "\"$it\""}) { json ->
-            it("jackson serde") {
-                val obj = laxObjectMapper.readValue<ISO8601Period>(json)
-                laxObjectMapper.writeValueAsString(obj) shouldBe json
+    describe("ISO8601Period parse and print roundtrip") {
+        forAll<Pair<String, String>>(examples) { (input, expected) ->
+            it("$input ::parse -> ::toString is $expected") {
+                ISO8601Period.parse(input).toString() shouldBe expected
+            }
+
+            it("jackson serde $input -> $expected") {
+                val obj = laxObjectMapper.readValue<ISO8601Period>("\"$input\"")
+                laxObjectMapper.writeValueAsString(obj) shouldBe "\"$expected\""
+            }
+
+            it("toString+parse preserve equality:  $input") {
+                ISO8601Period.parse(input) shouldBe ISO8601Period.parse(ISO8601Period.parse(input).toString())
             }
         }
     }
