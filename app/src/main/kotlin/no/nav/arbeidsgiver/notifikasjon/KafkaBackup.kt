@@ -16,7 +16,7 @@ object KafkaBackup {
 
     private val hendelsestrøm: RawKafkaReader by lazy { RawKafkaReaderImpl(
         topic = NOTIFIKASJON_TOPIC,
-        groupId = "ekstern-varsling-model-builder",
+        groupId = "kafka-backup-model-builder",
     ) }
 
     fun main(httpPort: Int = 8080) {
