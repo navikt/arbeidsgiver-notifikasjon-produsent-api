@@ -4,15 +4,19 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
+/**
+ * The code is written to only support one topic. Run multiple copies for the
+ * application if you need to have backup of multiple topics.
+ */
 class BackupRepository(
     private val database: Database,
 ) {
     suspend fun process(record: ConsumerRecord<ByteArray, ByteArray>) {
         database.transaction {
+            this.save(record)
+
             if (record.key() != null && record.value() == null) {
                 this.delete(record.key())
-            } else {
-                this.save(record)
             }
         }
     }
@@ -47,6 +51,39 @@ class BackupRepository(
             byteaOrNull(record.key())
             byteaOrNull(record.value())
         }
+    }
+
+    class Record(
+        val partition: Int,
+        val offset: Long,
+        val timestamp: Long,
+        val timestampType: Int,
+        val key: ByteArray?,
+        val value: ByteArray?,
+    )
+
+    suspend fun readRecords(offset: Long, limit: Long): List<Record> {
+        return database.nonTransactionalExecuteQuery(
+            """
+                select * from topic_notifikasjon
+                order by id
+                offset ?
+                limit ?
+            """,
+            setup = {
+                long(offset)
+                long(limit)
+            },
+            transform = {
+                Record(
+                    partition = getInt("partition"),
+                    offset = getLong("offset"),
+                    timestamp = getLong("timestamp"),
+                    timestampType = getInt("timestamp_type"),
+                    key = getBytes("event_key"),
+                    value = getBytes("event_value"),
+                )
+            })
     }
 }
 

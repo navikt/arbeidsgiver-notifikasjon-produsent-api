@@ -25,7 +25,7 @@ interface EmbeddedKafka {
 }
 
 class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
-    private val env: KafkaEnvironment = KafkaEnvironment(topicNames = listOf("fager.notifikasjon"))
+    private val env: KafkaEnvironment = KafkaEnvironment(topicNames = listOf(NOTIFIKASJON_TOPIC))
 
     override val name: String
         get() = "EmbeddedKafkaListener"
@@ -52,7 +52,7 @@ class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
         }
 
     override fun newRawConsumer() = RawKafkaReaderImpl(
-        topic = "fager.notifikasjon",
+        topic = NOTIFIKASJON_TOPIC,
         groupId = "test-" + groupIdCounter.getAndIncrement()
     )
 
