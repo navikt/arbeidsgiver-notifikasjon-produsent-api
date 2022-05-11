@@ -249,7 +249,7 @@ class EksternVarslingRepository(
     suspend fun detectEmptyDatabase() {
         database.transaction {
             val databaseIsEmpty = executeQuery(
-                """select 1 from ekstern_varsel_kontaktinfo limit 1""", transform = {}
+                """select 1 from emergency_break limit 1""", transform = {}
             ).isEmpty()
 
             if (databaseIsEmpty) {
