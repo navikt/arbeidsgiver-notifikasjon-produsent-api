@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.kafka_backup
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.base64Decoded
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.base64Encoded
@@ -17,6 +18,9 @@ import org.apache.kafka.common.header.internals.RecordHeaders
 class BackupRepository(
     private val database: Database,
 ) {
+    private val savedCounter = Metrics.meterRegistry.counter("kafka_backup_saved")
+    private val tombstonedCounter = Metrics.meterRegistry.counter("kafka_backup_tombstoned")
+
     suspend fun process(record: ConsumerRecord<ByteArray, ByteArray>) {
         database.transaction {
             this.save(record)
@@ -35,6 +39,7 @@ class BackupRepository(
         """) {
             bytea(key)
         }
+        tombstonedCounter.increment()
     }
 
     private fun Transaction.save(record: ConsumerRecord<ByteArray, ByteArray>) {
@@ -60,6 +65,7 @@ class BackupRepository(
             byteaOrNull(record.key())
             byteaOrNull(record.value())
         }
+        savedCounter.increment()
     }
 
     class Record(
