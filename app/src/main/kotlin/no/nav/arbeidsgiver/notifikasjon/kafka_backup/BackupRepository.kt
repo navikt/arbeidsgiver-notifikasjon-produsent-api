@@ -47,7 +47,7 @@ class BackupRepository(
                 "offset", -- bigint not null,
                 timestamp, -- bigint not null,
                 timestamp_type, -- int not null,
-                header, -- jsonb not null
+                headers, -- jsonb not null
                 event_key, -- bytea null,
                 event_value -- bytea null
                 ) values (?, ?, ?, ?, ?::jsonb, ?, ?)
@@ -92,7 +92,7 @@ class BackupRepository(
                     timestampType = getInt("timestamp_type"),
                     key = getBytes("event_key"),
                     value = getBytes("event_value"),
-                    headers = getString("header")
+                    headers = getString("headers")
                         .let { laxObjectMapper.readValue<List<Pair<String, String?>>>(it) }
                         .map { (key, value) -> RecordHeader(key, value?.base64Decoded) }
                         .let { RecordHeaders(it) }
