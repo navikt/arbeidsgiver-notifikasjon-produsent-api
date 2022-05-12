@@ -43,13 +43,13 @@ class BackupRepository(
         """
             insert into topic_notifikasjon
             (
-                partition, -- int not null,
-                "offset", -- bigint not null,
-                timestamp, -- bigint not null,
-                timestamp_type, -- int not null,
-                headers, -- jsonb not null
-                event_key, -- bytea null,
-                event_value -- bytea null
+                partition,
+                "offset",
+                timestamp,
+                timestamp_type,
+                headers,
+                event_key,
+                event_value
                 ) values (?, ?, ?, ?, ?::jsonb, ?, ?)
         """) {
             integer(record.partition())
