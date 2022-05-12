@@ -81,7 +81,7 @@ jobs:
     strategy:
       matrix:
         cluster: [ dev-gcp, prod-gcp ]
-        app: [ bruker-api, produsent-api, kafka-reaper, statistikk, ekstern-varsling, replay-validator, autoslett ]
+        app: [ bruker-api, produsent-api, kafka-reaper, statistikk, ekstern-varsling, replay-validator, autoslett, kafka-backup ]
         exclude:
           - cluster: prod-gcp
             app: autoslett

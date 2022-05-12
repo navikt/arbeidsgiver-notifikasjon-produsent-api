@@ -1,7 +1,7 @@
 apiVersion: nais.io/v1alpha1
 kind: Application
 metadata:
-  name: notifikasjon-ekstern-varsling
+  name: notifikasjon-kafka-backup
   namespace: fager
   labels:
     team: fager
@@ -13,27 +13,21 @@ spec:
     path: /internal/ready
   replicas:
     min: 1
-    max: 1
+    max: 2
   prometheus:
     enabled: true
     path: /internal/metrics
   kafka:
-    pool: nav-dev
-  azure:
-    application:
-      enabled: true
-  accessPolicy:
-    outbound:
-      rules:
-        - application: altinn-varsel-firewall
+    pool: nav-prod
   gcp:
     sqlInstances:
       - type: POSTGRES_12
-        tier: db-f1-micro
+        tier: db-custom-1-3840
         diskAutoresize: true
-        highAvailability: false
+        highAvailability: true
         databases:
-          - name: ekstern-varsling-model
+          - name: kafka-backup-model
             envVarPrefix: DB
-  envFrom:
-    - secret: altinn-basic-ws
+        autoBackupHour: 1
+        maintenance:
+          hour: 3
