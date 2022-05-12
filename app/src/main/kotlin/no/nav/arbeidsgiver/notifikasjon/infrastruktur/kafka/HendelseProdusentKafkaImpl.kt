@@ -30,7 +30,7 @@ private class HendelseProdusentKafkaImpl(
     override suspend fun send(hendelse: Hendelse) {
         producer.suspendingSend(
             ProducerRecord(
-                TOPIC,
+                NOTIFIKASJON_TOPIC,
                 hendelse.hendelseId.toString(),
                 hendelse
             )
@@ -40,8 +40,8 @@ private class HendelseProdusentKafkaImpl(
     override suspend fun tombstone(key: UUID, orgnr: String) {
         producer.suspendingSend(
             ProducerRecord(
-                TOPIC,
-                partitionOfOrgnr(orgnr, producer.partitionsFor(TOPIC).size),
+                NOTIFIKASJON_TOPIC,
+                partitionOfOrgnr(orgnr, producer.partitionsFor(NOTIFIKASJON_TOPIC).size),
                 key.toString(),
                 null
             )

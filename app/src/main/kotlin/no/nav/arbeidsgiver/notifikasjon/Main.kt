@@ -18,6 +18,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-ekstern-varsling" -> EksternVarsling.main()
             "notifikasjon-replay-validator" -> ReplayValidator.main()
             "notifikasjon-autoslett" -> AutoSlett.main()
+            "notifikasjon-kafka-backup" -> KafkaBackup.main()
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
         }
     } catch (e: Exception) {

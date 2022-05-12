@@ -4,6 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import org.apache.kafka.common.serialization.StringDeserializer
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -15,9 +16,11 @@ class HendelsesstrømKafkaImpl(
 ): Hendelsesstrøm {
     private val log = logger()
 
-    private val consumer = CoroutineKafkaConsumer<KafkaKey, Hendelse>(
-        topic = TOPIC,
+    private val consumer = CoroutineKafkaConsumer.new(
+        topic = NOTIFIKASJON_TOPIC,
         groupId = groupId,
+        keyDeserializer = StringDeserializer::class.java,
+        valueDeserializer = ValueDeserializer::class.java,
         seekToBeginning = seekToBeginning,
         configure = configure,
     )

@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
 import org.flywaydb.core.Flyway
 import org.intellij.lang.annotations.Language
+import java.io.Closeable
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -29,7 +30,7 @@ import java.util.*
 class Database private constructor(
     private val config: Config,
     private val dataSource: NonBlockingDataSource<*>,
-) {
+): Closeable {
     data class Config(
         val host: String,
         val port: String,
@@ -43,7 +44,7 @@ class Database private constructor(
             get() = "jdbc:postgresql://$host:$port/$database?${jdbcOpts.entries.joinToString("&")}"
     }
 
-    suspend fun close() {
+    override fun close() {
         dataSource.close()
     }
 
@@ -253,6 +254,26 @@ class ParameterSetters(
 ) {
     private var index = 1
 
+    fun string(value: String) = preparedStatement.setString(index++, value)
+    fun nullableString(value: String?) = preparedStatement.setString(index++, value)
+    fun integer(value: Int) = preparedStatement.setInt(index++, value)
+    fun long(value: Long) = preparedStatement.setLong(index++, value)
+    fun boolean(newState: Boolean) = preparedStatement.setBoolean(index++, newState)
+    fun uuid(value: UUID) = preparedStatement.setObject(index++, value)
+    fun nullableUuid(value: UUID?) = preparedStatement.setObject(index++, value)
+    fun nullableTimestamptz(value: OffsetDateTime?) = preparedStatement.setObject(index++, value)
+    fun timestamp_utc(value: OffsetDateTime) = timestamp(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
+    fun timestamp_utc(value: Instant) = timestamp(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
+    fun timestamp(value: LocalDateTime) = preparedStatement.setObject(index++, value)
+    fun nullableTimestamp(value: LocalDateTime?) = preparedStatement.setObject(index++, value)
+    fun timestamptz(value: OffsetDateTime) = preparedStatement.setObject(index++, value)
+    fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
+    fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
+
+    inline fun <reified T> jsonb(value: T) =
+        string(
+            laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)
+        )
 
     fun stringList(value: List<String>) {
         val array = preparedStatement.connection.createArrayOf(
@@ -262,46 +283,5 @@ class ParameterSetters(
         preparedStatement.setArray(index++, array)
     }
 
-    fun string(value: String) =
-        preparedStatement.setString(index++, value)
 
-    fun nullableString(value: String?) =
-        preparedStatement.setString(index++, value)
-
-    fun uuid(value: UUID) =
-        preparedStatement.setObject(index++, value)
-
-    fun nullableUuid(value: UUID?) =
-        preparedStatement.setObject(index++, value)
-
-    fun timestamptz(value: OffsetDateTime) =
-        preparedStatement.setObject(index++, value)
-
-    fun nullableTimestamptz(value: OffsetDateTime?) =
-        preparedStatement.setObject(index++, value)
-
-    fun timestamp_utc(value: OffsetDateTime) =
-        timestamp(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
-
-    fun timestamp_utc(value: Instant) {
-        timestamp(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
-    }
-
-    fun timestamp(value: LocalDateTime) =
-        preparedStatement.setObject(index++, value)
-
-    fun nullableTimestamp(value: LocalDateTime?) =
-        preparedStatement.setObject(index++, value)
-
-    fun integer(value: Int) =
-        preparedStatement.setInt(index++, value)
-
-    inline fun <reified T> jsonb(value: T) =
-        string(
-            laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)
-        )
-
-    fun boolean(newState: Boolean) {
-        preparedStatement.setBoolean(index++, newState)
-    }
 }

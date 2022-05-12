@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.*
 import kotlin.math.pow
 import kotlin.reflect.KProperty
 
@@ -47,3 +48,9 @@ class UnavailableInProduction<T>(initializer: () -> T) {
         }
     }
 }
+
+
+val ByteArray.base64Encoded: String get() = Base64.getEncoder().encodeToString(this)
+val String.base64Decoded: ByteArray get() = Base64.getDecoder().decode(this)
+
+

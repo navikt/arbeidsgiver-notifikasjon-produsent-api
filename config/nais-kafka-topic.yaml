@@ -39,3 +39,6 @@ spec:
     - application: notifikasjon-autoslett
       team: fager
       access: readwrite
+    - application: notifikasjon-kafka-backup
+      team: fager
+      access: read
