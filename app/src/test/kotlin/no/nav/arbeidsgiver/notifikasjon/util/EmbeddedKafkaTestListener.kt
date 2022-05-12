@@ -54,7 +54,10 @@ class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
     override fun newRawConsumer() = RawKafkaReaderImpl(
         topic = NOTIFIKASJON_TOPIC,
         groupId = "test-" + groupIdCounter.getAndIncrement()
-    )
+    ) {
+        this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
+        this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
+    }
 
     override fun newProducer() =
         lagKafkaHendelseProdusent {

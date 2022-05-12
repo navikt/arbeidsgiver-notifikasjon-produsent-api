@@ -12,19 +12,20 @@ class BackupHendelserTests: DescribeSpec({
     val database = testDatabase(KafkaBackup.databaseConfig)
     val backupRepository = BackupRepository(database)
     val kafka = embeddedKafka()
-    val producer = kafka.newProducer()
-    val consumer = kafka.newRawConsumer()
-    val stop = AtomicBoolean(false)
-    var eventsSent = 0
-    var eventsRead = 0
 
     describe("write to and read from database") {
+        val producer = kafka.newProducer()
+        var eventsSent = 0
+        var eventsRead = 0
+
         EksempelHendelse.Alle.forEach {
             producer.send(it)
             eventsSent += 1
         }
 
-        xit("kan lese alle med raw consumer") {
+        it("kan lese alle med raw consumer") {
+            val consumer = kafka.newRawConsumer()
+            val stop = AtomicBoolean(false)
             consumer.forEach(stop) {
                 eventsRead += 1
                 backupRepository.process(it)
