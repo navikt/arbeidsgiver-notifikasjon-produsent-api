@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.kafka_backup
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -7,9 +7,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
-import no.nav.arbeidsgiver.notifikasjon.kafka_backup.BackupRepository
-import no.nav.arbeidsgiver.notifikasjon.kafka_backup.RawKafkaReader
-import no.nav.arbeidsgiver.notifikasjon.kafka_backup.RawKafkaReaderImpl
 
 object KafkaBackup {
     internal val databaseConfig = Database.config("kafka_backup_model")

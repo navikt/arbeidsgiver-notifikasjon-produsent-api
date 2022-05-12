@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.executable.produsent_api
 
-import no.nav.arbeidsgiver.notifikasjon.Produsent as ProdusentMain
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent as ProdusentMain
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.FAGER_TESTPRODUSENT
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent

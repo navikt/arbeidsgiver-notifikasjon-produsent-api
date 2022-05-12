@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.autoslett
 
 import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
-import no.nav.arbeidsgiver.notifikasjon.AutoSlett
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase

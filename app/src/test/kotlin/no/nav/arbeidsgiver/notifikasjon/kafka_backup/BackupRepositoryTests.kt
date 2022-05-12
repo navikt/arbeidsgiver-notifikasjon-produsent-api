@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.kafka_backup
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.header.internals.RecordHeader

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.statistikk
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -10,8 +10,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkModel
-import no.nav.arbeidsgiver.notifikasjon.statistikk.StatistikkServiceImpl
 import java.time.Duration
 
 object Statistikk {
