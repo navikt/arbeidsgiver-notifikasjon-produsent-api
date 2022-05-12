@@ -22,18 +22,13 @@ class BackupHendelserTests: DescribeSpec({
         EksempelHendelse.Alle.forEach {
             producer.send(it)
             eventsSent += 1
-            println("sent $eventsSent")
         }
 
-        it("kan lese alle med raw consumer") {
+        xit("kan lese alle med raw consumer") {
             consumer.forEach(stop) {
                 eventsRead += 1
-                println("received $eventsRead")
                 backupRepository.process(it)
-
-                if (eventsRead >= eventsSent) {
-                    stop.set(true)
-                }
+                stop.set(eventsRead >= eventsSent)
             }
             eventsRead shouldBe eventsSent
         }

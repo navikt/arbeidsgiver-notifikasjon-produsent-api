@@ -1,8 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_backup
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.base64Decoded
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.base64Encoded
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.header.internals.RecordHeader
+import org.apache.kafka.common.header.internals.RecordHeaders
 
 /**
  * The code is written to only support one topic. Run multiple copies for the
@@ -32,6 +38,7 @@ class BackupRepository(
     }
 
     private fun Transaction.save(record: ConsumerRecord<ByteArray, ByteArray>) {
+        val headers = record.headers().map { it.key() to it.value()?.base64Encoded }
         executeUpdate(
         """
             insert into topic_notifikasjon
@@ -40,14 +47,16 @@ class BackupRepository(
                 "offset", -- bigint not null,
                 timestamp, -- bigint not null,
                 timestamp_type, -- int not null,
+                header, -- jsonb not null
                 event_key, -- bytea null,
                 event_value -- bytea null
-                ) values (?, ?, ?, ?, ?, ?)
+                ) values (?, ?, ?, ?, ?::jsonb, ?, ?)
         """) {
             integer(record.partition())
             long(record.offset())
             long(record.timestamp())
             integer(record.timestampType().id)
+            jsonb(headers)
             byteaOrNull(record.key())
             byteaOrNull(record.value())
         }
@@ -60,6 +69,7 @@ class BackupRepository(
         val timestampType: Int,
         val key: ByteArray?,
         val value: ByteArray?,
+        val headers: RecordHeaders,
     )
 
     suspend fun readRecords(offset: Long, limit: Long): List<Record> {
@@ -82,6 +92,10 @@ class BackupRepository(
                     timestampType = getInt("timestamp_type"),
                     key = getBytes("event_key"),
                     value = getBytes("event_value"),
+                    headers = getString("header")
+                        .let { laxObjectMapper.readValue<List<Pair<String, String?>>>(it) }
+                        .map { (key, value) -> RecordHeader(key, value?.base64Decoded) }
+                        .let { RecordHeaders(it) }
                 )
             })
     }

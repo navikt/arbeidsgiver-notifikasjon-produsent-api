@@ -6,8 +6,12 @@ import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.header.internals.RecordHeader
+import org.apache.kafka.common.header.internals.RecordHeaders
+import org.apache.kafka.common.record.TimestampType
 
-class BackupRepositoryTest : DescribeSpec({
+
+class BackupRepositoryTests : DescribeSpec({
     val database = testDatabase(KafkaBackup.databaseConfig)
     val backupRepository = BackupRepository(database)
 
@@ -23,6 +27,13 @@ class BackupRepositoryTest : DescribeSpec({
         offset = 1,
         key = "key 2",
         value ="some value 2 ",
+        headers = RecordHeaders(listOf(
+            RecordHeader("h1", byteArrayOf(0, 1)),
+            RecordHeader("h1", byteArrayOf(0, 1)),
+            RecordHeader("h2", byteArrayOf(3, 4)),
+            RecordHeader("h1", byteArrayOf()),
+            RecordHeader("h1", null)
+        ))
     )
 
     val record3 = record(
@@ -63,12 +74,20 @@ class BackupRepositoryTest : DescribeSpec({
             r1.partition shouldBe record1.partition()
             r1.key shouldBe record1.key()
             r1.value shouldBe null /* tombstone! */
+            r1.headers shouldBe RecordHeaders(listOf())
 
             val r2 = `records 1 to 3`[1]
             r2.offset shouldBe record2.offset()
             r2.partition shouldBe record2.partition()
             r2.key shouldBe record2.key()
             r2.value shouldBe record2.value()
+            r2.headers shouldBe RecordHeaders(listOf(
+                RecordHeader("h1", byteArrayOf(0, 1)),
+                RecordHeader("h1", byteArrayOf(0, 1)),
+                RecordHeader("h2", byteArrayOf(3, 4)),
+                RecordHeader("h1", byteArrayOf()),
+                RecordHeader("h1", null),
+            ))
 
             val r3 = `records 1 to 3`[2]
             r3.offset shouldBe record3.offset()
@@ -92,10 +111,26 @@ class BackupRepositoryTest : DescribeSpec({
 
 })
 
-fun record(partition: Int, offset: Long, key: String, value: String?) = ConsumerRecord<ByteArray, ByteArray>(
-    "topic",
-    partition,
-    offset,
-    key.toByteArray(),
-    value?.toByteArray(),
-)
+fun record(
+    partition: Int,
+    offset: Long,
+    key: String,
+    value: String?,
+    headers: RecordHeaders = RecordHeaders(),
+): ConsumerRecord<ByteArray, ByteArray> {
+    val keyBytes = key.toByteArray()
+    val valueBytes = value?.toByteArray()
+    return ConsumerRecord<ByteArray, ByteArray>(
+        "topic",
+        partition,
+        offset,
+        0L,
+        TimestampType.NO_TIMESTAMP_TYPE,
+        0L,
+        keyBytes.size,
+        valueBytes?.size ?: 0,
+        keyBytes,
+        valueBytes,
+        headers,
+    )
+}
