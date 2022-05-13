@@ -47,6 +47,9 @@ class EnhetsregisteretImpl(
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
         }
+        install(HttpClientMetricsFeature) {
+            registry = Metrics.meterRegistry
+        }
         expectSuccess = false
     }
 

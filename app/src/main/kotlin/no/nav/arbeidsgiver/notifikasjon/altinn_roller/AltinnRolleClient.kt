@@ -5,9 +5,7 @@ import io.ktor.client.engine.apache.*
 import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnConfig
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 
 interface AltinnRolleClient {
     suspend fun hentRoller(): List<AltinnRolle>?
@@ -19,6 +17,12 @@ class AltinnRolleClientImpl: AltinnRolleClient {
     private val httpClient = HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer()
+        }
+        install(PropagateFromMDCFeature) {
+            propagate("x_correlation_id")
+        }
+        install(HttpClientMetricsFeature) {
+            registry = Metrics.meterRegistry
         }
     }
 
