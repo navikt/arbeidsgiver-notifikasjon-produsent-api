@@ -30,28 +30,6 @@ class HttpClientMetricsFeature internal constructor(
         lateinit var registry: MeterRegistry
     }
 
-    private fun ClientCallMeasure.recordDuration(context: HttpClientCall) {
-        timer.stop(
-            Timer.builder(requestTimeTimerName)
-                .addDefaultTags(context, throwable)
-                .register(registry)
-        )
-    }
-
-    private fun Timer.Builder.addDefaultTags(context: HttpClientCall, throwable: Throwable?): Timer.Builder {
-        val url = context.attributes[measureKey].url ?: context.request.url.toString()
-        tags(
-            listOf(
-                Tag.of("address", context.request.url.let { "${it.host}:${it.port}" }),
-                Tag.of("method", context.request.method.value),
-                Tag.of("url", url),
-                Tag.of("status", context.response.status.value.toString()),
-                Tag.of("throwable", throwable?.let { it::class.qualifiedName } ?: "n/a")
-            )
-        )
-        return this
-    }
-
     private fun before(httpRequestBuilder: HttpRequestBuilder) {
         active?.incrementAndGet()
 
@@ -70,10 +48,41 @@ class HttpClientMetricsFeature internal constructor(
         }
     }
 
+    private fun after(context: HttpRequestBuilder) {
+        val clientCallMeasure = context.attributes.getOrNull(measureKey)
+        if (clientCallMeasure?.throwable != null) {
+            // send av request feilet
+
+            active?.decrementAndGet()
+            val builder = Timer.builder(requestTimeTimerName).tags(
+                listOf(
+                    Tag.of("address", context.url.let { "${it.host}:${it.port}" }),
+                    Tag.of("method", context.method.value),
+                    Tag.of("url", context.attributes[measureKey].url ?: context.url.toString()),
+                    Tag.of("status", "n/a"),
+                    Tag.of("throwable", clientCallMeasure.throwable!!::class.qualifiedName!! )
+                )
+            )
+            clientCallMeasure.timer.stop(builder.register(registry))
+        }
+    }
+
     private fun after(context: HttpClientCall) {
         active?.decrementAndGet()
 
-        context.attributes.getOrNull(measureKey)?.recordDuration(context)
+        val clientCallMeasure = context.attributes.getOrNull(measureKey)
+        if (clientCallMeasure != null) {
+            val builder = Timer.builder(requestTimeTimerName).tags(
+                listOf(
+                    Tag.of("address", context.request.url.let { "${it.host}:${it.port}" }),
+                    Tag.of("method", context.request.method.value),
+                    Tag.of("url", context.attributes[measureKey].url ?: context.request.url.toString()),
+                    Tag.of("status", context.response.status.value.toString()),
+                    Tag.of("throwable", clientCallMeasure.throwable?.let { it::class.qualifiedName } ?: "n/a")
+                )
+            )
+            clientCallMeasure.timer.stop(builder.register(registry))
+        }
     }
 
     /**
@@ -108,6 +117,8 @@ class HttpClientMetricsFeature internal constructor(
                 } catch (e: Throwable) {
                     feature.throwable(context, e)
                     throw e
+                } finally {
+                    feature.after(context)
                 }
             }
             scope.responsePipeline.intercept(HttpResponsePipeline.Phases.Receive) {
