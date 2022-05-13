@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class HttpClientMetricsFeature internal constructor(
     private val registry: MeterRegistry,
-    val clientName: String,
+    private val clientName: String,
 ) {
 
     private val active = registry.gauge(activeRequestsGaugeName, AtomicInteger(0))
@@ -90,7 +90,7 @@ class HttpClientMetricsFeature internal constructor(
      */
     @Suppress("EXPERIMENTAL_API_USAGE_FUTURE_ERROR")
     companion object Feature : HttpClientFeature<Config, HttpClientMetricsFeature> {
-        private lateinit var clientName: String
+        private var clientName: String = "ktor.http.client"
 
         val requestTimeTimerName: String
             get() = "$clientName.requests"
@@ -121,6 +121,7 @@ class HttpClientMetricsFeature internal constructor(
                     feature.after(context)
                 }
             }
+
             scope.responsePipeline.intercept(HttpResponsePipeline.Phases.Receive) {
                 try {
                     proceed()
@@ -131,7 +132,6 @@ class HttpClientMetricsFeature internal constructor(
                     feature.after(context)
                 }
             }
-
         }
     }
 }
