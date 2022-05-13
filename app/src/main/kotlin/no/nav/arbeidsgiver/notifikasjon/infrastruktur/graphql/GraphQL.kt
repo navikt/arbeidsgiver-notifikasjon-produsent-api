@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.module.kotlin.convertValue
+import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation
 import graphql.*
 import graphql.GraphQL.newGraphQL
 import graphql.execution.DataFetcherResult
@@ -15,6 +16,7 @@ import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.intellij.lang.annotations.Language
@@ -115,7 +117,9 @@ fun createGraphQL(
 
     val schema = SchemaGenerator()
         .makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
-    return newGraphQL(schema).build()
+    return newGraphQL(schema)
+        .instrumentation(MicrometerInstrumentation(meterRegistry))
+        .build()
 }
 
 data class GraphQLRequest(
