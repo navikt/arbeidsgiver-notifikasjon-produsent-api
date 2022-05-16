@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 
 typealias AppName = String
 typealias ClientId = String

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import java.time.LocalDateTime
 
 class ISO8601PeriodTest : DescribeSpec({

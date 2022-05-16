@@ -6,7 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.base64Decoded
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.base64Encoded
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.kafka.common.header.internals.RecordHeaders

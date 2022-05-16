@@ -22,7 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.ProdusentPrincipal
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.graphqlSetup
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI

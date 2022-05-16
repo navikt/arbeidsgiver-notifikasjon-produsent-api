@@ -6,7 +6,7 @@ import com.jayway.jsonpath.JsonPath
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 
 data class GraphQLError(
     val message: String,

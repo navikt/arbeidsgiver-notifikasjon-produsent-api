@@ -19,7 +19,7 @@ typealias KafkaKey = String
 
 const val NOTIFIKASJON_TOPIC = "fager.notifikasjon"
 
-private val strictObjectMapper = jacksonObjectMapper().apply {
+val kafkaObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
     disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
@@ -27,7 +27,7 @@ private val strictObjectMapper = jacksonObjectMapper().apply {
 
 interface JsonSerializer<T> : Serializer<T> {
     override fun serialize(topic: String?, data: T): ByteArray {
-        return strictObjectMapper.writeValueAsBytes(data)
+        return kafkaObjectMapper.writeValueAsBytes(data)
     }
 }
 
@@ -35,7 +35,7 @@ abstract class JsonDeserializer<T>(private val clazz: Class<T>) : Deserializer<T
     private val log = logger()
 
     override fun deserialize(topic: String?, data: ByteArray?): T {
-        return strictObjectMapper.readValue(data, clazz)
+        return kafkaObjectMapper.readValue(data, clazz)
     }
 }
 
