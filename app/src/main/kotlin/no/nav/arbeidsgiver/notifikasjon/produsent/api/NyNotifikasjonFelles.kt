@@ -1,14 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnRolleMottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarsel
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Mottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
 import java.time.LocalDateTime
 import java.time.OffsetDateTime

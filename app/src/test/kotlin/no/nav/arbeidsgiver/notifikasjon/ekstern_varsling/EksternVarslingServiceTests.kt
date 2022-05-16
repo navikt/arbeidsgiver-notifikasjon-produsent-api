@@ -3,18 +3,19 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNot
 import io.mockk.every
 import io.mockk.mockkObject
-import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import io.mockk.unmockkAll
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
+import no.nav.arbeidsgiver.notifikasjon.util.StubbedHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDateTime
@@ -22,14 +23,11 @@ import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
 
-class Done : Throwable("done")
-
 @OptIn(ExperimentalTime::class)
 class EksternVarslingServiceTests : DescribeSpec({
-    val log = logger()
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
-    val kafka = embeddedKafka()
+    val hendelseProdusent = StubbedHendelseProdusent()
     val meldingSendt = AtomicBoolean(false)
 
     val service = EksternVarslingService(
@@ -42,7 +40,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 return Result.success(AltinnVarselKlient.AltinnResponse.Ok(rå = NullNode.instance))
             }
         },
-        kafkaProducer = kafka.newProducer(),
+        hendelseProdusent = hendelseProdusent,
     )
 
     val nå = LocalDateTime.parse("2020-01-01T01:01")
@@ -50,9 +48,11 @@ class EksternVarslingServiceTests : DescribeSpec({
         /**
          * uten before each mister vi mockObject oppførsel i påfølgende av testene. litt usikker på hvorfor
          */
-        mockkObject(Åpningstider)
         mockkObject(LokalOsloTid)
         every { LokalOsloTid.now() } returns nå
+    }
+    afterEach {
+        unmockkAll()
     }
 
     describe("EksternVarslingService#start()") {
@@ -97,20 +97,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                 }
             }
 
-            val consumer = kafka.newConsumer()
-            try {
-                consumer.forEachEvent { event ->
-                    log.info("message received $event")
-                    if (event is EksterntVarselVellykket) {
-                        throw Done()
-                    }
-                }
-            } catch (e: Done) {
-                // nothing to do
-            }
-
             it("message received from kafka") {
-                true shouldBe true
+                eventually(kotlin.time.Duration.seconds(5)) {
+                    val vellykedeVarsler = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                    vellykedeVarsler shouldNot beEmpty()
+                }
             }
 
             serviceJob.cancel()
@@ -148,7 +139,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             database.nonTransactionalExecuteUpdate("""
                 update emergency_break set stop_processing = false where id = 0
             """)
-
+            mockkObject(Åpningstider)
             every { Åpningstider.nesteNksÅpningstid() } returns nå.minusMinutes(5)
             val serviceJob = service.start(this)
 
@@ -193,7 +184,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             database.nonTransactionalExecuteUpdate("""
                 update emergency_break set stop_processing = false where id = 0
             """)
-
+            mockkObject(Åpningstider)
             every { Åpningstider.nesteNksÅpningstid() } returns nå.plusMinutes(5)
             val serviceJob = service.start(this)
 
@@ -238,7 +229,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             database.nonTransactionalExecuteUpdate("""
                 update emergency_break set stop_processing = false where id = 0
             """)
-
+            mockkObject(Åpningstider)
             every { Åpningstider.nesteDagtidIkkeSøndag() } returns nå.minusMinutes(5)
             val serviceJob = service.start(this)
 
@@ -283,7 +274,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             database.nonTransactionalExecuteUpdate("""
                 update emergency_break set stop_processing = false where id = 0
             """)
-
+            mockkObject(Åpningstider)
             every { Åpningstider.nesteDagtidIkkeSøndag() } returns nå.plusMinutes(5)
             val serviceJob = service.start(this)
 

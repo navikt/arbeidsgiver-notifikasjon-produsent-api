@@ -4,8 +4,11 @@ import io.kotest.core.TestConfiguration
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
 import kotlinx.coroutines.delay
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
+import no.nav.arbeidsgiver.notifikasjon.kafka_backup.RawKafkaReader
+import no.nav.arbeidsgiver.notifikasjon.kafka_backup.RawKafkaReaderImpl
 import no.nav.common.KafkaEnvironment
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -16,12 +19,13 @@ fun TestConfiguration.embeddedKafka(): EmbeddedKafka =
         .also{ listener(it) }
 
 interface EmbeddedKafka {
-    fun newConsumer(): CoroutineKafkaConsumer<KafkaKey, Hendelse>
-    fun newProducer(): CoroutineKafkaProducer<KafkaKey, Hendelse>
+    fun newConsumer(): Hendelsesstrøm
+    fun newRawConsumer(): RawKafkaReader
+    fun newProducer(): HendelseProdusent
 }
 
 class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
-    private val env: KafkaEnvironment = KafkaEnvironment(topicNames = listOf("arbeidsgiver.notifikasjon"))
+    private val env: KafkaEnvironment = KafkaEnvironment(topicNames = listOf(NOTIFIKASJON_TOPIC))
 
     override val name: String
         get() = "EmbeddedKafkaListener"
@@ -40,14 +44,23 @@ class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
     private var groupIdCounter = AtomicInteger(0)
 
     override fun newConsumer() =
-        createKafkaConsumer {
-            this[ConsumerConfig.GROUP_ID_CONFIG] = "test-" + groupIdCounter.getAndIncrement()
+        HendelsesstrømKafkaImpl(
+            groupId = "test-" + groupIdCounter.getAndIncrement(),
+        ) {
             this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
             this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
         }
 
+    override fun newRawConsumer() = RawKafkaReaderImpl(
+        topic = NOTIFIKASJON_TOPIC,
+        groupId = "test-" + groupIdCounter.getAndIncrement()
+    ) {
+        this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
+        this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
+    }
+
     override fun newProducer() =
-        createKafkaProducer {
+        lagKafkaHendelseProdusent {
             this[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = 15000
             this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = env.bootstrapServers()
         }

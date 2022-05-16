@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.*
 import kotlin.math.pow
 import kotlin.reflect.KProperty
 
@@ -10,7 +11,7 @@ fun <T> basedOnEnv(
     other: () -> T,
     dev: () -> T = other,
 ): T =
-    when (System.getenv("NAIS_CLUSTER_NAME")) {
+    when (NaisEnvironment.clusterName) {
         "prod-gcp" -> prod()
         "dev-gcp" -> dev()
         else -> other()
@@ -32,11 +33,10 @@ fun Int.toThePowerOf(exponent: Int): Long = toDouble().pow(exponent).toLong()
  *
  */
 class UnavailableInProduction<T>(initializer: () -> T) {
-    private val cluster: String = System.getenv("NAIS_CLUSTER_NAME") ?: ""
     private val value: T by lazy(initializer)
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        if (cluster == "prod-gcp") {
+        if (NaisEnvironment.clusterName == "prod-gcp") {
             throw Error(
                 """
                 Attempt at accessing property '${property.name}' in class '${thisRef?.javaClass?.canonicalName}' denied.
@@ -52,3 +52,6 @@ class UnavailableInProduction<T>(initializer: () -> T) {
 
 inline fun String.ifNotBlank(transform: (String) -> String) =
     if (this.isBlank()) this else transform(this)
+
+val ByteArray.base64Encoded: String get() = Base64.getEncoder().encodeToString(this)
+val String.base64Decoded: ByteArray get() = Base64.getDecoder().decode(this)

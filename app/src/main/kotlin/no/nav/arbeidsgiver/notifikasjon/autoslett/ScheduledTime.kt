@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.autoslett
 
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.LocalDateTimeOrDuration
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.LocalDateTimeOrDuration
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import java.time.Instant
 import java.time.OffsetDateTime

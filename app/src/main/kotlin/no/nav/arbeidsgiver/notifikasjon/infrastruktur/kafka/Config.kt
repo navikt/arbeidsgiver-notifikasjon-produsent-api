@@ -4,11 +4,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import java.lang.System.getenv
 import org.apache.kafka.clients.CommonClientConfigs as CommonProp
@@ -18,9 +17,9 @@ import org.apache.kafka.common.config.SslConfigs as SSLProp
 
 typealias KafkaKey = String
 
-const val TOPIC = "fager.notifikasjon"
+const val NOTIFIKASJON_TOPIC = "fager.notifikasjon"
 
-private val strictObjectMapper = jacksonObjectMapper().apply {
+val kafkaObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
     disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
@@ -28,7 +27,7 @@ private val strictObjectMapper = jacksonObjectMapper().apply {
 
 interface JsonSerializer<T> : Serializer<T> {
     override fun serialize(topic: String?, data: T): ByteArray {
-        return strictObjectMapper.writeValueAsBytes(data)
+        return kafkaObjectMapper.writeValueAsBytes(data)
     }
 }
 
@@ -36,7 +35,7 @@ abstract class JsonDeserializer<T>(private val clazz: Class<T>) : Deserializer<T
     private val log = logger()
 
     override fun deserialize(topic: String?, data: ByteArray?): T {
-        return strictObjectMapper.readValue(data, clazz)
+        return kafkaObjectMapper.readValue(data, clazz)
     }
 }
 
@@ -71,9 +70,6 @@ val PRODUCER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
 )
 
 val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
-    ConsumerProp.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java.canonicalName,
-    ConsumerProp.VALUE_DESERIALIZER_CLASS_CONFIG to ValueDeserializer::class.java.canonicalName,
-
     ConsumerProp.AUTO_OFFSET_RESET_CONFIG to "earliest",
     ConsumerProp.MAX_POLL_RECORDS_CONFIG to 50,
     ConsumerProp.MAX_POLL_INTERVAL_MS_CONFIG to Int.MAX_VALUE,

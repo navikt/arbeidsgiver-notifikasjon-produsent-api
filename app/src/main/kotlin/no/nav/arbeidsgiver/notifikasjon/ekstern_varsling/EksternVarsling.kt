@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.ktor.application.*
 import io.ktor.http.*
@@ -10,25 +10,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlient
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientImpl
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientLogging
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.AltinnVarselKlientMedFilter
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingRepository
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 
 
 object EksternVarsling {
-    val log = logger()
     val databaseConfig = Database.config("ekstern_varsling_model")
+
+    private val hendelsestrøm by lazy { HendelsesstrømKafkaImpl("ekstern-varsling-model-builder") }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
@@ -39,7 +33,7 @@ object EksternVarsling {
 
             launch {
                 val eksternVarslingModel = eksternVarslingModelAsync.await()
-                forEachHendelse("ekstern-varsling-model-builder") { event ->
+                hendelsestrøm.forEach { event ->
                     eksternVarslingModel.oppdaterModellEtterHendelse(event)
                 }
             }
@@ -59,7 +53,7 @@ object EksternVarsling {
                         },
                         other = { AltinnVarselKlientLogging() },
                     ),
-                    kafkaProducer = createKafkaProducer(),
+                    hendelseProdusent = lagKafkaHendelseProdusent(),
                 )
                 service.start(this)
             }

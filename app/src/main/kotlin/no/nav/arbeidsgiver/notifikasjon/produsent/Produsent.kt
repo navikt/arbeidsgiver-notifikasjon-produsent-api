@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -13,19 +13,19 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.createKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.forEachHendelse
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_REGISTER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import java.time.Duration
 
 object Produsent {
-    val log = logger()
     val databaseConfig = Database.config("produsent_model")
+    private val log = logger()
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("produsent-model-builder") }
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
@@ -59,14 +59,14 @@ object Produsent {
 
             launch {
                 val produsentRepository = produsentRepositoryAsync.await()
-                forEachHendelse("produsent-model-builder") { event ->
+                hendelsesstrøm.forEach { event ->
                     produsentRepository.oppdaterModellEtterHendelse(event)
                 }
             }
 
             val graphql = async {
                 ProdusentAPI.newGraphQL(
-                    kafkaProducer = createKafkaProducer(),
+                    kafkaProducer = lagKafkaHendelseProdusent(),
                     produsentRepository = produsentRepositoryAsync.await(),
                 )
             }

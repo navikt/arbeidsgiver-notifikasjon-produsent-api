@@ -5,9 +5,9 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
-import no.nav.arbeidsgiver.notifikasjon.Produsent
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyBeskjed
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyOppgave

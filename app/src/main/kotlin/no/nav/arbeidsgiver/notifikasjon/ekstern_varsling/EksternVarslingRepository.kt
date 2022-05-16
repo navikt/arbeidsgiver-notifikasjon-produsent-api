@@ -1,24 +1,24 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.BrukerKlikket
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarsel
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselFeilet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselSendingsvindu
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EksterntVarselVellykket
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.EpostVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HardDelete
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.NyStatusSak
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveUtført
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SakOpprettet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SmsVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
 import java.time.LocalDateTime
@@ -249,7 +249,7 @@ class EksternVarslingRepository(
     suspend fun detectEmptyDatabase() {
         database.transaction {
             val databaseIsEmpty = executeQuery(
-                """select 1 from ekstern_varsel_kontaktinfo limit 1""", transform = {}
+                """select 1 from emergency_break limit 1""", transform = {}
             ).isEmpty()
 
             if (databaseIsEmpty) {

@@ -17,3 +17,6 @@ GRANT ALL PRIVILEGES ON DATABASE "ekstern-varsling-model" TO postgres;
 
 CREATE DATABASE "autoslett-model";
 GRANT ALL PRIVILEGES ON DATABASE "autoslett-model" TO postgres;
+
+CREATE DATABASE "kafka-backup-model";
+GRANT ALL PRIVILEGES ON DATABASE "kafka-backup-model" TO postgres;

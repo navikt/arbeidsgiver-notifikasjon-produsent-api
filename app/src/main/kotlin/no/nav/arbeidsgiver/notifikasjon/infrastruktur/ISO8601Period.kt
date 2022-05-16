@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonValue
 import java.time.Duration
 import java.time.Period
@@ -10,8 +9,9 @@ import java.time.temporal.Temporal
 import java.time.temporal.TemporalAmount
 import java.time.temporal.TemporalUnit
 import java.time.temporal.UnsupportedTemporalTypeException
+import java.util.*
 
-class ISO8601Period private constructor(
+data class ISO8601Period(
     private val period: Period,
     private val duration: Duration,
 ): TemporalAmount {
@@ -19,7 +19,7 @@ class ISO8601Period private constructor(
     @JsonValue
     override fun toString(): String {
         val datePart = if (period.isZero) "P" else period.toString()
-        val timePart = if (duration.isZero) "T" else duration.toString().trimStart('P')
+        val timePart = if (duration.isZero) "" else duration.toString().trimStart('P')
         return "$datePart$timePart"
     }
 
@@ -42,12 +42,12 @@ class ISO8601Period private constructor(
         duration.subtractFrom(period.subtractFrom(temporal))
 
     companion object {
-        private val format = Regex("""P(.*)T(.*)""")
+        private val format = Regex("""P([^T]*)(T(.*))?""")
 
         @JsonCreator
         @JvmStatic
         fun parse(text: String): ISO8601Period {
-            val (datePart, timePart) = format.matchEntire(text)?.destructured
+            val (datePart, _, timePart) = format.matchEntire(text)?.destructured
                 ?: throw DateTimeParseException("Invalid ISO8601 duration", text, 0)
             return ISO8601Period(
                 if (datePart == "") Period.ZERO else Period.parse("P${datePart}"),

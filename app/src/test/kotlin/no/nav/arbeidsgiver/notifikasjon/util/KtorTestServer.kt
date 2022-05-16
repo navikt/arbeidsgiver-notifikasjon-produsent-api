@@ -10,9 +10,9 @@ import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.bruker.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
@@ -22,9 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.ProdusentPrincipal
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.graphqlSetup
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
@@ -34,7 +32,7 @@ import org.intellij.lang.annotations.Language
 fun Spec.ktorBrukerTestServer(
     enhetsregisteret: Enhetsregisteret = EnhetsregisteretStub(),
     brukerRepository: BrukerRepository = mockk(relaxed = true),
-    kafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse> = mockk(relaxed = true),
+    kafkaProducer: HendelseProdusent = NoopHendelseProdusent,
     altinn: Altinn = AltinnStub(),
     altinnRolleService: AltinnRolleService = mockk(relaxed = true),
     tilgangerService: TilgangerService = TilgangerServiceImpl(altinn, altinnRolleService),
@@ -45,7 +43,7 @@ fun Spec.ktorBrukerTestServer(
     )
     val brukerGraphQL = BrukerAPI.createBrukerGraphQL(
         brukerRepository= brukerRepository,
-        kafkaProducer = kafkaProducer,
+        hendelseProdusent = kafkaProducer,
         tilgangerService = tilgangerService,
         virksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
     )
@@ -61,7 +59,7 @@ fun Spec.ktorBrukerTestServer(
 
 fun Spec.ktorProdusentTestServer(
     produsentRegister: ProdusentRegister = stubProdusentRegister,
-    kafkaProducer: CoroutineKafkaProducer<KafkaKey, HendelseModel.Hendelse> = mockk(relaxed = true),
+    kafkaProducer: HendelseProdusent = NoopHendelseProdusent,
     produsentRepository: ProdusentRepository = mockk(relaxed = true),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {

@@ -5,18 +5,16 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.OppgaveOpprettet
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.Produsent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaProducer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.KafkaKey
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.sendHendelse
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import io.mockk.unmockkAll
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.produsent.*
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.*
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -28,10 +26,9 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)
-    val kafkaProducer = mockk<CoroutineKafkaProducer<KafkaKey, Hendelse>>()
+    val kafkaProducer = mockk<HendelseProdusent>()
 
-    mockkStatic(CoroutineKafkaProducer<KafkaKey, Hendelse>::sendHendelse)
-    coEvery { any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>()) } returns Unit
+    coEvery { kafkaProducer.send(ofType<SoftDelete>()) } returns Unit
 
     afterSpec {
         unmockkAll()
@@ -109,9 +106,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>())
-                }
+                coVerify { kafkaProducer.send(ofType<SoftDelete>()) }
             }
 
             it("har slettet-status i modellen") {
@@ -320,9 +315,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify {
-                    any<CoroutineKafkaProducer<KafkaKey, Hendelse>>().sendHendelse(ofType<SoftDelete>())
-                }
+                coVerify { kafkaProducer.send(ofType<SoftDelete>()) }
             }
 
             it("har fått slettet tidspunkt") {

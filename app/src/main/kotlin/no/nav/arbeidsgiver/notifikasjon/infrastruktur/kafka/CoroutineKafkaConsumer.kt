@@ -5,76 +5,68 @@ import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
-import org.apache.kafka.clients.consumer.*
+import org.apache.kafka.clients.consumer.Consumer
+import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.consumer.ConsumerRecords
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
+import org.apache.kafka.common.serialization.Deserializer
+import org.apache.kafka.common.serialization.StringDeserializer
 import java.time.Duration
-import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
 
-interface CoroutineKafkaConsumer<K, V> {
-    suspend fun forEachEvent(body: suspend (V, HendelseMetadata) -> Unit)
+class CoroutineKafkaConsumer<K, V>
+private constructor(
+    topic: String,
+    groupId: String,
+    keyDeserializer: Class<*>,
+    valueDeserializer: Class<*>,
+    seekToBeginning: Boolean = false,
+    private val configure: Properties.() -> Unit = {},
+) {
+    companion object {
+        fun <K, V, KS : Deserializer<K>, VS: Deserializer<V>> new(
+            topic: String,
+            groupId: String,
+            keyDeserializer: Class<KS>,
+            valueDeserializer: Class<VS>,
+            seekToBeginning: Boolean = false,
+            configure: Properties.() -> Unit = {},
+        ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
+            topic, groupId, keyDeserializer, valueDeserializer, seekToBeginning, configure
+        )
+    }
 
-    suspend fun forEachEvent(body: suspend (V) -> Unit) {
-        forEachEvent { v: V, _: HendelseMetadata ->
-            body(v)
+    private val properties = Properties().apply {
+        putAll(CONSUMER_PROPERTIES)
+        this[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = keyDeserializer.canonicalName
+        this[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = valueDeserializer.canonicalName
+        this[ConsumerConfig.GROUP_ID_CONFIG] = groupId
+        configure()
+    }
+
+    private val consumer: Consumer<K, V> = KafkaConsumer(properties)
+
+    init {
+        KafkaClientMetrics(consumer).bindTo(Metrics.meterRegistry)
+        consumer.subscribe(listOf(topic))
+        if (seekToBeginning) {
+            seekToBeginningOnAssignment()
         }
     }
 
-    suspend fun poll(timeout: Duration): ConsumerRecords<K, V>
-
-    suspend fun seekToBeginningOnAssignment()
-}
-
-private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
-    generateSequence {
-        this.poll()
-    }.toList()
-
-suspend inline fun forEachHendelse(groupId: String, crossinline body: suspend (Hendelse, HendelseMetadata) -> Unit) =
-    createKafkaConsumer(groupId).forEachEvent { hendelse, metadata ->
-        body(hendelse, metadata)
-    }
-
-suspend inline fun forEachHendelse(groupId: String, crossinline body: suspend (Hendelse) -> Unit) =
-    forEachHendelse(groupId) { hendelse, _ ->
-        body(hendelse)
-    }
-
-fun createKafkaConsumer(groupId: String) =
-    createKafkaConsumer {
-        put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
-    }
-
-fun createKafkaConsumer(configure: Properties.() -> Unit = {}) =
-    createAndSubscribeKafkaConsumer<KafkaKey, Hendelse>(TOPIC, configure = configure)
-
-fun <K, V> createAndSubscribeKafkaConsumer(
-    vararg topic: String,
-    configure: Properties.() -> Unit = {}
-): CoroutineKafkaConsumer<K, V> {
-    val properties = Properties().apply {
-        putAll(CONSUMER_PROPERTIES)
-        configure()
-    }
-    val kafkaConsumer = KafkaConsumer<K, V>(properties)
-    KafkaClientMetrics(kafkaConsumer).bindTo(Metrics.meterRegistry)
-    kafkaConsumer.subscribe(topic.asList())
-    return CoroutineKafkaConsumerImpl(kafkaConsumer)
-}
-
-class CoroutineKafkaConsumerImpl<K, V>(
-    private val consumer: Consumer<K, V>
-) : CoroutineKafkaConsumer<K, V> {
     private val log = logger()
 
     private val retriesPerPartition = ConcurrentHashMap<Int, AtomicInteger>()
@@ -83,13 +75,12 @@ class CoroutineKafkaConsumerImpl<K, V>(
 
     private val retryTimer = Timer()
 
-    override suspend fun poll(timeout: Duration): ConsumerRecords<K, V> =
-        withContext(Dispatchers.IO) {
-            consumer.poll(timeout)
-        }
 
-    override suspend fun forEachEvent(body: suspend (V, HendelseMetadata) -> Unit) {
-        while (!Health.terminating) {
+    suspend fun forEach(
+        stop: AtomicBoolean = AtomicBoolean(false),
+        body: suspend (ConsumerRecord<K, V>) -> Unit
+    ) {
+        while (!stop.get() && !Health.terminating) {
             consumer.resume(resumeQueue.pollAll())
             val records = try {
                 poll(Duration.ofMillis(1000))
@@ -98,28 +89,19 @@ class CoroutineKafkaConsumerImpl<K, V>(
                 throw e
             }
 
-            forEachEvent(records, body)
+            forEachRecord(records, body)
         }
         log.info("kafka consumer stopped")
     }
 
-    override suspend fun seekToBeginningOnAssignment() {
-        consumer.subscribe(
-            consumer.subscription(),
-            object: ConsumerRebalanceListener {
-                override fun onPartitionsAssigned(partitions: MutableCollection<TopicPartition>?) {
-                    consumer.seekToBeginning(partitions.orEmpty())
-                }
-                override fun onPartitionsRevoked(partitions: MutableCollection<TopicPartition>?) {
-                    // noop
-                }
-            }
-        )
-    }
+    private suspend fun poll(timeout: Duration): ConsumerRecords<K, V> =
+        withContext(Dispatchers.IO) {
+            consumer.poll(timeout)
+        }
 
-    private suspend fun forEachEvent(
+    private suspend fun forEachRecord(
         records: ConsumerRecords<K, V>,
-        body: suspend (V, HendelseMetadata) -> Unit
+        body: suspend (ConsumerRecord<K, V>) -> Unit
     ) {
         if (records.isEmpty) {
             return
@@ -129,13 +111,8 @@ class CoroutineKafkaConsumerImpl<K, V>(
             val retries = retriesForPartition(partition.partition())
             records.records(partition).forEach currentRecord@{ record ->
                 try {
-                    val recordValue = record.value()
-                    if (recordValue == null) {
-                        log.info("skipping tombstoned event key=${record.loggableToString()}")
-                        return@currentRecord
-                    }
                     log.info("processing {}", record.loggableToString())
-                    body(recordValue, HendelseMetadata(Instant.ofEpochMilli(record.timestamp())))
+                    body(record)
                     consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)
@@ -173,7 +150,27 @@ class CoroutineKafkaConsumerImpl<K, V>(
             }
         }
 
-    private fun <K, V> ConsumerRecord<K, V>.loggableToString() = """
+    private fun seekToBeginningOnAssignment() {
+        consumer.subscribe(
+            consumer.subscription(),
+            object: ConsumerRebalanceListener {
+                override fun onPartitionsAssigned(partitions: MutableCollection<TopicPartition>?) {
+                    consumer.seekToBeginning(partitions.orEmpty())
+                }
+                override fun onPartitionsRevoked(partitions: MutableCollection<TopicPartition>?) {
+                    // noop
+                }
+            }
+        )
+    }
+}
+
+private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
+    generateSequence {
+        this.poll()
+    }.toList()
+
+private fun <K, V> ConsumerRecord<K, V>.loggableToString() = """
         ConsumerRecord(
             topic = ${topic()},
             partition = ${partition()}, 
@@ -182,4 +179,3 @@ class CoroutineKafkaConsumerImpl<K, V>(
             key = ${key()}
         )
     """.trimIndent()
-}
