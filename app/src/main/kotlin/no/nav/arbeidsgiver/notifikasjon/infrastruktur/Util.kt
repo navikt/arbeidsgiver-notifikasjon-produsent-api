@@ -7,8 +7,8 @@ import kotlin.math.pow
 import kotlin.reflect.KProperty
 
 fun <T> basedOnEnv(
-    prod: () -> T,
     other: () -> T,
+    prod: () -> T = other,
     dev: () -> T = other,
 ): T =
     when (NaisEnvironment.clusterName) {

@@ -41,7 +41,6 @@ class AltinnReporteeTilgangsstyringTests : DescribeSpec({
             lagMelding(uuid("1"), "HarTilgang1"),
             lagMelding(uuid("2"), "IkkeTilgang2"),
             lagMelding(uuid("3"), "IkkeTilgang3"),
-
         ).forEach {
             model.oppdaterModellEtterHendelse(it)
         }
