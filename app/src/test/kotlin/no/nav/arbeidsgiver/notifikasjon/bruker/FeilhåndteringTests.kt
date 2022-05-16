@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.bruker_api
+package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
@@ -9,7 +9,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.util.brukerApi

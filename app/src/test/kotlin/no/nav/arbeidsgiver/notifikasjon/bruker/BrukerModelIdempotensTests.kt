@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.bruker_api
+package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec

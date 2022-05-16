@@ -85,9 +85,9 @@ object BrukerModel {
     ) {
 
         operator fun plus(other: Tilganger) = Tilganger(
-            tjenestetilganger = this.tjenestetilganger.plus(other.tjenestetilganger),
-            reportee = this.reportee.plus(other.reportee),
-            rolle = this.rolle.plus(other.rolle),
+            tjenestetilganger = this.tjenestetilganger + other.tjenestetilganger,
+            reportee = this.reportee + other.reportee,
+            rolle = this.rolle + other.rolle,
             harFeil = this.harFeil || other.harFeil,
         )
 
@@ -95,7 +95,7 @@ object BrukerModel {
             val EMPTY = Tilganger()
             val FAILURE = Tilganger(harFeil = true)
 
-            fun List<Tilganger>.flatten() = this.fold(EMPTY){ x, y -> x + y }
+            fun List<Tilganger>.flatten() = this.fold(EMPTY, Tilganger::plus)
         }
     }
 }

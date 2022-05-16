@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.bruker_api
+package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
@@ -6,9 +6,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.mockk.coEvery
 import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent

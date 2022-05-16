@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.bruker_api
+package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
@@ -6,15 +6,13 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.bruker.*
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.hendelse.virksomhetsnummer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import no.nav.arbeidsgiver.notifikasjon.hendelse.virksomhetsnummer
 import java.time.OffsetDateTime
 import java.util.*
 

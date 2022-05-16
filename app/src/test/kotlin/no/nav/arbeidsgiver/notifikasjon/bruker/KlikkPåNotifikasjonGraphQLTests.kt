@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.bruker_api
+package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
@@ -14,11 +14,14 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.BRUKER_HOST
+import no.nav.arbeidsgiver.notifikasjon.util.SELVBETJENING_TOKEN
+import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.post
 import java.util.*
 
 class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({

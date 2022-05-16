@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
@@ -31,7 +32,10 @@ object Bruker {
     private val log = logger()
     val databaseConfig = Database.config("bruker_model")
 
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("bruker-model-builder") }
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(basedOnEnv(
+        dev = { "bruker-model-builder-1" },
+        other = { "bruker-model-builder" },
+    ))}
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(

@@ -7,8 +7,8 @@ import kotlin.math.pow
 import kotlin.reflect.KProperty
 
 fun <T> basedOnEnv(
-    prod: () -> T,
     other: () -> T,
+    prod: () -> T = other,
     dev: () -> T = other,
 ): T =
     when (NaisEnvironment.clusterName) {
@@ -50,7 +50,8 @@ class UnavailableInProduction<T>(initializer: () -> T) {
 }
 
 
+inline fun String.ifNotBlank(transform: (String) -> String) =
+    if (this.isBlank()) this else transform(this)
+
 val ByteArray.base64Encoded: String get() = Base64.getEncoder().encodeToString(this)
 val String.base64Decoded: ByteArray get() = Base64.getDecoder().decode(this)
-
-

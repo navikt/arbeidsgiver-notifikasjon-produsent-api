@@ -1,24 +1,21 @@
-package no.nav.arbeidsgiver.notifikasjon.bruker_api
+package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
-import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 import java.util.*
 
-class AltinnRolleTilgangsstyringTests : DescribeSpec({
+class AltinnTilgangsstyringTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerRepositoryImpl(database)
 
-    fun lagMelding(id: UUID, rolle: String) = BeskjedOpprettet(
+    fun lagMelding(id: UUID, serviceCode: String) = BeskjedOpprettet(
         virksomhetsnummer = "1",
         notifikasjonId = id,
         hendelseId = id,
@@ -26,10 +23,10 @@ class AltinnRolleTilgangsstyringTests : DescribeSpec({
         kildeAppNavn = "k",
         merkelapp = "m",
         eksternId = id.toString(),
-        mottakere = listOf(AltinnRolleMottaker(
+        mottakere = listOf(AltinnMottaker(
             virksomhetsnummer = "1",
-            roleDefinitionId = rolle,
-            roleDefinitionCode = rolle,
+            serviceCode = serviceCode,
+            serviceEdition = "1",
         )),
         tekst = "",
         lenke = "https://dev.nav.no",
@@ -39,7 +36,7 @@ class AltinnRolleTilgangsstyringTests : DescribeSpec({
         hardDelete = null,
     )
 
-    describe("Tilgangsstyring med altinn rolle") {
+    describe("Tilgangsstyring med altinn-tjenester") {
         listOf(
             lagMelding(uuid("0"), "HarTilgang0"),
             lagMelding(uuid("1"), "HarTilgang1"),
@@ -53,15 +50,15 @@ class AltinnRolleTilgangsstyringTests : DescribeSpec({
         val notifikasjoner = model.hentNotifikasjoner(
             fnr = "",
             tilganger = Tilganger(
-                rolle = listOf("HarTilgang0", "HarTilgang1").map {
-                    BrukerModel.Tilgang.AltinnRolle(
+                tjenestetilganger = listOf("HarTilgang0", "HarTilgang1").map {
+                    BrukerModel.Tilgang.Altinn(
                         virksomhet = "1",
-                        roleDefinitionId = it,
-                        roleDefinitionCode = it,
+                        servicecode = it,
+                        serviceedition = "1",
                     )
                 },
-                reportee = listOf(),
-                tjenestetilganger = listOf(),
+                listOf(),
+                listOf(),
             )
         )
 
