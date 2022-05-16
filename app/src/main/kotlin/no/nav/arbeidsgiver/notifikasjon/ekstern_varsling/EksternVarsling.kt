@@ -16,7 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 
 
 object EksternVarsling {
