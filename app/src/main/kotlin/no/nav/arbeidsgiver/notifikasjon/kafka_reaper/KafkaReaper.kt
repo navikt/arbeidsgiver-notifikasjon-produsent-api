@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon
+package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -9,8 +9,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDat
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaperModelImpl
-import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaperServiceImpl
 
 object KafkaReaper {
     val databaseConfig = Database.config("kafka_reaper_model")

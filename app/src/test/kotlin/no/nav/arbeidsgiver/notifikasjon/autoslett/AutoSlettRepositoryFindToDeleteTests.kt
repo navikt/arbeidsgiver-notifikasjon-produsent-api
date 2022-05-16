@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.autoslett
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
-import no.nav.arbeidsgiver.notifikasjon.AutoSlett
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDateTime
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase

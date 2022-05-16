@@ -1,6 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import no.nav.arbeidsgiver.notifikasjon.autoslett.AutoSlett
+import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
+import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaper
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.statistikk.Statistikk
 import kotlin.system.exitProcess
 
 @Suppress("unused") /* Entry point for jar. */

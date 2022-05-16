@@ -9,7 +9,6 @@ import io.kotest.matchers.shouldNot
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import no.nav.arbeidsgiver.notifikasjon.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
