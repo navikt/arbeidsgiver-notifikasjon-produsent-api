@@ -14,11 +14,9 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.mapAt
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.JsonNodeKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.kafkaObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 
 object HendelseTransformer {
-    private val log = logger()
-    private val consumer by lazy { JsonNodeKafkaConsumer("hendelse-transformer-0") }
+    private val consumer by lazy { JsonNodeKafkaConsumer("hendelse-transformer-1") }
     private val producer by lazy { lagKafkaHendelseProdusent() }
 
     fun main(httpPort: Int = 8080) {
@@ -29,8 +27,7 @@ object HendelseTransformer {
                 consumer.forEach { jsonNode ->
                     val hendelse = transform(jsonNode)
                     if (hendelse != null) {
-                        log.info("ville sendt: {}", hendelse)
-                        // producer.send(hendelse)
+                        producer.send(hendelse)
                     }
                 }
             }
