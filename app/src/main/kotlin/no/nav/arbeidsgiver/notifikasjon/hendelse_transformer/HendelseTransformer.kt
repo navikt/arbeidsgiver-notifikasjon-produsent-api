@@ -42,7 +42,7 @@ object HendelseTransformer {
 
 fun transform(hendelse: JsonNode): HendelseModel.Hendelse? {
     val nyHendelse = hendelse.mapAt("/hardDelete") { hardDelete ->
-        if (hardDelete.get("@type").asText() == "Duration") {
+        if (hardDelete.get("@type")?.asText() == "Duration") {
            hardDelete.mapAt("/value") { value ->
               if (value.isNumber) {
                   TextNode("PT${value.numberValue().toLong()}S")
