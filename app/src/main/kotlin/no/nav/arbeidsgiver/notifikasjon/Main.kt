@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import no.nav.arbeidsgiver.notifikasjon.autoslett.AutoSlett
 import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
+import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaper
@@ -26,6 +27,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-replay-validator" -> ReplayValidator.main()
             "notifikasjon-autoslett" -> AutoSlett.main()
             "notifikasjon-kafka-backup" -> KafkaBackup.main()
+            "notifikasjon-hendelse-transformer" -> HendelseTransformer.main()
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
         }
     } catch (e: Exception) {

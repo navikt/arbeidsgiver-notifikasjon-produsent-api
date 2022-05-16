@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.hendelse_transform
+package no.nav.arbeidsgiver.notifikasjon.hendelse_transformer
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.should
@@ -9,7 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 
-class TransformHendelseTest : DescribeSpec({
+class HendelseTransformerTest : DescribeSpec({
     describe("Transform hendelse: Duration as seconds") {
         val inputWithError = laxObjectMapper.readTree(inputWithErrorJson)
         val transformed = transform(inputWithError)
