@@ -26,12 +26,6 @@ class AutoSlettService(
                 return
             }
 
-            if (NaisEnvironment.clusterName == "prod-gcp") {
-                log.error("Ikke enablet i prod-gcp i påvente av backup av topic")
-                Health.subsystemAlive[Subsystem.AUTOSLETT_SERVICE] = false
-                return
-            }
-
             hendelseProdusent.send(
                 HendelseModel.HardDelete(
                     hendelseId = UUID.randomUUID(),
