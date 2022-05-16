@@ -42,6 +42,3 @@ spec:
     - application: notifikasjon-kafka-backup
       team: fager
       access: read
-    - application: notifikasjon-hendelse-transformer
-      team: fager
-      access: readwrite

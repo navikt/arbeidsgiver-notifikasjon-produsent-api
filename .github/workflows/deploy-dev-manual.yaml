@@ -16,8 +16,7 @@ jobs:
           ekstern-varsling,
           replay-validator,
           autoslett,
-          kafka-backup,
-          hendelse-transformer
+          kafka-backup
         ]
     steps:
       - uses: actions/checkout@v1

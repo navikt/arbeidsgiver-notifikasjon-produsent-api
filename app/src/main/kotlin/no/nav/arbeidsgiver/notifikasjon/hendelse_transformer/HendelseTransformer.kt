@@ -25,7 +25,7 @@ object HendelseTransformer {
 
             launch {
                 consumer.forEach { jsonNode ->
-                    val hendelse = transform(jsonNode)
+                    val hendelse = fiksNumberTilDurationStringISkedulertHardDelete(jsonNode)
                     if (hendelse != null) {
                         producer.send(hendelse)
                     }
@@ -37,7 +37,7 @@ object HendelseTransformer {
     }
 }
 
-fun transform(hendelse: JsonNode): HendelseModel.Hendelse? {
+fun fiksNumberTilDurationStringISkedulertHardDelete(hendelse: JsonNode): HendelseModel.Hendelse? {
     val nyHendelse = hendelse.mapAt("/hardDelete") { hardDelete ->
         if (hardDelete.get("@type")?.asText() == "Duration") {
            hardDelete.mapAt("/value") { value ->

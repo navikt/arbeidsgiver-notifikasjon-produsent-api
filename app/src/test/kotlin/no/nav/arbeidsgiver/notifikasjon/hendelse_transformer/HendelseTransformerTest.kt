@@ -12,7 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 class HendelseTransformerTest : DescribeSpec({
     describe("Transform hendelse: Duration as seconds") {
         val inputWithError = laxObjectMapper.readTree(inputWithErrorJson)
-        val transformed = transform(inputWithError)
+        val transformed = fiksNumberTilDurationStringISkedulertHardDelete(inputWithError)
         it("should transfrom numbers to duration of seconds") {
             transformed shouldNotBe null
             transformed!! should beInstanceOf<SakOpprettet>()
@@ -23,7 +23,7 @@ class HendelseTransformerTest : DescribeSpec({
 
         val jsonNode2 = laxObjectMapper.readTree(inputOkJson)
         it("no transformation needed") {
-            transform(jsonNode2) shouldBe null
+            fiksNumberTilDurationStringISkedulertHardDelete(jsonNode2) shouldBe null
         }
     }
 })
