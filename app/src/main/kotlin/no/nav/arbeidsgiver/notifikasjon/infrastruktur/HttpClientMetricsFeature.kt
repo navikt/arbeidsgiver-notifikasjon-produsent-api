@@ -13,7 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger
 
 
 /**
- * inspired by MicrometerMetrics, but for clients
+ * inspired by [io.ktor.metrics.micrometer.MicrometerMetrics], but for clients.
+ * this feature/plugin generates the following metrics:
+ * (x = ktor.http.client, but can be overridden)
+ *
+ * x.requests.active: a gauge that counts the amount of concurrent HTTP requests. This metric doesn't provide any tags
+ * x.requests: a timer for measuring the time of each request. This metric provides a set of tags for monitoring request data, including address for a requested URL, method for an HTTP method, and so on.
+ *
  */
 class HttpClientMetricsFeature internal constructor(
     private val registry: MeterRegistry,
