@@ -35,7 +35,7 @@ spec:
       access: read
     - application: notifikasjon-devops
       team: fager
-      access: read
+      access: readwrite
     - application: notifikasjon-autoslett
       team: fager
       access: readwrite
