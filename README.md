@@ -58,12 +58,19 @@ Noen eksempler på bruk:
 
 Set env vars fra genrerert secrets (som f.eks $KAFKA_BROKERS)
 ```
-source /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka-secret.env
+KAFKA_CONFIG=/var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168
+source $KAFKA_CONFIG/kafka-secret.env
+```
+
+i fish: 
+```
+set KAFKA_CONFIG /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168
+bass "set -a; source $KAFKA_CONFIG/kafka-secret.env"
 ```
 
 List offsets for en consumer group:
 ```
-./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka.properties --group bruker-model-builder --describe
+./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group bruker-model-builder --describe
 ```
 
 Dersom man skal endre en offset på en partisjon må consumer group være inaktiv. Dette gjøres enklest ved å skalere ned deployment til 0:
@@ -73,12 +80,22 @@ kubectl scale --replicas=0 deployment/notifikasjon-bruker-api
 
 Hopp over en offset på en gitt partisjon for en consumer group:
 ```
-./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --shift-by 1 --execute
+./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --shift-by 1 --execute
 ```
 
 Sett til et bestemt offset på en gitt partisjon for en consumer group:
 ```
 kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --to-offset 50 --execute
+```
+
+Les topic for en gitt partisjon fra et gitt offset:
+```
+.kafka-cli/bin/./kafka-console-consumer.sh --bootstrap-server $KAFKA_BROKERS --consumer.config $KAFKA_CONFIG/kafka.properties --topic fager.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.value=true --property print.offset=true --partition 12 --offset 124
+```
+
+Describe topic:
+```
+kafka-cli/bin/./kafka-topics.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --topic fager.notifikasjon --describe
 ```
 
 ## Ticks n' Trips
