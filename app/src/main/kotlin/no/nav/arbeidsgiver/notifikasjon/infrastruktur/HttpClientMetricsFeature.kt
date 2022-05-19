@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * (x = ktor.http.client, but can be overridden)
  *
  * x.requests.active: a gauge that counts the amount of concurrent HTTP requests. This metric doesn't provide any tags
- * x.requests: a timer for measuring the time of each request. This metric provides a set of tags for monitoring request data, including address for a requested URL, method for an HTTP method, and so on.
+ * x.requests: a timer for measuring the time of each request. This metric provides a set of tags for monitoring request data, including http method, path, status
  *
  */
 class HttpClientMetricsFeature internal constructor(
@@ -36,10 +36,10 @@ class HttpClientMetricsFeature internal constructor(
         lateinit var registry: MeterRegistry
     }
 
-    private fun before(httpRequestBuilder: HttpRequestBuilder) {
+    private fun before(context: HttpRequestBuilder) {
         active?.incrementAndGet()
 
-        httpRequestBuilder.attributes.put(measureKey, ClientCallMeasure(Timer.start(registry)))
+        context.attributes.put(measureKey, ClientCallMeasure(Timer.start(registry), context.url.encodedPath))
     }
 
     private fun throwable(context: HttpRequestBuilder, t: Throwable) {
@@ -64,7 +64,7 @@ class HttpClientMetricsFeature internal constructor(
                 listOf(
                     Tag.of("address", context.url.let { "${it.host}:${it.port}" }),
                     Tag.of("method", context.method.value),
-                    Tag.of("url", context.attributes[measureKey].url ?: context.url.toString()),
+                    Tag.of("path", context.attributes[measureKey].path ?: context.url.encodedPath),
                     Tag.of("status", "n/a"),
                     Tag.of("throwable", clientCallMeasure.throwable!!::class.qualifiedName!! )
                 )
@@ -82,7 +82,7 @@ class HttpClientMetricsFeature internal constructor(
                 listOf(
                     Tag.of("address", context.request.url.let { "${it.host}:${it.port}" }),
                     Tag.of("method", context.request.method.value),
-                    Tag.of("url", context.attributes[measureKey].url ?: context.request.url.toString()),
+                    Tag.of("path", context.attributes[measureKey].path ?: context.request.url.encodedPath),
                     Tag.of("status", context.response.status.value.toString()),
                     Tag.of("throwable", clientCallMeasure.throwable?.let { it::class.qualifiedName } ?: "n/a")
                 )
@@ -144,6 +144,6 @@ class HttpClientMetricsFeature internal constructor(
 
 private data class ClientCallMeasure(
     val timer: Timer.Sample,
-    var url: String? = null,
+    var path: String? = null,
     var throwable: Throwable? = null
 )
