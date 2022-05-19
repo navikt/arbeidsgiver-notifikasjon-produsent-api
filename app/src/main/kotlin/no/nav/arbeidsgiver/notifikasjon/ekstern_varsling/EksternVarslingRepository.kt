@@ -284,7 +284,7 @@ class EksternVarslingRepository(
             (
                 select varsel_id, false as locked from ekstern_varsel_kontaktinfo
                 where 
-                    state <> '${EksterntVarselTilstand.SENDT}'
+                    state in ('${EksterntVarselTilstand.NY}', '${EksterntVarselTilstand.SENDT}')
                     and varsel_id not in (select varsel_id from job_queue)
             )
         """)
