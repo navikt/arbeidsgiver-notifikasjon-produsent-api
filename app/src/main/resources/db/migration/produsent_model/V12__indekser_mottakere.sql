@@ -1,0 +1,106 @@
+create index mottaker_altinn_rolle_notifikasjon_id_idx on mottaker_altinn_rolle(notifikasjon_id);
+create index mottaker_altinn_reportee_notifikasjon_id_idx on mottaker_altinn_reportee(notifikasjon_id);
+create index mottaker_altinn_enkeltrettighet_notifikasjon_id_idx on mottaker_altinn_enkeltrettighet(notifikasjon_id);
+create index mottaker_digisyfo_notifikasjon_id_idx on mottaker_digisyfo(notifikasjon_id);
+create index eksternt_varsel_notifikasjon_id_idx on eksternt_varsel(notifikasjon_id);
+
+-- Sammenligning av `explain ProdusentRepositoryImpl.hentNotifikasjon(?id?: UUID)`
+-- før migrering og etter migering. Legg merke til "Seq Scan".
+--
+-- Før migering:
+--
+-- Hash Left Join  (cost=20.94..113.06 rows=432 width=352)
+--   Hash Cond: (notifikasjon.id = ev.notifikasjon_id)
+--   ->  Nested Loop Left Join  (cost=0.14..78.90 rows=108 width=416)
+--   ->  Hash  (cost=20.75..20.75 rows=4 width=48)
+--         Join Filter: (mar.notifikasjon_id = notifikasjon.id)
+--         ->  Subquery Scan on ev  (cost=0.00..20.75 rows=4 width=48)
+--         ->  Nested Loop Left Join  (cost=0.14..59.37 rows=27 width=384)
+--         ->  Materialize  (cost=0.00..18.89 rows=4 width=48)
+--               Join Filter: (maro.notifikasjon_id = notifikasjon.id)
+--               ->  Subquery Scan on mar  (cost=0.00..18.87 rows=4 width=48)
+--               ->  Nested Loop Left Join  (cost=0.14..42.19 rows=9 width=352)
+--               ->  Materialize  (cost=0.00..16.98 rows=3 width=48)
+--               ->  GroupAggregate  (cost=0.00..20.71 rows=4 width=48)
+--                     Join Filter: (md.notifikasjon_id = notifikasjon.id)
+--                     Group Key: eksternt_varsel.notifikasjon_id
+--                     ->  Subquery Scan on maro  (cost=0.00..16.97 rows=3 width=48)
+--                     ->  Seq Scan on eksternt_varsel  (cost=0.00..20.62 rows=4 width=68)
+--                     ->  Nested Loop Left Join  (cost=0.14..25.15 rows=3 width=320)
+--                     ->  Materialize  (cost=0.00..16.98 rows=3 width=48)
+--                     ->  GroupAggregate  (cost=0.00..18.83 rows=4 width=48)
+--                           Join Filter: (mottaker_altinn_enkeltrettighet.notifikasjon_id = notifikasjon.id)
+--                           Group Key: mottaker_altinn_reportee.notifikasjon_id
+--                           Filter: (notifikasjon_id = ?::uuid)
+--                           ->  Subquery Scan on md  (cost=0.00..16.97 rows=3 width=48)
+--                           ->  Seq Scan on mottaker_altinn_reportee  (cost=0.00..18.75 rows=4 width=80)
+--                           ->  Index Scan using notifikasjon_pkey on notifikasjon  (cost=0.14..8.16 rows=1 width=288)
+--                           ->  GroupAggregate  (cost=0.00..16.94 rows=3 width=48)
+--                           ->  GroupAggregate  (cost=0.00..16.94 rows=3 width=48)
+--                                 Index Cond: (id = ?::uuid)
+--                                 Group Key: mottaker_altinn_rolle.notifikasjon_id
+--                                 Group Key: mottaker_altinn_enkeltrettighet.notifikasjon_id
+--                                 Filter: (notifikasjon_id = ?::uuid)
+--                                 ->  Seq Scan on mottaker_altinn_rolle  (cost=0.00..16.88 rows=3 width=112)
+--                                 ->  Seq Scan on mottaker_altinn_enkeltrettighet  (cost=0.00..16.88 rows=3 width=112)
+--                                 ->  GroupAggregate  (cost=0.00..16.94 rows=3 width=48)
+--                                       Group Key: mottaker_digisyfo.notifikasjon_id
+--                                       Filter: (notifikasjon_id = ?::uuid)
+--                                       Filter: (notifikasjon_id = ?::uuid)
+--                                       ->  Seq Scan on mottaker_digisyfo  (cost=0.00..16.88 rows=3 width=112)
+--                                             Filter: (notifikasjon_id = ?::uuid)
+--
+-- Vi ser over mange sekvensielle scans av tabeller som vokser røflig linært med antall notifikasjoner.
+-- Etter migrering (altså med indekser), så er alle disse borte.
+--
+-- Hash Left Join  (cost=29.66..82.19 rows=432 width=352)
+--   Hash Cond: (notifikasjon.id = mar.notifikasjon_id)
+--   ->  Nested Loop Left Join  (cost=16.85..56.01 rows=108 width=416)
+--         Join Filter: (ev.notifikasjon_id = notifikasjon.id)
+--         ->  Nested Loop Left Join  (cost=12.66..42.59 rows=27 width=384)
+--               Join Filter: (maro.notifikasjon_id = notifikasjon.id)
+--               ->  Nested Loop Left Join  (cost=8.49..31.00 rows=9 width=352)
+--                     Join Filter: (md.notifikasjon_id = notifikasjon.id)
+--                     ->  Nested Loop Left Join  (cost=4.32..19.55 rows=3 width=320)
+--                           Join Filter: (mottaker_altinn_enkeltrettighet.notifikasjon_id = notifikasjon.id)
+--                           ->  Index Scan using notifikasjon_pkey on notifikasjon  (cost=0.14..8.16 rows=1 width=288)
+--                                 Index Cond: (id = ?::uuid)
+--                           ->  GroupAggregate  (cost=4.17..11.34 rows=3 width=48)
+--                                 Group Key: mottaker_altinn_enkeltrettighet.notifikasjon_id
+--                                 ->  Bitmap Heap Scan on mottaker_altinn_enkeltrettighet  (cost=4.17..11.28 rows=3 width=112)
+--                                       Recheck Cond: (notifikasjon_id = ?::uuid)
+--                                       ->  Bitmap Index Scan on mottaker_altinn_enkeltrettighet_notifikasjon_id_idx  (cost=0.00..4.17 rows=3 width=0)
+--                                             Index Cond: (notifikasjon_id = ?::uuid)
+--                     ->  Materialize  (cost=4.17..11.39 rows=3 width=48)
+--                           ->  Subquery Scan on md  (cost=4.17..11.37 rows=3 width=48)
+--                                 ->  GroupAggregate  (cost=4.17..11.34 rows=3 width=48)
+--                                       Group Key: mottaker_digisyfo.notifikasjon_id
+--                                       ->  Bitmap Heap Scan on mottaker_digisyfo  (cost=4.17..11.28 rows=3 width=112)
+--                                             Recheck Cond: (notifikasjon_id = ?::uuid)
+--                                             ->  Bitmap Index Scan on mottaker_digisyfo_notifikasjon_id_idx  (cost=0.00..4.17 rows=3 width=0)
+--                                                   Index Cond: (notifikasjon_id = ?::uuid)
+--               ->  Materialize  (cost=4.17..11.39 rows=3 width=48)
+--                     ->  Subquery Scan on maro  (cost=4.17..11.37 rows=3 width=48)
+--                           ->  GroupAggregate  (cost=4.17..11.34 rows=3 width=48)
+--                                 Group Key: mottaker_altinn_rolle.notifikasjon_id
+--                                 ->  Bitmap Heap Scan on mottaker_altinn_rolle  (cost=4.17..11.28 rows=3 width=112)
+--                                       Recheck Cond: (notifikasjon_id = ?::uuid)
+--                                       ->  Bitmap Index Scan on mottaker_altinn_rolle_notifikasjon_id_idx  (cost=0.00..4.17 rows=3 width=0)
+--                                             Index Cond: (notifikasjon_id = ?::uuid)
+--         ->  Materialize  (cost=4.18..12.78 rows=4 width=48)
+--               ->  Subquery Scan on ev  (cost=4.18..12.76 rows=4 width=48)
+--                     ->  GroupAggregate  (cost=4.18..12.72 rows=4 width=48)
+--                           Group Key: eksternt_varsel.notifikasjon_id
+--                           ->  Bitmap Heap Scan on eksternt_varsel  (cost=4.18..12.64 rows=4 width=68)
+--                                 Recheck Cond: (notifikasjon_id = ?::uuid)
+--                                 ->  Bitmap Index Scan on eksternt_varsel_notifikasjon_id_idx  (cost=0.00..4.18 rows=4 width=0)
+--                                       Index Cond: (notifikasjon_id = ?::uuid)
+--   ->  Hash  (cost=12.76..12.76 rows=4 width=48)
+--         ->  Subquery Scan on mar  (cost=4.18..12.76 rows=4 width=48)
+--               ->  GroupAggregate  (cost=4.18..12.72 rows=4 width=48)
+--                     Group Key: mottaker_altinn_reportee.notifikasjon_id
+--                     ->  Bitmap Heap Scan on mottaker_altinn_reportee  (cost=4.18..12.64 rows=4 width=80)
+--                           Recheck Cond: (notifikasjon_id = ?::uuid)
+--                           ->  Bitmap Index Scan on mottaker_altinn_reportee_notifikasjon_id_idx  (cost=0.00..4.18 rows=4 width=0)
+--                                 Index Cond: (notifikasjon_id = ?::uuid)
+--
