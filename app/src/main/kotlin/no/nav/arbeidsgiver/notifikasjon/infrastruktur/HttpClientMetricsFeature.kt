@@ -62,16 +62,17 @@ class HttpClientMetricsFeature internal constructor(
             active?.decrementAndGet()
             val builder = Timer.builder(requestTimeTimerName).tags(
                 listOf(
-                    Tag.of("address", context.url.let { "${it.host}:${it.port}" }),
                     Tag.of("method", context.method.value),
-                    Tag.of("path", context.attributes[measureKey].path ?: context.url.encodedPath),
+                    Tag.of("url", context.urlTagValue()),
                     Tag.of("status", "n/a"),
-                    Tag.of("throwable", clientCallMeasure.throwable!!::class.qualifiedName!! )
+                    Tag.of("throwable", clientCallMeasure.throwableTagValue())
                 )
             )
             clientCallMeasure.timer.stop(builder.register(registry))
         }
     }
+
+
 
     private fun after(context: HttpClientCall) {
         active?.decrementAndGet()
@@ -80,11 +81,10 @@ class HttpClientMetricsFeature internal constructor(
         if (clientCallMeasure != null) {
             val builder = Timer.builder(requestTimeTimerName).tags(
                 listOf(
-                    Tag.of("address", context.request.url.let { "${it.host}:${it.port}" }),
                     Tag.of("method", context.request.method.value),
-                    Tag.of("path", context.attributes[measureKey].path ?: context.request.url.encodedPath),
+                    Tag.of("url", context.urlTagValue()),
                     Tag.of("status", context.response.status.value.toString()),
-                    Tag.of("throwable", clientCallMeasure.throwable?.let { it::class.qualifiedName } ?: "n/a")
+                    Tag.of("throwable", clientCallMeasure.throwableTagValue())
                 )
             )
             clientCallMeasure.timer.stop(builder.register(registry))
@@ -140,10 +140,18 @@ class HttpClientMetricsFeature internal constructor(
             }
         }
     }
+
+    private fun HttpClientCall.urlTagValue() =
+        "${request.url.let { "${it.host}:${it.port}" }}${attributes[measureKey].path ?: request.url.encodedPath}"
+
+    private fun HttpRequestBuilder.urlTagValue() =
+        "${url.let { "${it.host}:${it.port}" }}${attributes[measureKey].path ?: url.encodedPath}"
 }
 
 private data class ClientCallMeasure(
     val timer: Timer.Sample,
     var path: String? = null,
     var throwable: Throwable? = null
-)
+) {
+    fun throwableTagValue() : String = throwable?.let { it::class.qualifiedName } ?: "n/a"
+}
