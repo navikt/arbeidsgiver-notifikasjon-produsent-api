@@ -77,10 +77,7 @@ val ESYFO = Produsent(
 val PERMITTERING = Produsent(
     id = "permitteringsmelding-notifikasjon",
     accessPolicy = basedOnEnv(
-        prod = { listOf(
-            // De er ikke i prod enda
-            // "prod-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon"
-        ) },
+        prod = { listOf("prod-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon") },
         other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon") },
     ),
     tillatteMerkelapper = listOf(
