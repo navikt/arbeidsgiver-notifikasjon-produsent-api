@@ -78,7 +78,7 @@ val PERMITTERING = Produsent(
     id = "permitteringsmelding-notifikasjon",
     accessPolicy = basedOnEnv(
         prod = { listOf("prod-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon") },
-        other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon") }
+        other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon") },
     ),
     tillatteMerkelapper = listOf(
         "Permittering",
@@ -86,9 +86,7 @@ val PERMITTERING = Produsent(
         "Innskrenking av arbeidstid",
     ),
     tillatteMottakere = listOf(
-        AltinnRolleDefinisjon("DAGL"),
-        AltinnRolleDefinisjon("LEDE"),
-        AltinnRolleDefinisjon("REGN"),
+        ServicecodeDefinisjon(code = "5810", version = "1", description = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV"),
     )
 )
 
@@ -105,22 +103,15 @@ val FRITAKAGP = Produsent(
 )
 
 
-val PRODUSENT_LIST = basedOnEnv(
-    prod = {
-        listOf(
-            ARBEIDSGIVER_TILTAK,
-        )
-    },
-    other = {
-        listOf(
-            FAGER_TESTPRODUSENT,
-            ARBEIDSGIVER_TILTAK,
-            ESYFO,
-            PERMITTERING,
-            FRITAKAGP,
-        )
-    }
-)
+val PRODUSENT_LIST =
+    listOf(
+        FAGER_TESTPRODUSENT,
+        ARBEIDSGIVER_TILTAK,
+        ESYFO,
+        PERMITTERING,
+        FRITAKAGP,
+    )
+        .filter { it.accessPolicy.isNotEmpty() }
 
 val PRODUSENT_REGISTER by lazy { ProdusentRegisterImpl(PRODUSENT_LIST) }
 
