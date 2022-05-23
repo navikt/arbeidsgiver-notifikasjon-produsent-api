@@ -29,6 +29,7 @@ class SuspendingAltinnClient(
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
         }
+        install(HttpClientMetricsFeature)
     }
 
     suspend fun hentOrganisasjoner(
