@@ -4,7 +4,6 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.features.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.util.*
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tag
@@ -26,7 +25,7 @@ class HttpClientMetricsFeature internal constructor(
     private val clientName: String,
 ) {
 
-    private val active = registry.gauge(activeRequestsGaugeName, AtomicInteger(0))
+    private val activeRequests = registry.gauge(activeRequestsGaugeName, AtomicInteger(0))
 
     /**
      * [HttpClientMetricsFeature] configuration that is used during installation
@@ -37,54 +36,20 @@ class HttpClientMetricsFeature internal constructor(
     }
 
     private fun before(context: HttpRequestBuilder) {
-        active?.incrementAndGet()
-
+        activeRequests?.incrementAndGet()
         context.attributes.put(measureKey, ClientCallMeasure(Timer.start(registry), context.url.encodedPath))
     }
 
-    private fun throwable(context: HttpRequestBuilder, t: Throwable) {
-        context.attributes.getOrNull(measureKey)?.apply {
-            throwable = t
-        }
-    }
+    private fun after(call: HttpClientCall, context: HttpRequestBuilder) {
+        activeRequests?.decrementAndGet()
 
-    private fun throwable(context: HttpClientCall, t: Throwable) {
-        context.attributes.getOrNull(measureKey)?.apply {
-            throwable = t
-        }
-    }
-
-    private fun after(context: HttpRequestBuilder) {
-        val clientCallMeasure = context.attributes.getOrNull(measureKey)
-        if (clientCallMeasure?.throwable != null) {
-            // send av request feilet
-
-            active?.decrementAndGet()
-            val builder = Timer.builder(requestTimeTimerName).tags(
-                listOf(
-                    Tag.of("method", context.method.value),
-                    Tag.of("url", context.urlTagValue()),
-                    Tag.of("status", "n/a"),
-                    Tag.of("throwable", clientCallMeasure.throwableTagValue())
-                )
-            )
-            clientCallMeasure.timer.stop(builder.register(registry))
-        }
-    }
-
-
-
-    private fun after(context: HttpClientCall) {
-        active?.decrementAndGet()
-
-        val clientCallMeasure = context.attributes.getOrNull(measureKey)
+        val clientCallMeasure = call.attributes.getOrNull(measureKey)
         if (clientCallMeasure != null) {
             val builder = Timer.builder(requestTimeTimerName).tags(
                 listOf(
-                    Tag.of("method", context.request.method.value),
+                    Tag.of("method", call.request.method.value),
                     Tag.of("url", context.urlTagValue()),
-                    Tag.of("status", context.response.status.value.toString()),
-                    Tag.of("throwable", clientCallMeasure.throwableTagValue())
+                    Tag.of("status", call.response.status.value.toString()),
                 )
             )
             clientCallMeasure.timer.stop(builder.register(registry))
@@ -106,52 +71,31 @@ class HttpClientMetricsFeature internal constructor(
         private val measureKey = AttributeKey<ClientCallMeasure>("HttpClientMetricsFeature")
         override val key: AttributeKey<HttpClientMetricsFeature> = AttributeKey("HttpClientMetricsFeature")
 
-        override fun prepare(block: Config.() -> Unit): HttpClientMetricsFeature {
-            val config = Config().apply(block)
-            // validate config?
-
-            return HttpClientMetricsFeature(config.registry, config.clientName)
-        }
+        override fun prepare(block: Config.() -> Unit): HttpClientMetricsFeature =
+            Config().apply(block).let {
+                HttpClientMetricsFeature(it.registry, it.clientName)
+            }
 
         override fun install(feature: HttpClientMetricsFeature, scope: HttpClient) {
             clientName = feature.clientName
 
-            scope.requestPipeline.intercept(HttpRequestPipeline.Phases.Send) {
+            scope.requestPipeline.intercept(HttpRequestPipeline.Phases.Before) {
                 feature.before(context)
-                try {
-                    proceed()
-                } catch (e: Throwable) {
-                    feature.throwable(context, e)
-                    throw e
-                } finally {
-                    feature.after(context)
-                }
+                proceed()
             }
 
-            scope.responsePipeline.intercept(HttpResponsePipeline.Phases.Receive) {
-                try {
-                    proceed()
-                } catch (e: Throwable) {
-                    feature.throwable(context, e)
-                    throw e
-                } finally {
-                    feature.after(context)
-                }
+            scope[HttpSend].intercept { call, context ->
+                feature.after(call, context)
+                call
             }
         }
     }
 
-    private fun HttpClientCall.urlTagValue() =
-        "${request.url.let { "${it.host}:${it.port}" }}${attributes[measureKey].path ?: request.url.encodedPath}"
-
     private fun HttpRequestBuilder.urlTagValue() =
-        "${url.let { "${it.host}:${it.port}" }}${attributes[measureKey].path ?: url.encodedPath}"
+        "${url.let { "${it.host}:${it.port}" }}${attributes[measureKey].path}"
 }
 
 private data class ClientCallMeasure(
     val timer: Timer.Sample,
-    var path: String? = null,
-    var throwable: Throwable? = null
-) {
-    fun throwableTagValue() : String = throwable?.let { it::class.qualifiedName } ?: "n/a"
-}
+    val path: String,
+)
