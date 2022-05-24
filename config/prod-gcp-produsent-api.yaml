@@ -32,6 +32,14 @@ spec:
           namespace: permittering-og-nedbemanning
           cluster: prod-gcp
 
+        - application: esyfovarsel
+          namespace: team-esyfo
+          cluster: prod-fss
+
+        - application: esyfovarsel
+          namespace: team-esyfo
+          cluster: prod-gcp
+
   azure:
     application:
       enabled: true
