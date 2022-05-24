@@ -61,9 +61,8 @@ val ESYFO = Produsent(
     id = "esyfovarsel",
     accessPolicy = basedOnEnv(
         prod = { listOf(
-            // avventer bruksvilkår godkjent
-            // "prod-gcp:team-esyfo:esyfovarsel",
-            // "prod-fss:team-esyfo:esyfovarsel",
+            "prod-gcp:team-esyfo:esyfovarsel",
+            "prod-fss:team-esyfo:esyfovarsel",
         ) },
         other = { listOf(
             "dev-gcp:team-esyfo:esyfovarsel",
