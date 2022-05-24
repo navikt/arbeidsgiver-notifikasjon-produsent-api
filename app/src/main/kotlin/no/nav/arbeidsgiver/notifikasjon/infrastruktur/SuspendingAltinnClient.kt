@@ -26,6 +26,12 @@ class SuspendingAltinnClient(
         install(JsonFeature) {
             serializer = JacksonSerializer()
         }
+        install(PropagateFromMDCFeature) {
+            propagate("x_correlation_id")
+        }
+        install(HttpClientMetricsFeature) {
+            registry = Metrics.meterRegistry
+        }
     }
 
     suspend fun hentOrganisasjoner(

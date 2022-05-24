@@ -11,10 +11,7 @@ import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.routing.*
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AzurePreAuthorizedAppsImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCFeature
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.UnavailableInProduction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -40,6 +37,9 @@ object HttpAuthProviders {
         }
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
+        }
+        install(HttpClientMetricsFeature) {
+            registry = Metrics.meterRegistry
         }
     }
 
