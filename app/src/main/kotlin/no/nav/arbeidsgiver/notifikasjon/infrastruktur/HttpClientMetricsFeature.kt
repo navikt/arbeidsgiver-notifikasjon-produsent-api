@@ -33,6 +33,8 @@ class HttpClientMetricsFeature internal constructor(
     class Config {
         var clientName: String = "ktor.http.client"
         lateinit var registry: MeterRegistry
+
+        internal fun isRegistryInitialized() = this::registry.isInitialized
     }
 
     private fun before(context: HttpRequestBuilder) {
@@ -73,6 +75,11 @@ class HttpClientMetricsFeature internal constructor(
 
         override fun prepare(block: Config.() -> Unit): HttpClientMetricsFeature =
             Config().apply(block).let {
+                if (!it.isRegistryInitialized()) {
+                    throw IllegalArgumentException(
+                        "Meter registry is missing. Please initialize the field 'registry'"
+                    )
+                }
                 HttpClientMetricsFeature(it.registry, it.clientName)
             }
 
