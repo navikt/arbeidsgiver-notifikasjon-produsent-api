@@ -89,7 +89,7 @@ class HttpClientMetricsFeature internal constructor(
     }
 
     private fun HttpRequestBuilder.urlTagValue() =
-        "${url.let { "${it.protocol.name}://${it.host}${it.port}" }}${attributes[measureKey].path}"
+        "${url.let { "${it.protocol.name}://${it.host}:${it.port}" }}${attributes[measureKey].path}"
 }
 
 private data class ClientCallMeasure(
