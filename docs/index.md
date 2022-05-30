@@ -17,12 +17,12 @@ Tidligere har Min side - arbeidgsiver integrert mot API-er for å kunne vise at 
 Oppgaver og beskjeder vil være synlig for arbeidsgivere som er logget inn i NAV sine tjenester. Når det finns nye beskjeder eller oppgaver har bjella en rød sirkel med et tall som viser hvor mange. 
 
 
-![Bjella på Min side -arbeidsgiver viser at nye notifikasjoner kommet med rød cirkel og antall](images/Bjella%20collapsed.png)
+![Bjella på Min side -arbeidsgiver viser at nye notifikasjoner kommet med rød cirkel og antall](images/bjellakollapsed.png)
 
 
 Når arbeidsgiver trykker på bjella kan de se oppgaver og beskjeder på tvers av virksomheter. 
 
-![Når man trykker på bjella ekspandere notfikasjonerne ut](images/Bjella%20expanded.png)
+![Når man trykker på bjella ekspandere notfikasjonerne ut](images/bjellaekpandert.png)
 
 
 
@@ -52,7 +52,7 @@ Lag en sak og bruk statusoppdatering-event for at vise en søknad eller skjema s
 
 Hvis en sak eller søknad har endret status kan produsenten sende et Statusoppdatering-event. Produsenten må velge én av våre 3 globale statuser: MOTTATT, UNDER_BEHANDLING eller FERDIG. Hvis produsenten ønsker, kan teksten i statusen overstyres med en egen tekst t ex «Venter på dokumentasjon».  
 
-![Siste saker vises på Min side - arbeidsgiver](images/siste%20saker.png)
+![Siste saker vises på Min side - arbeidsgiver](images/saker.png)
 
 
 __Saksprosess:__
