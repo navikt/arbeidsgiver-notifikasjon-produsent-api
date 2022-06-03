@@ -163,7 +163,7 @@ class EksternVarslingRepository(
                 ?, /* sendetidspunkt */
                 'NY' /* tilstand */
             )
-            ON CONFLICT (varsel_id) DO NOTHING;
+            ON CONFLICT DO NOTHING;
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
@@ -210,7 +210,7 @@ class EksternVarslingRepository(
                 ?, /* sendetidspunkt */
                 'NY' /* tilstand */
             )
-            ON CONFLICT (varsel_id) DO NOTHING;
+            ON CONFLICT DO NOTHING;
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
@@ -485,7 +485,7 @@ class EksternVarslingRepository(
                 ) 
                 insert into job_queue (varsel_id, locked) 
                 select varsel_id, false as locked from selected
-                on conflict (varsel_id) do nothing
+                on conflict do nothing
             """,
         ) {
             timestamp(scheduledAt)
@@ -539,7 +539,7 @@ internal fun Transaction.putOnJobQueue(varselId: UUID) {
     executeUpdate(
         """
             insert into job_queue(varsel_id, locked) values (?, false)
-            on conflict (varsel_id) do nothing;
+            on conflict do nothing;
         """
     ) {
         uuid(varselId)

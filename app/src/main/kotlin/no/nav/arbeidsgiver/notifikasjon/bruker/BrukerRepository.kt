@@ -410,9 +410,8 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: BrukerKlikket) {
         database.nonTransactionalExecuteUpdate(
             """
-            INSERT INTO brukerklikk(fnr, notifikasjonsid) VALUES (?, ?)
-            ON CONFLICT ON CONSTRAINT brukerklikk_pkey
-            DO NOTHING
+            insert into brukerklikk(fnr, notifikasjonsid) values (?, ?)
+            on conflict do nothing
         """
         ) {
             string(brukerKlikket.fnr)
@@ -437,7 +436,7 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer
                 )
                 values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
-                on conflict on constraint notifikasjon_pkey do nothing;
+                on conflict do nothing;
             """
             ) {
                 uuid(beskjedOpprettet.notifikasjonId)
@@ -468,7 +467,7 @@ class BrukerRepositoryImpl(
                     id, virksomhetsnummer, tittel, lenke, merkelapp
                 )
                 values (?, ?, ? ,?, ?)
-                on conflict on constraint sak_pkey do nothing;
+                on conflict do nothing;
             """
             ) {
                 uuid(sakOpprettet.sakId)
@@ -503,7 +502,7 @@ class BrukerRepositoryImpl(
                     id, sak_id, status, overstyrt_statustekst, tidspunkt 
                 )
                 values (?, ?, ?, ?, ?)
-                on conflict on constraint sak_status_pkey do nothing;
+                on conflict do nothing;
             """
             ) {
                 uuid(nyStatusSak.hendelseId)
@@ -649,7 +648,7 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer
                 )
                 values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
-                on conflict on constraint notifikasjon_pkey do nothing;
+                on conflict do nothing;
             """
             ) {
                 uuid(oppgaveOpprettet.notifikasjonId)
