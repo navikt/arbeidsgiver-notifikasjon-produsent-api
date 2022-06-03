@@ -411,7 +411,7 @@ class StatistikkModel(
                 }
             }
             is NyStatusSak -> {
-                log.error("mottok hendelse som ikke enda er støttet {}", hendelse.javaClass.simpleName)
+                // noop
             }
         }
     }
