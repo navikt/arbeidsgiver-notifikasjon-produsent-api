@@ -261,7 +261,7 @@ class StatistikkModel(
                     insert into notifikasjon 
                         (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
                     values (?, ?, 'beskjed', ?, ?, ?, ?)
-                    on conflict on constraint notifikasjon_pkey do nothing;
+                    on conflict do nothing;
                     """
                 ) {
                     string(hendelse.produsentId)
@@ -292,7 +292,7 @@ class StatistikkModel(
                     )
                     values
                     (?, ?, 'oppgave', ?, ?, ?, ?)
-                    on conflict on constraint notifikasjon_pkey do nothing;
+                    on conflict do nothing;
                     """
                 ) {
                     string(hendelse.produsentId)
@@ -327,7 +327,7 @@ class StatistikkModel(
                     insert into notifikasjon_klikk 
                         (hendelse_id, notifikasjon_id, klikket_paa_tidspunkt)
                     values (?, ?, ?)
-                    on conflict on constraint notifikasjon_klikk_pkey do nothing;
+                    on conflict do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
@@ -342,7 +342,7 @@ class StatistikkModel(
                         (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
                     values
                     (?, ?, ?, ?, 'vellykket')
-                    on conflict on constraint varsel_resultat_pkey do nothing;
+                    on conflict do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
@@ -358,7 +358,7 @@ class StatistikkModel(
                         (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status, feilkode)
                     values
                         (?, ?, ?, ?, 'feilet', ?)
-                    on conflict on constraint varsel_resultat_pkey do nothing;
+                    on conflict do nothing;
                     """
                 ) {
                     uuid(hendelse.hendelseId)
@@ -400,7 +400,7 @@ class StatistikkModel(
                     insert into sak 
                         (produsent_id, sak_id, merkelapp, mottaker, opprettet_tidspunkt)
                     values (?, ?, ?, ?, ?)
-                    on conflict on constraint sak_pkey do nothing;
+                    on conflict do nothing;
                     """
                 ) {
                     string(hendelse.produsentId)
@@ -427,7 +427,7 @@ class StatistikkModel(
                 (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
             values
                 (?, ?, ?, ?, ?)
-            on conflict (varsel_id) do nothing;
+            on conflict do nothing;
             """,
             iterable
         ) { eksterntVarsel ->

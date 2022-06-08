@@ -235,7 +235,7 @@ class ProdusentRepositoryImpl(
             executeUpdate("""
                     insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, lenke, tidspunkt_mottatt)
                     values (?, ?, ?, ?, ?::jsonb, ?, ?, now())
-                    on conflict on constraint grupperingsid_unique do nothing
+                    on conflict do nothing
                 """
             ) {
                 uuid(sakOpprettet.sakId)
@@ -249,7 +249,7 @@ class ProdusentRepositoryImpl(
 
             executeUpdate("""
                 insert into sak_id (incoming_sak_id, sak_id) values (?, ?)
-                on conflict on constraint sak_id_pkey do nothing
+                on conflict do nothing
             """) {
                 uuid(sakOpprettet.sakId)
                 uuid(sakOpprettet.sakId)
@@ -275,7 +275,7 @@ class ProdusentRepositoryImpl(
                 insert into sak_status
                 (id, idempotence_key, sak_id, status, overstyr_statustekst_med, tidspunkt_oppgitt, tidspunkt_mottatt)
                 values (?, ?, ?, ?, ?, ?, ?)
-                on conflict on constraint sak_status_pkey do nothing;
+                on conflict do nothing;
             """) {
                 uuid(nyStatusSak.hendelseId)
                 string(nyStatusSak.idempotensKey)
@@ -364,7 +364,7 @@ class ProdusentRepositoryImpl(
                     virksomhetsnummer
                 )
                 values ('BESKJED', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
-                on conflict on constraint notifikasjon_pkey do nothing;
+                on conflict do nothing;
             """
             ) {
                 uuid(beskjedOpprettet.notifikasjonId)
@@ -389,7 +389,7 @@ class ProdusentRepositoryImpl(
                     status
                 )
                 values (?, ?, 'NY')
-                on conflict on constraint eksternt_varsel_pkey do nothing;
+                on conflict do nothing;
                 """,
                 beskjedOpprettet.eksterneVarsler
             ) { eksterntVarsel ->
@@ -416,7 +416,7 @@ class ProdusentRepositoryImpl(
                     virksomhetsnummer
                 )
                 values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
-                on conflict on constraint notifikasjon_pkey do nothing;
+                on conflict do nothing;
             """
             ) {
                 uuid(oppgaveOpprettet.notifikasjonId)
@@ -441,7 +441,7 @@ class ProdusentRepositoryImpl(
                     status
                 )
                 values (?, ?, 'NY')
-                on conflict on constraint eksternt_varsel_pkey do nothing;
+                on conflict do nothing;
                 """,
                 oppgaveOpprettet.eksterneVarsler
             ) { eksterntVarsel ->
