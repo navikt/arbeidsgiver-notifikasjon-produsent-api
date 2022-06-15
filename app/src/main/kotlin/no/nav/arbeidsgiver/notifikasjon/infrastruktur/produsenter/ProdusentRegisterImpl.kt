@@ -69,7 +69,10 @@ val ESYFO = Produsent(
             "dev-fss:team-esyfo:esyfovarsel",
         ) },
     ),
-    tillatteMerkelapper = listOf("Aktivitetskrav"),
+    tillatteMerkelapper = listOf(
+        "Aktivitetskrav",
+        "Oppfølging",
+    ),
     tillatteMottakere = listOf(NærmesteLederDefinisjon)
 )
 
