@@ -35,14 +35,14 @@ class PropagateFromMDCFeatureTests : DescribeSpec({
         context("MDC inneholder nøkkel som skal propageres") {
             MDC.put(mdcKey, mdcValue)
             it("verdi fra MDC key blir propagert") {
-                val response: HttpResponse = httpClient.get()
+                val response: HttpResponse = httpClient.get("")
                 response.headers[mdcKey] shouldBe mdcValue
             }
         }
 
         context("MDC inneholder ikke nøkkel som skal propageres") {
             it("verdi fra MDC key blir propagert") {
-                val response: HttpResponse = httpClient.get()
+                val response: HttpResponse = httpClient.get("")
                 response.headers[mdcKey] shouldBe null
             }
         }
@@ -55,7 +55,7 @@ class PropagateFromMDCFeatureTests : DescribeSpec({
             }
             MDC.put(mdcKey, mdcValue)
             it("verdi fra MDC key blir propagert som angitt header key") {
-                val response: HttpResponse = client.get()
+                val response: HttpResponse = client.get("")
                 response.headers[mdcKey] shouldBe null
                 response.headers["foolias"] shouldBe mdcValue
             }
@@ -70,7 +70,7 @@ class PropagateFromMDCFeatureTests : DescribeSpec({
             }
             MDC.put(mdcKey, mdcValue)
             it("verdi fra MDC key blir propagert som angitt header key") {
-                val response: HttpResponse = client.get()
+                val response: HttpResponse = client.get("")
                 response.headers[mdcKey] shouldBe mdcValue
                 response.headers["foolias"] shouldBe mdcValue
             }

@@ -1,8 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.autoslett
 
-import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.core.spec.style.scopes.DescribeSpecContainerContext
+import io.kotest.core.spec.style.scopes.DescribeSpecContainerScope
+import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -23,7 +23,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
     val database = testDatabase(AutoSlett.databaseConfig)
     val repository = AutoSlettRepository(database)
 
-    suspend fun DescribeSpecContainerContext.oppgaveUtførtCase(
+    suspend fun DescribeSpecContainerScope.oppgaveUtførtCase(
         title: String,
         opprettetTidspunkt: String,
         opprinneligHardDelete: String,
@@ -56,7 +56,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
         }
     }
 
-    suspend fun DescribeSpecContainerContext.sakOppdatertCase(
+    suspend fun DescribeSpecContainerScope.sakOppdatertCase(
         title: String,
         sakMottattTidspunkt: String,
         opprinneligHardDelete: String,
@@ -270,7 +270,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                 expected = Instant.parse("2022-11-04T14:37:37.37Z"),
             )
 
-            forAll(
+            withData(
                 "2020-10-13T07:20:50.52",
                 "2022-10-13T07:20:50.52",
                 "2025-10-13T07:20:50.52",

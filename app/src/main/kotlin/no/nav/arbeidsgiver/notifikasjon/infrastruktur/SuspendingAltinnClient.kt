@@ -1,19 +1,17 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
-import io.ktor.client.features.*
-import io.ktor.client.features.json.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.serialization.jackson.*
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 
 class SuspendingAltinnClient(
@@ -23,8 +21,8 @@ class SuspendingAltinnClient(
     private val log = logger()
 
     private val httpClient = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer()
+        install(ContentNegotiation) {
+            jackson()
         }
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
@@ -96,12 +94,13 @@ class SuspendingAltinnClient(
         // TODO: ta i bruk proxy-klient når vi får utvidet den
         val baseUrl = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/ekstern/altinn"
         return try {
-            httpClient.get<List<AltinnReportee>>("${baseUrl}/api/serviceowner/reportees?ForceEIAuthentication&roleDefinitionId=$roleDefinitionId") {
+            httpClient.get("${baseUrl}/api/serviceowner/reportees?ForceEIAuthentication&roleDefinitionId=$roleDefinitionId") {
                 headers {
                     append("Authorization", "Bearer $selvbetjeningsToken")
                     append("APIKEY", System.getenv("ALTINN_HEADER") ?: "default")
                 }
             }
+                .body()
         } catch (e: Exception) {
             logException(e)
             null

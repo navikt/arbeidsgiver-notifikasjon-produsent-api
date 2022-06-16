@@ -1,11 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.altinn_roller
 
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
-import io.ktor.client.features.*
-import io.ktor.client.features.json.*
-import io.ktor.client.request.*
+import io.ktor.client.plugins.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.serialization.jackson.*
 
 interface AltinnRolleClient {
     suspend fun hentRoller(): List<AltinnRolle>?
@@ -15,8 +17,8 @@ class AltinnRolleClientImpl: AltinnRolleClient {
     private val log = logger()
 
     private val httpClient = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer()
+        install(ContentNegotiation) {
+            jackson()
         }
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
@@ -34,7 +36,7 @@ class AltinnRolleClientImpl: AltinnRolleClient {
                 append("X-NAV-APIKEY", AltinnConfig.GW_KEY)
                 append("APIKEY", AltinnConfig.ALTINN_KEY)
             }
-        }
+        }.body()
     } catch (e: ResponseException) {
         log.warn("serviceowner/roledefinitions feiler: ${e.response.status.value} '${e.response.status.description}'", e)
         null

@@ -39,19 +39,19 @@ suspend fun AutoSlettRepository.insert(
     id: String,
     beregnetSlettetid: OffsetDateTime,
 ) {
-    val id = uuid(id)
+    val uuid = uuid(id)
     this.oppdaterModellEtterHendelse(
         HendelseModel.SakOpprettet(
-            hendelseId = id,
+            hendelseId = uuid,
             virksomhetsnummer = "1",
             produsentId = "1",
             kildeAppNavn = "1",
-            sakId = id,
-            grupperingsid = id.toString(),
+            sakId = uuid,
+            grupperingsid = uuid.toString(),
             merkelapp = "",
             mottakere = listOf(HendelseModel.AltinnMottaker("", "", "")),
-            tittel = "Sak $id",
-            lenke = "https://dev.nav.no/$id",
+            tittel = "Sak $uuid",
+            lenke = "https://dev.nav.no/$uuid",
             oppgittTidspunkt = null,
             mottattTidspunkt = OffsetDateTime.parse("1234-12-19T23:32:32.01+05"),
             hardDelete = HendelseModel.LocalDateTimeOrDuration.parse(
