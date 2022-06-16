@@ -14,6 +14,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzurePreAuthorizedAppsImpl
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
