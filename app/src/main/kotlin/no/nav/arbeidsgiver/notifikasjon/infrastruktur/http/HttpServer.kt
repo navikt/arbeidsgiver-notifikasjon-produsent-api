@@ -1,17 +1,21 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
 import com.fasterxml.jackson.core.JsonProcessingException
-import io.ktor.application.*
-import io.ktor.auth.*
-import io.ktor.features.*
 import io.ktor.http.*
-import io.ktor.jackson.*
-import io.ktor.metrics.micrometer.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.serialization.jackson.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.engine.*
+import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.callid.*
+import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -126,11 +130,11 @@ fun Application.baseSetup(
         allowNonSimpleContentTypes = true
         when (System.getenv("NAIS_CLUSTER_NAME")) {
             "prod-gcp" -> {
-                host("*.nav.no", schemes = listOf("https"))
+                allowHost("*.nav.no", schemes = listOf("https"))
             }
             "dev-gcp" -> {
-                host("*.nav.no", schemes = listOf("https"))
-                host("localhost:3000")
+                allowHost("*.nav.no", schemes = listOf("https"))
+                allowHost("localhost:3000")
             }
         }
     }
@@ -181,14 +185,17 @@ fun Application.baseSetup(
         mdc("path") { call ->
             call.request.path()
         }
+        mdc("preAuthorizedAppName") { call ->
+            call.principal<ProdusentPrincipal>()?.appName
+        }
         callIdMdc("x_correlation_id")
     }
 
     install(StatusPages) {
-        exception<JsonProcessingException> { ex ->
+        exception<JsonProcessingException> { call, ex ->
             ex.clearLocation()
 
-            log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
@@ -196,8 +203,8 @@ fun Application.baseSetup(
             )
         }
 
-        exception<RuntimeException> { ex ->
-            log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+        exception<RuntimeException> { call, ex ->
+            this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
@@ -205,8 +212,8 @@ fun Application.baseSetup(
             )
         }
 
-        exception<Throwable> { ex ->
-            log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+        exception<Throwable> { _, ex ->
+            this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             throw ex
         }
     }
@@ -248,7 +255,7 @@ fun Application.baseSetup(
             }
 
             get("metrics") {
-                withContext<Unit>(coroutineContext + metricsDispatcher) {
+                withContext(coroutineContext + metricsDispatcher) {
                     call.respond<String>(Metrics.meterRegistry.scrape())
                 }
             }

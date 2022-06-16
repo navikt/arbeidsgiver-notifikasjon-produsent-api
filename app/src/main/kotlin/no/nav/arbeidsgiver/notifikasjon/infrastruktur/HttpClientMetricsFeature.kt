@@ -2,8 +2,9 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.features.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
+import io.ktor.http.*
 import io.ktor.util.*
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tag
@@ -11,7 +12,7 @@ import io.micrometer.core.instrument.Timer
 
 
 /**
- * inspired by [io.ktor.metrics.micrometer.MicrometerMetrics], but for clients.
+ * inspired by [io.ktor.server.metrics.micrometer.MicrometerMetrics], but for clients.
  * this feature/plugin generates the following metrics:
  * (x = ktor.http.client, but can be overridden)
  *
@@ -54,7 +55,7 @@ class HttpClientMetricsFeature internal constructor(
      * Companion object for feature installation
      */
     @Suppress("EXPERIMENTAL_API_USAGE_FUTURE_ERROR")
-    companion object Feature : HttpClientFeature<Config, HttpClientMetricsFeature> {
+    companion object Feature : HttpClientPlugin<Config, HttpClientMetricsFeature> {
         private var clientName: String = "ktor.http.client"
 
         val requestTimeTimerName: String
@@ -73,17 +74,16 @@ class HttpClientMetricsFeature internal constructor(
                 HttpClientMetricsFeature(it.registry, it.clientName)
             }
 
-        override fun install(feature: HttpClientMetricsFeature, scope: HttpClient) {
-            clientName = feature.clientName
+        override fun install(plugin: HttpClientMetricsFeature, scope: HttpClient) {
+            clientName = plugin.clientName
 
-            scope.requestPipeline.intercept(HttpRequestPipeline.Phases.Before) {
-                feature.before(context)
-                proceed()
-            }
+            scope.plugin(HttpSend).intercept { context ->
+                plugin.before(context)
 
-            scope[HttpSend].intercept { call, context ->
-                feature.after(call, context)
-                call
+                val origin = execute(context)
+                plugin.after(origin, context)
+
+                origin
             }
         }
     }

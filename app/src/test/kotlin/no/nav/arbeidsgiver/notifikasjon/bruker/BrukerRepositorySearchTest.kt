@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -23,7 +23,7 @@ class BrukerRepositorySearchTest : DescribeSpec({
         repo.insertSak("7", "Sykemelding - Pål - 111222")
         repo.insertSak("8", "Litt rare symboler // \\x % _")
 
-        forAll<Pair<String, List<String>>>(
+        withData(
             "" to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
             " " to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
             "zzzzz" to listOf(),

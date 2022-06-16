@@ -3,13 +3,15 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.interfaces.Verification
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import io.ktor.auth.*
-import io.ktor.auth.jwt.*
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
-import io.ktor.client.features.json.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.routing.*
+import io.ktor.serialization.jackson.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import java.net.URL
@@ -25,15 +27,15 @@ data class ProdusentPrincipal(
 
 data class JWTAuthentication(
     val name: String,
-    val config:  JWTAuthenticationProvider.Configuration.() -> Unit,
+    val config:  JWTAuthenticationProvider.Config.() -> Unit,
 )
 
 object HttpAuthProviders {
     private val log = logger()
 
     private val httpClient = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer()
+        install(ContentNegotiation) {
+            jackson()
         }
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
@@ -152,13 +154,13 @@ object HttpAuthProviders {
         withClaim("acr", "Level4")
     }
 
-    private fun JWTAuthenticationProvider.Configuration.verifier(
+    private fun JWTAuthenticationProvider.Config.verifier(
         audience: String,
         discoveryUrl: String,
         additionalVerification: Verification.() -> Unit = {},
     ) {
         val metaData = runBlocking {
-            httpClient.get<AuthorizationServerMetaData>(discoveryUrl)
+            httpClient.get(discoveryUrl).body<AuthorizationServerMetaData>()
         }
         verifier(
             issuer = metaData.issuer,
@@ -168,7 +170,7 @@ object HttpAuthProviders {
         )
     }
 
-    private fun JWTAuthenticationProvider.Configuration.verifier(
+    private fun JWTAuthenticationProvider.Config.verifier(
         issuer: String,
         jwksUri: String,
         audience: String,
@@ -202,7 +204,7 @@ object HttpAuthProviders {
 
 
 
-fun Authentication.Configuration.configureProviders(providers: Iterable<JWTAuthentication>) {
+fun AuthenticationConfig.configureProviders(providers: Iterable<JWTAuthentication>) {
     for ((name, config) in providers) {
         jwt(name = name) {
             config()

@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
-import io.ktor.client.features.json.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.serialization.jackson.*
 
 interface Enhetsregisteret {
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -41,8 +42,8 @@ class EnhetsregisteretImpl(
     private val timer = Metrics.meterRegistry.timer("brreg_hent_organisasjon")
 
     private val httpClient = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer()
+        install(ContentNegotiation) {
+            jackson()
         }
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
@@ -62,13 +63,13 @@ class EnhetsregisteretImpl(
         }
         if (response.status.isSuccess()) {
             try {
-                response.receive()
+                response.body()
             } catch (e: Exception) {
                 log.warn("feil ved deserializing av response fra enhetsregisteret", e)
                 Enhetsregisteret.Underenhet(orgnr, "")
             }
         } else {
-            log.warn("kunne ikke finne navn for virksomhet. kall til brreg feilet: ${response.status} ${response.readText()}")
+            log.warn("kunne ikke finne navn for virksomhet. kall til brreg feilet: ${response.status} ${response.bodyAsText()}")
             Enhetsregisteret.Underenhet(orgnr, "")
         }
     }

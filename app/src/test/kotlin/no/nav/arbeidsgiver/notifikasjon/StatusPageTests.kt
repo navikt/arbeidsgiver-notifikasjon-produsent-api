@@ -9,7 +9,7 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.string.shouldNotContain
 import io.ktor.http.*
-import io.ktor.routing.*
+import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import io.mockk.spyk
 import io.mockk.verify
