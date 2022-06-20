@@ -14,24 +14,25 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.Altin
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 
-private val httpClient = HttpClient(Apache) {
-    install(ContentNegotiation) {
-        jackson()
-    }
-    install(PropagateFromMDCFeature) {
-        propagate("x_correlation_id")
-    }
-    install(HttpClientMetricsFeature) {
-        registry = Metrics.meterRegistry
-    }
-}
 
 class SuspendingAltinnClient(
-    private val blockingClient: AltinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(AltinnConfig.config, httpClient),
+    private val blockingClient: AltinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(AltinnConfig.config),
     private val observer: (AltinnReportee) -> Unit,
 ) {
 
     private val log = logger()
+
+    private val httpClient = HttpClient(Apache) {
+        install(ContentNegotiation) {
+            jackson()
+        }
+        install(PropagateFromMDCFeature) {
+            propagate("x_correlation_id")
+        }
+        install(HttpClientMetricsFeature) {
+            registry = Metrics.meterRegistry
+        }
+    }
 
     suspend fun hentOrganisasjoner(
         selvbetjeningToken: SelvbetjeningToken,
