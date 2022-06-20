@@ -113,7 +113,7 @@
         <dependency>
             <groupId>no.nav.arbeidsgiver</groupId>
             <artifactId>altinn-rettigheter-proxy-klient</artifactId>
-            <version>3.0.0-rc</version>
+            <version>3.0.0</version>
         </dependency>
 
         <!-- altinn-ws -->
