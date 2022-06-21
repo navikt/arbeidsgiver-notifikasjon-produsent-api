@@ -256,7 +256,7 @@ fun Application.baseSetup(
 
             get("metrics") {
                 withContext(coroutineContext + metricsDispatcher) {
-                    call.respond<String>(Metrics.meterRegistry.scrape())
+                    call.respondText(Metrics.meterRegistry.scrape())
                 }
             }
         }
