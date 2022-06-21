@@ -16,8 +16,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureServiceImpl
+import no.nav.tms.token.support.azure.exchange.AzureService
+import no.nav.tms.token.support.azure.exchange.AzureServiceBuilder
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
@@ -93,7 +93,7 @@ class AltinnVarselKlientImpl(
     altinnEndPoint: String = "http://altinn-varsel-firewall.fager/ServiceEngineExternal/NotificationAgencyExternalBasic.svc",
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
-    azureService: AzureService = AzureServiceImpl,
+    azureService: AzureService = AzureServiceBuilder.buildAzureService(),
     azureTargetApp: String = basedOnEnv(
         prod = { "prod-gcp.fager.altinn-varsel-firewall" },
         dev = { "dev-gcp.fager.altinn-varsel-firewall" },

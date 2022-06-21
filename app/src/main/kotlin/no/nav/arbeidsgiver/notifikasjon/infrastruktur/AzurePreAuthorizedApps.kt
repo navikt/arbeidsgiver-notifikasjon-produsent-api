@@ -1,8 +1,7 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 
 typealias AppName = String
 typealias ClientId = String
@@ -19,7 +18,9 @@ class AzurePreAuthorizedAppsImpl : AzurePreAuthorizedApps {
         val clientId: ClientId
     )
 
-    private val authorizedApps = laxObjectMapper.readValue<List<Elem>>(AzureEnv.preAuthorizedApps)
+    private val authorizedApps = laxObjectMapper.readValue<List<Elem>>(
+        System.getenv("AZURE_APP_PRE_AUTHORIZED_APPS")!!
+    )
 
     private val lookupTable: Map<ClientId, AppName> =
         authorizedApps.associate { Pair(it.clientId, it.name) }

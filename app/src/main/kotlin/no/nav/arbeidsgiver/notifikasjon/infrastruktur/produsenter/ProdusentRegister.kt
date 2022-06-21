@@ -5,7 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMot
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AppName
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AppName
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.util.*
 
