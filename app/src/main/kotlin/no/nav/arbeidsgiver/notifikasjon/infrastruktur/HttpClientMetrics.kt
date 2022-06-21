@@ -8,7 +8,10 @@ import io.ktor.http.*
 import io.ktor.util.*
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tag
+import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 
 /**
@@ -17,15 +20,12 @@ import io.micrometer.core.instrument.Timer
  * (x = ktor.http.client, but can be overridden)
  *
  * x.requests: a timer for measuring the time of each request. This metric provides a set of tags for monitoring request data, including http method, path, status
- *
+ * x.activeRequests: a gauge for the number of active requests
  */
-class HttpClientMetricsFeature internal constructor(
+class HttpClientMetrics internal constructor(
     private val registry: MeterRegistry,
     private val clientName: String,
 ) {
-    /**
-     * [HttpClientMetricsFeature] configuration that is used during installation
-     */
     class Config {
         var clientName: String = "ktor.http.client"
         lateinit var registry: MeterRegistry
@@ -33,11 +33,24 @@ class HttpClientMetricsFeature internal constructor(
         internal fun isRegistryInitialized() = this::registry.isInitialized
     }
 
+    private fun activeRequestsPerClientName() =
+        activeRequests.getOrPut(clientName) {
+            AtomicInteger(0).also { activeRequests ->
+                Metrics.meterRegistry.gauge(
+                    activeRequestsGaugeName,
+                    Tags.of(Tag.of("instance", "${hashCode()}")),
+                    activeRequests
+                )
+            }
+        }
+
     private fun before(context: HttpRequestBuilder) {
+        activeRequestsPerClientName()?.incrementAndGet()
         context.attributes.put(measureKey, ClientCallMeasure(Timer.start(registry), context.url.encodedPath))
     }
 
     private fun after(call: HttpClientCall, context: HttpRequestBuilder) {
+        activeRequestsPerClientName()?.decrementAndGet()
         val clientCallMeasure = call.attributes.getOrNull(measureKey)
         if (clientCallMeasure != null) {
             val builder = Timer.builder(requestTimeTimerName).tags(
@@ -51,30 +64,31 @@ class HttpClientMetricsFeature internal constructor(
         }
     }
 
-    /**
-     * Companion object for feature installation
-     */
-    @Suppress("EXPERIMENTAL_API_USAGE_FUTURE_ERROR")
-    companion object Feature : HttpClientPlugin<Config, HttpClientMetricsFeature> {
+    companion object Plugin : HttpClientPlugin<Config, HttpClientMetrics> {
         private var clientName: String = "ktor.http.client"
 
         val requestTimeTimerName: String
             get() = "$clientName.requests"
 
-        private val measureKey = AttributeKey<ClientCallMeasure>("HttpClientMetricsFeature")
-        override val key: AttributeKey<HttpClientMetricsFeature> = AttributeKey("HttpClientMetricsFeature")
+        val activeRequestsGaugeName : String
+            get() = "$clientName.activeRequests"
 
-        override fun prepare(block: Config.() -> Unit): HttpClientMetricsFeature =
+        val activeRequests = ConcurrentHashMap<String, AtomicInteger>()
+
+        private val measureKey = AttributeKey<ClientCallMeasure>("HttpClientMetricsFeature")
+        override val key: AttributeKey<HttpClientMetrics> = AttributeKey("HttpClientMetricsFeature")
+
+        override fun prepare(block: Config.() -> Unit): HttpClientMetrics =
             Config().apply(block).let {
                 if (!it.isRegistryInitialized()) {
                     throw IllegalArgumentException(
                         "Meter registry is missing. Please initialize the field 'registry'"
                     )
                 }
-                HttpClientMetricsFeature(it.registry, it.clientName)
+                HttpClientMetrics(it.registry, it.clientName)
             }
 
-        override fun install(plugin: HttpClientMetricsFeature, scope: HttpClient) {
+        override fun install(plugin: HttpClientMetrics, scope: HttpClient) {
             clientName = plugin.clientName
 
             scope.plugin(HttpSend).intercept { context ->

@@ -11,7 +11,7 @@ import io.ktor.http.content.*
 import io.ktor.serialization.jackson.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCFeature
 
@@ -23,7 +23,7 @@ object AzureClient {
         install(PropagateFromMDCFeature) {
             propagate("x_correlation_id")
         }
-        install(HttpClientMetricsFeature) {
+        install(HttpClientMetrics) {
             registry = Metrics.meterRegistry
         }
     }
