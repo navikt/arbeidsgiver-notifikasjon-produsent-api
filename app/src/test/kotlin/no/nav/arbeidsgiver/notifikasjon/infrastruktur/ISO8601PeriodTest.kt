@@ -1,8 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import java.time.LocalDateTime
@@ -25,7 +25,7 @@ class ISO8601PeriodTest : DescribeSpec({
     val examples = simpleExamples.map { it to it } + complexExamples
 
     describe("ISO8601Period parse and print roundtrip") {
-        withData(examples) { (input, expected) ->
+        forAll<Pair<String, String>>(examples) { (input, expected) ->
             it("$input ::parse -> ::toString is $expected") {
                 ISO8601Period.parse(input).toString() shouldBe expected
             }

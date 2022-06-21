@@ -1,33 +1,31 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
+import io.ktor.application.*
+import io.ktor.features.*
 import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.serialization.*
-import io.ktor.util.reflect.*
-import io.ktor.utils.io.*
-import io.ktor.utils.io.charsets.*
+import io.ktor.request.*
+import io.ktor.util.pipeline.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 
 
 class TimedContentConverter(private val base: ContentConverter) : ContentConverter {
-    private val deserializeTimer = Metrics.meterRegistry.timer("content.converter.receive")
-    private val serializeTimer = Metrics.meterRegistry.timer("content.converter.send")
+    private val receiveTimer = Metrics.meterRegistry.timer("content.converter.receive")
+    private val sendTimer = Metrics.meterRegistry.timer("content.converter.send")
 
-    override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: ByteReadChannel): Any? {
-        return deserializeTimer.coRecord {
-            base.deserialize(charset, typeInfo, content)
+    override suspend fun convertForReceive(context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>): Any? {
+        return receiveTimer.coRecord {
+            base.convertForReceive(context)
         }
     }
 
-    override suspend fun serialize(
+    override suspend fun convertForSend(
+        context: PipelineContext<Any, ApplicationCall>,
         contentType: ContentType,
-        charset: Charset,
-        typeInfo: TypeInfo,
-        value: Any
-    ): OutgoingContent? {
-        return serializeTimer.coRecord {
-            base.serialize(contentType, charset, typeInfo, value)
+        value: Any,
+    ): Any? {
+        return sendTimer.coRecord {
+            base.convertForSend(context, contentType, value)
         }
     }
 

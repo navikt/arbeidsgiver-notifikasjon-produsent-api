@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon
 
+import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
@@ -24,7 +24,7 @@ class CorrelationIdTests : DescribeSpec({
             val callid = "1234"
 
             context("with header name:") {
-                withData("callid", "CALLID", "call-id") { headerName ->
+                forAll("callid", "CALLID", "call-id") { headerName ->
                     val response = engine.get( "/internal/alive") {
                         addHeader(headerName, callid)
                     }

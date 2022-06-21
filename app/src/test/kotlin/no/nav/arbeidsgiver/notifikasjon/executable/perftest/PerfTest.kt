@@ -3,7 +3,6 @@
 package no.nav.arbeidsgiver.notifikasjon.executable.perftest
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -39,14 +38,11 @@ const val selvbetjeningToken =
     "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImZ5akpfczQwN1ZqdnRzT0NZcEItRy1IUTZpYzJUeDNmXy1JT3ZqVEFqLXcifQ.eyJleHAiOjE2MjQ0NTIwMTgsIm5iZiI6MTYyNDQ0ODQxOCwidmVyIjoiMS4wIiwiaXNzIjoiaHR0cHM6Ly9uYXZ0ZXN0YjJjLmIyY2xvZ2luLmNvbS9kMzhmMjVhYS1lYWI4LTRjNTAtOWYyOC1lYmY5MmMxMjU2ZjIvdjIuMC8iLCJzdWIiOiIxNjEyMDEwMTE4MSIsImF1ZCI6IjAwOTBiNmUxLWZmY2MtNGMzNy1iYzIxLTA0OWY3ZDFmMGZlNSIsImFjciI6IkxldmVsNCIsIm5vbmNlIjoiTDlCaVlsMlNYVGVVNm1zckpuZUFwN05DUk9qcFZKQ09QRVNZWk9fQ2IwcyIsImlhdCI6MTYyNDQ0ODQxOCwiYXV0aF90aW1lIjoxNjI0NDQ4NDE3LCJqdGkiOiJSQ3praU1fQmhaajZtRVFvTWk1YjBMV1d6Z3hlSTFWVzkzRExaZGctOUpnIiwiYXRfaGFzaCI6IlRVN24xNnBVVElRR0ZVdUgzdUE5a1EifQ.cVxMow7vGKi_w4jsxtr3XVDfz9i1uQw7fH6KdRSU4R8ahtONaGiiBstXw6Ega1PLJ2NPN1bb5p2Bi9BsdTiXxbtjLIquS1pHC3UgQOeEBx3YOdgfjiPOXWjXYqGciIBWbzjjKRvGkYysICPudrL0YDVMmsPIY90-KclQRbaoSPMnRosmwoF_VEK5PJ8EWpePTzDMwD-W2oR2yQ-0SaX8d4K8Rqzwrz-1aKU4hPVgBYxd4eLapdDS39xEU-l1v3j8zCXp67Vvmq6XJdat6H9IJ9_Ok7fU9E62zjbHliMETe3If53aS8-YXJevI0S1qxH4wROJud0d1595U5yqDFEhjA"
 
 val tokenDingsToken : String = runBlocking {
-    client.post("https://fakedings.dev-gcp.nais.io/fake/custom") {
+    client.post<HttpResponse>("https://fakedings.dev-gcp.nais.io/fake/custom") {
         contentType(FormUrlEncoded)
-        setBody(
-            "azp=dev-gcp:fager:notifikasjon-test-produsent\n" +
-                    "\n&aud=produsent-api"
-        )
-    }
-        .bodyAsText()
+        body = "azp=dev-gcp:fager:notifikasjon-test-produsent\n" +
+                "\n&aud=produsent-api"
+    }.readText()
 }
 
 suspend fun concurrentWithStats(
@@ -109,11 +105,13 @@ enum class Api(val url: String) {
 
 suspend fun hentNotifikasjoner(count: Int, api: Api = Api.BRUKER_GCP) {
     concurrentWithStats("hentNotifikasjoner", count) {
-        client.post(api.url) {
+        client.post<HttpResponse>(api.url) {
             headers {
                 append(HttpHeaders.ContentType, "application/json")
                 append(HttpHeaders.Authorization, "Bearer $selvbetjeningToken")
             }
+
+            //language=GraphQL
             val query = """
                     {
                          notifikasjoner {
@@ -126,13 +124,10 @@ suspend fun hentNotifikasjoner(count: Int, api: Api = Api.BRUKER_GCP) {
                          }
                      }
             """.trimIndent()
-            setBody(
-                """{
+            body = """{
                      "query": "$query"
                     }""".trimMarginAndNewline()
-            )
         }
-            .body<HttpResponse>()
     }
 }
 
@@ -151,13 +146,12 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
     concurrentWithStats("nyBeskjed", count) {
         val (tjenesteKode, tjenesteVersjon) = tjenester.next()
         val virksomhet = virksomhetsnummere.next()
-        client.post(api.url) {
+        client.post<HttpResponse>(api.url) {
             headers {
                 append(HttpHeaders.ContentType, "application/json")
                 append(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
             }
-            setBody(
-                """{
+            body = """{
                      "query": "mutation {
                           nyBeskjed(nyBeskjed: {
                               notifikasjon: {
@@ -187,9 +181,7 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
                           }
                      }"
                     }""".trimMarginAndNewline()
-            )
         }
-            .body<HttpResponse>()
     }
 }
 
@@ -209,13 +201,12 @@ suspend fun nySak(count: Int, api: Api = Api.PRODUSENT_GCP) {
     concurrentWithStats("nySak", count) {
         val (tjenesteKode, tjenesteVersjon) = tjenester.next()
         val virksomhet = virksomhetsnummere.next()
-        client.post(api.url) {
+        client.post<HttpResponse>(api.url) {
             headers {
                 append(HttpHeaders.ContentType, "application/json")
                 append(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
             }
-            setBody(
-                """{
+            body = """{
                      "query": "mutation {
                           nySak(
                               grupperingsid: \"${java.util.UUID.randomUUID()}\"
@@ -242,9 +233,7 @@ suspend fun nySak(count: Int, api: Api = Api.PRODUSENT_GCP) {
                           }
                      }"
                     }""".trimMarginAndNewline()
-            )
         }
-            .body<HttpResponse>()
     }
 }
 

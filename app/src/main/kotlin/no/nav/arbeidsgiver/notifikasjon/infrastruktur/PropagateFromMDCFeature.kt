@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import io.ktor.client.*
-import io.ktor.client.plugins.*
+import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.util.*
 import org.slf4j.MDC
@@ -60,7 +60,7 @@ class PropagateFromMDCFeature internal constructor(
      * Companion object for feature installation
      */
     @Suppress("EXPERIMENTAL_API_USAGE_FUTURE_ERROR")
-    companion object Feature : HttpClientPlugin<Config, PropagateFromMDCFeature> {
+    companion object Feature : HttpClientFeature<Config, PropagateFromMDCFeature> {
         override val key: AttributeKey<PropagateFromMDCFeature> = AttributeKey("PropagateFromMDCFeature")
 
         override fun prepare(block: Config.() -> Unit): PropagateFromMDCFeature {
@@ -68,9 +68,9 @@ class PropagateFromMDCFeature internal constructor(
             return PropagateFromMDCFeature(config.keysToPropagate)
         }
 
-        override fun install(plugin: PropagateFromMDCFeature, scope: HttpClient) {
+        override fun install(feature: PropagateFromMDCFeature, scope: HttpClient) {
             scope.requestPipeline.intercept(HttpRequestPipeline.Phases.State) {
-                plugin.keysToPropagate.forEach { keyToPropagate ->
+                feature.keysToPropagate.forEach { keyToPropagate ->
                     MDC.get(keyToPropagate.mdcKey)?.let { mdcValue ->
                         if (context.headers[keyToPropagate.headerKey] == null) {
                             context.headers.append(keyToPropagate.headerKey, mdcValue)

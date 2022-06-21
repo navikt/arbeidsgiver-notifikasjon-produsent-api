@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
@@ -21,7 +21,7 @@ class KafkaHendelsesstrømTests: DescribeSpec({
     val receivedHendelse = mutableSetOf<Hendelse>()
 
     describe("reading and writing from kafka") {
-        withData(EksempelHendelse.Alle) {
+        forAll<Hendelse>(EksempelHendelse.Alle) {
             kafkaProducer.send(it)
             sent.add(it.hendelseId)
         }

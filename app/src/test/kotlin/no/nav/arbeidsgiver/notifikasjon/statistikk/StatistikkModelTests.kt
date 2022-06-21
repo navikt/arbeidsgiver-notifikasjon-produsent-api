@@ -2,8 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.statistikk
 
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.throwables.shouldNotThrowAny
+import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFei
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -170,7 +171,7 @@ class StatistikkModelTests : DescribeSpec({
     }
 
     describe("Idempotent oppførsel") {
-        withData(EksempelHendelse.Alle) { hendelse ->
+        forAll<Hendelse>(EksempelHendelse.Alle) { hendelse ->
             val metadata = HendelseMetadata(now())
             it("håndterer ${hendelse::class.simpleName} med idempotens") {
                 model.oppdaterModellEtterHendelse(hendelse, metadata)

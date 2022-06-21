@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import io.kotest.core.datatest.forAll
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Åpningstider.nesteDagtidIkkeSøndag
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Åpningstider.nesteNksÅpningstid
@@ -19,7 +19,7 @@ class ÅpningstiderTests: DescribeSpec({
 
     describe("Åpningstider.erNksÅpningstid") {
         context("når tidspunkt er innenfor NKS åningstid") {
-            withData(
+            forAll(
                 tidspunkt("08:30", MONDAY),
                 tidspunkt("08:30", TUESDAY),
                 tidspunkt("08:30", WEDNESDAY),
@@ -39,7 +39,7 @@ class ÅpningstiderTests: DescribeSpec({
         }
 
         context("når tidspunkt ikke er innenfor NKS åningstid") {
-            withData(
+            forAll(
                 tidspunkt("08:29", MONDAY),
                 tidspunkt("08:29", TUESDAY),
                 tidspunkt("08:29", WEDNESDAY),
@@ -67,7 +67,7 @@ class ÅpningstiderTests: DescribeSpec({
 
     describe("LocalDateTime.erDagtidIkkeSøndag") {
         context("når tidspunkt er dagtid ikke søndag") {
-            withData(
+            forAll(
                 tidspunkt("09:00", MONDAY),
                 tidspunkt("09:00", TUESDAY),
                 tidspunkt("09:00", WEDNESDAY),
@@ -89,7 +89,7 @@ class ÅpningstiderTests: DescribeSpec({
         }
 
         context("når tidspunkt er noe annet enn dagtid ikke søndag") {
-            withData(
+            forAll(
                 tidspunkt("08:59", MONDAY),
                 tidspunkt("08:59", TUESDAY),
                 tidspunkt("08:59", WEDNESDAY),
@@ -117,7 +117,7 @@ class ÅpningstiderTests: DescribeSpec({
 
     describe("LocalDateTime.nesteNksÅpningstid") {
         context("finner neste nks åpningstid") {
-            withData(
+            forAll(
                 tidspunkt("08:29",  SATURDAY) to tidspunkt("09:29", MONDAY),
                 tidspunkt("08:29",  SUNDAY) to tidspunkt("09:29", MONDAY),
                 tidspunkt("08:29",  MONDAY) to tidspunkt("09:29", MONDAY),
@@ -141,7 +141,7 @@ class ÅpningstiderTests: DescribeSpec({
 
     describe("LocalDateTime.nesteDagtidIkkeSøndag") {
         context("finner neste dagtid ikke søndag") {
-            withData(
+            forAll(
                 tidspunkt("08:59", SATURDAY) to tidspunkt("09:59", SATURDAY),
                 tidspunkt("08:59", SUNDAY) to tidspunkt("09:59", MONDAY),
                 tidspunkt("08:59", MONDAY) to tidspunkt("09:59", MONDAY),

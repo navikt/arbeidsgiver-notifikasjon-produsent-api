@@ -4,7 +4,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
-import io.ktor.server.application.*
+import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
