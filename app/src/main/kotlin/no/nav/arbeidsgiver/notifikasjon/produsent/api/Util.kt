@@ -1,11 +1,16 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
+
+object Util {
+    val log = logger()
+}
 
 internal suspend inline fun hentSak(
     produsentRepository: ProdusentRepository,
@@ -61,6 +66,7 @@ internal inline fun tilgangsstyrMottaker(
     onError: (error: Error.UgyldigMottaker) -> Nothing
 ) {
     if (!produsent.kanSendeTil(mottaker)) {
+        Util.log.warn("Ugyldig mottaker. produsent={}", produsent.id)
         onError(
             Error.UgyldigMottaker(
                 """
@@ -77,6 +83,7 @@ internal inline fun hentProdusent(
     onMissing: (error: Error.UkjentProdusent) -> Nothing
 ): Produsent {
     if (context.produsent == null) {
+        Util.log.warn("Ukjent produsent '{}'", context.appName)
         onMissing(
             Error.UkjentProdusent(
                 "Finner ikke produsent med id ${context.appName}"
@@ -105,6 +112,7 @@ internal inline fun tilgangsstyrMerkelapp(
     onError: (error: Error.UgyldigMerkelapp) -> Nothing
 ) {
     if (!produsent.kanSendeTil(merkelapp)) {
+        Util.log.warn("Ugyldig merkelapp '{}' for produsent '{}'", merkelapp, produsent.id)
         onError(
             Error.UgyldigMerkelapp(
                 """
