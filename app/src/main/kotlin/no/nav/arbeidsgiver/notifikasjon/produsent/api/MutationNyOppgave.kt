@@ -126,6 +126,11 @@ internal class MutationNyOppgave(
                 )
             }
             else -> {
+                log.warn(
+                    "notifikasjon med angitt eksternId={} og merkelapp={} finnes fra før",
+                    domeneNyOppgave.eksternId,
+                    domeneNyOppgave.merkelapp
+                )
                 Error.DuplikatEksternIdOgMerkelapp(
                     "notifikasjon med angitt eksternId og merkelapp finnes fra før"
                 )
