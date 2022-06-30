@@ -40,6 +40,10 @@ spec:
           namespace: team-esyfo
           cluster: prod-gcp
 
+        - application: fritakagp
+          namespace: helsearbeidsgiver
+          cluster: prod-gcp
+
   azure:
     application:
       enabled: true
