@@ -7,6 +7,11 @@ metadata:
     team: fager
 spec:
   image: {{image}}
+  resources:
+    limits:
+      memory: 1Gi
+  replicas:
+    max: 10
   ingresses:
     - https://ag-notifikasjon-bruker-api.nav.no/
   liveness:
