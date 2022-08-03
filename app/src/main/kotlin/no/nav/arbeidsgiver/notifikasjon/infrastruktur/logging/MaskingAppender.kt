@@ -1,10 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging
 
 import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.classic.spi.IThrowableProxy
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.AppenderBase
 
-class MaskingAppender: AppenderBase<ILoggingEvent>() {
+class MaskingAppender : AppenderBase<ILoggingEvent>() {
 
     var appender: Appender<ILoggingEvent>? = null
 
@@ -13,6 +14,12 @@ class MaskingAppender: AppenderBase<ILoggingEvent>() {
             object : ILoggingEvent by event {
                 override fun getFormattedMessage(): String? =
                     mask(event.formattedMessage)
+
+                override fun getThrowableProxy(): IThrowableProxy =
+                    object : IThrowableProxy by event.throwableProxy {
+                        override fun getMessage(): String? =
+                            mask(event.throwableProxy.message)
+                    }
             }
         )
     }
