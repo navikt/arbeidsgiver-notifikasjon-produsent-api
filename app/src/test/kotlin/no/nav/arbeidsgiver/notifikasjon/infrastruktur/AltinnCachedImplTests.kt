@@ -12,50 +12,55 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 
 class AltinnCachedImplTests : DescribeSpec({
-    val klient = mockk<SuspendingAltinnClient>()
+    val def = ServicecodeDefinisjon("1", "1")
+    val fnr = "42"
+
+    fun mockKlient(): SuspendingAltinnClient {
+        val klient = mockk<SuspendingAltinnClient>()
+        coEvery {
+            klient.hentOrganisasjoner(
+                any(),
+                Subject(fnr),
+                ServiceCode(def.code),
+                ServiceEdition(def.version),
+                false
+            )
+        } returns listOf(
+            AltinnReportee(
+                name = "virksomhet1",
+                type = "Business",
+                organizationNumber = "1",
+                parentOrganizationNumber = null,
+                organizationForm = null,
+                status = null,
+                socialSecurityNumber = null
+            )
+        )
+        coEvery {
+            klient.hentOrganisasjoner(
+                any(),
+                Subject(fnr),
+                true
+            )
+        } returns listOf(
+            AltinnReportee(
+                name = "virksomhet2",
+                type = "Business",
+                organizationNumber = "2",
+                parentOrganizationNumber = null,
+                organizationForm = null,
+                status = null,
+                socialSecurityNumber = null
+            )
+        )
+        // TODO: legg til roller
+        return klient
+    }
+
     describe("AltinnCachedImpl#hentTilganger") {
-        val def = ServicecodeDefinisjon("1", "1")
-        val fnr = "42"
-        val virksomhet1 = AltinnReportee(
-            name = "virksomhet1",
-            type = "Business",
-            organizationNumber = "1",
-            parentOrganizationNumber = null,
-            organizationForm = null,
-            status = null,
-            socialSecurityNumber = null
-        )
-        val virksomhet2 = AltinnReportee(
-            name = "virksomhet2",
-            type = "Business",
-            organizationNumber = "2",
-            parentOrganizationNumber = null,
-            organizationForm = null,
-            status = null,
-            socialSecurityNumber = null
-        )
-        beforeContainer {
-            clearMocks(klient)
-            coEvery {
-                klient.hentOrganisasjoner(
-                    any(),
-                    Subject(fnr),
-                    ServiceCode(def.code),
-                    ServiceEdition(def.version),
-                    false
-                )
-            } returns listOf(virksomhet1)
-            coEvery {
-                klient.hentOrganisasjoner(
-                    any(),
-                    Subject(fnr),
-                    true
-                )
-            } returns listOf(virksomhet2)
-            // TODO: legg til roller
-        }
 
         context("når cache er disabled") {
+            val klient = mockKlient()
             val cachedAltinn = AltinnCachedImpl(
                 klient = klient,
                 maxCacheSize = 0,
@@ -87,6 +92,7 @@ class AltinnCachedImplTests : DescribeSpec({
         }
 
         context("når cache er enablet") {
+            val klient = mockKlient()
             val cachedAltinn = AltinnCachedImpl(klient = klient)
 
             val tilganger = cachedAltinn.hentTilganger(fnr, "token", listOf(def), listOf())
