@@ -20,8 +20,6 @@ fun TestConfiguration.testDatabase(config: Database.Config): Database =
         .also { listener(PostgresTestListener(it)) }
 
 class PostgresTestListener(private val database: Database): TestListener {
-    override val name: String
-        get() = "PostgresTestListener"
 
     override suspend fun beforeContainer(testCase: TestCase) {
         database.withFlyway {
