@@ -1,9 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import com.github.benmanes.caffeine.cache.AsyncCache
+import com.github.benmanes.caffeine.cache.Caffeine
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.supervisorScope
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
@@ -12,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger.Companion.flatten
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
+import java.time.Duration
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AltinnRolle(
@@ -32,8 +35,14 @@ class AltinnImpl(
     private val klient: SuspendingAltinnClient,
 ) : Altinn {
     private val log = logger()
-
     private val timer = Metrics.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
+    private val maxCacheSize : Long = 10_000
+    private val cacheExpiry = Duration.ofMinutes(10)
+
+    private val cache = Caffeine.newBuilder()
+        .expireAfterWrite(cacheExpiry)
+        .maximumSize(maxCacheSize)
+        .buildAsync<TilgangerCacheKey, Tilganger>()
 
     override suspend fun hentTilganger(
         fnr: String,
@@ -42,23 +51,17 @@ class AltinnImpl(
         roller: Iterable<AltinnRolle>,
     ): Tilganger =
         timer.coRecord {
-            coroutineScope {
+            cache.getAsync(TilgangerCacheKey(fnr, selvbetjeningsToken, tjenester, roller)) {
                 val tjenesteTilganger = tjenester.map {
                     val (code, version) = it
-                    async {
-                        hentTilganger(fnr, code, version, selvbetjeningsToken)
-                    }
+                    hentTilganger(fnr, code, version, selvbetjeningsToken)
                 }
                 val rolleTilganger = roller.map {
                     val (RoleDefinitionId, RoleDefinitionCode) = it
-                    async {
-                        hentTilgangerForRolle(RoleDefinitionId, RoleDefinitionCode, selvbetjeningsToken)
-                    }
+                    hentTilgangerForRolle(RoleDefinitionId, RoleDefinitionCode, selvbetjeningsToken)
                 }
-                val reporteeTilganger = async {
-                    hentTilganger(fnr, selvbetjeningsToken)
-                }
-                return@coroutineScope tjenesteTilganger.awaitAll().flatten() + reporteeTilganger.await() + rolleTilganger.awaitAll().flatten()
+                val reporteeTilganger = hentTilganger(fnr, selvbetjeningsToken)
+                tjenesteTilganger.flatten() + reporteeTilganger + rolleTilganger.flatten()
             }
         }
 
@@ -137,4 +140,19 @@ class AltinnImpl(
             }
         )
     }
+}
+
+internal data class TilgangerCacheKey(
+    val fnr: String,
+    val selvbetjeningsToken: String,
+    val tjenester: Iterable<ServicecodeDefinisjon>,
+    val roller: Iterable<AltinnRolle>,
+)
+
+private suspend fun <K : Any, V : Any> AsyncCache<K, V>.getAsync(key: K, loader: suspend (K) -> V) = supervisorScope {
+    get(key) { key, _ ->
+        future {
+            loader(key)
+        }
+    }.await()
 }
