@@ -3,9 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
@@ -36,50 +34,25 @@ class AltinnCachedImplTests : DescribeSpec({
             status = null,
             socialSecurityNumber = null
         )
-        coEvery {
-            klient.hentOrganisasjoner(
-                any(),
-                Subject(fnr),
-                ServiceCode(def.code),
-                ServiceEdition(def.version),
-                false
-            )
-        } returns listOf(virksomhet1)
-        coEvery {
-            klient.hentOrganisasjoner(
-                any(),
-                Subject(fnr),
-                true
-            )
-        } returns listOf(virksomhet2)
-        // TODO: legg til roller
-
-        context("når cache er enablet") {
-            val cachedAltinn = AltinnCachedImpl(klient = klient)
-
-            val tilganger = cachedAltinn.hentTilganger(fnr, "token", listOf(def), listOf())
-            it("returnerer tilganger") {
-                tilganger.tjenestetilganger + tilganger.reportee + tilganger.rolle shouldContainExactlyInAnyOrder listOf(
-                    BrukerModel.Tilgang.Altinn("1", def.code, def.version),
-                    BrukerModel.Tilgang.AltinnReportee(fnr = fnr, virksomhet = "2")
+        beforeContainer {
+            clearMocks(klient)
+            coEvery {
+                klient.hentOrganisasjoner(
+                    any(),
+                    Subject(fnr),
+                    ServiceCode(def.code),
+                    ServiceEdition(def.version),
+                    false
                 )
-            }
-
-            val tilganger2 = cachedAltinn.hentTilganger(fnr, "token", listOf(def), listOf())
-            it("returnerer samme tilganger for samme kall") {
-                tilganger shouldBe tilganger2
-            }
-            it("altinn klient ble kun invokert for første kall (cache hit)") {
-                coVerify(exactly = 1) {
-                    klient.hentOrganisasjoner(
-                        any(),
-                        Subject(fnr),
-                        ServiceCode(def.code),
-                        ServiceEdition(def.version),
-                        false
-                    )
-                }
-            }
+            } returns listOf(virksomhet1)
+            coEvery {
+                klient.hentOrganisasjoner(
+                    any(),
+                    Subject(fnr),
+                    true
+                )
+            } returns listOf(virksomhet2)
+            // TODO: legg til roller
         }
 
         context("når cache er disabled") {
@@ -102,6 +75,34 @@ class AltinnCachedImplTests : DescribeSpec({
             }
             it("altinn klient ble invokert for hvert kall til tjenesten (cache miss)") {
                 coVerify(exactly = 2) {
+                    klient.hentOrganisasjoner(
+                        any(),
+                        Subject(fnr),
+                        ServiceCode(def.code),
+                        ServiceEdition(def.version),
+                        false
+                    )
+                }
+            }
+        }
+
+        context("når cache er enablet") {
+            val cachedAltinn = AltinnCachedImpl(klient = klient)
+
+            val tilganger = cachedAltinn.hentTilganger(fnr, "token", listOf(def), listOf())
+            it("returnerer tilganger") {
+                tilganger.tjenestetilganger + tilganger.reportee + tilganger.rolle shouldContainExactlyInAnyOrder listOf(
+                    BrukerModel.Tilgang.Altinn("1", def.code, def.version),
+                    BrukerModel.Tilgang.AltinnReportee(fnr = fnr, virksomhet = "2")
+                )
+            }
+
+            val tilganger2 = cachedAltinn.hentTilganger(fnr, "token", listOf(def), listOf())
+            it("returnerer samme tilganger for samme kall") {
+                tilganger shouldBe tilganger2
+            }
+            it("altinn klient ble kun invokert for første kall (cache hit)") {
+                coVerify(exactly = 1) {
                     klient.hentOrganisasjoner(
                         any(),
                         Subject(fnr),
