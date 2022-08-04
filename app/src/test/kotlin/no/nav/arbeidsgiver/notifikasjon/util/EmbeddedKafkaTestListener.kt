@@ -27,9 +27,6 @@ interface EmbeddedKafka {
 class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
     private val env: KafkaEnvironment = KafkaEnvironment(topicNames = listOf(NOTIFIKASJON_TOPIC))
 
-    override val name: String
-        get() = "EmbeddedKafkaListener"
-
     override suspend fun beforeSpec(spec: Spec) {
         env.start()
         while (env.serverPark.brokerStatus !is KafkaEnvironment.BrokerStatus.Available) {
