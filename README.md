@@ -28,7 +28,7 @@ Scale ned replicaset:
 `kubectl scale --replicas=0 deployment/notifikasjon-statistikk`
 deploy ny app:
 - med migrering som nullstiller database til ønsket tidspunkt eller helt.
-- med ny consumer-group-id postfix eller MigrationOps som setter bestemt offset.
+- med ny consumer-group-id postfix eller set offset vha [nais aiven cli](#koble-direkte-til-en-topic-på-aiven) 
 
 ## Koble direkte til DEV databaser
 

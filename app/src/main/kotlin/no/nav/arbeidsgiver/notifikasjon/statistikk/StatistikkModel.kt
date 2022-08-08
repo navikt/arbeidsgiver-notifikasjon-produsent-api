@@ -181,6 +181,32 @@ class StatistikkModel(
         )
     }
 
+    suspend fun antallUnikeVarselTekster(): List<MultiGauge.Row<Number>> {
+        return database.nonTransactionalExecuteQuery(
+            """
+                select 
+                    produsent_id,
+                    merkelapp,
+                    mottaker,
+                    varsel_type,
+                    count(distinct checksum) as antall_unike_tekster
+                from varsel_bestilling
+                group by (produsent_id, merkelapp, mottaker, varsel_type)
+            """,
+            transform = {
+                MultiGauge.Row.of(
+                    Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
+                        "merkelapp", this.getString("merkelapp"),
+                        "mottaker", this.getString("mottaker"),
+                        "varsel_type", this.getString("varsel_type")
+                    ),
+                    this.getInt("antall_unike_tekster")
+                )
+            }
+        )
+    }
+
     suspend fun antallNotifikasjoner(): List<MultiGauge.Row<Number>> {
         return database.nonTransactionalExecuteQuery(
             """
@@ -227,7 +253,7 @@ class StatistikkModel(
             """
                 select 
                     notifikasjon.produsent_id, 
-                    merkelapp, 
+                    notifikasjon.merkelapp, 
                     varsel_type, 
                     coalesce(status, 'bestilt') as status, 
                     coalesce(feilkode, '') as feilkode,
@@ -235,7 +261,7 @@ class StatistikkModel(
                 from varsel_bestilling as bestilling
                          inner join notifikasjon on bestilling.notifikasjon_id = notifikasjon.notifikasjon_id
                          left outer join varsel_resultat as resultat on resultat.varsel_id = bestilling.varsel_id
-                group by (notifikasjon.produsent_id, merkelapp, varsel_type, status, feilkode)
+                group by (notifikasjon.produsent_id, notifikasjon.merkelapp, varsel_type, status, feilkode)
             """,
             transform = {
                 MultiGauge.Row.of(
@@ -275,6 +301,7 @@ class StatistikkModel(
                 oppdaterVarselBestilling(
                     notifikasjonId = hendelse.notifikasjonId,
                     produsentId = hendelse.produsentId,
+                    merkelapp = hendelse.merkelapp,
                     iterable = hendelse.eksterneVarsler
                 )
             }
@@ -306,6 +333,7 @@ class StatistikkModel(
                 oppdaterVarselBestilling(
                     notifikasjonId = hendelse.notifikasjonId,
                     produsentId = hendelse.produsentId,
+                    merkelapp = hendelse.merkelapp,
                     iterable = hendelse.eksterneVarsler
                 )
             }
@@ -419,14 +447,15 @@ class StatistikkModel(
     private suspend fun oppdaterVarselBestilling(
         notifikasjonId: UUID,
         produsentId: String,
+        merkelapp: String,
         iterable: List<EksterntVarsel>,
     ) {
         database.nonTransactionalExecuteBatch(
             """
             insert into varsel_bestilling 
-                (varsel_id, varsel_type, notifikasjon_id, produsent_id, mottaker)
+                (varsel_id, varsel_type, notifikasjon_id, produsent_id, merkelapp, mottaker, checksum)
             values
-                (?, ?, ?, ?, ?)
+                (?, ?, ?, ?, ?, ?, ?)
             on conflict do nothing;
             """,
             iterable
@@ -437,14 +466,18 @@ class StatistikkModel(
                     string("epost_kontaktinfo")
                     uuid(notifikasjonId)
                     string(produsentId)
+                    string(merkelapp)
                     string(eksterntVarsel.epostAddr)
+                    string((eksterntVarsel.tittel + eksterntVarsel.htmlBody).toHash())
                 }
                 is SmsVarselKontaktinfo -> {
                     uuid(eksterntVarsel.varselId)
                     string("sms_kontaktinfo")
                     uuid(notifikasjonId)
                     string(produsentId)
+                    string(merkelapp)
                     string(eksterntVarsel.tlfnr)
+                    string(eksterntVarsel.smsTekst.toHash())
                 }
             }
         }

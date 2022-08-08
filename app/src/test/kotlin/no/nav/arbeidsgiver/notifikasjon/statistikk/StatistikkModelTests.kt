@@ -52,7 +52,7 @@ class StatistikkModelTests : DescribeSpec({
             varselId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac000003"),
             tlfnr = "foo@bar.baz",
             fnrEllerOrgnr = "1234567789",
-            smsTekst = "tjobing!",
+            smsTekst = "sjalabais!",
             sendevindu = NKS_ÅPNINGSTID,
             sendeTidspunkt = null,
         )
@@ -125,6 +125,9 @@ class StatistikkModelTests : DescribeSpec({
             val antallUtførteGauge = MultiGauge.builder("antall_utforte")
                 .description("Antall utførte (med histogram)")
                 .register(meterRegistry)
+            val antallUnikeVarselTekster = MultiGauge.builder("antall_unike_varseltekster")
+                .description("Antall unike varseltekster")
+                .register(meterRegistry)
 
             model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(epostFeilet, HendelseMetadata(now()))
@@ -148,6 +151,17 @@ class StatistikkModelTests : DescribeSpec({
                 antallUtførteGauge.register(model.antallUtførteHistogram(), true)
                 val utførteOgKlikketPaa = meterRegistry.get("antall_utforte").tag("klikket_paa", "t").gauge().value()
                 utførteOgKlikketPaa shouldBe 1
+            }
+
+
+            it("antall unike varsler registreres") {
+                val rows = model.antallUnikeVarselTekster()
+                antallUnikeVarselTekster.register(rows, true)
+
+                val unikeEpostVarseltekster = meterRegistry.get("antall_unike_varseltekster").tag("varsel_type", "epost_kontaktinfo").gauge().value()
+                val unikeSmsVarseltekster = meterRegistry.get("antall_unike_varseltekster").tag("varsel_type", "sms_kontaktinfo").gauge().value()
+                unikeEpostVarseltekster shouldBe 1
+                unikeSmsVarseltekster shouldBe 2
             }
         }
 
