@@ -164,14 +164,13 @@ class AltinnCachedImpl(
         tjenester: Iterable<ServicecodeDefinisjon>,
         roller: Iterable<AltinnRolle>
     ): Tilganger =
-        cache.getAsync(TilgangerCacheKey(fnr, selvbetjeningsToken, tjenester, roller)) { cacheKey ->
-            altinnImpl.hentTilganger(cacheKey.fnr, cacheKey.selvbetjeningsToken, cacheKey.tjenester, cacheKey.roller)
+        cache.getAsync(TilgangerCacheKey(fnr, tjenester, roller)) { cacheKey ->
+            altinnImpl.hentTilganger(cacheKey.fnr, selvbetjeningsToken, cacheKey.tjenester, cacheKey.roller)
         }
 }
 
 internal data class TilgangerCacheKey(
     val fnr: String,
-    val selvbetjeningsToken: String,
     val tjenester: Iterable<ServicecodeDefinisjon>,
     val roller: Iterable<AltinnRolle>,
 )
