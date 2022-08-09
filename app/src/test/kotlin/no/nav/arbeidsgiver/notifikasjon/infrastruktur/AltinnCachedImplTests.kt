@@ -53,7 +53,6 @@ class AltinnCachedImplTests : DescribeSpec({
                 socialSecurityNumber = null
             )
         )
-        // TODO: legg til roller
         return klient
     }
 
