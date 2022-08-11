@@ -8,14 +8,8 @@ import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
@@ -23,8 +17,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
 
 
@@ -62,7 +54,7 @@ object Bruker {
         suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
             observer = virksomhetsinfoService::altinnObserver
         ),
-        altinn: Altinn = AltinnImpl(suspendingAltinnClient),
+        altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {

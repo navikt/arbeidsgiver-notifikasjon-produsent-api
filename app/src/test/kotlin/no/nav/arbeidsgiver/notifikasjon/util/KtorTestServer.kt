@@ -81,8 +81,6 @@ class KtorTestListener(
     private val engine: TestApplicationEngine,
     private val init: Application.() -> Unit
 ) : TestListener {
-    override val name: String
-        get() = this::class.simpleName!!
 
     override suspend fun beforeSpec(spec: Spec) {
         engine.start()

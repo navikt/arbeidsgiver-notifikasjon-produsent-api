@@ -5,7 +5,7 @@ import ch.qos.logback.classic.spi.IThrowableProxy
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.AppenderBase
 
-class MaskingAppender : AppenderBase<ILoggingEvent>() {
+class MaskingAppender: AppenderBase<ILoggingEvent>() {
 
     var appender: Appender<ILoggingEvent>? = null
 
@@ -15,11 +15,16 @@ class MaskingAppender : AppenderBase<ILoggingEvent>() {
                 override fun getFormattedMessage(): String? =
                     mask(event.formattedMessage)
 
-                override fun getThrowableProxy(): IThrowableProxy =
-                    object : IThrowableProxy by event.throwableProxy {
+                override fun getThrowableProxy(): IThrowableProxy? {
+                    if (event.throwableProxy == null) {
+                        return null
+                    }
+                    return object : IThrowableProxy by event.throwableProxy {
                         override fun getMessage(): String? =
                             mask(event.throwableProxy.message)
                     }
+                }
+
             }
         )
     }

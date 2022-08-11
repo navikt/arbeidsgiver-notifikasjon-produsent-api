@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 
-@Suppress("HttpUrlsUsage")
 class AltinnImplTests : DescribeSpec({
     val klient = mockk<SuspendingAltinnClient>()
     val altinn = AltinnImpl(klient)
