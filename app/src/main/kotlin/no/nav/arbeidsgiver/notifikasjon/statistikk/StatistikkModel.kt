@@ -186,10 +186,10 @@ class StatistikkModel(
             """
                 select 
                     produsent_id,
-                    merkelapp,
+                    coalesce(merkelapp, '?') as merkelapp,
                     mottaker,
                     varsel_type,
-                    count(distinct checksum) as antall_unike_tekster
+                    count(distinct coalesce(checksum, '?')) as antall_unike_tekster
                 from varsel_bestilling
                 group by (produsent_id, merkelapp, mottaker, varsel_type)
             """,
