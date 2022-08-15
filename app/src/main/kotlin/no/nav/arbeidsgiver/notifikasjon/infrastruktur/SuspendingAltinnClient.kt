@@ -9,7 +9,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
@@ -73,20 +72,10 @@ class SuspendingAltinnClient(
     private suspend fun <T> withErrorHandler(body: suspend () -> List<T>): List<T>? =
         try {
             body()
-        } catch (error: AltinnException) {
-            when (error.proxyError.httpStatus) {
-                400, 403 -> listOf()
-                else -> null.also {
-                    logException(error)
-                }
-            }
         } catch (error: Exception) {
-            if (error.message?.contains("403") == true)
-                listOf()
-            else
-                null.also {
-                    logException(error)
-                }
+            null.also {
+                logException(error)
+            }
         }
 
     suspend fun hentReportees(
