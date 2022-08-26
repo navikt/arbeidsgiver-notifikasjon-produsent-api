@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
@@ -9,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
@@ -109,6 +111,7 @@ val Hendelse.typeNavn: String get() = when (this) {
     is SoftDelete -> "SoftDelete"
     is HardDelete -> "HardDelete"
     is OppgaveUtført -> "OppgaveUtført"
+    is OppgaveUtgått -> "OppgaveUtgått"
     is BrukerKlikket -> "BrukerKlikket"
     is BeskjedOpprettet -> "BeskjedOpprettet"
     is OppgaveOpprettet -> "OppgaveOpprettet"

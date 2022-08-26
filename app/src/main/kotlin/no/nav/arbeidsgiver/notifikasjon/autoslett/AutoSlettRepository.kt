@@ -83,6 +83,15 @@ class AutoSlettRepository(
                 )
             }
 
+            is HendelseModel.OppgaveUtgått -> {
+                upsert(
+                    aggregateId = hendelse.aggregateId,
+                    hardDelete = hendelse.hardDelete,
+                    opprettetTidspunkt = timestamp.atOffset(ZoneOffset.UTC),
+                    eksisterende = hent(hendelse.aggregateId),
+                )
+            }
+
             is HendelseModel.NyStatusSak -> {
                 upsert(
                     aggregateId = hendelse.aggregateId,

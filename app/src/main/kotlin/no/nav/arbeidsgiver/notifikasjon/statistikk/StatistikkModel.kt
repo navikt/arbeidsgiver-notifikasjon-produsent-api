@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.statistikk
 
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.Tags
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
@@ -19,6 +20,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
@@ -342,6 +344,18 @@ class StatistikkModel(
                     """
                     update notifikasjon 
                         set utfoert_tidspunkt = ?
+                        where notifikasjon_id = ?
+                    """
+                ) {
+                    timestamp_utc(metadata.timestamp)
+                    uuid(hendelse.notifikasjonId)
+                }
+            }
+            is OppgaveUtgått -> { //TODO: Utvide tabell med kolonne utgått tidspunkt
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    update notifikasjon 
+                        set utgaatt_tidspunkt = ?
                         where notifikasjon_id = ?
                     """
                 ) {

@@ -20,6 +20,8 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
@@ -370,6 +372,7 @@ class BrukerRepositoryImpl(
             is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
+            is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
             is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
             is EksterntVarselFeilet -> Unit
@@ -406,6 +409,19 @@ class BrukerRepositoryImpl(
             uuid(utførtHendelse.notifikasjonId)
         }
     }
+
+    private suspend fun oppdaterModellEtterOppgaveUtgått(utførtHendelse: OppgaveUtgått) {
+        database.nonTransactionalExecuteUpdate(
+            """
+            UPDATE notifikasjon
+            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}'
+            WHERE id = ?
+        """
+        ) {
+            uuid(utførtHendelse.notifikasjonId)
+        }
+    }
+
 
     private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: BrukerKlikket) {
         database.nonTransactionalExecuteUpdate(
