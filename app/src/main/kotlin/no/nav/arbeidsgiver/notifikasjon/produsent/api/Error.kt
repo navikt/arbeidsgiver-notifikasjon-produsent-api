@@ -98,5 +98,11 @@ internal sealed class Error {
         MutationNyStatusSak.NyStatusSakResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat
+
+    @JsonTypeName("OppgavenErAlleredeUtfoert")
+    data class OppgavenErAlleredeUtfoert(
+        override val feilmelding: String,
+    ):  Error(),
+        MutationOppgaveUtgaatt.OppgaveUtgaattResultat
 }
 
