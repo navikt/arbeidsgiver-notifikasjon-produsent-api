@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import java.time.OffsetDateTime
 import java.util.*
 
 internal class MutationOppgaveUtgaatt(
@@ -97,7 +98,8 @@ internal class MutationOppgaveUtgaatt(
             virksomhetsnummer = notifikasjon.virksomhetsnummer,
             produsentId = produsent.id,
             kildeAppNavn = context.appName,
-            hardDelete = hardDelete?.tilDomene()
+            hardDelete = hardDelete?.tilDomene(),
+            utgaattTidspunt = OffsetDateTime.now(),
         )
 
         hendelseDispatcher.send(utgåttHendelse)

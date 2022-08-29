@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
@@ -179,6 +180,37 @@ class StatistikkModelTests : DescribeSpec({
                 shouldNotThrowAny {
                     model.oppdaterModellEtterHendelse(softdelete, HendelseMetadata(now()))
                 }
+            }
+        }
+
+        context("OppgaveUtført nulstiller utgaatt_tidspunkt") {
+            val oppgaveUtgått = HendelseModel.OppgaveUtgått(
+                virksomhetsnummer = bestilling.virksomhetsnummer,
+                notifikasjonId = bestilling.notifikasjonId,
+                hendelseId = UUID.randomUUID(),
+                produsentId = bestilling.produsentId,
+                kildeAppNavn = bestilling.kildeAppNavn,
+                hardDelete = null,
+                utgaattTidspunt = OffsetDateTime.now(),
+            )
+
+            model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))
+            model.oppdaterModellEtterHendelse(oppgaveUtgått, HendelseMetadata(now()))
+
+            it("utgått oppgave er ikke med i histogram for utførte") {
+               model.antallUtførteHistogram() shouldHaveSize 0
+            }
+            it("utgått oppgave er registrert i databasen") {
+                model.antallUtgåtteOppgaver() shouldHaveSize 1
+            }
+
+            model.oppdaterModellEtterHendelse(oppgaveUtført, HendelseMetadata(now()))
+
+            it("utført oppgave er nå med i histogram for utførte") {
+                model.antallUtførteHistogram() shouldHaveSize 1
+            }
+            it("utgått oppgave er nullstilt i databasen") {
+                model.antallUtgåtteOppgaver() shouldHaveSize 0
             }
         }
     }
