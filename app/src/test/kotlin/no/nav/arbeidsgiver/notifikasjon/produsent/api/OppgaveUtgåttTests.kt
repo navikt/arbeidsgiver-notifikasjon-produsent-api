@@ -230,14 +230,7 @@ class OppgaveUtgåttTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    oppgaveUtgaatt(
-                        id: "$uuid", 
-                        hardDelete: {
-                            nyTid: {
-                                den: "2019-10-13T07:20:50.52"
-                            }
-                            strategi: OVERSKRIV
-                        }) {
+                    oppgaveUtgaatt(id: "$uuid") {
                         __typename
                         ... on OppgaveUtgaattVellykket {
                             id
@@ -461,6 +454,53 @@ class OppgaveUtgåttTests : DescribeSpec({
 
             it("returnerer feilmelding") {
                 response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtgaattByEksternId")
+            }
+        }
+
+        context("Oppgave er allerede utført") {
+            val oppgaveOpprettet = OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottakere = listOf(mottaker),
+                hendelseId = uuid,
+                notifikasjonId = uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
+                hardDelete = null,
+            )
+            val oppgaveUtført = HendelseModel.OppgaveUtført(
+                virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,
+                notifikasjonId = oppgaveOpprettet.notifikasjonId,
+                hendelseId = UUID.fromString("113e3360-1911-4955-bc22-88ccca397211"),
+                produsentId = oppgaveOpprettet.produsentId,
+                kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
+                hardDelete = null,
+            )
+
+            produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
+            produsentModel.oppdaterModellEtterHendelse(oppgaveUtført)
+
+            val response = engine.produsentApi(
+                """
+                mutation {
+                    oppgaveUtgaattByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
+                        __typename
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+                """.trimIndent()
+            )
+
+            it("returnerer feilmelding") {
+                response.getTypedContent<Error.OppgavenErAlleredeUtfoert>("oppgaveUtgaattByEksternId")
             }
         }
     }

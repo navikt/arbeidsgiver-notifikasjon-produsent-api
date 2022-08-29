@@ -87,6 +87,10 @@ internal class MutationOppgaveUtgaatt(
 
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
+        if (notifikasjon.tilstand == ProdusentModel.Oppgave.Tilstand.UTFOERT) {
+            return Error.OppgavenErAlleredeUtfoert("Oppgaven er allerede utført")
+        }
+
         val utgåttHendelse = OppgaveUtgått(
             hendelseId = UUID.randomUUID(),
             notifikasjonId = notifikasjon.id,
