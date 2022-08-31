@@ -55,6 +55,7 @@ type Oppgave {
     tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
+    utgaattTidspunkt: ISO8601DateTime
     id: ID!
     virksomhet: Virksomhet!
 }
@@ -62,6 +63,7 @@ type Oppgave {
 enum OppgaveTilstand {
     NY
     UTFOERT
+    UTGAATT
 }
 
 type Beskjed {

@@ -41,6 +41,11 @@ enum OppgaveTilstand {
     En oppgave som allerede er utført.
     """
     UTFOERT
+
+    """
+    En oppgave hvor frist har utgått.
+    """
+    UTGAATT
 }
 
 """
