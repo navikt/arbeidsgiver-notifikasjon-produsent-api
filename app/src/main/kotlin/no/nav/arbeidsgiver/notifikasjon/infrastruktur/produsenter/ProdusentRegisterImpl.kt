@@ -43,6 +43,7 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         "Mentor",
         "Sommerjobb",
         "Arbeidstrening",
+        "Inkluderingstilskudd",
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
@@ -54,6 +55,7 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
         ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
         ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
+        ServicecodeDefinisjon(code = "5212", version = "1", description = "Inkluderingstilskudd'"),
     )
 )
 
