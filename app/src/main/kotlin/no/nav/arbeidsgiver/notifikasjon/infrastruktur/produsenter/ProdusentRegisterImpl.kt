@@ -53,9 +53,10 @@ val ARBEIDSGIVER_TILTAK = Produsent(
             description = "Arbeidstrening"
         ),
         ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
-        ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
-        ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
-        ServicecodeDefinisjon(code = "5212", version = "1", description = "Inkluderingstilskudd'"),
+        ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd"),
+        ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb"),
+        ServicecodeDefinisjon(code = "5516", version = "4", description = "Mentor"),
+        ServicecodeDefinisjon(code = "5516", version = "5", description = "Inkluderingstilskudd"),
     )
 )
 
