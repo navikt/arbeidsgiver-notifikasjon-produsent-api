@@ -99,7 +99,7 @@ internal class MutationOppgaveUtgaatt(
             produsentId = produsent.id,
             kildeAppNavn = context.appName,
             hardDelete = hardDelete?.tilDomene(),
-            utgaattTidspunt = OffsetDateTime.now(),
+            utgaattTidspunkt = OffsetDateTime.now(),
         )
 
         hendelseDispatcher.send(utgåttHendelse)

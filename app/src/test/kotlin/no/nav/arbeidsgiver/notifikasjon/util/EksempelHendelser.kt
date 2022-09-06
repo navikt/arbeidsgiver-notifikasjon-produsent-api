@@ -295,6 +295,18 @@ object EksempelHendelse {
             strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
         )
     )
+    val OppgaveUtgått = HendelseModel.OppgaveUtgått(
+        virksomhetsnummer = "1",
+        notifikasjonId = uuid("1"),
+        hendelseId = hendelseId.next(),
+        produsentId = "1",
+        kildeAppNavn = "1",
+        utgaattTidspunkt = OffsetDateTime.now(),
+        hardDelete = HendelseModel.HardDeleteUpdate(
+            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+        )
+    )
     val SoftDelete = HendelseModel.SoftDelete(
         virksomhetsnummer = "1",
         aggregateId = uuid("1"),
@@ -394,6 +406,7 @@ object EksempelHendelse {
         OppgaveOpprettet_2_Mottakere,
         OppgaveOpprettet_3_Mottakere,
         OppgaveUtført,
+        OppgaveUtgått,
         SoftDelete,
         HardDelete,
         BrukerKlikket,

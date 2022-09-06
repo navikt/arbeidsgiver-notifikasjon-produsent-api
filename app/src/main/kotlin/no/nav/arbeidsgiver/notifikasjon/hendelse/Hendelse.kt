@@ -306,7 +306,7 @@ object HendelseModel {
         override val produsentId: String,
         override val kildeAppNavn: String,
         val hardDelete: HardDeleteUpdate?,
-        val utgaattTidspunt: OffsetDateTime,
+        val utgaattTidspunkt: OffsetDateTime,
     ) : Hendelse(), Notifikasjon {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId

@@ -191,7 +191,7 @@ class StatistikkModelTests : DescribeSpec({
                 produsentId = bestilling.produsentId,
                 kildeAppNavn = bestilling.kildeAppNavn,
                 hardDelete = null,
-                utgaattTidspunt = OffsetDateTime.now(),
+                utgaattTidspunkt = OffsetDateTime.now(),
             )
 
             model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))
