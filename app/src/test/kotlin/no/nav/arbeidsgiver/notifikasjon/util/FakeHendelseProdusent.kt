@@ -4,7 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import java.util.*
 
-class StubbedHendelseProdusent: HendelseProdusent {
+class FakeHendelseProdusent: HendelseProdusent {
     val hendelser = mutableListOf<HendelseModel.Hendelse>()
 
     inline fun <reified T> hendelserOfType() = hendelser.filterIsInstance<T>()
@@ -17,5 +17,9 @@ class StubbedHendelseProdusent: HendelseProdusent {
         hendelser.removeIf {
             it.hendelseId == key
         }
+    }
+
+    fun clear() {
+        hendelser.clear()
     }
 }
