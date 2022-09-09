@@ -2,10 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime

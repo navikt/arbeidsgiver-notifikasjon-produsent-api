@@ -24,7 +24,7 @@ object ProdusentModel {
         val mottakere: List<Mottaker>,
         val opprettetTidspunkt: OffsetDateTime,
     ) {
-        fun statusoppdateringIkkeRegistrert() =
+        fun statusoppdateringRegistrert() =
             statusoppdateringer.any { it.idempotencyKey.startsWith(IdempotenceKey.initial()) }
     }
 

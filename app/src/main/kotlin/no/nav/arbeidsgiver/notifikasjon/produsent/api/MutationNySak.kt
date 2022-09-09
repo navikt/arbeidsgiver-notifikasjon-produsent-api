@@ -102,11 +102,11 @@ internal class MutationNySak(
                 )
             }
             nySak.erDuplikatAv(eksisterende) -> {
-                if (eksisterende.statusoppdateringIkkeRegistrert()) {
+                if (eksisterende.statusoppdateringRegistrert()) {
+                    log.info("duplisert opprettelse av sak med id ${eksisterende.id}")
+                } else {
                     log.info("statusoppdatering ikke registrert for duplisert opprettelse av sak med id ${eksisterende.id}")
                     hendelseDispatcher.send(statusoppdateringHendelse.copy(sakId = eksisterende.id))
-                } else {
-                    log.info("duplisert opprettelse av sak med id ${eksisterende.id}")
                 }
 
                 NySakVellykket(
