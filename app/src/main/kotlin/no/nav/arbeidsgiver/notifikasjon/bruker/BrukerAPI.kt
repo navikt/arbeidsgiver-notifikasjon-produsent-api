@@ -57,18 +57,21 @@ object BrukerAPI {
             val lenke: String,
             val tilstand: Tilstand,
             val opprettetTidspunkt: OffsetDateTime,
+            val utgaattTidspunkt: OffsetDateTime?,
             val id: UUID,
             val brukerKlikk: BrukerKlikk,
             override val virksomhet: Virksomhet,
         ) : Notifikasjon(), WithVirksomhet {
             enum class Tilstand {
                 NY,
-                UTFOERT;
+                UTFOERT,
+                UTGAATT;
 
                 companion object {
                     fun BrukerModel.Oppgave.Tilstand.tilBrukerAPI(): Tilstand = when (this) {
                         BrukerModel.Oppgave.Tilstand.NY -> NY
                         BrukerModel.Oppgave.Tilstand.UTFOERT -> UTFOERT
+                        BrukerModel.Oppgave.Tilstand.UTGAATT -> UTGAATT
                     }
                 }
             }
@@ -233,6 +236,7 @@ object BrukerAPI {
                                 lenke = notifikasjon.lenke,
                                 tilstand = notifikasjon.tilstand.tilBrukerAPI(),
                                 opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                utgaattTidspunkt = notifikasjon.utgaattTidspunkt,
                                 id = notifikasjon.id,
                                 virksomhet = Virksomhet(
                                     virksomhetsnummer = notifikasjon.virksomhetsnummer,

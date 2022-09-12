@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
@@ -278,6 +279,28 @@ class StatistikkModel(
         )
     }
 
+    suspend fun antallUtgåtteOppgaver(): List<MultiGauge.Row<Number>> {
+        return database.nonTransactionalExecuteQuery(
+            """
+                select produsent_id, merkelapp, mottaker, notifikasjon_type, count(*) as antall
+                from notifikasjon
+                where utgaatt_tidspunkt is not null
+                group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
+            """,
+            transform = {
+                MultiGauge.Row.of(
+                    Tags.of(
+                        "produsent_id", this.getString("produsent_id"),
+                        "merkelapp", this.getString("merkelapp"),
+                        "mottaker", this.getString("mottaker"),
+                        "notifikasjon_type", this.getString("notifikasjon_type")
+                    ),
+                    this.getInt("antall")
+                )
+            }
+        )
+    }
+
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         val ignore : Any = when (hendelse) {
@@ -341,7 +364,20 @@ class StatistikkModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                     update notifikasjon 
-                        set utfoert_tidspunkt = ?
+                        set utfoert_tidspunkt = ?,
+                            utgaatt_tidspunkt = null
+                        where notifikasjon_id = ?
+                    """
+                ) {
+                    timestamp_utc(metadata.timestamp)
+                    uuid(hendelse.notifikasjonId)
+                }
+            }
+            is OppgaveUtgått -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    update notifikasjon 
+                        set utgaatt_tidspunkt = ?
                         where notifikasjon_id = ?
                     """
                 ) {

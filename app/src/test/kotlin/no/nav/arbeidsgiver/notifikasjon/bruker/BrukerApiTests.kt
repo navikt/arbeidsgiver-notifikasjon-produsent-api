@@ -44,6 +44,7 @@ class BrukerApiTests : DescribeSpec({
                 eksternId = "",
                 virksomhetsnummer = "43",
                 opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
+                utgaattTidspunkt = null,
                 id = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130005"),
                 klikketPaa = false
             )

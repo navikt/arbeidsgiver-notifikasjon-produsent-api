@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
@@ -13,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
@@ -44,6 +46,7 @@ class EksternVarslingRepository(
                  */
             }
             is OppgaveUtført -> Unit
+            is OppgaveUtgått -> Unit
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit

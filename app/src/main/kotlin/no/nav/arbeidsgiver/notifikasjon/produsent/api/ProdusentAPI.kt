@@ -46,6 +46,7 @@ object ProdusentAPI {
                 MutationNyBeskjed(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNyOppgave(hendelseDispatcher, produsentRepository).wire(this)
                 MutationOppgaveUtfoert(hendelseDispatcher, produsentRepository).wire(this)
+                MutationOppgaveUtgaatt(hendelseDispatcher, produsentRepository).wire(this)
                 MutationSoftDeleteSak(hendelseDispatcher, produsentRepository).wire(this)
                 MutationSoftDeleteNotifikasjon(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNySak(hendelseDispatcher, produsentRepository).wire(this)

@@ -298,6 +298,20 @@ object HendelseModel {
         }
     }
 
+    @JsonTypeName("OppgaveUtgaatt")
+    data class OppgaveUtgått(
+        override val virksomhetsnummer: String,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val hardDelete: HardDeleteUpdate?,
+        val utgaattTidspunkt: OffsetDateTime,
+    ) : Hendelse(), Notifikasjon {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
+
     @JsonTypeName("OppgaveUtfoert")
     data class OppgaveUtført(
         override val virksomhetsnummer: String,

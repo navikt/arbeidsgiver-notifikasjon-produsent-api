@@ -41,6 +41,11 @@ enum OppgaveTilstand {
     En oppgave som allerede er utført.
     """
     UTFOERT
+
+    """
+    En oppgave hvor frist har utgått.
+    """
+    UTGAATT
 }
 
 """
@@ -459,6 +464,42 @@ type Mutation {
         hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
 
+    """
+    Marker en oppgave (identifisert ved id) som utgått.
+    """
+    oppgaveUtgaatt(
+        """
+        ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
+        """
+        id: ID!
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
+    ): OppgaveUtgaattResultat!
+
+
+    """
+    Marker en oppgave (identifisert ved ekstern id) som utgått.
+    """
+    oppgaveUtgaattByEksternId(
+        """
+        Merkelapp som oppgaven er registrert med.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+        """
+        eksternId: String!
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
+    ): OppgaveUtgaattResultat!
+
 
     """
     Markerer en notifikasjon som slettet (soft delete).
@@ -599,6 +640,8 @@ type Mutation {
         """
         grupperingsid: String!
     ): HardDeleteSakResultat!
+
+
 }
 
 union SoftDeleteNotifikasjonResultat =
@@ -649,6 +692,19 @@ union HardDeleteSakResultat =
 type HardDeleteSakVellykket {
     """
     ID-en til saken du "hard-delete"-et.
+    """
+    id: ID!
+}
+union OppgaveUtgaattResultat =
+    | OppgaveUtgaattVellykket
+    | UgyldigMerkelapp
+    | OppgavenErAlleredeUtfoert
+    | NotifikasjonFinnesIkke
+    | UkjentProdusent
+
+type OppgaveUtgaattVellykket {
+    """
+    ID-en til oppgaven du oppdaterte.
     """
     id: ID!
 }
@@ -1034,6 +1090,13 @@ type UgyldigMottaker implements Error {
 Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.
 """
 type UkjentProdusent implements Error {
+    feilmelding: String!
+}
+
+"""
+Denne feilen returneres dersom du forsøker å gå fra utført til utgått.
+"""
+type OppgavenErAlleredeUtfoert implements Error {
     feilmelding: String!
 }
 

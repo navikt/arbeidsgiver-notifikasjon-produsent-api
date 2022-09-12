@@ -84,6 +84,7 @@ object ProdusentModel {
         enum class Tilstand {
             NY,
             UTFOERT,
+            UTGAATT,
         }
 
         override fun erDuplikatAv(other: Notifikasjon): Boolean {

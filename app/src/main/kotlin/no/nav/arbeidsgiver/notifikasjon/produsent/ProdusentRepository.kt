@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import java.time.OffsetDateTime
@@ -221,7 +222,8 @@ class ProdusentRepositoryImpl(
             is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
-            is OppgaveUtført -> oppdatertModellEtterOppgaveUtført(hendelse)
+            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
+            is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is BrukerKlikket -> /* Ignorer */ Unit
             is SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
@@ -335,11 +337,23 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdatertModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført) {
+    private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført) {
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
+            WHERE id = ?
+        """
+        ) {
+            uuid(utførtHendelse.notifikasjonId)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterOppgaveUtgått(utførtHendelse: OppgaveUtgått) {
+        database.nonTransactionalExecuteUpdate(
+            """
+            UPDATE notifikasjon
+            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}'
             WHERE id = ?
         """
         ) {

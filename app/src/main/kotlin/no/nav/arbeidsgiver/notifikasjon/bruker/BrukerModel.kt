@@ -49,6 +49,7 @@ object BrukerModel {
         val eksternId: String,
         override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
+        val utgaattTidspunkt: OffsetDateTime?,
         override val id: UUID,
         val klikketPaa: Boolean,
         val tilstand: Tilstand,
@@ -57,7 +58,8 @@ object BrukerModel {
         /* leses fra database */
         enum class Tilstand {
             NY,
-            UTFOERT
+            UTFOERT,
+            UTGAATT
         }
     }
 
