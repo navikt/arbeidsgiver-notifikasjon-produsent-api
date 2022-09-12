@@ -70,6 +70,8 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
     * [Oppgave](#oppgave)
     * [OppgaveData](#oppgavedata)
     * [OppgaveUtfoertVellykket](#oppgaveutfoertvellykket)
+    * [OppgaveUtgaattVellykket](#oppgaveutgaattvellykket)
+    * [OppgavenErAlleredeUtfoert](#oppgaveneralleredeutfoert)
     * [PageInfo](#pageinfo)
     * [SakFinnesIkke](#sakfinnesikke)
     * [SoftDeleteNotifikasjonVellykket](#softdeletenotifikasjonvellykket)
@@ -126,6 +128,7 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
     * [NySakResultat](#nysakresultat)
     * [NyStatusSakResultat](#nystatussakresultat)
     * [OppgaveUtfoertResultat](#oppgaveutfoertresultat)
+    * [OppgaveUtgaattResultat](#oppgaveutgaattresultat)
     * [SoftDeleteNotifikasjonResultat](#softdeletenotifikasjonresultat)
     * [SoftDeleteSakResultat](#softdeletesakresultat)
 
@@ -558,6 +561,69 @@ Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
 <td>
 
 Marker en oppgave (identifisert ved ekstern id) som utført.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">merkelapp</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Merkelapp som oppgaven er registrert med.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">eksternId</td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">hardDelete</td>
+<td valign="top"><a href="#harddeleteupdateinput">HardDeleteUpdateInput</a></td>
+<td>
+
+Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>oppgaveUtgaatt</strong></td>
+<td valign="top"><a href="#oppgaveutgaattresultat">OppgaveUtgaattResultat</a>!</td>
+<td>
+
+Marker en oppgave (identifisert ved id) som utgått.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">id</td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td>
+
+ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">hardDelete</td>
+<td valign="top"><a href="#harddeleteupdateinput">HardDeleteUpdateInput</a></td>
+<td>
+
+Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>oppgaveUtgaattByEksternId</strong></td>
+<td valign="top"><a href="#oppgaveutgaattresultat">OppgaveUtgaattResultat</a>!</td>
+<td>
+
+Marker en oppgave (identifisert ved ekstern id) som utgått.
 
 </td>
 </tr>
@@ -1526,6 +1592,52 @@ Lenken som brukeren føres til hvis de klikker på beskjeden.
 ID-en til oppgaven du oppdaterte.
 
 </td>
+</tr>
+</tbody>
+</table>
+
+#### OppgaveUtgaattVellykket
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>id</strong></td>
+<td valign="top"><a href="#id">ID</a>!</td>
+<td>
+
+ID-en til oppgaven du oppdaterte.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### OppgavenErAlleredeUtfoert
+
+Denne feilen returneres dersom du forsøker å gå fra utført til utgått.
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>feilmelding</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -2500,6 +2612,14 @@ En oppgave som allerede er utført.
 
 </td>
 </tr>
+<tr>
+<td valign="top"><strong>UTGAATT</strong></td>
+<td>
+
+En oppgave hvor frist har utgått.
+
+</td>
+</tr>
 </tbody>
 </table>
 
@@ -2921,6 +3041,41 @@ merkelappen.</td>
 <tr>
 <td valign="top"><strong><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong></td>
 <td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#notifikasjonfinnesikke">NotifikasjonFinnesIkke</a></strong></td>
+<td valign="top">Denne feilen returneres dersom du prøver å referere til en notifikasjon
+som ikke eksisterer.
+
+Utover at dere kan ha oppgitt feil informasjon, så kan det potensielt være på grunn
+av "eventual consistency" i systemet vårt.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
+</tbody>
+</table>
+
+#### OppgaveUtgaattResultat
+
+<table>
+<thead>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong><a href="#oppgaveutgaattvellykket">OppgaveUtgaattVellykket</a></strong></td>
+<td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong></td>
+<td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#oppgaveneralleredeutfoert">OppgavenErAlleredeUtfoert</a></strong></td>
+<td valign="top">Denne feilen returneres dersom du forsøker å gå fra utført til utgått.</td>
 </tr>
 <tr>
 <td valign="top"><strong><a href="#notifikasjonfinnesikke">NotifikasjonFinnesIkke</a></strong></td>
