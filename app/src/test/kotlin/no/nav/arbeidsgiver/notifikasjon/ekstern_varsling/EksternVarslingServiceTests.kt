@@ -15,7 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
-import no.nav.arbeidsgiver.notifikasjon.util.StubbedHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDateTime
@@ -27,7 +27,7 @@ import kotlin.time.ExperimentalTime
 class EksternVarslingServiceTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
-    val hendelseProdusent = StubbedHendelseProdusent()
+    val hendelseProdusent = FakeHendelseProdusent()
     val meldingSendt = AtomicBoolean(false)
 
     val service = EksternVarslingService(

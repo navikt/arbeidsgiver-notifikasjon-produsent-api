@@ -3,11 +3,10 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
-import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.bruker.*
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -110,6 +109,20 @@ class BrukerModelTests : DescribeSpec({
                     id = uuid,
                     klikketPaa = false
                 )
+            }
+        }
+
+        context("prodfeil: statusoppdatering på sak som ikke finnes") {
+            /**
+             * underliggende årsak diskuteres her:
+             * https://github.com/navikt/arbeidsgiver-notifikasjon-produsent-api/pull/306
+             */
+            queryModel.oppdaterModellEtterHendelse(EksempelHendelse.NyStatusSak)
+
+            it("oppdaterModellEtterHendelse feiler ikke") {
+                shouldNotThrowAny {
+                    queryModel.oppdaterModellEtterHendelse(event)
+                }
             }
         }
     }
