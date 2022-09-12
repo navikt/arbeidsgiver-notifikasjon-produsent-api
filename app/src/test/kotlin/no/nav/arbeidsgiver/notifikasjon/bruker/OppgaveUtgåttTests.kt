@@ -8,7 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 
-class OppgaveUtførtTests : DescribeSpec({
+class OppgaveUtgåttTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
 
