@@ -15,12 +15,12 @@ data class PropagatedKey(
 
 infix fun String.asHeader(that: String): PropagatedKey = PropagatedKey(mdcKey = this, headerKey = that)
 
-class PropagateFromMDCFeature internal constructor(
+class PropagateFromMDCPlugin internal constructor(
     val keysToPropagate: List<PropagatedKey>
 ) {
 
     /**
-     * [PropagateFromMDCFeature] configuration that is used during installation
+     * [PropagateFromMDCPlugin] configuration that is used during installation
      */
     class Config {
         /**
@@ -59,16 +59,15 @@ class PropagateFromMDCFeature internal constructor(
     /**
      * Companion object for feature installation
      */
-    @Suppress("EXPERIMENTAL_API_USAGE_FUTURE_ERROR")
-    companion object Feature : HttpClientPlugin<Config, PropagateFromMDCFeature> {
-        override val key: AttributeKey<PropagateFromMDCFeature> = AttributeKey("PropagateFromMDCFeature")
+    companion object Plugin : HttpClientPlugin<Config, PropagateFromMDCPlugin> {
+        override val key: AttributeKey<PropagateFromMDCPlugin> = AttributeKey("PropagateFromMDCPlugin")
 
-        override fun prepare(block: Config.() -> Unit): PropagateFromMDCFeature {
+        override fun prepare(block: Config.() -> Unit): PropagateFromMDCPlugin {
             val config = Config().apply(block)
-            return PropagateFromMDCFeature(config.keysToPropagate)
+            return PropagateFromMDCPlugin(config.keysToPropagate)
         }
 
-        override fun install(plugin: PropagateFromMDCFeature, scope: HttpClient) {
+        override fun install(plugin: PropagateFromMDCPlugin, scope: HttpClient) {
             scope.requestPipeline.intercept(HttpRequestPipeline.Phases.State) {
                 plugin.keysToPropagate.forEach { keyToPropagate ->
                     MDC.get(keyToPropagate.mdcKey)?.let { mdcValue ->

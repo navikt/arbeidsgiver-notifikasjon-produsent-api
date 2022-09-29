@@ -11,8 +11,8 @@ import io.ktor.utils.io.*
 import org.slf4j.MDC
 
 
-class PropagateFromMDCFeatureTests : DescribeSpec({
-    describe("PropagateFromMDCFeature") {
+class PropagateFromMDCPluginTests : DescribeSpec({
+    describe("PropagateFromMDCPlugin") {
         val mdcKey = "foo"
         val mdcValue = "42"
         val mockEngine = MockEngine { request ->
@@ -23,7 +23,7 @@ class PropagateFromMDCFeatureTests : DescribeSpec({
             )
         }
         val httpClient = HttpClient(mockEngine) {
-            install(PropagateFromMDCFeature) {
+            install(PropagateFromMDCPlugin) {
                 propagate(mdcKey)
             }
         }
@@ -49,7 +49,7 @@ class PropagateFromMDCFeatureTests : DescribeSpec({
 
         context("når mdc key propageres som annen header key") {
             val client = HttpClient(mockEngine) {
-                install(PropagateFromMDCFeature) {
+                install(PropagateFromMDCPlugin) {
                     propagate(mdcKey asHeader "foolias")
                 }
             }
@@ -63,7 +63,7 @@ class PropagateFromMDCFeatureTests : DescribeSpec({
 
         context("når mdc key propageres som mdc key og annen header key") {
             val client = HttpClient(mockEngine) {
-                install(PropagateFromMDCFeature) {
+                install(PropagateFromMDCPlugin) {
                     propagate(mdcKey)
                     propagate(mdcKey asHeader "foolias")
                 }

@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
 
 class VirksomhetsinfoServiceTests: DescribeSpec({
     val enhetsregisteret = object: Enhetsregisteret {
@@ -46,6 +47,7 @@ class VirksomhetsinfoServiceTests: DescribeSpec({
     val altinn = SuspendingAltinnClient(
         blockingClient = altinnrettigheteterProxyKlient,
         observer = virksomhetsinfoService::altinnObserver,
+        tokenXClient = TokenXClientStub(),
     )
 
     describe("automatisk caching av virksomhetsnavn fra altinn-kall") {

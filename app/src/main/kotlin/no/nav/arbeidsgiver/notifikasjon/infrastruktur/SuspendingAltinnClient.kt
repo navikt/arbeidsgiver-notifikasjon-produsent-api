@@ -11,39 +11,49 @@ import io.ktor.serialization.jackson.*
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXPlugin
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 
 
 class SuspendingAltinnClient(
     private val blockingClient: AltinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(AltinnConfig.config),
     private val observer: (AltinnReportee) -> Unit,
+    private val tokenXClient: TokenXClient = TokenXClientImpl(),
 ) {
 
     private val log = logger()
+    private val altinnProxyAudience = "${NaisEnvironment.clusterName}:arbeidsgiver:altinn-rettigheter-proxy"
 
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
             jackson()
         }
-        install(PropagateFromMDCFeature) {
+        install(PropagateFromMDCPlugin) {
             propagate("x_correlation_id")
         }
         install(HttpClientMetricsFeature) {
             registry = Metrics.meterRegistry
         }
+        install(TokenXPlugin) {
+            audience = altinnProxyAudience
+            tokenXClient = this@SuspendingAltinnClient.tokenXClient
+        }
     }
 
     suspend fun hentOrganisasjoner(
-        selvbetjeningToken: SelvbetjeningToken,
+        selvbetjeningToken: Token,
         subject: Subject,
         serviceCode: ServiceCode,
         serviceEdition: ServiceEdition,
         filtrerPåAktiveOrganisasjoner: Boolean
     ): List<AltinnReportee>? =
         withErrorHandler {
+            val accessToken = tokenXClient.exchange(selvbetjeningToken.value, altinnProxyAudience)
             blockingIO {
                 blockingClient.hentOrganisasjoner(
-                    selvbetjeningToken,
+                    TokenXToken(accessToken),
                     subject,
                     serviceCode,
                     serviceEdition,
@@ -54,14 +64,15 @@ class SuspendingAltinnClient(
             ?.onEach(observer)
 
     suspend fun hentOrganisasjoner(
-        selvbetjeningToken: SelvbetjeningToken,
+        selvbetjeningToken: Token,
         subject: Subject,
         filtrerPåAktiveOrganisasjoner: Boolean
     ): List<AltinnReportee>? =
         withErrorHandler {
+            val accessToken = tokenXClient.exchange(selvbetjeningToken.value, altinnProxyAudience)
             blockingIO {
                 blockingClient.hentOrganisasjoner(
-                    selvbetjeningToken,
+                    TokenXToken(accessToken),
                     subject,
                     filtrerPåAktiveOrganisasjoner
                 )
