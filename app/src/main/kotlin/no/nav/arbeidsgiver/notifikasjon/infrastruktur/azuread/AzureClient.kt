@@ -13,14 +13,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCFeature
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCPlugin
 
 object AzureClient {
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
             jackson()
         }
-        install(PropagateFromMDCFeature) {
+        install(PropagateFromMDCPlugin) {
             propagate("x_correlation_id")
         }
         install(HttpClientMetricsFeature) {

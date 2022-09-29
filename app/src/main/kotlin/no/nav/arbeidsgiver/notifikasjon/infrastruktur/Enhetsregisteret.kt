@@ -45,7 +45,7 @@ class EnhetsregisteretImpl(
         install(ContentNegotiation) {
             jackson()
         }
-        install(PropagateFromMDCFeature) {
+        install(PropagateFromMDCPlugin) {
             propagate("x_correlation_id")
         }
         install(HttpClientMetricsFeature) {
