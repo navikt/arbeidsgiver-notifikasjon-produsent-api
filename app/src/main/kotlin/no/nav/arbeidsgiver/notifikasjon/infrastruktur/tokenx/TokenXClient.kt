@@ -23,7 +23,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -41,11 +40,10 @@ interface TokenXClient {
     suspend fun exchange(subjectToken: String, audience: String): String
 }
 
-private const val cacheExpiryMarginSeconds = 5L
-
 /**
  * lånt med modifikasjon fra https://github.com/navikt/tokendings-latency-tester/tree/master/src/main/kotlin/no/nav
  */
+@OptIn(ExperimentalTime::class)
 class TokenXClientImpl(
     private val httpClient: HttpClient = defaultHttpClient(),
     private val config: TokenXConfig = TokenXConfig(),
@@ -54,7 +52,6 @@ class TokenXClientImpl(
     private val algorithm: JWSAlgorithm = JWSAlgorithm.RS256
     private val jwsHeader: JWSHeader
 
-    @OptIn(ExperimentalTime::class)
     private val tokenCache = caffeineBuilder<String, AccessToken> {
         maximumSize = 5_000L
 
@@ -110,7 +107,6 @@ class TokenXClientImpl(
             .access_token
 
 
-    @OptIn(ExperimentalTime::class)
     private val clientAssertionCache = caffeineBuilder<Unit, String> {
         maximumSize = 1
         expireAfterWrite = 30.seconds
