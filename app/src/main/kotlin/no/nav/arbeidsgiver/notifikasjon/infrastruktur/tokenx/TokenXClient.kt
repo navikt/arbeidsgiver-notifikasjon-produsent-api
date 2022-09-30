@@ -89,7 +89,7 @@ class TokenXClientImpl(
     }
 
     override suspend fun exchange(subjectToken: String, audience: String): String =
-        tokenCache.get(subjectToken) {
+        tokenCache.get("$audience $subjectToken") {
             val assertion = makeClientAssertion()
 
             val accessTokenResponse = httpClient.post(config.tokenEndpoint) {
