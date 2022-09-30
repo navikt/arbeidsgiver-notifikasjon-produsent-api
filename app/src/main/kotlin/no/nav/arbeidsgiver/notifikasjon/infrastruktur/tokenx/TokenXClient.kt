@@ -54,27 +54,27 @@ class TokenXClientImpl(
     private val algorithm: JWSAlgorithm = JWSAlgorithm.RS256
     private val jwsHeader: JWSHeader
 
+    @OptIn(ExperimentalTime::class)
     private val tokenCache = caffeineBuilder<String, AccessToken> {
         maximumSize = 5_000L
 
         expireAfter = (object : Expiry<String, AccessToken> {
-            override fun expireAfterCreate(key: String, response: AccessToken, currentTime: Long): Long {
-                return TimeUnit.SECONDS.toNanos(response.expires_in - cacheExpiryMarginSeconds)
-            }
+            override fun expireAfterCreate(key: String, response: AccessToken, currentTime: Long) =
+                (response.expires_in.seconds - 5.seconds).inWholeNanoseconds
 
             override fun expireAfterUpdate(
                 key: String,
                 value: AccessToken,
                 currentTime: Long,
                 currentDuration: Long
-            ): Long = currentDuration
+            ) = currentDuration
 
             override fun expireAfterRead(
                 key: String,
                 value: AccessToken,
                 currentTime: Long,
                 currentDuration: Long
-            ): Long = currentDuration
+            ) = currentDuration
         })
     }
         .build()
