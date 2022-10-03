@@ -20,6 +20,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.Parameters
 import io.ktor.serialization.jackson.jackson
+import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -52,6 +53,11 @@ class TokenXClientImpl(
     private val jwsHeader: JWSHeader
     private val log = logger()
 
+    private val successCounter = Counter.builder("tokenx.success")
+        .register(Metrics.meterRegistry)
+    private val failCounter = Counter.builder("tokenx.fail")
+        .register(Metrics.meterRegistry)
+
     init {
         val privateKey = config.privateKey
         jwsSigner = RSASSASigner(privateKey)
@@ -63,26 +69,29 @@ class TokenXClientImpl(
 
     override suspend fun exchange(subjectToken: String, audience: String): String {
         try {
+            val assertion = makeClientAssertion()
 
-        val assertion = makeClientAssertion()
-
-        return httpClient.post(config.tokenEndpoint) {
-            accept(ContentType.Application.Json)
-            setBody(FormDataContent(
-                Parameters.build {
-                    append("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
-                    append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
-                    append("client_assertion", assertion)
-                    append("subject_token_type", "urn:ietf:params:oauth:token-type:jwt")
-                    append("subject_token", subjectToken)
-                    append("audience", audience)
+            return httpClient.post(config.tokenEndpoint) {
+                accept(ContentType.Application.Json)
+                setBody(FormDataContent(
+                    Parameters.build {
+                        append("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
+                        append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+                        append("client_assertion", assertion)
+                        append("subject_token_type", "urn:ietf:params:oauth:token-type:jwt")
+                        append("subject_token", subjectToken)
+                        append("audience", audience)
+                    }
+                ))
+            }
+                .body<AccessToken>()
+                .access_token
+                .also {
+                    successCounter.count()
                 }
-            ))
-        }
-            .body<AccessToken>()
-            .access_token
         } catch (e: Exception) {
             log.error("tokene exchange failed (audience='{}').", audience, e)
+            failCounter.count()
             throw e
         }
     }
