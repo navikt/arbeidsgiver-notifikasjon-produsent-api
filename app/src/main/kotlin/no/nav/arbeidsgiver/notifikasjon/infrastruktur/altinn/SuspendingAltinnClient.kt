@@ -128,11 +128,8 @@ class SuspendingAltinnClient(
     }
 
     private fun logException(e: Exception) {
-        if (e is AltinnrettigheterProxyKlientFallbackException) {
-            if (e.erDriftsforstyrrelse())
-                log.info("Henting av Altinn-tilganger feilet", e)
-            else
-                log.error("Henting av Altinn-tilganger feilet", e)
+        if (e is AltinnrettigheterProxyKlientFallbackException && e.erDriftsforstyrrelse()) {
+            log.info("Henting av Altinn-tilganger feilet", e)
         } else {
             log.error("Henting av Altinn-tilganger feilet", e)
         }

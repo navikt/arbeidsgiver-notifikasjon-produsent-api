@@ -25,6 +25,8 @@ import java.util.*
 object BrukerAPI {
     private val notifikasjonerHentetCount = Metrics.meterRegistry.counter("notifikasjoner_hentet")
     private val sakerHentetCount = Metrics.meterRegistry.counter("saker_hentet")
+    private val altinnFeilCounter = Metrics.meterRegistry.counter("graphql.bruker.altinn.error")
+    private val altinnSuccessCounter = Metrics.meterRegistry.counter("graphql.bruker.altinn.success")
 
     data class Context(
         val fnr: String,
@@ -249,6 +251,8 @@ object BrukerAPI {
                     }
                 }
             notifikasjonerHentetCount.increment(notifikasjoner.size.toDouble())
+            (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
+
             return@coDataFetcher NotifikasjonerResultat(
                 notifikasjoner,
                 feilAltinn = tilganger.harFeil,
@@ -297,6 +301,7 @@ object BrukerAPI {
                 )
             }
             sakerHentetCount.increment(saker.size.toDouble())
+            (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
             SakerResultat(
                 saker = saker,
                 feilAltinn = tilganger.harFeil,
