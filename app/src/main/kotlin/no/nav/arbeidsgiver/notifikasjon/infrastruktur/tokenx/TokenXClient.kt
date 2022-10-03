@@ -87,11 +87,11 @@ class TokenXClientImpl(
                 .body<AccessToken>()
                 .access_token
                 .also {
-                    successCounter.count()
+                    successCounter.increment()
                 }
         } catch (e: Exception) {
             log.error("tokene exchange failed (audience='{}').", audience, e)
-            failCounter.count()
+            failCounter.increment()
             throw e
         }
     }
