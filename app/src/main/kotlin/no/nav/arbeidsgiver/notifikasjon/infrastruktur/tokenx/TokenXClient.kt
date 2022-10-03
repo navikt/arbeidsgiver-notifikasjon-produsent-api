@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.github.benmanes.caffeine.cache.Expiry
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
@@ -10,21 +9,21 @@ import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
-import com.sksamuel.aedile.core.caffeineBuilder
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.apache.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.http.*
-import io.ktor.serialization.jackson.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.apache.Apache
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.accept
+import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.Parameters
+import io.ktor.serialization.jackson.jackson
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import java.time.Instant
 import java.util.*
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 
 fun defaultHttpClient() = HttpClient(Apache) {
     install(ContentNegotiation) {
@@ -43,7 +42,6 @@ interface TokenXClient {
 /**
  * lånt med modifikasjon fra https://github.com/navikt/tokendings-latency-tester/tree/master/src/main/kotlin/no/nav
  */
-@OptIn(ExperimentalTime::class)
 class TokenXClientImpl(
     private val httpClient: HttpClient = defaultHttpClient(),
     private val config: TokenXConfig = TokenXConfig(),
@@ -51,30 +49,6 @@ class TokenXClientImpl(
     private val jwsSigner: JWSSigner
     private val algorithm: JWSAlgorithm = JWSAlgorithm.RS256
     private val jwsHeader: JWSHeader
-
-    private val tokenCache = caffeineBuilder<String, AccessToken> {
-        maximumSize = 5_000L
-
-        expireAfter = (object : Expiry<String, AccessToken> {
-            override fun expireAfterCreate(key: String, response: AccessToken, currentTime: Long) =
-                (response.expires_in.seconds - 5.seconds).inWholeNanoseconds
-
-            override fun expireAfterUpdate(
-                key: String,
-                value: AccessToken,
-                currentTime: Long,
-                currentDuration: Long
-            ) = currentDuration
-
-            override fun expireAfterRead(
-                key: String,
-                value: AccessToken,
-                currentTime: Long,
-                currentDuration: Long
-            ) = currentDuration
-        })
-    }
-        .build()
 
     init {
         val privateKey = config.privateKey
@@ -85,37 +59,31 @@ class TokenXClientImpl(
             .build()
     }
 
-    override suspend fun exchange(subjectToken: String, audience: String): String =
-        tokenCache.get("$audience $subjectToken") {
-            val assertion = makeClientAssertion()
+    override suspend fun exchange(subjectToken: String, audience: String): String {
+        val assertion = makeClientAssertion()
 
-            val accessTokenResponse = httpClient.post(config.tokenEndpoint) {
-                accept(ContentType.Application.Json)
-                setBody(FormDataContent(
-                    Parameters.build {
-                        append("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
-                        append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
-                        append("client_assertion", assertion)
-                        append("subject_token_type", "urn:ietf:params:oauth:token-type:jwt")
-                        append("subject_token", subjectToken)
-                        append("audience", audience)
-                    }
-                ))
-            }
-            accessTokenResponse.body()
+        return httpClient.post(config.tokenEndpoint) {
+            accept(ContentType.Application.Json)
+            setBody(FormDataContent(
+                Parameters.build {
+                    append("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
+                    append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+                    append("client_assertion", assertion)
+                    append("subject_token_type", "urn:ietf:params:oauth:token-type:jwt")
+                    append("subject_token", subjectToken)
+                    append("audience", audience)
+                }
+            ))
         }
+            .body<AccessToken>()
             .access_token
+    }
 
 
-    private val clientAssertionCache = caffeineBuilder<Unit, String> {
-        maximumSize = 1
-        expireAfterWrite = 30.seconds
-    }.build()
-
-    private suspend fun makeClientAssertion(): String = clientAssertionCache.get(Unit) {
+    private fun makeClientAssertion(): String {
         val now = Date.from(Instant.now())
         val later = Date.from(Instant.now().plusSeconds(60))
-        JWTClaimsSet.Builder()
+        return JWTClaimsSet.Builder()
             .audience(config.tokenEndpoint)
             .subject(config.clientId)
             .issuer(config.clientId)
