@@ -6,7 +6,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent

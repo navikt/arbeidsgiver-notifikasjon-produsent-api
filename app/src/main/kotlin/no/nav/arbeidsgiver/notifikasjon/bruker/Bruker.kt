@@ -10,6 +10,9 @@ import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnCachedImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext

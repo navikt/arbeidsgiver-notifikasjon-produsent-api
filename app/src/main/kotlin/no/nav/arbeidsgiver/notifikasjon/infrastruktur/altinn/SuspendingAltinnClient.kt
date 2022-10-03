@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -8,9 +8,15 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
+import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCPlugin
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXPlugin
@@ -25,6 +31,13 @@ class SuspendingAltinnClient(
 
     private val log = logger()
     private val altinnProxyAudience = "${NaisEnvironment.clusterName}:arbeidsgiver:altinn-rettigheter-proxy"
+
+    private val initiatedCounter = Counter.builder("altinn.rettigheter.lookup.initiated")
+        .register(Metrics.meterRegistry)
+    private val successCounter = Counter.builder("altinn.rettigheter.lookup.success")
+        .register(Metrics.meterRegistry)
+    private val failCounter = Counter.builder("altinn.rettigheter.lookup.fail")
+        .register(Metrics.meterRegistry)
 
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
@@ -80,14 +93,19 @@ class SuspendingAltinnClient(
         }
             ?.onEach(observer)
 
-    private suspend fun <T> withErrorHandler(body: suspend () -> List<T>): List<T>? =
-        try {
-            body()
+    private suspend fun <T> withErrorHandler(body: suspend () -> List<T>): List<T>? {
+        initiatedCounter.increment()
+        return try {
+            body().also {
+                successCounter.increment()
+            }
         } catch (error: Exception) {
             null.also {
                 logException(error)
+                failCounter.count()
             }
         }
+    }
 
     suspend fun hentReportees(
         roleDefinitionId: String,

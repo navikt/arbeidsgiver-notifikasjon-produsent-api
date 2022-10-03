@@ -8,6 +8,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.jackson.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnConfig
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 
 interface AltinnRolleClient {
     suspend fun hentRoller(): List<AltinnRolle>?

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.github.benmanes.caffeine.cache.AsyncCache
@@ -16,6 +16,9 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger.Companion.flatten
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import java.time.Duration
 

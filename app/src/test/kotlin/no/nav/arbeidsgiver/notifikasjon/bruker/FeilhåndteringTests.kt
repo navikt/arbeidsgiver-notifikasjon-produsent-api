@@ -9,8 +9,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent

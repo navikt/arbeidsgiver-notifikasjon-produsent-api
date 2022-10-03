@@ -11,7 +11,7 @@ import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
 
 class VirksomhetsinfoServiceTests: DescribeSpec({

@@ -1,8 +1,9 @@
-package no.nav.arbeidsgiver.notifikasjon.infrastruktur
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnConfig as ClientAltinnConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlientConfig
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.ProxyConfig
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 
 
 object AltinnConfig {

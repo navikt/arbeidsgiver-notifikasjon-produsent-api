@@ -1,8 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 
 open class AltinnStub(

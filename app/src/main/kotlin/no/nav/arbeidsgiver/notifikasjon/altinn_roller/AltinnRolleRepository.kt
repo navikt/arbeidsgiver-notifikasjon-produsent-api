@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.altinn_roller
 
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 
 interface AltinnRolleRepository {

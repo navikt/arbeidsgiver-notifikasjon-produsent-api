@@ -9,7 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*

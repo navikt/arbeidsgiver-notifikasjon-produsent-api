@@ -13,7 +13,7 @@ import kotlinx.coroutines.CompletableDeferred
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.bruker.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.BrukerPrincipal
