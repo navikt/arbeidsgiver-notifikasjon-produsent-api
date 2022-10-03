@@ -22,6 +22,7 @@ import io.ktor.http.Parameters
 import io.ktor.serialization.jackson.jackson
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Instant
 import java.util.*
 
@@ -49,6 +50,7 @@ class TokenXClientImpl(
     private val jwsSigner: JWSSigner
     private val algorithm: JWSAlgorithm = JWSAlgorithm.RS256
     private val jwsHeader: JWSHeader
+    private val log = logger()
 
     init {
         val privateKey = config.privateKey
@@ -60,6 +62,8 @@ class TokenXClientImpl(
     }
 
     override suspend fun exchange(subjectToken: String, audience: String): String {
+        try {
+
         val assertion = makeClientAssertion()
 
         return httpClient.post(config.tokenEndpoint) {
@@ -77,6 +81,10 @@ class TokenXClientImpl(
         }
             .body<AccessToken>()
             .access_token
+        } catch (e: Exception) {
+            log.error("tokene exchange failed (audience='{}').", audience, e)
+            throw e
+        }
     }
 
 
