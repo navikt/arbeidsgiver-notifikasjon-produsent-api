@@ -208,6 +208,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.supervisorScope
 import java.util.concurrent.Executor
 
 /* Hentet fra https://github.com/sksamuel/aedile 30 september 2022 */
@@ -238,7 +240,9 @@ class Cache<K : Any, V: Any>(private val scope: CoroutineScope, private val cach
      *
      */
     suspend fun get(key: K, compute: suspend (K) -> V): V {
-        return cache.get(key) { k, _ -> scope.async { compute(k) }.asCompletableFuture() }.await()
+        return supervisorScope {
+            cache.get(key) { k, _ -> scope.future { compute(k) } }.await()
+        }
     }
 
     /**
