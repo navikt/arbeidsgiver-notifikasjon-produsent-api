@@ -24,7 +24,6 @@ spec:
       - type: POSTGRES_12
         tier: db-custom-1-3840
         diskAutoresize: true
-        highAvailability: true
         databases:
           - name: kafka-reaper-model
             envVarPrefix: DB
