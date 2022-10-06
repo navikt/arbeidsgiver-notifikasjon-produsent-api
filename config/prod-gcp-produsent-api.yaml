@@ -7,6 +7,13 @@ metadata:
     team: fager
 spec:
   image: {{image}}
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 512Mi
+    limits:
+      cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
+      memory: 1024Mi
   ingresses:
     - https://ag-notifikasjon-produsent-api.intern.nav.no/
   liveness:
@@ -61,5 +68,8 @@ spec:
         autoBackupHour: 1
         maintenance:
           hour: 3
+  env:
+    - name: JAVA_OPTS
+      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
