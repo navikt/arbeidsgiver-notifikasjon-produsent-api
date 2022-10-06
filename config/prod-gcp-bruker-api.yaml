@@ -44,6 +44,8 @@ spec:
         - application: min-side-arbeidsgiver
         - application: notifikasjon-proxy
         - application: innsyn-aareg
+        - application: tiltaksgjennomforing
+          namespace: arbeidsgiver
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
