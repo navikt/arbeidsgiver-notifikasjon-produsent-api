@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.AsyncCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.supervisorScope
@@ -50,7 +49,7 @@ class AltinnImpl(
         roller: Iterable<AltinnRolle>,
     ): Tilganger =
         timer.coRecord {
-            coroutineScope {
+            supervisorScope {
                 val tjenesteTilganger = tjenester.map {
                     val (code, version) = it
                     async {
@@ -66,7 +65,7 @@ class AltinnImpl(
                 val reporteeTilganger = async {
                     hentTilganger(fnr, selvbetjeningsToken)
                 }
-                return@coroutineScope tjenesteTilganger.awaitAll().flatten() +
+                return@supervisorScope tjenesteTilganger.awaitAll().flatten() +
                         reporteeTilganger.await() +
                         rolleTilganger.awaitAll().flatten()
             }
