@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Timer
 class HttpClientMetricsFeature internal constructor(
     private val registry: MeterRegistry,
     private val clientName: String,
+    private val staticPath: String?,
 ) {
     /**
      * [HttpClientMetricsFeature] configuration that is used during installation
@@ -29,12 +30,19 @@ class HttpClientMetricsFeature internal constructor(
     class Config {
         var clientName: String = "ktor.http.client"
         lateinit var registry: MeterRegistry
+        var staticPath: String? = null
 
         internal fun isRegistryInitialized() = this::registry.isInitialized
     }
 
     private fun before(context: HttpRequestBuilder) {
-        context.attributes.put(measureKey, ClientCallMeasure(Timer.start(registry), context.url.encodedPath))
+        context.attributes.put(
+            measureKey,
+            ClientCallMeasure(
+                Timer.start(registry),
+                staticPath ?: context.url.encodedPath,
+            )
+        )
     }
 
     private fun after(call: HttpClientCall, context: HttpRequestBuilder) {
@@ -71,7 +79,7 @@ class HttpClientMetricsFeature internal constructor(
                         "Meter registry is missing. Please initialize the field 'registry'"
                     )
                 }
-                HttpClientMetricsFeature(it.registry, it.clientName)
+                HttpClientMetricsFeature(it.registry, it.clientName, it.staticPath)
             }
 
         override fun install(plugin: HttpClientMetricsFeature, scope: HttpClient) {

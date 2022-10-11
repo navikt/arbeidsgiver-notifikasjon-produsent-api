@@ -50,6 +50,7 @@ class EnhetsregisteretImpl(
         }
         install(HttpClientMetricsFeature) {
             registry = Metrics.meterRegistry
+            staticPath = "/enhetsregisteret/api/underenheter/"
         }
         expectSuccess = false
     }
