@@ -29,8 +29,7 @@ object ProdusentAPI {
 
         return TypedGraphQL(
             createGraphQL("/produsent.graphql") {
-                directiveWiring(ValidateDirective)
-//                directive("Validate", ValidateDirective)
+                directive("Validate", ValidateDirective)
 
                 scalar(Scalars.ISO8601DateTime)
                 scalar(Scalars.ISO8601LocalDateTime)
