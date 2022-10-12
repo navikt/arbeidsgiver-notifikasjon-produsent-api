@@ -5,10 +5,11 @@ import com.auth0.jwt.interfaces.Verification
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.call.body
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson.jackson
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.routing.*
@@ -28,7 +29,7 @@ data class ProdusentPrincipal(
 
 data class JWTAuthentication(
     val name: String,
-    val config:  JWTAuthenticationProvider.Config.() -> Unit,
+    val config: JWTAuthenticationProvider.Config.() -> Unit,
 )
 
 object HttpAuthProviders {
@@ -202,7 +203,6 @@ object HttpAuthProviders {
         val id_token_signing_alg_values_supported: List<String>? = null,
     )
 }
-
 
 
 fun AuthenticationConfig.configureProviders(providers: Iterable<JWTAuthentication>) {

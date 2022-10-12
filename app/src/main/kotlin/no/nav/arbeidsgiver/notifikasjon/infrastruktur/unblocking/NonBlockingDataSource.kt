@@ -27,6 +27,7 @@ class NonBlockingDataSource<T>(
     suspend fun withFlyway(locations: String, body: Flyway.() -> Unit) {
         blockingIO {
             Flyway.configure()
+                .cleanDisabled(false)
                 .locations(locations)
                 .dataSource(dataSource)
                 .load()

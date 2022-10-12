@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.post
 
-class HttpAuthenticationTests: DescribeSpec({
+class HttpAuthenticationTests : DescribeSpec({
     val engine = ktorProdusentTestServer()
 
     describe("When calling graphql-endpoint without bearer token") {

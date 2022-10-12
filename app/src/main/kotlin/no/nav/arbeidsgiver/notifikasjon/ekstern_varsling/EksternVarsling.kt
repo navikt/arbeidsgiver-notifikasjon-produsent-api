@@ -128,16 +128,20 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.testSend(
                     when (it) {
                         is AltinnVarselKlient.AltinnResponse.Ok ->
                             call.respond(HttpStatusCode.OK, laxObjectMapper.writeValueAsString(it.rå))
+
                         is AltinnVarselKlient.AltinnResponse.Feil ->
                             call.respond(HttpStatusCode.BadRequest, laxObjectMapper.writeValueAsString(it.rå))
                     }
                 },
                 onFailure = {
-                    call.respond(HttpStatusCode.InternalServerError,
-                        laxObjectMapper.writeValueAsString(mapOf(
-                            "type" to it.javaClass.canonicalName,
-                            "msg" to it.message,
-                        ))
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        laxObjectMapper.writeValueAsString(
+                            mapOf(
+                                "type" to it.javaClass.canonicalName,
+                                "msg" to it.message,
+                            )
+                        )
                     )
                 }
             )

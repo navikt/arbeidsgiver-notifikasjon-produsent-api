@@ -25,17 +25,21 @@ class ISO8601PeriodTest : DescribeSpec({
     val examples = simpleExamples.map { it to it } + complexExamples
 
     describe("ISO8601Period parse and print roundtrip") {
-        withData(examples) { (input, expected) ->
-            it("$input ::parse -> ::toString is $expected") {
+        describe("::parse -> ::toString") {
+            withData(examples) { (input, expected) ->
                 ISO8601Period.parse(input).toString() shouldBe expected
             }
+        }
 
-            it("jackson serde $input -> $expected") {
+        describe("jackson serde") {
+            withData(examples) { (input, expected) ->
                 val obj = laxObjectMapper.readValue<ISO8601Period>("\"$input\"")
                 laxObjectMapper.writeValueAsString(obj) shouldBe "\"$expected\""
             }
+        }
 
-            it("toString+parse preserve equality:  $input") {
+        describe("toString+parse preserve equality") {
+            withData(examples) { (input, _) ->
                 ISO8601Period.parse(input) shouldBe ISO8601Period.parse(ISO8601Period.parse(input).toString())
             }
         }

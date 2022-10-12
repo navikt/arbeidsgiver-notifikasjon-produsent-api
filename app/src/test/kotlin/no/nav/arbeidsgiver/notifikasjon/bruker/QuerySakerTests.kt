@@ -30,11 +30,13 @@ class QuerySakerTests : DescribeSpec({
     val brukerRepository = BrukerRepositoryImpl(database)
 
     val engine = ktorBrukerTestServer(
-        altinn = AltinnStub("0".repeat(11) to Tilganger(
-            tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1")),
-            listOf(),
-            listOf(),
-        )),
+        altinn = AltinnStub(
+            "0".repeat(11) to Tilganger(
+                tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1")),
+                listOf(),
+                listOf(),
+            )
+        ),
         brukerRepository = brukerRepository,
     )
 
@@ -180,20 +182,22 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
         hardDelete = null,
     )
     oppdaterModellEtterHendelse(sakOpprettet)
-    oppdaterModellEtterHendelse(NyStatusSak(
-        hendelseId = UUID.randomUUID(),
-        virksomhetsnummer = sakOpprettet.virksomhetsnummer,
-        produsentId = sakOpprettet.produsentId,
-        kildeAppNavn = sakOpprettet.kildeAppNavn,
-        sakId = sakOpprettet.sakId,
-        status = status,
-        overstyrStatustekstMed = overstyrStatustekst,
-        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
-        mottattTidspunkt = OffsetDateTime.now(),
-        idempotensKey = IdempotenceKey.initial(),
-        hardDelete = null,
-        nyLenkeTilSak = null,
-    ))
+    oppdaterModellEtterHendelse(
+        NyStatusSak(
+            hendelseId = UUID.randomUUID(),
+            virksomhetsnummer = sakOpprettet.virksomhetsnummer,
+            produsentId = sakOpprettet.produsentId,
+            kildeAppNavn = sakOpprettet.kildeAppNavn,
+            sakId = sakOpprettet.sakId,
+            status = status,
+            overstyrStatustekstMed = overstyrStatustekst,
+            oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+            mottattTidspunkt = OffsetDateTime.now(),
+            idempotensKey = IdempotenceKey.initial(),
+            hardDelete = null,
+            nyLenkeTilSak = null,
+        )
+    )
     return sakOpprettet
 }
 
@@ -239,7 +243,9 @@ fun TestApplicationEngine.hentSaker(
     tekstsoek: String? = null,
     offset: Int? = null,
     limit: Int? = null,
-) = brukerApi(GraphQLRequest("""
+) = brukerApi(
+    GraphQLRequest(
+        """
     query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}tekstsoek: String, ${'$'}offset: Int, ${'$'}limit: Int){
         saker(virksomhetsnummer: ${'$'}virksomhetsnummer, tekstsoek: ${'$'}tekstsoek, offset: ${'$'}offset, limit: ${'$'}limit) {
             saker {
@@ -262,11 +268,12 @@ fun TestApplicationEngine.hentSaker(
         }
     }
     """.trimIndent(),
-    "hentSaker",
-    mapOf(
-        "virksomhetsnummer" to "42",
-        "tekstsoek" to tekstsoek,
-        "offset" to offset,
-        "limit" to limit,
+        "hentSaker",
+        mapOf(
+            "virksomhetsnummer" to "42",
+            "tekstsoek" to tekstsoek,
+            "offset" to offset,
+            "limit" to limit,
+        )
     )
-))
+)

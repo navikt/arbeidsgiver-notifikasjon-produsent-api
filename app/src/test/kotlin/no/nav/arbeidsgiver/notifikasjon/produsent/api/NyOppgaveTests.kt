@@ -111,10 +111,8 @@ class NyOppgaveTests : DescribeSpec({
         }
 
         it("updates produsent modell") {
-            it("updates produsent modell") {
-                val id = response.getTypedContent<UUID>("nyOppgave/id")
-                produsentRepository.hentNotifikasjon(id) shouldNot beNull()
-            }
+            val id = response.getTypedContent<UUID>("nyOppgave/id")
+            produsentRepository.hentNotifikasjon(id) shouldNot beNull()
         }
     }
 })

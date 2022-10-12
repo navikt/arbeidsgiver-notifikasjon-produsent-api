@@ -9,12 +9,10 @@ class KafkaReaperModelTest : DescribeSpec({
     val database = testDatabase(KafkaReaper.databaseConfig)
     val model = KafkaReaperModelImpl(database)
 
-    describe("Idempotent oppførsel") {
+    describe("Kafka Reaper Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
-            it("håndterer ${hendelse::class.simpleName} med idempotens") {
-                model.oppdaterModellEtterHendelse(hendelse)
-                model.oppdaterModellEtterHendelse(hendelse)
-            }
+            model.oppdaterModellEtterHendelse(hendelse)
+            model.oppdaterModellEtterHendelse(hendelse)
         }
     }
 })

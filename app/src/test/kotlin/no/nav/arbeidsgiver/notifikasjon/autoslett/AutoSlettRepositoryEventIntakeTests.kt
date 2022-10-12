@@ -34,7 +34,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
     ) {
         val nyTid = LocalDateTimeOrDuration.parse(nyHardDelete)
         val idsuffix = idsuffixes.next()
-        it("oppgave utført $title") {
+        describe("oppgave utført $title") {
             repository.oppgaveOpprettet(
                 idsuffix = idsuffix,
                 opprettetTidspunkt = opprettetTidspunkt,
@@ -67,7 +67,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
     ) {
         val nyTid = LocalDateTimeOrDuration.parse(nyHardDelete)
         val idsuffix = idsuffixes.next()
-        it("ny status sak $title") {
+        describe("ny status sak $title") {
             repository.sakOpprettet(
                 idsuffix = idsuffix,
                 mottattTidspunkt = sakMottattTidspunkt,
@@ -92,7 +92,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
 
     describe("AutoSlettRepository#oppdaterModellEtterHendelse") {
         context("opprett hendelse uten hard delete") {
-            it("beskjed opprettet") {
+            context("beskjed opprettet") {
                 val hendelse = repository.beskjedOpprettet("1", "2020-01-01T01:01+00", null)
 
                 it("hard delete scheduleres ikke") {
@@ -100,7 +100,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                 }
             }
 
-            it("oppgave opprettet") {
+            context("oppgave opprettet") {
                 val hendelse = repository.oppgaveOpprettet("2", "2020-01-01T01:01+00")
 
                 it("hard delete scheduleres ikke") {
@@ -108,7 +108,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                 }
             }
 
-            it("sak opprettet") {
+            context("sak opprettet") {
                 val hendelse = repository.sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
@@ -122,7 +122,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
         }
 
         context("opprett hendelse med hard delete") {
-            it("beskjed opprettet") {
+            context("beskjed opprettet") {
                 val hendelse = repository.beskjedOpprettet(
                     idsuffix = "1",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
@@ -134,7 +134,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                 }
             }
 
-            it("oppgave opprettet") {
+            context("oppgave opprettet") {
                 val hendelse = repository.oppgaveOpprettet(
                     idsuffix = "2",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
@@ -146,7 +146,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                 }
             }
 
-            it("sak opprettet") {
+            context("sak opprettet") {
                 val hendelse = repository.sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
@@ -160,7 +160,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
         }
 
         context("oppdater hendelse uten hard delete") {
-            it("oppgave utført") {
+            context("oppgave utført") {
                 repository.oppgaveOpprettet("1", "2020-01-01T01:01+00")
                 val utførtHendelse = repository.oppgaveUtført(
                     idsuffix = "1",
@@ -172,7 +172,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                     repository.hent(utførtHendelse.aggregateId) shouldBe null
                 }
             }
-            it("ny status sak") {
+            context("ny status sak") {
                 repository.sakOpprettet(
                     idsuffix = "2",
                     mottattTidspunkt = "2020-01-01T01:01+00",
@@ -191,7 +191,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
         }
 
         context("oppdater hendelse med hard delete uten tidligere skedulert delete") {
-            it("oppgave utført") {
+            context("oppgave utført") {
                 repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", merkelapp = "hei")
                 val utførtHendelse = repository.oppgaveUtført(
                     idsuffix = "1",
@@ -208,7 +208,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                     skedulert!!.merkelapp shouldBe "hei"
                 }
             }
-            it("ny status sak") {
+            context("ny status sak") {
                 repository.sakOpprettet(
                     idsuffix = "2",
                     mottattTidspunkt = "2020-01-01T01:01+00",
@@ -275,7 +275,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                 "2022-10-13T07:20:50.52",
                 "2025-10-13T07:20:50.52",
             ) { opprinneligHardDelete ->
-                oppgaveUtførtCase(
+                this@context.oppgaveUtførtCase(
                     title = "overskriv med absolutt dato",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
                     opprinneligHardDelete = opprinneligHardDelete,
@@ -285,7 +285,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                     expected = "2022-09-13T07:20:50.52".inOsloAsInstant(),
                 )
 
-                oppgaveUtførtCase(
+                this@context.oppgaveUtførtCase(
                     title = "overskriv med relativ dato",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
                     opprinneligHardDelete = "2022-10-13T07:20:50.52",
@@ -295,7 +295,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                     expected = Instant.parse("2022-03-04T14:37:37.37Z"),
                 )
 
-                sakOppdatertCase(
+                this@context.sakOppdatertCase(
                     title = "overskriv med absolutt dato",
                     sakMottattTidspunkt = "2020-01-01T01:01+00",
                     opprinneligHardDelete = opprinneligHardDelete,
@@ -305,7 +305,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
                     expected = "2022-09-13T07:20:50.52".inOsloAsInstant()
                 )
 
-                sakOppdatertCase(
+                this@context.sakOppdatertCase(
                     title = "overskriv med offset",
                     sakMottattTidspunkt = "2020-01-01T01:01+00",
                     opprinneligHardDelete = opprinneligHardDelete,
@@ -359,7 +359,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
     }
 
     describe("Hard delete") {
-        it("slette oppgave") {
+        context("slette oppgave") {
             val hendelse = repository.oppgaveOpprettet(
                 idsuffix = "1",
                 opprettetTidspunkt = "2020-01-01T01:01+00",
@@ -373,7 +373,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
             }
         }
 
-        it("slette sak") {
+        context("slette sak") {
             val hendelse = repository.sakOpprettet(
                 idsuffix = "2",
                 mottattTidspunkt = "2020-01-01T01:01+00",
@@ -387,7 +387,7 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
             }
         }
 
-        it("ikke slette andre saker") {
+        context("ikke slette andre saker") {
             val hendelse = repository.sakOpprettet(
                 idsuffix = "3",
                 mottattTidspunkt = "2020-01-01T01:01+00",

@@ -33,7 +33,8 @@ class EksternVarslingRepository(
     private val podName = System.getenv("HOSTNAME") ?: "localhost"
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
-        val ignore: Unit = when (hendelse) {
+        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
+        @Suppress("UNUSED_VARIABLE") val ignore: Unit = when (hendelse) {
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)

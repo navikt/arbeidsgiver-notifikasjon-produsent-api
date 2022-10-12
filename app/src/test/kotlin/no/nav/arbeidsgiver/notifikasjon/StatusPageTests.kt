@@ -40,7 +40,7 @@ class StatusPageTests : DescribeSpec({
             val response = whenExceptionThrown("/some/runtime/exception", ex)
 
             it("it returns InternalServerError") {
-               response.status() shouldBe HttpStatusCode.InternalServerError
+                response.status() shouldBe HttpStatusCode.InternalServerError
             }
             it("and response has no content") {
                 response.content shouldNotContain ex.message!!
@@ -52,7 +52,7 @@ class StatusPageTests : DescribeSpec({
 
         context("when an JsonProcessingException occurs") {
             val ex = object : JsonProcessingException(
-                "Error", JsonLocation(ContentReference.unknown(), 42,42,42)
+                "Error", JsonLocation(ContentReference.unknown(), 42, 42, 42)
             ) {}
             val response = whenExceptionThrown("/some/json/exception", ex)
 
@@ -60,13 +60,15 @@ class StatusPageTests : DescribeSpec({
                 response.status() shouldBe HttpStatusCode.InternalServerError
             }
             it("and excludes JsonLocation from log") {
-                verify { spiedOnLogger.warn(
-                    any() as String,
-                    ex::class.qualifiedName,
-                    withArg { jpex:JsonProcessingException ->
-                        jpex.location shouldBe null
-                    }
-                )}
+                verify {
+                    spiedOnLogger.warn(
+                        any() as String,
+                        ex::class.qualifiedName,
+                        withArg { jpex: JsonProcessingException ->
+                            jpex.location shouldBe null
+                        }
+                    )
+                }
             }
             it("and response does not include exception message") {
                 response.content shouldNotContain ex.message!!

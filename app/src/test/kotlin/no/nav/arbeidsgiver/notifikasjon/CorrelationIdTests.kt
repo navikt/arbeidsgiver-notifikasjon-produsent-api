@@ -23,14 +23,12 @@ class CorrelationIdTests : DescribeSpec({
         context("with callid") {
             val callid = "1234"
 
-            context("with header name:") {
+            context("replies with $callid with header name") {
                 withData("callid", "CALLID", "call-id") { headerName ->
-                    val response = engine.get( "/internal/alive") {
+                    val response = engine.get("/internal/alive") {
                         addHeader(headerName, callid)
                     }
-                    it("it replies with callid: $callid from $headerName") {
-                        response.headers[HttpHeaders.XCorrelationId] shouldBe callid
-                    }
+                    response.headers[HttpHeaders.XCorrelationId] shouldBe callid
                 }
             }
         }

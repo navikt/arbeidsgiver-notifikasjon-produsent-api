@@ -32,9 +32,7 @@ class ÅpningstiderTests: DescribeSpec({
                 tidspunkt("14:30", THURSDAY),
                 tidspunkt("14:30", FRIDAY),
             ) { dt ->
-                it("${dt.dayOfWeek} ${dt.toLocalTime()}") {
-                    dt.erNksÅpningstid() shouldBe true
-                }
+                dt.erNksÅpningstid() shouldBe true
             }
         }
 
@@ -58,9 +56,7 @@ class ÅpningstiderTests: DescribeSpec({
                 tidspunkt("14:30", SATURDAY),
                 tidspunkt("14:30", SUNDAY),
             ) { dt ->
-                it("${dt.dayOfWeek} ${dt.toLocalTime()}") {
-                    dt.erNksÅpningstid() shouldBe false
-                }
+                dt.erNksÅpningstid() shouldBe false
             }
         }
     }
@@ -82,9 +78,7 @@ class ÅpningstiderTests: DescribeSpec({
                 tidspunkt("16:00", FRIDAY),
                 tidspunkt("16:00", SATURDAY),
             ) { dt ->
-                it("${dt.dayOfWeek} ${dt.toLocalTime()}") {
-                    dt.erDagtidIkkeSøndag() shouldBe true
-                }
+                dt.erDagtidIkkeSøndag() shouldBe true
             }
         }
 
@@ -108,9 +102,7 @@ class ÅpningstiderTests: DescribeSpec({
 
                 tidspunkt("16:00", SUNDAY),
             ) { dt ->
-                it("${dt.dayOfWeek} ${dt.toLocalTime()}") {
-                    dt.erDagtidIkkeSøndag() shouldBe false
-                }
+                dt.erDagtidIkkeSøndag() shouldBe false
             }
         }
     }
@@ -132,9 +124,7 @@ class ÅpningstiderTests: DescribeSpec({
                 tidspunkt("14:31", SATURDAY) to tidspunkt("08:31", MONDAY),
                 tidspunkt("14:31", SUNDAY) to tidspunkt("08:31", MONDAY),
             ) { p ->
-                it("${p.first.dayOfWeek} ${p.first.toLocalTime()} -> ${p.second.dayOfWeek} ${p.second.toLocalTime()}") {
-                    nesteNksÅpningstid(p.first) shouldBe p.second
-                }
+                nesteNksÅpningstid(p.first) shouldBe p.second
             }
         }
     }
@@ -156,9 +146,7 @@ class ÅpningstiderTests: DescribeSpec({
                 tidspunkt("16:01", SATURDAY) to tidspunkt("09:01", MONDAY),
                 tidspunkt("16:00", SUNDAY) to tidspunkt("09:00", MONDAY),
             ) { p ->
-                it("${p.first.dayOfWeek} ${p.first.toLocalTime()} -> ${p.second.dayOfWeek} ${p.second.toLocalTime()}") {
-                    nesteDagtidIkkeSøndag(p.first) shouldBe p.second
-                }
+                nesteDagtidIkkeSøndag(p.first) shouldBe p.second
             }
         }
     }

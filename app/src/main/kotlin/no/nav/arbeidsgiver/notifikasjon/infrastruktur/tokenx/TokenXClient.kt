@@ -12,6 +12,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.call.body
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.accept
@@ -105,7 +106,10 @@ class TokenXClientImpl(
                     setBody(FormDataContent(
                         Parameters.build {
                             append("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
-                            append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+                            append(
+                                "client_assertion_type",
+                                "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+                            )
                             append("client_assertion", assertion)
                             append("subject_token_type", "urn:ietf:params:oauth:token-type:jwt")
                             append("subject_token", subjectToken)

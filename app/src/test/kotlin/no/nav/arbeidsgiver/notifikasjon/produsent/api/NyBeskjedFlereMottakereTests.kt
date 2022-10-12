@@ -17,7 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
-class NyBeskjedFlereMottakereTests: DescribeSpec({
+class NyBeskjedFlereMottakereTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
 
@@ -27,8 +27,10 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
 
     describe("sender ingen mottakere") {
         val response = engine.produsentApi(
-            nyBeskjed("""
-        """)
+            nyBeskjed(
+                """
+        """
+            )
         )
         it("response should have error") {
             val errors = response.getGraphqlErrors()
@@ -38,14 +40,16 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
 
     describe("sender 1 mottaker i 'mottaker'") {
         val response = engine.produsentApi(
-            nyBeskjed("""
+            nyBeskjed(
+                """
             mottaker: {
                 altinn: {
                     serviceCode: "5441"
                     serviceEdition: "1"
                 }
             }
-        """)
+        """
+            )
         )
         it("no error in response") {
             val errors = response.getGraphqlErrors()
@@ -70,7 +74,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
 
     describe("sender 1 mottaker i 'mottakere'") {
         val response = engine.produsentApi(
-            nyBeskjed("""
+            nyBeskjed(
+                """
             mottakere: [
                 {
                     altinn: {
@@ -79,7 +84,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """)
+        """
+            )
         )
         it("no error in response") {
             val errors = response.getGraphqlErrors()
@@ -102,7 +108,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
     }
     describe("sender 2 mottakere i 'mottakere'") {
         val response = engine.produsentApi(
-            nyBeskjed("""
+            nyBeskjed(
+                """
             mottakere: [
                 {
                     altinn: {
@@ -117,7 +124,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """)
+        """
+            )
         )
         it("no errors in response") {
             val errors = response.getGraphqlErrors()
@@ -146,7 +154,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
 
     describe("sender 2 mottaker, en i 'mottaker' og en i 'mottakere'") {
         val response = engine.produsentApi(
-            nyBeskjed("""
+            nyBeskjed(
+                """
             mottaker: {
                 altinn: {
                     serviceCode: "5441"
@@ -161,7 +170,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """)
+        """
+            )
         )
         it("no errors in response") {
             val errors = response.getGraphqlErrors()
@@ -190,7 +200,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
 
     describe("sender 3 mottakere i 'mottakere'") {
         val response = engine.produsentApi(
-            nyBeskjed("""
+            nyBeskjed(
+                """
             mottakere: [
                 {
                     altinn: {
@@ -210,7 +221,8 @@ class NyBeskjedFlereMottakereTests: DescribeSpec({
                     }
                 }
             ]
-        """)
+        """
+            )
         )
         it("no errors in response") {
             val errors = response.getGraphqlErrors()
@@ -269,7 +281,8 @@ fun nyBeskjed(fragment: String) = """
         """
 
 internal fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifikasjoner.Mottaker> {
-    return this.produsentApi("""
+    return this.produsentApi(
+        """
         query {
             mineNotifikasjoner(merkelapp: "tag") {
                 ... on NotifikasjonConnection {
@@ -333,7 +346,8 @@ internal fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifi
                 }
             }
         }
-    """)
+    """
+    )
         .getTypedContent<List<JsonNode>>("$.mineNotifikasjoner.edges[*].node")
         .flatMap {
             if (it["metadata"]["id"].asText() == id.toString())

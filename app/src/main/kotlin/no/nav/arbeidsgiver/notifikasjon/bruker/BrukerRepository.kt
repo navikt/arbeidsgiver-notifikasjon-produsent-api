@@ -62,7 +62,7 @@ class BrukerRepositoryImpl(
     private val database: Database
 ) : BrukerRepository {
     private val log = logger()
-    private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
+    private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")!!
     override val altinnRolle: AltinnRolleRepository = AltinnRolleRepositoryImpl(database)
 
     override suspend fun hentNotifikasjoner(
@@ -365,7 +365,7 @@ class BrukerRepositoryImpl(
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        val ignored: Unit = when (hendelse) {
+        @Suppress("UNUSED_VARIABLE") val ignored: Unit = when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
             is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
@@ -570,7 +570,8 @@ class BrukerRepositoryImpl(
     }
 
     private fun Transaction.storeMottaker(notifikasjonId: UUID?, sakId: UUID?, mottaker: Mottaker) {
-        val ignored = when (mottaker) {
+        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
+        @Suppress("UNUSED_VARIABLE") val ignored = when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(
                 notifikasjonId = notifikasjonId,
                 sakId = sakId,

@@ -24,7 +24,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.post
 import java.util.*
 
-class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
+class KlikkPåNotifikasjonGraphQLTests : DescribeSpec({
     val queryModel = mockk<BrukerRepositoryImpl>(relaxed = true)
     val kafkaProducer = mockk<HendelseProdusent>()
 
@@ -69,7 +69,8 @@ class KlikkPåNotifikasjonGraphQLTests: DescribeSpec({
                 httpResponse.getGraphqlErrors() should beEmpty()
             }
 
-            val graphqlSvar = httpResponse.getTypedContent<BrukerAPI.NotifikasjonKlikketPaaResultat>("notifikasjonKlikketPaa")
+            val graphqlSvar =
+                httpResponse.getTypedContent<BrukerAPI.NotifikasjonKlikketPaaResultat>("notifikasjonKlikketPaa")
 
             it("ingen domene-feil") {
                 graphqlSvar should beOfType<BrukerAPI.BrukerKlikk>()

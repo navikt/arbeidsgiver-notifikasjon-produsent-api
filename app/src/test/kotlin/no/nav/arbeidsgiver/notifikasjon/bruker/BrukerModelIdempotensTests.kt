@@ -9,12 +9,10 @@ class BrukerModelIdempotensTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
 
-    describe("Idempotent oppførsel") {
+    describe("BrukerModel Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
-            it("håndterer ${hendelse::class.simpleName} med idempotens") {
-                queryModel.oppdaterModellEtterHendelse(hendelse)
-                queryModel.oppdaterModellEtterHendelse(hendelse)
-            }
+            queryModel.oppdaterModellEtterHendelse(hendelse)
+            queryModel.oppdaterModellEtterHendelse(hendelse)
         }
     }
 })

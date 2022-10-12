@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 fun TestConfiguration.embeddedKafka(): EmbeddedKafka =
     EmbeddedKafkaTestListener()
-        .also{ listener(it) }
+        .also { listener(it) }
 
 interface EmbeddedKafka {
     fun newConsumer(): Hendelsesstrøm
@@ -30,6 +30,7 @@ class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
     override suspend fun beforeSpec(spec: Spec) {
         env.start()
         while (env.serverPark.brokerStatus !is KafkaEnvironment.BrokerStatus.Available) {
+            println("kafka server not ready yet: ${env.serverPark.brokerStatus}")
             delay(100)
         }
     }
