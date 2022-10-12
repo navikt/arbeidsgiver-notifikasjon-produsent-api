@@ -38,7 +38,7 @@
                 <artifactId>junit-jupiter-api</artifactId>
                 <version>5.8.2</version>
             </dependency>
-            <dependency>
+            <dependency> <!-- Used by mockk. Automatically resolved version unable to parse class files from java 16/17. -->
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy</artifactId>
                 <version>1.12.18</version>
