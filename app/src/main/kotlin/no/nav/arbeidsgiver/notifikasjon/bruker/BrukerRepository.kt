@@ -62,7 +62,7 @@ class BrukerRepositoryImpl(
     private val database: Database
 ) : BrukerRepository {
     private val log = logger()
-    private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")!!
+    private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
     override val altinnRolle: AltinnRolleRepository = AltinnRolleRepositoryImpl(database)
 
     override suspend fun hentNotifikasjoner(

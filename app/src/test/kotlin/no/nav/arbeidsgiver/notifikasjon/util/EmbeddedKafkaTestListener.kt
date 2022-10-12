@@ -30,7 +30,6 @@ class EmbeddedKafkaTestListener: TestListener, EmbeddedKafka {
     override suspend fun beforeSpec(spec: Spec) {
         env.start()
         while (env.serverPark.brokerStatus !is KafkaEnvironment.BrokerStatus.Available) {
-            println("kafka server not ready yet: ${env.serverPark.brokerStatus}")
             delay(100)
         }
     }

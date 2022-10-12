@@ -34,11 +34,11 @@ class SuspendingAltinnClient(
     private val altinnProxyAudience = "${NaisEnvironment.clusterName}:arbeidsgiver:altinn-rettigheter-proxy"
 
     private val initiatedCounter = Counter.builder("altinn.rettigheter.lookup.initiated")
-        .register(Metrics.meterRegistry)!!
+        .register(Metrics.meterRegistry)
     private val successCounter = Counter.builder("altinn.rettigheter.lookup.success")
-        .register(Metrics.meterRegistry)!!
+        .register(Metrics.meterRegistry)
     private val failCounter = Counter.builder("altinn.rettigheter.lookup.fail")
-        .register(Metrics.meterRegistry)!!
+        .register(Metrics.meterRegistry)
 
     private val httpClient = HttpClient(Apache) {
         install(ContentNegotiation) {

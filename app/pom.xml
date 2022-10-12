@@ -33,6 +33,7 @@
                 <version>1.6.4</version>
             </dependency>
             <dependency>
+            <!-- Related artifacts junit-jupiter-* got a different version than junit-jupiter-api -->
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-api</artifactId>
                 <version>5.8.2</version>
