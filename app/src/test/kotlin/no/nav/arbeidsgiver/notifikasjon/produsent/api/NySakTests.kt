@@ -16,7 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.temporal.ChronoUnit
 import java.util.*
 
-class NySakTests: DescribeSpec({
+class NySakTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
     val stubbedKafkaProducer = FakeHendelseProdusent()
@@ -167,14 +167,22 @@ private fun TestApplicationEngine.nySak(
                     tidspunkt: "2020-01-01T01:01Z"
                     tittel: "$tittel"
                     lenke: "$lenke"
-                    ${hardDeleteDen?.let {"""
+                    ${
+            hardDeleteDen?.let {
+                """
                         |hardDelete: {
                         |  den: "$it"
-                        |}""".trimMargin()} ?: ""}
-                    ${hardDeleteOm?.let {"""
+                        |}""".trimMargin()
+            } ?: ""
+        }
+                    ${
+            hardDeleteOm?.let {
+                """
                         |hardDelete: {
                         |  om: "$it"
-                        |}""".trimMargin()} ?: ""}
+                        |}""".trimMargin()
+            } ?: ""
+        }
                 ) {
                     __typename
                     ... on NySakVellykket {

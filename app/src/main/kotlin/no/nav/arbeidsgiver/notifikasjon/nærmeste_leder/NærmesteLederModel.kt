@@ -1,7 +1,7 @@
-package no.nav.arbeidsgiver.notifikasjon.bruker
+package no.nav.arbeidsgiver.notifikasjon.nærmeste_leder
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import no.nav.arbeidsgiver.notifikasjon.bruker.NærmesteLederModel.NarmesteLederLeesah
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.JsonDeserializer
 import java.time.LocalDate

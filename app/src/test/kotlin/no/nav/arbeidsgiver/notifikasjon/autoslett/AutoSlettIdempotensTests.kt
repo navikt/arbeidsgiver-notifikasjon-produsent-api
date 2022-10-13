@@ -10,12 +10,10 @@ class AutoSlettIdempotensTests : DescribeSpec({
     val database = testDatabase(AutoSlett.databaseConfig)
     val repository = AutoSlettRepository(database)
 
-    describe("Idempotent oppførsel") {
+    describe("AutoSlett Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
-            it("håndterer ${hendelse::class.simpleName} med idempotens") {
-                repository.oppdaterModellEtterHendelse(hendelse, Instant.EPOCH)
-                repository.oppdaterModellEtterHendelse(hendelse, Instant.EPOCH)
-            }
+            repository.oppdaterModellEtterHendelse(hendelse, Instant.EPOCH)
+            repository.oppdaterModellEtterHendelse(hendelse, Instant.EPOCH)
         }
     }
 })

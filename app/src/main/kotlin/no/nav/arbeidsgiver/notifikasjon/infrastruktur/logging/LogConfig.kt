@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.PatternLayout
 import ch.qos.logback.classic.spi.Configurator
+import ch.qos.logback.classic.spi.Configurator.ExecutionStatus
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.ConsoleAppender
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder
@@ -14,9 +15,9 @@ import ch.qos.logback.core.spi.LifeCycle
 import net.logstash.logback.encoder.LogstashEncoder
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 
-@Suppress("unused") /* see resources/META-INF/services/ch.qos.logback.classic.spi */
+/* used by resources/META-INF/services/ch.qos.logback.classic.spi */
 class LogConfig : ContextAwareBase(), Configurator {
-    override fun configure(lc: LoggerContext) {
+    override fun configure(lc: LoggerContext): ExecutionStatus {
         val naisCluster = System.getenv("NAIS_CLUSTER_NAME")
 
         val rootAppender = MaskingAppender().setup(lc) {
@@ -48,6 +49,7 @@ class LogConfig : ContextAwareBase(), Configurator {
         if (naisCluster == null || naisCluster == "dev-gcp") {
             lc.getLogger("io.ktor.auth.jwt").level = Level.TRACE
         }
+        return ExecutionStatus.NEUTRAL
     }
 }
 

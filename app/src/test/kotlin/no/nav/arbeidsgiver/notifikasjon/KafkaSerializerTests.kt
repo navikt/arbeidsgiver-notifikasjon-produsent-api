@@ -14,11 +14,9 @@ class KafkaSerializerTests : DescribeSpec({
         val deserializer = ValueDeserializer()
 
         withData(EksempelHendelse.Alle) { hendelse ->
-            it("serde preservers all values") {
-                val serialized = serializer.serialize("", hendelse)
-                val deserialized = deserializer.deserialize("", serialized)
-                deserialized shouldBe hendelse
-            }
+            val serialized = serializer.serialize("", hendelse)
+            val deserialized = deserializer.deserialize("", serialized)
+            deserialized shouldBe hendelse
         }
     }
 })

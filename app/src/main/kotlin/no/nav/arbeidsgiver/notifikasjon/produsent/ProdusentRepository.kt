@@ -217,7 +217,8 @@ class ProdusentRepositoryImpl(
         }
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
-        val ignored: Unit = when (hendelse) {
+        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
+        @Suppress("UNUSED_VARIABLE") val ignored: Unit = when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
             is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
@@ -490,7 +491,8 @@ class ProdusentRepositoryImpl(
     }
 
     private fun Transaction.storeMottaker(notifikasjonId: UUID, mottaker: Mottaker) {
-        val ignored = when (mottaker) {
+        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
+        @Suppress("UNUSED_VARIABLE") val ignored = when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
             is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(notifikasjonId, mottaker)

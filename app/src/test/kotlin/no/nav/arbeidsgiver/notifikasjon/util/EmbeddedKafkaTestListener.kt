@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 fun TestConfiguration.embeddedKafka(): EmbeddedKafka =
     EmbeddedKafkaTestListener()
-        .also{ listener(it) }
+        .also { listener(it) }
 
 interface EmbeddedKafka {
     fun newConsumer(): Hendelsesstrøm

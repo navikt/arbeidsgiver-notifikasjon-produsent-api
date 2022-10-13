@@ -105,7 +105,10 @@ class TokenXClientImpl(
                     setBody(FormDataContent(
                         Parameters.build {
                             append("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
-                            append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+                            append(
+                                "client_assertion_type",
+                                "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+                            )
                             append("client_assertion", assertion)
                             append("subject_token_type", "urn:ietf:params:oauth:token-type:jwt")
                             append("subject_token", subjectToken)

@@ -13,7 +13,6 @@ fun TestConfiguration.testDatabase(config: Database.Config): Database =
             config.copy(
                 // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
                 jdbcOpts = mapOf("preparedStatementCacheQueries" to 0)
-
             )
         )
     }
@@ -22,7 +21,9 @@ fun TestConfiguration.testDatabase(config: Database.Config): Database =
 class PostgresTestListener(private val database: Database): TestListener {
 
     override suspend fun beforeContainer(testCase: TestCase) {
-        database.withFlyway {
+        database.withFlyway({
+            cleanDisabled(false)
+        }) {
             clean()
             migrate()
         }

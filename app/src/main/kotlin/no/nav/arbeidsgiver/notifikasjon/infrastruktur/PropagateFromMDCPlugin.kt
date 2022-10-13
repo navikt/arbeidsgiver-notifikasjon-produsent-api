@@ -27,6 +27,7 @@ class PropagateFromMDCPlugin internal constructor(
          * backing field
          */
         private var _keysToPropagate: MutableList<PropagatedKey> = defaultKeys.toMutableList()
+
         /**
          * list of keys to propagate from MDC to request header
          *

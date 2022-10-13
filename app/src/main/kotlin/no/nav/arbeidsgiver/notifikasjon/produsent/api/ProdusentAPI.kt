@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 
+
 object ProdusentAPI {
     data class Context(
         val appName: String,

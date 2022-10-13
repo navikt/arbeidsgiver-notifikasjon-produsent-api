@@ -1,13 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 
 import io.ktor.client.*
-import io.ktor.client.call.*
+import io.ktor.client.call.body
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson.jackson
 import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
@@ -144,9 +144,11 @@ class SuspendingAltinnClient(
                     HttpStatusCode.GatewayTimeout,
                     HttpStatusCode.ServiceUnavailable,
                     -> true
+
                     else -> false
                 }
             }
+
             else -> false
         }
     }

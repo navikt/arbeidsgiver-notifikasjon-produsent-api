@@ -67,12 +67,12 @@ class AltinnVarselKlientMedFilter(
 ) : AltinnVarselKlient {
 
     override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
-        val mottaker = when(eksternVarsel) {
+        val mottaker = when (eksternVarsel) {
             is EksternVarsel.Sms -> eksternVarsel.mobilnummer
             is EksternVarsel.Epost -> eksternVarsel.epostadresse
         }
         return if (repository.mottakerErPåAllowList(mottaker)) {
-           altinnVarselKlient.send(eksternVarsel)
+            altinnVarselKlient.send(eksternVarsel)
         } else {
             loggingKlient.send(eksternVarsel)
         }
@@ -97,9 +97,9 @@ class AltinnVarselKlientImpl(
     azureTargetApp: String = basedOnEnv(
         prod = { "prod-gcp.fager.altinn-varsel-firewall" },
         dev = { "dev-gcp.fager.altinn-varsel-firewall" },
-        other = { " "}
+        other = { " " }
     ),
-): AltinnVarselKlient {
+) : AltinnVarselKlient {
     val log = logger()
     private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java) {
         azureService.getAccessToken(azureTargetApp)
@@ -113,6 +113,7 @@ class AltinnVarselKlientImpl(
                 tittel = eksternVarsel.tittel,
                 tekst = eksternVarsel.body,
             )
+
             is EksternVarsel.Sms -> sendSms(
                 reporteeNumber = eksternVarsel.fnrEllerOrgnr,
                 mobilnummer = eksternVarsel.mobilnummer,
@@ -335,7 +336,7 @@ fun <PORT_TYPE> createServicePort(
     })
 
     /* inject Azure AD token */
-    outInterceptors.add(object: AbstractPhaseInterceptor<Message>(Phase.PRE_STREAM) {
+    outInterceptors.add(object : AbstractPhaseInterceptor<Message>(Phase.PRE_STREAM) {
         override fun handleMessage(message: Message?) {
             if (message == null || message[Message.INBOUND_MESSAGE] as? Boolean != false) {
                 return

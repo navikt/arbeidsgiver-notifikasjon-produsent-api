@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson.JacksonConverter
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.engine.*
@@ -132,6 +132,7 @@ fun Application.baseSetup(
             "prod-gcp" -> {
                 allowHost("*.nav.no", schemes = listOf("https"))
             }
+
             "dev-gcp" -> {
                 allowHost("*.nav.no", schemes = listOf("https"))
                 allowHost("localhost:3000")

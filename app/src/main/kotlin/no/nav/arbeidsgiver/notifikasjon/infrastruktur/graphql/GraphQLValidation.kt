@@ -156,7 +156,7 @@ private val VALIDATORS = listOf(
         override val name = "MaxValue"
 
         override fun createValidator(path: Path, directive: GraphQLDirective, type: GraphQLType): Validator {
-            val upToIncluding = directive.getArgument("upToIncluding").value as Int
+            val upToIncluding = (directive.getArgument("upToIncluding").argumentValue.value as graphql.language.IntValue).value.toInt()
             return { value ->
                 val valueInt = value as Int?
                 if (valueInt != null && valueInt > upToIncluding) {
@@ -169,7 +169,7 @@ private val VALIDATORS = listOf(
         override val name = "MaxLength"
 
         override fun createValidator(path: Path, directive: GraphQLDirective, type: GraphQLType): Validator {
-            val max = directive.getArgument("max").value as Int
+            val max = (directive.getArgument("max").argumentValue.value as graphql.language.IntValue).value.toInt()
             return { value ->
                 val valueStr = value as String?
                 if (valueStr != null && valueStr.length > max) {

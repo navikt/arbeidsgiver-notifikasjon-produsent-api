@@ -215,13 +215,11 @@ class StatistikkModelTests : DescribeSpec({
         }
     }
 
-    describe("Idempotent oppførsel") {
+    describe("Statistikk Idempotent oppførsel") {
+        val metadata = HendelseMetadata(now())
         withData(EksempelHendelse.Alle) { hendelse ->
-            val metadata = HendelseMetadata(now())
-            it("håndterer ${hendelse::class.simpleName} med idempotens") {
-                model.oppdaterModellEtterHendelse(hendelse, metadata)
-                model.oppdaterModellEtterHendelse(hendelse, metadata)
-            }
+            model.oppdaterModellEtterHendelse(hendelse, metadata)
+            model.oppdaterModellEtterHendelse(hendelse, metadata)
         }
     }
 })

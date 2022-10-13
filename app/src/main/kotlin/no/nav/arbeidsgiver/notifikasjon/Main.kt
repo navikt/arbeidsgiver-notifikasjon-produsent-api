@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.statistikk.Statistikk
 import kotlin.system.exitProcess
 
-@Suppress("unused") /* Entry point for jar. */
 private object Main {
     val log = logger()
 }

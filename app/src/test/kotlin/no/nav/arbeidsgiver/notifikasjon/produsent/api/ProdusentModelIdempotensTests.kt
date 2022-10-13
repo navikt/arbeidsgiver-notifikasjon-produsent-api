@@ -11,12 +11,10 @@ class ProdusentModelIdempotensTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepositoryImpl(database)
 
-    describe("Idempotent oppførsel") {
+    describe("Produsent Model Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
-            it("håndterer ${hendelse::class.simpleName} med idempotens") {
-                produsentModel.oppdaterModellEtterHendelse(hendelse)
-                produsentModel.oppdaterModellEtterHendelse(hendelse)
-            }
+            produsentModel.oppdaterModellEtterHendelse(hendelse)
+            produsentModel.oppdaterModellEtterHendelse(hendelse)
         }
     }
 })

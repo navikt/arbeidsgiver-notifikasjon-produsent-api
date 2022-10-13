@@ -15,25 +15,27 @@ import java.util.*
 
 private val sakOpprettet = HendelseModel.SakOpprettet(
     hendelseId = uuid("1"),
-            virksomhetsnummer = "1",
-            produsentId = "1",
-            kildeAppNavn = "test",
-            sakId = uuid("1"),
-            grupperingsid = "grupperingsid",
-            merkelapp = "tag",
-            mottakere = listOf(HendelseModel.AltinnMottaker(
-                serviceCode = "5441",
-                serviceEdition = "1",
-                virksomhetsnummer = "1"
-            )),
-            tittel = "foo",
-            lenke = "#foo",
-            oppgittTidspunkt = null,
-            mottattTidspunkt = OffsetDateTime.now(),
-            hardDelete = null,
+    virksomhetsnummer = "1",
+    produsentId = "1",
+    kildeAppNavn = "test",
+    sakId = uuid("1"),
+    grupperingsid = "grupperingsid",
+    merkelapp = "tag",
+    mottakere = listOf(
+        HendelseModel.AltinnMottaker(
+            serviceCode = "5441",
+            serviceEdition = "1",
+            virksomhetsnummer = "1"
+        )
+    ),
+    tittel = "foo",
+    lenke = "#foo",
+    oppgittTidspunkt = null,
+    mottattTidspunkt = OffsetDateTime.now(),
+    hardDelete = null,
 )
 
-class NySakDuplisertTests: DescribeSpec({
+class NySakDuplisertTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
     val hendelseProdusent = FakeHendelseProdusent()

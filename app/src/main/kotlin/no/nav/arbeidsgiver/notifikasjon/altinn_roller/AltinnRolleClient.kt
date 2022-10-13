@@ -1,13 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.altinn_roller
 
 import io.ktor.client.*
-import io.ktor.client.call.*
+import io.ktor.client.call.body
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson.jackson
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnConfig
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 
@@ -15,7 +15,7 @@ interface AltinnRolleClient {
     suspend fun hentRoller(): List<AltinnRolle>?
 }
 
-class AltinnRolleClientImpl: AltinnRolleClient {
+class AltinnRolleClientImpl : AltinnRolleClient {
     private val log = logger()
 
     private val httpClient = HttpClient(Apache) {
@@ -30,7 +30,8 @@ class AltinnRolleClientImpl: AltinnRolleClient {
         }
     }
 
-    private val hentRollerUrl = "${AltinnConfig.ALTINN_ORIGIN}/ekstern/altinn/api/serviceowner/roledefinitions?ForceEIAuthentication&language=1044"
+    private val hentRollerUrl =
+        "${AltinnConfig.ALTINN_ORIGIN}/ekstern/altinn/api/serviceowner/roledefinitions?ForceEIAuthentication&language=1044"
 
     override suspend fun hentRoller(): List<AltinnRolle>? = try {
         httpClient.get(hentRollerUrl) {
@@ -40,7 +41,10 @@ class AltinnRolleClientImpl: AltinnRolleClient {
             }
         }.body()
     } catch (e: ResponseException) {
-        log.warn("serviceowner/roledefinitions feiler: ${e.response.status.value} '${e.response.status.description}'", e)
+        log.warn(
+            "serviceowner/roledefinitions feiler: ${e.response.status.value} '${e.response.status.description}'",
+            e
+        )
         null
     } catch (e: Exception) {
         log.warn("serviceowner/roledefinitions feiler: : '${e.message}' ", e)

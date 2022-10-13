@@ -46,7 +46,8 @@ class AutoSlettRepository(
     }
 
     suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, timestamp: Instant) {
-        val ignored = when (hendelse) {
+        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
+        @Suppress("UNUSED_VARIABLE") val ignored = when (hendelse) {
             is HendelseModel.BeskjedOpprettet -> {
                 saveAggregate(hendelse, "Beskjed", hendelse.merkelapp)
                 upsert(

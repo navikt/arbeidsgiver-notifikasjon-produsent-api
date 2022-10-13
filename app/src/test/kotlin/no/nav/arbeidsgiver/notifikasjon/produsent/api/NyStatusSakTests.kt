@@ -13,7 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDateTime
 import java.util.*
 
-class NyStatusSakTests: DescribeSpec({
+class NyStatusSakTests : DescribeSpec({
     val stubbedKafkaProducer = FakeHendelseProdusent()
 
     val database = testDatabase(Produsent.databaseConfig)
@@ -98,7 +98,9 @@ private fun TestApplicationEngine.nyStatusSak(
                     id: "$id"
                     idempotencyKey: ${idempotencyKey?.let { "\"$it\"" }}
                     nyStatus: $status
-                    ${hardDelete?.let {"""
+                    ${
+            hardDelete?.let {
+                """
                         hardDelete: {
                             nyTid: {
                                 den: "$it"
@@ -106,7 +108,8 @@ private fun TestApplicationEngine.nyStatusSak(
                             strategi: OVERSKRIV
                         }
                     """.trimIndent()
-                    } ?: ""}
+            } ?: ""
+        }
                 ) {
                     __typename
                     ... on NyStatusSakVellykket {

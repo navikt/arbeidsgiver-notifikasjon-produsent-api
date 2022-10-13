@@ -79,8 +79,6 @@ object ProdusentModel {
         override val virksomhetsnummer: String,
     ) : Notifikasjon {
 
-        @Suppress("unused")
-        /* leses fra database */
         enum class Tilstand {
             NY,
             UTFOERT,

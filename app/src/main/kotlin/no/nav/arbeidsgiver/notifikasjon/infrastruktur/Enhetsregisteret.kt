@@ -2,13 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
-import io.ktor.client.call.*
+import io.ktor.client.call.body
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson.jackson
 
 interface Enhetsregisteret {
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -26,7 +26,7 @@ fun enhetsregisterFactory() =
         other = { EnhetsregisteretDevImpl() }
     )
 
-class EnhetsregisteretDevImpl: Enhetsregisteret {
+class EnhetsregisteretDevImpl : Enhetsregisteret {
     override suspend fun hentUnderenhet(orgnr: String) =
         Enhetsregisteret.Underenhet(
             organisasjonsnummer = orgnr,
@@ -35,7 +35,7 @@ class EnhetsregisteretDevImpl: Enhetsregisteret {
 }
 
 class EnhetsregisteretImpl(
-    private val baseUrl : String = "https://data.brreg.no"
+    private val baseUrl: String = "https://data.brreg.no"
 ) : Enhetsregisteret {
     private val log = logger()
 

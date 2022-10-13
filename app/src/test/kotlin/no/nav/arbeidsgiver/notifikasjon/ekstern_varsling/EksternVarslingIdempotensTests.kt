@@ -9,12 +9,10 @@ class EksternVarslingIdempotensTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
 
-    describe("Idempotent oppførsel") {
+    describe("Ekstern Varlsing Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
-            it("håndterer ${hendelse::class.simpleName} med idempotens") {
-                repository.oppdaterModellEtterHendelse(hendelse)
-                repository.oppdaterModellEtterHendelse(hendelse)
-            }
+            repository.oppdaterModellEtterHendelse(hendelse)
+            repository.oppdaterModellEtterHendelse(hendelse)
         }
     }
 })

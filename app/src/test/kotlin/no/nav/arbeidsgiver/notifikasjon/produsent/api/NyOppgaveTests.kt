@@ -26,7 +26,6 @@ import java.time.OffsetDateTime
 import java.util.*
 import kotlin.time.ExperimentalTime
 
-@Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class NyOppgaveTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
@@ -111,10 +110,8 @@ class NyOppgaveTests : DescribeSpec({
         }
 
         it("updates produsent modell") {
-            it("updates produsent modell") {
-                val id = response.getTypedContent<UUID>("nyOppgave/id")
-                produsentRepository.hentNotifikasjon(id) shouldNot beNull()
-            }
+            val id = response.getTypedContent<UUID>("nyOppgave/id")
+            produsentRepository.hentNotifikasjon(id) shouldNot beNull()
         }
     }
 })

@@ -42,7 +42,7 @@ fun Spec.ktorBrukerTestServer(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
     val brukerGraphQL = BrukerAPI.createBrukerGraphQL(
-        brukerRepository= brukerRepository,
+        brukerRepository = brukerRepository,
         hendelseProdusent = kafkaProducer,
         tilgangerService = tilgangerService,
         virksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
