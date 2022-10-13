@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -10,7 +9,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
 import io.ktor.serialization.jackson.jackson
-import io.ktor.server.http.content.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature

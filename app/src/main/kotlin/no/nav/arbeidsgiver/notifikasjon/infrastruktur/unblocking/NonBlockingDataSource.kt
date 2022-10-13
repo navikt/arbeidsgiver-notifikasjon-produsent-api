@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.configuration.FluentConfiguration
 import java.io.Closeable
 import java.sql.Connection
 import javax.sql.DataSource
@@ -24,14 +25,18 @@ class NonBlockingDataSource<T>(
             }
         }
 
-    suspend fun withFlyway(locations: String, body: Flyway.() -> Unit) {
+    suspend fun withFlyway(
+        locations: String,
+        config: FluentConfiguration.() -> Unit = {},
+        action: Flyway.() -> Unit
+    ) {
         blockingIO {
             Flyway.configure()
-                .cleanDisabled(false)
                 .locations(locations)
                 .dataSource(dataSource)
+                .apply(config)
                 .load()
-                .body()
+                .action()
         }
     }
 }

@@ -9,7 +9,6 @@ import java.time.temporal.Temporal
 import java.time.temporal.TemporalAmount
 import java.time.temporal.TemporalUnit
 import java.time.temporal.UnsupportedTemporalTypeException
-import java.util.*
 
 data class ISO8601Period(
     private val period: Period,

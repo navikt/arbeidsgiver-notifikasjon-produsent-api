@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
-import java.time.Duration
 import java.time.LocalDateTime
 
 data class FutureTemporalInput(

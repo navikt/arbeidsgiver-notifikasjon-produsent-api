@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import kotlin.time.ExperimentalTime
 
-@Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class TilgangsstyringTests : DescribeSpec({
     val engine = ktorProdusentTestServer(

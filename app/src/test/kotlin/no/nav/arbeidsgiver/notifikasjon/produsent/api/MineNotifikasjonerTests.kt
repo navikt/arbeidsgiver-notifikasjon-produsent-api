@@ -15,7 +15,6 @@ import java.time.OffsetDateTime
 import java.util.*
 import kotlin.time.ExperimentalTime
 
-@Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class MineNotifikasjonerTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)

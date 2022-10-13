@@ -83,8 +83,6 @@ internal class QueryMineNotifikasjoner(
             val oppgave: OppgaveData,
             val eksterneVarsler: List<EksterntVarsel>,
         ) : Notifikasjon() {
-            @Suppress("unused")
-            /* Sendes til produsent */
             enum class Tilstand {
                 NY,
                 UTFOERT;

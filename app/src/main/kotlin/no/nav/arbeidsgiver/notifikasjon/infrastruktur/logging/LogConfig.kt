@@ -15,7 +15,7 @@ import ch.qos.logback.core.spi.LifeCycle
 import net.logstash.logback.encoder.LogstashEncoder
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 
-@Suppress("unused") /* see resources/META-INF/services/ch.qos.logback.classic.spi */
+/* used by resources/META-INF/services/ch.qos.logback.classic.spi */
 class LogConfig : ContextAwareBase(), Configurator {
     override fun configure(lc: LoggerContext): ExecutionStatus {
         val naisCluster = System.getenv("NAIS_CLUSTER_NAME")

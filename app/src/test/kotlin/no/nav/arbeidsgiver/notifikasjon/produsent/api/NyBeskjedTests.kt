@@ -26,7 +26,6 @@ import java.time.OffsetDateTime
 import java.util.*
 import kotlin.time.ExperimentalTime
 
-@Suppress("NAME_SHADOWING")
 @ExperimentalTime
 class NyBeskjedTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)

@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.writeValueAsStringSupportingTypeInfoInCollections
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.Closeable
 import java.sql.Connection
@@ -175,10 +176,9 @@ class Database private constructor(
             }
         }
 
-    suspend fun withFlyway(body: Flyway.() -> Unit) {
-        dataSource.withFlyway(config.migrationLocations, body)
+    suspend fun withFlyway(flywayConfig: FluentConfiguration.() -> Unit, body: Flyway.() -> Unit) {
+        dataSource.withFlyway(config.migrationLocations, flywayConfig, body)
     }
-
 }
 
 

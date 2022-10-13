@@ -21,7 +21,9 @@ fun TestConfiguration.testDatabase(config: Database.Config): Database =
 class PostgresTestListener(private val database: Database): TestListener {
 
     override suspend fun beforeContainer(testCase: TestCase) {
-        database.withFlyway {
+        database.withFlyway({
+            cleanDisabled(false)
+        }) {
             clean()
             migrate()
         }

@@ -6,6 +6,8 @@ import io.kotest.matchers.collections.shouldHaveSingleElement
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModel
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid

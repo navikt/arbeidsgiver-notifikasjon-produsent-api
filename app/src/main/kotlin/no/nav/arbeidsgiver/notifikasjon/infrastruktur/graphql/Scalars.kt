@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 import graphql.language.StringValue
 import graphql.schema.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter

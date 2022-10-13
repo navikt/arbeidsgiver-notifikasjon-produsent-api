@@ -54,8 +54,6 @@ object BrukerModel {
         val klikketPaa: Boolean,
         val tilstand: Tilstand,
     ) : Notifikasjon {
-        @Suppress("unused")
-        /* leses fra database */
         enum class Tilstand {
             NY,
             UTFOERT,
