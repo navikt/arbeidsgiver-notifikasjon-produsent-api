@@ -194,7 +194,6 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <!-- Fix for https://jira.qos.ch/browse/LOGBACK-1454 not in production release yet -->
             <version>1.4.4</version>
         </dependency>
 
