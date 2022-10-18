@@ -41,6 +41,8 @@ spec:
         - application: innsyn-aareg
         - application: tiltaksgjennomforing
           namespace: arbeidsgiver
+        - application: aareg-innsyn-arbeidsgiver
+          namespace: arbeidsforhold
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
