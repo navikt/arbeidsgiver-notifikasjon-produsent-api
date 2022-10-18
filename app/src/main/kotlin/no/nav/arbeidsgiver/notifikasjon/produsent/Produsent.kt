@@ -64,6 +64,10 @@ object Produsent {
                 }
             }
 
+            launch {
+                hendelsesstrøm.replayPeriodically()
+            }
+
             val graphql = async {
                 ProdusentAPI.newGraphQL(
                     kafkaProducer = lagKafkaHendelseProdusent(),
