@@ -38,6 +38,10 @@ class HendelsesstrømKafkaImpl(
             }
         }
     }
+
+    fun replayPeriodically() {
+        consumer.replayPeriodically()
+    }
 }
 
 
