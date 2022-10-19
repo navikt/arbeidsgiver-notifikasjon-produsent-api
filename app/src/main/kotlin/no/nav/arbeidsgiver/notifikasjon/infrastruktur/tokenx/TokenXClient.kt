@@ -121,7 +121,7 @@ class TokenXClientImpl(
                         successCounter.increment()
                     }
             } catch (e: Exception) {
-                log.info("tokene exchange failed (audience='{}').", audience, e)
+                log.info("token exchange failed (audience='{}').", audience, e)
                 failCounter.increment()
                 throw e
             }
