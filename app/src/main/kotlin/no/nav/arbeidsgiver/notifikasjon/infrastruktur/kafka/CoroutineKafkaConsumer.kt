@@ -79,9 +79,9 @@ private constructor(
     private val replayer = PeriodicReplayer(
         consumer,
         isBigLeap = { t -> t.hour == 5 && t.minute == 0 },
-        isSmallLeap = { t -> t.minute == 0 },
+        isSmallLeap = { t -> t.minute % 15 == 0 },
         bigLeap = 10_000,
-        smallLeap = 100,
+        smallLeap = 500,
         enabled = replayPeriodically,
     )
 
