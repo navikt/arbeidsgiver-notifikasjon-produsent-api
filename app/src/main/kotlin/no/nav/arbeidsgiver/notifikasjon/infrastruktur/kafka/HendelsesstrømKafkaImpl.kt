@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class HendelsesstrømKafkaImpl(
     groupId: String,
     seekToBeginning: Boolean = false,
+    periodicReplay: Boolean = false,
     configure: Properties.() -> Unit = {},
 ): Hendelsesstrøm {
     private val log = logger()
@@ -22,6 +23,7 @@ class HendelsesstrømKafkaImpl(
         keyDeserializer = StringDeserializer::class.java,
         valueDeserializer = ValueDeserializer::class.java,
         seekToBeginning = seekToBeginning,
+        periodicReplay = periodicReplay,
         configure = configure,
     )
 
@@ -37,10 +39,6 @@ class HendelsesstrømKafkaImpl(
                 body(recordValue, HendelseMetadata(Instant.ofEpochMilli(record.timestamp())))
             }
         }
-    }
-
-    fun replayPeriodically() {
-        consumer.replayPeriodically()
     }
 }
 
