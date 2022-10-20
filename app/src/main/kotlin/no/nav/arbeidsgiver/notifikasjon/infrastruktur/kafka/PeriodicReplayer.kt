@@ -47,18 +47,3 @@ fun <K, V> Consumer<K, V>.replay(numberOfRecords: Long) {
         seek(it, newPosition)
     }
 }
-
-//fun main() {
-//    val startAt = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)//.plusMinutes(5)
-//    val interval = Duration.ofSeconds(5)// .ofMinutes(1)
-//
-//    val replayer = PeriodicReplayer<String, String>(
-//        consumer = MockConsumer(OffsetResetStrategy.EARLIEST),
-//        isBigLeap = { t -> t.hour == 5 && t.minute == 0 },
-//        isSmallLeap = { t -> t.hour != 5 && t.minute != 0 },
-//        bigLeap = 10_000,
-//        smallLeap = 100,
-//    )
-//    replayer.schedule(startAt, interval)
-//
-//}
