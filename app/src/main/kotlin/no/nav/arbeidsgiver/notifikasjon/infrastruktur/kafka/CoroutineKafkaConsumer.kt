@@ -33,6 +33,7 @@ private constructor(
     keyDeserializer: Class<*>,
     valueDeserializer: Class<*>,
     seekToBeginning: Boolean = false,
+    replayPeriodically: Boolean = false,
     private val configure: Properties.() -> Unit = {},
 ) {
     companion object {
@@ -42,9 +43,10 @@ private constructor(
             keyDeserializer: Class<KS>,
             valueDeserializer: Class<VS>,
             seekToBeginning: Boolean = false,
+            periodicReplay: Boolean = false,
             configure: Properties.() -> Unit = {},
         ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
-            topic, groupId, keyDeserializer, valueDeserializer, seekToBeginning, configure
+            topic, groupId, keyDeserializer, valueDeserializer, seekToBeginning, periodicReplay, configure
         )
     }
 
@@ -74,12 +76,22 @@ private constructor(
 
     private val retryTimer = Timer()
 
+    private val replayer = PeriodicReplayer(
+        consumer,
+        isBigLeap = { t -> t.minute % 30 == 0 },
+        isSmallLeap = { t -> t.minute % 2 == 0 },
+        bigLeap = 10,
+        smallLeap = 1,
+        enabled = replayPeriodically,
+    )
+
 
     suspend fun forEach(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (ConsumerRecord<K, V>) -> Unit
     ) {
         while (!stop.get() && !Health.terminating) {
+            replayer.replayWhenLeap()
             consumer.resume(resumeQueue.pollAll())
             val records = try {
                 poll(Duration.ofMillis(1000))
@@ -161,16 +173,6 @@ private constructor(
                 }
             }
         )
-    }
-
-    fun replayPeriodically() {
-        PeriodicReplayer(
-            consumer,
-            isBigLeap = { t -> t.minute % 30 == 0 },
-            isSmallLeap = { t -> t.minute % 2 == 0 },
-            bigLeap = 10_000,
-            smallLeap = 100,
-        ).start()
     }
 }
 
