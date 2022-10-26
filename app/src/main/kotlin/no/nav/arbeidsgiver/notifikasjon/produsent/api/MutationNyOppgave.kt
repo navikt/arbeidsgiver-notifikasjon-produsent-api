@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
+import java.time.LocalDate
 import java.util.*
 
 internal class MutationNyOppgave(
@@ -37,6 +38,7 @@ internal class MutationNyOppgave(
         val mottaker: MottakerInput?,
         val mottakere: List<MottakerInput>,
         val notifikasjon: QueryMineNotifikasjoner.NotifikasjonData,
+        val frist: LocalDate?,
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>,
     ) {
@@ -64,6 +66,7 @@ internal class MutationNyOppgave(
                     it.tilDomene(metadata.virksomhetsnummer)
                 },
                 hardDelete = metadata.hardDelete?.tilDomene(),
+                frist = frist,
             )
         }
     }

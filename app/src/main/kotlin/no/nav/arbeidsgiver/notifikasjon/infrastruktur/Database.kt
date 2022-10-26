@@ -21,6 +21,7 @@ import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -271,6 +272,8 @@ class ParameterSetters(
     fun timestamptz(value: OffsetDateTime) = preparedStatement.setObject(index++, value)
     fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
+
+    fun nullableDate(value: LocalDate?) = preparedStatement.setString(index++, value?.toString())
 
     inline fun <reified T> jsonb(value: T) =
         string(
