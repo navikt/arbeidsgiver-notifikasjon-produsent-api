@@ -55,3 +55,4 @@ spec:
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
     - configmap: loginservice-idporten
+
