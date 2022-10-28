@@ -25,7 +25,7 @@ import java.time.Duration
 object Produsent {
     val databaseConfig = Database.config("produsent_model")
     private val log = logger()
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("produsent-model-builder", periodicReplay = true) }
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("produsent-model-builder", replayPeriodically = true) }
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
