@@ -65,15 +65,13 @@ val ESYFO = Produsent(
     accessPolicy = basedOnEnv(
         prod = { listOf(
             "prod-gcp:team-esyfo:esyfovarsel",
-            "prod-fss:team-esyfo:esyfovarsel",
         ) },
         other = { listOf(
             "dev-gcp:team-esyfo:esyfovarsel",
-            "dev-fss:team-esyfo:esyfovarsel",
         ) },
     ),
     tillatteMerkelapper = listOf(
-        "Aktivitetskrav",
+        "Dialogmøte",
         "Oppfølging",
     ),
     tillatteMottakere = listOf(NærmesteLederDefinisjon)
