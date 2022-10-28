@@ -43,10 +43,10 @@ private constructor(
             keyDeserializer: Class<KS>,
             valueDeserializer: Class<VS>,
             seekToBeginning: Boolean = false,
-            periodicReplay: Boolean = false,
+            replayPeriodically: Boolean = false,
             configure: Properties.() -> Unit = {},
         ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
-            topic, groupId, keyDeserializer, valueDeserializer, seekToBeginning, periodicReplay, configure
+            topic, groupId, keyDeserializer, valueDeserializer, seekToBeginning, replayPeriodically, configure
         )
     }
 

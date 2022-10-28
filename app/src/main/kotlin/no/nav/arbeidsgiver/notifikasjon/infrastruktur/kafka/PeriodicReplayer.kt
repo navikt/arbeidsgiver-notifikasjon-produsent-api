@@ -24,7 +24,7 @@ class PeriodicReplayer<K, V>(
         }
 
         val now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
-        if (now == lastTick.get()) {
+        if (now == lastTick.getAndSet(now)) {
             // noop
         } else if (isBigLeap.test(now)) {
             log.info("replaying big leap")
@@ -34,7 +34,6 @@ class PeriodicReplayer<K, V>(
             log.info("replaying small leap")
             consumer.replay(smallLeap)
         }
-        lastTick.set(now)
     }
 }
 
