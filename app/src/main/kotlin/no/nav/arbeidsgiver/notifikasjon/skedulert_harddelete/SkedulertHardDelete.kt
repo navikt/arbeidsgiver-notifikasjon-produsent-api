@@ -18,7 +18,8 @@ object SkedulertHardDelete {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "skedulert-harddelete-model-builder"
+            groupId = "skedulert-harddelete-model-builder",
+            replayPeriodically = true,
         )
     }
 

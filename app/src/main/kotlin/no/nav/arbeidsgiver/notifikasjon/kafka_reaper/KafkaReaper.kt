@@ -16,7 +16,8 @@ object KafkaReaper {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "reaper-model-builder"
+            groupId = "reaper-model-builder",
+            replayPeriodically = true,
         )
     }
 

@@ -19,7 +19,8 @@ object Statistikk {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "statistikk-model-builder-1"
+            groupId = "statistikk-model-builder-1",
+            replayPeriodically = true,
         )
     }
 

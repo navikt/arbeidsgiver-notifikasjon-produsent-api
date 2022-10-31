@@ -26,7 +26,8 @@ object EksternVarsling {
     private val hendelsestrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "ekstern-varsling-model-builder"
+            groupId = "ekstern-varsling-model-builder",
+            replayPeriodically = true
         )
     }
 

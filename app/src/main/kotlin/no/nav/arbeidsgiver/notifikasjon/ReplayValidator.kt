@@ -16,6 +16,7 @@ object ReplayValidator {
             topic = NOTIFIKASJON_TOPIC,
             groupId = "replay-validator",
             seekToBeginning = true,
+            replayPeriodically = true,
         )
     }
     fun main(httpPort: Int = 8080) {
