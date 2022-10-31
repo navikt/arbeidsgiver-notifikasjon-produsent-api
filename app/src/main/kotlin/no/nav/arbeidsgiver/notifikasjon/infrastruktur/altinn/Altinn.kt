@@ -177,7 +177,7 @@ internal data class TilgangerCacheKey(
     val roller: Iterable<AltinnRolle>,
 )
 
-private suspend fun <K : Any, V : Any> AsyncCache<K, V>.getAsync(key: K, loader: suspend (K) -> V) =
+suspend fun <K : Any, V : Any> AsyncCache<K, V>.getAsync(key: K, loader: suspend (K) -> V) =
     supervisorScope {
         get(key) { key, _ ->
             future {
