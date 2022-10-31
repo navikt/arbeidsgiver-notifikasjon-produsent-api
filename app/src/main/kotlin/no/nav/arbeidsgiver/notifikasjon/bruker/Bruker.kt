@@ -35,7 +35,8 @@ object Bruker {
             groupId = basedOnEnv(
                 dev = { "bruker-model-builder-1" },
                 other = { "bruker-model-builder" },
-            )
+            ),
+            replayPeriodically = true,
         )
     }
 
