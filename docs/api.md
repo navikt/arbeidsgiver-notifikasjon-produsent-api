@@ -110,6 +110,7 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
   * [Scalars](#scalars)
     * [Boolean](#boolean)
     * [ID](#id)
+    * [ISO8601Date](#iso8601date)
     * [ISO8601DateTime](#iso8601datetime)
     * [ISO8601Duration](#iso8601duration)
     * [ISO8601LocalDateTime](#iso8601localdatetime)
@@ -2439,6 +2440,28 @@ Dere må gi oss minst 1 mottaker.
 <td></td>
 </tr>
 <tr>
+<td colspan="2" valign="top"><strong>frist</strong></td>
+<td valign="top"><a href="#iso8601date">ISO8601Date</a></td>
+<td>
+
+NB: IKKE IMPLEMENTERT I PROD. IKKE SEND.
+
+Her kan du spesifisere frist for når oppgaven skal utføres av bruker.
+Ideen er at etter fristen, så har ikke bruker lov, eller dere sperret for,
+å gjøre oppgaven.
+
+Fristen vises til bruker i grensesnittet.
+Oppgaven blir automatisk markert som `UTGAAT` når fristen er forbi.
+Dere kan kun oppgi frist med dato, og ikke klokkelsett.
+Fristen regnes som utløpt når dagen er omme (midnatt, norsk tidssone).
+
+Hvis dere ikke sender med frist, så viser vi ingen frist for bruker,
+og oppgaven anses som NY frem til dere markerer oppgaven som `UTFOERT` eller
+`UTGAATT`.
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>metadata</strong></td>
 <td valign="top"><a href="#metadatainput">MetadataInput</a>!</td>
 <td></td>
@@ -2718,6 +2741,10 @@ The `Boolean` scalar type represents `true` or `false`.
 #### ID
 
 The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
+
+#### ISO8601Date
+
+Dato etter ISO8601-standaren. F.eks. `2020-01-02`, altså 2. mars 2020.
 
 #### ISO8601DateTime
 
