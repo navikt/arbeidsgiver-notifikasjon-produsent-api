@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -99,7 +100,7 @@ internal class MutationNyOppgave(
         }
 
         if (NaisEnvironment.clusterName == "prod-gcp") {
-            require(domeneNyOppgave.frist == null) {
+            requireGraphql(domeneNyOppgave.frist == null) {
                 "frist ikke implementert"
             }
         }
