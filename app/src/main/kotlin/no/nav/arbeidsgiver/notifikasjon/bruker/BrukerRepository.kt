@@ -29,6 +29,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ifNotBlank
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -190,6 +191,7 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     utgaattTidspunkt = getObject("utgaatt_tidspunkt", OffsetDateTime::class.java),
+                    frist = getObject("frist", LocalDate::class.java),
                     id = getObject("id", UUID::class.java),
                     klikketPaa = getBoolean("klikketPaa")
                 )
