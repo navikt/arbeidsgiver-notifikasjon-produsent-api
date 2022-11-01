@@ -29,6 +29,11 @@ Er representert som String.
 scalar ISO8601Duration
 
 """
+Dato etter ISO8601-standaren. F.eks. `2020-01-02`, altså 2. mars 2020.
+"""
+scalar ISO8601Date
+
+"""
 Tilstanden til en oppgave.
 """
 enum OppgaveTilstand {
@@ -759,6 +764,24 @@ input NyOppgaveInput {
     """
     mottakere: [MottakerInput!]! = []
     notifikasjon: NotifikasjonInput!
+
+    """
+    NB: IKKE IMPLEMENTERT I PROD. IKKE SEND.
+
+    Her kan du spesifisere frist for når oppgaven skal utføres av bruker.
+    Ideen er at etter fristen, så har ikke bruker lov, eller dere sperret for,
+    å gjøre oppgaven.
+
+    Fristen vises til bruker i grensesnittet.
+    Oppgaven blir automatisk markert som `UTGAAT` når fristen er forbi.
+    Dere kan kun oppgi frist med dato, og ikke klokkelsett.
+    Fristen regnes som utløpt når dagen er omme (midnatt, norsk tidssone).
+
+    Hvis dere ikke sender med frist, så viser vi ingen frist for bruker,
+    og oppgaven anses som NY frem til dere markerer oppgaven som `UTFOERT` eller
+    `UTGAATT`.
+    """
+    frist: ISO8601Date
     metadata: MetadataInput!
     eksterneVarsler: [EksterntVarselInput!]! = []
 }

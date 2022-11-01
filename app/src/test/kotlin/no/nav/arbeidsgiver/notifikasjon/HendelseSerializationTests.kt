@@ -36,7 +36,8 @@ class HendelseSerializationTests : DescribeSpec({
             lenke = "",
             opprettetTidspunkt = OffsetDateTime.parse("2000-01-01T01:01+01"),
             eksterneVarsler = listOf(),
-            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52"))
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            frist = null,
         )
 
 
@@ -106,7 +107,8 @@ class HendelseSerializationTests : DescribeSpec({
             lenke = "",
             opprettetTidspunkt = OffsetDateTime.parse("2000-01-01T01:01+01"),
             eksterneVarsler = listOf(),
-            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52"))
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            frist = null,
         )
 
 

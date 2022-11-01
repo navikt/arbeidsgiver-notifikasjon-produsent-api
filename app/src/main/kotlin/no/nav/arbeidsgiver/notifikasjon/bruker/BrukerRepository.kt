@@ -678,9 +678,10 @@ class BrukerRepositoryImpl(
                     lenke,
                     ekstern_id,
                     opprettet_tidspunkt,
-                    virksomhetsnummer
+                    virksomhetsnummer,
+                    frist
                 )
-                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -692,6 +693,7 @@ class BrukerRepositoryImpl(
                 string(oppgaveOpprettet.eksternId)
                 timestamptz(oppgaveOpprettet.opprettetTidspunkt)
                 string(oppgaveOpprettet.virksomhetsnummer)
+                nullableDate(oppgaveOpprettet.frist)
             }
 
             for (mottaker in oppgaveOpprettet.mottakere) {

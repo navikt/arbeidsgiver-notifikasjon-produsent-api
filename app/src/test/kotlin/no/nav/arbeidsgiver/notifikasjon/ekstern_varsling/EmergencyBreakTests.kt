@@ -42,6 +42,7 @@ class EmergencyBreakTests : DescribeSpec({
             )
         ),
         hardDelete = null,
+        frist = null,
     )
 
 

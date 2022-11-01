@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -250,6 +251,7 @@ object HendelseModel {
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
         val hardDelete: LocalDateTimeOrDuration?,
+        val frist: LocalDate?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -279,6 +281,7 @@ object HendelseModel {
                 opprettetTidspunkt: OffsetDateTime,
                 eksterneVarsler: List<EksterntVarsel> = listOf(),
                 hardDelete: LocalDateTimeOrDuration?,
+                frist: LocalDate? = null,
             ) = OppgaveOpprettet(
                 virksomhetsnummer = virksomhetsnummer,
                 notifikasjonId = notifikasjonId,
@@ -294,6 +297,7 @@ object HendelseModel {
                 opprettetTidspunkt = opprettetTidspunkt,
                 eksterneVarsler = eksterneVarsler,
                 hardDelete = hardDelete,
+                frist = frist,
             )
         }
     }
