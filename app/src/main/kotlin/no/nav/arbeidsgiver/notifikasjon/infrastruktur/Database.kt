@@ -273,7 +273,9 @@ class ParameterSetters(
     fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
 
-    fun nullableDate(value: LocalDate?) = preparedStatement.setString(index++, value?.toString())
+    fun nullableDate(value: LocalDate?) =
+        preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) } )
+
 
     inline fun <reified T> jsonb(value: T) =
         string(

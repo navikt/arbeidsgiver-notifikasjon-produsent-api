@@ -298,7 +298,7 @@ object EksempelHendelse {
             serviceCode = "1",
             serviceEdition = "1"
         )),
-        frist = LocalDate.parse("2020-01-2"),
+        frist = LocalDate.parse("2020-01-02"),
         tekst = "1",
         grupperingsid = null,
         lenke = "",
