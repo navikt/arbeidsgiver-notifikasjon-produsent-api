@@ -55,6 +55,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -135,6 +136,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -211,6 +213,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
             val oppgaveUtført = HendelseModel.OppgaveUtført(
                 virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,
@@ -274,6 +277,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -356,6 +360,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -394,6 +399,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -470,6 +476,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
             val oppgaveUtført = HendelseModel.OppgaveUtført(
                 virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,

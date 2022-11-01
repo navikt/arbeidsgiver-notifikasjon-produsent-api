@@ -251,7 +251,7 @@ object HendelseModel {
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
         val hardDelete: LocalDateTimeOrDuration?,
-        val frist: LocalDate? = null,
+        val frist: LocalDate?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {

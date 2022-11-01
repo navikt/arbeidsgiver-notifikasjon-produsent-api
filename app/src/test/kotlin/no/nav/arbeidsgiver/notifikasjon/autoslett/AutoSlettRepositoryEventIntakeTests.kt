@@ -478,6 +478,7 @@ private suspend fun AutoSlettRepository.oppgaveOpprettet(
         opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
         eksterneVarsler = listOf(),
         hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
+        frist = null,
     )
 )
 
