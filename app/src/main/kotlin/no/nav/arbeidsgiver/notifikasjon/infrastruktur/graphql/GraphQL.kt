@@ -142,7 +142,8 @@ class TypedGraphQL<T : WithCoroutineScope>(
 ) {
     fun execute(request: GraphQLRequest, context: T): Any {
         val executionInput = executionInput(request, context)
-        return graphQL.execute(executionInput).toSpecification()
+        val result = graphQL.execute(executionInput)
+        return result.toSpecification()
     }
 
     private fun executionInput(
