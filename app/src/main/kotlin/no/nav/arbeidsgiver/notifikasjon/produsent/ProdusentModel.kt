@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -77,6 +78,7 @@ object ProdusentModel {
         val tilstand: Tilstand,
         override val eksterneVarsler: List<EksterntVarsel>,
         override val virksomhetsnummer: String,
+        val frist: LocalDate?,
     ) : Notifikasjon {
 
         enum class Tilstand {
@@ -149,6 +151,7 @@ fun OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
         deletedAt = null,
         eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel),
         virksomhetsnummer = this.virksomhetsnummer,
+        frist = this.frist,
     )
 
 fun EksterntVarsel.tilProdusentModel(): ProdusentModel.EksterntVarsel {

@@ -22,6 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -210,6 +211,7 @@ class ProdusentRepositoryImpl(
                     deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                     eksterneVarsler = laxObjectMapper.readValue(getString("eksterne_varsler")),
                     virksomhetsnummer = getString("virksomhetsnummer"),
+                    frist = getObject("frist", LocalDate::class.java),
                 )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
@@ -428,9 +430,10 @@ class ProdusentRepositoryImpl(
                     lenke,
                     ekstern_id,
                     opprettet_tidspunkt,
-                    virksomhetsnummer
+                    virksomhetsnummer,
+                    frist
                 )
-                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?)
+                values ('OPPGAVE', 'NY', ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -442,6 +445,7 @@ class ProdusentRepositoryImpl(
                 string(oppgaveOpprettet.eksternId)
                 timestamptz(oppgaveOpprettet.opprettetTidspunkt)
                 string(oppgaveOpprettet.virksomhetsnummer)
+                nullableDate(oppgaveOpprettet.frist)
             }
 
             for (mottaker in oppgaveOpprettet.mottakere) {
