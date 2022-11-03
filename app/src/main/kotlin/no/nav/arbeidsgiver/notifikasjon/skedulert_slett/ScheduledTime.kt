@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.autoslett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.LocalDateTimeOrDuration
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo

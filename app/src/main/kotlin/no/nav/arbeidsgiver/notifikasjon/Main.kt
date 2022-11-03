@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import no.nav.arbeidsgiver.notifikasjon.autoslett.AutoSlett
+import no.nav.arbeidsgiver.notifikasjon.skedulert_slett.SkedulertSlett
 import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
@@ -24,7 +24,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-statistikk" -> Statistikk.main()
             "notifikasjon-ekstern-varsling" -> EksternVarsling.main()
             "notifikasjon-replay-validator" -> ReplayValidator.main()
-            "notifikasjon-autoslett" -> AutoSlett.main()
+            "notifikasjon-autoslett" -> SkedulertSlett.main()
             "notifikasjon-kafka-backup" -> KafkaBackup.main()
             "notifikasjon-hendelse-transformer" -> HendelseTransformer.main()
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")

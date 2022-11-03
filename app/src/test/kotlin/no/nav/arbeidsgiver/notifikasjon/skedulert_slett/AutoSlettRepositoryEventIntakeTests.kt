@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.autoslett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.core.spec.style.scopes.DescribeSpecContainerScope
@@ -20,8 +20,8 @@ import java.util.*
 private var idsuffixes = generateSequence(0) { it + 1 }.map { it.toString() }.iterator()
 
 class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
-    val database = testDatabase(AutoSlett.databaseConfig)
-    val repository = AutoSlettRepository(database)
+    val database = testDatabase(SkedulertSlett.databaseConfig)
+    val repository = SkedulertSlettRepository(database)
 
     suspend fun DescribeSpecContainerScope.oppgaveUtførtCase(
         title: String,
@@ -403,13 +403,13 @@ class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
     }
 })
 
-private suspend fun <T : HendelseModel.Hendelse> AutoSlettRepository.oppdaterModell(
+private suspend fun <T : HendelseModel.Hendelse> SkedulertSlettRepository.oppdaterModell(
     hendelse: T,
     timestamp: Instant = Instant.EPOCH,
 ): T =
     hendelse.also { oppdaterModellEtterHendelse(it, timestamp) }
 
-private suspend fun AutoSlettRepository.hardDelete(
+private suspend fun SkedulertSlettRepository.hardDelete(
     idsuffix: String,
 ) = oppdaterModell(HendelseModel.HardDelete(
         virksomhetsnummer = idsuffix,
@@ -420,7 +420,7 @@ private suspend fun AutoSlettRepository.hardDelete(
         deletedAt = OffsetDateTime.now(),
 ))
 
-private suspend fun AutoSlettRepository.beskjedOpprettet(
+private suspend fun SkedulertSlettRepository.beskjedOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
     hardDelete: String? = null,
@@ -451,7 +451,7 @@ private suspend fun AutoSlettRepository.beskjedOpprettet(
 )
 
 
-private suspend fun AutoSlettRepository.oppgaveOpprettet(
+private suspend fun SkedulertSlettRepository.oppgaveOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
     merkelapp: String = "merkelapp",
@@ -483,7 +483,7 @@ private suspend fun AutoSlettRepository.oppgaveOpprettet(
 )
 
 
-private suspend fun AutoSlettRepository.sakOpprettet(
+private suspend fun SkedulertSlettRepository.sakOpprettet(
     idsuffix: String,
     mottattTidspunkt: String,
     oppgittTidspunkt: String? = null,
@@ -513,7 +513,7 @@ private suspend fun AutoSlettRepository.sakOpprettet(
     )
 )
 
-private suspend fun AutoSlettRepository.oppgaveUtført(
+private suspend fun SkedulertSlettRepository.oppgaveUtført(
     idsuffix: String,
     mottattTidspunkt: String,
     hardDelete: HendelseModel.HardDeleteUpdate?
@@ -529,7 +529,7 @@ private suspend fun AutoSlettRepository.oppgaveUtført(
     Instant.parse(mottattTidspunkt)
 )
 
-private suspend fun AutoSlettRepository.nyStatusSak(
+private suspend fun SkedulertSlettRepository.nyStatusSak(
     idsuffix: String,
     mottattTidspunkt: String,
     oppgittTidspunkt: String? = null,

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.autoslett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
@@ -7,8 +7,8 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.Instant
 
 class AutoSlettIdempotensTests : DescribeSpec({
-    val database = testDatabase(AutoSlett.databaseConfig)
-    val repository = AutoSlettRepository(database)
+    val database = testDatabase(SkedulertSlett.databaseConfig)
+    val repository = SkedulertSlettRepository(database)
 
     describe("AutoSlett Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->

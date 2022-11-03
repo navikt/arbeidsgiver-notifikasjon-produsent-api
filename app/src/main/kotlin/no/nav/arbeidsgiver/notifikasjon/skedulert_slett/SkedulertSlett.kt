@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.autoslett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -12,7 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProd
 import java.time.Duration
 import java.time.Instant
 
-object AutoSlett {
+object SkedulertSlett {
     val databaseConfig = Database.config("autoslett_model")
     private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("autoslett-model-builder") }
 
@@ -21,7 +21,7 @@ object AutoSlett {
             val database = openDatabaseAsync(databaseConfig)
 
             val repoAsync = async {
-                AutoSlettRepository(database.await())
+                SkedulertSlettRepository(database.await())
             }
             launch {
                 val repo = repoAsync.await()
@@ -31,7 +31,7 @@ object AutoSlett {
             }
 
             val service = async {
-                AutoSlettService(repoAsync.await(), lagKafkaHendelseProdusent())
+                SkedulertSlettService(repoAsync.await(), lagKafkaHendelseProdusent())
             }
             launchProcessingLoop(
                 "autoslett-service",
