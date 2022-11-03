@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaper
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.skedulert_utgått.SkedulertUgått
 import no.nav.arbeidsgiver.notifikasjon.statistikk.Statistikk
 import kotlin.system.exitProcess
 
@@ -26,6 +27,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-replay-validator" -> ReplayValidator.main()
             "notifikasjon-autoslett" -> SkedulertSlett.main()
             "notifikasjon-kafka-backup" -> KafkaBackup.main()
+            "notifikasjon-skedulert-utgaatt" -> SkedulertUgått.main()
             "notifikasjon-hendelse-transformer" -> HendelseTransformer.main()
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
         }

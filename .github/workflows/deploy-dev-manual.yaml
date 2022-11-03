@@ -16,7 +16,8 @@ jobs:
           ekstern-varsling,
           replay-validator,
           autoslett,
-          kafka-backup
+          kafka-backup,
+          skedulert-utgaatt
         ]
     steps:
       - uses: actions/checkout@v1
