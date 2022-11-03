@@ -1,15 +1,18 @@
 package no.nav.arbeidsgiver.notifikasjon.tid
 
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
 private val norwayZoneId: ZoneId = ZoneId.of("Europe/Oslo")
 
-object LokalOsloTid {
+object OsloTid {
+    fun localDateTimeNow(): LocalDateTime = LocalDateTime.now(norwayZoneId)
 
-    fun now() : LocalDateTime = LocalDateTime.now(norwayZoneId)
+    fun localDateNow(): LocalDate =
+        LocalDate.now(norwayZoneId)
 }
 
 fun LocalDateTime.atOslo():  ZonedDateTime = atZone(norwayZoneId)

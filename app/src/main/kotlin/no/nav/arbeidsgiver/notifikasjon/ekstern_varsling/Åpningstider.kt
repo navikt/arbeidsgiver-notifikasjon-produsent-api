@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
-import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
+import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDateTime
@@ -9,11 +9,11 @@ import java.time.temporal.ChronoUnit.MINUTES
 
 object Åpningstider {
     fun nesteNksÅpningstid(
-        start: LocalDateTime = LokalOsloTid.now(),
+        start: LocalDateTime = OsloTid.localDateTimeNow(),
     ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erNksÅpningstid)!!
 
     fun nesteDagtidIkkeSøndag(
-        start: LocalDateTime = LokalOsloTid.now(),
+        start: LocalDateTime = OsloTid.localDateTimeNow(),
     ): LocalDateTime = tidspunkterFremover(start).take(24 * 7).find(LocalDateTime::erDagtidIkkeSøndag)!!
 
     private fun tidspunkterFremover(

@@ -9,7 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
+import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -142,7 +142,7 @@ class EksternVarslingService(
                 "resume-scheduled-work",
                 pauseAfterEach = Duration.ofMinutes(5)
             ) {
-                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(LokalOsloTid.now())
+                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(OsloTid.localDateTimeNow())
                 if (rescheduledCount > 0) {
                     log.info("resumed $rescheduledCount jobs from wait queue")
                 }
@@ -199,10 +199,10 @@ class EksternVarslingService(
                 val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
                     EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid()
                     EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag()
-                    EksterntVarselSendingsvindu.LØPENDE -> LokalOsloTid.now()
+                    EksterntVarselSendingsvindu.LØPENDE -> OsloTid.localDateTimeNow()
                     EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
                 }
-                if (kalkulertSendeTidspunkt <= LokalOsloTid.now()) {
+                if (kalkulertSendeTidspunkt <= OsloTid.localDateTimeNow()) {
                     altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
                         onSuccess = { response ->
                             eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)

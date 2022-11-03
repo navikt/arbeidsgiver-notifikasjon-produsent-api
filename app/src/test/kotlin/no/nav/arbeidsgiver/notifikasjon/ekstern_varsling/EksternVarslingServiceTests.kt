@@ -14,7 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSen
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.tid.LokalOsloTid
+import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -48,8 +48,8 @@ class EksternVarslingServiceTests : DescribeSpec({
         /**
          * uten before each mister vi mockObject oppførsel i påfølgende av testene. litt usikker på hvorfor
          */
-        mockkObject(LokalOsloTid)
-        every { LokalOsloTid.now() } returns nå
+        mockkObject(OsloTid)
+        every { OsloTid.localDateTimeNow() } returns nå
     }
     afterEach {
         unmockkAll()
