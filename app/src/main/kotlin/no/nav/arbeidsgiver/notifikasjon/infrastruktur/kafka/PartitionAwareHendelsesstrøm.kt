@@ -65,7 +65,6 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
     suspend fun start() {
         kafkaConsumer.forEach { consumerRecord ->
             val partition = TopicPartition(consumerRecord.topic(), consumerRecord.partition())
-
             val p = partitionInfo[partition]
                 ?: error("missing partition information for received record")
 
