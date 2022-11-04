@@ -18,9 +18,13 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
     val processEvent: suspend (state: PartitionState, event: HendelseModel.Hendelse) -> Unit,
     val processingLoopAfterCatchup: suspend (state: PartitionState) -> Unit,
 ) {
-    private val stateForPartition: MutableMap<Int, PartitionState> = HashMap()
-    private val endOffsetAtAssignment: MutableMap<Int, Long> = HashMap()
-    private val jobForPartition: MutableMap<Int, Job> = HashMap()
+    class PartitionInfo<PartitionState: Any>(
+        val state: PartitionState,
+        val endOffsetAtAssignment: Long,
+        var processingJob: Job? = null,
+    )
+
+    private val partitionInfo: MutableMap<TopicPartition, PartitionInfo<PartitionState>> = HashMap()
 
     private val processingScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -33,27 +37,32 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
         replayPeriodically = replayPeriodically,
         configure = configure,
         onPartitionAssigned = { partition: TopicPartition, endOffset: Long ->
-            endOffsetAtAssignment[partition.partition()] = endOffset
-            stateForPartition[partition.partition()] = initState()
+            partitionInfo[partition] = PartitionInfo(
+                state = initState(),
+                endOffsetAtAssignment = endOffset,
+            )
         },
         onPartitionRevoked = { partition: TopicPartition ->
-            stateForPartition.remove(partition.partition())
-            jobForPartition[partition.partition()]?.cancel()
+            val p = partitionInfo.remove(partition)
+            p?.processingJob?.cancel()
         }
     )
 
     suspend fun start() {
         kafkaConsumer.forEach { consumerRecord ->
-            val partition = consumerRecord.partition()
-            val state = stateForPartition[partition] !! /* TODO: why did we get event for this partition? */
-            processEvent(state, consumerRecord.value())
+            val partition = TopicPartition(consumerRecord.topic(), consumerRecord.partition())
 
-            val maxOffset = endOffsetAtAssignment[partition]!! /* TODO: why don't we have max offset for this partiton */
-            if (maxOffset <= consumerRecord.offset()) {
-                jobForPartition[partition] = processingScope.launch {
-                    processingLoopAfterCatchup(state)
+            val p = partitionInfo[partition]
+                ?: error("missing partition information for received record")
+
+            processEvent(p.state, consumerRecord.value())
+
+            if (p.processingJob == null && p.endOffsetAtAssignment <= consumerRecord.offset()) {
+                p.processingJob = processingScope.launch {
+                    processingLoopAfterCatchup(p.state)
                 }
             }
         }
     }
 }
+
