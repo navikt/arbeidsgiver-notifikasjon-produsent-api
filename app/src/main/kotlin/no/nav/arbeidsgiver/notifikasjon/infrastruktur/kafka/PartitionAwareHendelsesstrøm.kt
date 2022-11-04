@@ -1,11 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import java.util.*
@@ -23,6 +25,7 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
         val endOffsetAtAssignment: Long,
         var processingJob: Job? = null,
     )
+    private val timer = Timer.builder("kafka.partition.catchup").register(Metrics.meterRegistry)
 
     private val partitionInfo: MutableMap<TopicPartition, PartitionInfo<PartitionState>> = HashMap()
 
@@ -51,7 +54,6 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
     suspend fun start() {
         kafkaConsumer.forEach { consumerRecord ->
             val partition = TopicPartition(consumerRecord.topic(), consumerRecord.partition())
-
             val p = partitionInfo[partition]
                 ?: error("missing partition information for received record")
 

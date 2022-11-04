@@ -54,7 +54,7 @@ class SkedulertUtgåttService(
 
     suspend fun sendVedUtgåttFrist() {
         val utgåttFrist = skedulerteUtgått.hentOgFjernAlleMedFrist(OsloTid.localDateNow())
-        /* TODO: rom for batching av utsendelse. */
+        /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
         utgåttFrist.forEach { utgått ->
             hendelseProdusent.send(HendelseModel.OppgaveUtgått(
                 virksomhetsnummer = utgått.virksomhetsnummer,
