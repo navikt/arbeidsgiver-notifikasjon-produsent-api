@@ -1,11 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import io.micrometer.core.instrument.LongTaskTimer
+import io.micrometer.core.instrument.LongTaskTimer.Sample
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import java.util.*
@@ -21,8 +24,18 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
     class PartitionInfo<PartitionState: Any>(
         val state: PartitionState,
         val endOffsetAtAssignment: Long,
+        var catchupTimerSample: Sample?,
         var processingJob: Job? = null,
     )
+
+    private val catchupTimer = LongTaskTimer
+        .builder("kafka.partition.replay.ajour")
+        .description("""
+            How long it takes in PartitionAwareHendelsesstrøm to read a partition. 
+            It reads partitions from then beginning, and detects when it reached the offset 
+            that was "endOffset" at time of assignment.
+        """)
+        .register(Metrics.meterRegistry)
 
     private val partitionInfo: MutableMap<TopicPartition, PartitionInfo<PartitionState>> = HashMap()
 
@@ -40,6 +53,7 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
             partitionInfo[partition] = PartitionInfo(
                 state = initState(),
                 endOffsetAtAssignment = endOffset,
+                catchupTimerSample = catchupTimer.start(),
             )
         },
         onPartitionRevoked = { partition: TopicPartition ->
@@ -58,6 +72,8 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
             processEvent(p.state, consumerRecord.value())
 
             if (p.processingJob == null && p.endOffsetAtAssignment <= consumerRecord.offset()) {
+                p.catchupTimerSample?.stop()
+                p.catchupTimerSample = null
                 p.processingJob = processingScope.launch {
                     processingLoopAfterCatchup(p.state)
                 }
