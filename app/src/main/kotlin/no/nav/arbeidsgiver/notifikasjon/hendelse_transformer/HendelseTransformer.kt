@@ -12,12 +12,13 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.mapAt
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.JsonNodeKafkaConsumer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.kafkaObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 
 object HendelseTransformer {
     private val consumer by lazy { JsonNodeKafkaConsumer("hendelse-transformer-1") }
-    private val producer by lazy { lagKafkaHendelseProdusent() }
+    private val producer by lazy { lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC) }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {

@@ -10,6 +10,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class HendelsesstrømKafkaImpl(
+    topic: String = NOTIFIKASJON_TOPIC,
     groupId: String,
     seekToBeginning: Boolean = false,
     replayPeriodically: Boolean = false,
@@ -18,7 +19,7 @@ class HendelsesstrømKafkaImpl(
     private val log = logger()
 
     private val consumer = CoroutineKafkaConsumer.new(
-        topic = NOTIFIKASJON_TOPIC,
+        topic = topic,
         groupId = groupId,
         keyDeserializer = StringDeserializer::class.java,
         valueDeserializer = ValueDeserializer::class.java,

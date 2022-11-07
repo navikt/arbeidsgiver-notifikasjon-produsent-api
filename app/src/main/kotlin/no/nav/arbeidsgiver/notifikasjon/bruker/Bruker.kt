@@ -18,6 +18,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
@@ -28,10 +29,12 @@ object Bruker {
     private val log = logger()
     val databaseConfig = Database.config("bruker_model")
 
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(basedOnEnv(
-        dev = { "bruker-model-builder-1" },
-        other = { "bruker-model-builder" },
-    ))}
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(
+        topic = NOTIFIKASJON_TOPIC, basedOnEnv(
+            dev = { "bruker-model-builder-1" },
+            other = { "bruker-model-builder" },
+        )
+    )}
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
@@ -96,7 +99,7 @@ object Bruker {
                 )
                 BrukerAPI.createBrukerGraphQL(
                     brukerRepository = brukerRepositoryAsync.await(),
-                    hendelseProdusent = lagKafkaHendelseProdusent(),
+                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
                     tilgangerService = tilgangerService,
                     virksomhetsinfoService = virksomhetsinfoService,
                 )

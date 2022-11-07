@@ -13,6 +13,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import java.util.*
 
 fun lagKafkaHendelseProdusent(
+    topic: String = NOTIFIKASJON_TOPIC,
     configure: Properties.() -> Unit = {},
 ): HendelseProdusent {
     val properties = Properties().apply {
@@ -21,16 +22,17 @@ fun lagKafkaHendelseProdusent(
     }
     val kafkaProducer = KafkaProducer<KafkaKey, Hendelse>(properties)
     KafkaClientMetrics(kafkaProducer).bindTo(Metrics.meterRegistry)
-    return HendelseProdusentKafkaImpl(kafkaProducer)
+    return HendelseProdusentKafkaImpl(kafkaProducer, topic)
 }
 
 private class HendelseProdusentKafkaImpl(
     private val producer: Producer<KafkaKey, Hendelse?>,
+    private val topic: String,
 ): HendelseProdusent {
     override suspend fun send(hendelse: Hendelse) {
         producer.suspendingSend(
             ProducerRecord(
-                NOTIFIKASJON_TOPIC,
+                topic,
                 hendelse.hendelseId.toString(),
                 hendelse
             )
@@ -40,8 +42,8 @@ private class HendelseProdusentKafkaImpl(
     override suspend fun tombstone(key: UUID, orgnr: String) {
         producer.suspendingSend(
             ProducerRecord(
-                NOTIFIKASJON_TOPIC,
-                partitionOfOrgnr(orgnr, producer.partitionsFor(NOTIFIKASJON_TOPIC).size),
+                topic,
+                partitionOfOrgnr(orgnr, producer.partitionsFor(topic).size),
                 key.toString(),
                 null
             )
