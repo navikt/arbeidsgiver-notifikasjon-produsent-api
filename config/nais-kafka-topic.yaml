@@ -44,4 +44,4 @@ spec:
       access: read
     - application: notifikasjon-skedulert-utgaatt
       team: fager
-      access: read
+      access: readwrite
