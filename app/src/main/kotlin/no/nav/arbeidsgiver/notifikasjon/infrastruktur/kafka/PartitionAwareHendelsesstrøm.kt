@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import java.util.*
@@ -17,10 +18,12 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
     groupId: String,
     replayPeriodically: Boolean = false,
     configure: Properties.() -> Unit = {},
-    val initState: () -> PartitionState,
-    val processEvent: suspend (state: PartitionState, event: HendelseModel.Hendelse) -> Unit,
-    val processingLoopAfterCatchup: suspend (state: PartitionState) -> Unit,
+    private val initState: () -> PartitionState,
+    private val processEvent: suspend (state: PartitionState, event: HendelseModel.Hendelse) -> Unit,
+    private val processingLoopAfterCatchup: suspend (state: PartitionState) -> Unit,
 ) {
+    private val log = logger()
+
     class PartitionInfo<PartitionState: Any>(
         val state: PartitionState,
         val endOffsetAtAssignment: Long,
@@ -77,6 +80,7 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
                 p.catchupTimerSample?.stop()
                 p.catchupTimerSample = null
                 p.processingJob = processingScope.launch {
+                    log.info("launching processingLoopAfterCatchup for $partition")
                     processingLoopAfterCatchup(p.state)
                 }
             }
