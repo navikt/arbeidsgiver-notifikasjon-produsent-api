@@ -68,7 +68,10 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
             val p = partitionInfo[partition]
                 ?: error("missing partition information for received record")
 
-            processEvent(p.state, consumerRecord.value())
+            val value = consumerRecord.value()
+            if (value != null) {
+                processEvent(p.state, value)
+            }
 
             if (p.processingJob == null && p.endOffsetAtAssignment <= consumerRecord.offset()) {
                 p.catchupTimerSample?.stop()
