@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafka
 import kotlin.collections.set
 
 object ReplayValidator {
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("replay-validator") }
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("replay-validator", seekToBeginning = true) }
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             Health.subsystemReady[Subsystem.DATABASE] = true
