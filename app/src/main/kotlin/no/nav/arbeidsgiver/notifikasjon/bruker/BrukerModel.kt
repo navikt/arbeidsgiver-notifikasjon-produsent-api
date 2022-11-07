@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -50,6 +51,7 @@ object BrukerModel {
         override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
         val utgaattTidspunkt: OffsetDateTime?,
+        val frist: LocalDate?,
         override val id: UUID,
         val klikketPaa: Boolean,
         val tilstand: Tilstand,

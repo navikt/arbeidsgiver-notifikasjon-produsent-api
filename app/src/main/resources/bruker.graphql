@@ -47,6 +47,7 @@ type NotifikasjonerResultat {
 union Notifikasjon = Beskjed | Oppgave
 
 scalar ISO8601DateTime
+scalar ISO8601Date
 
 type Oppgave {
     brukerKlikk: BrukerKlikk!
@@ -56,6 +57,7 @@ type Oppgave {
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
     utgaattTidspunkt: ISO8601DateTime
+    frist: ISO8601Date
     id: ID!
     virksomhet: Virksomhet!
 }
