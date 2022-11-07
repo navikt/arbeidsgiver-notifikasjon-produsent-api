@@ -14,7 +14,7 @@ class SkedulertUtgåttRepository {
         mutex.withLock {
             val alleUtgåtte = mutableListOf<SkedulertUtgått>()
 
-            while (fristQueue.firstKey() < localDateNow) {
+            while (fristQueue.isNotEmpty() && fristQueue.firstKey() < localDateNow) {
                 val utgåttFrist = fristQueue.firstKey()
                 val utgåtteOppgaver = fristQueue.remove(utgåttFrist) ?: listOf()
 
