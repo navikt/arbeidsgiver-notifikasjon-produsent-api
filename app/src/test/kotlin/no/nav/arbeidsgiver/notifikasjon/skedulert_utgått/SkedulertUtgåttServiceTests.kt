@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
@@ -36,20 +37,28 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
         hardDelete = null,
         frist = null,
     )
+    val fristSomHarPassert = LocalDate.now().minusDays(1)
+    val fristSomIkkeHarPassert = LocalDate.now().plusDays(2)
 
     describe("Skedulerer utgått når frist har passert") {
-        val fristSomHarPassert = LocalDate.now().minusDays(1)
         hendelseProdusent.clear()
-        service.processHendelse(
-            oppgaveOpprettet.copy(frist = fristSomHarPassert)
-        )
+        service.processHendelse(oppgaveOpprettet.copy(frist = fristSomHarPassert))
         service.sendVedUtgåttFrist()
 
         hendelseProdusent.hendelser.first() should beInstanceOf<HendelseModel.OppgaveUtgått>()
     }
+    describe("Skedulerer utgått når frist har passert og det finnes en frist på kø som ikke har passert") {
+        hendelseProdusent.clear()
+        service.processHendelse(oppgaveOpprettet.copy(notifikasjonId = uuid("11"), frist = fristSomIkkeHarPassert))
+        service.processHendelse(oppgaveOpprettet.copy(notifikasjonId = uuid("22"), frist = fristSomHarPassert))
+        service.sendVedUtgåttFrist()
+
+        hendelseProdusent.hendelser shouldHaveSize 1
+        hendelseProdusent.hendelser.first() should beInstanceOf<HendelseModel.OppgaveUtgått>()
+        hendelseProdusent.hendelser.first().aggregateId shouldBe uuid("22")
+    }
 
     describe("noop når frist ikke har passert enda") {
-        val fristSomIkkeHarPassert = LocalDate.now().plusDays(1)
         hendelseProdusent.clear()
         service.processHendelse(
             oppgaveOpprettet.copy(frist = fristSomIkkeHarPassert)
@@ -87,7 +96,6 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
                 utgaattTidspunkt = OffsetDateTime.now()
             )
         )) { hendelse ->
-            val fristSomHarPassert = LocalDate.now().minusDays(1)
             hendelseProdusent.clear()
             service.processHendelse(
                 oppgaveOpprettet.copy(frist = fristSomHarPassert)
