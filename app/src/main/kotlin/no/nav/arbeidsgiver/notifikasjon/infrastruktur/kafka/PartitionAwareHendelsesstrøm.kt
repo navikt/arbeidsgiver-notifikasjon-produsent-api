@@ -62,6 +62,7 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
         onPartitionRevoked = { partition: TopicPartition ->
             val p = partitionInfo.remove(partition)
             p?.processingJob?.cancel()
+            p?.catchupTimerSample?.stop()
         }
     )
 
