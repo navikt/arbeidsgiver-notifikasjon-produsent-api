@@ -17,12 +17,16 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 
 
 object EksternVarsling {
     val databaseConfig = Database.config("ekstern_varsling_model")
 
-    private val hendelsestrøm by lazy { HendelsesstrømKafkaImpl("ekstern-varsling-model-builder") }
+    private val hendelsestrøm by lazy { HendelsesstrømKafkaImpl(
+        topic = NOTIFIKASJON_TOPIC,
+        "ekstern-varsling-model-builder"
+    ) }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
@@ -53,7 +57,7 @@ object EksternVarsling {
                         },
                         other = { AltinnVarselKlientLogging() },
                     ),
-                    hendelseProdusent = lagKafkaHendelseProdusent(),
+                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
                 )
                 service.start(this)
             }

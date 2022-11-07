@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
@@ -15,7 +16,10 @@ import java.time.Duration
 object Statistikk {
     private val log = logger()
     val databaseConfig = Database.config("statistikk_model")
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("statistikk-model-builder-1") }
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(
+        topic = NOTIFIKASJON_TOPIC,
+        "statistikk-model-builder-1"
+    ) }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {

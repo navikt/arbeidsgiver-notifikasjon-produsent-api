@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -25,7 +26,11 @@ import java.time.Duration
 object Produsent {
     val databaseConfig = Database.config("produsent_model")
     private val log = logger()
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("produsent-model-builder", replayPeriodically = true) }
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(
+        topic = NOTIFIKASJON_TOPIC,
+        "produsent-model-builder",
+        replayPeriodically = true
+    ) }
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
@@ -66,7 +71,7 @@ object Produsent {
 
             val graphql = async {
                 ProdusentAPI.newGraphQL(
-                    kafkaProducer = lagKafkaHendelseProdusent(),
+                    kafkaProducer = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
                     produsentRepository = produsentRepositoryAsync.await(),
                 )
             }

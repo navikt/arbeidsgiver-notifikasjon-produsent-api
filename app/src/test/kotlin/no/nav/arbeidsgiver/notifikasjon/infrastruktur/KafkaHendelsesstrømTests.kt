@@ -6,14 +6,12 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
-import no.nav.arbeidsgiver.notifikasjon.util.embeddedKafka
+import no.nav.arbeidsgiver.notifikasjon.util.localKafka
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class KafkaHendelsesstrømTests: DescribeSpec({
-    val embeddedKafka = embeddedKafka()
-    val kafkaProducer = embeddedKafka.newProducer()
-    val hendelsesstrøm = embeddedKafka.newConsumer()
+    val localKafka = localKafka()
 
     val stop = AtomicBoolean(false)
     val sent = mutableSetOf<UUID>()
@@ -21,6 +19,8 @@ class KafkaHendelsesstrømTests: DescribeSpec({
     val receivedHendelse = mutableSetOf<Hendelse>()
 
     describe("reading and writing from kafka") {
+        val kafkaProducer = localKafka.newProducer()
+        val hendelsesstrøm = localKafka.newConsumer()
         withData(EksempelHendelse.Alle) {
             kafkaProducer.send(it)
             sent.add(it.hendelseId)

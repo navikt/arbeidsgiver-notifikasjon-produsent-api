@@ -8,13 +8,14 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import java.time.Duration
 import java.time.Instant
 
 object SkedulertHardDelete {
     val databaseConfig = Database.config("skedulert_harddelete_model")
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("skedulert-harddelete-model-builder") }
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(topic = NOTIFIKASJON_TOPIC, "skedulert-harddelete-model-builder") }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
@@ -31,7 +32,7 @@ object SkedulertHardDelete {
             }
 
             val service = async {
-                SkedulertHardDeleteService(repoAsync.await(), lagKafkaHendelseProdusent())
+                SkedulertHardDeleteService(repoAsync.await(), lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC))
             }
             launchProcessingLoop(
                 "autoslett-service",

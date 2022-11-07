@@ -7,10 +7,11 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import kotlin.collections.set
 
 object ReplayValidator {
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("replay-validator", seekToBeginning = true) }
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(topic = NOTIFIKASJON_TOPIC, "replay-validator", seekToBeginning = true) }
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             Health.subsystemReady[Subsystem.DATABASE] = true
