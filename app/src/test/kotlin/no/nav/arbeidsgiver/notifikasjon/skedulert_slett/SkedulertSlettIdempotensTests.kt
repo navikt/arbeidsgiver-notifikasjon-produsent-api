@@ -6,7 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.Instant
 
-class AutoSlettIdempotensTests : DescribeSpec({
+class SkedulertSlettIdempotensTests : DescribeSpec({
     val database = testDatabase(SkedulertSlett.databaseConfig)
     val repository = SkedulertSlettRepository(database)
 

@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
-class AutoSlettServiceTest : DescribeSpec({
+class SkedulertSlettServiceTest : DescribeSpec({
 
     val kafkaProducer = FakeHendelseProdusent()
     val repo = mockk<SkedulertSlettRepository>()

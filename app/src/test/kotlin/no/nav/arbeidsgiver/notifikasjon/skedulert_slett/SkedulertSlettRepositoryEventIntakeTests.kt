@@ -19,7 +19,7 @@ import java.util.*
 
 private var idsuffixes = generateSequence(0) { it + 1 }.map { it.toString() }.iterator()
 
-class AutoSlettRepositoryEventIntakeTests : DescribeSpec({
+class SkedulertSlettRepositoryEventIntakeTests : DescribeSpec({
     val database = testDatabase(SkedulertSlett.databaseConfig)
     val repository = SkedulertSlettRepository(database)
 
