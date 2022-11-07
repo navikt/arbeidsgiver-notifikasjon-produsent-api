@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.autoslett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -12,8 +12,8 @@ import java.time.OffsetDateTime
 import java.time.Period
 
 class AutoSlettRepositoryFindToDeleteTests : DescribeSpec({
-    val database = testDatabase(AutoSlett.databaseConfig)
-    val repository = AutoSlettRepository(database)
+    val database = testDatabase(SkedulertSlett.databaseConfig)
+    val repository = SkedulertSlettRepository(database)
 
     describe("AutoSlettRepository#hentDeSomSkalSlettes") {
         val baseline = OffsetDateTime.parse("2020-01-01T01:01:01.00Z")
@@ -35,7 +35,7 @@ class AutoSlettRepositoryFindToDeleteTests : DescribeSpec({
     }
 })
 
-suspend fun AutoSlettRepository.insert(
+suspend fun SkedulertSlettRepository.insert(
     id: String,
     beregnetSlettetid: OffsetDateTime,
 ) {

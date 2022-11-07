@@ -34,6 +34,8 @@ private constructor(
     valueDeserializer: Class<*>,
     seekToBeginning: Boolean = false,
     replayPeriodically: Boolean = false,
+    private val onPartitionAssigned: ((partition: TopicPartition, endOffset: Long) -> Unit)?,
+    private val onPartitionRevoked: ((partition: TopicPartition) -> Unit)?,
     private val configure: Properties.() -> Unit = {},
 ) {
     companion object {
@@ -44,9 +46,19 @@ private constructor(
             valueDeserializer: Class<VS>,
             seekToBeginning: Boolean = false,
             replayPeriodically: Boolean = false,
+            onPartitionAssigned: ((partition: TopicPartition, endOffset: Long) -> Unit)? = null,
+            onPartitionRevoked: ((partition: TopicPartition) -> Unit)? = null,
             configure: Properties.() -> Unit = {},
         ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
-            topic, groupId, keyDeserializer, valueDeserializer, seekToBeginning, replayPeriodically, configure
+            topic,
+            groupId,
+            keyDeserializer,
+            valueDeserializer,
+            seekToBeginning,
+            replayPeriodically,
+            onPartitionAssigned,
+            onPartitionRevoked,
+            configure
         )
     }
 
@@ -166,10 +178,16 @@ private constructor(
             consumer.subscription(),
             object: ConsumerRebalanceListener {
                 override fun onPartitionsAssigned(partitions: MutableCollection<TopicPartition>?) {
+                    consumer.endOffsets(partitions).forEach { (partition, endOffset) ->
+                        onPartitionAssigned?.invoke(partition, endOffset)
+                    }
+
                     consumer.seekToBeginning(partitions.orEmpty())
                 }
                 override fun onPartitionsRevoked(partitions: MutableCollection<TopicPartition>?) {
-                    // noop
+                    partitions?.forEach { partition ->
+                        onPartitionRevoked?.invoke(partition)
+                    }
                 }
             }
         )

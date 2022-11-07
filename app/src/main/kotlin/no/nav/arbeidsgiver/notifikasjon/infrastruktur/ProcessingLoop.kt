@@ -21,6 +21,7 @@ fun CoroutineScope.launchProcessingLoop(
 
         var errors = 0
 
+        log.info("processing loop started")
         while (!Health.terminating) {
             try {
                 action()

@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.autoslett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
@@ -10,8 +10,8 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
-class AutoSlettService(
-    private val repo: AutoSlettRepository,
+class SkedulertSlettService(
+    private val repo: SkedulertSlettRepository,
     private val hendelseProdusent: HendelseProdusent,
 ) {
     private val log = logger()
