@@ -83,6 +83,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendeTidspunkt = null,
                 )),
                 hardDelete = null,
+                frist = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -134,6 +135,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendeTidspunkt = null,
                 )),
                 hardDelete = null,
+                frist = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -179,6 +181,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendeTidspunkt = null,
                 )),
                 hardDelete = null,
+                frist = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -224,6 +227,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendeTidspunkt = null,
                 )),
                 hardDelete = null,
+                frist = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -269,6 +273,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendeTidspunkt = null,
                 )),
                 hardDelete = null,
+                frist = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -314,6 +319,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendeTidspunkt = LocalDateTime.now().minusMinutes(5),
                 )),
                 hardDelete = null,
+                frist = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -358,6 +364,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     sendeTidspunkt = LocalDateTime.now().plusMinutes(5),
                 )),
                 hardDelete = null,
+                frist = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""

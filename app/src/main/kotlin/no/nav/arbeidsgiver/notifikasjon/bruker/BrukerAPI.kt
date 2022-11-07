@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.createGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -60,6 +61,7 @@ object BrukerAPI {
             val tilstand: Tilstand,
             val opprettetTidspunkt: OffsetDateTime,
             val utgaattTidspunkt: OffsetDateTime?,
+            val frist: LocalDate?,
             val id: UUID,
             val brukerKlikk: BrukerKlikk,
             override val virksomhet: Virksomhet,
@@ -153,6 +155,7 @@ object BrukerAPI {
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
             scalar(Scalars.ISO8601DateTime)
+            scalar(Scalars.ISO8601Date)
 
             resolveSubtypes<Notifikasjon>()
             resolveSubtypes<NotifikasjonKlikketPaaResultat>()
@@ -239,6 +242,7 @@ object BrukerAPI {
                                 tilstand = notifikasjon.tilstand.tilBrukerAPI(),
                                 opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                 utgaattTidspunkt = notifikasjon.utgaattTidspunkt,
+                                frist = notifikasjon.frist,
                                 id = notifikasjon.id,
                                 virksomhet = Virksomhet(
                                     virksomhetsnummer = notifikasjon.virksomhetsnummer,

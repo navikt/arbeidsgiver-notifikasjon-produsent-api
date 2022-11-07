@@ -43,6 +43,13 @@
                 <artifactId>byte-buddy</artifactId>
                 <version>1.12.18</version>
             </dependency>
+
+            <!-- transitiv dependency av jackson-datatype-jsr310 !-->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.13.4.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

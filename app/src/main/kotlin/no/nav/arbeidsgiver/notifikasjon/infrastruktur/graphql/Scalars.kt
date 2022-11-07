@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 import graphql.language.StringValue
 import graphql.schema.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -72,6 +73,13 @@ object Scalars {
             name = "ISO8601LocalDateTime",
             dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME,
             temporalQuery = LocalDateTime::from
+        )
+
+    val ISO8601Date : GraphQLScalarType =
+        dateTimeScalar(
+            name = "ISO8601Date",
+            dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE,
+            temporalQuery = LocalDate::from
         )
 
     val ISO8601Duration: GraphQLScalarType = toFromStringScalar(

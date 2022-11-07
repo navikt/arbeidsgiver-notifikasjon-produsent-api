@@ -41,6 +41,7 @@ class IdempotentOppgaveOpprettetTests: DescribeSpec({
         eksterneVarsler = listOf(smsVarsel),
         grupperingsid = null,
         hardDelete = null,
+        frist = null,
     )
 
     describe("mutual exclusive access to ekstern_varsel") {

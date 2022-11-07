@@ -57,6 +57,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -137,6 +138,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -226,6 +228,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -308,6 +311,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -346,6 +350,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -435,6 +440,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -517,6 +523,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -555,6 +562,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                frist = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)

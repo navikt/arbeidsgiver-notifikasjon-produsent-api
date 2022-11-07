@@ -26,6 +26,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.security.MessageDigest
+import java.time.LocalDate
 import java.util.*
 
 /* potensielle målinger:
@@ -339,10 +340,11 @@ class StatistikkModel(
                         merkelapp, 
                         mottaker, 
                         checksum, 
-                        opprettet_tidspunkt
+                        opprettet_tidspunkt,
+                        frist
                     )
                     values
-                    (?, ?, 'oppgave', ?, ?, ?, ?)
+                    (?, ?, 'oppgave', ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
@@ -352,6 +354,7 @@ class StatistikkModel(
                     string(hendelse.mottakere.oppsummering())
                     string(hendelse.tekst.toHash())
                     timestamp_utc(hendelse.opprettetTidspunkt)
+                    nullableDate(hendelse.frist)
                 }
 
                 oppdaterVarselBestilling(

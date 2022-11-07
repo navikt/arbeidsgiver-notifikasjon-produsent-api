@@ -2,13 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.util.*
+import java.time.LocalDate
 import java.time.OffsetDateTime
 
-class OppgaveUtgåttTests : DescribeSpec({
+class OppgaveMedFristTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
 
@@ -27,7 +27,7 @@ class OppgaveUtgåttTests : DescribeSpec({
         }
     )
 
-    describe("oppgave utgått") {
+    describe("oppgave med frist") {
         val oppgaveOpprettet = HendelseModel.OppgaveOpprettet(
             hendelseId = uuid("0"),
             notifikasjonId = uuid("1"),
@@ -49,26 +49,14 @@ class OppgaveUtgåttTests : DescribeSpec({
             ),
             lenke = "#foo",
             hardDelete = null,
-            frist = null,
-        )
-        val oppgaveUtgått = HendelseModel.OppgaveUtgått(
-            hendelseId = uuid("1"),
-            notifikasjonId = uuid("1"),
-            virksomhetsnummer = "1",
-            produsentId = "1",
-            kildeAppNavn = "1",
-            hardDelete = null,
-            utgaattTidspunkt = OffsetDateTime.parse("2018-12-03T10:15:30+01:00")
+            frist = LocalDate.parse("2007-12-03"),
         )
         queryModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
-        queryModel.oppdaterModellEtterHendelse(oppgaveUtgått)
 
         val oppgave = hentOppgave(engine)
 
-        it("har tilstand utgått og utgått tidspunkt") {
-            oppgave.tilstand shouldBe BrukerAPI.Notifikasjon.Oppgave.Tilstand.UTGAATT
-            oppgave.utgaattTidspunkt shouldNotBe null
-            oppgave.utgaattTidspunkt!!.toInstant() shouldBe oppgaveUtgått.utgaattTidspunkt.toInstant()
+        it("har frist") {
+            oppgave.frist shouldBe oppgaveOpprettet.frist
         }
 
     }
@@ -81,22 +69,6 @@ private fun hentOppgave(engine: TestApplicationEngine): BrukerAPI.Notifikasjon.O
                     notifikasjoner{
                         notifikasjoner {
                             __typename
-                            ...on Beskjed {
-                                brukerKlikk { 
-                                    __typename
-                                    id
-                                    klikketPaa 
-                                }
-                                lenke
-                                tekst
-                                merkelapp
-                                opprettetTidspunkt
-                                id
-                                virksomhet {
-                                    virksomhetsnummer
-                                    navn
-                                }
-                            }
                             ...on Oppgave {
                                 brukerKlikk { 
                                     __typename
@@ -110,6 +82,7 @@ private fun hentOppgave(engine: TestApplicationEngine): BrukerAPI.Notifikasjon.O
                                 opprettetTidspunkt
                                 utgaattTidspunkt
                                 id
+                                frist
                                 virksomhet {
                                     virksomhetsnummer
                                     navn
