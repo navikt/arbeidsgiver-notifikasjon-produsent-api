@@ -26,7 +26,7 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
 
     class PartitionInfo<PartitionState: Any>(
         val state: PartitionState,
-        val endOffsetAtAssignment: Long,
+        val maxOffsetAtAssignment: Long,
         var catchupTimerSample: Sample?,
         var processingJob: Job? = null,
     )
@@ -52,10 +52,10 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
         seekToBeginning = true,
         replayPeriodically = replayPeriodically,
         configure = configure,
-        onPartitionAssigned = { partition: TopicPartition, endOffset: Long ->
+        onPartitionAssigned = { partition: TopicPartition, maxOffset: Long ->
             partitionInfo[partition] = PartitionInfo(
                 state = initState(),
-                endOffsetAtAssignment = endOffset,
+                maxOffsetAtAssignment = maxOffset,
                 catchupTimerSample = catchupTimer.start(),
             )
         },
@@ -77,7 +77,7 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
                 processEvent(p.state, value)
             }
 
-            if (p.processingJob == null && p.endOffsetAtAssignment <= consumerRecord.offset()) {
+            if (p.processingJob == null && p.maxOffsetAtAssignment <= consumerRecord.offset()) {
                 p.catchupTimerSample?.stop()
                 p.catchupTimerSample = null
                 p.processingJob = processingScope.launch {

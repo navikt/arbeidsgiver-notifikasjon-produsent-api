@@ -19,8 +19,8 @@ import kotlin.system.measureTimeMillis
 
 fun main() = runBlocking {
     client.use {
-        //nyBeskjed(1, Api.PRODUSENT_GCP)
-        nySak(3, Api.PRODUSENT_GCP)
+        nyBeskjed(1, Api.PRODUSENT_LOCAL)
+        nySak(3, Api.PRODUSENT_LOCAL)
 
         //hentNotifikasjoner(1, Api.BRUKER_GCP)
     }

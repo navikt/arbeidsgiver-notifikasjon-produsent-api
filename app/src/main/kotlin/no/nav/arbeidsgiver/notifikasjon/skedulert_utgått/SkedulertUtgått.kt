@@ -13,7 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProd
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import java.time.Duration
 
-object SkedulertUgått {
+object SkedulertUtgått {
     private val hendelsesstrøm by lazy {
         PartitionAwareHendelsesstrøm<SkedulertUtgåttService>(
             groupId = "skedulert-utgaatt-1",

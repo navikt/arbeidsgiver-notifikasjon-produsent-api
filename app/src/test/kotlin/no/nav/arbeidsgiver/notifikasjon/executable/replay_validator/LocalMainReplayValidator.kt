@@ -1,11 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.executable.replay_validator
 
 import no.nav.arbeidsgiver.notifikasjon.ReplayValidator
+import no.nav.arbeidsgiver.notifikasjon.executable.Port
 
 /* Bruker API */
-fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
+fun main() {
     ReplayValidator.main(
-        httpPort = 8086
+        httpPort = Port.REPLAY_VALIDATOR.port,
     )
 }
 
