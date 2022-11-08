@@ -36,7 +36,7 @@ spec:
     - application: notifikasjon-devops
       team: fager
       access: readwrite
-    - application: notifikasjon-autoslett
+    - application: notifikasjon-skedulert-harddelete
       team: fager
       access: readwrite
     - application: notifikasjon-kafka-backup

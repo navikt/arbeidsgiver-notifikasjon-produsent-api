@@ -4,11 +4,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -97,12 +95,6 @@ internal class MutationNyOppgave(
             )
         }catch (e: UkjentRolleException){
             return Error.UkjentRolle(e.message!!)
-        }
-
-        if (NaisEnvironment.clusterName == "prod-gcp") {
-            requireGraphql(domeneNyOppgave.frist == null) {
-                "frist ikke implementert"
-            }
         }
 
         tilgangsstyrNyNotifikasjon(
