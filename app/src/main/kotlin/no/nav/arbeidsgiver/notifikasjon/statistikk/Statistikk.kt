@@ -16,10 +16,12 @@ import java.time.Duration
 object Statistikk {
     private val log = logger()
     val databaseConfig = Database.config("statistikk_model")
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(
-        topic = NOTIFIKASJON_TOPIC,
-        "statistikk-model-builder-1"
-    ) }
+    private val hendelsesstrøm by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "statistikk-model-builder-1"
+        )
+    }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
