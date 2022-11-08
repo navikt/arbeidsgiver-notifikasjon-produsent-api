@@ -4,6 +4,9 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
+import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -49,6 +52,7 @@ class SkedulertUtgåttService(
         val utgåttFrist = skedulerteUtgått.hentOgFjernAlleMedFrist(OsloTid.localDateNow())
         /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
         utgåttFrist.forEach { utgått ->
+            val fristLocalDateTime = LocalDateTime.of(utgått.frist, LocalTime.MAX)
             hendelseProdusent.send(HendelseModel.OppgaveUtgått(
                 virksomhetsnummer = utgått.virksomhetsnummer,
                 notifikasjonId = utgått.oppgaveId,
@@ -56,7 +60,7 @@ class SkedulertUtgåttService(
                 produsentId = utgått.produsentId,
                 kildeAppNavn = NaisEnvironment.clientId,
                 hardDelete = null,
-                utgaattTidspunkt = OffsetDateTime.now(),
+                utgaattTidspunkt = fristLocalDateTime.atOslo().toOffsetDateTime()
             ))
         }
     }
