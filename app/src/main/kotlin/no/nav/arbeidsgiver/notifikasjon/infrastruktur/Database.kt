@@ -25,6 +25,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
@@ -264,12 +265,15 @@ class ParameterSetters(
     fun boolean(newState: Boolean) = preparedStatement.setBoolean(index++, newState)
     fun uuid(value: UUID) = preparedStatement.setObject(index++, value)
     fun nullableUuid(value: UUID?) = preparedStatement.setObject(index++, value)
-    fun nullableTimestamptz(value: OffsetDateTime?) = preparedStatement.setObject(index++, value)
+    /**
+     * all timestamp values must be `truncatedTo` micros to avoid rounding/precision errors when writing and reading
+     **/
+    fun nullableTimestamptz(value: OffsetDateTime?) = preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
     fun timestamp_utc(value: OffsetDateTime) = timestamp(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
     fun timestamp_utc(value: Instant) = timestamp(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
-    fun timestamp(value: LocalDateTime) = preparedStatement.setObject(index++, value)
-    fun nullableTimestamp(value: LocalDateTime?) = preparedStatement.setObject(index++, value)
-    fun timestamptz(value: OffsetDateTime) = preparedStatement.setObject(index++, value)
+    fun timestamp(value: LocalDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+    fun nullableTimestamp(value: LocalDateTime?) = preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
+    fun timestamptz(value: OffsetDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
     fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
 
