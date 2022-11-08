@@ -13,8 +13,8 @@ import java.time.Duration
 import java.time.Instant
 
 object SkedulertSlett {
-    val databaseConfig = Database.config("autoslett_model")
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("autoslett-model-builder") }
+    val databaseConfig = Database.config("skedulert_harddelete")
+    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("skedulert-harddelete-model-builder") }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {

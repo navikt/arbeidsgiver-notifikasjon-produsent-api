@@ -25,9 +25,9 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-statistikk" -> Statistikk.main()
             "notifikasjon-ekstern-varsling" -> EksternVarsling.main()
             "notifikasjon-replay-validator" -> ReplayValidator.main()
-            "notifikasjon-autoslett" -> SkedulertSlett.main()
             "notifikasjon-kafka-backup" -> KafkaBackup.main()
             "notifikasjon-skedulert-utgaatt" -> SkedulertUgått.main()
+            "notifikasjon-skedulert-harddelete" -> SkedulertSlett.main()
             "notifikasjon-hendelse-transformer" -> HendelseTransformer.main()
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
         }
