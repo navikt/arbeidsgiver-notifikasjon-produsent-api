@@ -21,7 +21,7 @@ private var idsuffixes = generateSequence(0) { it + 1 }.map { it.toString() }.it
 
 class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
     val database = testDatabase(SkedulertHardDelete.databaseConfig)
-    val repository = SkedulertSlettRepository(database)
+    val repository = SkedulertHardDeleteRepository(database)
 
     suspend fun DescribeSpecContainerScope.oppgaveUtførtCase(
         title: String,
@@ -403,13 +403,13 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
     }
 })
 
-private suspend fun <T : HendelseModel.Hendelse> SkedulertSlettRepository.oppdaterModell(
+private suspend fun <T : HendelseModel.Hendelse> SkedulertHardDeleteRepository.oppdaterModell(
     hendelse: T,
     timestamp: Instant = Instant.EPOCH,
 ): T =
     hendelse.also { oppdaterModellEtterHendelse(it, timestamp) }
 
-private suspend fun SkedulertSlettRepository.hardDelete(
+private suspend fun SkedulertHardDeleteRepository.hardDelete(
     idsuffix: String,
 ) = oppdaterModell(HendelseModel.HardDelete(
         virksomhetsnummer = idsuffix,
@@ -420,7 +420,7 @@ private suspend fun SkedulertSlettRepository.hardDelete(
         deletedAt = OffsetDateTime.now(),
 ))
 
-private suspend fun SkedulertSlettRepository.beskjedOpprettet(
+private suspend fun SkedulertHardDeleteRepository.beskjedOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
     hardDelete: String? = null,
@@ -451,7 +451,7 @@ private suspend fun SkedulertSlettRepository.beskjedOpprettet(
 )
 
 
-private suspend fun SkedulertSlettRepository.oppgaveOpprettet(
+private suspend fun SkedulertHardDeleteRepository.oppgaveOpprettet(
     idsuffix: String,
     opprettetTidspunkt: String,
     merkelapp: String = "merkelapp",
@@ -483,7 +483,7 @@ private suspend fun SkedulertSlettRepository.oppgaveOpprettet(
 )
 
 
-private suspend fun SkedulertSlettRepository.sakOpprettet(
+private suspend fun SkedulertHardDeleteRepository.sakOpprettet(
     idsuffix: String,
     mottattTidspunkt: String,
     oppgittTidspunkt: String? = null,
@@ -513,7 +513,7 @@ private suspend fun SkedulertSlettRepository.sakOpprettet(
     )
 )
 
-private suspend fun SkedulertSlettRepository.oppgaveUtført(
+private suspend fun SkedulertHardDeleteRepository.oppgaveUtført(
     idsuffix: String,
     mottattTidspunkt: String,
     hardDelete: HendelseModel.HardDeleteUpdate?
@@ -529,7 +529,7 @@ private suspend fun SkedulertSlettRepository.oppgaveUtført(
     Instant.parse(mottattTidspunkt)
 )
 
-private suspend fun SkedulertSlettRepository.nyStatusSak(
+private suspend fun SkedulertHardDeleteRepository.nyStatusSak(
     idsuffix: String,
     mottattTidspunkt: String,
     oppgittTidspunkt: String? = null,

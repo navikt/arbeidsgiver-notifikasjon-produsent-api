@@ -19,7 +19,7 @@ import java.util.*
 class SkedulertHardDeleteServiceTest : DescribeSpec({
 
     val kafkaProducer = FakeHendelseProdusent()
-    val repo = mockk<SkedulertSlettRepository>()
+    val repo = mockk<SkedulertHardDeleteRepository>()
     val service = SkedulertHardDeleteService(repo, kafkaProducer)
     val nåTidspunkt = Instant.parse("2020-01-01T20:20:01.01Z")
 
@@ -65,15 +65,14 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
 private fun skedulertHardDelete(
     aggregateId: UUID,
     beregnetSlettetidspunkt: Instant = Instant.EPOCH
-): SkedulertHardDelete =
-    SkedulertHardDelete(
-        aggregateId = aggregateId,
-        aggregateType = "foo",
-        virksomhetsnummer = "21",
-        produsentid = "test",
-        merkelapp = "tag",
-        inputBase = OffsetDateTime.now(),
-        inputOm = null,
-        inputDen = LocalDateTime.now(),
-        beregnetSlettetidspunkt = beregnetSlettetidspunkt,
-    )
+) = SkedulertHardDeleteRepository.SkedulertHardDelete(
+    aggregateId = aggregateId,
+    aggregateType = "foo",
+    virksomhetsnummer = "21",
+    produsentid = "test",
+    merkelapp = "tag",
+    inputBase = OffsetDateTime.now(),
+    inputOm = null,
+    inputDen = LocalDateTime.now(),
+    beregnetSlettetidspunkt = beregnetSlettetidspunkt,
+)

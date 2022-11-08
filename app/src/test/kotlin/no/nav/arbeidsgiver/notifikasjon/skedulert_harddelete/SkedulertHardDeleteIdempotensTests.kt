@@ -8,7 +8,7 @@ import java.time.Instant
 
 class SkedulertHardDeleteIdempotensTests : DescribeSpec({
     val database = testDatabase(SkedulertHardDelete.databaseConfig)
-    val repository = SkedulertSlettRepository(database)
+    val repository = SkedulertHardDeleteRepository(database)
 
     describe("AutoSlett Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
