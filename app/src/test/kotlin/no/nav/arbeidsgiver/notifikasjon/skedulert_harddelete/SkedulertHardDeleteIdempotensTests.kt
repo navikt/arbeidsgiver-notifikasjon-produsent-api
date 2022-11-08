@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
@@ -6,8 +6,8 @@ import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.Instant
 
-class SkedulertSlettIdempotensTests : DescribeSpec({
-    val database = testDatabase(SkedulertSlett.databaseConfig)
+class SkedulertHardDeleteIdempotensTests : DescribeSpec({
+    val database = testDatabase(SkedulertHardDelete.databaseConfig)
     val repository = SkedulertSlettRepository(database)
 
     describe("AutoSlett Idempotent oppførsel") {

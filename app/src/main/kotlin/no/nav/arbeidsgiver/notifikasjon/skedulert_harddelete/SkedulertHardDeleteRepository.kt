@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.FORLENG
@@ -14,6 +14,27 @@ import java.util.*
 class SkedulertSlettRepository(
     private val database: Database
 ) {
+    data class SkedulertHardDelete(
+        val aggregateId: UUID,
+        val aggregateType: String,
+        val virksomhetsnummer: String,
+        val produsentid: String,
+        val merkelapp: String,
+        val inputBase: OffsetDateTime,
+        val inputOm: ISO8601Period?,
+        val inputDen: LocalDateTime?,
+        val beregnetSlettetidspunkt: Instant,
+    ) {
+        fun loggableToString() = mapOf(
+            "aggregateId" to aggregateId,
+            "aggregateType" to aggregateType,
+            "produsentid" to produsentid,
+            "inputBase" to inputBase,
+            "inputOm" to inputOm,
+            "inputDen" to inputDen,
+            "beregnetSlettetidspunkt" to beregnetSlettetidspunkt,
+        ).toString()
+    }
 
     suspend fun hentDeSomSkalSlettes(
         tilOgMed: Instant,
@@ -227,26 +248,4 @@ class SkedulertSlettRepository(
             nullableString(scheduledTime.denOrNull()?.toString())
         }
     }
-}
-
-data class SkedulertHardDelete(
-    val aggregateId: UUID,
-    val aggregateType: String,
-    val virksomhetsnummer: String,
-    val produsentid: String,
-    val merkelapp: String,
-    val inputBase: OffsetDateTime,
-    val inputOm: ISO8601Period?,
-    val inputDen: LocalDateTime?,
-    val beregnetSlettetidspunkt: Instant,
-) {
-    fun loggableToString() = mapOf(
-        "aggregateId" to aggregateId,
-        "aggregateType" to aggregateType,
-        "produsentid" to produsentid,
-        "inputBase" to inputBase,
-        "inputOm" to inputOm,
-        "inputDen" to inputDen,
-        "beregnetSlettetidspunkt" to beregnetSlettetidspunkt,
-    ).toString()
 }

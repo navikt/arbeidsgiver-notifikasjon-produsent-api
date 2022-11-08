@@ -6,7 +6,11 @@ metadata:
   labels:
     team: fager
 spec:
-  image: {{image}}
+  image: {{{image}}}
+  resources:
+    limits:
+      cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
+      memory: 1024Mi
   liveness:
     path: /internal/alive
   readiness:
@@ -18,7 +22,7 @@ spec:
     enabled: true
     path: /internal/metrics
   kafka:
-    pool: nav-dev
+    pool: nav-prod
   gcp:
     sqlInstances:
       - type: POSTGRES_12
@@ -28,3 +32,6 @@ spec:
         databases:
           - name: skedulert-harddelete-model
             envVarPrefix: DB
+  env:
+    - name: JAVA_OPTS
+      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
