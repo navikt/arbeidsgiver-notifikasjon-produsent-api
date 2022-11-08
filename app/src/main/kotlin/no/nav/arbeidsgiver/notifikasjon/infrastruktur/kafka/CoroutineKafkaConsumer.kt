@@ -5,10 +5,7 @@ import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
@@ -90,7 +87,10 @@ private constructor(
 
     private val replayer = PeriodicReplayer(
         consumer,
-        isBigLeap = { t -> t.hour == 5 && t.minute == 0 },
+        isBigLeap = basedOnEnv(
+            prod = {{ t -> t.hour == 5 && t.minute == 0 }},
+            other = {{ t -> t.hour % 2 == 0  && t.minute == 0 }}
+        ),
         isSmallLeap = { t -> t.minute == 0 },
         bigLeap = 10_000,
         smallLeap = 100,
