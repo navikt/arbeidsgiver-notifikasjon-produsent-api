@@ -2444,8 +2444,6 @@ Dere må gi oss minst 1 mottaker.
 <td valign="top"><a href="#iso8601date">ISO8601Date</a></td>
 <td>
 
-NB: IKKE IMPLEMENTERT I PROD. IKKE SEND.
-
 Her kan du spesifisere frist for når oppgaven skal utføres av bruker.
 Ideen er at etter fristen, så har ikke bruker lov, eller dere sperret for,
 å gjøre oppgaven.
