@@ -15,7 +15,12 @@ import java.time.Instant
 
 object SkedulertHardDelete {
     val databaseConfig = Database.config("skedulert_harddelete_model")
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(topic = NOTIFIKASJON_TOPIC, "skedulert-harddelete-model-builder") }
+    private val hendelsesstrøm by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "skedulert-harddelete-model-builder"
+        )
+    }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {

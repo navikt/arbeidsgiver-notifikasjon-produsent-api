@@ -13,7 +13,12 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProd
 
 object KafkaReaper {
     val databaseConfig = Database.config("kafka_reaper_model")
-    private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl(topic = NOTIFIKASJON_TOPIC, "reaper-model-builder") }
+    private val hendelsesstrøm by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "reaper-model-builder"
+        )
+    }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
