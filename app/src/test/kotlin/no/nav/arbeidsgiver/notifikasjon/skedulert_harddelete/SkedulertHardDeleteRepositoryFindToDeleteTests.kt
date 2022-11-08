@@ -13,7 +13,7 @@ import java.time.Period
 
 class AutoSlettRepositoryFindToDeleteTests : DescribeSpec({
     val database = testDatabase(SkedulertHardDelete.databaseConfig)
-    val repository = SkedulertSlettRepository(database)
+    val repository = SkedulertHardDeleteRepository(database)
 
     describe("AutoSlettRepository#hentDeSomSkalSlettes") {
         val baseline = OffsetDateTime.parse("2020-01-01T01:01:01.00Z")
@@ -35,7 +35,7 @@ class AutoSlettRepositoryFindToDeleteTests : DescribeSpec({
     }
 })
 
-suspend fun SkedulertSlettRepository.insert(
+suspend fun SkedulertHardDeleteRepository.insert(
     id: String,
     beregnetSlettetid: OffsetDateTime,
 ) {

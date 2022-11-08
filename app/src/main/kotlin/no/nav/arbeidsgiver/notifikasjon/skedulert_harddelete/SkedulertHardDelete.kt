@@ -13,7 +13,7 @@ import java.time.Duration
 import java.time.Instant
 
 object SkedulertHardDelete {
-    val databaseConfig = Database.config("skedulert_harddelete")
+    val databaseConfig = Database.config("skedulert_harddelete_model")
     private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("skedulert-harddelete-model-builder") }
 
     fun main(httpPort: Int = 8080) {
@@ -21,7 +21,7 @@ object SkedulertHardDelete {
             val database = openDatabaseAsync(databaseConfig)
 
             val repoAsync = async {
-                SkedulertSlettRepository(database.await())
+                SkedulertHardDeleteRepository(database.await())
             }
             launch {
                 val repo = repoAsync.await()

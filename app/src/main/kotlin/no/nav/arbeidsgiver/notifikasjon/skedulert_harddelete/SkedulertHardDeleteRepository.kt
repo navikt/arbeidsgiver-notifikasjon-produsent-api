@@ -11,7 +11,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
 
-class SkedulertSlettRepository(
+class SkedulertHardDeleteRepository(
     private val database: Database
 ) {
     data class SkedulertHardDelete(

@@ -11,7 +11,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class SkedulertHardDeleteService(
-    private val repo: SkedulertSlettRepository,
+    private val repo: SkedulertHardDeleteRepository,
     private val hendelseProdusent: HendelseProdusent,
 ) {
     private val log = logger()
