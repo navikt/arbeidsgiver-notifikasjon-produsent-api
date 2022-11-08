@@ -4,16 +4,9 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
-import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
-class SkedulertUtgått(
-    val oppgaveId: UUID,
-    val frist: LocalDate,
-    val virksomhetsnummer: String,
-    val produsentId: String,
-)
 
 class SkedulertUtgåttService(
     private val hendelseProdusent: HendelseProdusent
@@ -29,7 +22,7 @@ class SkedulertUtgåttService(
                     return@run
                 }
                 skedulerteUtgått.add(
-                    SkedulertUtgått(
+                    SkedulertUtgåttRepository.SkedulertUtgått(
                         oppgaveId = hendelse.notifikasjonId,
                         frist = hendelse.frist,
                         virksomhetsnummer = hendelse.virksomhetsnummer,

@@ -10,6 +10,13 @@ class SkedulertUtgåttRepository {
     private val indexedLookup = HashMap<UUID, SkedulertUtgått>()
     private val fristQueue = TreeMap<LocalDate, MutableList<SkedulertUtgått>>()
 
+    class SkedulertUtgått(
+        val oppgaveId: UUID,
+        val frist: LocalDate,
+        val virksomhetsnummer: String,
+        val produsentId: String,
+    )
+
     suspend fun hentOgFjernAlleMedFrist(localDateNow: LocalDate): Collection<SkedulertUtgått> =
         mutex.withLock {
             val alleUtgåtte = mutableListOf<SkedulertUtgått>()

@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.executable.bruker_api
 import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.executable.Port
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
@@ -10,9 +11,9 @@ import no.nav.arbeidsgiver.notifikasjon.util.EnhetsregisteretStub
 import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_BRUKER_AUTHENTICATION
 
 /* Bruker API */
-fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
+fun main() {
     Bruker.main(
-        httpPort = 8082,
+        httpPort = Port.BRUKER_API.port,
         authProviders = listOf(
             HttpAuthProviders.FAKEDINGS_BRUKER,
             LOCALHOST_BRUKER_AUTHENTICATION,

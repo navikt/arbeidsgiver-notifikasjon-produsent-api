@@ -34,7 +34,7 @@ private constructor(
     valueDeserializer: Class<*>,
     seekToBeginning: Boolean = false,
     replayPeriodically: Boolean = false,
-    private val onPartitionAssigned: ((partition: TopicPartition, endOffset: Long) -> Unit)?,
+    private val onPartitionAssigned: ((partition: TopicPartition, maxOffset: Long) -> Unit)?,
     private val onPartitionRevoked: ((partition: TopicPartition) -> Unit)?,
     private val configure: Properties.() -> Unit = {},
 ) {
@@ -179,7 +179,7 @@ private constructor(
             object: ConsumerRebalanceListener {
                 override fun onPartitionsAssigned(partitions: MutableCollection<TopicPartition>?) {
                     consumer.endOffsets(partitions).forEach { (partition, endOffset) ->
-                        onPartitionAssigned?.invoke(partition, endOffset)
+                        onPartitionAssigned?.invoke(partition, endOffset - 1)
                     }
 
                     consumer.seekToBeginning(partitions.orEmpty())

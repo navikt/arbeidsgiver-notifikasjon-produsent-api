@@ -1,11 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.executable.statistikk
 
+import no.nav.arbeidsgiver.notifikasjon.executable.Port
 import no.nav.arbeidsgiver.notifikasjon.statistikk.Statistikk
 
 /* Statistikk */
-fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
+fun main() {
     Statistikk.main(
-        httpPort = 8084
+        httpPort = Port.STATISTIKK.port,
     )
 }
 
