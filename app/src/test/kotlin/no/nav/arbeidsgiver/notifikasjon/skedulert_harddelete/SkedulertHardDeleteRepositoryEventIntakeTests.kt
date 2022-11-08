@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.core.spec.style.scopes.DescribeSpecContainerScope
@@ -19,8 +19,8 @@ import java.util.*
 
 private var idsuffixes = generateSequence(0) { it + 1 }.map { it.toString() }.iterator()
 
-class SkedulertSlettRepositoryEventIntakeTests : DescribeSpec({
-    val database = testDatabase(SkedulertSlett.databaseConfig)
+class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
+    val database = testDatabase(SkedulertHardDelete.databaseConfig)
     val repository = SkedulertSlettRepository(database)
 
     suspend fun DescribeSpecContainerScope.oppgaveUtførtCase(

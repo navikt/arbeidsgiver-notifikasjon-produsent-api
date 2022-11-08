@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -12,7 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProd
 import java.time.Duration
 import java.time.Instant
 
-object SkedulertSlett {
+object SkedulertHardDelete {
     val databaseConfig = Database.config("skedulert_harddelete")
     private val hendelsesstrøm by lazy { HendelsesstrømKafkaImpl("skedulert-harddelete-model-builder") }
 
@@ -31,7 +31,7 @@ object SkedulertSlett {
             }
 
             val service = async {
-                SkedulertSlettService(repoAsync.await(), lagKafkaHendelseProdusent())
+                SkedulertHardDeleteService(repoAsync.await(), lagKafkaHendelseProdusent())
             }
             launchProcessingLoop(
                 "autoslett-service",

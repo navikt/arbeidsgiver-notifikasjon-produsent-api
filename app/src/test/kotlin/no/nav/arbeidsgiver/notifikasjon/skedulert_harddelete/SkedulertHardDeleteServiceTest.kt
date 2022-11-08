@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -16,11 +16,11 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
-class SkedulertSlettServiceTest : DescribeSpec({
+class SkedulertHardDeleteServiceTest : DescribeSpec({
 
     val kafkaProducer = FakeHendelseProdusent()
     val repo = mockk<SkedulertSlettRepository>()
-    val service = SkedulertSlettService(repo, kafkaProducer)
+    val service = SkedulertHardDeleteService(repo, kafkaProducer)
     val nåTidspunkt = Instant.parse("2020-01-01T20:20:01.01Z")
 
     afterSpec {

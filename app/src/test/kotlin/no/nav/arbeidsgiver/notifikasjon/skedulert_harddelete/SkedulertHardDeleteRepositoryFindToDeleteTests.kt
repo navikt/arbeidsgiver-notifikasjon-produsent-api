@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -12,7 +12,7 @@ import java.time.OffsetDateTime
 import java.time.Period
 
 class AutoSlettRepositoryFindToDeleteTests : DescribeSpec({
-    val database = testDatabase(SkedulertSlett.databaseConfig)
+    val database = testDatabase(SkedulertHardDelete.databaseConfig)
     val repository = SkedulertSlettRepository(database)
 
     describe("AutoSlettRepository#hentDeSomSkalSlettes") {

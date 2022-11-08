@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
@@ -10,7 +10,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
-class SkedulertSlettService(
+class SkedulertHardDeleteService(
     private val repo: SkedulertSlettRepository,
     private val hendelseProdusent: HendelseProdusent,
 ) {

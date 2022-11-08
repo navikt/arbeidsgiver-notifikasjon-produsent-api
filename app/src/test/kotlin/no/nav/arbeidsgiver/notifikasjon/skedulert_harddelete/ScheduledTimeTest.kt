@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_slett
+package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
