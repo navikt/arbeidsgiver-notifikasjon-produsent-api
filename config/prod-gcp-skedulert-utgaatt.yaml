@@ -12,8 +12,6 @@ spec:
     min: 4
     max: 4
   resources:
-    requests:
-      memory: 2Gi
     limits:
       cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
       memory: 2Gi
