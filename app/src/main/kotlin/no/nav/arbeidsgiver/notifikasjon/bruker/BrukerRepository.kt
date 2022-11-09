@@ -491,7 +491,7 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid 
+                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid
                 )
                 values (?, ?, ? ,?, ?, ?)
                 on conflict do nothing;
