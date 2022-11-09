@@ -484,9 +484,9 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    id, virksomhetsnummer, tittel, lenke, merkelapp
+                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid
                 )
-                values (?, ?, ? ,?, ?)
+                values (?, ?, ? ,?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -495,6 +495,7 @@ class BrukerRepositoryImpl(
                 string(sakOpprettet.tittel)
                 string(sakOpprettet.lenke)
                 string(sakOpprettet.merkelapp)
+                string(sakOpprettet.grupperingsid)
             }
 
             executeUpdate("""

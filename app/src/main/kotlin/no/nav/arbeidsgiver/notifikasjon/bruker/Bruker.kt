@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
@@ -37,6 +38,13 @@ object Bruker {
                 other = { "bruker-model-builder" },
             ),
             replayPeriodically = true,
+        )
+    }
+
+    private val hendelsesstrømBerikGruperingsid by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "bruker-model-sak-grupperingsid",
         )
     }
 
@@ -78,6 +86,22 @@ object Bruker {
                 val brukerRepository = brukerRepositoryAsync.await()
                 hendelsesstrøm.forEach { event ->
                     brukerRepository.oppdaterModellEtterHendelse(event)
+                }
+            }
+
+            launch {
+                val db = database.await()
+                hendelsesstrømBerikGruperingsid.forEach { hendelse ->
+                    if (hendelse is HendelseModel.SakOpprettet) {
+                        db.nonTransactionalExecuteUpdate("""
+                            update sak
+                            set grupperingsid = ?
+                            where id = ?
+                        """) {
+                            string(hendelse.grupperingsid)
+                            uuid(hendelse.sakId)
+                        }
+                    }
                 }
             }
 
