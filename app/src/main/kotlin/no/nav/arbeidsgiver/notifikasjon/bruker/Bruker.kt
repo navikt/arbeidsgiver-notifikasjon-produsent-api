@@ -21,7 +21,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafka
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
 import java.time.Duration
 
 
@@ -81,19 +80,15 @@ object Bruker {
                 }
             }
 
-            val nærmesteLederModelAsync = async {
-                NærmesteLederModelImpl(database.await())
+            launch {
+                val brukerRepository = brukerRepositoryAsync.await()
+                NærmesteLederKafkaListener().forEach { event ->
+                    brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
+                }
             }
 
             val altinnRolleService = async<AltinnRolleService> {
                 AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
-            }
-
-            launch {
-                val nærmesteLederModel = nærmesteLederModelAsync.await()
-                NærmesteLederKafkaListener().forEach { event ->
-                    nærmesteLederModel.oppdaterModell(event)
-                }
             }
 
             val graphql = async {

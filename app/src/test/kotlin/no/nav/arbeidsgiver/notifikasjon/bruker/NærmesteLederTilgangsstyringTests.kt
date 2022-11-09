@@ -11,8 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.virksomhetsnummer
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModel
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -21,7 +20,6 @@ import java.util.*
 class NærmesteLederTilgangsstyringTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val model = BrukerRepositoryImpl(database)
-    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("Tilgangsstyring av nærmeste leder") {
 
@@ -72,8 +70,8 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             notifikasjoner should beEmpty()
         }
 
-        nærmesteLederModel.oppdaterModell(
-            NærmesteLederModel.NarmesteLederLeesah(
+        model.oppdaterModellEtterNærmesteLederLeesah(
+            NarmesteLederLeesah(
                 narmesteLederId = uuid("12"),
                 fnr = mottaker1.ansattFnr,
                 narmesteLederFnr = mottaker1.naermesteLederFnr,
@@ -88,8 +86,8 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             beskjed.id shouldBe beskjed1.notifikasjonId
         }
 
-        nærmesteLederModel.oppdaterModell(
-            NærmesteLederModel.NarmesteLederLeesah(
+        model.oppdaterModellEtterNærmesteLederLeesah(
+            NarmesteLederLeesah(
                 narmesteLederId = uuid("13"),
                 fnr = mottaker1.ansattFnr,
                 narmesteLederFnr = mottaker1.naermesteLederFnr,

@@ -27,6 +27,10 @@ type Sak {
     lenke: String!
     merkelapp: String!
     sisteStatus: SakStatus!
+    """
+    frist fra oppgaver med status ny. null i array betyr oppgave uten frist
+    """
+    frister: [ISO8601Date]!
 }
 type SakStatus {
     type: SakStatusType!

@@ -7,8 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModel
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -20,7 +19,6 @@ import java.util.*
 class HardDeleteTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
-    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("HardDelete av notifikasjon") {
         val uuid1 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
@@ -62,8 +60,8 @@ class HardDeleteTests : DescribeSpec({
         it("oppretter to beskjeder i databasen") {
             queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid1))
             queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid2))
-            nærmesteLederModel.oppdaterModell(
-                NærmesteLederModel.NarmesteLederLeesah(
+            queryModel.oppdaterModellEtterNærmesteLederLeesah(
+                NarmesteLederLeesah(
                     narmesteLederId = uuid("43"),
                     fnr = mottaker.ansattFnr,
                     narmesteLederFnr = mottaker.naermesteLederFnr,
@@ -150,8 +148,8 @@ class HardDeleteTests : DescribeSpec({
             queryModel.oppdaterModellEtterHendelse(opprettStatusEvent(uuid1))
             queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid2))
             queryModel.oppdaterModellEtterHendelse(opprettStatusEvent(uuid2))
-            nærmesteLederModel.oppdaterModell(
-                NærmesteLederModel.NarmesteLederLeesah(
+            queryModel.oppdaterModellEtterNærmesteLederLeesah(
+                NarmesteLederLeesah(
                     narmesteLederId = uuid("43"),
                     fnr = mottaker.ansattFnr,
                     narmesteLederFnr = mottaker.naermesteLederFnr,

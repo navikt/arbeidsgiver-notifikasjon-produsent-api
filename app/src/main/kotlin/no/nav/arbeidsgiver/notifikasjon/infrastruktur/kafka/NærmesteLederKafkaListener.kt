@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesahDeserializer
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModel.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederListener
 import org.apache.kafka.common.serialization.StringDeserializer
 

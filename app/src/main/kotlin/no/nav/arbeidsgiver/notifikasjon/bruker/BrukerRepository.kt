@@ -28,6 +28,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ifNotBlank
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -55,6 +56,7 @@ interface BrukerRepository {
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
+    suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
 
     val altinnRolle : AltinnRolleRepository
 }
@@ -704,6 +706,36 @@ class BrukerRepositoryImpl(
                     sakId = null,
                     mottaker
                 )
+            }
+        }
+    }
+
+    override suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah) {
+        if (nærmesteLederLeesah.aktivTom != null) {
+            database.nonTransactionalExecuteUpdate(
+                """
+                delete from naermeste_leder_kobling where id = ?
+            """
+            ) {
+                uuid(nærmesteLederLeesah.narmesteLederId)
+            }
+        } else {
+            database.nonTransactionalExecuteUpdate(
+                """
+                INSERT INTO naermeste_leder_kobling(id, fnr, naermeste_leder_fnr, orgnummer)
+                VALUES(?, ?, ?, ?) 
+                ON CONFLICT (id) 
+                DO 
+                UPDATE SET 
+                    orgnummer = EXCLUDED.orgnummer, 
+                    fnr = EXCLUDED.fnr, 
+                    naermeste_leder_fnr = EXCLUDED.naermeste_leder_fnr;
+            """
+            ) {
+                uuid(nærmesteLederLeesah.narmesteLederId)
+                string(nærmesteLederLeesah.fnr)
+                string(nærmesteLederLeesah.narmesteLederFnr)
+                string(nærmesteLederLeesah.orgnummer)
             }
         }
     }

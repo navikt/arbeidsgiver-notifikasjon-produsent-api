@@ -239,7 +239,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
     oppdaterModellEtterHendelse(status)
 }
 
-fun TestApplicationEngine.hentSaker(
+private fun TestApplicationEngine.hentSaker(
     tekstsoek: String? = null,
     offset: Int? = null,
     limit: Int? = null,

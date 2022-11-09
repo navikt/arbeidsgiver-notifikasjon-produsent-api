@@ -5,8 +5,7 @@ import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModel
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
@@ -17,7 +16,6 @@ import java.util.*
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
-    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     val fnr = "00000000000"
     val ansattFnr = "12344321"
@@ -48,14 +46,15 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             hardDelete = null,
         )
         queryModel.oppdaterModellEtterHendelse(beskjedOpprettet)
-        nærmesteLederModel.oppdaterModell(
-            NærmesteLederModel.NarmesteLederLeesah(
+        queryModel.oppdaterModellEtterNærmesteLederLeesah(
+            NarmesteLederLeesah(
             narmesteLederId = uuid,
             fnr = mottaker.ansattFnr,
             narmesteLederFnr = mottaker.naermesteLederFnr,
             orgnummer = mottaker.virksomhetsnummer,
             aktivTom = null
-        ))
+        )
+        )
 
         /* sjekk at beskjed ikke er klikket på */
         val response = engine.brukerApi(

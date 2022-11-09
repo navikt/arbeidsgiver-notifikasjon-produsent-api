@@ -96,7 +96,8 @@ object BrukerAPI {
         val lenke: String,
         val merkelapp: String,
         override val virksomhet: Virksomhet,
-        val sisteStatus: SakStatus
+        val sisteStatus: SakStatus,
+        val frister: List<LocalDate?>,
     ) : WithVirksomhet
 
 
@@ -302,6 +303,7 @@ object BrukerAPI {
                             tidspunkt = sakStatus.tidspunkt
                         )
                     }.first(),
+                    frister = emptyList()
                 )
             }
             sakerHentetCount.increment(saker.size.toDouble())
