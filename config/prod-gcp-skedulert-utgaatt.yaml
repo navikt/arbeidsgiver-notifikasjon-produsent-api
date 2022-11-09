@@ -7,12 +7,16 @@ metadata:
     team: fager
 spec:
   image: {{{image}}}
+  replicas:
+    disableAutoScaling: true
+    min: 4
+    max: 4
   resources:
     requests:
-      memory: 512Mi
+      memory: 2Gi
     limits:
       cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
-      memory: 1024Mi
+      memory: 2Gi
   liveness:
     path: /internal/alive
   readiness:
