@@ -303,7 +303,7 @@ object BrukerAPI {
                             tidspunkt = sakStatus.tidspunkt
                         )
                     }.first(),
-                    frister = emptyList()
+                    frister = it.frister,
                 )
             }
             sakerHentetCount.increment(saker.size.toDouble())

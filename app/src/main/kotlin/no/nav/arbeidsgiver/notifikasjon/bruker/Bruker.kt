@@ -23,6 +23,9 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import java.time.Duration
 
+/* TODO: mangler grupperingsid i sak-tabellen. Må spille av topic (i som egen one-off consumer)
+ * for å sette de som mangler.
+ */
 
 object Bruker {
     private val log = logger()

@@ -332,6 +332,11 @@ class BrukerRepositoryImpl(
                             order by sist_endret desc
                             offset ?
                             limit ?
+                        ),
+                        abcdef as (
+                            select s.* from mine_saker_paginert as s
+                            left join notifikasjon n on n.grupperingsid = s.grupperingsid
+                        
                         )
                     select 
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
@@ -486,9 +491,9 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    id, virksomhetsnummer, tittel, lenke, merkelapp
+                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid 
                 )
-                values (?, ?, ? ,?, ?)
+                values (?, ?, ? ,?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -497,6 +502,7 @@ class BrukerRepositoryImpl(
                 string(sakOpprettet.tittel)
                 string(sakOpprettet.lenke)
                 string(sakOpprettet.merkelapp)
+                string(sakOpprettet.grupperingsid)
             }
 
             executeUpdate("""
