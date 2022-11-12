@@ -319,7 +319,8 @@ class BrukerRepositoryImpl(
                                 s.tittel as tittel,
                                 s.lenke as lenke,
                                 s.merkelapp as merkelapp,
-                                status_json.statuser as statuser,
+                                s.grupperingsid as grupperingsid,
+                                to_jsonb(status_json.statuser) as statuser,
                                 status_json.sist_endret as sist_endret
                             from mine_saker as ms
                             join sak as s on s.id = ms.sak_id
@@ -333,14 +334,36 @@ class BrukerRepositoryImpl(
                             offset ?
                             limit ?
                         ),
-                        abcdef as (
-                            select s.* from mine_saker_paginert as s
-                            left join notifikasjon n on n.grupperingsid = s.grupperingsid
-                        
+                        mine_saksfrister as (
+                            select
+                                s."sakId" as "sakId",
+                                jsonb_build_object(
+                                    'sakId', s."sakId",
+                                    'virksomhetsnummer', s.virksomhetsnummer,
+                                    'tittel', s.tittel,
+                                    'lenke', s.lenke,
+                                    'merkelapp', s.merkelapp,
+                                    'grupperingsid', s.grupperingsid,
+                                    'statuser', s.statuser,
+                                    'sist_endret', s.sist_endret
+                                ) as sak,
+                                jsonb_build_object('frister', coalesce(json_agg(n.frist) filter (where n.id is not null), '[]'::json)) as frister
+                            from mine_saker_paginert as s
+                            left join notifikasjon as n on n.grupperingsid = s.grupperingsid
+                            group by
+                                s."sakId",
+                                s.virksomhetsnummer,
+                                s.tittel,
+                                s.lenke,
+                                s.merkelapp,
+                                s.grupperingsid,
+                                s.statuser,
+                                s.sist_endret
+                            -- TODO: tilgangsstyring
                         )
-                    select 
+                    select
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
-                        (select coalesce(json_agg(mine_saker_paginert.*), '[]'::json) from mine_saker_paginert) as saker
+                        (select coalesce(json_agg(sak || frister),  '[]'::json) from mine_saksfrister) as saker
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
