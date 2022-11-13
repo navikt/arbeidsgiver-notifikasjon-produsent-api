@@ -104,13 +104,21 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("sak med oppgaver [UTFOERT:med frist, UTGAATT:med frist]") {
-            //brukerRepository.opprettSak()
+            val mottaker = listOf(altinnMottakerMedTilgang)
+            val frist = LocalDate.now()
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.UTFOERT to frist to mottaker,
+                    BrukerModel.Oppgave.Tilstand.UTGAATT to frist to mottaker,
+                ),
+                mottakerSak = mottaker
+            )
 
             val response = engine.hentSaker()
 
             it("response inneholder riktig data") {
-                val saker = response.getTypedContent<List<Any>>("saker/saker")
-                saker should beEmpty()
+                val frister = response.getTypedContent<List<LocalDate?>>("$.saker.saker[0].frister")
+                frister should beEmpty()
             }
         }
 

@@ -347,7 +347,7 @@ class BrukerRepositoryImpl(
                                     'statuser', s.statuser,
                                     'sist_endret', s.sist_endret
                                 ) as sak,
-                                jsonb_build_object('frister', coalesce(json_agg(n.frist) filter (where n.id is not null), '[]'::json)) as frister
+                                jsonb_build_object('frister', coalesce(json_agg(n.frist) filter (where n.tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}'), '[]'::json)) as frister
                             from mine_saker_paginert as s
                             left join notifikasjon as n on n.grupperingsid = s.grupperingsid
                             group by
