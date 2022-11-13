@@ -262,6 +262,7 @@ private fun TestApplicationEngine.hentSaker(
                     tekst
                     tidspunkt
                 }
+                frister
             }
             feilAltinn
             totaltAntallSaker
