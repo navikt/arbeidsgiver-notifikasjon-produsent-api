@@ -334,9 +334,42 @@ class BrukerRepositoryImpl(
                             offset ?
                             limit ?
                         ),
+                        mine_altinn_notifikasjoner as (
+                            select er.notifikasjon_id
+                            from mottaker_altinn_enkeltrettighet er
+                            join mine_altinntilganger at on 
+                                er.virksomhet = at.virksomhetsnummer and
+                                er.service_code = at."serviceCode" and
+                                er.service_edition = at."serviceEdition"
+                            where
+                                er.notifikasjon_id is not null
+                        ),
+                        mine_altinn_reportee_notifikasjoner as (
+                            select rep.notifikasjon_id
+                            from mottaker_altinn_reportee rep
+                            join mine_altinnreporteetilganger at on 
+                                rep.virksomhet = at.virksomhetsnummer and
+                                rep.fnr = at."fnr"
+                            where
+                                rep.notifikasjon_id is not null
+                        ),
+                        mine_altinn_rolle_notifikasjoner as (
+                            select rol.notifikasjon_id
+                            from mottaker_altinn_rolle rol
+                            join mine_altinnrolletilganger at on 
+                                rol.virksomhet = at.virksomhetsnummer and
+                                rol.role_definition_id = at."roleDefinitionId" and
+                                rol.role_definition_code = at."roleDefinitionCode"
+                            where
+                                rol.notifikasjon_id is not null
+                        ),
+                        mine_digisyfo_notifikasjoner as (
+                            select notifikasjon_id 
+                            from mottaker_digisyfo_for_fnr
+                            where fnr_leder = ? and notifikasjon_id is not null
+                        ),
                         mine_saksfrister as (
                             select
-                                s."sakId" as "sakId",
                                 jsonb_build_object(
                                     'sakId', s."sakId",
                                     'virksomhetsnummer', s.virksomhetsnummer,
@@ -347,11 +380,28 @@ class BrukerRepositoryImpl(
                                     'statuser', s.statuser,
                                     'sist_endret', s.sist_endret
                                 ) as sak,
-                                jsonb_build_object('frister', coalesce(json_agg(n.frist) filter (where n.tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}'), '[]'::json)) as frister
+                                jsonb_build_object(
+                                    'frister', 
+                                    coalesce(
+                                        json_agg(n.frist) filter (
+                                            where n.tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}'
+                                                and n.id in (
+                                                    select * from mine_digisyfo_notifikasjoner
+                                                        union
+                                                    select * from mine_altinn_notifikasjoner
+                                                        union
+                                                    select * from mine_altinn_reportee_notifikasjoner
+                                                        union
+                                                    select * from mine_altinn_rolle_notifikasjoner
+                                                )
+                                        ), 
+                                        '[]'::json
+                                    )
+                                ) as frister
                             from mine_saker_paginert as s
                             left join notifikasjon as n on n.grupperingsid = s.grupperingsid
                             group by
-                                s."sakId",
+                                s."sakId", -- TODO: få til å grupper på kun sakId ?
                                 s.virksomhetsnummer,
                                 s.tittel,
                                 s.lenke,
@@ -359,7 +409,6 @@ class BrukerRepositoryImpl(
                                 s.grupperingsid,
                                 s.statuser,
                                 s.sist_endret
-                            -- TODO: tilgangsstyring
                         )
                     select
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
@@ -374,6 +423,7 @@ class BrukerRepositoryImpl(
                     tekstsoekElementer.forEach { string(it) }
                     integer(offset)
                     integer(limit)
+                    string(fnr)
                 }
             ) {
                 BrukerRepository.HentSakerResultat(

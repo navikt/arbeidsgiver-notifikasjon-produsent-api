@@ -63,15 +63,17 @@ class QuerySakerFristTests : DescribeSpec({
 
 
     describe("Query.saker med frist") {
-        brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
-            NarmesteLederLeesah(
-                narmesteLederId = UUID.randomUUID(),
-                fnr = naermestelederMottakerMedTilgang.ansattFnr,
-                narmesteLederFnr = naermestelederMottakerMedTilgang.naermesteLederFnr,
-                orgnummer = naermestelederMottakerMedTilgang.virksomhetsnummer,
-                aktivTom = null,
+        beforeContainer {
+            brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
+                NarmesteLederLeesah(
+                    narmesteLederId = UUID.randomUUID(),
+                    fnr = naermestelederMottakerMedTilgang.ansattFnr,
+                    narmesteLederFnr = naermestelederMottakerMedTilgang.naermesteLederFnr,
+                    orgnummer = naermestelederMottakerMedTilgang.virksomhetsnummer,
+                    aktivTom = null,
+                )
             )
-        )
+        }
 
         context("sak uten oppgaver") {
             brukerRepository.opprettSak(tilstander = emptyList(), mottakerSak = listOf(altinnMottakerMedTilgang))
@@ -84,7 +86,7 @@ class QuerySakerFristTests : DescribeSpec({
             }
         }
 
-        context("sak med oppgaver [NY:med frist, NY:uten frist]") {
+        context("sak med oppgaver [NY:medfrist:tilgang, NY:utenfrist:tilgang]") {
             val mottaker = listOf(altinnMottakerMedTilgang)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
@@ -103,8 +105,27 @@ class QuerySakerFristTests : DescribeSpec({
             }
         }
 
-        context("sak med oppgaver [UTFOERT:med frist, UTGAATT:med frist]") {
-            val mottaker = listOf(altinnMottakerMedTilgang)
+        context("sak med oppgaver nl [NY:medfrist:tilgang, NY:utenfrist:tilgang]") {
+            val mottaker = listOf(naermestelederMottakerMedTilgang)
+            val frist = LocalDate.now()
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.NY to frist to mottaker,
+                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
+                ),
+                mottakerSak = mottaker
+            )
+
+            val response = engine.hentSaker()
+
+            it("response inneholder riktig data") {
+                val frister = response.getTypedContent<List<LocalDate?>>("$.saker.saker[0].frister")
+                frister shouldBe listOf(frist, null)
+            }
+        }
+
+        context("sak med oppgaver [UTFOERT:medfrist:tilgang, UTGAATT:medfrist:tilgang]") {
+            val mottaker = listOf(naermestelederMottakerMedTilgang)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
                 tilstander = listOf(
@@ -122,7 +143,41 @@ class QuerySakerFristTests : DescribeSpec({
             }
         }
 
-        // TODO: tilgangsstyringstester
+        context("sak med oppgaver [NY:medfrist:ikketilgang, NY:utenfrist:ikketilgang]") {
+            val frist = LocalDate.now()
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.NY to frist to listOf(altinnMottakerUtenTilgang1),
+                    BrukerModel.Oppgave.Tilstand.NY to null to listOf(altinnMottakerUtenTilgang2),
+                ),
+                mottakerSak = listOf(naermestelederMottakerMedTilgang)
+            )
+
+            val response = engine.hentSaker()
+
+            it("response inneholder riktig data") {
+                val frister = response.getTypedContent<List<LocalDate?>>("$.saker.saker[0].frister")
+                frister shouldBe emptyList()
+            }
+        }
+
+        context("sak med oppgaver [NY:medfrist:tilgang, NY:utenfrist:ikketilgang]") {
+            val frist = LocalDate.now()
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.NY to frist to listOf(naermestelederMottakerMedTilgang),
+                    BrukerModel.Oppgave.Tilstand.NY to null to listOf(naermestelederMottakerUtenTilgang),
+                ),
+                mottakerSak = listOf(altinnMottakerMedTilgang)
+            )
+
+            val response = engine.hentSaker()
+
+            it("response inneholder riktig data") {
+                val frister = response.getTypedContent<List<LocalDate?>>("$.saker.saker[0].frister")
+                frister shouldBe listOf(frist)
+            }
+        }
     }
 })
 
@@ -225,4 +280,4 @@ private fun TestApplicationEngine.hentSaker() = brukerApi(
     )
 )
 
-private infix fun <A,B,C> Pair<A, B>.to(third: C) = Triple(this.first, this.second, third)
+private infix fun <A, B, C> Pair<A, B>.to(third: C) = Triple(this.first, this.second, third)
