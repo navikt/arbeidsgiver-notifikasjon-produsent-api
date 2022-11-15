@@ -370,7 +370,7 @@ class BrukerRepositoryImpl(
                         ),
                         mine_saksfrister as (
                             select
-                                jsonb_build_object(
+                                jsonb_agg(jsonb_build_object(
                                     'sakId', s."sakId",
                                     'virksomhetsnummer', s.virksomhetsnummer,
                                     'tittel', s.tittel,
@@ -379,7 +379,7 @@ class BrukerRepositoryImpl(
                                     'grupperingsid', s.grupperingsid,
                                     'statuser', s.statuser,
                                     'sist_endret', s.sist_endret
-                                ) as sak,
+                                )) as sak,
                                 jsonb_build_object(
                                     'frister', 
                                     coalesce(
@@ -400,19 +400,11 @@ class BrukerRepositoryImpl(
                                 ) as frister
                             from mine_saker_paginert as s
                             left join notifikasjon as n on n.grupperingsid = s.grupperingsid
-                            group by
-                                s."sakId", -- TODO: få til å grupper på kun sakId ?
-                                s.virksomhetsnummer,
-                                s.tittel,
-                                s.lenke,
-                                s.merkelapp,
-                                s.grupperingsid,
-                                s.statuser,
-                                s.sist_endret
+                            group by s."sakId"
                         )
                     select
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
-                        (select coalesce(json_agg(sak || frister),  '[]'::json) from mine_saksfrister) as saker
+                        (select coalesce(json_agg(sak -> 0 || frister),  '[]'::json) from mine_saksfrister) as saker
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
