@@ -199,6 +199,55 @@ class QuerySakerFristTests : DescribeSpec({
                 frister shouldBe listOf(frist.plusDays(1), frist.plusDays(2), frist.plusDays(3), null)
             }
         }
+
+        context("saker er sortert på frist") {
+            val mottaker = listOf(naermestelederMottakerMedTilgang)
+            val frist = LocalDate.now()
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
+                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(2) to mottaker,
+                ),
+                mottakerSak = mottaker
+            )
+            brukerRepository.opprettSak(
+                tilstander = emptyList(),
+                mottakerSak = mottaker
+            )
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(3) to mottaker,
+                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
+                ),
+                mottakerSak = mottaker
+            )
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(1) to mottaker,
+                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
+                ),
+                mottakerSak = mottaker
+            )
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
+                ),
+                mottakerSak = mottaker
+            )
+
+            val response = engine.hentSaker()
+
+            it("response inneholder riktig data") {
+                val saksfrister = response.getTypedContent<List<List<LocalDate?>>>("$.saker.saker[*].frister")
+                saksfrister shouldBe listOf(
+                    listOf(frist.plusDays(1), null),
+                    listOf(frist.plusDays(2), null),
+                    listOf(frist.plusDays(3), null),
+                    listOf(null),
+                    listOf(),
+                )
+            }
+        }
     }
 })
 
@@ -285,8 +334,8 @@ private suspend fun BrukerRepository.opprettSak(
 private fun TestApplicationEngine.hentSaker() = brukerApi(
     GraphQLRequest(
         """
-    query hentSaker(${'$'}virksomhetsnummer: String!){
-        saker(virksomhetsnummer: ${'$'}virksomhetsnummer) {
+    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}limit: Int){
+        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, limit: ${'$'}limit) {
             saker {
                 id
                 frister
@@ -297,6 +346,7 @@ private fun TestApplicationEngine.hentSaker() = brukerApi(
         "hentSaker",
         mapOf(
             "virksomhetsnummer" to "42",
+            "limit" to 10,
         )
     )
 )
