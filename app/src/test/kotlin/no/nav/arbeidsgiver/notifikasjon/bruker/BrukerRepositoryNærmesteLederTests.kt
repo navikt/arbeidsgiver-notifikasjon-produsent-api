@@ -43,12 +43,12 @@ class BrukerRepositoryNærmesteLederTests : DescribeSpec({
             )
             model.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
-                narmesteLederId = narmesteLederId,
-                fnr = "2",
-                narmesteLederFnr = "2",
-                orgnummer = "2",
-                aktivTom = null
-            )
+                    narmesteLederId = narmesteLederId,
+                    fnr = "2",
+                    narmesteLederFnr = "2",
+                    orgnummer = "2",
+                    aktivTom = null
+                )
             )
 
             it("den siste mottatte koblingen blir gjeldende") {
