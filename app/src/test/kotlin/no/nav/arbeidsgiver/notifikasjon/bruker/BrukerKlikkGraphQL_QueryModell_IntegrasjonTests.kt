@@ -53,8 +53,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
             narmesteLederFnr = mottaker.naermesteLederFnr,
             orgnummer = mottaker.virksomhetsnummer,
             aktivTom = null
-        )
-        )
+        ))
 
         /* sjekk at beskjed ikke er klikket på */
         val response = engine.brukerApi(
