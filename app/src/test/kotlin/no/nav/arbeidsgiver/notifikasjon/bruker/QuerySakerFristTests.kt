@@ -178,6 +178,27 @@ class QuerySakerFristTests : DescribeSpec({
                 frister shouldBe listOf(frist)
             }
         }
+
+        context("sak med oppgaver er sortert på frist") {
+            val mottaker = listOf(naermestelederMottakerMedTilgang)
+            val frist = LocalDate.now()
+            brukerRepository.opprettSak(
+                tilstander = listOf(
+                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
+                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(2) to mottaker,
+                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(1) to mottaker,
+                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(3) to mottaker,
+                ),
+                mottakerSak = mottaker
+            )
+
+            val response = engine.hentSaker()
+
+            it("response inneholder riktig data") {
+                val frister = response.getTypedContent<List<LocalDate?>>("$.saker.saker[0].frister")
+                frister shouldBe listOf(frist.plusDays(1), frist.plusDays(2), frist.plusDays(3), null)
+            }
+        }
     }
 })
 

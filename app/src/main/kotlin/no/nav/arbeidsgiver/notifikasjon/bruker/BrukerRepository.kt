@@ -383,7 +383,7 @@ class BrukerRepositoryImpl(
                                 jsonb_build_object(
                                     'frister', 
                                     coalesce(
-                                        json_agg(n.frist) filter (
+                                        json_agg(n.frist order by n.frist) filter (
                                             where n.tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}'
                                                 and n.id in (
                                                     select * from mine_digisyfo_notifikasjoner
