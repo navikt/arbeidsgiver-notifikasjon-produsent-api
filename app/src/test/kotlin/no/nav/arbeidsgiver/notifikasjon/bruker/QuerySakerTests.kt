@@ -108,6 +108,14 @@ class QuerySakerTests : DescribeSpec({
             brukerRepository.opprettSakMedTidspunkt(eldsteId, Duration.ofHours(1))
             brukerRepository.opprettSakMedTidspunkt(nyesteId, Duration.ofHours(3))
 
+            it("saksrekkefølge er korrekt innenfor page") {
+                val response = engine.hentSaker(offset = 0, limit = 3)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe nyesteId
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/1").id shouldBe mellomsteId
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/2").id shouldBe eldsteId
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
             it("nyeste sak først") {
                 val response = engine.hentSaker(offset = 0, limit = 1)
                 response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe nyesteId
