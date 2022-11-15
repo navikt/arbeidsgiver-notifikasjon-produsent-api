@@ -364,23 +364,22 @@ class BrukerRepositoryImpl(
                         ),
                         mine_saksfrister as (
                             select
-                                jsonb_agg(
-                                    jsonb_build_object(
-                                        'sakId', s."sakId",
-                                        'virksomhetsnummer', s.virksomhetsnummer,
-                                        'tittel', s.tittel,
-                                        'lenke', s.lenke,
-                                        'merkelapp', s.merkelapp,
-                                        'grupperingsid', s.grupperingsid,
-                                        'statuser', s.statuser,
-                                        'sist_endret', s.sist_endret
-                                    ) 
-                                ) as sak,
-                                jsonb_build_object(
-                                    'frister', 
-                                    coalesce(
-                                        jsonb_agg(n.frist order by n.frist nulls last) filter (
-                                            where n.tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}'
+                                s."sakId",
+                                s.virksomhetsnummer,
+                                s.tittel,
+                                s.lenke,
+                                s.merkelapp,
+                                s.grupperingsid,
+                                s.statuser,
+                                s.sist_endret,
+                                f.frister
+                                from mine_saker_ikke_paginert s
+                                cross join lateral (
+                                    select array (
+                                        select n.frist
+                                        from notifikasjon n
+                                            where n.grupperingsid = s.grupperingsid
+                                                and n.tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}'
                                                 and n.id in (
                                                     select * from mine_digisyfo_notifikasjoner
                                                         union
@@ -390,26 +389,30 @@ class BrukerRepositoryImpl(
                                                         union
                                                     select * from mine_altinn_rolle_notifikasjoner
                                                 )
-                                        ), 
-                                        '[]'::jsonb
-                                    )
-                                ) as frister
-                            from mine_saker_ikke_paginert as s
-                            left join notifikasjon as n on n.grupperingsid = s.grupperingsid
-                            group by s."sakId"
+                                            order by n.frist nulls last
+                                    ) as frister
+                                ) f
+                            order by 
+                                to_jsonb(frister)->>0 nulls last,
+                                nullif(array_length(frister, 1), 0) nulls last,
+                                sist_endret desc
+                             offset ? limit ? 
                         )
                     select
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
                         (select coalesce(
-                            json_agg(
-                                sak->0 
-                                || frister 
-                                    order by 
-                                          frister#>>'{frister,0}' nulls last, 
-                                          nullif(frister->'frister', '[]'::jsonb) nulls last,
-                                          sak#>'{0,sist_endret}' desc
-                            ),  
-                            '[]'::json
+                            jsonb_agg(jsonb_build_object(
+                                'frister', frister,
+                                'sakId', "sakId",
+                                'virksomhetsnummer', virksomhetsnummer,
+                                'tittel', tittel,
+                                'lenke', lenke,
+                                'merkelapp', merkelapp,
+                                'grupperingsid', grupperingsid,
+                                'statuser', statuser,
+                                'sist_endret', sist_endret
+                            )),  
+                            '[]'::jsonb
                         ) from mine_saksfrister) as saker
                     """,
                 {
@@ -420,8 +423,8 @@ class BrukerRepositoryImpl(
                     string(virksomhetsnummer)
                     tekstsoekElementer.forEach { string(it) }
                     string(fnr)
-                    //integer(offset)
-                    //integer(limit)
+                    integer(offset)
+                    integer(limit)
                 }
             ) {
                 BrukerRepository.HentSakerResultat(
