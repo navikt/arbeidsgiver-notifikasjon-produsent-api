@@ -82,6 +82,12 @@ object BrukerAPI {
         }
     }
 
+    enum class SakSortering {
+        OPPDATERT,
+        OPPRETTET,
+        FRIST,
+    }
+
     @JsonTypeName("SakerResultat")
     data class SakerResultat(
         val saker: List<Sak>,
@@ -275,6 +281,7 @@ object BrukerAPI {
             val context = env.getContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
             val tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null)
+            val sortering = env.getTypedArgument<SakSortering>("sortering")
             val offset = env.getArgumentOrDefault("offset", 0) ?: 0
             val limit = env.getArgumentOrDefault("limit", 3) ?: 3
             val tilganger = tilgangerService.hentTilganger(context)
@@ -283,6 +290,7 @@ object BrukerAPI {
                 virksomhetsnummer = virksomhetsnummer,
                 tilganger = tilganger,
                 tekstsoek = tekstsoek,
+                sortering =  sortering,
                 offset = offset,
                 limit = limit,
             )

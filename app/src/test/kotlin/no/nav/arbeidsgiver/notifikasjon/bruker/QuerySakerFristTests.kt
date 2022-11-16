@@ -334,8 +334,8 @@ private suspend fun BrukerRepository.opprettSak(
 private fun TestApplicationEngine.hentSaker() = brukerApi(
     GraphQLRequest(
         """
-    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}limit: Int){
-        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, limit: ${'$'}limit) {
+    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}sortering: SakSortering!, ${'$'}limit: Int){
+        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, sortering: ${'$'}sortering, limit: ${'$'}limit) {
             saker {
                 id
                 frister
@@ -347,6 +347,7 @@ private fun TestApplicationEngine.hentSaker() = brukerApi(
         mapOf(
             "virksomhetsnummer" to "42",
             "limit" to 10,
+            "sortering" to BrukerAPI.SakSortering.FRIST
         )
     )
 )

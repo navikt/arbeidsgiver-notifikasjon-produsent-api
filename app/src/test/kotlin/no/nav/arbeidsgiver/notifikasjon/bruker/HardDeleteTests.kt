@@ -165,7 +165,8 @@ class HardDeleteTests : DescribeSpec({
                     tilganger = Tilganger.EMPTY,
                     tekstsoek = null,
                     offset = 0,
-                    limit = Integer.MAX_VALUE
+                    limit = Integer.MAX_VALUE,
+                    sortering = BrukerAPI.SakSortering.OPPDATERT
                 ).saker
                     .map { it.sakId }
                     .sorted()
@@ -181,7 +182,8 @@ class HardDeleteTests : DescribeSpec({
                 tilganger = Tilganger.EMPTY,
                 tekstsoek = null,
                 offset = 0,
-                limit = Integer.MAX_VALUE
+                limit = Integer.MAX_VALUE,
+                sortering = BrukerAPI.SakSortering.OPPDATERT
             ).saker
                 .map { it.sakId }
 

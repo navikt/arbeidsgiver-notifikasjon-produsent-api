@@ -52,6 +52,7 @@ interface BrukerRepository {
         tekstsoek: String?,
         offset: Int,
         limit: Int,
+        sortering: BrukerAPI.SakSortering,
     ): HentSakerResultat
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -212,6 +213,7 @@ class BrukerRepositoryImpl(
         tekstsoek: String?,
         offset: Int,
         limit: Int,
+        sortering: BrukerAPI.SakSortering,
     ): BrukerRepository.HentSakerResultat {
         return timer.coRecord {
             val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
@@ -252,6 +254,18 @@ class BrukerRepositoryImpl(
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
                 .ifNotBlank { "where $it" }
+
+            val sorteringSql = when (sortering) {
+                BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
+                BrukerAPI.SakSortering.OPPRETTET -> """
+                   statuser#>>'{-1,a}' 
+                """
+                BrukerAPI.SakSortering.FRIST -> """
+                    to_jsonb(frister)->>0 nulls last,
+                    nullif(array_length(frister, 1), 0) nulls last,
+                    sist_endret desc
+                """
+            }
 
             val rows = database.nonTransactionalExecuteQuery(
                 /*  quotes are necessary for fields from json, otherwise they are lower-cased */
@@ -392,11 +406,8 @@ class BrukerRepositoryImpl(
                                             order by n.frist nulls last
                                     ) as frister
                                 ) f
-                            order by 
-                                to_jsonb(frister)->>0 nulls last,
-                                nullif(array_length(frister, 1), 0) nulls last,
-                                sist_endret desc
-                             offset ? limit ? 
+                            order by ${sorteringSql}
+                            offset ? limit ? 
                         )
                     select
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
