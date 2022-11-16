@@ -258,7 +258,7 @@ class BrukerRepositoryImpl(
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
                 BrukerAPI.SakSortering.OPPRETTET -> """
-                   statuser#>>'{-1,a}' 
+                   s.statuser#>>'{-1,tidspunkt}' desc 
                 """
                 BrukerAPI.SakSortering.FRIST -> """
                     to_jsonb(frister)->>0 nulls last,
