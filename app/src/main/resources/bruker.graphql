@@ -5,8 +5,15 @@ type Query {
         offset: Int
         limit: Int
         tekstsoek: String
+        sortering: SakSortering! = OPPDATERT
     ): SakerResultat!
     whoami: String
+}
+
+enum SakSortering {
+    OPPDATERT
+    OPPRETTET
+    FRIST
 }
 
 type SakerResultat {
