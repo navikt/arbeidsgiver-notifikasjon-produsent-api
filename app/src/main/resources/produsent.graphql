@@ -238,6 +238,8 @@ union NyStatusSakResultat =
     | NyStatusSakVellykket
     | SakFinnesIkke
     | Konflikt
+    | UgyldigMerkelapp
+    | UkjentProdusent
 
 type NyStatusSakVellykket {
     id: ID!
