@@ -3048,6 +3048,14 @@ merkelappen.</td>
 <td valign="top"><strong><a href="#konflikt">Konflikt</a></strong></td>
 <td valign="top">Oppgitt informasjon samsvarer ikke med tidligere informasjon som er oppgitt.</td>
 </tr>
+<tr>
+<td valign="top"><strong><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong></td>
+<td valign="top">Denne feilen returneres dersom en produsent forsøker å benytte en merkelapp som den ikke har tilgang til.</td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ukjentprodusent">UkjentProdusent</a></strong></td>
+<td valign="top">Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.</td>
+</tr>
 </tbody>
 </table>
 
