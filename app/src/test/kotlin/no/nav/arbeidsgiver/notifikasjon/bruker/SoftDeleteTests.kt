@@ -6,8 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModel
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -18,7 +17,6 @@ import java.util.*
 class SoftDeleteTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
-    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("SoftDelete av notifikasjon") {
         val uuid1 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
@@ -60,8 +58,8 @@ class SoftDeleteTests : DescribeSpec({
         it("oppretter to beskjeder i databasen") {
             queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid1))
             queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid2))
-            nærmesteLederModel.oppdaterModell(
-                NærmesteLederModel.NarmesteLederLeesah(
+            queryModel.oppdaterModellEtterNærmesteLederLeesah(
+                NarmesteLederLeesah(
                     narmesteLederId = uuid("432"),
                     fnr = mottaker.ansattFnr,
                     narmesteLederFnr = mottaker.naermesteLederFnr,

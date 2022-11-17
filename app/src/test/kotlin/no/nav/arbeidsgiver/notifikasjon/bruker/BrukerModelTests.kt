@@ -6,8 +6,7 @@ import io.kotest.matchers.collections.shouldHaveSingleElement
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModel
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -19,7 +18,6 @@ import java.util.*
 class BrukerModelTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
-    val nærmesteLederModel = NærmesteLederModelImpl(database)
 
     describe("Beskjed opprettet i BrukerModel") {
         val uuid = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
@@ -47,8 +45,8 @@ class BrukerModelTests : DescribeSpec({
 
 
         context("happy path") {
-            nærmesteLederModel.oppdaterModell(
-                NærmesteLederModel.NarmesteLederLeesah(
+            queryModel.oppdaterModellEtterNærmesteLederLeesah(
+                NarmesteLederLeesah(
                     narmesteLederId = uuid("4321"),
                     fnr = mottaker.ansattFnr,
                     narmesteLederFnr = mottaker.naermesteLederFnr,
@@ -79,8 +77,8 @@ class BrukerModelTests : DescribeSpec({
         }
 
         context("notifikasjon mottas flere ganger (fra kafka f.eks.)") {
-            nærmesteLederModel.oppdaterModell(
-                NærmesteLederModel.NarmesteLederLeesah(
+            queryModel.oppdaterModellEtterNærmesteLederLeesah(
+                NarmesteLederLeesah(
                     narmesteLederId = uuid("4321"),
                     fnr = mottaker.ansattFnr,
                     narmesteLederFnr = mottaker.naermesteLederFnr,

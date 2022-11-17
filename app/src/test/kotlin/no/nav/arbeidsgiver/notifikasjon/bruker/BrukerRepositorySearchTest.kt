@@ -97,7 +97,8 @@ private suspend fun BrukerRepositoryImpl.search(query: String): List<UUID> =
         ),
         tekstsoek = query,
         offset = 0,
-        limit = 1000_000
+        limit = 1000_000,
+        sortering = BrukerAPI.SakSortering.OPPDATERT
     )
         .saker
         .map { it.sakId }
