@@ -8,7 +8,6 @@ import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
@@ -22,9 +21,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafka
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NærmesteLederModelImpl
 import java.time.Duration
-
 
 object Bruker {
     private val log = logger()
@@ -38,13 +35,6 @@ object Bruker {
                 other = { "bruker-model-builder" },
             ),
             replayPeriodically = true,
-        )
-    }
-
-    private val hendelsesstrømBerikGruperingsid by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "bruker-model-sak-grupperingsid",
         )
     }
 
@@ -90,34 +80,14 @@ object Bruker {
             }
 
             launch {
-                val db = database.await()
-                hendelsesstrømBerikGruperingsid.forEach { hendelse ->
-                    if (hendelse is HendelseModel.SakOpprettet) {
-                        db.nonTransactionalExecuteUpdate("""
-                            update sak
-                            set grupperingsid = ?
-                            where id = ?
-                        """) {
-                            string(hendelse.grupperingsid)
-                            uuid(hendelse.sakId)
-                        }
-                    }
+                val brukerRepository = brukerRepositoryAsync.await()
+                NærmesteLederKafkaListener().forEach { event ->
+                    brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
                 }
-            }
-
-            val nærmesteLederModelAsync = async {
-                NærmesteLederModelImpl(database.await())
             }
 
             val altinnRolleService = async<AltinnRolleService> {
                 AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
-            }
-
-            launch {
-                val nærmesteLederModel = nærmesteLederModelAsync.await()
-                NærmesteLederKafkaListener().forEach { event ->
-                    nærmesteLederModel.oppdaterModell(event)
-                }
             }
 
             val graphql = async {

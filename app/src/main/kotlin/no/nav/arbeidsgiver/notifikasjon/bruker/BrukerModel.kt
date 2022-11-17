@@ -70,6 +70,7 @@ object BrukerModel {
         val lenke: String,
         val merkelapp: String,
         val statuser: List<SakStatus>,
+        val frister: List<LocalDate?>,
     )
 
     data class SakStatus(

@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.OPPRETTET
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
@@ -99,35 +100,89 @@ class QuerySakerTests : DescribeSpec({
             }
         }
 
-        context("paginering med offset og limit angitt") {
-            val eldsteId = uuid("2")
-            val mellomsteId = uuid("1")
-            val nyesteId = uuid("3")
+        context("paginering med offset og limit angitt sortert på oppdatert") {
+            val forventetRekkefoelge = listOf(
+                uuid("3"),
+                uuid("1"),
+                uuid("4"),
+            )
 
-            brukerRepository.opprettSakMedTidspunkt(mellomsteId, Duration.ofHours(2))
-            brukerRepository.opprettSakMedTidspunkt(eldsteId, Duration.ofHours(1))
-            brukerRepository.opprettSakMedTidspunkt(nyesteId, Duration.ofHours(3))
+            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[0], Duration.ofHours(1), Duration.ofHours(5))
+            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[1], Duration.ofHours(2), Duration.ofHours(4))
+            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[2], Duration.ofHours(3))
 
-            it("nyeste sak først") {
+            it("saksrekkefølge er korrekt innenfor page") {
+                val response = engine.hentSaker(offset = 0, limit = 3)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[0]
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/1").id shouldBe forventetRekkefoelge[1]
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/2").id shouldBe forventetRekkefoelge[2]
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
+            it("sist oppdaterte sak først") {
                 val response = engine.hentSaker(offset = 0, limit = 1)
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe nyesteId
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[0]
                 response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
 
             it("mellomste sak ved offset 1") {
                 val response = engine.hentSaker(offset = 1, limit = 1)
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe mellomsteId
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[1]
                 response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
 
             it("eldste sak ved offset 2") {
                 val response = engine.hentSaker(offset = 2, limit = 1)
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe eldsteId
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[2]
                 response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
 
             it("utenfor offset") {
                 val response = engine.hentSaker(offset = 3, limit = 1)
+                response.getTypedContent<List<Any>>("saker/saker") should beEmpty()
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+        }
+
+        context("paginering med offset og limit angitt sortert på opprettet") {
+            val forventetRekkefoelge = listOf(
+                uuid("3"),
+                uuid("1"),
+                uuid("4"),
+            )
+
+            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[0], Duration.ofHours(3))
+            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[1], Duration.ofHours(2), Duration.ofHours(4))
+            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[2], Duration.ofHours(1), Duration.ofHours(5))
+
+            it("saksrekkefølge er korrekt innenfor page") {
+                val response = engine.hentSaker(offset = 0, limit = 3, sortering = OPPRETTET)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[0]
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/1").id shouldBe forventetRekkefoelge[1]
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/2").id shouldBe forventetRekkefoelge[2]
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
+            it("sist oppdaterte sak først") {
+                val response = engine.hentSaker(offset = 0, limit = 1, sortering = OPPRETTET)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[0]
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
+            it("mellomste sak ved offset 1") {
+                val response = engine.hentSaker(offset = 1, limit = 1, sortering = OPPRETTET)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[1]
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
+            it("eldste sak ved offset 2") {
+                val response = engine.hentSaker(offset = 2, limit = 1, sortering = OPPRETTET)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[2]
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
+            it("utenfor offset") {
+                val response = engine.hentSaker(offset = 3, limit = 1, sortering = OPPRETTET)
                 response.getTypedContent<List<Any>>("saker/saker") should beEmpty()
                 response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
@@ -203,9 +258,9 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
 
 private suspend fun BrukerRepository.opprettSakMedTidspunkt(
     sakId: UUID,
-    shift: Duration,
+    vararg shift: Duration,
 ) {
-    val mottattTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
+    val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
     val sak = SakOpprettet(
         hendelseId = sakId,
         sakId = sakId,
@@ -217,37 +272,42 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
         mottakere = listOf(AltinnMottaker("5441", "1", "42")),
         tittel = "er det no sak",
         lenke = "#foo",
-        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        oppgittTidspunkt = oppgittTidspunkt,
         mottattTidspunkt = OffsetDateTime.now(),
         hardDelete = null,
-    )
-    val status = NyStatusSak(
-        hendelseId = UUID.randomUUID(),
-        virksomhetsnummer = sak.virksomhetsnummer,
-        produsentId = sak.produsentId,
-        kildeAppNavn = sak.kildeAppNavn,
-        sakId = sak.sakId,
-        status = SakStatus.MOTTATT,
-        overstyrStatustekstMed = "noe",
-        mottattTidspunkt = mottattTidspunkt.plus(shift),
-        idempotensKey = IdempotenceKey.initial(),
-        oppgittTidspunkt = null,
-        hardDelete = null,
-        nyLenkeTilSak = null,
-    )
-    oppdaterModellEtterHendelse(sak)
-    oppdaterModellEtterHendelse(status)
+    ).also {
+        oppdaterModellEtterHendelse(it)
+    }
+    shift.forEach {
+        NyStatusSak(
+            hendelseId = UUID.randomUUID(),
+            virksomhetsnummer = sak.virksomhetsnummer,
+            produsentId = sak.produsentId,
+            kildeAppNavn = sak.kildeAppNavn,
+            sakId = sak.sakId,
+            status = SakStatus.MOTTATT,
+            overstyrStatustekstMed = "noe",
+            mottattTidspunkt = oppgittTidspunkt.plus(it),
+            idempotensKey = IdempotenceKey.initial(),
+            oppgittTidspunkt = null,
+            hardDelete = null,
+            nyLenkeTilSak = null,
+        ).also { hendelse ->
+            oppdaterModellEtterHendelse(hendelse)
+        }
+    }
 }
 
-fun TestApplicationEngine.hentSaker(
+private fun TestApplicationEngine.hentSaker(
     tekstsoek: String? = null,
     offset: Int? = null,
     limit: Int? = null,
+    sortering: BrukerAPI.SakSortering = BrukerAPI.SakSortering.OPPDATERT,
 ) = brukerApi(
     GraphQLRequest(
         """
-    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}tekstsoek: String, ${'$'}offset: Int, ${'$'}limit: Int){
-        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, tekstsoek: ${'$'}tekstsoek, offset: ${'$'}offset, limit: ${'$'}limit) {
+    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}tekstsoek: String, ${'$'}sortering: SakSortering!, ${'$'}offset: Int, ${'$'}limit: Int){
+        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, tekstsoek: ${'$'}tekstsoek, sortering: ${'$'}sortering, offset: ${'$'}offset, limit: ${'$'}limit) {
             saker {
                 id
                 tittel
@@ -262,6 +322,7 @@ fun TestApplicationEngine.hentSaker(
                     tekst
                     tidspunkt
                 }
+                frister
             }
             feilAltinn
             totaltAntallSaker
@@ -272,6 +333,7 @@ fun TestApplicationEngine.hentSaker(
         mapOf(
             "virksomhetsnummer" to "42",
             "tekstsoek" to tekstsoek,
+            "sortering" to sortering,
             "offset" to offset,
             "limit" to limit,
         )

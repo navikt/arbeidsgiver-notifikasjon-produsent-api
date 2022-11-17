@@ -28,6 +28,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ifNotBlank
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -51,10 +52,12 @@ interface BrukerRepository {
         tekstsoek: String?,
         offset: Int,
         limit: Int,
+        sortering: BrukerAPI.SakSortering,
     ): HentSakerResultat
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
+    suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
 
     val altinnRolle : AltinnRolleRepository
 }
@@ -210,6 +213,7 @@ class BrukerRepositoryImpl(
         tekstsoek: String?,
         offset: Int,
         limit: Int,
+        sortering: BrukerAPI.SakSortering,
     ): BrukerRepository.HentSakerResultat {
         return timer.coRecord {
             val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
@@ -250,6 +254,18 @@ class BrukerRepositoryImpl(
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
                 .ifNotBlank { "where $it" }
+
+            val sorteringSql = when (sortering) {
+                BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
+                BrukerAPI.SakSortering.OPPRETTET -> """
+                   s.statuser#>>'{-1,tidspunkt}' desc 
+                """
+                BrukerAPI.SakSortering.FRIST -> """
+                    to_jsonb(frister)->>0 nulls last,
+                    nullif(array_length(frister, 1), 0) nulls last,
+                    sist_endret desc
+                """
+            }
 
             val rows = database.nonTransactionalExecuteQuery(
                 /*  quotes are necessary for fields from json, otherwise they are lower-cased */
@@ -317,7 +333,8 @@ class BrukerRepositoryImpl(
                                 s.tittel as tittel,
                                 s.lenke as lenke,
                                 s.merkelapp as merkelapp,
-                                status_json.statuser as statuser,
+                                s.grupperingsid as grupperingsid,
+                                to_jsonb(status_json.statuser) as statuser,
                                 status_json.sist_endret as sist_endret
                             from mine_saker as ms
                             join sak as s on s.id = ms.sak_id
@@ -325,15 +342,89 @@ class BrukerRepositoryImpl(
                             join sak_search as search on s.id = search.id
                             $tekstsoekSql
                         ),
-                        mine_saker_paginert as (
-                            table mine_saker_ikke_paginert
-                            order by sist_endret desc
-                            offset ?
-                            limit ?
+                        mine_altinn_notifikasjoner as (
+                            select er.notifikasjon_id
+                            from mottaker_altinn_enkeltrettighet er
+                            join mine_altinntilganger at on 
+                                er.virksomhet = at.virksomhetsnummer and
+                                er.service_code = at."serviceCode" and
+                                er.service_edition = at."serviceEdition"
+                            where
+                                er.notifikasjon_id is not null
+                        ),
+                        mine_altinn_reportee_notifikasjoner as (
+                            select rep.notifikasjon_id
+                            from mottaker_altinn_reportee rep
+                            join mine_altinnreporteetilganger at on 
+                                rep.virksomhet = at.virksomhetsnummer and
+                                rep.fnr = at."fnr"
+                            where
+                                rep.notifikasjon_id is not null
+                        ),
+                        mine_altinn_rolle_notifikasjoner as (
+                            select rol.notifikasjon_id
+                            from mottaker_altinn_rolle rol
+                            join mine_altinnrolletilganger at on 
+                                rol.virksomhet = at.virksomhetsnummer and
+                                rol.role_definition_id = at."roleDefinitionId" and
+                                rol.role_definition_code = at."roleDefinitionCode"
+                            where
+                                rol.notifikasjon_id is not null
+                        ),
+                        mine_digisyfo_notifikasjoner as (
+                            select notifikasjon_id 
+                            from mottaker_digisyfo_for_fnr
+                            where fnr_leder = ? and notifikasjon_id is not null
+                        ),
+                        mine_saksfrister as (
+                            select
+                                s."sakId",
+                                s.virksomhetsnummer,
+                                s.tittel,
+                                s.lenke,
+                                s.merkelapp,
+                                s.grupperingsid,
+                                s.statuser,
+                                s.sist_endret,
+                                f.frister
+                                from mine_saker_ikke_paginert s
+                                cross join lateral (
+                                    select array (
+                                        select n.frist
+                                        from notifikasjon n
+                                            where n.grupperingsid = s.grupperingsid
+                                                and n.tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}'
+                                                and n.id in (
+                                                    select * from mine_digisyfo_notifikasjoner
+                                                        union
+                                                    select * from mine_altinn_notifikasjoner
+                                                        union
+                                                    select * from mine_altinn_reportee_notifikasjoner
+                                                        union
+                                                    select * from mine_altinn_rolle_notifikasjoner
+                                                )
+                                            order by n.frist nulls last
+                                    ) as frister
+                                ) f
+                            order by ${sorteringSql}
+                            offset ? limit ? 
                         )
-                    select 
+                    select
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
-                        (select coalesce(json_agg(mine_saker_paginert.*), '[]'::json) from mine_saker_paginert) as saker
+                        (select coalesce(
+                            jsonb_agg(jsonb_build_object(
+                                'frister', frister,
+                                'sakId', "sakId",
+                                'virksomhetsnummer', virksomhetsnummer,
+                                'tittel', tittel,
+                                'lenke', lenke,
+                                'merkelapp', merkelapp,
+                                'grupperingsid', grupperingsid,
+                                'statuser', statuser,
+                                'sist_endret', sist_endret
+                            )),  
+                            '[]'::jsonb
+                        ) from mine_saksfrister) as saker
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
@@ -342,6 +433,7 @@ class BrukerRepositoryImpl(
                     string(fnr)
                     string(virksomhetsnummer)
                     tekstsoekElementer.forEach { string(it) }
+                    string(fnr)
                     integer(offset)
                     integer(limit)
                 }
@@ -705,6 +797,36 @@ class BrukerRepositoryImpl(
                     sakId = null,
                     mottaker
                 )
+            }
+        }
+    }
+
+    override suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah) {
+        if (nærmesteLederLeesah.aktivTom != null) {
+            database.nonTransactionalExecuteUpdate(
+                """
+                delete from naermeste_leder_kobling where id = ?
+            """
+            ) {
+                uuid(nærmesteLederLeesah.narmesteLederId)
+            }
+        } else {
+            database.nonTransactionalExecuteUpdate(
+                """
+                INSERT INTO naermeste_leder_kobling(id, fnr, naermeste_leder_fnr, orgnummer)
+                VALUES(?, ?, ?, ?) 
+                ON CONFLICT (id) 
+                DO 
+                UPDATE SET 
+                    orgnummer = EXCLUDED.orgnummer, 
+                    fnr = EXCLUDED.fnr, 
+                    naermeste_leder_fnr = EXCLUDED.naermeste_leder_fnr;
+            """
+            ) {
+                uuid(nærmesteLederLeesah.narmesteLederId)
+                string(nærmesteLederLeesah.fnr)
+                string(nærmesteLederLeesah.narmesteLederFnr)
+                string(nærmesteLederLeesah.orgnummer)
             }
         }
     }
