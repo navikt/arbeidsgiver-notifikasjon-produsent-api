@@ -66,6 +66,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         ),
         hardDelete = null,
         frist = null,
+        påminnelse = null,
     )
 
     describe("Getting and deleting jobs") {

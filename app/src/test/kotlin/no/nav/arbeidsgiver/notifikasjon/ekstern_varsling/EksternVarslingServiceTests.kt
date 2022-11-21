@@ -84,6 +84,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 )),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -136,6 +137,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 )),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -182,6 +184,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 )),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -228,6 +231,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 )),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -274,6 +278,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 )),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -320,6 +325,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 )),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""
@@ -365,6 +371,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 )),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             ))
 
             database.nonTransactionalExecuteUpdate("""

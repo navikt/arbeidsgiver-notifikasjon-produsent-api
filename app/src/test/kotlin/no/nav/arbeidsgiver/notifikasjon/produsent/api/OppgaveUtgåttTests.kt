@@ -56,6 +56,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -137,6 +138,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -214,6 +216,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
             val oppgaveUtført = HendelseModel.OppgaveUtført(
                 virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,
@@ -278,6 +281,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -361,6 +365,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -400,6 +405,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -477,6 +483,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
             val oppgaveUtført = HendelseModel.OppgaveUtført(
                 virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,

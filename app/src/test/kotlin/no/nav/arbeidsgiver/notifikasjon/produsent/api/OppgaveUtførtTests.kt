@@ -58,6 +58,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -139,6 +140,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -229,6 +231,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -312,6 +315,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -351,6 +355,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -441,6 +446,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -524,6 +530,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -563,6 +570,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)

@@ -66,6 +66,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
         eksterneVarsler = listOf(),
         hardDelete = null,
         frist = null,
+        påminnelse = null,
     )
     val oppgaveOpprettet2 = oppgaveOpprettet.copy(
         eksternId = eksternId2,

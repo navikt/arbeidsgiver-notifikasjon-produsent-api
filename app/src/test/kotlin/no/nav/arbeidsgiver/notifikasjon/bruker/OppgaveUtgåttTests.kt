@@ -50,6 +50,7 @@ class OppgaveUtgåttTests : DescribeSpec({
             lenke = "#foo",
             hardDelete = null,
             frist = null,
+            påminnelse = null,
         )
         val oppgaveUtgått = HendelseModel.OppgaveUtgått(
             hendelseId = uuid("1"),

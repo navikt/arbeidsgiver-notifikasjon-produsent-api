@@ -48,6 +48,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 eksterneVarsler = listOf(),
                 hardDelete = null,
                 frist = null,
+                påminnelse = null,
             )
         )
         val uuid2 = UUID.randomUUID()

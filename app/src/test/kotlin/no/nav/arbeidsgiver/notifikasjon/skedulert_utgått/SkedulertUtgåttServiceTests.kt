@@ -36,6 +36,7 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
         eksterneVarsler = listOf(),
         hardDelete = null,
         frist = null,
+        påminnelse = null,
     )
     val fristSomHarPassert = LocalDate.now().minusDays(1)
     val fristSomIkkeHarPassert = LocalDate.now().plusDays(2)

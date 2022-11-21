@@ -38,6 +38,7 @@ class HendelseSerializationTests : DescribeSpec({
             eksterneVarsler = listOf(),
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             frist = null,
+            påminnelse = null,
         )
 
 
@@ -109,6 +110,7 @@ class HendelseSerializationTests : DescribeSpec({
             eksterneVarsler = listOf(),
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             frist = null,
+            påminnelse = null,
         )
 
 
