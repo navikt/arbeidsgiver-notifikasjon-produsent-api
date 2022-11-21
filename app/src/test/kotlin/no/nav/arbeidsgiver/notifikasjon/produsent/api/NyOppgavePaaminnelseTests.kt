@@ -1,15 +1,18 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.beNull
+import io.kotest.matchers.shouldNot
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.util.fakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
 class NyOppgavePaaminnelseTests : DescribeSpec({
-    val stubbedKafkaProducer = FakeHendelseProdusent()
+    val stubbedKafkaProducer = fakeHendelseProdusent()
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
 
@@ -34,8 +37,10 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         )
         it("opprettes uten feil") {
             response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            (stubbedKafkaProducer.hendelser.first() as HendelseModel.OppgaveOpprettet).påminnelse shouldNot beNull()
         }
     }
+
     describe("oppgave uten frist konkret tidspunkt for påminnelse") {
         val response = engine.produsentApi(
             nyOppgave(
@@ -51,6 +56,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         )
         it("opprettes uten feil") {
             response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            (stubbedKafkaProducer.hendelser.first() as HendelseModel.OppgaveOpprettet).påminnelse shouldNot beNull()
         }
     }
     describe("oppgave med frist konkret tidspunkt for påminnelse etter frist") {
@@ -106,6 +112,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         )
         it("opprettes uten feil") {
             response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            (stubbedKafkaProducer.hendelser.first() as HendelseModel.OppgaveOpprettet).påminnelse shouldNot beNull()
         }
     }
 
@@ -143,6 +150,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         )
         it("opprettes uten feil") {
             response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            (stubbedKafkaProducer.hendelser.first() as HendelseModel.OppgaveOpprettet).påminnelse shouldNot beNull()
         }
     }
 
