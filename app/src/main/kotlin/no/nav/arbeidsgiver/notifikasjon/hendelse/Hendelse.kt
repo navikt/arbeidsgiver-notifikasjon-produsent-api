@@ -2,11 +2,9 @@ package no.nav.arbeidsgiver.notifikasjon.hendelse
 
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
-import io.ktor.util.reflect.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.UgyldigPåminnelseTidspunktException
-import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import java.time.*
 import java.util.*
@@ -75,6 +73,20 @@ object HendelseModel {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed interface PåminnelseTidspunkt {
+        fun validateBetween(
+            opprettelsesTidspunkt: OffsetDateTime,
+            påmindelsesTidspunkt: Instant,
+            fristTidspunkt: LocalDate?,
+        ) {
+            if (påmindelsesTidspunkt < opprettelsesTidspunkt.toInstant()) {
+                throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være før oppgaven er opprettet")
+            }
+
+            if (fristTidspunkt != null && LocalDateTime.of(fristTidspunkt, LocalTime.MAX).inOsloAsInstant() < påmindelsesTidspunkt) {
+                throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være etter fristen på oppgaven")
+            }
+        }
+
         @JsonTypeName("PåminnelseTidspunkt.Konkret")
         class Konkret(
             val value: LocalDateTime,
@@ -82,12 +94,7 @@ object HendelseModel {
             frist: LocalDate?
         ) : PåminnelseTidspunkt {
             init {
-                if (frist != null && value > LocalDateTime.of(frist, LocalTime.MAX)) {
-                    throw UgyldigPåminnelseTidspunktException("error")
-                }
-                if (value.inOsloAsInstant() < opprettetTidspunkt.toInstant()) {
-                    throw UgyldigPåminnelseTidspunktException("error")
-                }
+                validateBetween(opprettetTidspunkt, value.inOsloAsInstant(), frist)
             }
         }
 
@@ -98,14 +105,7 @@ object HendelseModel {
             frist: LocalDate?
         ) : PåminnelseTidspunkt {
             init {
-                if (frist != null && (opprettetTidspunkt + value).toInstant() >
-                    LocalDateTime.of(frist, LocalTime.MAX).inOsloAsInstant()
-                ) {
-                    throw UgyldigPåminnelseTidspunktException("error")
-                }
-                if (value.isNegative) {
-                    throw UgyldigPåminnelseTidspunktException("error")
-                }
+                validateBetween(opprettetTidspunkt, (opprettetTidspunkt + value).toInstant(), frist)
             }
         }
 
@@ -116,14 +116,14 @@ object HendelseModel {
             frist: LocalDate?
         ) : PåminnelseTidspunkt {
             init {
-                if (frist == null || value.isNegative) {
-                    throw UgyldigPåminnelseTidspunktException("error")
+                if (frist == null) {
+                    throw UgyldigPåminnelseTidspunktException("du må oppgi `frist`, siden `foerFrist` skal være relativ til denne")
                 }
-                if (((LocalDateTime.of(frist, LocalTime.MAX) - value).inOsloAsInstant()) <
-                    opprettetTidspunkt.toInstant()
-                ) {
-                    throw UgyldigPåminnelseTidspunktException("error")
-                }
+                validateBetween(
+                    opprettetTidspunkt,
+                    (LocalDateTime.of(frist, LocalTime.MAX) - value).inOsloAsInstant(),
+                    frist,
+                )
             }
         }
     }
