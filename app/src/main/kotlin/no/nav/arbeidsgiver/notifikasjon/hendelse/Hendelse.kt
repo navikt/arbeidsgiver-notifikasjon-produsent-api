@@ -2,13 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.hendelse
 
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
+import io.ktor.util.reflect.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.UgyldigPåminnelseTidspunktException
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
+import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
+import java.time.*
 import java.util.*
 
 object HendelseModel {
@@ -45,24 +45,24 @@ object HendelseModel {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed interface LocalDateTimeOrDuration {
 
-        companion object{
+        companion object {
             fun parse(tekst: String) =
                 if (tekst.startsWith("P")) Duration(ISO8601Period.parse(tekst))
                 else LocalDateTime(java.time.LocalDateTime.parse(tekst))
         }
 
         @JsonTypeName("LocalDateTime")
-        data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration
+        data class LocalDateTime(val value: java.time.LocalDateTime) : LocalDateTimeOrDuration
 
         @JsonTypeName("Duration")
-        data class Duration(val value: ISO8601Period): LocalDateTimeOrDuration
+        data class Duration(val value: ISO8601Period) : LocalDateTimeOrDuration
 
-        fun omOrNull() = when(this) {
+        fun omOrNull() = when (this) {
             is LocalDateTime -> null
             is Duration -> value
         }
 
-        fun denOrNull() = when(this) {
+        fun denOrNull() = when (this) {
             is LocalDateTime -> value
             is Duration -> null
         }
@@ -82,29 +82,48 @@ object HendelseModel {
             frist: LocalDate?
         ) : PåminnelseTidspunkt {
             init {
-                throw UgyldigPåminnelseTidspunktException("error")
+                if (frist != null && value > LocalDateTime.of(frist, LocalTime.MAX)) {
+                    throw UgyldigPåminnelseTidspunktException("error")
+                }
+                if (value.inOsloAsInstant() < opprettetTidspunkt.toInstant()) {
+                    throw UgyldigPåminnelseTidspunktException("error")
+                }
             }
         }
 
         @JsonTypeName("PåminnelseTidspunkt.EtterOpprettelse")
         class EtterOpprettelse(
-            val value: ISO8601Period, 
-            opprettetTidspunkt: OffsetDateTime, 
+            val value: ISO8601Period,
+            opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
         ) : PåminnelseTidspunkt {
             init {
-                throw UgyldigPåminnelseTidspunktException("error")
+                if (frist != null && (opprettetTidspunkt + value).toInstant() >
+                    LocalDateTime.of(frist, LocalTime.MAX).inOsloAsInstant()
+                ) {
+                    throw UgyldigPåminnelseTidspunktException("error")
+                }
+                if (value.isNegative) {
+                    throw UgyldigPåminnelseTidspunktException("error")
+                }
             }
         }
 
         @JsonTypeName("PåminnelseTidspunkt.FørFrist")
         class FørFrist(
-            val value: ISO8601Period, 
-            opprettetTidspunkt: OffsetDateTime, 
+            val value: ISO8601Period,
+            opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
         ) : PåminnelseTidspunkt {
             init {
-                throw UgyldigPåminnelseTidspunktException("error")
+                if (frist == null || value.isNegative) {
+                    throw UgyldigPåminnelseTidspunktException("error")
+                }
+                if (((LocalDateTime.of(frist, LocalTime.MAX) - value).inOsloAsInstant()) <
+                    opprettetTidspunkt.toInstant()
+                ) {
+                    throw UgyldigPåminnelseTidspunktException("error")
+                }
             }
         }
     }

@@ -22,6 +22,9 @@ data class ISO8601Period(
         return "$datePart$timePart"
     }
 
+    val isNegative: Boolean get() = period.isNegative || duration.isNegative
+
+
     override fun get(unit: TemporalUnit): Long {
         if (unit in period.units) {
             return period.get(unit)
