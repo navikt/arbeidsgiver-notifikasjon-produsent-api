@@ -72,17 +72,17 @@ object HendelseModel {
     )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-    sealed interface PåminnelseTidspunkt {
-        fun validateBetween(
-            opprettelsesTidspunkt: OffsetDateTime,
-            påmindelsesTidspunkt: Instant,
-            fristTidspunkt: LocalDate?,
-        ) {
-            if (påmindelsesTidspunkt < opprettelsesTidspunkt.toInstant()) {
+    sealed class PåminnelseTidspunkt(
+        @JsonProperty("påminnelseTidspunkt")
+        val påminnelseTidspunkt: Instant,
+        opprettetTidspunkt: OffsetDateTime,
+        frist: LocalDate?,
+    ) {
+        init {
+            if (påminnelseTidspunkt < opprettetTidspunkt.toInstant()) {
                 throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være før oppgaven er opprettet")
             }
-
-            if (fristTidspunkt != null && LocalDateTime.of(fristTidspunkt, LocalTime.MAX).inOsloAsInstant() < påmindelsesTidspunkt) {
+            if (frist != null && LocalDateTime.of(frist, LocalTime.MAX).inOsloAsInstant() < påminnelseTidspunkt) {
                 throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være etter fristen på oppgaven")
             }
         }
@@ -92,38 +92,47 @@ object HendelseModel {
             val value: LocalDateTime,
             opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
-        ) : PåminnelseTidspunkt {
-            init {
-                validateBetween(opprettetTidspunkt, value.inOsloAsInstant(), frist)
-            }
-        }
+        ) : PåminnelseTidspunkt(
+            value.inOsloAsInstant(),
+            opprettetTidspunkt,
+            frist
+        )
 
         @JsonTypeName("PåminnelseTidspunkt.EtterOpprettelse")
         class EtterOpprettelse(
             val value: ISO8601Period,
             opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
-        ) : PåminnelseTidspunkt {
-            init {
-                validateBetween(opprettetTidspunkt, (opprettetTidspunkt + value).toInstant(), frist)
-            }
-        }
+        ) : PåminnelseTidspunkt(
+            (opprettetTidspunkt + value).toInstant(),
+            opprettetTidspunkt,
+            frist,
+        )
 
         @JsonTypeName("PåminnelseTidspunkt.FørFrist")
-        class FørFrist(
+        class FørFrist
+        private constructor(
             val value: ISO8601Period,
+            påmindelsesTidspunkt: Instant,
             opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
-        ) : PåminnelseTidspunkt {
-            init {
-                if (frist == null) {
-                    throw UgyldigPåminnelseTidspunktException("du må oppgi `frist`, siden `foerFrist` skal være relativ til denne")
+        ) : PåminnelseTidspunkt(påmindelsesTidspunkt, opprettetTidspunkt, frist) {
+            companion object {
+                operator fun invoke(
+                    value: ISO8601Period,
+                    opprettetTidspunkt: OffsetDateTime,
+                    frist: LocalDate?
+                ): FørFrist {
+                    if (frist == null) {
+                        throw UgyldigPåminnelseTidspunktException("du må oppgi `frist`, siden `foerFrist` skal være relativ til denne")
+                    }
+                    return FørFrist(
+                        value,
+                        (LocalDateTime.of(frist, LocalTime.MAX) - value).inOsloAsInstant(),
+                        opprettetTidspunkt,
+                        frist
+                    )
                 }
-                validateBetween(
-                    opprettetTidspunkt,
-                    (LocalDateTime.of(frist, LocalTime.MAX) - value).inOsloAsInstant(),
-                    frist,
-                )
             }
         }
     }
