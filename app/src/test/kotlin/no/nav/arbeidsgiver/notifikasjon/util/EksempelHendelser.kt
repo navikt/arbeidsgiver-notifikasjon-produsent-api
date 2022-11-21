@@ -191,6 +191,7 @@ object EksempelHendelse {
         ),
         hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
         frist = null,
+        påminnelse = null,
     )
     val OppgaveOpprettet_2_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -237,6 +238,7 @@ object EksempelHendelse {
         ),
         hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
         frist = null,
+        påminnelse = null,
     )
     val OppgaveOpprettet_3_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -287,6 +289,7 @@ object EksempelHendelse {
         ),
         hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
         frist = null,
+        påminnelse = null,
     )
     val OppgaveOpprettet_MedFrist = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -326,6 +329,7 @@ object EksempelHendelse {
             )
         ),
         hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+        påminnelse = null,
     )
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",

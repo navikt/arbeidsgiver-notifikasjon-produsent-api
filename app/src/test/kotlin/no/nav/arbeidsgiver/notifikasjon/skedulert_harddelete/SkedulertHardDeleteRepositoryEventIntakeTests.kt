@@ -479,6 +479,7 @@ private suspend fun SkedulertHardDeleteRepository.oppgaveOpprettet(
         eksterneVarsler = listOf(),
         hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
         frist = null,
+        påminnelse = null,
     )
 )
 

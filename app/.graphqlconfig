@@ -1,6 +1,13 @@
 {
   "name": "Produsent API GraphQL Schema",
-  "schemaPath": "schema.graphql",
+  "projects": {
+    "brukerapi": {
+      "schemaPath": "./src/main/resources/bruker.graphql"
+    },
+    "produsentapi": {
+      "schemaPath": "./src/main/resources/produsent.graphql"
+    }
+  },
   "extensions": {
     "endpoints": {
       "bruker-api": {

@@ -3,7 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
@@ -13,6 +15,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.util.*
 
 internal class MutationNyOppgave(
@@ -39,6 +43,7 @@ internal class MutationNyOppgave(
         val mottakere: List<MottakerInput>,
         val notifikasjon: QueryMineNotifikasjoner.NotifikasjonData,
         val frist: LocalDate?,
+        val paaminnelse: PaaminnelseInput?,
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>,
     ) {
@@ -65,9 +70,39 @@ internal class MutationNyOppgave(
                 eksterneVarsler = eksterneVarsler.map {
                     it.tilDomene(metadata.virksomhetsnummer)
                 },
+                påminnelse = paaminnelse?.tilDomene(metadata.opprettetTidspunkt, frist),
                 hardDelete = metadata.hardDelete?.tilDomene(),
                 frist = frist,
             )
+        }
+    }
+
+    data class PaaminnelseInput(
+        val tidspunkt: PaaminnelseTidspunktInput,
+        val eksterneVarsler: List<EksterntVarselInput>
+    ) {
+        fun tilDomene(
+            opprettetTidspunkt: OffsetDateTime,
+            frist: LocalDate?
+        ) : HendelseModel.Påminnelse = HendelseModel.Påminnelse(
+            tidspunkt = tidspunkt.tilDomene(opprettetTidspunkt, frist),
+            eksterneVarsler = emptyList()
+        )
+    }
+
+    data class PaaminnelseTidspunktInput(
+        val konkret: LocalDateTime?,
+        val etterOpprettelse: ISO8601Period?,
+        val foerFrist: ISO8601Period?,
+    ) {
+        fun tilDomene(
+            opprettetTidspunkt: OffsetDateTime,
+            frist: LocalDate?
+        ): HendelseModel.PåminnelseTidspunkt = when {
+            konkret != null -> HendelseModel.PåminnelseTidspunkt.Konkret(konkret, opprettetTidspunkt, frist)
+            etterOpprettelse != null -> HendelseModel.PåminnelseTidspunkt.EtterOpprettelse(etterOpprettelse, opprettetTidspunkt, frist)
+            foerFrist != null -> HendelseModel.PåminnelseTidspunkt.FørFrist(foerFrist, opprettetTidspunkt, frist)
+            else -> throw RuntimeException("Feil format")
         }
     }
 
@@ -93,8 +128,10 @@ internal class MutationNyOppgave(
                 kildeAppNavn = context.appName,
                 finnRolleId = produsentRepository.altinnRolle::hentAltinnrolle
             )
-        }catch (e: UkjentRolleException){
+        } catch (e: UkjentRolleException){
             return Error.UkjentRolle(e.message!!)
+        } catch (e: UgyldigPåminnelseTidspunktException) {
+            return Error.UgyldigPåminnelseTidspunkt(e.message!!)
         }
 
         tilgangsstyrNyNotifikasjon(
@@ -141,3 +178,5 @@ internal class MutationNyOppgave(
         }
     }
 }
+
+internal class UgyldigPåminnelseTidspunktException(message: String) : RuntimeException(message)

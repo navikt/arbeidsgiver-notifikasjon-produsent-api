@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.UgyldigPåminnelseTidspunktException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -64,6 +65,47 @@ object HendelseModel {
         fun denOrNull() = when(this) {
             is LocalDateTime -> value
             is Duration -> null
+        }
+    }
+
+    data class Påminnelse(
+        val tidspunkt: PåminnelseTidspunkt,
+        val eksterneVarsler: List<Nothing> = listOf()
+    )
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    sealed interface PåminnelseTidspunkt {
+        @JsonTypeName("PåminnelseTidspunkt.Konkret")
+        class Konkret(
+            val value: LocalDateTime,
+            opprettetTidspunkt: OffsetDateTime,
+            frist: LocalDate?
+        ) : PåminnelseTidspunkt {
+            init {
+                throw UgyldigPåminnelseTidspunktException("error")
+            }
+        }
+
+        @JsonTypeName("PåminnelseTidspunkt.EtterOpprettelse")
+        class EtterOpprettelse(
+            val value: ISO8601Period, 
+            opprettetTidspunkt: OffsetDateTime, 
+            frist: LocalDate?
+        ) : PåminnelseTidspunkt {
+            init {
+                throw UgyldigPåminnelseTidspunktException("error")
+            }
+        }
+
+        @JsonTypeName("PåminnelseTidspunkt.FørFrist")
+        class FørFrist(
+            val value: ISO8601Period, 
+            opprettetTidspunkt: OffsetDateTime, 
+            frist: LocalDate?
+        ) : PåminnelseTidspunkt {
+            init {
+                throw UgyldigPåminnelseTidspunktException("error")
+            }
         }
     }
 
@@ -252,6 +294,7 @@ object HendelseModel {
         val eksterneVarsler: List<EksterntVarsel>,
         val hardDelete: LocalDateTimeOrDuration?,
         val frist: LocalDate?,
+        val påminnelse: Påminnelse?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -282,6 +325,7 @@ object HendelseModel {
                 eksterneVarsler: List<EksterntVarsel> = listOf(),
                 hardDelete: LocalDateTimeOrDuration?,
                 frist: LocalDate? = null,
+                påminnelse: Påminnelse? = null,
             ) = OppgaveOpprettet(
                 virksomhetsnummer = virksomhetsnummer,
                 notifikasjonId = notifikasjonId,
@@ -298,6 +342,7 @@ object HendelseModel {
                 eksterneVarsler = eksterneVarsler,
                 hardDelete = hardDelete,
                 frist = frist,
+                påminnelse = påminnelse,
             )
         }
     }

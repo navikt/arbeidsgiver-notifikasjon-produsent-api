@@ -304,6 +304,7 @@ private suspend fun BrukerRepository.opprettSak(
             lenke = "#foo",
             hardDelete = null,
             frist = frist,
+            påminnelse = null,
         ).also { oppdaterModellEtterHendelse(it) }
 
         when (tilstand) {
