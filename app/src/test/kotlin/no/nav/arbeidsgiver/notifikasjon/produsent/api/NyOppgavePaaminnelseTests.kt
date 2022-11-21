@@ -192,6 +192,9 @@ private fun nyOppgave(opprettetTidspunkt: String, fragment: String) = """
                     __typename
                     ... on NyOppgaveVellykket {
                         id
+                        eksterneVarsler {
+                            id
+                        }
                     }
                     ... on Error {
                         feilmelding

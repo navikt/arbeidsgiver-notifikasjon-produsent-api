@@ -79,7 +79,7 @@ internal class MutationNyOppgave(
 
     data class PaaminnelseInput(
         val tidspunkt: PaaminnelseTidspunktInput,
-        val eksterneVarsler: List<EksterntVarselInput>
+        val eksterneVarsler: List<EksterntVarselInput>,
     ) {
         fun tilDomene(
             opprettetTidspunkt: OffsetDateTime,
