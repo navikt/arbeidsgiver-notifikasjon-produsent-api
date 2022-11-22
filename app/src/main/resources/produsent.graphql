@@ -794,10 +794,15 @@ input NyOppgaveInput {
 
 input PaaminnelseInput {
     """
-    Tidspunktet for når påminnelsen skal aktiveres. Dersom det er angitt frist må påminnelsen være før dette.
+    Tidspunktet for når påminnelsen skal aktiveres.
+    Dersom det er angitt frist må påminnelsen være før dette.
+
+    Hvis du sender `eksterneVarsler`, så vil vi sjekke at vi har
+    mulighet for å sende dem før fristen, ellers får du feil ved
+    opprettelse av oppgaven.
     """
     tidspunkt: PaaminnelseTidspunktInput!
-    eksterneVarsler: [EksterntVarselInput!]! = []
+    eksterneVarsler: [PaaminnelseEksterntVarselInput!]! = []
 }
 
 input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
@@ -815,16 +820,64 @@ input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
     foerFrist: ISO8601Duration
 }
 
+input PaaminnelseEksterntVarselInput @ExactlyOneFieldGiven {
+    sms: PaaminnelseEksterntVarselSmsInput
+    epost: PaaminnelseEksterntVarselEpostInput
+}
+
+input PaaminnelseEksterntVarselSmsInput {
+    mottaker: SmsMottakerInput!
+    """
+    Teksten som sendes i SMS-en.
+    OBS: Det er ikke lov med personopplysninger i teksten. SMS er ikke en sikker kanal.
+    """
+    smsTekst: String!
+
+    """
+    Vi sender SMS-en med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+    til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+    det ved første mulighet.
+    """
+    sendevindu: Sendevindu!
+}
+
+input PaaminnelseEksterntVarselEpostInput {
+    mottaker: EpostMottakerInput!
+    """
+    Subject/emne til e-posten.
+    OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+    """
+    epostTittel: String!
+    """
+    Kroppen til e-posten. Tolkes som HTML.
+    OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+    """
+    epostHtmlBody: String!
+
+    """
+    Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+    til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+    det ved første mulighet.
+    """
+    sendevindu: Sendevindu!
+}
+
 input EksterntVarselInput @ExactlyOneFieldGiven {
     sms: EksterntVarselSmsInput
     epost: EksterntVarselEpostInput
 }
 
+"""
+For SMS, så vil
+[Altinns varslingsvindu](https://altinn.github.io/docs/utviklingsguider/varsling/#varslingsvindu-for-sms)
+også gjelde. Dette burde kun påvirke `LOEPENDE`.
+"""
 enum Sendevindu {
     """
-    Vi sender varselet slik at mottaker skal ha mulighet for å kontakte NAVs
-    kontaktsenter (NKS). Varsler blir sendt litt før NKS åpner, og vi slutter å
-    sende litt før NKS stenger.
+    Vi sender varselet slik at mottaker skal ha mulighet for å
+    kontakte NAVs kontaktsenter (NKS) når de mottar varselet. Varsler
+    blir sendt litt før NKS åpner, og vi slutter å sende litt før
+    NKS stenger.
 
     Vi tar foreløpig ikke hensyn til røde dager eller produksjonshendelser som fører til
     at NKS er utilgjengelig.
