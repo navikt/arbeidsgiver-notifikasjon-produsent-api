@@ -68,7 +68,7 @@ type Oppgave {
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
     sorteringTidspunkt: ISO8601DateTime!
-    paaminnelseTidspunkt: ISO8601DateTime!
+    paaminnelseTidspunkt: ISO8601DateTime
     utgaattTidspunkt: ISO8601DateTime
     frist: ISO8601Date
     id: ID!
