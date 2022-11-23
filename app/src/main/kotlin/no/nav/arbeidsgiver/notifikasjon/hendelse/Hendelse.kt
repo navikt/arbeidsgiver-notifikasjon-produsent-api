@@ -66,14 +66,15 @@ object HendelseModel {
         }
     }
 
+    @JsonTypeName("Paaminnelse")
     data class Påminnelse(
         val tidspunkt: PåminnelseTidspunkt,
-        val eksterneVarsler: List<Nothing> = listOf()
+        val eksterneVarsler: List<EksterntVarsel>,
     )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed class PåminnelseTidspunkt(
-        @JsonProperty("påminnelseTidspunkt")
+        @JsonProperty("paaminnelseTidspunkt")
         val påminnelseTidspunkt: Instant,
         opprettetTidspunkt: OffsetDateTime,
         frist: LocalDate?,
@@ -87,32 +88,35 @@ object HendelseModel {
             }
         }
 
-        @JsonTypeName("PåminnelseTidspunkt.Konkret")
+        @JsonTypeName("PaaminnelseTidspunkt.Konkret")
         class Konkret(
-            val value: LocalDateTime,
+            @JsonProperty("konkret")
+            val konkret: LocalDateTime,
             opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
         ) : PåminnelseTidspunkt(
-            value.inOsloAsInstant(),
+            konkret.inOsloAsInstant(),
             opprettetTidspunkt,
             frist
         )
 
-        @JsonTypeName("PåminnelseTidspunkt.EtterOpprettelse")
+        @JsonTypeName("PaaminnelseTidspunkt.EtterOpprettelse")
         class EtterOpprettelse(
-            val value: ISO8601Period,
+            @JsonProperty("etterOpprettelse")
+            val etterOpprettelse: ISO8601Period,
             opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
         ) : PåminnelseTidspunkt(
-            (opprettetTidspunkt + value).toInstant(),
+            (opprettetTidspunkt + etterOpprettelse).toInstant(),
             opprettetTidspunkt,
             frist,
         )
 
-        @JsonTypeName("PåminnelseTidspunkt.FørFrist")
+        @JsonTypeName("PaaminnelseTidspunkt.FoerFrist")
         class FørFrist
         private constructor(
-            val value: ISO8601Period,
+            @JsonProperty("foerFrist")
+            val førFrist: ISO8601Period,
             påmindelsesTidspunkt: Instant,
             opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
