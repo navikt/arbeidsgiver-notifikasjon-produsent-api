@@ -123,6 +123,7 @@ private fun HendelseModel.OppgaveOpprettet.medPåminnelse(
             tidspunkt,
             opprettetTidspunkt,
             frist
-        )
-    )
+        ),
+        eksterneVarsler = listOf()
+    ),
 )
