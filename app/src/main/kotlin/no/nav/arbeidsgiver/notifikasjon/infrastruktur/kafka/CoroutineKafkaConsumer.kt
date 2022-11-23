@@ -200,7 +200,7 @@ private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
         this.poll()
     }.toList()
 
-private fun <K, V> ConsumerRecord<K, V>.loggableToString() = """
+internal fun <K, V> ConsumerRecord<K, V>.loggableToString() = """
         |ConsumerRecord(
         |    topic = ${topic()},
         |    partition = ${partition()}, 
@@ -211,7 +211,7 @@ private fun <K, V> ConsumerRecord<K, V>.loggableToString() = """
     """.trimMargin()
 
 private fun <K, V> ConsumerRecord<K, V>.loggableValue() : String {
-    return when(val value = value()) {
+    return when (val value = value()) {
         null -> "Tombstone"
         is HendelseModel.Hendelse -> """
             |Hendelse(
@@ -221,6 +221,7 @@ private fun <K, V> ConsumerRecord<K, V>.loggableValue() : String {
             |    produsentId = ${value.produsentId},
             |    kildeAppNavn = ${value.kildeAppNavn})
         """.trimMargin()
-        else -> value!!::class.simpleName?:"?"
+
+        else -> value!!::class.java.simpleName
     }
 }
