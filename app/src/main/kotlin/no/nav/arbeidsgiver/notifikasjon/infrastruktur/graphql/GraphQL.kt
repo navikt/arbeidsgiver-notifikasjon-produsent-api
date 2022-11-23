@@ -62,7 +62,7 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
     fetcher: suspend (DataFetchingEnvironment) -> T,
 ) {
     dataFetcher(fieldName) { env ->
-        val ctx = env.getContext<WithCoroutineScope>()
+        val ctx = env.notifikasjonContext<WithCoroutineScope>()
         ctx.coroutineScope.future(Dispatchers.IO) {
             try {
                 fetcher(env)
@@ -137,6 +137,9 @@ inline fun requireGraphql(check: Boolean, message: () -> String) {
     }
 }
 
+fun <T> DataFetchingEnvironment.notifikasjonContext(): T =
+    this.graphQlContext["context"]
+
 class TypedGraphQL<T : WithCoroutineScope>(
     private val graphQL: GraphQL
 ) {
@@ -162,7 +165,7 @@ class TypedGraphQL<T : WithCoroutineScope>(
                     variables(it)
                 }
 
-                context(context)
+                graphQLContext(mapOf("context" to context))
             }.build()
     }
 }

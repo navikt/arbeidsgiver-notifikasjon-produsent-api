@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -31,7 +32,7 @@ internal class MutationNyOppgave(
         runtime.wire("Mutation") {
             coDataFetcher("nyOppgave") { env ->
                 nyOppgave(
-                    env.getContext(),
+                    env.notifikasjonContext(),
                     env.getTypedArgument("nyOppgave"),
                 )
             }

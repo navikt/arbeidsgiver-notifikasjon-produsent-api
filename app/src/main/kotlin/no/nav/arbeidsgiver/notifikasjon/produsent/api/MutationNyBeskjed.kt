@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -25,7 +26,7 @@ internal class MutationNyBeskjed(
         runtime.wire("Mutation") {
             coDataFetcher("nyBeskjed") { env ->
                 nyBeskjed(
-                    env.getContext(),
+                    env.notifikasjonContext(),
                     env.getTypedArgument("nyBeskjed"),
                 )
             }

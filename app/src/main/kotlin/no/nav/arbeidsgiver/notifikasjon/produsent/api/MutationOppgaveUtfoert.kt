@@ -26,7 +26,7 @@ internal class MutationOppgaveUtfoert(
         runtime.wire("Mutation") {
             coDataFetcher("oppgaveUtfoert") { env ->
                 oppgaveUtført(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     id = env.getTypedArgument("id"),
                     hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
                 )
@@ -43,7 +43,7 @@ internal class MutationOppgaveUtfoert(
 
     private suspend fun oppgaveUtfoertByEksternId(env: DataFetchingEnvironment) =
         oppgaveUtført(
-            context = env.getContext(),
+            context = env.notifikasjonContext(),
             eksternId = env.getTypedArgument("eksternId"),
             merkelapp = env.getTypedArgument("merkelapp"),
             hardDelete = env.getTypedArgumentOrNull("hardDelete")

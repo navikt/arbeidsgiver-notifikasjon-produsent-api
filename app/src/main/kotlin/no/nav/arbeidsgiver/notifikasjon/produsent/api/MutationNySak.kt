@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -34,7 +35,7 @@ internal class MutationNySak(
         runtime.wire("Mutation") {
             coDataFetcher("nySak") { env ->
                 nySak(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     nySak = NySakInput(
                         grupperingsid = env.getTypedArgument("grupperingsid"),
                         merkelapp = env.getTypedArgument("merkelapp"),

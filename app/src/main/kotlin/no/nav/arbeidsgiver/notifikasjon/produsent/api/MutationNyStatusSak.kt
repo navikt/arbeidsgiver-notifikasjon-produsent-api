@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -38,14 +39,14 @@ internal class MutationNyStatusSak(
         runtime.wire("Mutation") {
             coDataFetcher("nyStatusSak") { env ->
                 nyStatusSak(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     id = env.getTypedArgument("id"),
                     status = env.getStatus(),
                 )
             }
             coDataFetcher("nyStatusSakByGrupperingsid") { env ->
                 nyStatusSakByGrupperingsid(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     grupperingsid = env.getTypedArgument("grupperingsid"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                     status = env.getStatus(),
