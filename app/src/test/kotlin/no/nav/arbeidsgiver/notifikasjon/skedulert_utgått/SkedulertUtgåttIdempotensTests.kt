@@ -11,7 +11,7 @@ import java.time.Instant
 class SkedulertUtgåttIdempotensTests : DescribeSpec({
     val service = SkedulertUtgåttService(NoopHendelseProdusent)
 
-    describe("AutoSlett Idempotent oppførsel") {
+    describe("SkedulertUtgått Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
             service.processHendelse(hendelse)
             service.processHendelse(hendelse)

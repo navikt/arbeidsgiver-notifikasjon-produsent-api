@@ -1,32 +1,34 @@
-package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
+package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
-import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
-import java.time.LocalDateTime
-import java.time.LocalTime
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
+import java.time.Instant
 import java.util.*
 
 
-class SkedulertUtgåttService(
+class SkedulertPåminnelseService(
     private val hendelseProdusent: HendelseProdusent
 ) {
-    private val skedulerteUtgått = SkedulertUtgåttRepository()
+    private val repository = SkedulertPåminnelseRepository()
 
     suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
         @Suppress("UNUSED_VARIABLE")
         val ignored = when (hendelse) {
             /* må håndtere */
             is HendelseModel.OppgaveOpprettet -> run {
-                if (hendelse.frist == null) {
+                if (hendelse.påminnelse == null) {
                     return@run
                 }
-                skedulerteUtgått.add(
-                    SkedulertUtgåttRepository.SkedulertUtgått(
+                repository.add(
+                    SkedulertPåminnelseRepository.SkedulertPåminnelse(
                         oppgaveId = hendelse.notifikasjonId,
+                        oppgaveOpprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
                         frist = hendelse.frist,
+                        tidspunkt = hendelse.påminnelse.tidspunkt,
+                        eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
                         virksomhetsnummer = hendelse.virksomhetsnummer,
                         produsentId = hendelse.produsentId,
                     )
@@ -35,32 +37,35 @@ class SkedulertUtgåttService(
             is HendelseModel.OppgaveUtført,
             is HendelseModel.OppgaveUtgått,
             is HendelseModel.HardDelete ->
-                skedulerteUtgått.remove(hendelse.aggregateId)
+                repository.remove(hendelse.aggregateId)
 
             is HendelseModel.SoftDelete,
             is HendelseModel.BeskjedOpprettet,
             is HendelseModel.BrukerKlikket,
-            is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.SakOpprettet,
             is HendelseModel.NyStatusSak,
+            is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket -> Unit
         }
     }
 
-    suspend fun sendVedUtgåttFrist() {
-        val utgåttFrist = skedulerteUtgått.hentOgFjernAlleMedFrist(OsloTid.localDateNow())
+    suspend fun sendAktuellePåminnelser() {
+        val skedulertePåminnelser = repository.hentOgFjernAlleAktuellePåminnelser(OsloTid.localDateTimeNow().inOsloAsInstant())
         /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
-        utgåttFrist.forEach { utgått ->
-            val fristLocalDateTime = LocalDateTime.of(utgått.frist, LocalTime.MAX)
-            hendelseProdusent.send(HendelseModel.OppgaveUtgått(
-                virksomhetsnummer = utgått.virksomhetsnummer,
-                notifikasjonId = utgått.oppgaveId,
+        skedulertePåminnelser.forEach { skedulert ->
+            // TODO: send PåminnelseOpprettet event
+            hendelseProdusent.send(HendelseModel.PåminnelseOpprettet(
+                virksomhetsnummer = skedulert.virksomhetsnummer,
+                notifikasjonId = skedulert.oppgaveId,
                 hendelseId = UUID.randomUUID(),
-                produsentId = utgått.produsentId,
+                produsentId = skedulert.produsentId,
                 kildeAppNavn = NaisEnvironment.clientId,
-                hardDelete = null,
-                utgaattTidspunkt = fristLocalDateTime.atOslo().toOffsetDateTime()
+                opprettetTidpunkt = Instant.now(),
+                oppgaveOpprettetTidspunkt = skedulert.oppgaveOpprettetTidspunkt,
+                frist = skedulert.frist,
+                tidspunkt = skedulert.tidspunkt,
+                eksterneVarsler = skedulert.eksterneVarsler,
             ))
         }
     }

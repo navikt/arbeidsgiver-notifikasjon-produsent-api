@@ -141,6 +141,23 @@ object HendelseModel {
         }
     }
 
+    @JsonTypeName("PaaminnelseOpprettet")
+    data class PåminnelseOpprettet(
+        override val virksomhetsnummer: String,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val notifikasjonId: UUID,
+        val opprettetTidpunkt: Instant,
+        val oppgaveOpprettetTidspunkt: Instant,
+        val frist: LocalDate?,
+        val tidspunkt: PåminnelseTidspunkt,
+        val eksterneVarsler: List<EksterntVarsel>
+    ) : Hendelse() {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
+
     @JsonTypeName("SakOpprettet")
     data class SakOpprettet
     @JsonIgnore constructor(
