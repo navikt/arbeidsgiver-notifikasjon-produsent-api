@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -372,8 +373,7 @@ object EksempelHendelse {
         påminnelse = HendelseModel.Påminnelse(
             tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
                 konkret = LocalDateTime.parse("2020-01-14T01:01"),
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                frist = LocalDate.parse("2020-01-22")
+                påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
             ),
             eksterneVarsler = listOf()
         )
