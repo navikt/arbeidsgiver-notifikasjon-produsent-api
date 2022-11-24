@@ -51,7 +51,7 @@ class EksternVarslingRepository(
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
-            is PåminnelseOpprettet -> Unit
+            is PåminnelseOpprettet -> TODO()
         }
     }
 
