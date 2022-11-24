@@ -119,7 +119,7 @@ private fun HendelseModel.OppgaveOpprettet.medPåminnelse(
 ) = copy(
     notifikasjonId = uuid,
     påminnelse = HendelseModel.Påminnelse(
-        tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+        tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
             tidspunkt,
             opprettetTidspunkt,
             frist
