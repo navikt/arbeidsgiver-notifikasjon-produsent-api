@@ -189,7 +189,7 @@ internal data class MetadataInput(
     val hardDelete: FutureTemporalInput?,
 )
 
-internal data class NyEksternVarselResultat(
+internal data class NyEksterntVarselResultat(
     val id: UUID,
 )
 

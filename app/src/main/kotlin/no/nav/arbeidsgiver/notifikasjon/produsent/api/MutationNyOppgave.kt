@@ -15,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -71,7 +72,11 @@ internal class MutationNyOppgave(
                 eksterneVarsler = eksterneVarsler.map {
                     it.tilDomene(metadata.virksomhetsnummer)
                 },
-                påminnelse = paaminnelse?.tilDomene(metadata.opprettetTidspunkt, frist),
+                påminnelse = paaminnelse?.tilDomene(
+                    opprettetTidspunkt = metadata.opprettetTidspunkt,
+                    frist = frist,
+                    virksomhetsnummer = metadata.virksomhetsnummer,
+                ),
                 hardDelete = metadata.hardDelete?.tilDomene(),
                 frist = frist,
             )
@@ -80,14 +85,17 @@ internal class MutationNyOppgave(
 
     data class PaaminnelseInput(
         val tidspunkt: PaaminnelseTidspunktInput,
-        val eksterneVarsler: List<EksterntVarselInput>,
+        val eksterneVarsler: List<PaaminnelseEksterntVarselInput>,
     ) {
         fun tilDomene(
             opprettetTidspunkt: OffsetDateTime,
-            frist: LocalDate?
+            frist: LocalDate?,
+            virksomhetsnummer: String,
         ) : HendelseModel.Påminnelse = HendelseModel.Påminnelse(
             tidspunkt = tidspunkt.tilDomene(opprettetTidspunkt, frist),
-            eksterneVarsler = emptyList()
+            eksterneVarsler = eksterneVarsler.map {
+                it.tilDomene(virksomhetsnummer)
+            }
         )
     }
 
@@ -107,13 +115,66 @@ internal class MutationNyOppgave(
         }
     }
 
+    class PaaminnelseEksterntVarselInput(
+        val sms: Sms?,
+        val epost: Epost?,
+    ) {
+        fun tilDomene(virksomhetsnummer: String): HendelseModel.EksterntVarsel =
+            when {
+                sms != null -> sms.tilDomene(virksomhetsnummer)
+                epost != null -> epost.tilDomene(virksomhetsnummer)
+                else -> error("graphql-validation failed, neither sms nor epost defined")
+            }
+
+        class Sms(
+            val mottaker: EksterntVarselInput.Sms.Mottaker,
+            val smsTekst: String,
+            val sendevindu: EksterntVarselInput.Sendevindu,
+        ) {
+            fun tilDomene(virksomhetsnummer: String): HendelseModel.SmsVarselKontaktinfo {
+                if (mottaker.kontaktinfo != null) {
+                    return HendelseModel.SmsVarselKontaktinfo(
+                        varselId = UUID.randomUUID(),
+                        tlfnr = mottaker.kontaktinfo.tlf,
+                        fnrEllerOrgnr = virksomhetsnummer,
+                        smsTekst = smsTekst,
+                        sendevindu = sendevindu.somDomene,
+                        sendeTidspunkt = null,
+                    )
+                }
+                throw RuntimeException("mottaker-felt mangler for sms")
+            }
+        }
+        class Epost(
+            val mottaker: EksterntVarselInput.Epost.Mottaker,
+            val epostTittel: String,
+            val epostHtmlBody: String,
+            val sendevindu: EksterntVarselInput.Sendevindu,
+        ) {
+            fun tilDomene(virksomhetsnummer: String): HendelseModel.EpostVarselKontaktinfo {
+                if (mottaker.kontaktinfo != null) {
+                    return HendelseModel.EpostVarselKontaktinfo(
+                        varselId = UUID.randomUUID(),
+                        epostAddr = mottaker.kontaktinfo.epostadresse,
+                        fnrEllerOrgnr = virksomhetsnummer,
+                        tittel = epostTittel,
+                        htmlBody = epostHtmlBody,
+                        sendevindu = sendevindu.somDomene,
+                        sendeTidspunkt = null,
+                    )
+                }
+                throw RuntimeException("mottaker mangler for epost")
+            }
+        }
+    }
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface NyOppgaveResultat
 
     @JsonTypeName("NyOppgaveVellykket")
     data class NyOppgaveVellykket(
         val id: UUID,
-        val eksterneVarsler: List<NyEksternVarselResultat>,
+        val eksterneVarsler: List<NyEksterntVarselResultat>,
     ) : NyOppgaveResultat
 
     private suspend fun nyOppgave(
@@ -153,8 +214,8 @@ internal class MutationNyOppgave(
                 NyOppgaveVellykket(
                     id = id,
                     eksterneVarsler = domeneNyOppgave.eksterneVarsler.map {
-                        NyEksternVarselResultat(it.varselId)
-                    }
+                        NyEksterntVarselResultat(it.varselId)
+                    },
                 )
             }
             eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) -> {
@@ -162,8 +223,8 @@ internal class MutationNyOppgave(
                 NyOppgaveVellykket(
                     id = eksisterende.id,
                     eksterneVarsler = eksisterende.eksterneVarsler.map {
-                        NyEksternVarselResultat(it.varselId)
-                    }
+                        NyEksterntVarselResultat(it.varselId)
+                    },
                 )
             }
             else -> {

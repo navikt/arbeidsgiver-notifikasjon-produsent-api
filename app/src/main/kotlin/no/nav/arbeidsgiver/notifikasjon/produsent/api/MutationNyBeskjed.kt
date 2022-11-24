@@ -40,7 +40,7 @@ internal class MutationNyBeskjed(
     @JsonTypeName("NyBeskjedVellykket")
     data class NyBeskjedVellykket(
         val id: UUID,
-        val eksterneVarsler: List<NyEksternVarselResultat>
+        val eksterneVarsler: List<NyEksterntVarselResultat>
     ) : NyBeskjedResultat
 
     data class NyBeskjedInput(
@@ -115,7 +115,7 @@ internal class MutationNyBeskjed(
                 NyBeskjedVellykket(
                     id = id,
                     eksterneVarsler = domeneNyBeskjed.eksterneVarsler.map {
-                        NyEksternVarselResultat(it.varselId)
+                        NyEksterntVarselResultat(it.varselId)
                     }
                 )
             }
@@ -124,7 +124,7 @@ internal class MutationNyBeskjed(
                 NyBeskjedVellykket(
                     id = eksisterende.id,
                     eksterneVarsler = eksisterende.eksterneVarsler.map {
-                        NyEksternVarselResultat(it.varselId)
+                        NyEksterntVarselResultat(it.varselId)
                     }
                 )
             }
