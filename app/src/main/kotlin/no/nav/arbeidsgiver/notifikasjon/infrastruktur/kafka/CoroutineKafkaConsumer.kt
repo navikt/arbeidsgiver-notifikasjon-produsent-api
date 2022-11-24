@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -199,12 +200,28 @@ private fun <T> ConcurrentLinkedQueue<T>.pollAll(): List<T> =
         this.poll()
     }.toList()
 
-private fun <K, V> ConsumerRecord<K, V>.loggableToString() = """
-        ConsumerRecord(
-            topic = ${topic()},
-            partition = ${partition()}, 
-            offset = ${offset()},
-            timestamp = ${timestamp()},
-            key = ${key()}
-        )
-    """.trimIndent()
+internal fun <K, V> ConsumerRecord<K, V>.loggableToString() = """
+        |ConsumerRecord(
+        |    topic = ${topic()},
+        |    partition = ${partition()}, 
+        |    offset = ${offset()},
+        |    timestamp = ${timestamp()},
+        |    key = ${key()}
+        |    value = ${loggableValue()})
+    """.trimMargin()
+
+private fun <K, V> ConsumerRecord<K, V>.loggableValue() : String {
+    return when (val value = value()) {
+        null -> "Tombstone"
+        is HendelseModel.Hendelse -> """
+            |Hendelse(
+            |    type = ${value.javaClass.simpleName},
+            |    hendelseId = ${value.hendelseId},
+            |    aggregateId = ${value.aggregateId},
+            |    produsentId = ${value.produsentId},
+            |    kildeAppNavn = ${value.kildeAppNavn})
+        """.trimMargin()
+
+        else -> value!!::class.java.simpleName
+    }
+}

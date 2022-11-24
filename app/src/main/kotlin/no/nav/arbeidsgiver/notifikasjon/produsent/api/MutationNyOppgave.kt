@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateEtterOpprettelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateFørFrist
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateKonkret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
@@ -15,7 +18,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -108,9 +110,9 @@ internal class MutationNyOppgave(
             opprettetTidspunkt: OffsetDateTime,
             frist: LocalDate?
         ): HendelseModel.PåminnelseTidspunkt = when {
-            konkret != null -> HendelseModel.PåminnelseTidspunkt.Konkret(konkret, opprettetTidspunkt, frist)
-            etterOpprettelse != null -> HendelseModel.PåminnelseTidspunkt.EtterOpprettelse(etterOpprettelse, opprettetTidspunkt, frist)
-            foerFrist != null -> HendelseModel.PåminnelseTidspunkt.FørFrist(foerFrist, opprettetTidspunkt, frist)
+            konkret != null -> createAndValidateKonkret(konkret, opprettetTidspunkt, frist)
+            etterOpprettelse != null -> createAndValidateEtterOpprettelse(etterOpprettelse, opprettetTidspunkt, frist)
+            foerFrist != null -> createAndValidateFørFrist(foerFrist, opprettetTidspunkt, frist)
             else -> throw RuntimeException("Feil format")
         }
     }
