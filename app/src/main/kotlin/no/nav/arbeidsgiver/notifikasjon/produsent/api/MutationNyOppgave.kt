@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
@@ -16,6 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContex
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.time.LocalDate
@@ -177,7 +179,13 @@ internal class MutationNyOppgave(
     data class NyOppgaveVellykket(
         val id: UUID,
         val eksterneVarsler: List<NyEksterntVarselResultat>,
+        val paaminnelse: PåminnelseResultat?,
     ) : NyOppgaveResultat
+
+    @JsonTypeName("PaaminnelseResultat")
+    data class PåminnelseResultat(
+        val eksterneVarsler: List<NyEksterntVarselResultat>,
+    )
 
     private suspend fun nyOppgave(
         context: ProdusentAPI.Context,
@@ -218,15 +226,31 @@ internal class MutationNyOppgave(
                     eksterneVarsler = domeneNyOppgave.eksterneVarsler.map {
                         NyEksterntVarselResultat(it.varselId)
                     },
+                    paaminnelse = domeneNyOppgave.påminnelse?.let { påminnelse ->
+                        PåminnelseResultat(
+                            påminnelse.eksterneVarsler.map { varsel ->
+                                NyEksterntVarselResultat(varsel.varselId)
+                            }
+                        )
+                    }
                 )
+                    .also { println(it)}
             }
-            eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) -> {
+            eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) &&
+            eksisterende is ProdusentModel.Oppgave -> {
                 log.info("duplisert opprettelse av oppgave med id ${eksisterende.id}")
                 NyOppgaveVellykket(
                     id = eksisterende.id,
                     eksterneVarsler = eksisterende.eksterneVarsler.map {
                         NyEksterntVarselResultat(it.varselId)
                     },
+                    paaminnelse = if (nyOppgave.paaminnelse == null)
+                        null
+                    else PåminnelseResultat(
+                        eksisterende.påminnelseEksterneVarsler.map {
+                            NyEksterntVarselResultat(it.varselId)
+                        }
+                    )
                 )
             }
             else -> {

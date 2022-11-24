@@ -169,10 +169,13 @@ class ProdusentRepositoryImpl(
             select 
                 valgt_notifikasjon.*, 
                 coalesce(ev.eksterne_varsler_json, '[]'::json) as eksterne_varsler,
+                coalesce(pev.paaminnelse_eksterne_varsler_json, '[]'::json) as paaminnelse_eksterne_varsler,
                 (coalesce(ma.mottakere::jsonb, '[]'::jsonb) || coalesce(mar.mottakere::jsonb, '[]'::jsonb) || coalesce(md.mottakere::jsonb, '[]'::jsonb) || coalesce(maro.mottakere::jsonb, '[]'::jsonb)) as mottakere
             from valgt_notifikasjon
             left join eksterne_varsler_json ev 
                 on ev.notifikasjon_id = valgt_notifikasjon.id
+            left join paaminnelse_eksterne_varsler_json pev 
+                on pev.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_altinn_enkeltrettighet_json ma
                 on ma.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_altinn_reportee_json mar
@@ -212,6 +215,7 @@ class ProdusentRepositoryImpl(
                     eksterneVarsler = laxObjectMapper.readValue(getString("eksterne_varsler")),
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     frist = getObject("frist", LocalDate::class.java),
+                    påminnelseEksterneVarsler = laxObjectMapper.readValue(getString("paaminnelse_eksterne_varsler")),
                 )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
@@ -463,6 +467,22 @@ class ProdusentRepositoryImpl(
                 on conflict do nothing;
                 """,
                 oppgaveOpprettet.eksterneVarsler
+            ) { eksterntVarsel ->
+                uuid(eksterntVarsel.varselId)
+                uuid(oppgaveOpprettet.notifikasjonId)
+            }
+
+            executeBatch(
+                """
+                insert into paaminnelse_eksternt_varsel(
+                    varsel_id,
+                    notifikasjon_id,
+                    status
+                )
+                values (?, ?, 'NY')
+                on conflict do nothing;
+                """,
+                oppgaveOpprettet.påminnelse?.eksterneVarsler.orEmpty()
             ) { eksterntVarsel ->
                 uuid(eksterntVarsel.varselId)
                 uuid(oppgaveOpprettet.notifikasjonId)

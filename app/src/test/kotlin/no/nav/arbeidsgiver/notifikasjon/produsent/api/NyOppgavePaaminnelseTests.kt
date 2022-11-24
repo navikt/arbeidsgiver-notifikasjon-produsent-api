@@ -1,11 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.maps.beEmpty
 import io.kotest.matchers.nulls.beNull
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.shouldNot
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
@@ -227,12 +224,12 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
             )
         )
         it("opprettelse ok, med en sms") {
-            response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            val r = response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
             val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
             hendelse.påminnelse?.eksterneVarsler?.size shouldBe 1
             val varsel = hendelse.påminnelse!!.eksterneVarsler[0]
             varsel shouldBe HendelseModel.SmsVarselKontaktinfo(
-                varselId = varsel.varselId,
+                varselId = r.paaminnelse!!.eksterneVarsler[0].id,
                 tlfnr = "1234",
                 fnrEllerOrgnr = "0",
                 smsTekst = "hei",
@@ -271,12 +268,12 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
             )
         )
         it("opprettelse ok, med en epost") {
-            response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            val r = response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
             val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
             hendelse.påminnelse?.eksterneVarsler?.size shouldBe 1
             val varsel = hendelse.påminnelse!!.eksterneVarsler[0]
             varsel shouldBe HendelseModel.EpostVarselKontaktinfo(
-                varselId = varsel.varselId,
+                varselId = r.paaminnelse!!.eksterneVarsler[0].id,
                 epostAddr = "1234@1234.no",
                 fnrEllerOrgnr = "0",
                 tittel = "hei",
@@ -327,10 +324,31 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
             )
         )
         it("opprettelse ok, med sms og epost") {
-            response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
-            // TODO: sjekke at ID-er for eksterne varsler blir generert og returnert?
+            val varsler = response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+                .paaminnelse!!
+                .eksterneVarsler
             val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
             hendelse.påminnelse?.eksterneVarsler?.size shouldBe 2
+
+            hendelse.påminnelse!!.eksterneVarsler.toSet() shouldBe setOf(
+                HendelseModel.EpostVarselKontaktinfo(
+                    varselId = varsler[0].id,
+                    epostAddr = "1234@1234.no",
+                    fnrEllerOrgnr = "0",
+                    tittel = "hei",
+                    htmlBody = "body",
+                    sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                    sendeTidspunkt = null,
+                ),
+                HendelseModel.SmsVarselKontaktinfo(
+                    varselId = varsler[1].id,
+                    tlfnr = "1234",
+                    fnrEllerOrgnr = "0",
+                    smsTekst = "hei",
+                    sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                    sendeTidspunkt = null,
+                ),
+            )
         }
     }
 })
@@ -361,6 +379,11 @@ private fun nyOppgave(opprettetTidspunkt: String, fragment: String) = """
                         id
                         eksterneVarsler {
                             id
+                        }
+                        paaminnelse {
+                            eksterneVarsler {
+                                id
+                            }
                         }
                     }
                     ... on Error {
