@@ -36,10 +36,10 @@ class SkedulertPåminnelseService(
             }
             is HendelseModel.OppgaveUtført,
             is HendelseModel.OppgaveUtgått,
+            is HendelseModel.SoftDelete,
             is HendelseModel.HardDelete ->
                 repository.remove(hendelse.aggregateId)
 
-            is HendelseModel.SoftDelete,
             is HendelseModel.BeskjedOpprettet,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.SakOpprettet,
