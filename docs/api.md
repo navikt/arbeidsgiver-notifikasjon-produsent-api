@@ -79,6 +79,7 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
     * [StatusOppdatering](#statusoppdatering)
     * [UgyldigMerkelapp](#ugyldigmerkelapp)
     * [UgyldigMottaker](#ugyldigmottaker)
+    * [UgyldigPaaminnelseTidspunkt](#ugyldigpaaminnelsetidspunkt)
     * [UkjentProdusent](#ukjentprodusent)
     * [UkjentRolle](#ukjentrolle)
   * [Inputs](#inputs)
@@ -98,6 +99,11 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
     * [NotifikasjonInput](#notifikasjoninput)
     * [NyBeskjedInput](#nybeskjedinput)
     * [NyOppgaveInput](#nyoppgaveinput)
+    * [PaaminnelseEksterntVarselEpostInput](#paaminnelseeksterntvarselepostinput)
+    * [PaaminnelseEksterntVarselInput](#paaminnelseeksterntvarselinput)
+    * [PaaminnelseEksterntVarselSmsInput](#paaminnelseeksterntvarselsmsinput)
+    * [PaaminnelseInput](#paaminnelseinput)
+    * [PaaminnelseTidspunktInput](#paaminnelsetidspunktinput)
     * [SendetidspunktInput](#sendetidspunktinput)
     * [SmsKontaktInfoInput](#smskontaktinfoinput)
     * [SmsMottakerInput](#smsmottakerinput)
@@ -1810,6 +1816,28 @@ Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som
 </tbody>
 </table>
 
+#### UgyldigPaaminnelseTidspunkt
+
+Tidpunkt for påminnelse er ugyldig iht grenseverdier. F.eks før opprettelse eller etter frist, eller i fortid.
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>feilmelding</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 #### UkjentProdusent
 
 Denne feilen returneres dersom vi ikke greier å finne dere i produsent-registeret vårt.
@@ -2469,6 +2497,204 @@ og oppgaven anses som NY frem til dere markerer oppgaven som `UTFOERT` eller
 <td valign="top">[<a href="#eksterntvarselinput">EksterntVarselInput</a>!]!</td>
 <td></td>
 </tr>
+<tr>
+<td colspan="2" valign="top"><strong>paaminnelse</strong></td>
+<td valign="top"><a href="#paaminnelseinput">PaaminnelseInput</a></td>
+<td>
+
+Her kan du spesifisere en påminnelse for en oppgave.
+Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### PaaminnelseEksterntVarselEpostInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>mottaker</strong></td>
+<td valign="top"><a href="#epostmottakerinput">EpostMottakerInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>epostTittel</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Subject/emne til e-posten.
+OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>epostHtmlBody</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Kroppen til e-posten. Tolkes som HTML.
+OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>sendevindu</strong></td>
+<td valign="top"><a href="#sendevindu">Sendevindu</a>!</td>
+<td>
+
+Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+det ved første mulighet.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### PaaminnelseEksterntVarselInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>sms</strong></td>
+<td valign="top"><a href="#paaminnelseeksterntvarselsmsinput">PaaminnelseEksterntVarselSmsInput</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>epost</strong></td>
+<td valign="top"><a href="#paaminnelseeksterntvarselepostinput">PaaminnelseEksterntVarselEpostInput</a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### PaaminnelseEksterntVarselSmsInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>mottaker</strong></td>
+<td valign="top"><a href="#smsmottakerinput">SmsMottakerInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>smsTekst</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Teksten som sendes i SMS-en.
+OBS: Det er ikke lov med personopplysninger i teksten. SMS er ikke en sikker kanal.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>sendevindu</strong></td>
+<td valign="top"><a href="#sendevindu">Sendevindu</a>!</td>
+<td>
+
+Vi sender SMS-en med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+det ved første mulighet.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+#### PaaminnelseInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>tidspunkt</strong></td>
+<td valign="top"><a href="#paaminnelsetidspunktinput">PaaminnelseTidspunktInput</a>!</td>
+<td>
+
+Tidspunktet for når påminnelsen skal aktiveres.
+Dersom det er angitt frist må påminnelsen være før dette.
+
+Hvis du sender `eksterneVarsler`, så vil vi sjekke at vi har
+mulighet for å sende dem før fristen, ellers får du feil ved
+opprettelse av oppgaven.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>eksterneVarsler</strong></td>
+<td valign="top">[<a href="#paaminnelseeksterntvarselinput">PaaminnelseEksterntVarselInput</a>!]!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### PaaminnelseTidspunktInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>konkret</strong></td>
+<td valign="top"><a href="#iso8601localdatetime">ISO8601LocalDateTime</a></td>
+<td>
+
+Konkret tidspunkt
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>etterOpprettelse</strong></td>
+<td valign="top"><a href="#iso8601duration">ISO8601Duration</a></td>
+<td>
+
+Relativ til når oppgaven er angitt som opprettet. Altså X duration etter opprettelse.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>foerFrist</strong></td>
+<td valign="top"><a href="#iso8601duration">ISO8601Duration</a></td>
+<td>
+
+Relativ til oppgavens frist, alts X duration før frist. Anses som ugyldig dersom oppgaven ikke har frist.
+
+</td>
+</tr>
 </tbody>
 </table>
 
@@ -2689,6 +2915,10 @@ Default tekst som vises til bruker: "Ferdig".
 
 #### Sendevindu
 
+For SMS, så vil
+[Altinns varslingsvindu](https://altinn.github.io/docs/utviklingsguider/varsling/#varslingsvindu-for-sms)
+også gjelde. Dette burde kun påvirke `LOEPENDE`.
+
 <table>
 <thead>
 <th align="left">Value</th>
@@ -2699,9 +2929,10 @@ Default tekst som vises til bruker: "Ferdig".
 <td valign="top"><strong>NKS_AAPNINGSTID</strong></td>
 <td>
 
-Vi sender varselet slik at mottaker skal ha mulighet for å kontakte NAVs
-kontaktsenter (NKS). Varsler blir sendt litt før NKS åpner, og vi slutter å
-sende litt før NKS stenger.
+Vi sender varselet slik at mottaker skal ha mulighet for å
+kontakte NAVs kontaktsenter (NKS) når de mottar varselet. Varsler
+blir sendt litt før NKS åpner, og vi slutter å sende litt før
+NKS stenger.
 
 Vi tar foreløpig ikke hensyn til røde dager eller produksjonshendelser som fører til
 at NKS er utilgjengelig.
@@ -2988,6 +3219,10 @@ av "eventual consistency" i systemet vårt.</td>
 <tr>
 <td valign="top"><strong><a href="#ukjentrolle">UkjentRolle</a></strong></td>
 <td></td>
+</tr>
+<tr>
+<td valign="top"><strong><a href="#ugyldigpaaminnelsetidspunkt">UgyldigPaaminnelseTidspunkt</a></strong></td>
+<td valign="top">Tidpunkt for påminnelse er ugyldig iht grenseverdier. F.eks før opprettelse eller etter frist, eller i fortid.</td>
 </tr>
 </tbody>
 </table>
