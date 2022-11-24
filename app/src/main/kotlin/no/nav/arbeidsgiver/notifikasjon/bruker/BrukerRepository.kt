@@ -467,7 +467,7 @@ class BrukerRepositoryImpl(
             is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
-            is PåminnelseOpprettet -> Unit
+            is PåminnelseOpprettet -> TODO()
         }
     }
 
