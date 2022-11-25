@@ -50,8 +50,8 @@ class SkedulertPåminnelseService(
         }
     }
 
-    suspend fun sendAktuellePåminnelser() {
-        val skedulertePåminnelser = repository.hentOgFjernAlleAktuellePåminnelser(OsloTid.localDateTimeNow().inOsloAsInstant())
+    suspend fun sendAktuellePåminnelser(now: Instant = OsloTid.localDateTimeNow().inOsloAsInstant()) {
+        val skedulertePåminnelser = repository.hentOgFjernAlleAktuellePåminnelser(now)
         /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
         skedulertePåminnelser.forEach { skedulert ->
             // TODO: send PåminnelseOpprettet event

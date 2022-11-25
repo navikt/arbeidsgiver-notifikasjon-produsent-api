@@ -1,18 +1,23 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
+import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
+import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.time.temporal.ChronoUnit
+import java.util.*
 
 class SkedulertPåminnelseServiceTests : DescribeSpec({
     val hendelseProdusent = FakeHendelseProdusent()
@@ -111,7 +116,35 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
         }
     }
 
-})
+    describe("Skedulerer utgått for alle som har passert innenfor samme time, men ikke de som ikke har passert") {
+        hendelseProdusent.clear()
+        val now = LocalDateTime.parse("2022-12-24T12:30:00")
+        val passert1 = now.minus(1, ChronoUnit.HOURS) // key: 11:00
+        val passert2 = now.minus(10, ChronoUnit.MINUTES) // key: 12:00
+        val passert3 = now.minus(1, ChronoUnit.MINUTES) // key: 12:00
+        val ikkePassert1 = now.plus(10, ChronoUnit.MINUTES) // key: 12:00
+
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert1, uuid("1")))
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert2, uuid("2")))
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert3, uuid("3")))
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(ikkePassert1, uuid("4")))
+
+        hendelseProdusent.clear()
+        service.sendAktuellePåminnelser(now.inOsloAsInstant())
+        hendelseProdusent.hendelser shouldHaveSize 3
+        hendelseProdusent.hendelser.map {
+            it.aggregateId
+        } shouldContainExactlyInAnyOrder  listOf(uuid("1"), uuid("2"), uuid("3"))
+
+        hendelseProdusent.clear()
+        service.sendAktuellePåminnelser(ikkePassert1.plusMinutes(1).inOsloAsInstant())
+        hendelseProdusent.hendelser shouldHaveSize 1
+        hendelseProdusent.hendelser.first().aggregateId shouldBe uuid("4")
+    }
+
+}) {
+    override fun isolationMode() = IsolationMode.InstancePerTest
+}
 
 private fun HendelseModel.OppgaveOpprettet.medPåminnelse(
     tidspunkt: LocalDateTime,
