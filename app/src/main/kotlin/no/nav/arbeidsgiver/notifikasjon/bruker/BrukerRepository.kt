@@ -467,7 +467,7 @@ class BrukerRepositoryImpl(
             is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
-            is PåminnelseOpprettet -> TODO()
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
         }
     }
 
@@ -658,6 +658,24 @@ class BrukerRepositoryImpl(
                 }
             }
 
+        }
+    }
+
+    private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
+        database.transaction {
+            executeUpdate(
+                """
+                    update notifikasjon
+                    set paaminnelse_tidspunkt = ?
+                    where id = ?
+                """
+            ) {
+                timestamp_utc(påminnelseOpprettet.tidspunkt.påminnelseTidspunkt)
+                uuid(påminnelseOpprettet.notifikasjonId)
+            }
+            executeUpdate("delete from brukerklikk where notifikasjonsid = ?;") {
+                uuid(påminnelseOpprettet.notifikasjonId)
+            }
         }
     }
 
