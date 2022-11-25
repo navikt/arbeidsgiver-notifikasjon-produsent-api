@@ -20,13 +20,13 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMot
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.security.MessageDigest
-import java.time.LocalDate
 import java.util.*
 
 /* potensielle målinger:
@@ -479,6 +479,9 @@ class StatistikkModel(
                 }
             }
             is NyStatusSak -> {
+                // noop
+            }
+            is PåminnelseOpprettet -> {
                 // noop
             }
         }

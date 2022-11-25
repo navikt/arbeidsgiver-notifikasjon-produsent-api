@@ -9,4 +9,5 @@ enum class Port(val port: Int) {
     REPLAY_VALIDATOR(8086),
     SKEDULERT_UTGÅTT(8087),
     SKEDULERT_HARDDELETE(8088),
+    SKEDULERT_PÅMINNELSE(8089),
 }

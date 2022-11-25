@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.executable.replay_validator.main as repl
 import no.nav.arbeidsgiver.notifikasjon.executable.statistikk.main as statistikkMain
 import no.nav.arbeidsgiver.notifikasjon.executable.skedulert_utgått.main as skedulertUtgåttMain
 import no.nav.arbeidsgiver.notifikasjon.executable.skedulert_harddelete.main as skedulertHardDeleteMain
+import no.nav.arbeidsgiver.notifikasjon.executable.skedulert_påminnelse.main as skedulertPåminnelseMain
 
 /* start all */
 fun main() = runBlocking {
@@ -36,6 +37,9 @@ fun main() = runBlocking {
     }
     launch {
         skedulertHardDeleteMain()
+    }
+    launch {
+        skedulertPåminnelseMain()
     }
     Unit
 }
