@@ -784,6 +784,82 @@ input NyOppgaveInput {
     frist: ISO8601Date
     metadata: MetadataInput!
     eksterneVarsler: [EksterntVarselInput!]! = []
+
+    """
+    Her kan du spesifisere en påminnelse for en oppgave.
+    Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+    """
+    paaminnelse: PaaminnelseInput
+}
+
+input PaaminnelseInput {
+    """
+    Tidspunktet for når påminnelsen skal aktiveres.
+    Dersom det er angitt frist må påminnelsen være før dette.
+
+    Hvis du sender `eksterneVarsler`, så vil vi sjekke at vi har
+    mulighet for å sende dem før fristen, ellers får du feil ved
+    opprettelse av oppgaven.
+    """
+    tidspunkt: PaaminnelseTidspunktInput!
+    eksterneVarsler: [PaaminnelseEksterntVarselInput!]! = []
+}
+
+input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
+    """
+    Konkret tidspunkt
+    """
+    konkret: ISO8601LocalDateTime
+    """
+    Relativ til når oppgaven er angitt som opprettet. Altså X duration etter opprettelse.
+    """
+    etterOpprettelse: ISO8601Duration
+    """
+    Relativ til oppgavens frist, alts X duration før frist. Anses som ugyldig dersom oppgaven ikke har frist.
+    """
+    foerFrist: ISO8601Duration
+}
+
+input PaaminnelseEksterntVarselInput @ExactlyOneFieldGiven {
+    sms: PaaminnelseEksterntVarselSmsInput
+    epost: PaaminnelseEksterntVarselEpostInput
+}
+
+input PaaminnelseEksterntVarselSmsInput {
+    mottaker: SmsMottakerInput!
+    """
+    Teksten som sendes i SMS-en.
+    OBS: Det er ikke lov med personopplysninger i teksten. SMS er ikke en sikker kanal.
+    """
+    smsTekst: String!
+
+    """
+    Vi sender SMS-en med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+    til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+    det ved første mulighet.
+    """
+    sendevindu: Sendevindu!
+}
+
+input PaaminnelseEksterntVarselEpostInput {
+    mottaker: EpostMottakerInput!
+    """
+    Subject/emne til e-posten.
+    OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+    """
+    epostTittel: String!
+    """
+    Kroppen til e-posten. Tolkes som HTML.
+    OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
+    """
+    epostHtmlBody: String!
+
+    """
+    Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+    til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+    det ved første mulighet.
+    """
+    sendevindu: Sendevindu!
 }
 
 input EksterntVarselInput @ExactlyOneFieldGiven {
@@ -791,11 +867,17 @@ input EksterntVarselInput @ExactlyOneFieldGiven {
     epost: EksterntVarselEpostInput
 }
 
+"""
+For SMS, så vil
+[Altinns varslingsvindu](https://altinn.github.io/docs/utviklingsguider/varsling/#varslingsvindu-for-sms)
+også gjelde. Dette burde kun påvirke `LOEPENDE`.
+"""
 enum Sendevindu {
     """
-    Vi sender varselet slik at mottaker skal ha mulighet for å kontakte NAVs
-    kontaktsenter (NKS). Varsler blir sendt litt før NKS åpner, og vi slutter å
-    sende litt før NKS stenger.
+    Vi sender varselet slik at mottaker skal ha mulighet for å
+    kontakte NAVs kontaktsenter (NKS) når de mottar varselet. Varsler
+    blir sendt litt før NKS åpner, og vi slutter å sende litt før
+    NKS stenger.
 
     Vi tar foreløpig ikke hensyn til røde dager eller produksjonshendelser som fører til
     at NKS er utilgjengelig.
@@ -1072,6 +1154,7 @@ union NyOppgaveResultat =
     | DuplikatEksternIdOgMerkelapp
     | UkjentProdusent
     | UkjentRolle
+    | UgyldigPaaminnelseTidspunkt
 
 union NyBeskjedResultat =
     | NyBeskjedVellykket
@@ -1154,6 +1237,13 @@ type DuplikatGrupperingsid implements Error {
 }
 
 type UkjentRolle implements Error {
+    feilmelding: String!
+}
+
+"""
+Tidpunkt for påminnelse er ugyldig iht grenseverdier. F.eks før opprettelse eller etter frist, eller i fortid.
+"""
+type UgyldigPaaminnelseTidspunkt implements Error {
     feilmelding: String!
 }
 

@@ -50,6 +50,7 @@ class OppgaveMedFristTests : DescribeSpec({
             lenke = "#foo",
             hardDelete = null,
             frist = LocalDate.parse("2007-12-03"),
+            påminnelse = null,
         )
         queryModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 

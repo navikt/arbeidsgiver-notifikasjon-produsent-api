@@ -127,6 +127,7 @@ class SkedulertHardDeleteRepository(
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket,
             is HendelseModel.BrukerKlikket,
+            is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.SoftDelete -> Unit
         }
     }

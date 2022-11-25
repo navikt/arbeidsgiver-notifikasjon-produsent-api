@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -191,6 +192,7 @@ object EksempelHendelse {
         ),
         hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
         frist = null,
+        påminnelse = null,
     )
     val OppgaveOpprettet_2_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -237,6 +239,7 @@ object EksempelHendelse {
         ),
         hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
         frist = null,
+        påminnelse = null,
     )
     val OppgaveOpprettet_3_Mottakere = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -287,6 +290,7 @@ object EksempelHendelse {
         ),
         hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
         frist = null,
+        påminnelse = null,
     )
     val OppgaveOpprettet_MedFrist = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -326,6 +330,53 @@ object EksempelHendelse {
             )
         ),
         hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+        påminnelse = null,
+    )
+    val OppgaveOpprettet_MedPåminnelse = HendelseModel.OppgaveOpprettet(
+        virksomhetsnummer = "1",
+        notifikasjonId = uuid("3"),
+        hendelseId = hendelseId.next(),
+        produsentId = "1",
+        kildeAppNavn = "1",
+        merkelapp = "1",
+        eksternId = "2",
+        mottakere = listOf(AltinnMottaker(
+            virksomhetsnummer = "1",
+            serviceCode = "1",
+            serviceEdition = "1"
+        )),
+        frist = LocalDate.parse("2020-01-22"),
+        tekst = "1",
+        grupperingsid = null,
+        lenke = "",
+        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+        eksterneVarsler = listOf(
+            SmsVarselKontaktinfo(
+                varselId = uuid("3"),
+                fnrEllerOrgnr = "1",
+                tlfnr = "1",
+                smsTekst = "hey",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            ),
+            EpostVarselKontaktinfo(
+                varselId = uuid("4"),
+                fnrEllerOrgnr = "1",
+                epostAddr = "1",
+                tittel = "hey",
+                htmlBody = "body",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            )
+        ),
+        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+        påminnelse = HendelseModel.Påminnelse(
+            tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+                konkret = LocalDateTime.parse("2020-01-14T01:01"),
+                påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
+            ),
+            eksterneVarsler = listOf()
+        )
     )
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",
@@ -449,6 +500,7 @@ object EksempelHendelse {
         OppgaveOpprettet_2_Mottakere,
         OppgaveOpprettet_3_Mottakere,
         OppgaveOpprettet_MedFrist,
+        OppgaveOpprettet_MedPåminnelse,
         OppgaveUtført,
         OppgaveUtgått,
         SoftDelete,

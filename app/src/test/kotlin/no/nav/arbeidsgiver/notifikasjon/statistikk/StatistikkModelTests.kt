@@ -77,6 +77,7 @@ class StatistikkModelTests : DescribeSpec({
             eksterneVarsler = listOf(epostBestilling, smsBestilling, smsBestilling2),
             hardDelete = null,
             frist = null,
+            påminnelse = null,
         )
         val epostFeilet = EksterntVarselFeilet(
             virksomhetsnummer = bestilling.virksomhetsnummer,

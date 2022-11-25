@@ -4,10 +4,9 @@ import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.UgyldigPåminnelseTidspunktException
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
+import java.time.*
 import java.util.*
 
 object HendelseModel {
@@ -44,27 +43,110 @@ object HendelseModel {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed interface LocalDateTimeOrDuration {
 
-        companion object{
+        companion object {
             fun parse(tekst: String) =
                 if (tekst.startsWith("P")) Duration(ISO8601Period.parse(tekst))
                 else LocalDateTime(java.time.LocalDateTime.parse(tekst))
         }
 
         @JsonTypeName("LocalDateTime")
-        data class LocalDateTime(val value: java.time.LocalDateTime): LocalDateTimeOrDuration
+        data class LocalDateTime(val value: java.time.LocalDateTime) : LocalDateTimeOrDuration
 
         @JsonTypeName("Duration")
-        data class Duration(val value: ISO8601Period): LocalDateTimeOrDuration
+        data class Duration(val value: ISO8601Period) : LocalDateTimeOrDuration
 
-        fun omOrNull() = when(this) {
+        fun omOrNull() = when (this) {
             is LocalDateTime -> null
             is Duration -> value
         }
 
-        fun denOrNull() = when(this) {
+        fun denOrNull() = when (this) {
             is LocalDateTime -> value
             is Duration -> null
         }
+    }
+
+    @JsonTypeName("Paaminnelse")
+    data class Påminnelse(
+        val tidspunkt: PåminnelseTidspunkt,
+        val eksterneVarsler: List<EksterntVarsel>,
+    )
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    sealed interface PåminnelseTidspunkt {
+        companion object {
+            fun createAndValidateKonkret(konkret: LocalDateTime, opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) =
+                Konkret(konkret, konkret.inOsloAsInstant()).apply {
+                    validerGrenseVerdier(opprettetTidspunkt, frist)
+                }
+
+            fun createAndValidateEtterOpprettelse(etterOpprettelse: ISO8601Period, opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) =
+                EtterOpprettelse(etterOpprettelse,  (opprettetTidspunkt + etterOpprettelse).toInstant()).apply {
+                    validerGrenseVerdier(opprettetTidspunkt, frist)
+                }
+
+            fun createAndValidateFørFrist(førFrist: ISO8601Period, opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) : FørFrist {
+                if (frist == null) {
+                    throw UgyldigPåminnelseTidspunktException("du må oppgi `frist`, siden `foerFrist` skal være relativ til denne")
+                }
+
+                return FørFrist(førFrist, (LocalDateTime.of(frist, LocalTime.MAX) - førFrist).inOsloAsInstant()).apply {
+                    validerGrenseVerdier(opprettetTidspunkt, frist)
+                }
+            }
+
+        }
+        fun validerGrenseVerdier(opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) {
+            if (påminnelseTidspunkt < opprettetTidspunkt.toInstant()) {
+                throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være før oppgaven er opprettet")
+            }
+            if (frist != null && LocalDateTime.of(frist, LocalTime.MAX).inOsloAsInstant() < påminnelseTidspunkt) {
+                throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være etter fristen på oppgaven")
+            }
+        }
+
+        val påminnelseTidspunkt: Instant
+
+        @JsonTypeName("PaaminnelseTidspunkt.Konkret")
+        data class Konkret(
+            @JsonProperty("konkret")
+            val konkret: LocalDateTime,
+            @JsonProperty("paaminnelseTidspunkt")
+            override val påminnelseTidspunkt: Instant,
+        ) : PåminnelseTidspunkt
+
+        @JsonTypeName("PaaminnelseTidspunkt.EtterOpprettelse")
+        data class EtterOpprettelse(
+            @JsonProperty("etterOpprettelse")
+            val etterOpprettelse: ISO8601Period,
+            @JsonProperty("paaminnelseTidspunkt")
+            override val påminnelseTidspunkt: Instant,
+        ) : PåminnelseTidspunkt
+
+        @JsonTypeName("PaaminnelseTidspunkt.FoerFrist")
+        data class FørFrist(
+            @JsonProperty("foerFrist")
+            val førFrist: ISO8601Period,
+            @JsonProperty("paaminnelseTidspunkt")
+            override val påminnelseTidspunkt: Instant,
+        ) : PåminnelseTidspunkt
+    }
+
+    @JsonTypeName("PaaminnelseOpprettet")
+    data class PåminnelseOpprettet(
+        override val virksomhetsnummer: String,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val notifikasjonId: UUID,
+        val opprettetTidpunkt: Instant,
+        val oppgaveOpprettetTidspunkt: Instant,
+        val frist: LocalDate?,
+        val tidspunkt: PåminnelseTidspunkt,
+        val eksterneVarsler: List<EksterntVarsel>
+    ) : Hendelse() {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
     }
 
     @JsonTypeName("SakOpprettet")
@@ -252,6 +334,7 @@ object HendelseModel {
         val eksterneVarsler: List<EksterntVarsel>,
         val hardDelete: LocalDateTimeOrDuration?,
         val frist: LocalDate?,
+        val påminnelse: Påminnelse?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -282,6 +365,7 @@ object HendelseModel {
                 eksterneVarsler: List<EksterntVarsel> = listOf(),
                 hardDelete: LocalDateTimeOrDuration?,
                 frist: LocalDate? = null,
+                påminnelse: Påminnelse? = null,
             ) = OppgaveOpprettet(
                 virksomhetsnummer = virksomhetsnummer,
                 notifikasjonId = notifikasjonId,
@@ -298,6 +382,7 @@ object HendelseModel {
                 eksterneVarsler = eksterneVarsler,
                 hardDelete = hardDelete,
                 frist = frist,
+                påminnelse = påminnelse,
             )
         }
     }

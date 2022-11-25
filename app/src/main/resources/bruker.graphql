@@ -67,6 +67,8 @@ type Oppgave {
     tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
+    sorteringTidspunkt: ISO8601DateTime!
+    paaminnelseTidspunkt: ISO8601DateTime
     utgaattTidspunkt: ISO8601DateTime
     frist: ISO8601Date
     id: ID!
@@ -85,6 +87,7 @@ type Beskjed {
     tekst: String!
     lenke: String!
     opprettetTidspunkt: ISO8601DateTime!
+    sorteringTidspunkt: ISO8601DateTime!
     id: ID!
     virksomhet: Virksomhet!
 }

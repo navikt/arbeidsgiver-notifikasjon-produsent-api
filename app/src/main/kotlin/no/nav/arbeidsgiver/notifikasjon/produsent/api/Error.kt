@@ -91,6 +91,13 @@ internal sealed class Error {
         TilgangsstyringError,
         MutationNySak.NySakResultat
 
+    @JsonTypeName("UgyldigPaaminnelseTidspunkt")
+    data class UgyldigPåminnelseTidspunkt(
+        override val feilmelding: String
+    ) :
+        Error(),
+        MutationNyOppgave.NyOppgaveResultat
+
     @JsonTypeName("SakFinnesIkke")
     data class SakFinnesIkke(
         override val feilmelding: String,
