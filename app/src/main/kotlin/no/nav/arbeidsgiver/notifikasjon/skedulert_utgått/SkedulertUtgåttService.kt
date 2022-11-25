@@ -40,6 +40,7 @@ class SkedulertUtgåttService(
             is HendelseModel.SoftDelete,
             is HendelseModel.BeskjedOpprettet,
             is HendelseModel.BrukerKlikket,
+            is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.SakOpprettet,
             is HendelseModel.NyStatusSak,
             is HendelseModel.EksterntVarselFeilet,

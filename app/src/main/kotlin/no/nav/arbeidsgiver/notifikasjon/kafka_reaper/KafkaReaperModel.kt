@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
@@ -116,4 +117,5 @@ val Hendelse.typeNavn: String get() = when (this) {
     is OppgaveOpprettet -> "OppgaveOpprettet"
     is EksterntVarselVellykket -> "EksterntVarselVellykket"
     is EksterntVarselFeilet -> "EksterntVarselFeilet"
+    is PåminnelseOpprettet -> "PåminnelseOpprettet"
 }

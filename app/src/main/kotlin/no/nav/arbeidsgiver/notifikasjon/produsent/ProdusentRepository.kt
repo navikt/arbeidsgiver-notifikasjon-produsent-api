@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
@@ -227,6 +228,7 @@ class ProdusentRepositoryImpl(
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
+            is HendelseModel.PåminnelseOpprettet -> TODO()
             is BrukerKlikket -> /* Ignorer */ Unit
             is SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)

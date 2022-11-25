@@ -45,3 +45,6 @@ spec:
     - application: notifikasjon-skedulert-utgaatt
       team: fager
       access: readwrite
+    - application: notifikasjon-skedulert-paaminnelse
+      team: fager
+      access: readwrite
