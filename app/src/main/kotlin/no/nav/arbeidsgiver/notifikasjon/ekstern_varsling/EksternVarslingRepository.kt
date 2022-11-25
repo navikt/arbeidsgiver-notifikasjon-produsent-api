@@ -37,6 +37,7 @@ class EksternVarslingRepository(
         @Suppress("UNUSED_VARIABLE") val ignore: Unit = when (hendelse) {
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
@@ -51,7 +52,6 @@ class EksternVarslingRepository(
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
-            is PåminnelseOpprettet -> TODO()
         }
     }
 
@@ -68,6 +68,14 @@ class EksternVarslingRepository(
             varsler = oppgaveOpprettet.eksterneVarsler,
             produsentId = oppgaveOpprettet.produsentId,
             notifikasjonsId = oppgaveOpprettet.notifikasjonId,
+        )
+    }
+
+    private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
+        insertVarsler(
+            varsler = påminnelseOpprettet.eksterneVarsler,
+            produsentId = påminnelseOpprettet.produsentId,
+            notifikasjonsId = påminnelseOpprettet.notifikasjonId,
         )
     }
 
