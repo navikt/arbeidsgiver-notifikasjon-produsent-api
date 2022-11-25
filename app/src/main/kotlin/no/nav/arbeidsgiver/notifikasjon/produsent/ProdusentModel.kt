@@ -79,6 +79,7 @@ object ProdusentModel {
         override val eksterneVarsler: List<EksterntVarsel>,
         override val virksomhetsnummer: String,
         val frist: LocalDate?,
+        val påminnelseEksterneVarsler: List<EksterntVarsel>,
     ) : Notifikasjon {
 
         enum class Tilstand {
@@ -152,6 +153,9 @@ fun OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
         eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel),
         virksomhetsnummer = this.virksomhetsnummer,
         frist = this.frist,
+        påminnelseEksterneVarsler = this.påminnelse?.eksterneVarsler
+            .orEmpty()
+            .map(EksterntVarsel::tilProdusentModel),
     )
 
 fun EksterntVarsel.tilProdusentModel(): ProdusentModel.EksterntVarsel {

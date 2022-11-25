@@ -6,6 +6,7 @@ import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -23,13 +24,13 @@ internal class MutationHardDeleteNotifikasjon(
         runtime.wire("Mutation") {
             coDataFetcher("hardDeleteNotifikasjon") { env ->
                 hardDelete(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     id = env.getTypedArgument("id")
                 )
             }
             coDataFetcher("hardDeleteNotifikasjonByEksternId") { env ->
                 hardDelete(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     eksternId = env.getTypedArgument("eksternId"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )
@@ -37,7 +38,7 @@ internal class MutationHardDeleteNotifikasjon(
 
             coDataFetcher("hardDeleteNotifikasjonByEksternId_V2") { env ->
                 hardDelete(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     eksternId = env.getTypedArgument("eksternId"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )

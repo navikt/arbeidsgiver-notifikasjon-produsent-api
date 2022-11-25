@@ -6,6 +6,7 @@ import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -23,20 +24,20 @@ internal class MutationSoftDeleteNotifikasjon(
         runtime.wire("Mutation") {
             coDataFetcher("softDeleteNotifikasjon") { env ->
                 softDelete(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     id = env.getTypedArgument("id")
                 )
             }
             coDataFetcher("softDeleteNotifikasjonByEksternId") { env ->
                 softDelete(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     eksternId = env.getTypedArgument("eksternId"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )
             }
             coDataFetcher("softDeleteNotifikasjonByEksternId_V2") { env ->
                 softDelete(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     eksternId = env.getTypedArgument("eksternId"),
                     merkelapp = env.getTypedArgument("merkelapp"),
                 )

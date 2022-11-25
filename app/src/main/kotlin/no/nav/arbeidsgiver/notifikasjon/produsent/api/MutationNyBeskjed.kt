@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -25,7 +26,7 @@ internal class MutationNyBeskjed(
         runtime.wire("Mutation") {
             coDataFetcher("nyBeskjed") { env ->
                 nyBeskjed(
-                    env.getContext(),
+                    env.notifikasjonContext(),
                     env.getTypedArgument("nyBeskjed"),
                 )
             }
@@ -39,7 +40,7 @@ internal class MutationNyBeskjed(
     @JsonTypeName("NyBeskjedVellykket")
     data class NyBeskjedVellykket(
         val id: UUID,
-        val eksterneVarsler: List<NyEksternVarselResultat>
+        val eksterneVarsler: List<NyEksterntVarselResultat>
     ) : NyBeskjedResultat
 
     data class NyBeskjedInput(
@@ -114,7 +115,7 @@ internal class MutationNyBeskjed(
                 NyBeskjedVellykket(
                     id = id,
                     eksterneVarsler = domeneNyBeskjed.eksterneVarsler.map {
-                        NyEksternVarselResultat(it.varselId)
+                        NyEksterntVarselResultat(it.varselId)
                     }
                 )
             }
@@ -123,7 +124,7 @@ internal class MutationNyBeskjed(
                 NyBeskjedVellykket(
                     id = eksisterende.id,
                     eksterneVarsler = eksisterende.eksterneVarsler.map {
-                        NyEksternVarselResultat(it.varselId)
+                        NyEksterntVarselResultat(it.varselId)
                     }
                 )
             }

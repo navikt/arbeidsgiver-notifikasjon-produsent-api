@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
@@ -12,9 +13,11 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.time.LocalDate
@@ -34,7 +37,7 @@ internal class MutationNyOppgave(
         runtime.wire("Mutation") {
             coDataFetcher("nyOppgave") { env ->
                 nyOppgave(
-                    env.getContext(),
+                    env.notifikasjonContext(),
                     env.getTypedArgument("nyOppgave"),
                 )
             }
@@ -73,7 +76,11 @@ internal class MutationNyOppgave(
                 eksterneVarsler = eksterneVarsler.map {
                     it.tilDomene(metadata.virksomhetsnummer)
                 },
-                påminnelse = paaminnelse?.tilDomene(metadata.opprettetTidspunkt, frist),
+                påminnelse = paaminnelse?.tilDomene(
+                    opprettetTidspunkt = metadata.opprettetTidspunkt,
+                    frist = frist,
+                    virksomhetsnummer = metadata.virksomhetsnummer,
+                ),
                 hardDelete = metadata.hardDelete?.tilDomene(),
                 frist = frist,
             )
@@ -82,14 +89,17 @@ internal class MutationNyOppgave(
 
     data class PaaminnelseInput(
         val tidspunkt: PaaminnelseTidspunktInput,
-        val eksterneVarsler: List<EksterntVarselInput>,
+        val eksterneVarsler: List<PaaminnelseEksterntVarselInput>,
     ) {
         fun tilDomene(
             opprettetTidspunkt: OffsetDateTime,
-            frist: LocalDate?
+            frist: LocalDate?,
+            virksomhetsnummer: String,
         ) : HendelseModel.Påminnelse = HendelseModel.Påminnelse(
             tidspunkt = tidspunkt.tilDomene(opprettetTidspunkt, frist),
-            eksterneVarsler = emptyList()
+            eksterneVarsler = eksterneVarsler.map {
+                it.tilDomene(virksomhetsnummer)
+            }
         )
     }
 
@@ -109,14 +119,73 @@ internal class MutationNyOppgave(
         }
     }
 
+    class PaaminnelseEksterntVarselInput(
+        val sms: Sms?,
+        val epost: Epost?,
+    ) {
+        fun tilDomene(virksomhetsnummer: String): HendelseModel.EksterntVarsel =
+            when {
+                sms != null -> sms.tilDomene(virksomhetsnummer)
+                epost != null -> epost.tilDomene(virksomhetsnummer)
+                else -> error("graphql-validation failed, neither sms nor epost defined")
+            }
+
+        class Sms(
+            val mottaker: EksterntVarselInput.Sms.Mottaker,
+            val smsTekst: String,
+            val sendevindu: EksterntVarselInput.Sendevindu,
+        ) {
+            fun tilDomene(virksomhetsnummer: String): HendelseModel.SmsVarselKontaktinfo {
+                if (mottaker.kontaktinfo != null) {
+                    return HendelseModel.SmsVarselKontaktinfo(
+                        varselId = UUID.randomUUID(),
+                        tlfnr = mottaker.kontaktinfo.tlf,
+                        fnrEllerOrgnr = virksomhetsnummer,
+                        smsTekst = smsTekst,
+                        sendevindu = sendevindu.somDomene,
+                        sendeTidspunkt = null,
+                    )
+                }
+                throw RuntimeException("mottaker-felt mangler for sms")
+            }
+        }
+        class Epost(
+            val mottaker: EksterntVarselInput.Epost.Mottaker,
+            val epostTittel: String,
+            val epostHtmlBody: String,
+            val sendevindu: EksterntVarselInput.Sendevindu,
+        ) {
+            fun tilDomene(virksomhetsnummer: String): HendelseModel.EpostVarselKontaktinfo {
+                if (mottaker.kontaktinfo != null) {
+                    return HendelseModel.EpostVarselKontaktinfo(
+                        varselId = UUID.randomUUID(),
+                        epostAddr = mottaker.kontaktinfo.epostadresse,
+                        fnrEllerOrgnr = virksomhetsnummer,
+                        tittel = epostTittel,
+                        htmlBody = epostHtmlBody,
+                        sendevindu = sendevindu.somDomene,
+                        sendeTidspunkt = null,
+                    )
+                }
+                throw RuntimeException("mottaker mangler for epost")
+            }
+        }
+    }
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed interface NyOppgaveResultat
 
     @JsonTypeName("NyOppgaveVellykket")
     data class NyOppgaveVellykket(
         val id: UUID,
-        val eksterneVarsler: List<NyEksternVarselResultat>,
+        val eksterneVarsler: List<NyEksterntVarselResultat>,
+        val paaminnelse: PåminnelseResultat?,
     ) : NyOppgaveResultat
+
+    @JsonTypeName("PaaminnelseResultat")
+    data class PåminnelseResultat(
+        val eksterneVarsler: List<NyEksterntVarselResultat>,
+    )
 
     private suspend fun nyOppgave(
         context: ProdusentAPI.Context,
@@ -155,17 +224,33 @@ internal class MutationNyOppgave(
                 NyOppgaveVellykket(
                     id = id,
                     eksterneVarsler = domeneNyOppgave.eksterneVarsler.map {
-                        NyEksternVarselResultat(it.varselId)
+                        NyEksterntVarselResultat(it.varselId)
+                    },
+                    paaminnelse = domeneNyOppgave.påminnelse?.let { påminnelse ->
+                        PåminnelseResultat(
+                            påminnelse.eksterneVarsler.map { varsel ->
+                                NyEksterntVarselResultat(varsel.varselId)
+                            }
+                        )
                     }
                 )
+                    .also { println(it)}
             }
-            eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) -> {
+            eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) &&
+            eksisterende is ProdusentModel.Oppgave -> {
                 log.info("duplisert opprettelse av oppgave med id ${eksisterende.id}")
                 NyOppgaveVellykket(
                     id = eksisterende.id,
                     eksterneVarsler = eksisterende.eksterneVarsler.map {
-                        NyEksternVarselResultat(it.varselId)
-                    }
+                        NyEksterntVarselResultat(it.varselId)
+                    },
+                    paaminnelse = if (nyOppgave.paaminnelse == null)
+                        null
+                    else PåminnelseResultat(
+                        eksisterende.påminnelseEksterneVarsler.map {
+                            NyEksterntVarselResultat(it.varselId)
+                        }
+                    )
                 )
             }
             else -> {

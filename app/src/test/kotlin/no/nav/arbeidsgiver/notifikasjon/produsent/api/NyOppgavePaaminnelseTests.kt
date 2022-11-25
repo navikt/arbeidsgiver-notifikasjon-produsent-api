@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.beNull
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
@@ -173,7 +174,183 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         }
     }
 
-    // TODO: med eksternevarsler
+    describe("ekstern varlser med tom liste") {
+        val response = engine.produsentApi(
+            nyOppgave(
+                "2020-01-01T00:00:00Z",
+                """
+                    frist: "2021-01-01"
+                    paaminnelse: {
+                        tidspunkt: {
+                            foerFrist: "P2DT3H4M"
+                        }
+                        eksterneVarsler: []
+                    }
+                """,
+            )
+        )
+        it("opprettelse uten varsler") {
+            response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
+            hendelse.påminnelse!!.eksterneVarsler shouldBe emptyList()
+        }
+    }
+
+    describe("ekstern varlser med 1 sms") {
+        val response = engine.produsentApi(
+            nyOppgave(
+                "2020-01-01T00:00:00Z",
+                """
+                    frist: "2021-01-01"
+                    paaminnelse: {
+                        tidspunkt: {
+                            foerFrist: "P2DT3H4M"
+                        }
+                        eksterneVarsler: [
+                            { 
+                                sms: {
+                                    mottaker: {
+                                        kontaktinfo: {
+                                            tlf: "1234"
+                                        }
+                                    }
+                                    smsTekst: "hei"
+                                    sendevindu: NKS_AAPNINGSTID
+                                }
+                            }
+                        ]
+                    }
+                """,
+            )
+        )
+        it("opprettelse ok, med en sms") {
+            val r = response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
+            hendelse.påminnelse?.eksterneVarsler?.size shouldBe 1
+            val varsel = hendelse.påminnelse!!.eksterneVarsler[0]
+            varsel shouldBe HendelseModel.SmsVarselKontaktinfo(
+                varselId = r.paaminnelse!!.eksterneVarsler[0].id,
+                tlfnr = "1234",
+                fnrEllerOrgnr = "0",
+                smsTekst = "hei",
+                sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                sendeTidspunkt = null,
+            )
+        }
+    }
+
+    describe("ekstern varlser med 1 epost") {
+        val response = engine.produsentApi(
+            nyOppgave(
+                "2020-01-01T00:00:00Z",
+                """
+                    frist: "2021-01-01"
+                    paaminnelse: {
+                        tidspunkt: {
+                            foerFrist: "P2DT3H4M"
+                        }
+                        eksterneVarsler: [
+                            { 
+                                epost: {
+                                    mottaker: {
+                                        kontaktinfo: {
+                                            epostadresse: "1234@1234.no"
+                                        }
+                                    }
+                                    epostTittel: "hei"
+                                    epostHtmlBody: "body"
+                                    sendevindu: NKS_AAPNINGSTID
+                                }
+                            }
+                        ]
+                    }
+                """,
+            )
+        )
+        it("opprettelse ok, med en epost") {
+            val r = response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
+            hendelse.påminnelse?.eksterneVarsler?.size shouldBe 1
+            val varsel = hendelse.påminnelse!!.eksterneVarsler[0]
+            varsel shouldBe HendelseModel.EpostVarselKontaktinfo(
+                varselId = r.paaminnelse!!.eksterneVarsler[0].id,
+                epostAddr = "1234@1234.no",
+                fnrEllerOrgnr = "0",
+                tittel = "hei",
+                htmlBody = "body",
+                sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                sendeTidspunkt = null,
+            )
+        }
+    }
+
+    describe("ekstern varlser med epost og sms") {
+        val response = engine.produsentApi(
+            nyOppgave(
+                "2020-01-01T00:00:00Z",
+                """
+                    frist: "2021-01-01"
+                    paaminnelse: {
+                        tidspunkt: {
+                            foerFrist: "P2DT3H4M"
+                        }
+                        eksterneVarsler: [
+                            { 
+                                epost: {
+                                    mottaker: {
+                                        kontaktinfo: {
+                                            epostadresse: "1234@1234.no"
+                                        }
+                                    }
+                                    epostTittel: "hei"
+                                    epostHtmlBody: "body"
+                                    sendevindu: NKS_AAPNINGSTID
+                                }
+                            }
+                            {
+                                sms: {
+                                    mottaker: {
+                                        kontaktinfo: {
+                                            tlf: "1234"
+                                        }
+                                    }
+                                    smsTekst: "hei"
+                                    sendevindu: NKS_AAPNINGSTID
+                                }
+                            }
+                        ]
+                    }
+                """,
+            )
+        )
+        it("opprettelse ok, med sms og epost") {
+            val varsler = response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+                .paaminnelse!!
+                .eksterneVarsler
+            val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
+            hendelse.påminnelse?.eksterneVarsler?.size shouldBe 2
+
+            hendelse.påminnelse!!.eksterneVarsler.toSet() shouldBe setOf(
+                HendelseModel.EpostVarselKontaktinfo(
+                    varselId = varsler[0].id,
+                    epostAddr = "1234@1234.no",
+                    fnrEllerOrgnr = "0",
+                    tittel = "hei",
+                    htmlBody = "body",
+                    sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                    sendeTidspunkt = null,
+                ),
+                HendelseModel.SmsVarselKontaktinfo(
+                    varselId = varsler[1].id,
+                    tlfnr = "1234",
+                    fnrEllerOrgnr = "0",
+                    smsTekst = "hei",
+                    sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                    sendeTidspunkt = null,
+                ),
+            )
+        }
+    }
 })
 
 private fun nyOppgave(opprettetTidspunkt: String, fragment: String) = """
@@ -202,6 +379,11 @@ private fun nyOppgave(opprettetTidspunkt: String, fragment: String) = """
                         id
                         eksterneVarsler {
                             id
+                        }
+                        paaminnelse {
+                            eksterneVarsler {
+                                id
+                            }
                         }
                     }
                     ... on Error {

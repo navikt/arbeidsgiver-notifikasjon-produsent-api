@@ -22,7 +22,7 @@ internal class QueryMineNotifikasjoner(
         runtime.wire("Query") {
             coDataFetcher("mineNotifikasjoner") { env ->
                 mineNotifikasjoner(
-                    context = env.getContext(),
+                    context = env.notifikasjonContext(),
                     inputMerkelapp = env.getArgument<String?>("merkelapp"),
                     inputMerkelapper = env.getArgument<List<String>?>("merkelapper"),
                     grupperingsid = env.getArgument<String>("grupperingsid"),

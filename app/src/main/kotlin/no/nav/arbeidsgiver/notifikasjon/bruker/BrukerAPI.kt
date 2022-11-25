@@ -17,6 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.createGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import java.time.LocalDate
@@ -169,7 +170,7 @@ object BrukerAPI {
 
             wire("Query") {
                 dataFetcher("whoami") {
-                    it.getContext<Context>().fnr
+                    it.notifikasjonContext<Context>().fnr
                 }
 
                 queryNotifikasjoner(
@@ -216,7 +217,7 @@ object BrukerAPI {
     ) {
         coDataFetcher("notifikasjoner") { env ->
 
-            val context = env.getContext<Context>()
+            val context = env.notifikasjonContext<Context>()
             val tilganger = tilgangerService.hentTilganger(context)
 
             val notifikasjoner = brukerRepository
@@ -278,7 +279,7 @@ object BrukerAPI {
         tilgangerService: TilgangerService,
     ) {
         coDataFetcher("saker") { env ->
-            val context = env.getContext<Context>()
+            val context = env.notifikasjonContext<Context>()
             val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
             val tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null)
             val sortering = env.getTypedArgument<SakSortering>("sortering")
@@ -329,7 +330,7 @@ object BrukerAPI {
         hendelseProdusent: HendelseProdusent,
     ) {
         coDataFetcher("notifikasjonKlikketPaa") { env ->
-            val context = env.getContext<Context>()
+            val context = env.notifikasjonContext<Context>()
             val notifikasjonsid = env.getTypedArgument<UUID>("id")
 
             val virksomhetsnummer = brukerRepository.virksomhetsnummerForNotifikasjon(notifikasjonsid)

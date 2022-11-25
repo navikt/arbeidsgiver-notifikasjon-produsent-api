@@ -1176,6 +1176,11 @@ type NyEksterntVarselResultat {
 type NyOppgaveVellykket {
     id: ID!
     eksterneVarsler: [NyEksterntVarselResultat!]!
+    paaminnelse: PaaminnelseResultat
+}
+
+type PaaminnelseResultat {
+    eksterneVarsler: [NyEksterntVarselResultat!]!
 }
 
 """

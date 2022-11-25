@@ -24,7 +24,7 @@ object ProdusentAPI {
 
         fun queryWhoami(env: DataFetchingEnvironment): String {
             // TODO: returner hele context objectet som struct
-            return env.getContext<Context>().appName
+            return env.notifikasjonContext<Context>().appName
         }
 
         return TypedGraphQL(

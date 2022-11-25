@@ -170,10 +170,13 @@ class ProdusentRepositoryImpl(
             select 
                 valgt_notifikasjon.*, 
                 coalesce(ev.eksterne_varsler_json, '[]'::json) as eksterne_varsler,
+                coalesce(pev.paaminnelse_eksterne_varsler_json, '[]'::json) as paaminnelse_eksterne_varsler,
                 (coalesce(ma.mottakere::jsonb, '[]'::jsonb) || coalesce(mar.mottakere::jsonb, '[]'::jsonb) || coalesce(md.mottakere::jsonb, '[]'::jsonb) || coalesce(maro.mottakere::jsonb, '[]'::jsonb)) as mottakere
             from valgt_notifikasjon
             left join eksterne_varsler_json ev 
                 on ev.notifikasjon_id = valgt_notifikasjon.id
+            left join paaminnelse_eksterne_varsler_json pev 
+                on pev.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_altinn_enkeltrettighet_json ma
                 on ma.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_altinn_reportee_json mar
@@ -213,6 +216,7 @@ class ProdusentRepositoryImpl(
                     eksterneVarsler = laxObjectMapper.readValue(getString("eksterne_varsler")),
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     frist = getObject("frist", LocalDate::class.java),
+                    påminnelseEksterneVarsler = laxObjectMapper.readValue(getString("paaminnelse_eksterne_varsler")),
                 )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
@@ -469,6 +473,22 @@ class ProdusentRepositoryImpl(
                 uuid(eksterntVarsel.varselId)
                 uuid(oppgaveOpprettet.notifikasjonId)
             }
+
+            executeBatch(
+                """
+                insert into paaminnelse_eksternt_varsel(
+                    varsel_id,
+                    notifikasjon_id,
+                    status
+                )
+                values (?, ?, 'NY')
+                on conflict do nothing;
+                """,
+                oppgaveOpprettet.påminnelse?.eksterneVarsler.orEmpty()
+            ) { eksterntVarsel ->
+                uuid(eksterntVarsel.varselId)
+                uuid(oppgaveOpprettet.notifikasjonId)
+            }
         }
     }
 
@@ -480,12 +500,30 @@ class ProdusentRepositoryImpl(
         ) {
             uuid(eksterntVarselVellykket.varselId)
         }
+        database.nonTransactionalExecuteUpdate(
+            """
+            update paaminnelse_eksternt_varsel set status = 'SENDT' where varsel_id = ?
+            """
+        ) {
+            uuid(eksterntVarselVellykket.varselId)
+        }
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
         database.nonTransactionalExecuteUpdate(
             """
             update eksternt_varsel 
+            set status = 'FEILET',
+                feilmelding = ?  
+            where varsel_id = ?
+            """
+        ) {
+            string(eksterntVarselFeilet.feilmelding)
+            uuid(eksterntVarselFeilet.varselId)
+        }
+        database.nonTransactionalExecuteUpdate(
+            """
+            update paaminnelse_eksternt_varsel 
             set status = 'FEILET',
                 feilmelding = ?  
             where varsel_id = ?
