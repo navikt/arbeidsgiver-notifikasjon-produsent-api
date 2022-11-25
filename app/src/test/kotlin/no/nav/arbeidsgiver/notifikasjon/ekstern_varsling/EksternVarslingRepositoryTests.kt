@@ -351,7 +351,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             repository.findVarsel(varselId) shouldBe null
         }
     }
-    describe("Påminnelse med påminnelse blir registrert") {
+    describe("varsler i påminnelse blir registrert") {
         val varselId = UUID.randomUUID()
         val notifikasjonId = UUID.randomUUID()
         HendelseModel.PåminnelseOpprettet(
@@ -381,7 +381,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             repository.oppdaterModellEtterHendelse(it)
         }
 
-        it("ikke registret") {
+        it("varsel registrert") {
             repository.findVarsel(varselId) shouldBe EksternVarselTilstand.Ny(
                 data = EksternVarselStatiskData(
                     varselId = varselId,
