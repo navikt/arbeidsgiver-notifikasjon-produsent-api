@@ -500,12 +500,30 @@ class ProdusentRepositoryImpl(
         ) {
             uuid(eksterntVarselVellykket.varselId)
         }
+        database.nonTransactionalExecuteUpdate(
+            """
+            update paaminnelse_eksternt_varsel set status = 'SENDT' where varsel_id = ?
+            """
+        ) {
+            uuid(eksterntVarselVellykket.varselId)
+        }
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
         database.nonTransactionalExecuteUpdate(
             """
             update eksternt_varsel 
+            set status = 'FEILET',
+                feilmelding = ?  
+            where varsel_id = ?
+            """
+        ) {
+            string(eksterntVarselFeilet.feilmelding)
+            uuid(eksterntVarselFeilet.varselId)
+        }
+        database.nonTransactionalExecuteUpdate(
+            """
+            update paaminnelse_eksternt_varsel 
             set status = 'FEILET',
                 feilmelding = ?  
             where varsel_id = ?
