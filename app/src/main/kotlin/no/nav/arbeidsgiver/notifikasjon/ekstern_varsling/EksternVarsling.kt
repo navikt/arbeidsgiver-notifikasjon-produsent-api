@@ -27,7 +27,7 @@ object EksternVarsling {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
             groupId = "ekstern-varsling-model-builder",
-            replayPeriodically = true
+            replayPeriodically = false,
         )
     }
 
