@@ -89,7 +89,6 @@ class EksternVarslingRepository(
                 sende_status = ?::status
             where
                 varsel_id = ? 
-                and state <> '${EksterntVarselTilstand.KVITTERT}'
         """) {
             jsonb(råRespons)
             string(sendeStatus.toString())

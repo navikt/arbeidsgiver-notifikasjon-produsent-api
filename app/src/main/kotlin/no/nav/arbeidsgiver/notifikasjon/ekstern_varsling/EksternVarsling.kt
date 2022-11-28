@@ -34,7 +34,7 @@ object EksternVarsling {
     private val hendelsestrømMigrering by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "ekstern-varsling-migrering-hard-delete",
+            groupId = "ekstern-varsling-migrering-berik_sendestatus",
         )
     }
 
@@ -48,8 +48,11 @@ object EksternVarsling {
             launch {
                 val eksternVarslingModel = eksternVarslingModelAsync.await()
                 hendelsestrømMigrering.forEach { event ->
-                    if (event is HendelseModel.HardDelete) {
-                        eksternVarslingModel.oppdaterModellEtterHendelse(event)
+                    when (event) {
+                        is HendelseModel.EksterntVarselFeilet,
+                        is HendelseModel.EksterntVarselVellykket -> {
+                            eksternVarslingModel.oppdaterModellEtterHendelse(event)
+                        }
                     }
                 }
             }
