@@ -25,6 +25,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.sql.ResultSet
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.util.*
 
 class EksternVarslingRepository(
@@ -61,6 +62,7 @@ class EksternVarslingRepository(
             varsler = beskjedOpprettet.eksterneVarsler,
             produsentId = beskjedOpprettet.produsentId,
             notifikasjonsId = beskjedOpprettet.notifikasjonId,
+            notifikasjonOpprettet = beskjedOpprettet.opprettetTidspunkt,
         )
     }
 
@@ -69,6 +71,7 @@ class EksternVarslingRepository(
             varsler = oppgaveOpprettet.eksterneVarsler,
             produsentId = oppgaveOpprettet.produsentId,
             notifikasjonsId = oppgaveOpprettet.notifikasjonId,
+            notifikasjonOpprettet = oppgaveOpprettet.opprettetTidspunkt,
         )
     }
 
@@ -117,6 +120,7 @@ class EksternVarslingRepository(
         varsler: List<EksterntVarsel>,
         produsentId: String,
         notifikasjonsId: UUID,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         /* Rewrite to batch insert? */
         database.transaction {
@@ -129,12 +133,14 @@ class EksternVarslingRepository(
                     is SmsVarselKontaktinfo -> insertSmsVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId
+                        notifikasjonsId = notifikasjonsId,
+                        notifikasjonOpprettet = notifikasjonOpprettet,
                     )
                     is EpostVarselKontaktinfo -> insertEpostVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId
+                        notifikasjonsId = notifikasjonsId,
+                        notifikasjonOpprettet = notifikasjonOpprettet,
                     )
                 }
             }
@@ -156,12 +162,14 @@ class EksternVarslingRepository(
         varsel: SmsVarselKontaktinfo,
         notifikasjonsId: UUID,
         produsentId: String,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate("""
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
                 notifikasjon_id,
+                notifikasjon_opprettet,
                 produsent_id,
                 varsel_type,
                 tlfnr,
@@ -175,6 +183,7 @@ class EksternVarslingRepository(
             (
                 ?, /* varsel_id */
                 ?, /* notifikasjon_id */
+                ?, /* notifikasjon_opprettet */
                 ?, /* produsent_id */
                 'SMS',
                 ?, /* tlfnr */
@@ -188,6 +197,7 @@ class EksternVarslingRepository(
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
+            timestamp_utc(notifikasjonOpprettet)
             string(produsentId)
             string(varsel.tlfnr)
             string(varsel.fnrEllerOrgnr)
@@ -201,12 +211,14 @@ class EksternVarslingRepository(
         varsel: EpostVarselKontaktinfo,
         notifikasjonsId: UUID,
         produsentId: String,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate("""
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
                 notifikasjon_id,
+                notifikasjon_opprettet,
                 produsent_id,
                 varsel_type,
                 epost_adresse,
@@ -221,6 +233,7 @@ class EksternVarslingRepository(
             (
                 ?, /* varsel_id */
                 ?, /* notifikasjon_id */
+                ?, /* notifikasjon_opprettet */
                 ?, /* produsent_id */
                 'EMAIL',
                 ?, /* epost_adresse */
@@ -235,6 +248,7 @@ class EksternVarslingRepository(
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
+            timestamp_utc(notifikasjonOpprettet)
             string(produsentId)
             string(varsel.epostAddr)
             string(varsel.fnrEllerOrgnr)
