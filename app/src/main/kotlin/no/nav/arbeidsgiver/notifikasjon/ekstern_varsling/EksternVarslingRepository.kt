@@ -22,6 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import java.sql.ResultSet
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
@@ -72,24 +73,26 @@ class EksternVarslingRepository(
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
-        oppdaterUtfall(eksterntVarselFeilet.varselId, eksterntVarselFeilet.råRespons)
+        oppdaterUtfall(eksterntVarselFeilet.varselId, SendeStatus.FEIL, eksterntVarselFeilet.råRespons)
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: EksterntVarselVellykket) {
-        oppdaterUtfall(eksterntVarselVellykket.varselId, eksterntVarselVellykket.råRespons)
+        oppdaterUtfall(eksterntVarselVellykket.varselId, SendeStatus.OK, eksterntVarselVellykket.råRespons)
     }
 
-    private suspend fun oppdaterUtfall(varselId: UUID, råRespons: JsonNode) {
+    private suspend fun oppdaterUtfall(varselId: UUID, sendeStatus: SendeStatus, råRespons: JsonNode) {
         database.nonTransactionalExecuteUpdate("""
             update ekstern_varsel_kontaktinfo 
             set 
                 altinn_response = ?::jsonb,
-                state = '${EksterntVarselTilstand.KVITTERT}' 
+                state = '${EksterntVarselTilstand.KVITTERT}',
+                sende_status = ?::status
             where
                 varsel_id = ? 
                 and state <> '${EksterntVarselTilstand.KVITTERT}'
         """) {
             jsonb(råRespons)
+            string(sendeStatus.toString())
             uuid(varselId)
         }
     }
@@ -358,37 +361,35 @@ class EksternVarslingRepository(
                         else -> throw Error("Ukjent varsel_type '$varselType'")
                     }
                 )
-                val state = getString("state")
 
-                val response = when (state) {
-                    EksterntVarselTilstand.NY.toString() -> null
-                    EksterntVarselTilstand.SENDT.toString(),
-                    EksterntVarselTilstand.KVITTERT.toString(),
-                    ->
-                        when (val sendeStatus = getString("sende_status")) {
-                            "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
-                                rå = laxObjectMapper.readTree(getString("altinn_response")),
-                            )
-                            "FEIL" -> AltinnVarselKlient.AltinnResponse.Feil(
-                                rå = laxObjectMapper.readTree(getString("altinn_response")),
-                                feilkode = getString("altinn_feilkode"),
-                                feilmelding = getString("feilmelding"),
-                            )
-                            else -> throw Error("ukjent sende_status '$sendeStatus'")
-                        }
-                    else -> throw Error("ukjent tilstand '$state'")
-                }
+                when (val state = getString("state")) {
+                    EksterntVarselTilstand.NY.toString() ->
+                        EksternVarselTilstand.Ny(data)
 
-                when (state) {
-                    EksterntVarselTilstand.NY.toString() -> EksternVarselTilstand.Ny(data)
                     EksterntVarselTilstand.SENDT.toString() ->
-                        EksternVarselTilstand.Utført(data, response!!) // todo rewrite to don't use !!
+                        EksternVarselTilstand.Sendt(data, altinnResponse())
+
                     EksterntVarselTilstand.KVITTERT.toString() ->
-                        EksternVarselTilstand.Kvittert(data, response!!) // todo rewrite to don't use !!
+                        EksternVarselTilstand.Kvittert(data, altinnResponse())
+
                     else -> throw Error("Ukjent tilstand '$state'")
                 }
             })
             .firstOrNull()
+    }
+
+    private fun ResultSet.altinnResponse() = when (val sendeStatus = getString("sende_status")) {
+        "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
+            rå = laxObjectMapper.readTree(getString("altinn_response")),
+        )
+
+        "FEIL" -> AltinnVarselKlient.AltinnResponse.Feil(
+            rå = laxObjectMapper.readTree(getString("altinn_response")),
+            feilkode = getString("altinn_feilkode"),
+            feilmelding = getString("feilmelding"),
+        )
+
+        else -> throw Error("ukjent sende_status '$sendeStatus'")
     }
 
 
