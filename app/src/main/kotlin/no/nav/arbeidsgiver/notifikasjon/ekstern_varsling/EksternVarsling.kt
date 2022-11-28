@@ -10,12 +10,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 
@@ -31,11 +31,27 @@ object EksternVarsling {
         )
     }
 
+    private val hendelsestrømMigrering by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "ekstern-varsling-migrering-hard-delete",
+        )
+    }
+
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val eksternVarslingModelAsync = async {
                 EksternVarslingRepository(database.await())
+            }
+
+            launch {
+                val eksternVarslingModel = eksternVarslingModelAsync.await()
+                hendelsestrømMigrering.forEach { event ->
+                    if (event is HendelseModel.HardDelete) {
+                        eksternVarslingModel.oppdaterModellEtterHendelse(event)
+                    }
+                }
             }
 
 //            launch {
