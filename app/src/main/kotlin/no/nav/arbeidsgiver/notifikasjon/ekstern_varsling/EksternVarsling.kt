@@ -10,12 +10,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 
@@ -27,7 +27,14 @@ object EksternVarsling {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
             groupId = "ekstern-varsling-model-builder",
-            replayPeriodically = true
+            replayPeriodically = false,
+        )
+    }
+
+    private val hendelsestrømMigrering by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "ekstern-varsling-migrering-hard-delete",
         )
     }
 
@@ -40,30 +47,39 @@ object EksternVarsling {
 
             launch {
                 val eksternVarslingModel = eksternVarslingModelAsync.await()
-                hendelsestrøm.forEach { event ->
-                    eksternVarslingModel.oppdaterModellEtterHendelse(event)
+                hendelsestrømMigrering.forEach { event ->
+                    if (event is HendelseModel.HardDelete) {
+                        eksternVarslingModel.oppdaterModellEtterHendelse(event)
+                    }
                 }
             }
 
-            launch {
-                val eksternVarslingRepository = eksternVarslingModelAsync.await()
-                val service = EksternVarslingService(
-                    eksternVarslingRepository = eksternVarslingRepository,
-                    altinnVarselKlient = basedOnEnv(
-                        prod = { AltinnVarselKlientImpl() },
-                        dev = {
-                            AltinnVarselKlientMedFilter(
-                                eksternVarslingRepository,
-                                AltinnVarselKlientImpl(),
-                                AltinnVarselKlientLogging()
-                            )
-                        },
-                        other = { AltinnVarselKlientLogging() },
-                    ),
-                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
-                )
-                service.start(this)
-            }
+//            launch {
+//                val eksternVarslingModel = eksternVarslingModelAsync.await()
+//                hendelsestrøm.forEach { event ->
+//                    eksternVarslingModel.oppdaterModellEtterHendelse(event)
+//                }
+//            }
+
+//            launch {
+//                val eksternVarslingRepository = eksternVarslingModelAsync.await()
+//                val service = EksternVarslingService(
+//                    eksternVarslingRepository = eksternVarslingRepository,
+//                    altinnVarselKlient = basedOnEnv(
+//                        prod = { AltinnVarselKlientImpl() },
+//                        dev = {
+//                            AltinnVarselKlientMedFilter(
+//                                eksternVarslingRepository,
+//                                AltinnVarselKlientImpl(),
+//                                AltinnVarselKlientLogging()
+//                            )
+//                        },
+//                        other = { AltinnVarselKlientLogging() },
+//                    ),
+//                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
+//                )
+//                service.start(this)
+//            }
 
             launchHttpServer(
                 httpPort = httpPort,
