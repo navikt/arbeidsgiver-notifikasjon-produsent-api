@@ -217,7 +217,7 @@ class EksternVarslingService(
                 }
             }
 
-            is EksternVarselTilstand.Utført -> {
+            is EksternVarselTilstand.Sendt -> {
                 try {
                     hendelseProdusent.send(varsel.toHendelse())
                     eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
