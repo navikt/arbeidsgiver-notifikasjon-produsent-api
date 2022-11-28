@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
@@ -21,6 +22,13 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 
 object EksternVarsling {
     val databaseConfig = Database.config("ekstern_varsling_model")
+
+    private val berikhendelsestrøm by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "ekstern-varsling-berik-opprettet",
+        )
+    }
 
     private val hendelsestrøm by lazy {
         HendelsesstrømKafkaImpl(
@@ -41,6 +49,36 @@ object EksternVarsling {
                 val eksternVarslingModel = eksternVarslingModelAsync.await()
                 hendelsestrøm.forEach { event ->
                     eksternVarslingModel.oppdaterModellEtterHendelse(event)
+                }
+            }
+
+            launch {
+                val db = database.await()
+                berikhendelsestrøm.forEach { event ->
+                    when (event) {
+                        is HendelseModel.OppgaveOpprettet -> {
+                            db.nonTransactionalExecuteUpdate("""
+                                update ekstern_varsel_kontaktinfo 
+                                set 
+                                    notifikasjon_opprettet = ?
+                                where
+                                    notifikasjon_id = ? 
+                            """) {
+                                timestamp_utc(event.opprettetTidspunkt)
+                            }
+                        }
+                        is HendelseModel.BeskjedOpprettet -> {
+                            db.nonTransactionalExecuteUpdate("""
+                                update ekstern_varsel_kontaktinfo 
+                                set 
+                                    notifikasjon_opprettet = ?
+                                where
+                                    notifikasjon_id = ? 
+                            """) {
+                                timestamp_utc(event.opprettetTidspunkt)
+                            }
+                        }
+                    }
                 }
             }
 
