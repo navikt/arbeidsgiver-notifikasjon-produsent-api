@@ -65,6 +65,7 @@ object EksternVarsling {
                                     notifikasjon_id = ? 
                             """) {
                                 timestamp_utc(event.opprettetTidspunkt)
+                                uuid(event.aggregateId)
                             }
                         }
                         is HendelseModel.BeskjedOpprettet -> {
@@ -76,6 +77,7 @@ object EksternVarsling {
                                     notifikasjon_id = ? 
                             """) {
                                 timestamp_utc(event.opprettetTidspunkt)
+                                uuid(event.aggregateId)
                             }
                         }
                     }
