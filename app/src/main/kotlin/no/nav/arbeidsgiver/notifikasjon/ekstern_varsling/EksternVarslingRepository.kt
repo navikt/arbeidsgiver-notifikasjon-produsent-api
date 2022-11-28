@@ -96,9 +96,8 @@ class EksternVarslingRepository(
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
         database.nonTransactionalExecuteUpdate("""
-            update ekstern_varsel_kontaktinfo
-            set hard_deleted = true
-            where notifikasjon_id = ?
+            insert into hard_delete (notifikasjon_id) values (?)
+            on conflict do nothing
         """) {
             uuid(hardDelete.aggregateId)
         }
@@ -107,7 +106,8 @@ class EksternVarslingRepository(
     suspend fun deleteScheduledHardDeletes() {
         database.nonTransactionalExecuteUpdate("""
             delete from ekstern_varsel_kontaktinfo
-            where hard_deleted and state = '${EksterntVarselTilstand.KVITTERT}'
+            where state = '${EksterntVarselTilstand.KVITTERT}'
+            and notifikasjon_id in (select notifikasjon_id from hard_delete)
         """)
     }
 
@@ -118,6 +118,9 @@ class EksternVarslingRepository(
     ) {
         /* Rewrite to batch insert? */
         database.transaction {
+            if (isHardDeleted(notifikasjonsId)) {
+                return@transaction
+            }
             for (varsel in varsler) {
                 putOnJobQueue(varsel.varselId)
                 when (varsel) {
@@ -135,6 +138,17 @@ class EksternVarslingRepository(
             }
         }
     }
+
+    private fun Transaction.isHardDeleted(notifikasjonsId: UUID) = executeQuery(
+            """
+            select 1 from hard_delete where notifikasjon_id = ?
+            """,
+            {
+                uuid(notifikasjonsId)
+            },
+            { true }
+        )
+            .firstOrNull() ?: false
 
     private fun Transaction.insertSmsVarsel(
         varsel: SmsVarselKontaktinfo,
