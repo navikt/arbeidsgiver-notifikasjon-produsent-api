@@ -38,32 +38,32 @@ object EksternVarsling {
                 EksternVarslingRepository(database.await())
             }
 
-            launch {
-                val eksternVarslingModel = eksternVarslingModelAsync.await()
-                hendelsestrøm.forEach { event ->
-                    eksternVarslingModel.oppdaterModellEtterHendelse(event)
-                }
-            }
+//            launch {
+//                val eksternVarslingModel = eksternVarslingModelAsync.await()
+//                hendelsestrøm.forEach { event ->
+//                    eksternVarslingModel.oppdaterModellEtterHendelse(event)
+//                }
+//            }
 
-            launch {
-                val eksternVarslingRepository = eksternVarslingModelAsync.await()
-                val service = EksternVarslingService(
-                    eksternVarslingRepository = eksternVarslingRepository,
-                    altinnVarselKlient = basedOnEnv(
-                        prod = { AltinnVarselKlientImpl() },
-                        dev = {
-                            AltinnVarselKlientMedFilter(
-                                eksternVarslingRepository,
-                                AltinnVarselKlientImpl(),
-                                AltinnVarselKlientLogging()
-                            )
-                        },
-                        other = { AltinnVarselKlientLogging() },
-                    ),
-                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
-                )
-                service.start(this)
-            }
+//            launch {
+//                val eksternVarslingRepository = eksternVarslingModelAsync.await()
+//                val service = EksternVarslingService(
+//                    eksternVarslingRepository = eksternVarslingRepository,
+//                    altinnVarselKlient = basedOnEnv(
+//                        prod = { AltinnVarselKlientImpl() },
+//                        dev = {
+//                            AltinnVarselKlientMedFilter(
+//                                eksternVarslingRepository,
+//                                AltinnVarselKlientImpl(),
+//                                AltinnVarselKlientLogging()
+//                            )
+//                        },
+//                        other = { AltinnVarselKlientLogging() },
+//                    ),
+//                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
+//                )
+//                service.start(this)
+//            }
 
             launchHttpServer(
                 httpPort = httpPort,
