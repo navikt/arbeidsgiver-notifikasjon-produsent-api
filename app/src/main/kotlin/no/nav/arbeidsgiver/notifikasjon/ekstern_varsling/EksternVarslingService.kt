@@ -157,12 +157,12 @@ class EksternVarslingService(
                 log.info("gauge-oppdatering vellykket")
             }
 
-//            launchProcessingLoop(
-//                "ekstern-varsel",
-//                init = { eksternVarslingRepository.detectEmptyDatabase() }
-//            ) {
-//                workOnEksternVarsel()
-//            }
+            launchProcessingLoop(
+                "ekstern-varsel",
+                init = { eksternVarslingRepository.detectEmptyDatabase() }
+            ) {
+                workOnEksternVarsel()
+            }
         }
     }
 

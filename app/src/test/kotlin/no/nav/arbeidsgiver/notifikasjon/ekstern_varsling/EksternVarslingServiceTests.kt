@@ -55,7 +55,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         unmockkAll()
     }
 
-    xdescribe("EksternVarslingService#start()") {
+    describe("EksternVarslingService#start()") {
         context("LØPENDE sendingsvindu") {
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
