@@ -2,31 +2,28 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.TextNode
 import io.ktor.http.HttpHeaders.Authorization
 import kotlinx.coroutines.runBlocking
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
-import no.altinn.schemas.services.serviceengine.notification._2015._06.SendNotificationResultList
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2015._06.Service
 import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureServiceImpl
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import org.apache.cxf.message.Message
 import org.apache.cxf.phase.AbstractPhaseInterceptor
 import org.apache.cxf.phase.Phase
-import java.io.StringWriter
-import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
@@ -281,7 +278,7 @@ class AltinnVarselKlientImpl(
                 )
                 Result.success(
                     AltinnVarselKlient.AltinnResponse.Ok(
-                        rå = TextNode(response.serialize()),
+                        rå = laxObjectMapper.valueToTree(response),
                     )
                 )
             } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
@@ -293,7 +290,7 @@ class AltinnVarselKlientImpl(
                     AltinnVarselKlient.AltinnResponse.Feil(
                         feilkode = e.faultInfo.errorID.toString(),
                         feilmelding = e.faultInfo.altinnErrorMessage.value,
-                        rå = TextNode(e.serialize()),
+                        rå = laxObjectMapper.valueToTree(e),
                     )
                 )
             } catch (e: Throwable) {
@@ -360,18 +357,3 @@ fun <PORT_TYPE> createServicePort(
         }
     })
 }.create(clazz)
-
-private val marshaller = JAXBContext.newInstance(
-    SendNotificationResultList::class.java,
-    INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage::class.java
-).createMarshaller()
-
-private fun INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage.serialize() =
-    StringWriter().also {
-        marshaller.marshal(this, it)
-    }.toString()
-
-private fun SendNotificationResultList.serialize() =
-    StringWriter().also {
-        marshaller.marshal(this, it)
-    }.toString()
