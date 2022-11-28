@@ -18,17 +18,11 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 
 
 object EksternVarsling {
     val databaseConfig = Database.config("ekstern_varsling_model")
-
-    private val berikhendelsestrøm by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "ekstern-varsling-berik-opprettet",
-        )
-    }
 
     private val hendelsestrøm by lazy {
         HendelsesstrømKafkaImpl(
@@ -53,56 +47,24 @@ object EksternVarsling {
             }
 
             launch {
-                val db = database.await()
-                berikhendelsestrøm.forEach { event ->
-                    when (event) {
-                        is HendelseModel.OppgaveOpprettet -> {
-                            db.nonTransactionalExecuteUpdate("""
-                                update ekstern_varsel_kontaktinfo 
-                                set 
-                                    notifikasjon_opprettet = ?
-                                where
-                                    notifikasjon_id = ? 
-                            """) {
-                                timestamp_utc(event.opprettetTidspunkt)
-                                uuid(event.aggregateId)
-                            }
-                        }
-                        is HendelseModel.BeskjedOpprettet -> {
-                            db.nonTransactionalExecuteUpdate("""
-                                update ekstern_varsel_kontaktinfo 
-                                set 
-                                    notifikasjon_opprettet = ?
-                                where
-                                    notifikasjon_id = ? 
-                            """) {
-                                timestamp_utc(event.opprettetTidspunkt)
-                                uuid(event.aggregateId)
-                            }
-                        }
-                    }
-                }
+                val eksternVarslingRepository = eksternVarslingModelAsync.await()
+                val service = EksternVarslingService(
+                    eksternVarslingRepository = eksternVarslingRepository,
+                    altinnVarselKlient = basedOnEnv(
+                        prod = { AltinnVarselKlientImpl() },
+                        dev = {
+                            AltinnVarselKlientMedFilter(
+                                eksternVarslingRepository,
+                                AltinnVarselKlientImpl(),
+                                AltinnVarselKlientLogging()
+                            )
+                        },
+                        other = { AltinnVarselKlientLogging() },
+                    ),
+                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
+                )
+                service.start(this)
             }
-
-            //launch {
-            //    val eksternVarslingRepository = eksternVarslingModelAsync.await()
-            //    val service = EksternVarslingService(
-            //        eksternVarslingRepository = eksternVarslingRepository,
-            //        altinnVarselKlient = basedOnEnv(
-            //            prod = { AltinnVarselKlientImpl() },
-            //            dev = {
-            //                AltinnVarselKlientMedFilter(
-            //                    eksternVarslingRepository,
-            //                    AltinnVarselKlientImpl(),
-            //                    AltinnVarselKlientLogging()
-            //                )
-            //            },
-            //            other = { AltinnVarselKlientLogging() },
-            //        ),
-            //        hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
-            //    )
-            //    service.start(this)
-            //}
 
             launchHttpServer(
                 httpPort = httpPort,
