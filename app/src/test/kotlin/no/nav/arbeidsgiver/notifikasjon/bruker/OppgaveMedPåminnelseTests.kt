@@ -32,36 +32,36 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
 
     describe("oppgave med påminnelse blir bumpet og klikk state clearet") {
         val tidspunkt = OffsetDateTime.parse("2020-12-03T10:15:30+01:00")
-        oppgaveOpprettet(uuid("0"), tidspunkt).also { queryModel.oppdaterModellEtterHendelse(it) }
-        val oppgave1 = oppgaveOpprettet(uuid("1"), tidspunkt.plusDays(1)).also { queryModel.oppdaterModellEtterHendelse(it) }
+        val oppgave0 = oppgaveOpprettet(uuid("0"), tidspunkt).also { queryModel.oppdaterModellEtterHendelse(it) }
+        oppgaveOpprettet(uuid("1"), tidspunkt.plusDays(1)).also { queryModel.oppdaterModellEtterHendelse(it) }
         oppgaveOpprettet(uuid("2"), tidspunkt.plusDays(2)).also { queryModel.oppdaterModellEtterHendelse(it) }
-        brukerKlikket(uuid("1")).also { queryModel.oppdaterModellEtterHendelse(it) }
+        brukerKlikket(uuid("0")).also { queryModel.oppdaterModellEtterHendelse(it) }
 
         val response1 = engine.hentOppgaver()
         it("listen er sortert og entry id=1 er klikket på") {
             val oppgaver = response1.getTypedContent<List<UUID>>("$.notifikasjoner.notifikasjoner[*].id")
             oppgaver shouldBe listOf(
                 uuid("2"),
-                oppgave1.notifikasjonId,
+                uuid("1"),
                 uuid("0"),
             )
             val klikketPaa = response1.getTypedContent<List<Boolean>>("$.notifikasjoner.notifikasjoner[*].brukerKlikk.klikketPaa")
             klikketPaa shouldBe listOf(
                 false,
-                true,
                 false,
+                true,
             )
         }
 
-        påminnelseOpprettet(oppgave1).also { queryModel.oppdaterModellEtterHendelse(it) }
+        påminnelseOpprettet(oppgave0).also { queryModel.oppdaterModellEtterHendelse(it) }
 
         val response2 = engine.hentOppgaver()
         it("listen er sortert på rekkefølge og entry 1 er klikket på") {
             val oppgaver = response2.getTypedContent<List<UUID>>("$.notifikasjoner.notifikasjoner[*].id")
             oppgaver shouldBe listOf(
-                oppgave1.notifikasjonId,
                 uuid("2"),
                 uuid("0"),
+                uuid("1"),
             )
             val klikketPaa = response2.getTypedContent<List<Boolean>>("$.notifikasjoner.notifikasjoner[*].brukerKlikk.klikketPaa")
             klikketPaa shouldBe listOf(
