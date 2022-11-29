@@ -218,7 +218,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         val varsel2 = repository.findVarsel(id2)
 
         it("should be utført") {
-            varsel2 shouldBe instanceOf(EksternVarselTilstand.Utført::class)
+            varsel2 shouldBe instanceOf(EksternVarselTilstand.Sendt::class)
         }
 
         repository.markerSomKvittertAndDeleteJob(id2)
@@ -264,7 +264,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         val varsel2 = repository.findVarsel(id2)
 
         it("should be utført") {
-            varsel2 shouldBe instanceOf(EksternVarselTilstand.Utført::class)
+            varsel2 shouldBe instanceOf(EksternVarselTilstand.Sendt::class)
         }
 
         repository.markerSomKvittertAndDeleteJob(id2)
@@ -398,4 +398,37 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             )
         }
     }
+
+    describe("Hard delete event for oppgave") {
+        val eksterntVarselVellykket = HendelseModel.EksterntVarselVellykket(
+            virksomhetsnummer = "42",
+            notifikasjonId = oppgaveOpprettet.aggregateId,
+            hendelseId = UUID.randomUUID(),
+            produsentId = "42",
+            kildeAppNavn = "test:app",
+            varselId = oppgaveOpprettet.eksterneVarsler[0].varselId,
+            råRespons = NullNode.instance
+        )
+        val hardDelete = HendelseModel.HardDelete(
+            virksomhetsnummer = "42",
+            aggregateId = oppgaveOpprettet.aggregateId,
+            hendelseId = UUID.randomUUID(),
+            produsentId = "42",
+            kildeAppNavn = "test:app",
+            deletedAt = OffsetDateTime.now()
+        )
+
+        repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
+        repository.oppdaterModellEtterHendelse(eksterntVarselVellykket)
+        repository.oppdaterModellEtterHendelse(hardDelete)
+        repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
+        repository.oppdaterModellEtterHendelse(eksterntVarselVellykket)
+        repository.oppdaterModellEtterHendelse(hardDelete)
+
+        it("findVarsel feiler ikke") {
+            repository.findVarsel(eksterntVarselVellykket.varselId) shouldNot beNull()
+        }
+    }
+
+
 })

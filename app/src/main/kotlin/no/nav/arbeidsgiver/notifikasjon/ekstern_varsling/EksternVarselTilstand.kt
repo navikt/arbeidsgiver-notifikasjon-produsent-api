@@ -44,7 +44,7 @@ sealed interface EksternVarselTilstand {
         override val data: EksternVarselStatiskData
     ) : EksternVarselTilstand
 
-    data class Utført(
+    data class Sendt(
         override val data: EksternVarselStatiskData,
         val response: AltinnVarselKlient.AltinnResponse
     ) : EksternVarselTilstand
@@ -60,9 +60,13 @@ enum class EksterntVarselTilstand {
     NY, SENDT, KVITTERT
 }
 
+enum class SendeStatus {
+    OK, FEIL
+}
+
 private val naisClientId = System.getenv("NAIS_CLIENT_ID") ?: "local:fager:notifikasjon-ekstern-varsling"
 
-fun EksternVarselTilstand.Utført.toHendelse(): Hendelse =
+fun EksternVarselTilstand.Sendt.toHendelse(): Hendelse =
     when (this.response) {
         is AltinnVarselKlient.AltinnResponse.Ok -> EksterntVarselVellykket(
             virksomhetsnummer = data.eksternVarsel.fnrEllerOrgnr,
