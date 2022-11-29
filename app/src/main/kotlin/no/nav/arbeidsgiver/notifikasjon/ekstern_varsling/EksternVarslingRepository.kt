@@ -26,6 +26,7 @@ import java.sql.ResultSet
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 class EksternVarslingRepository(
@@ -80,6 +81,7 @@ class EksternVarslingRepository(
             varsler = påminnelseOpprettet.eksterneVarsler,
             produsentId = påminnelseOpprettet.produsentId,
             notifikasjonsId = påminnelseOpprettet.notifikasjonId,
+            notifikasjonOpprettet = påminnelseOpprettet.opprettetTidpunkt.atOffset(ZoneOffset.UTC),
         )
     }
 

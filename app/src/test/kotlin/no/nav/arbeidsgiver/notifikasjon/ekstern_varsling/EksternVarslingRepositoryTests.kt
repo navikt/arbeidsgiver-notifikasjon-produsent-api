@@ -360,7 +360,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             hendelseId = UUID.randomUUID(),
             produsentId = "fager",
             kildeAppNavn = "local:local:local",
-            opprettetTidpunkt = Instant.parse(""),
+            opprettetTidpunkt = Instant.parse("2020-01-01T01:01:01.00Z"),
             oppgaveOpprettetTidspunkt = Instant.parse("2020-01-01T01:01:01.00Z"),
             eksterneVarsler = listOf(
                 SmsVarselKontaktinfo(
