@@ -5,7 +5,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.OrgnrPartitioner.Companion.partitionOfOrgnr
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
@@ -57,8 +59,12 @@ private suspend fun <K: Any?, V: Any?> Producer<K, V>.suspendingSend(record: Pro
     suspendCancellableCoroutine<Unit> { continuation ->
         val result = send(record) { _, exception ->
             if (exception != null) {
+                Health.subsystemAlive[Subsystem.KAFKA] = false
                 continuation.cancel(exception)
             } else {
+                if (Health.subsystemAlive[Subsystem.KAFKA] == false) {
+                    Health.subsystemAlive[Subsystem.KAFKA] = true
+                }
                 continuation.resume(Unit) {
                     /* nothing to close if canceled */
                 }
