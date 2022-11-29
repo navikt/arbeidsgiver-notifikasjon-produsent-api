@@ -48,6 +48,7 @@ class BrukerApiTests : DescribeSpec({
                 id = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130005"),
                 klikketPaa = false,
                 frist = null,
+                paaminnelseTidspunkt = null,
             )
 
             coEvery {
@@ -70,6 +71,7 @@ class BrukerApiTests : DescribeSpec({
                                     tekst
                                     merkelapp
                                     opprettetTidspunkt
+                                    sorteringTidspunkt
                                     id
                                     virksomhet {
                                         virksomhetsnummer
@@ -87,6 +89,7 @@ class BrukerApiTests : DescribeSpec({
                                     tekst
                                     merkelapp
                                     opprettetTidspunkt
+                                    sorteringTidspunkt
                                     id
                                     virksomhet {
                                         virksomhetsnummer

@@ -28,6 +28,7 @@ object BrukerModel {
     sealed interface Notifikasjon {
         val id: UUID
         val virksomhetsnummer: String
+        val sorteringTidspunkt: OffsetDateTime
     }
 
     data class Beskjed(
@@ -39,8 +40,11 @@ object BrukerModel {
         override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
         override val id: UUID,
-        val klikketPaa: Boolean
-    ) : Notifikasjon
+        val klikketPaa: Boolean,
+    ) : Notifikasjon {
+        override val sorteringTidspunkt: OffsetDateTime
+            get() = opprettetTidspunkt
+    }
 
     data class Oppgave(
         val merkelapp: String,
@@ -51,6 +55,7 @@ object BrukerModel {
         override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
         val utgaattTidspunkt: OffsetDateTime?,
+        val paaminnelseTidspunkt: OffsetDateTime?,
         val frist: LocalDate?,
         override val id: UUID,
         val klikketPaa: Boolean,
@@ -61,6 +66,9 @@ object BrukerModel {
             UTFOERT,
             UTGAATT
         }
+
+        override val sorteringTidspunkt: OffsetDateTime
+            get() = paaminnelseTidspunkt ?: opprettetTidspunkt
     }
 
     data class Sak(
