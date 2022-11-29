@@ -62,9 +62,6 @@ private suspend fun <K: Any?, V: Any?> Producer<K, V>.suspendingSend(record: Pro
                 Health.subsystemAlive[Subsystem.KAFKA] = false
                 continuation.cancel(exception)
             } else {
-                if (Health.subsystemAlive[Subsystem.KAFKA] == false) {
-                    Health.subsystemAlive[Subsystem.KAFKA] = true
-                }
                 continuation.resume(Unit) {
                     /* nothing to close if canceled */
                 }
