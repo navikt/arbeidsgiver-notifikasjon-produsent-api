@@ -157,7 +157,9 @@ class BrukerRepositoryImpl(
             left outer join brukerklikk as klikk on
                 klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
-            order by opprettet_tidspunkt desc
+            order by 
+                paaminnelse_tidspunkt desc nulls last, 
+                opprettet_tidspunkt desc
             limit 200
             """,
             {
@@ -190,6 +192,7 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     utgaattTidspunkt = getObject("utgaatt_tidspunkt", OffsetDateTime::class.java),
+                    paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java),
                     frist = getObject("frist", LocalDate::class.java),
                     id = getObject("id", UUID::class.java),
                     klikketPaa = getBoolean("klikketPaa")

@@ -137,7 +137,7 @@ private fun TestApplicationEngine.hentOppgaver(): TestApplicationResponse =
                                     id
                                     klikketPaa 
                                 }
-                                #sorteringTidspunkt TODO
+                                sorteringTidspunkt
                                 id
                             }
                         }
