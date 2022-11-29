@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 enum class Subsystem {
     DATABASE,
     AUTOSLETT_SERVICE,
+    KAFKA,
 }
 
 object Health {
@@ -14,6 +15,7 @@ object Health {
 
     val subsystemAlive = ConcurrentHashMap(mapOf(
         Subsystem.DATABASE to true,
+        Subsystem.KAFKA to true,
         Subsystem.AUTOSLETT_SERVICE to true,
     ))
 
