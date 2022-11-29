@@ -158,8 +158,7 @@ class BrukerRepositoryImpl(
                 klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
             order by 
-                paaminnelse_tidspunkt desc nulls last, 
-                opprettet_tidspunkt desc
+                coalesce(paaminnelse_tidspunkt, opprettet_tidspunkt) desc
             limit 200
             """,
             {

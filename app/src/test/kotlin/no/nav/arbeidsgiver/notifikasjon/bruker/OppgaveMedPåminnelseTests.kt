@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloLocalDateTime
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Instant
 import java.time.LocalDateTime
@@ -53,7 +54,7 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
             )
         }
 
-        påminnelseOpprettet(oppgave0).also { queryModel.oppdaterModellEtterHendelse(it) }
+        påminnelseOpprettet(oppgave0, tidspunkt.plusHours(36).inOsloLocalDateTime()).also { queryModel.oppdaterModellEtterHendelse(it) }
 
         val response2 = engine.hentOppgaver()
         it("listen er sortert på rekkefølge og entry 1 er klikket på") {
@@ -73,7 +74,7 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
     }
 })
 
-private fun påminnelseOpprettet(oppgave: HendelseModel.OppgaveOpprettet) =
+private fun påminnelseOpprettet(oppgave: HendelseModel.OppgaveOpprettet, konkretPåminnelseTidspunkt: LocalDateTime) =
     HendelseModel.PåminnelseOpprettet(
         virksomhetsnummer = "1",
         hendelseId = UUID.randomUUID(),
@@ -84,7 +85,7 @@ private fun påminnelseOpprettet(oppgave: HendelseModel.OppgaveOpprettet) =
         oppgaveOpprettetTidspunkt = oppgave.opprettetTidspunkt.toInstant(),
         frist = oppgave.frist,
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
-            konkret = LocalDateTime.now(),
+            konkret = konkretPåminnelseTidspunkt,
             opprettetTidspunkt = oppgave.opprettetTidspunkt,
             frist = oppgave.frist
         ),

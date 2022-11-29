@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.tid
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -25,4 +26,6 @@ fun String.inOsloAsInstant(): Instant =
 
 fun LocalDateTime.inOsloAsInstant(): Instant =
     this.atOslo().toInstant()
+
+fun OffsetDateTime.inOsloLocalDateTime() = toInstant().asOsloLocalDateTime()
 
