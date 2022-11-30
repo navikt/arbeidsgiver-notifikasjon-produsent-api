@@ -59,8 +59,8 @@ class UnhandledGraphQLExceptionError(
 
 fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
     fieldName: String,
-    internFeilHandler: (exception: Exception) -> DataFetcherResult<*> = { exception ->
-        handleUnexepctedError(exception, UnhandledGraphQLExceptionError(exception))
+    exceptionHandler: (exception: Exception) -> DataFetcherResult<*> = { exception ->
+        handleUnexpectedError(exception, UnhandledGraphQLExceptionError(exception))
     },
     fetcher: suspend (DataFetchingEnvironment) -> T,
 ) {
@@ -70,15 +70,15 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
             try {
                 fetcher(env)
             } catch (e: GraphqlErrorException) {
-                handleUnexepctedError(e, e)
+                handleUnexpectedError(e, e)
             } catch (e: Exception) {
-                internFeilHandler(e)
+                exceptionHandler(e)
             }
         }
     }
 }
 
-fun handleUnexepctedError(exception: Exception, error: GraphQLError): DataFetcherResult<*> {
+fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetcherResult<*> {
     GraphQLLogger.log.error(
         "unhandled exception while executing coDataFetcher: {}",
         exception.javaClass.canonicalName,
