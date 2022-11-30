@@ -157,7 +157,8 @@ class BrukerRepositoryImpl(
             left outer join brukerklikk as klikk on
                 klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
-            order by opprettet_tidspunkt desc
+            order by 
+                coalesce(paaminnelse_tidspunkt, opprettet_tidspunkt) desc
             limit 200
             """,
             {
@@ -190,6 +191,7 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     utgaattTidspunkt = getObject("utgaatt_tidspunkt", OffsetDateTime::class.java),
+                    paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java),
                     frist = getObject("frist", LocalDate::class.java),
                     id = getObject("id", UUID::class.java),
                     klikketPaa = getBoolean("klikketPaa")
@@ -467,7 +469,7 @@ class BrukerRepositoryImpl(
             is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
-            is PåminnelseOpprettet -> TODO()
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
         }
     }
 
@@ -658,6 +660,24 @@ class BrukerRepositoryImpl(
                 }
             }
 
+        }
+    }
+
+    private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
+        database.transaction {
+            executeUpdate(
+                """
+                    update notifikasjon
+                    set paaminnelse_tidspunkt = ?
+                    where id = ?
+                """
+            ) {
+                timestamp_utc(påminnelseOpprettet.tidspunkt.påminnelseTidspunkt)
+                uuid(påminnelseOpprettet.notifikasjonId)
+            }
+            executeUpdate("delete from brukerklikk where notifikasjonsid = ?;") {
+                uuid(påminnelseOpprettet.notifikasjonId)
+            }
         }
     }
 

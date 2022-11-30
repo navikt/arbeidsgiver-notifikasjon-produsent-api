@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
-import io.ktor.server.application.*
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -15,9 +15,10 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 
 
 object EksternVarsling {
@@ -31,13 +32,6 @@ object EksternVarsling {
         )
     }
 
-    private val hendelsestrømMigrering by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "ekstern-varsling-migrering-berik_sendestatus",
-        )
-    }
-
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
@@ -47,42 +41,30 @@ object EksternVarsling {
 
             launch {
                 val eksternVarslingModel = eksternVarslingModelAsync.await()
-                hendelsestrømMigrering.forEach { event ->
-                    when (event) {
-                        is HendelseModel.EksterntVarselFeilet,
-                        is HendelseModel.EksterntVarselVellykket -> {
-                            eksternVarslingModel.oppdaterModellEtterHendelse(event)
-                        }
-                    }
+                hendelsestrøm.forEach { event ->
+                    eksternVarslingModel.oppdaterModellEtterHendelse(event)
                 }
             }
 
-//            launch {
-//                val eksternVarslingModel = eksternVarslingModelAsync.await()
-//                hendelsestrøm.forEach { event ->
-//                    eksternVarslingModel.oppdaterModellEtterHendelse(event)
-//                }
-//            }
-
-//            launch {
-//                val eksternVarslingRepository = eksternVarslingModelAsync.await()
-//                val service = EksternVarslingService(
-//                    eksternVarslingRepository = eksternVarslingRepository,
-//                    altinnVarselKlient = basedOnEnv(
-//                        prod = { AltinnVarselKlientImpl() },
-//                        dev = {
-//                            AltinnVarselKlientMedFilter(
-//                                eksternVarslingRepository,
-//                                AltinnVarselKlientImpl(),
-//                                AltinnVarselKlientLogging()
-//                            )
-//                        },
-//                        other = { AltinnVarselKlientLogging() },
-//                    ),
-//                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
-//                )
-//                service.start(this)
-//            }
+            launch {
+                val eksternVarslingRepository = eksternVarslingModelAsync.await()
+                val service = EksternVarslingService(
+                    eksternVarslingRepository = eksternVarslingRepository,
+                    altinnVarselKlient = basedOnEnv(
+                        prod = { AltinnVarselKlientImpl() },
+                        dev = {
+                            AltinnVarselKlientMedFilter(
+                                eksternVarslingRepository,
+                                AltinnVarselKlientImpl(),
+                                AltinnVarselKlientLogging()
+                            )
+                        },
+                        other = { AltinnVarselKlientLogging() },
+                    ),
+                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
+                )
+                service.start(this)
+            }
 
             launchHttpServer(
                 httpPort = httpPort,

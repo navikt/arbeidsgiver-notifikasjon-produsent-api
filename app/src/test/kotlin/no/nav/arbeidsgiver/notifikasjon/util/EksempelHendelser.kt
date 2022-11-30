@@ -491,6 +491,22 @@ object EksempelHendelse {
         ),
         nyLenkeTilSak = null,
     )
+    val PåminnelseOpprettet = HendelseModel.PåminnelseOpprettet(
+        virksomhetsnummer = "1",
+        hendelseId = hendelseId.next(),
+        produsentId = "1",
+        kildeAppNavn = "1",
+        notifikasjonId = uuid("1"),
+        opprettetTidpunkt = Instant.now(),
+        oppgaveOpprettetTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z").toInstant(),
+        frist = LocalDate.parse("2021-01-14"),
+        tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
+            konkret = LocalDateTime.parse("2021-01-10T12:00:00"),
+            opprettetTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+            frist = LocalDate.parse("2021-01-14")
+        ),
+        eksterneVarsler = listOf(),
+    )
 
     val Alle: List<Hendelse> = listOf(
         BeskjedOpprettet,
@@ -510,5 +526,6 @@ object EksempelHendelse {
         EksterntVarselFeilet,
         SakOpprettet,
         NyStatusSak,
+        PåminnelseOpprettet,
     )
 }

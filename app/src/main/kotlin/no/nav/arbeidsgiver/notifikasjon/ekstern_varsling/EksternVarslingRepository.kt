@@ -25,6 +25,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.sql.ResultSet
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 class EksternVarslingRepository(
@@ -38,6 +40,7 @@ class EksternVarslingRepository(
         @Suppress("UNUSED_VARIABLE") val ignore: Unit = when (hendelse) {
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
@@ -52,7 +55,6 @@ class EksternVarslingRepository(
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
-            is PåminnelseOpprettet -> TODO()
         }
     }
 
@@ -61,6 +63,7 @@ class EksternVarslingRepository(
             varsler = beskjedOpprettet.eksterneVarsler,
             produsentId = beskjedOpprettet.produsentId,
             notifikasjonsId = beskjedOpprettet.notifikasjonId,
+            notifikasjonOpprettet = beskjedOpprettet.opprettetTidspunkt,
         )
     }
 
@@ -69,6 +72,16 @@ class EksternVarslingRepository(
             varsler = oppgaveOpprettet.eksterneVarsler,
             produsentId = oppgaveOpprettet.produsentId,
             notifikasjonsId = oppgaveOpprettet.notifikasjonId,
+            notifikasjonOpprettet = oppgaveOpprettet.opprettetTidspunkt,
+        )
+    }
+
+    private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
+        insertVarsler(
+            varsler = påminnelseOpprettet.eksterneVarsler,
+            produsentId = påminnelseOpprettet.produsentId,
+            notifikasjonsId = påminnelseOpprettet.notifikasjonId,
+            notifikasjonOpprettet = påminnelseOpprettet.opprettetTidpunkt.atOffset(ZoneOffset.UTC),
         )
     }
 
@@ -117,6 +130,7 @@ class EksternVarslingRepository(
         varsler: List<EksterntVarsel>,
         produsentId: String,
         notifikasjonsId: UUID,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         /* Rewrite to batch insert? */
         database.transaction {
@@ -129,12 +143,14 @@ class EksternVarslingRepository(
                     is SmsVarselKontaktinfo -> insertSmsVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId
+                        notifikasjonsId = notifikasjonsId,
+                        notifikasjonOpprettet = notifikasjonOpprettet,
                     )
                     is EpostVarselKontaktinfo -> insertEpostVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId
+                        notifikasjonsId = notifikasjonsId,
+                        notifikasjonOpprettet = notifikasjonOpprettet,
                     )
                 }
             }
@@ -156,12 +172,14 @@ class EksternVarslingRepository(
         varsel: SmsVarselKontaktinfo,
         notifikasjonsId: UUID,
         produsentId: String,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate("""
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
                 notifikasjon_id,
+                notifikasjon_opprettet,
                 produsent_id,
                 varsel_type,
                 tlfnr,
@@ -175,6 +193,7 @@ class EksternVarslingRepository(
             (
                 ?, /* varsel_id */
                 ?, /* notifikasjon_id */
+                ?, /* notifikasjon_opprettet */
                 ?, /* produsent_id */
                 'SMS',
                 ?, /* tlfnr */
@@ -188,6 +207,7 @@ class EksternVarslingRepository(
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
+            timestamp_utc(notifikasjonOpprettet)
             string(produsentId)
             string(varsel.tlfnr)
             string(varsel.fnrEllerOrgnr)
@@ -201,12 +221,14 @@ class EksternVarslingRepository(
         varsel: EpostVarselKontaktinfo,
         notifikasjonsId: UUID,
         produsentId: String,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate("""
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
                 notifikasjon_id,
+                notifikasjon_opprettet,
                 produsent_id,
                 varsel_type,
                 epost_adresse,
@@ -221,6 +243,7 @@ class EksternVarslingRepository(
             (
                 ?, /* varsel_id */
                 ?, /* notifikasjon_id */
+                ?, /* notifikasjon_opprettet */
                 ?, /* produsent_id */
                 'EMAIL',
                 ?, /* epost_adresse */
@@ -235,6 +258,7 @@ class EksternVarslingRepository(
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
+            timestamp_utc(notifikasjonOpprettet)
             string(produsentId)
             string(varsel.epostAddr)
             string(varsel.fnrEllerOrgnr)
