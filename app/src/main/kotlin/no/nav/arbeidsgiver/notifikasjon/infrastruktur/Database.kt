@@ -58,7 +58,7 @@ class Database private constructor(
 
         fun config(name: String) = Config(
             host = System.getenv("DB_HOST") ?: "localhost",
-            port = System.getenv("DB_PORT") ?: "5432",
+            port = System.getenv("DB_PORT") ?: "1337",
             username = System.getenv("DB_USERNAME") ?: "postgres",
             password = System.getenv("DB_PASSWORD") ?: "postgres",
             database = System.getenv("DB_DATABASE") ?: name.replace('_', '-'),

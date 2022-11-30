@@ -12,7 +12,8 @@ fun TestConfiguration.testDatabase(config: Database.Config): Database =
         Database.openDatabase(
             config.copy(
                 // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
-                jdbcOpts = mapOf("preparedStatementCacheQueries" to 0)
+                jdbcOpts = mapOf("preparedStatementCacheQueries" to 0),
+                port = "1337",
             )
         )
     }
