@@ -92,6 +92,7 @@ private fun hentOppgave(engine: TestApplicationEngine): BrukerAPI.Notifikasjon.O
                                 tekst
                                 merkelapp
                                 opprettetTidspunkt
+                                sorteringTidspunkt
                                 id
                                 virksomhet {
                                     virksomhetsnummer
@@ -109,6 +110,7 @@ private fun hentOppgave(engine: TestApplicationEngine): BrukerAPI.Notifikasjon.O
                                 tekst
                                 merkelapp
                                 opprettetTidspunkt
+                                sorteringTidspunkt
                                 utgaattTidspunkt
                                 id
                                 virksomhet {
