@@ -19,6 +19,7 @@ jobs:
           - kafka-backup
           - skedulert-utgaatt
           - skedulert-harddelete
+          - skedulert-paaminnelse
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1
