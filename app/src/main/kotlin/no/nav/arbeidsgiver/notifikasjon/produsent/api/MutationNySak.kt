@@ -11,12 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -33,7 +28,7 @@ internal class MutationNySak(
         runtime.resolveSubtypes<NySakResultat>()
 
         runtime.wire("Mutation") {
-            coDataFetcher("nySak") { env ->
+            safeCoDataFetcher("nySak") { env ->
                 nySak(
                     context = env.notifikasjonContext(),
                     nySak = NySakInput(

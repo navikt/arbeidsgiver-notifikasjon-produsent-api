@@ -59,6 +59,9 @@ class UnhandledGraphQLExceptionError(
 
 fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
     fieldName: String,
+    internFeilHandler: (exception: Exception) -> DataFetcherResult<*> = { exception ->
+        handleUnexepctedError(exception, UnhandledGraphQLExceptionError(exception))
+    },
     fetcher: suspend (DataFetchingEnvironment) -> T,
 ) {
     dataFetcher(fieldName) { env ->
@@ -69,7 +72,7 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
             } catch (e: GraphqlErrorException) {
                 handleUnexepctedError(e, e)
             } catch (e: Exception) {
-                handleUnexepctedError(e, UnhandledGraphQLExceptionError(e))
+                internFeilHandler(e)
             }
         }
     }

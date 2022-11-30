@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
@@ -11,7 +10,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateKonkret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
@@ -35,7 +33,7 @@ internal class MutationNyOppgave(
         runtime.resolveSubtypes<NyOppgaveResultat>()
 
         runtime.wire("Mutation") {
-            coDataFetcher("nyOppgave") { env ->
+            safeCoDataFetcher("nyOppgave") { env ->
                 nyOppgave(
                     env.notifikasjonContext(),
                     env.getTypedArgument("nyOppgave"),
