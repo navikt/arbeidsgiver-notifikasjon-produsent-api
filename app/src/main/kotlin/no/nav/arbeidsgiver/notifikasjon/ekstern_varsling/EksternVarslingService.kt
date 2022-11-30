@@ -109,12 +109,12 @@ class EksternVarslingService(
 
     fun start(coroutineScope: CoroutineScope): Job {
         return coroutineScope.launch {
-//            launchProcessingLoop(
-//                "hard-delete",
-//                pauseAfterEach = Duration.ofMinutes(10)
-//            ) {
-//                eksternVarslingRepository.deleteScheduledHardDeletes()
-//            }
+            launchProcessingLoop(
+                "hard-delete",
+                pauseAfterEach = Duration.ofMinutes(10)
+            ) {
+                eksternVarslingRepository.deleteScheduledHardDeletes()
+            }
 
             launchProcessingLoop(
                 "release-locks",

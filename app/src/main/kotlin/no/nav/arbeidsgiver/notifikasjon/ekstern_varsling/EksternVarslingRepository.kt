@@ -26,6 +26,7 @@ import java.sql.ResultSet
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 class EksternVarslingRepository(
@@ -39,6 +40,7 @@ class EksternVarslingRepository(
         @Suppress("UNUSED_VARIABLE") val ignore: Unit = when (hendelse) {
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
@@ -53,7 +55,6 @@ class EksternVarslingRepository(
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
-            is PåminnelseOpprettet -> TODO()
         }
     }
 
@@ -72,6 +73,15 @@ class EksternVarslingRepository(
             produsentId = oppgaveOpprettet.produsentId,
             notifikasjonsId = oppgaveOpprettet.notifikasjonId,
             notifikasjonOpprettet = oppgaveOpprettet.opprettetTidspunkt,
+        )
+    }
+
+    private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
+        insertVarsler(
+            varsler = påminnelseOpprettet.eksterneVarsler,
+            produsentId = påminnelseOpprettet.produsentId,
+            notifikasjonsId = påminnelseOpprettet.notifikasjonId,
+            notifikasjonOpprettet = påminnelseOpprettet.opprettetTidpunkt.atOffset(ZoneOffset.UTC),
         )
     }
 
