@@ -23,7 +23,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
+          - 1337:5432
       zookeeper:
         image: docker.io/bitnami/zookeeper:latest
         ports:
@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - run: PGPASSWORD=postgres psql -U postgres -h localhost -p 5432 -f ./local-db-init.sql
+      - run: PGPASSWORD=postgres psql -U postgres -h localhost -p 1337 -f ./local-db-init.sql
 
       - uses: actions/setup-java@v1
         with:
