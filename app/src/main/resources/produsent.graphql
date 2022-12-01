@@ -229,7 +229,6 @@ union NySakResultat =
     | DuplikatGrupperingsid
     | UkjentProdusent
     | UkjentRolle
-    | InternFeil
 
 type NySakVellykket {
     id: ID!
@@ -1156,7 +1155,6 @@ union NyOppgaveResultat =
     | UkjentProdusent
     | UkjentRolle
     | UgyldigPaaminnelseTidspunkt
-    | InternFeil
 
 union NyBeskjedResultat =
     | NyBeskjedVellykket
@@ -1165,7 +1163,6 @@ union NyBeskjedResultat =
     | DuplikatEksternIdOgMerkelapp
     | UkjentProdusent
     | UkjentRolle
-    | InternFeil
 
 type NyBeskjedVellykket {
     id: ID!
@@ -1259,13 +1256,6 @@ type UgyldigPaaminnelseTidspunkt implements Error {
 Oppgitt informasjon samsvarer ikke med tidligere informasjon som er oppgitt.
 """
 type Konflikt implements Error {
-    feilmelding: String!
-}
-
-"""
-Det har skjedd en uforventet intern feil. Dette er nok vår skyld, skal helst ikke skje.
-"""
-type InternFeil implements Error {
     feilmelding: String!
 }
 

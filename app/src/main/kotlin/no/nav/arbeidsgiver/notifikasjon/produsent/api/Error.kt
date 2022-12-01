@@ -2,8 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import graphql.execution.DataFetcherResult
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLLogger
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
 internal sealed class Error {
@@ -114,23 +112,5 @@ internal sealed class Error {
     ):  Error(),
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat
 
-
-    @JsonTypeName("InternFeil")
-    data class InternFeil(
-        override val feilmelding: String
-    ) :
-        Error(),
-        MutationNySak.NySakResultat,
-        MutationNyBeskjed.NyBeskjedResultat,
-        MutationNyOppgave.NyOppgaveResultat {
-        companion object {
-            fun exceptionHandler(e: Exception): DataFetcherResult<Error> {
-                GraphQLLogger.log.error("Intern feil håndtert: {}", e.message, e)
-                return DataFetcherResult.newResult<Error>()
-                    .data(InternFeil(e.message ?: e.javaClass.canonicalName))
-                    .build()
-            }
-        }
-    }
 }
 
