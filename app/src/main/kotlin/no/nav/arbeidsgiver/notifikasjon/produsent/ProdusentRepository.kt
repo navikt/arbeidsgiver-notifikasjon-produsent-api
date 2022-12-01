@@ -19,7 +19,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
@@ -295,7 +294,7 @@ class ProdusentRepositoryImpl(
                 string(nyStatusSak.status.name)
                 nullableString(nyStatusSak.overstyrStatustekstMed)
                 nullableTimestamptz(nyStatusSak.oppgittTidspunkt)
-                timestamptz(nyStatusSak.mottattTidspunkt)
+                timestamp_with_timezone(nyStatusSak.mottattTidspunkt)
             }
         }
     }
@@ -331,7 +330,7 @@ class ProdusentRepositoryImpl(
                 WHERE id = ?
                 """
             ) {
-                timestamptz(softDelete.deletedAt)
+                timestamp_with_timezone(softDelete.deletedAt)
                 uuid(softDelete.aggregateId)
             }
            executeUpdate(
@@ -341,7 +340,7 @@ class ProdusentRepositoryImpl(
                 WHERE id = ?
                 """
             ) {
-                timestamptz(softDelete.deletedAt)
+                timestamp_with_timezone(softDelete.deletedAt)
                 uuid(softDelete.aggregateId)
             }
         }
@@ -397,7 +396,7 @@ class ProdusentRepositoryImpl(
                 nullableString(beskjedOpprettet.grupperingsid)
                 string(beskjedOpprettet.lenke)
                 string(beskjedOpprettet.eksternId)
-                timestamptz(beskjedOpprettet.opprettetTidspunkt)
+                timestamp_with_timezone(beskjedOpprettet.opprettetTidspunkt)
                 string(beskjedOpprettet.virksomhetsnummer)
             }
 
@@ -450,7 +449,7 @@ class ProdusentRepositoryImpl(
                 nullableString(oppgaveOpprettet.grupperingsid)
                 string(oppgaveOpprettet.lenke)
                 string(oppgaveOpprettet.eksternId)
-                timestamptz(oppgaveOpprettet.opprettetTidspunkt)
+                timestamp_with_timezone(oppgaveOpprettet.opprettetTidspunkt)
                 string(oppgaveOpprettet.virksomhetsnummer)
                 nullableDate(oppgaveOpprettet.frist)
             }

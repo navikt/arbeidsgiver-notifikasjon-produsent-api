@@ -58,7 +58,7 @@ class KafkaReaperModelImpl(
                         ON CONFLICT DO NOTHING
                     """) {
                         uuid(hendelse.aggregateId)
-                        timestamptz(OffsetDateTime.now())
+                        timestamp_with_timezone(OffsetDateTime.now())
                 }
             }
         }
