@@ -46,6 +46,10 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
                 uuid("1"),
                 uuid("0"),
             )
+            val harPåminnelse = response1.getTypedContent<List<OffsetDateTime?>>("$.notifikasjoner.notifikasjoner[*].paaminnelseTidspunkt")
+                .map { it != null }
+            harPåminnelse shouldBe listOf(false, false, false)
+
             val klikketPaa = response1.getTypedContent<List<Boolean>>("$.notifikasjoner.notifikasjoner[*].brukerKlikk.klikketPaa")
             klikketPaa shouldBe listOf(
                 false,
@@ -70,6 +74,9 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
                 false,
                 false,
             )
+            val harPåminnelse = response2.getTypedContent<List<Any?>>("$.notifikasjoner.notifikasjoner[*].paaminnelseTidspunkt")
+                .map { it != null }
+            harPåminnelse shouldBe listOf(false, true, false)
         }
     }
 })
@@ -139,6 +146,7 @@ private fun TestApplicationEngine.hentOppgaver(): TestApplicationResponse =
                                     klikketPaa 
                                 }
                                 sorteringTidspunkt
+                                paaminnelseTidspunkt
                                 id
                             }
                         }
