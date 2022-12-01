@@ -10,10 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateKonkret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -33,7 +30,7 @@ internal class MutationNyOppgave(
         runtime.resolveSubtypes<NyOppgaveResultat>()
 
         runtime.wire("Mutation") {
-            safeCoDataFetcher("nyOppgave") { env ->
+            coDataFetcher("nyOppgave") { env ->
                 nyOppgave(
                     env.notifikasjonContext(),
                     env.getTypedArgument("nyOppgave"),

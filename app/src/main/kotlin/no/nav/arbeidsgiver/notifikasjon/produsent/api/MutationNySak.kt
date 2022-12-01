@@ -28,7 +28,7 @@ internal class MutationNySak(
         runtime.resolveSubtypes<NySakResultat>()
 
         runtime.wire("Mutation") {
-            safeCoDataFetcher("nySak") { env ->
+            coDataFetcher("nySak") { env ->
                 nySak(
                     context = env.notifikasjonContext(),
                     nySak = NySakInput(

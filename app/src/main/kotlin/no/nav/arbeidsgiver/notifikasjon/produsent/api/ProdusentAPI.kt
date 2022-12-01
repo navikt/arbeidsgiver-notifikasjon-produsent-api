@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import graphql.schema.DataFetchingEnvironment
-import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
@@ -58,8 +57,3 @@ object ProdusentAPI {
         )
     }
 }
-
-fun <T> TypeRuntimeWiring.Builder.safeCoDataFetcher(
-    fieldName: String,
-    fetcher: suspend (DataFetchingEnvironment) -> T,
-) = coDataFetcher(fieldName, Error.InternFeil::exceptionHandler, fetcher)

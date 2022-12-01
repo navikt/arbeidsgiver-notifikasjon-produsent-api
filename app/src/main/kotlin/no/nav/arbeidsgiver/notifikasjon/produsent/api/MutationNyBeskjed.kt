@@ -5,10 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
@@ -23,7 +20,7 @@ internal class MutationNyBeskjed(
     fun wire(runtime: RuntimeWiring.Builder) {
         runtime.resolveSubtypes<NyBeskjedResultat>()
         runtime.wire("Mutation") {
-            safeCoDataFetcher("nyBeskjed") { env ->
+            coDataFetcher("nyBeskjed") { env ->
                 nyBeskjed(
                     env.notifikasjonContext(),
                     env.getTypedArgument("nyBeskjed"),

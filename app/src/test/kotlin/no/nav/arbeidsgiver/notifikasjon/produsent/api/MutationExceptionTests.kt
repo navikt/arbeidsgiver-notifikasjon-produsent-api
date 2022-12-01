@@ -2,17 +2,14 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
-import io.kotest.matchers.collections.beEmpty
-import io.kotest.matchers.should
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.instanceOf
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.string.shouldContainIgnoringCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
@@ -28,8 +25,9 @@ class MutationExceptionTests : DescribeSpec({
         produsentRepository = produsentRepository,
     )
 
+    //language=GraphQL
     val gyldigeMutations = listOf(
-        "nyBeskjed" to """mutation {
+        """mutation {
             nyBeskjed(nyBeskjed: {
                 mottaker: {
                     naermesteLeder: {
@@ -61,7 +59,7 @@ class MutationExceptionTests : DescribeSpec({
             }
         }""",
 
-        "nyOppgave" to """mutation { 
+        """mutation { 
             nyOppgave(nyOppgave: {
                 mottaker: {
                     naermesteLeder: {
@@ -93,7 +91,7 @@ class MutationExceptionTests : DescribeSpec({
             }
         }""",
 
-        "nySak" to """mutation {
+        """mutation {
                 nySak(
                     virksomhetsnummer: "1"
                     merkelapp: "tag"
@@ -122,12 +120,12 @@ class MutationExceptionTests : DescribeSpec({
     )
 
     describe("robusthet ved intern feil") {
-        withData(gyldigeMutations) { (name, query) ->
-            coEvery { kafkaProducer.send(any()) }.throws(RuntimeException("woops!"))
+        withData(gyldigeMutations) { query ->
+            val ex = RuntimeException("woops!")
+            coEvery { kafkaProducer.send(any()) }.throws(ex)
             val response = engine.produsentApi(query)
-            response.getGraphqlErrors() should beEmpty()
-            val err = response.getTypedContent<Error>(name)
-            err shouldBe instanceOf<Error.InternFeil>()
+            response.getGraphqlErrors() shouldHaveSize 1
+            response.getGraphqlErrors().first().message shouldContainIgnoringCase ex.message!!
         }
     }
 })
