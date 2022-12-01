@@ -1,9 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
-import graphql.ErrorClassification
-import graphql.ErrorType
-import graphql.GraphQLError
-import graphql.language.SourceLocation
+import graphql.GraphqlErrorException
 import graphql.schema.*
 import graphql.schema.idl.SchemaDirectiveWiring
 import graphql.schema.idl.SchemaDirectiveWiringEnvironment
@@ -211,12 +208,4 @@ private val VALIDATORS = listOf(
     }
 ).associateBy { it.name }
 
-/**
- * lånt fra https://github.com/graphql-java/graphql-java/issues/1022#issuecomment-723369519
- * workaround for mismatch mellom kotlin og hvordan graphql eksponerer custom feil
- */
-class ValideringsFeil(@JvmField override val message: String) : RuntimeException(message), GraphQLError {
-    override fun getMessage(): String? = super.message
-    override fun getLocations(): MutableList<SourceLocation> = mutableListOf()
-    override fun getErrorType(): ErrorClassification = ErrorType.DataFetchingException
-}
+class ValideringsFeil(message: String): GraphqlErrorException(newErrorException().message(message))
