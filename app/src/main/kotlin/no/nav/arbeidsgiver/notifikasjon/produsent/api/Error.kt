@@ -111,5 +111,6 @@ internal sealed class Error {
         override val feilmelding: String,
     ):  Error(),
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat
+
 }
 

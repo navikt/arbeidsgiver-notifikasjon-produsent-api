@@ -3,10 +3,12 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation
-import graphql.*
+import graphql.ExecutionInput
+import graphql.GraphQL
 import graphql.GraphQL.newGraphQL
+import graphql.GraphQLError
+import graphql.GraphqlErrorException
 import graphql.execution.DataFetcherResult
-import graphql.language.SourceLocation
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
@@ -42,19 +44,14 @@ interface WithCoroutineScope {
 }
 
 class UnhandledGraphQLExceptionError(
-    private val exception: Exception
-): GraphQLError {
-    override fun getErrorType(): ErrorClassification {
-        return ErrorType.DataFetchingException
-    }
-
-    override fun getLocations(): MutableList<SourceLocation> {
-        return mutableListOf()
-    }
-
-    override fun getMessage(): String {
-        return "unhandled exception ${exception.javaClass.canonicalName}: ${exception.message ?: ""}"
-    }
+    exception: Exception,
+    fieldName: String,
+): GraphqlErrorException(
+    newErrorException()
+        .message(exception.message)
+        .path(listOf(fieldName))
+) {
+    override val message: String = "unhandled exception ${exception.javaClass.canonicalName}: ${exception.message ?: ""}"
 }
 
 fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
@@ -67,15 +64,15 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
             try {
                 fetcher(env)
             } catch (e: GraphqlErrorException) {
-                handleUnexepctedError(e, e)
+                handleUnexpectedError(e, e)
             } catch (e: Exception) {
-                handleUnexepctedError(e, UnhandledGraphQLExceptionError(e))
+                handleUnexpectedError(e, UnhandledGraphQLExceptionError(e, fieldName))
             }
         }
     }
 }
 
-fun handleUnexepctedError(exception: Exception, error: GraphQLError): DataFetcherResult<*> {
+fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetcherResult<*> {
     GraphQLLogger.log.error(
         "unhandled exception while executing coDataFetcher: {}",
         exception.javaClass.canonicalName,
