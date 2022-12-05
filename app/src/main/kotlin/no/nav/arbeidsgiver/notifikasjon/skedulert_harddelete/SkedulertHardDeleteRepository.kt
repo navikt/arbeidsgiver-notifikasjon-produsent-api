@@ -58,7 +58,7 @@ class SkedulertHardDeleteRepository(
             limit 100
         """,
             setup = {
-                timestamp_utc(tilOgMed)
+                timestamp_without_timezone_utc(tilOgMed)
             },
             transform = {
                 this.toSkedulertHardDelete()
@@ -243,8 +243,8 @@ class SkedulertHardDeleteRepository(
             """
         ) {
             uuid(aggregateId)
-            timestamp_utc(scheduledTime.happensAt())
-            timestamp_utc(scheduledTime.baseTime)
+            timestamp_without_timezone_utc(scheduledTime.happensAt())
+            timestamp_without_timezone_utc(scheduledTime.baseTime)
             nullableString(scheduledTime.omOrNull()?.toString())
             nullableString(scheduledTime.denOrNull()?.toString())
         }

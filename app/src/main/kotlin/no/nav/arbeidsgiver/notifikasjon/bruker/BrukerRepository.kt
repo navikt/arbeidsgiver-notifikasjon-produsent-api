@@ -28,6 +28,7 @@ import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 interface BrukerRepository {
@@ -512,7 +513,7 @@ class BrukerRepositoryImpl(
             WHERE id = ?
         """
         ) {
-            timestamptz(utgåttHendelse.utgaattTidspunkt)
+            timestamp_with_timezone(utgåttHendelse.utgaattTidspunkt)
             uuid(utgåttHendelse.notifikasjonId)
         }
     }
@@ -556,7 +557,7 @@ class BrukerRepositoryImpl(
                 nullableString(beskjedOpprettet.grupperingsid)
                 string(beskjedOpprettet.lenke)
                 string(beskjedOpprettet.eksternId)
-                timestamptz(beskjedOpprettet.opprettetTidspunkt)
+                timestamp_with_timezone(beskjedOpprettet.opprettetTidspunkt)
                 string(beskjedOpprettet.virksomhetsnummer)
             }
 
@@ -635,7 +636,7 @@ class BrukerRepositoryImpl(
                 uuid(nyStatusSak.sakId)
                 string(nyStatusSak.status.name)
                 nullableString(nyStatusSak.overstyrStatustekstMed)
-                timestamptz(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
+                timestamp_with_timezone(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
             }
 
             executeUpdate("""
@@ -672,7 +673,7 @@ class BrukerRepositoryImpl(
                     where id = ?
                 """
             ) {
-                timestamp_utc(påminnelseOpprettet.tidspunkt.påminnelseTidspunkt)
+                timestamp_with_timezone(påminnelseOpprettet.tidspunkt.påminnelseTidspunkt.atOffset(ZoneOffset.UTC))
                 uuid(påminnelseOpprettet.notifikasjonId)
             }
             executeUpdate("delete from brukerklikk where notifikasjonsid = ?;") {
@@ -803,7 +804,7 @@ class BrukerRepositoryImpl(
                 nullableString(oppgaveOpprettet.grupperingsid)
                 string(oppgaveOpprettet.lenke)
                 string(oppgaveOpprettet.eksternId)
-                timestamptz(oppgaveOpprettet.opprettetTidspunkt)
+                timestamp_with_timezone(oppgaveOpprettet.opprettetTidspunkt)
                 string(oppgaveOpprettet.virksomhetsnummer)
                 nullableDate(oppgaveOpprettet.frist)
             }
