@@ -105,6 +105,24 @@ val FRITAKAGP = Produsent(
     )
 )
 
+val HELSEARBEIDSGIVER = Produsent(
+    id = "helsearbeidsgiver",
+    accessPolicy = basedOnEnv(
+        prod = { listOf(
+            //"prod-gcp:helsearbeidsgiver:im-notifikasjon",
+        ) },
+        other = { listOf(
+            "dev-gcp:helsearbeidsgiver:im-notifikasjon",
+        ) },
+    ),
+    tillatteMerkelapper = listOf(
+        "Inntektsmelding",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+    )
+)
+
 
 val PRODUSENT_LIST =
     listOf(
@@ -113,6 +131,7 @@ val PRODUSENT_LIST =
         ESYFO,
         PERMITTERING,
         FRITAKAGP,
+        HELSEARBEIDSGIVER,
     )
         .filter { it.accessPolicy.isNotEmpty() }
 
