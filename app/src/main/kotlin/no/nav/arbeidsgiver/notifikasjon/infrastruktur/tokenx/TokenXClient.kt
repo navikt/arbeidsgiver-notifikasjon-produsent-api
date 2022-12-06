@@ -14,6 +14,7 @@ import com.nimbusds.jwt.SignedJWT
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
@@ -24,6 +25,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.getAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import org.apache.http.ConnectionClosedException
 import java.time.Instant
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
@@ -35,6 +37,13 @@ fun defaultHttpClient() = HttpClient(Apache) {
     }
     install(HttpClientMetricsFeature) {
         registry = Metrics.meterRegistry
+    }
+    install(HttpRequestRetry) {
+        maxRetries = 3
+        retryOnExceptionIf { _, cause ->
+            cause is ConnectionClosedException
+        }
+        delayMillis { 250L }
     }
 }
 

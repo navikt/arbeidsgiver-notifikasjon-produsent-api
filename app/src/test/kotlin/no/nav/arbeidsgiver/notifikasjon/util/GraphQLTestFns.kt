@@ -53,6 +53,7 @@ fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
         throw NullPointerException("content is null. status:${status()}")
     }
     val tree = laxObjectMapper.readTree(this.content!!)
+    logger().info("content: $tree")
     val errors = tree.get("errors")
     return if (errors == null) emptyList() else laxObjectMapper.convertValue(errors)
 }

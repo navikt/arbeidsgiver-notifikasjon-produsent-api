@@ -58,7 +58,7 @@ class Database private constructor(
 
         fun config(name: String) = Config(
             host = System.getenv("DB_HOST") ?: "localhost",
-            port = System.getenv("DB_PORT") ?: "5432",
+            port = System.getenv("DB_PORT") ?: "1337",
             username = System.getenv("DB_USERNAME") ?: "postgres",
             password = System.getenv("DB_PASSWORD") ?: "postgres",
             database = System.getenv("DB_DATABASE") ?: name.replace('_', '-'),
@@ -269,11 +269,11 @@ class ParameterSetters(
      * all timestamp values must be `truncatedTo` micros to avoid rounding/precision errors when writing and reading
      **/
     fun nullableTimestamptz(value: OffsetDateTime?) = preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
-    fun timestamp_utc(value: OffsetDateTime) = timestamp(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
-    fun timestamp_utc(value: Instant) = timestamp(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
-    fun timestamp(value: LocalDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
-    fun nullableTimestamp(value: LocalDateTime?) = preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
-    fun timestamptz(value: OffsetDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+    fun timestamp_without_timezone_utc(value: OffsetDateTime) = timestamp_without_timezone(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
+    fun timestamp_without_timezone_utc(value: Instant) = timestamp_without_timezone(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
+    fun timestamp_without_timezone(value: LocalDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+    fun timestamp_without_timezone_nullable(value: LocalDateTime?) = preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
+    fun timestamp_with_timezone(value: OffsetDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
     fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
 

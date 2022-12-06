@@ -21,6 +21,8 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontakti
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -216,7 +218,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         val varsel2 = repository.findVarsel(id2)
 
         it("should be utført") {
-            varsel2 shouldBe instanceOf(EksternVarselTilstand.Utført::class)
+            varsel2 shouldBe instanceOf(EksternVarselTilstand.Sendt::class)
         }
 
         repository.markerSomKvittertAndDeleteJob(id2)
@@ -262,7 +264,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         val varsel2 = repository.findVarsel(id2)
 
         it("should be utført") {
-            varsel2 shouldBe instanceOf(EksternVarselTilstand.Utført::class)
+            varsel2 shouldBe instanceOf(EksternVarselTilstand.Sendt::class)
         }
 
         repository.markerSomKvittertAndDeleteJob(id2)
@@ -302,4 +304,131 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             }
         }
     }
+
+    describe("Oppgave med påminnelse fører ikke til varsel nå") {
+        val varselId = UUID.randomUUID()
+        val nyOppgave = HendelseModel.OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = UUID.randomUUID(),
+            hendelseId = UUID.randomUUID(),
+            produsentId = "fager",
+            kildeAppNavn = "local:local:local",
+            merkelapp = "merkelapp",
+            eksternId = "ekstern-id",
+            mottakere = listOf(AltinnMottaker(
+                serviceCode = "",
+                serviceEdition = "",
+                virksomhetsnummer = "",
+            )),
+            tekst = "tekst",
+            grupperingsid = null,
+            lenke = "#",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+01"),
+            eksterneVarsler = listOf(),
+            hardDelete = null,
+            frist = null,
+            påminnelse = HendelseModel.Påminnelse(
+                tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+                    LocalDateTime.parse("2020-01-01T01:01"),
+                    Instant.parse("2020-01-01T01:01:01.00Z")
+                ),
+                eksterneVarsler = listOf(
+                    SmsVarselKontaktinfo(
+                        varselId = varselId,
+                        tlfnr = "1234",
+                        fnrEllerOrgnr = "32123",
+                        smsTekst = "tekst",
+                        sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                        sendeTidspunkt = null,
+                    )
+                )
+            ),
+        ).also {
+            repository.oppdaterModellEtterHendelse(it)
+        }
+
+        it("ikke registret") {
+            repository.findVarsel(varselId) shouldBe null
+        }
+    }
+    describe("varsler i påminnelse blir registrert") {
+        val varselId = UUID.randomUUID()
+        val notifikasjonId = UUID.randomUUID()
+        HendelseModel.PåminnelseOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = notifikasjonId,
+            hendelseId = UUID.randomUUID(),
+            produsentId = "fager",
+            kildeAppNavn = "local:local:local",
+            opprettetTidpunkt = Instant.parse("2020-01-01T01:01:01.00Z"),
+            oppgaveOpprettetTidspunkt = Instant.parse("2020-01-01T01:01:01.00Z"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = varselId,
+                    tlfnr = "1234",
+                    fnrEllerOrgnr = "32123",
+                    smsTekst = "tekst",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null,
+                )
+            ),
+            frist = null,
+            tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+                LocalDateTime.parse("2020-01-01T01:01"),
+                Instant.parse("2020-01-01T01:01:01.00Z")
+            ),
+        ).also {
+            repository.oppdaterModellEtterHendelse(it)
+        }
+
+        it("varsel registrert") {
+            repository.findVarsel(varselId) shouldBe EksternVarselTilstand.Ny(
+                data = EksternVarselStatiskData(
+                    varselId = varselId,
+                    notifikasjonId = notifikasjonId,
+                    produsentId = "fager",
+                    eksternVarsel = EksternVarsel.Sms(
+                        fnrEllerOrgnr = "32123",
+                        sendeVindu = EksterntVarselSendingsvindu.LØPENDE,
+                        sendeTidspunkt = null,
+                        mobilnummer = "1234",
+                        tekst = "tekst",
+                    ),
+                )
+            )
+        }
+    }
+
+    describe("Hard delete event for oppgave") {
+        val eksterntVarselVellykket = HendelseModel.EksterntVarselVellykket(
+            virksomhetsnummer = "42",
+            notifikasjonId = oppgaveOpprettet.aggregateId,
+            hendelseId = UUID.randomUUID(),
+            produsentId = "42",
+            kildeAppNavn = "test:app",
+            varselId = oppgaveOpprettet.eksterneVarsler[0].varselId,
+            råRespons = NullNode.instance
+        )
+        val hardDelete = HendelseModel.HardDelete(
+            virksomhetsnummer = "42",
+            aggregateId = oppgaveOpprettet.aggregateId,
+            hendelseId = UUID.randomUUID(),
+            produsentId = "42",
+            kildeAppNavn = "test:app",
+            deletedAt = OffsetDateTime.now()
+        )
+
+        repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
+        repository.oppdaterModellEtterHendelse(eksterntVarselVellykket)
+        repository.oppdaterModellEtterHendelse(hardDelete)
+        repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
+        repository.oppdaterModellEtterHendelse(eksterntVarselVellykket)
+        repository.oppdaterModellEtterHendelse(hardDelete)
+
+        it("findVarsel feiler ikke") {
+            repository.findVarsel(eksterntVarselVellykket.varselId) shouldNot beNull()
+        }
+    }
+
+
 })

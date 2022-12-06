@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import java.time.Instant
@@ -13,6 +14,7 @@ class SkedulertPåminnelseService(
     private val hendelseProdusent: HendelseProdusent
 ) {
     private val repository = SkedulertPåminnelseRepository()
+    private val log = logger()
 
     suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
         @Suppress("UNUSED_VARIABLE")
@@ -22,6 +24,7 @@ class SkedulertPåminnelseService(
                 if (hendelse.påminnelse == null) {
                     return@run
                 }
+                log.debug("putter inn påminnelse. oppgaveId=${hendelse.notifikasjonId} tidspunkt=${hendelse.påminnelse.tidspunkt}")
                 repository.add(
                     SkedulertPåminnelseRepository.SkedulertPåminnelse(
                         oppgaveId = hendelse.notifikasjonId,
@@ -54,7 +57,7 @@ class SkedulertPåminnelseService(
         val skedulertePåminnelser = repository.hentOgFjernAlleAktuellePåminnelser(now)
         /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
         skedulertePåminnelser.forEach { skedulert ->
-            // TODO: send PåminnelseOpprettet event
+            log.debug("sender skedulert påminnelse for oppgaveId=${skedulert.oppgaveId}")
             hendelseProdusent.send(HendelseModel.PåminnelseOpprettet(
                 virksomhetsnummer = skedulert.virksomhetsnummer,
                 notifikasjonId = skedulert.oppgaveId,

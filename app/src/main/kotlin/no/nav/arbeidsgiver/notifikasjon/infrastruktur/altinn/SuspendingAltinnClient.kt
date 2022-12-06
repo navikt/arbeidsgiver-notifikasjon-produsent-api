@@ -21,6 +21,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXPlugin
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
+import org.apache.http.ConnectionClosedException
 
 
 class SuspendingAltinnClient(
@@ -52,6 +53,13 @@ class SuspendingAltinnClient(
         install(TokenXPlugin) {
             audience = altinnProxyAudience
             tokenXClient = this@SuspendingAltinnClient.tokenXClient
+        }
+        install(HttpRequestRetry) {
+            maxRetries = 3
+            retryOnExceptionIf { _, cause ->
+                cause is ConnectionClosedException
+            }
+            delayMillis { 250L }
         }
     }
 

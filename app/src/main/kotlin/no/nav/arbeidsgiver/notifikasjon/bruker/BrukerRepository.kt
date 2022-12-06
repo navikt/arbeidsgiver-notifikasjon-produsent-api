@@ -28,6 +28,7 @@ import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 interface BrukerRepository {
@@ -157,7 +158,8 @@ class BrukerRepositoryImpl(
             left outer join brukerklikk as klikk on
                 klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
-            order by opprettet_tidspunkt desc
+            order by 
+                coalesce(paaminnelse_tidspunkt, opprettet_tidspunkt) desc
             limit 200
             """,
             {
@@ -190,6 +192,7 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     utgaattTidspunkt = getObject("utgaatt_tidspunkt", OffsetDateTime::class.java),
+                    paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java),
                     frist = getObject("frist", LocalDate::class.java),
                     id = getObject("id", UUID::class.java),
                     klikketPaa = getBoolean("klikketPaa")
@@ -467,7 +470,7 @@ class BrukerRepositoryImpl(
             is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
-            is PåminnelseOpprettet -> TODO()
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
         }
     }
 
@@ -510,7 +513,7 @@ class BrukerRepositoryImpl(
             WHERE id = ?
         """
         ) {
-            timestamptz(utgåttHendelse.utgaattTidspunkt)
+            timestamp_with_timezone(utgåttHendelse.utgaattTidspunkt)
             uuid(utgåttHendelse.notifikasjonId)
         }
     }
@@ -554,7 +557,7 @@ class BrukerRepositoryImpl(
                 nullableString(beskjedOpprettet.grupperingsid)
                 string(beskjedOpprettet.lenke)
                 string(beskjedOpprettet.eksternId)
-                timestamptz(beskjedOpprettet.opprettetTidspunkt)
+                timestamp_with_timezone(beskjedOpprettet.opprettetTidspunkt)
                 string(beskjedOpprettet.virksomhetsnummer)
             }
 
@@ -633,7 +636,7 @@ class BrukerRepositoryImpl(
                 uuid(nyStatusSak.sakId)
                 string(nyStatusSak.status.name)
                 nullableString(nyStatusSak.overstyrStatustekstMed)
-                timestamptz(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
+                timestamp_with_timezone(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
             }
 
             executeUpdate("""
@@ -658,6 +661,24 @@ class BrukerRepositoryImpl(
                 }
             }
 
+        }
+    }
+
+    private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
+        database.transaction {
+            executeUpdate(
+                """
+                    update notifikasjon
+                    set paaminnelse_tidspunkt = ?
+                    where id = ?
+                """
+            ) {
+                timestamp_with_timezone(påminnelseOpprettet.tidspunkt.påminnelseTidspunkt.atOffset(ZoneOffset.UTC))
+                uuid(påminnelseOpprettet.notifikasjonId)
+            }
+            executeUpdate("delete from brukerklikk where notifikasjonsid = ?;") {
+                uuid(påminnelseOpprettet.notifikasjonId)
+            }
         }
     }
 
@@ -783,7 +804,7 @@ class BrukerRepositoryImpl(
                 nullableString(oppgaveOpprettet.grupperingsid)
                 string(oppgaveOpprettet.lenke)
                 string(oppgaveOpprettet.eksternId)
-                timestamptz(oppgaveOpprettet.opprettetTidspunkt)
+                timestamp_with_timezone(oppgaveOpprettet.opprettetTidspunkt)
                 string(oppgaveOpprettet.virksomhetsnummer)
                 nullableDate(oppgaveOpprettet.frist)
             }

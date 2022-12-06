@@ -22,8 +22,11 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import java.sql.ResultSet
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 class EksternVarslingRepository(
@@ -37,6 +40,7 @@ class EksternVarslingRepository(
         @Suppress("UNUSED_VARIABLE") val ignore: Unit = when (hendelse) {
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
@@ -51,7 +55,6 @@ class EksternVarslingRepository(
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
-            is PåminnelseOpprettet -> TODO()
         }
     }
 
@@ -60,6 +63,7 @@ class EksternVarslingRepository(
             varsler = beskjedOpprettet.eksterneVarsler,
             produsentId = beskjedOpprettet.produsentId,
             notifikasjonsId = beskjedOpprettet.notifikasjonId,
+            notifikasjonOpprettet = beskjedOpprettet.opprettetTidspunkt,
         )
     }
 
@@ -68,37 +72,47 @@ class EksternVarslingRepository(
             varsler = oppgaveOpprettet.eksterneVarsler,
             produsentId = oppgaveOpprettet.produsentId,
             notifikasjonsId = oppgaveOpprettet.notifikasjonId,
+            notifikasjonOpprettet = oppgaveOpprettet.opprettetTidspunkt,
+        )
+    }
+
+    private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
+        insertVarsler(
+            varsler = påminnelseOpprettet.eksterneVarsler,
+            produsentId = påminnelseOpprettet.produsentId,
+            notifikasjonsId = påminnelseOpprettet.notifikasjonId,
+            notifikasjonOpprettet = påminnelseOpprettet.opprettetTidpunkt.atOffset(ZoneOffset.UTC),
         )
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
-        oppdaterUtfall(eksterntVarselFeilet.varselId, eksterntVarselFeilet.råRespons)
+        oppdaterUtfall(eksterntVarselFeilet.varselId, SendeStatus.FEIL, eksterntVarselFeilet.råRespons)
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: EksterntVarselVellykket) {
-        oppdaterUtfall(eksterntVarselVellykket.varselId, eksterntVarselVellykket.råRespons)
+        oppdaterUtfall(eksterntVarselVellykket.varselId, SendeStatus.OK, eksterntVarselVellykket.råRespons)
     }
 
-    private suspend fun oppdaterUtfall(varselId: UUID, råRespons: JsonNode) {
+    private suspend fun oppdaterUtfall(varselId: UUID, sendeStatus: SendeStatus, råRespons: JsonNode) {
         database.nonTransactionalExecuteUpdate("""
             update ekstern_varsel_kontaktinfo 
             set 
                 altinn_response = ?::jsonb,
-                state = '${EksterntVarselTilstand.KVITTERT}' 
+                state = '${EksterntVarselTilstand.KVITTERT}',
+                sende_status = ?::status
             where
                 varsel_id = ? 
-                and state <> '${EksterntVarselTilstand.KVITTERT}'
         """) {
             jsonb(råRespons)
+            string(sendeStatus.toString())
             uuid(varselId)
         }
     }
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
         database.nonTransactionalExecuteUpdate("""
-            update ekstern_varsel_kontaktinfo
-            set hard_deleted = true
-            where notifikasjon_id = ?
+            insert into hard_delete (notifikasjon_id) values (?)
+            on conflict do nothing
         """) {
             uuid(hardDelete.aggregateId)
         }
@@ -107,7 +121,8 @@ class EksternVarslingRepository(
     suspend fun deleteScheduledHardDeletes() {
         database.nonTransactionalExecuteUpdate("""
             delete from ekstern_varsel_kontaktinfo
-            where hard_deleted and state = '${EksterntVarselTilstand.KVITTERT}'
+            where state = '${EksterntVarselTilstand.KVITTERT}'
+            and notifikasjon_id in (select notifikasjon_id from hard_delete)
         """)
     }
 
@@ -115,37 +130,56 @@ class EksternVarslingRepository(
         varsler: List<EksterntVarsel>,
         produsentId: String,
         notifikasjonsId: UUID,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         /* Rewrite to batch insert? */
         database.transaction {
+            if (isHardDeleted(notifikasjonsId)) {
+                return@transaction
+            }
             for (varsel in varsler) {
                 putOnJobQueue(varsel.varselId)
                 when (varsel) {
                     is SmsVarselKontaktinfo -> insertSmsVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId
+                        notifikasjonsId = notifikasjonsId,
+                        notifikasjonOpprettet = notifikasjonOpprettet,
                     )
                     is EpostVarselKontaktinfo -> insertEpostVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId
+                        notifikasjonsId = notifikasjonsId,
+                        notifikasjonOpprettet = notifikasjonOpprettet,
                     )
                 }
             }
         }
     }
 
+    private fun Transaction.isHardDeleted(notifikasjonsId: UUID) = executeQuery(
+            """
+            select 1 from hard_delete where notifikasjon_id = ?
+            """,
+            {
+                uuid(notifikasjonsId)
+            },
+            { true }
+        )
+            .firstOrNull() ?: false
+
     private fun Transaction.insertSmsVarsel(
         varsel: SmsVarselKontaktinfo,
         notifikasjonsId: UUID,
         produsentId: String,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate("""
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
                 notifikasjon_id,
+                notifikasjon_opprettet,
                 produsent_id,
                 varsel_type,
                 tlfnr,
@@ -159,6 +193,7 @@ class EksternVarslingRepository(
             (
                 ?, /* varsel_id */
                 ?, /* notifikasjon_id */
+                ?, /* notifikasjon_opprettet */
                 ?, /* produsent_id */
                 'SMS',
                 ?, /* tlfnr */
@@ -172,12 +207,13 @@ class EksternVarslingRepository(
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
+            timestamp_without_timezone_utc(notifikasjonOpprettet)
             string(produsentId)
             string(varsel.tlfnr)
             string(varsel.fnrEllerOrgnr)
             string(varsel.smsTekst)
             string(varsel.sendevindu.toString())
-            nullableTimestamp(varsel.sendeTidspunkt)
+            timestamp_without_timezone_nullable(varsel.sendeTidspunkt)
         }
     }
 
@@ -185,12 +221,14 @@ class EksternVarslingRepository(
         varsel: EpostVarselKontaktinfo,
         notifikasjonsId: UUID,
         produsentId: String,
+        notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate("""
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
                 notifikasjon_id,
+                notifikasjon_opprettet,
                 produsent_id,
                 varsel_type,
                 epost_adresse,
@@ -205,6 +243,7 @@ class EksternVarslingRepository(
             (
                 ?, /* varsel_id */
                 ?, /* notifikasjon_id */
+                ?, /* notifikasjon_opprettet */
                 ?, /* produsent_id */
                 'EMAIL',
                 ?, /* epost_adresse */
@@ -219,13 +258,14 @@ class EksternVarslingRepository(
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
+            timestamp_without_timezone_utc(notifikasjonOpprettet)
             string(produsentId)
             string(varsel.epostAddr)
             string(varsel.fnrEllerOrgnr)
             string(varsel.tittel)
             string(varsel.htmlBody)
             string(varsel.sendevindu.toString())
-            nullableTimestamp(varsel.sendeTidspunkt)
+            timestamp_without_timezone_nullable(varsel.sendeTidspunkt)
         }
     }
 
@@ -358,37 +398,35 @@ class EksternVarslingRepository(
                         else -> throw Error("Ukjent varsel_type '$varselType'")
                     }
                 )
-                val state = getString("state")
 
-                val response = when (state) {
-                    EksterntVarselTilstand.NY.toString() -> null
-                    EksterntVarselTilstand.SENDT.toString(),
-                    EksterntVarselTilstand.KVITTERT.toString(),
-                    ->
-                        when (val sendeStatus = getString("sende_status")) {
-                            "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
-                                rå = laxObjectMapper.readTree(getString("altinn_response")),
-                            )
-                            "FEIL" -> AltinnVarselKlient.AltinnResponse.Feil(
-                                rå = laxObjectMapper.readTree(getString("altinn_response")),
-                                feilkode = getString("altinn_feilkode"),
-                                feilmelding = getString("feilmelding"),
-                            )
-                            else -> throw Error("ukjent sende_status '$sendeStatus'")
-                        }
-                    else -> throw Error("ukjent tilstand '$state'")
-                }
+                when (val state = getString("state")) {
+                    EksterntVarselTilstand.NY.toString() ->
+                        EksternVarselTilstand.Ny(data)
 
-                when (state) {
-                    EksterntVarselTilstand.NY.toString() -> EksternVarselTilstand.Ny(data)
                     EksterntVarselTilstand.SENDT.toString() ->
-                        EksternVarselTilstand.Utført(data, response!!) // todo rewrite to don't use !!
+                        EksternVarselTilstand.Sendt(data, altinnResponse())
+
                     EksterntVarselTilstand.KVITTERT.toString() ->
-                        EksternVarselTilstand.Kvittert(data, response!!) // todo rewrite to don't use !!
+                        EksternVarselTilstand.Kvittert(data, altinnResponse())
+
                     else -> throw Error("Ukjent tilstand '$state'")
                 }
             })
             .firstOrNull()
+    }
+
+    private fun ResultSet.altinnResponse() = when (val sendeStatus = getString("sende_status")) {
+        "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
+            rå = laxObjectMapper.readTree(getString("altinn_response")),
+        )
+
+        "FEIL" -> AltinnVarselKlient.AltinnResponse.Feil(
+            rå = laxObjectMapper.readTree(getString("altinn_response")),
+            feilkode = getString("altinn_feilkode"),
+            feilmelding = getString("feilmelding"),
+        )
+
+        else -> throw Error("ukjent sende_status '$sendeStatus'")
     }
 
 
@@ -476,7 +514,7 @@ class EksternVarslingRepository(
             values (?, ?)
         """) {
             uuid(varselId)
-            timestamp(resumeAt)
+            timestamp_without_timezone(resumeAt)
         }
     }
 
@@ -493,7 +531,7 @@ class EksternVarslingRepository(
                 on conflict do nothing
             """,
         ) {
-            timestamp(scheduledAt)
+            timestamp_without_timezone(scheduledAt)
         }
     }
 
