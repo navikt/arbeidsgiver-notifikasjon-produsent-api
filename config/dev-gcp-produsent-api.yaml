@@ -66,5 +66,9 @@ spec:
         - application: fritakagp
           namespace: helsearbeidsgiver
           cluster: dev-gcp
+
+        - application: im-notifikasjon
+          namespace: helsearbeidsgiver
+          cluster: dev-gcp
   envFrom:
     - secret: notifikasjon-produsent-api-secrets

@@ -34,8 +34,8 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
     describe("oppgave med påminnelse blir bumpet og klikk state clearet") {
         val tidspunkt = OffsetDateTime.parse("2020-12-03T10:15:30+01:00")
         val oppgave0 = oppgaveOpprettet(uuid("0"), tidspunkt).also { queryModel.oppdaterModellEtterHendelse(it) }
-        oppgaveOpprettet(uuid("1"), tidspunkt.plusDays(1)).also { queryModel.oppdaterModellEtterHendelse(it) }
-        oppgaveOpprettet(uuid("2"), tidspunkt.plusDays(2)).also { queryModel.oppdaterModellEtterHendelse(it) }
+        oppgaveOpprettet(uuid("1"), tidspunkt.plusMinutes(10)).also { queryModel.oppdaterModellEtterHendelse(it) }
+        oppgaveOpprettet(uuid("2"), tidspunkt.plusMinutes(20)).also { queryModel.oppdaterModellEtterHendelse(it) }
         brukerKlikket(uuid("0")).also { queryModel.oppdaterModellEtterHendelse(it) }
 
         val response1 = engine.hentOppgaver()
@@ -46,6 +46,10 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
                 uuid("1"),
                 uuid("0"),
             )
+            val harPåminnelse = response1.getTypedContent<List<OffsetDateTime?>>("$.notifikasjoner.notifikasjoner[*].paaminnelseTidspunkt")
+                .map { it != null }
+            harPåminnelse shouldBe listOf(false, false, false)
+
             val klikketPaa = response1.getTypedContent<List<Boolean>>("$.notifikasjoner.notifikasjoner[*].brukerKlikk.klikketPaa")
             klikketPaa shouldBe listOf(
                 false,
@@ -54,7 +58,7 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
             )
         }
 
-        påminnelseOpprettet(oppgave0, tidspunkt.plusHours(36).inOsloLocalDateTime()).also { queryModel.oppdaterModellEtterHendelse(it) }
+        påminnelseOpprettet(oppgave0, tidspunkt.plusMinutes(15).inOsloLocalDateTime()).also { queryModel.oppdaterModellEtterHendelse(it) }
 
         val response2 = engine.hentOppgaver()
         it("listen er sortert på rekkefølge og entry 1 er klikket på") {
@@ -70,6 +74,9 @@ class OppgaveMedPåminnelseTests : DescribeSpec({
                 false,
                 false,
             )
+            val harPåminnelse = response2.getTypedContent<List<Any?>>("$.notifikasjoner.notifikasjoner[*].paaminnelseTidspunkt")
+                .map { it != null }
+            harPåminnelse shouldBe listOf(false, true, false)
         }
     }
 })
@@ -139,6 +146,7 @@ private fun TestApplicationEngine.hentOppgaver(): TestApplicationResponse =
                                     klikketPaa 
                                 }
                                 sorteringTidspunkt
+                                paaminnelseTidspunkt
                                 id
                             }
                         }

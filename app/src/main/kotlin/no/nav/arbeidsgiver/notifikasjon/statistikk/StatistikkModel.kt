@@ -320,7 +320,7 @@ class StatistikkModel(
                     string(hendelse.merkelapp)
                     string(hendelse.mottakere.oppsummering())
                     string(hendelse.tekst.toHash())
-                    timestamptz(hendelse.opprettetTidspunkt)
+                    timestamp_with_timezone(hendelse.opprettetTidspunkt)
                 }
 
                 oppdaterVarselBestilling(
@@ -353,7 +353,7 @@ class StatistikkModel(
                     string(hendelse.merkelapp)
                     string(hendelse.mottakere.oppsummering())
                     string(hendelse.tekst.toHash())
-                    timestamp_utc(hendelse.opprettetTidspunkt)
+                    timestamp_without_timezone_utc(hendelse.opprettetTidspunkt)
                     nullableDate(hendelse.frist)
                 }
 
@@ -373,7 +373,7 @@ class StatistikkModel(
                         where notifikasjon_id = ?
                     """
                 ) {
-                    timestamp_utc(metadata.timestamp)
+                    timestamp_without_timezone_utc(metadata.timestamp)
                     uuid(hendelse.notifikasjonId)
                 }
             }
@@ -385,7 +385,7 @@ class StatistikkModel(
                         where notifikasjon_id = ?
                     """
                 ) {
-                    timestamp_utc(metadata.timestamp)
+                    timestamp_without_timezone_utc(metadata.timestamp)
                     uuid(hendelse.notifikasjonId)
                 }
             }
@@ -400,7 +400,7 @@ class StatistikkModel(
                 ) {
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.notifikasjonId)
-                    timestamp_utc(metadata.timestamp)
+                    timestamp_without_timezone_utc(metadata.timestamp)
                 }
             }
             is EksterntVarselVellykket -> {
@@ -444,7 +444,7 @@ class StatistikkModel(
                         where notifikasjon_id = ?
                     """
                 ) {
-                    timestamp_utc(hendelse.deletedAt)
+                    timestamp_without_timezone_utc(hendelse.deletedAt)
                     uuid(hendelse.aggregateId)
                 }
                 database.nonTransactionalExecuteUpdate(
@@ -454,7 +454,7 @@ class StatistikkModel(
                         where sak_id = ?
                     """
                 ) {
-                    timestamp_utc(hendelse.deletedAt)
+                    timestamp_without_timezone_utc(hendelse.deletedAt)
                     uuid(hendelse.aggregateId)
                 }
             }
@@ -475,7 +475,7 @@ class StatistikkModel(
                     uuid(hendelse.sakId)
                     string(hendelse.merkelapp)
                     string(hendelse.mottakere.oppsummering())
-                    timestamptz(hendelse.oppgittTidspunkt ?: hendelse.mottattTidspunkt)
+                    timestamp_with_timezone(hendelse.oppgittTidspunkt ?: hendelse.mottattTidspunkt)
                 }
             }
             is NyStatusSak -> {

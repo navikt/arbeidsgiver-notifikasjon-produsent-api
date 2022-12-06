@@ -207,13 +207,13 @@ class EksternVarslingRepository(
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
-            timestamp_utc(notifikasjonOpprettet)
+            timestamp_without_timezone_utc(notifikasjonOpprettet)
             string(produsentId)
             string(varsel.tlfnr)
             string(varsel.fnrEllerOrgnr)
             string(varsel.smsTekst)
             string(varsel.sendevindu.toString())
-            nullableTimestamp(varsel.sendeTidspunkt)
+            timestamp_without_timezone_nullable(varsel.sendeTidspunkt)
         }
     }
 
@@ -258,14 +258,14 @@ class EksternVarslingRepository(
         """) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
-            timestamp_utc(notifikasjonOpprettet)
+            timestamp_without_timezone_utc(notifikasjonOpprettet)
             string(produsentId)
             string(varsel.epostAddr)
             string(varsel.fnrEllerOrgnr)
             string(varsel.tittel)
             string(varsel.htmlBody)
             string(varsel.sendevindu.toString())
-            nullableTimestamp(varsel.sendeTidspunkt)
+            timestamp_without_timezone_nullable(varsel.sendeTidspunkt)
         }
     }
 
@@ -514,7 +514,7 @@ class EksternVarslingRepository(
             values (?, ?)
         """) {
             uuid(varselId)
-            timestamp(resumeAt)
+            timestamp_without_timezone(resumeAt)
         }
     }
 
@@ -531,7 +531,7 @@ class EksternVarslingRepository(
                 on conflict do nothing
             """,
         ) {
-            timestamp(scheduledAt)
+            timestamp_without_timezone(scheduledAt)
         }
     }
 
