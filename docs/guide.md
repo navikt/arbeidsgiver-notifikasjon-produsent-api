@@ -137,7 +137,44 @@ mutation MarkerOppgaveSomUtfoert($id: ID!) {
 }
 ```
 
-(Eksempel på oppdatering med deres ID kommer senere. Vi skal lage versjon 2, som fikser en typefeil.)
+```graphql
+mutation MarkerOppgaveSomUtfoert($merkelapp: String!, $eksternId: String!) {
+  oppgaveUtfoertByEksternId_V2(merkelapp: $merkelapp, eksternId: $eksternId) {
+    __typename
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+```
+
+## Hvordan markere oppgave som utgått 
+Dere kan markere en oppgave som utgått, ved å bruke en av følgende:
+- vår ID, som vi returnerte til dere da dere opprettet oppgaven
+- deres ID, som dere oppga  som `eksternId` da dere opprettet oppgaven.
+
+
+```graphql
+mutation MarkerOppgaveSomUtgaatt($id: ID!) {
+  oppgaveUtgaatt(id: $id) {
+    __typename
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+```
+
+```graphql
+mutation MarkerOppgaveSomUtgaatt($merkelapp: String!, $eksternId: String!) {
+  oppgaveUtgaattByEksternId(merkelapp: $merkelapp, eksternId: $eksternId) {
+    __typename
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+```
 
 ## Hvordan opprette ny sak
 
@@ -160,7 +197,7 @@ mutation OpprettNySak(
     }]
     tittel: $tittel
     lenke: $lenke
-    initiell_status: MOTTATT
+    initiellStatus: MOTTATT
     tidspunkt: "2022-03-01T17:18:00+01" # optional
     overstyrStatustekstMed: "Avtale opprettet" # optional
   ) {
@@ -185,7 +222,7 @@ Vår ID:
 mutation OpprettNySak($id: ID!) {
   nyStatusSak(
     id: $id
-    ny_status: UNDER_BEHANDLING
+    nyStatus: UNDER_BEHANDLING
     tidspunkt: "2022-03-01T18:18:00+01" # optional
     overstyrStatustekstMed: "Avtale opprettet" # optional
   ) {
@@ -206,7 +243,7 @@ mutation OpprettNySak($grupperingsid: String!) {
   nyStatusSakByGrupperingsid(
     grupperingsid: $grupperingsid
     merkelapp: "Tiltak"
-    ny_status: UNDER_BEHANDLING
+    nyStatus: UNDER_BEHANDLING
     tidspunkt: "2022-03-01T18:18:00+01" # optional
     overstyrStatustekstMed: "Avtale opprettet" # optional
   ) {
@@ -284,7 +321,7 @@ nyBeskjed: {
 }
 ```
 
-## Opprette beskjed med SMS og e-post
+## Hvordan opprette beskjed med varsling på SMS og e-post
 SMS eller e-post skal ikke inneholde noen personopplysninger men si generelt hva varslet gjelder.
 F.eks. “_Du har en ny sykemelding. Logg inn på NAV på Min side – arbeidsgiver for å finne den_”. 
 Se bruksvilkårene for flere detaljer.
@@ -374,6 +411,91 @@ med variabler
 }
 ```
 
+## Hvordan opprette en oppgave med frist og automatisk påminnelse før fristen
+
+Du kan spesifisere frist for når oppgaven skal utføres av bruker. Ideen er at etter fristen, så har ikke bruker lov, eller dere sperret for,
+å gjøre oppgaven. Fristen vises til bruker i grensesnittet. Oppgaven blir automatisk markert som `UTGAAT` når fristen er forbi.
+
+Du kan også spesifisere en påminnelse for en oppgave. Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+Du kan også velge å angi ekstern varsling som vil sendes når påminnelsen aktiveres.
+
+Funksjonaliteten rundt frist og påminnelse er dokumentert i [API dokumentasjonen](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/)
+
+```graphql
+mutation OpprettNyOppgaveMedFristOgPaaMinnelse(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $lenke: String!
+  $tekst: String!
+  $grupperingsId: String!
+  $tlf: String!
+  $frist: ISO8601Date!
+) {
+  nyOppgave(nyOppgave: {
+    metadata: {
+      eksternId: $eksternId
+      grupperingsid: $grupperingsId
+      virksomhetsnummer: $virksomhetsnummer
+    }
+    frist: $frist
+    paaminnelse: {
+      tidspunkt: {
+        foerFrist: "P5D"
+        #etterOpprettelse: "P10D"
+        #konkret: "2022-12-24T00:00:00"
+      }
+      eksterneVarsler: [
+        {
+          sms: {
+            mottaker: {
+              kontaktinfo: {
+                tlf: $tlf
+              }
+            }
+            smsTekst: "Vi mangler svar fra deg. Logg inn på NAV på Min side – arbeidsgiver for å svare"
+            sendevindu: NKS_AAPNINGSTID
+          }
+        }
+      ]
+    }
+    mottakere: [
+      {
+        altinn: {
+          serviceCode: "4321"
+          serviceEdition: "1"
+        }
+      }
+    ]
+    notifikasjon: {
+      merkelapp: "Pensjon"
+      tekst: $tekst
+      lenke: $lenke
+    }
+  }) {
+    __typename
+    ... on NyOppgaveVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+```
+
+med variabler
+```json
+{
+  "eksternId": "saksnummer-1234",
+  "grupperingsId": "saksnummer-1234",
+  "virksomhetsnummer": "012345678",
+  "tekst": "Du har en søknad du må fylle ut",
+  "lenke": "https://dev.nav.no/sakssystem/?sak=1234",
+  "tlf": "123445",
+  "frist": "2022-12-31"
+}
+```
+
 ## Hvordan slette notifikasjoner og saker automatisk
 For å slette en notifikasjon helt, både fra databaser og kafka-topics, så må dere
 bruke hard delete. Da slettes informasjonen knyttet til notifikasjonen
@@ -399,7 +521,7 @@ mutation OpprettSakMedAutomatiskSletting {
     grupperingsid: "12345"
     merkelapp: "Tiltak"
     virksomhetsnummer: "000000000"
-    initiell_status: MOTTATT
+    initiellStatus: MOTTATT
     mottakere: [{
       altinn: {
         serviceEdition: "1" 
@@ -430,7 +552,7 @@ mutation OppdaterSakMedAutomatiskSletting {
     }
     grupperingsid: "12345"
     merkelapp: "Tiltak"
-    ny_status: UNDER_BEHANDLING
+    nyStatus: UNDER_BEHANDLING
   ) {
     __typename
   }
