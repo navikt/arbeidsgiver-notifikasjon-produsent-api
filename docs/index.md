@@ -35,7 +35,9 @@ Dette er en typisk informasjonsmelding til arbeidsgiver. Denne krever ikke nødv
 
 __Oppgave__
 
-Oppgave brukes når du trenger at arbeidsgiver skal gjøre en konkret handling. For eksempel «Du må godkjenne avtalen innen...» Du som produsent må holde styr på når oppgaven er fullført. Arbeidsgiver vil da se oppgaven som utført. 
+Oppgave brukes når du trenger at arbeidsgiver skal gjøre en konkret handling. For eksempel «Du må godkjenne avtalen innen...» Du som produsent må holde styr på når oppgaven er fullført. 
+Arbeidsgiver vil da se oppgaven som utført. Du kan velge å sette en frist på oppgaven. Fristen vises til arbeidsgiver. 
+Blir oppgaven ikke utført innen fristen vil den automatisk få status “utgått”. Blir en oppgave ikke utført kan du sende en påminnelse.
 
 ![](images/oppgave.svg)
 
