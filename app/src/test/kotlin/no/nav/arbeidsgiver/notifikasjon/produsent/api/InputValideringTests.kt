@@ -1,7 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldContainIgnoringCase
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
@@ -149,6 +151,40 @@ class InputValideringTests : DescribeSpec({
 
             it("feil pga identifiserende data i tekst") {
                 response.getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+            }
+        }
+
+        context("når virksomhetsnummer er blankt") {
+            val response = engine.produsentApi(
+                """
+                    mutation {
+                        nyBeskjed(nyBeskjed: {
+                            notifikasjon: {
+                                lenke: "https://foo.bar",
+                                tekst: "hei hå nå er det jul igjen",
+                                merkelapp: "tag",
+                            }
+                            mottaker: {
+                                naermesteLeder: {
+                                    naermesteLederFnr: "12345678910",
+                                    ansattFnr: "3213"
+                                } 
+                            }
+                            metadata: {
+                                eksternId: "heuer",
+                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                virksomhetsnummer: ""
+                            }
+                        }) {
+                            __typename
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("feil pga blanks virksomhetsnummer") {
+                response.getGraphqlErrors() shouldNot beEmpty()
+                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "virksomhetsnummer"
             }
         }
     }
