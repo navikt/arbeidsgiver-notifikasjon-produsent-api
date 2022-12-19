@@ -27,6 +27,12 @@ type SakerResultat {
     feilAltinn: Boolean!
 }
 
+type OppgaveMetadata {
+    tilstand: OppgaveTilstand!
+    frist: ISO8601Date
+    paminnelseTidspunkt: ISO8601DateTime
+}
+
 type Sak {
     id: ID!
     virksomhet: Virksomhet!
@@ -38,23 +44,28 @@ type Sak {
     frist fra oppgaver med status ny. null i array betyr oppgave uten frist
     """
     frister: [ISO8601Date]!
+    oppgaver: [OppgaveMetadata!]!
 }
+
 type SakStatus {
     type: SakStatusType!
     tekst: String!
     tidspunkt: ISO8601DateTime!
 }
+
 enum SakStatusType {
     MOTTATT
     UNDER_BEHANDLING
     FERDIG
 
 }
+
 type NotifikasjonerResultat {
     notifikasjoner: [Notifikasjon!]!
     feilAltinn: Boolean!
     feilDigiSyfo: Boolean!
 }
+
 union Notifikasjon = Beskjed | Oppgave
 
 scalar ISO8601DateTime

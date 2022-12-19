@@ -99,6 +99,13 @@ object BrukerAPI {
         val totaltAntallSaker: Int,
     )
 
+    @JsonTypeName("OppgaveMetadata")
+    data class OppgaveMetadata(
+        val tilstand: Notifikasjon.Oppgave.Tilstand,
+        val frist: LocalDate?,
+        val paaminnelseTidspunkt: OffsetDateTime?,
+    )
+
     @JsonTypeName("Sak")
     data class Sak(
         val id: UUID,
@@ -108,6 +115,7 @@ object BrukerAPI {
         override val virksomhet: Virksomhet,
         val sisteStatus: SakStatus,
         val frister: List<LocalDate?>,
+        val oppgaver: List<OppgaveMetadata>,
     ) : WithVirksomhet
 
 
@@ -318,7 +326,12 @@ object BrukerAPI {
                             tidspunkt = sakStatus.tidspunkt
                         )
                     }.first(),
-                    frister = it.frister,
+                    frister = it.oppgaver.map {o -> o.frist},
+                    oppgaver = it.oppgaver.map { o -> OppgaveMetadata(
+                        tilstand = o.tilstand.tilBrukerAPI(),
+                        frist = o.frist,
+                        paaminnelseTidspunkt = o.paaminnelseTidspunkt
+                    )}
                 )
             }
             sakerHentetCount.increment(saker.size.toDouble())

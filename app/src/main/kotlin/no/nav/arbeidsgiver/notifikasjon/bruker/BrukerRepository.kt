@@ -56,7 +56,7 @@ interface BrukerRepository {
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
     suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
 
-    val altinnRolle : AltinnRolleRepository
+    val altinnRolle: AltinnRolleRepository
 }
 
 class BrukerRepositoryImpl(
@@ -375,7 +375,7 @@ class BrukerRepositoryImpl(
                             from mottaker_digisyfo_for_fnr
                             where fnr_leder = ? and notifikasjon_id is not null
                         ),
-                        mine_saksfrister as (
+                        mine_saksoppgaver as (
                             select
                                 s."sakId",
                                 s.virksomhetsnummer,
@@ -385,14 +385,24 @@ class BrukerRepositoryImpl(
                                 s.grupperingsid,
                                 s.statuser,
                                 s.sist_endret,
-                                f.frister
+                                o.oppgaver,
+                                ( 
+                                select o2 ->> frist 
+                                from unnest(o.oppgaver) as o2
+                                where  o2 ->> tilstand = '${BrukerModel.Oppgave.Tilstand.NY}'
+                                order by o2 ->> frist
+                                 nulls last
+                                ) as frister
                                 from mine_saker_ikke_paginert s
                                 cross join lateral (
                                     select array (
-                                        select n.frist
+                                        select jsonb_build_object( 
+                                        'tilstand', n.tilstand, 
+                                        'frist', n.frist, 
+                                        'paaminnelseTidspunkt', n.paaminnelse_tidspunkt 
+                                        )
                                         from notifikasjon n
                                             where n.grupperingsid = s.grupperingsid
-                                                and n.tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}'
                                                 and n.id in (
                                                     select * from mine_digisyfo_notifikasjoner
                                                         union
@@ -403,8 +413,8 @@ class BrukerRepositoryImpl(
                                                     select * from mine_altinn_rolle_notifikasjoner
                                                 )
                                             order by n.frist nulls last
-                                    ) as frister
-                                ) f
+                                    ) as oppgaver
+                                ) o
                             order by ${sorteringSql}
                             offset ? limit ? 
                         )
@@ -412,7 +422,6 @@ class BrukerRepositoryImpl(
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
                         (select coalesce(
                             jsonb_agg(jsonb_build_object(
-                                'frister', frister,
                                 'sakId', "sakId",
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
@@ -420,10 +429,11 @@ class BrukerRepositoryImpl(
                                 'merkelapp', merkelapp,
                                 'grupperingsid', grupperingsid,
                                 'statuser', statuser,
-                                'sist_endret', sist_endret
+                                'sist_endret', sist_endret,
+                                'oppgaver', oppgaver
                             )),  
                             '[]'::jsonb
-                        ) from mine_saksfrister) as saker
+                        ) from mine_saksoppgaver) as saker
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
@@ -590,9 +600,11 @@ class BrukerRepositoryImpl(
                 string(sakOpprettet.grupperingsid)
             }
 
-            executeUpdate("""
+            executeUpdate(
+                """
                 insert into sak_search(id, text) values (?, lower(?)) on conflict do nothing
-            """) {
+            """
+            ) {
                 uuid(sakOpprettet.sakId)
                 string("${sakOpprettet.tittel} ${sakOpprettet.merkelapp}")
             }
@@ -639,11 +651,13 @@ class BrukerRepositoryImpl(
                 timestamp_with_timezone(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
             }
 
-            executeUpdate("""
+            executeUpdate(
+                """
                 update sak_search
                 set text =  text || ' ' || lower(?) || ' ' || lower(coalesce(?, ''))
                 where id = ?
-            """) {
+            """
+            ) {
                 string(nyStatusSak.status.name)
                 nullableString(nyStatusSak.overstyrStatustekstMed)
                 uuid(nyStatusSak.sakId)
@@ -708,11 +722,17 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID?, sakId: UUID?, mottaker: NærmesteLederMottaker) {
-        executeUpdate("""
+    private fun Transaction.storeNærmesteLederMottaker(
+        notifikasjonId: UUID?,
+        sakId: UUID?,
+        mottaker: NærmesteLederMottaker
+    ) {
+        executeUpdate(
+            """
             insert into mottaker_digisyfo(notifikasjon_id, sak_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?, ?)
-        """) {
+        """
+        ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
@@ -726,11 +746,13 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnMottaker
     ) {
-        executeUpdate("""
+        executeUpdate(
+            """
             insert into mottaker_altinn_enkeltrettighet
                 (notifikasjon_id, sak_id, virksomhet, service_code, service_edition)
             values (?, ?, ?, ?, ?)
-        """) {
+        """
+        ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
@@ -744,11 +766,13 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnReporteeMottaker
     ) {
-        executeUpdate("""
+        executeUpdate(
+            """
             insert into mottaker_altinn_reportee
                 (notifikasjon_id, sak_id, virksomhet, fnr)
             values (?, ?, ?, ?)
-        """) {
+        """
+        ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
             string(mottaker.virksomhetsnummer)
