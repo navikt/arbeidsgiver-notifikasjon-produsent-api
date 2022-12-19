@@ -307,7 +307,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
 
     describe("Oppgave med påminnelse fører ikke til varsel nå") {
         val varselId = UUID.randomUUID()
-        val nyOppgave = HendelseModel.OppgaveOpprettet(
+        OppgaveOpprettet(
             virksomhetsnummer = "1",
             notifikasjonId = UUID.randomUUID(),
             hendelseId = UUID.randomUUID(),
@@ -318,7 +318,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             mottakere = listOf(AltinnMottaker(
                 serviceCode = "",
                 serviceEdition = "",
-                virksomhetsnummer = "",
+                virksomhetsnummer = "42",
             )),
             tekst = "tekst",
             grupperingsid = null,
