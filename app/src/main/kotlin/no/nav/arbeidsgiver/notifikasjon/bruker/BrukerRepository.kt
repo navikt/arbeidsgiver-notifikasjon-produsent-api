@@ -260,9 +260,7 @@ class BrukerRepositoryImpl(
                    s.statuser#>>'{-1,tidspunkt}' desc 
                 """
                 BrukerAPI.SakSortering.FRIST -> """
-                    to_jsonb(frister)->>0 nulls last,
-                    nullif(array_length(frister, 1), 0) nulls last,
-                    sist_endret desc
+                    frister nulls last
                 """
             }
 
@@ -386,12 +384,11 @@ class BrukerRepositoryImpl(
                                 s.statuser,
                                 s.sist_endret,
                                 o.oppgaver,
-                                ( 
-                                select o2 ->> frist 
-                                from unnest(o.oppgaver) as o2
-                                where  o2 ->> tilstand = '${BrukerModel.Oppgave.Tilstand.NY}'
-                                order by o2 ->> frist
-                                 nulls last
+                                array(
+                                    select o2 ->> 'frist'
+                                    from unnest(o.oppgaver) as o2
+                                    where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
+                                    order by o2 ->> 'frist' nulls last
                                 ) as frister
                                 from mine_saker_ikke_paginert s
                                 cross join lateral (

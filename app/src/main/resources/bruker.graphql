@@ -7,6 +7,7 @@ type Query {
         tekstsoek: String
         sortering: SakSortering! = OPPDATERT
     ): SakerResultat!
+    sak:SakResultat!
     whoami: String
 }
 
@@ -14,6 +15,10 @@ enum SakSortering {
     OPPDATERT
     OPPRETTET
     FRIST
+}
+
+type SakResultat {
+    saker: [Sak!]!
 }
 
 type SakerResultat {
