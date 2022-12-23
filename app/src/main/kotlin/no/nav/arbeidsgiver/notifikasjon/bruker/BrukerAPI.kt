@@ -326,7 +326,7 @@ object BrukerAPI {
                             tidspunkt = sakStatus.tidspunkt
                         )
                     }.first(),
-                    frister = it.oppgaver.map {o -> o.frist},
+                    frister = it.oppgaver.filter { o -> o.tilstand == BrukerModel.Oppgave.Tilstand.NY } .map { o -> o.frist },
                     oppgaver = it.oppgaver.map { o -> OppgaveMetadata(
                         tilstand = o.tilstand.tilBrukerAPI(),
                         frist = o.frist,

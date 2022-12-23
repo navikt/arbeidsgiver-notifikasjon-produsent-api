@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -28,20 +29,64 @@ class SakMedOppgaverMedFristMedPaminnelseTests : DescribeSpec({
         }
     )
 
-    var num_id : Int = 0
-
-    suspend fun  opprettSakMedOppgaver(
-        id : String = num_id++.toString(),
-        frist1 : LocalDate? = null,
-        frist2 : LocalDate? = null
-    ) : String {
-        val sakOpprettet = HendelseModel.SakOpprettet(
-            hendelseId = uuid(id),
+    fun opprettOppgave(
+        id: UUID,
+        frist: LocalDate?,
+    ): HendelseModel.OppgaveOpprettet {
+        val oppgaveId = UUID.randomUUID()
+        return HendelseModel.OppgaveOpprettet(
+            hendelseId = oppgaveId,
+            notifikasjonId = oppgaveId,
             virksomhetsnummer = "1",
             produsentId = "1",
             kildeAppNavn = "1",
-            sakId = uuid(id),
-            grupperingsid = id,
+            grupperingsid = id.toString(),
+            eksternId = "1",
+            eksterneVarsler = listOf(),
+            opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
+            merkelapp = "tag",
+            tekst = "tjohei",
+            mottakere = listOf(
+                HendelseModel.AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                )
+            ),
+            lenke = "#foo",
+            hardDelete = null,
+            frist = frist,
+            påminnelse = null,
+        )
+    }
+
+    fun opprettStatus(id: UUID) = HendelseModel.NyStatusSak(
+        hendelseId = UUID.randomUUID(),
+        virksomhetsnummer = "1",
+        produsentId = "1",
+        kildeAppNavn = "1",
+        sakId = id,
+        status = HendelseModel.SakStatus.MOTTATT,
+        overstyrStatustekstMed = null,
+        oppgittTidspunkt = null,
+        mottattTidspunkt = OffsetDateTime.now(),
+        idempotensKey = IdempotenceKey.initial(),
+        hardDelete = null,
+        nyLenkeTilSak = null,
+    )
+
+    suspend fun opprettSakMedOppgaver(
+        id: String,
+        vararg frister: String?,
+    ): UUID {
+        val uuid = uuid(id)
+        val sakOpprettet = HendelseModel.SakOpprettet(
+            hendelseId = uuid,
+            virksomhetsnummer = "1",
+            produsentId = "1",
+            kildeAppNavn = "1",
+            sakId = uuid,
+            grupperingsid = uuid.toString(),
             merkelapp = "tag",
             mottakere = listOf(
                 HendelseModel.AltinnMottaker(
@@ -57,89 +102,51 @@ class SakMedOppgaverMedFristMedPaminnelseTests : DescribeSpec({
             hardDelete = null,
         )
 
-
-        val oppgaveOpprettet = HendelseModel.OppgaveOpprettet(
-            hendelseId = uuid(id),
-            notifikasjonId = uuid(id+"1"),
-            virksomhetsnummer = "1",
-            produsentId = "1",
-            kildeAppNavn = "1",
-            grupperingsid = id,
-            eksternId = "1",
-            eksterneVarsler = listOf(),
-            opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
-            merkelapp = "tag",
-            tekst = "tjohei",
-            mottakere = listOf(
-                HendelseModel.AltinnMottaker(
-                    virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
-                )
-            ),
-            lenke = "#foo",
-            hardDelete = null,
-            frist = frist1,
-            påminnelse = null,
-        )
-
-        val oppgaveOpprettet2 = HendelseModel.OppgaveOpprettet(
-            hendelseId = uuid(id),
-            notifikasjonId = uuid(id+"2"),
-            virksomhetsnummer = "1",
-            produsentId = "1",
-            kildeAppNavn = "1",
-            grupperingsid = id,
-            eksternId = "1",
-            eksterneVarsler = listOf(),
-            opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
-            merkelapp = "tag",
-            tekst = "tjohei",
-            mottakere = listOf(
-                HendelseModel.AltinnMottaker(
-                    virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
-                )
-            ),
-            lenke = "#foo",
-            hardDelete = null,
-            frist = frist2,
-            påminnelse = null,
-        )
-
         queryModel.oppdaterModellEtterHendelse(sakOpprettet)
-        queryModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
-        queryModel.oppdaterModellEtterHendelse(oppgaveOpprettet2)
+        queryModel.oppdaterModellEtterHendelse(opprettStatus(uuid))
 
-        return id
+        frister.forEach { frist ->
+            queryModel.oppdaterModellEtterHendelse(opprettOppgave(uuid, frist?.let { LocalDate.parse(it) }))
+        }
+
+        return uuid
+
+
     }
 
     describe("Sak som med oppgave") {
-        val sak1 = opprettSakMedOppgaver(frist1 = LocalDate.parse("2023-01-10"), frist2 = LocalDate.parse("2023-01-10"))
-        val sak2 = opprettSakMedOppgaver(frist1 = LocalDate.parse("2023-01-15"), frist2 = LocalDate.parse("2023-01-04"))
-        val sak3 = opprettSakMedOppgaver(frist1 = LocalDate.parse("2023-01-05"), frist2 = LocalDate.parse("2023-01-25"))
-        val sak4 = opprettSakMedOppgaver(frist1 = LocalDate.parse("2023-01-06"), frist2 = LocalDate.parse("2023-01-06"))
+        /**
+         * Sakene 2, 3, 4 og så 1 blir sortert etter frist, mens 6 og 8 vil bli sortert før 7 fordi disse har oppgaver.
+         * sak 8 kommer før 6 fordi den er oppdatert sist.
+         */
+        val sak2 = opprettSakMedOppgaver("2", "2023-01-15", "2023-01-04")
+        val sak3 = opprettSakMedOppgaver("3", "2023-01-05", "2023-01-25")
+        val sak4 = opprettSakMedOppgaver("4", "2023-01-06", "2023-01-06")
+        val sak1 = opprettSakMedOppgaver("1", "2023-01-10", "2023-01-10")
+        val sak5 = opprettSakMedOppgaver("5", "2023-01-07", null)
+        val sak6 = opprettSakMedOppgaver("6", null)
+        val sak7 = opprettSakMedOppgaver("7")
+        val sak8 = opprettSakMedOppgaver("8", null)
 
-        val res1 = engine.hentSaker("1")
-        println("Min test" + res1.content)
-//        val res2 = engine.hentSaker(sak2)
-//        val res3 = engine.hentSaker(sak3)
-//        val res4 = engine.hentSaker(sak4)
-        res1 shouldBe sak1
-    }}
+        val res = engine.hentSaker().getTypedContent<List<UUID>>("$.saker.saker.*.id")
+
+        res shouldBe listOf(sak2, sak3, sak4, sak5, sak1, sak8, sak6, sak7)
+
+    }
+
+}
 )
 
-private fun TestApplicationEngine.hentSaker(id : String): TestApplicationResponse =
+private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
     brukerApi(
         """
-                {
-                    sak{
-                        saker {
-                            id                                              
-                        }
+            {
+                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST ){
+                    saker {
+                        id                                                
                     }
                 }
-            """.trimIndent()
+            }
+        """.trimIndent()
     )
 

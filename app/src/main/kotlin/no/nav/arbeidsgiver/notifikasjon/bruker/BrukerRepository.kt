@@ -260,7 +260,7 @@ class BrukerRepositoryImpl(
                    s.statuser#>>'{-1,tidspunkt}' desc 
                 """
                 BrukerAPI.SakSortering.FRIST -> """
-                    frister nulls last
+                    frist nulls last, o.oppgaver desc, sist_endret desc
                 """
             }
 
@@ -384,12 +384,13 @@ class BrukerRepositoryImpl(
                                 s.statuser,
                                 s.sist_endret,
                                 o.oppgaver,
-                                array(
-                                    select o2 ->> 'frist'
+                                
+                                    (select o2 ->> 'frist'
                                     from unnest(o.oppgaver) as o2
                                     where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
                                     order by o2 ->> 'frist' nulls last
-                                ) as frister
+                                    limit 1)
+                                as frist
                                 from mine_saker_ikke_paginert s
                                 cross join lateral (
                                     select array (
