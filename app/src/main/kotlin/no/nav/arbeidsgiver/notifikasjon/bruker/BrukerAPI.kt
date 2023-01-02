@@ -103,7 +103,7 @@ object BrukerAPI {
     data class OppgaveMetadata(
         val tilstand: Notifikasjon.Oppgave.Tilstand,
         val frist: LocalDate?,
-        val paaminnelseTidspunkt: OffsetDateTime?,
+        val paminnelseTidspunkt: OffsetDateTime?,
     )
 
     @JsonTypeName("Sak")
@@ -330,7 +330,7 @@ object BrukerAPI {
                     oppgaver = it.oppgaver.map { o -> OppgaveMetadata(
                         tilstand = o.tilstand.tilBrukerAPI(),
                         frist = o.frist,
-                        paaminnelseTidspunkt = o.paaminnelseTidspunkt
+                        paminnelseTidspunkt = o.paaminnelseTidspunkt
                     )}
                 )
             }
