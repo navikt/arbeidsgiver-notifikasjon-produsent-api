@@ -16,6 +16,7 @@ enum SakSortering {
     FRIST
 }
 
+
 type SakerResultat {
     saker: [Sak!]!
 
@@ -25,6 +26,12 @@ type SakerResultat {
     totaltAntallSaker: Int!
 
     feilAltinn: Boolean!
+}
+
+type OppgaveMetadata {
+    tilstand: OppgaveTilstand!
+    frist: ISO8601Date
+    paaminnelseTidspunkt: ISO8601DateTime
 }
 
 type Sak {
@@ -38,23 +45,28 @@ type Sak {
     frist fra oppgaver med status ny. null i array betyr oppgave uten frist
     """
     frister: [ISO8601Date]!
+    oppgaver: [OppgaveMetadata!]!
 }
+
 type SakStatus {
     type: SakStatusType!
     tekst: String!
     tidspunkt: ISO8601DateTime!
 }
+
 enum SakStatusType {
     MOTTATT
     UNDER_BEHANDLING
     FERDIG
 
 }
+
 type NotifikasjonerResultat {
     notifikasjoner: [Notifikasjon!]!
     feilAltinn: Boolean!
     feilDigiSyfo: Boolean!
 }
+
 union Notifikasjon = Beskjed | Oppgave
 
 scalar ISO8601DateTime
