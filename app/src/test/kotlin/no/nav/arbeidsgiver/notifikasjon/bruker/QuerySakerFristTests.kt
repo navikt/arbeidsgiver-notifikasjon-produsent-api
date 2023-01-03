@@ -343,7 +343,7 @@ private fun TestApplicationEngine.hentSaker() = brukerApi(
                 oppgaver{
                     frist
                     tilstand
-                    paminnelseTidspunkt
+                    paaminnelseTidspunkt
                 }
             }
         }

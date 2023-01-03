@@ -326,7 +326,7 @@ private fun TestApplicationEngine.hentSaker(
                 oppgaver {
                     frist
                     tilstand
-                    paminnelseTidspunkt
+                    paaminnelseTidspunkt
                 }
             }
             feilAltinn

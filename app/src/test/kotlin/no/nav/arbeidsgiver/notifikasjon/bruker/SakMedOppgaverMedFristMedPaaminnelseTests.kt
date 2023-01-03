@@ -5,8 +5,6 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDateTime
-import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloLocalDateTime
 import no.nav.arbeidsgiver.notifikasjon.util.*
@@ -16,7 +14,7 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class SakMedOppgaverMedFristMedPaminnelseTests : DescribeSpec({
+class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
 
@@ -38,7 +36,7 @@ class SakMedOppgaverMedFristMedPaminnelseTests : DescribeSpec({
     suspend fun opprettOppgave(
         grupperingsid: String,
         frist: LocalDate?,
-        paminnelse: HendelseModel.Påminnelse,
+        paaminnelse: HendelseModel.Påminnelse,
     ) {
         val oppgaveId = UUID.randomUUID()
 
@@ -64,7 +62,7 @@ class SakMedOppgaverMedFristMedPaminnelseTests : DescribeSpec({
             lenke = "#foo",
             hardDelete = null,
             frist = frist,
-            påminnelse = paminnelse,
+            påminnelse = paaminnelse,
         ).also { queryModel.oppdaterModellEtterHendelse(it) }
 
         HendelseModel.PåminnelseOpprettet(
@@ -76,7 +74,7 @@ class SakMedOppgaverMedFristMedPaminnelseTests : DescribeSpec({
             opprettetTidpunkt = Instant.now(),
             oppgaveOpprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00").toInstant(),
             frist = frist,
-            tidspunkt = paminnelse.tidspunkt,
+            tidspunkt = paaminnelse.tidspunkt,
             eksterneVarsler = listOf(),
         ).also { queryModel.oppdaterModellEtterHendelse(it) }
     }
@@ -131,7 +129,7 @@ class SakMedOppgaverMedFristMedPaminnelseTests : DescribeSpec({
     describe("Sak med oppgave med frist og påminnelse") {
         val påminnelsestidspunktLocalDateTime = LocalDateTime.parse("2023-01-02T12:15:00")
         val sak1 = opprettSak("1")
-        val oppg1 = opprettOppgave(
+        opprettOppgave(
             sak1,
             LocalDate.parse("2023-01-15"),
             HendelseModel.Påminnelse(
@@ -143,13 +141,11 @@ class SakMedOppgaverMedFristMedPaminnelseTests : DescribeSpec({
             )
         )
 
-
-        val res = engine.hentSaker().getTypedContent<List<OffsetDateTime>>("$.saker.saker.*.oppgaver.*.paminnelseTidspunkt")
+        val res =
+            engine.hentSaker().getTypedContent<List<OffsetDateTime>>("$.saker.saker.*.oppgaver.*.paaminnelseTidspunkt")
 
         res.first().inOsloLocalDateTime() shouldBe påminnelsestidspunktLocalDateTime
-
     }
-
 }
 )
 
@@ -161,7 +157,7 @@ private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
                     saker {
                         id
                         oppgaver {
-                            paminnelseTidspunkt   
+                            paaminnelseTidspunkt   
                             frist
                             tilstand
                         }

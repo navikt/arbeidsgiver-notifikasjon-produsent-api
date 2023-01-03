@@ -31,7 +31,7 @@ type SakerResultat {
 type OppgaveMetadata {
     tilstand: OppgaveTilstand!
     frist: ISO8601Date
-    paminnelseTidspunkt: ISO8601DateTime
+    paaminnelseTidspunkt: ISO8601DateTime
 }
 
 type Sak {

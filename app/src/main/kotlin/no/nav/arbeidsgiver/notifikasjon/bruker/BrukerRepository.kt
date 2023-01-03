@@ -261,7 +261,7 @@ class BrukerRepositoryImpl(
                 """
                 BrukerAPI.SakSortering.FRIST -> """
                     frist nulls last, o.oppgaver desc, sist_endret desc
-                """
+                """ /* Opplever at sortering på o.oppgaver desc setter [] før [null]*/
             }
 
             val rows = database.nonTransactionalExecuteQuery(
@@ -384,13 +384,11 @@ class BrukerRepositoryImpl(
                                 s.statuser,
                                 s.sist_endret,
                                 o.oppgaver,
-                                
-                                    (select o2 ->> 'frist'
-                                    from unnest(o.oppgaver) as o2
-                                    where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
-                                    order by o2 ->> 'frist' nulls last
-                                    limit 1)
-                                as frist
+                                (select o2 ->> 'frist'
+                                from unnest(o.oppgaver) as o2
+                                where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
+                                order by o2 ->> 'frist' nulls last
+                                limit 1) as frist
                                 from mine_saker_ikke_paginert s
                                 cross join lateral (
                                     select array (
