@@ -71,6 +71,12 @@ object BrukerModel {
             get() = paaminnelseTidspunkt ?: opprettetTidspunkt
     }
 
+    data class OppgaveMetadata(
+        val tilstand: Oppgave.Tilstand,
+        val frist: LocalDate?,
+        val paaminnelseTidspunkt: OffsetDateTime?,
+    )
+
     data class Sak(
         val sakId: UUID,
         val virksomhetsnummer: String,
@@ -78,7 +84,7 @@ object BrukerModel {
         val lenke: String,
         val merkelapp: String,
         val statuser: List<SakStatus>,
-        val frister: List<LocalDate?>,
+        val oppgaver: List<OppgaveMetadata>,
     )
 
     data class SakStatus(

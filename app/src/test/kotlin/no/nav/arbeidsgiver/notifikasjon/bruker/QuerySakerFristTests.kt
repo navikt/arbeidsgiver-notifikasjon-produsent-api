@@ -340,6 +340,11 @@ private fun TestApplicationEngine.hentSaker() = brukerApi(
             saker {
                 id
                 frister
+                oppgaver{
+                    frist
+                    tilstand
+                    paaminnelseTidspunkt
+                }
             }
         }
     }
