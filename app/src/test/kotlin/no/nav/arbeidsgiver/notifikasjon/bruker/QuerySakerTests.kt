@@ -323,6 +323,11 @@ private fun TestApplicationEngine.hentSaker(
                     tidspunkt
                 }
                 frister
+                oppgaver {
+                    frist
+                    tilstand
+                    paaminnelseTidspunkt
+                }
             }
             feilAltinn
             totaltAntallSaker

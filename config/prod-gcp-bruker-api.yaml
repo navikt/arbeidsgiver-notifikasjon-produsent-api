@@ -52,6 +52,8 @@ spec:
           namespace: arbeidsgiver
         - application: aareg-innsyn-arbeidsgiver
           namespace: arbeidsforhold
+        - application: sykefravarsstatistikk
+          namespace: arbeidsgiver
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
