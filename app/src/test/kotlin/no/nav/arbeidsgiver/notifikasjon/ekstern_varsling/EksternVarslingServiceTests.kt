@@ -66,7 +66,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 merkelapp = "",
                 eksternId = "",
                 mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "42",
+                    virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
                 )),
@@ -119,7 +119,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 merkelapp = "",
                 eksternId = "",
                 mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "42",
+                    virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
                 )),
@@ -166,7 +166,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 merkelapp = "",
                 eksternId = "",
                 mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "42",
+                    virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
                 )),
@@ -213,7 +213,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 merkelapp = "",
                 eksternId = "",
                 mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "42",
+                    virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
                 )),
@@ -260,7 +260,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 merkelapp = "",
                 eksternId = "",
                 mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "42",
+                    virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
                 )),
@@ -307,7 +307,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 merkelapp = "",
                 eksternId = "",
                 mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "42",
+                    virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
                 )),
@@ -353,7 +353,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 merkelapp = "",
                 eksternId = "",
                 mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "42",
+                    virksomhetsnummer = "",
                     serviceCode = "",
                     serviceEdition = "",
                 )),
