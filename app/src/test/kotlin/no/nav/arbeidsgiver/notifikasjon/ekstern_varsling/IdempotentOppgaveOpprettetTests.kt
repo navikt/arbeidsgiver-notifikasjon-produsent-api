@@ -27,7 +27,7 @@ class IdempotentOppgaveOpprettetTests: DescribeSpec({
     )
 
     val oppgaveOpprettet = OppgaveOpprettet(
-        virksomhetsnummer = "42",
+        virksomhetsnummer = "",
         notifikasjonId = uuid("0"),
         hendelseId = uuid("0"),
         produsentId = "",

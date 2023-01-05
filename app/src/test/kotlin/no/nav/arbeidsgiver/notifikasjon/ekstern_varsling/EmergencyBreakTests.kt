@@ -23,7 +23,7 @@ class EmergencyBreakTests : DescribeSpec({
         merkelapp = "",
         eksternId = "",
         mottakere = listOf(AltinnMottaker(
-            virksomhetsnummer = "42",
+            virksomhetsnummer = "",
             serviceCode = "",
             serviceEdition = "",
         )),
