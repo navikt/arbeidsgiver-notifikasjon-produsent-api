@@ -390,7 +390,7 @@ class BrukerRepositoryImpl(
                                 ) as nye_oppgaver,
                                 (select o2 ->> 'frist'
                                     from unnest(o.oppgaver) as o2
-                                    where  o2 ->> 'tilstand' = 'NY'
+                                    where  o2 ->> 'tilstand' = ${BrukerModel.Oppgave.Tilstand.NY}
                                     order by o2 ->> 'frist' nulls last
                                     limit 1) as frist
                             from mine_saker_ikke_paginert s
@@ -402,17 +402,17 @@ class BrukerRepositoryImpl(
                                     'paaminnelseTidspunkt', n.paaminnelse_tidspunkt 
                                     )
                                     from notifikasjon n
-                                        where n.grupperingsid = s.grupperingsid
-                                            and n.id in (
-                                                select * from mine_digisyfo_notifikasjoner
-                                                    union
-                                                select * from mine_altinn_notifikasjoner
-                                                    union
-                                                select * from mine_altinn_reportee_notifikasjoner
-                                                    union
-                                                select * from mine_altinn_rolle_notifikasjoner
-                                            )
-                                        order by n.frist nulls last
+                                    where n.grupperingsid = s.grupperingsid
+                                        and n.id in (
+                                            select * from mine_digisyfo_notifikasjoner
+                                                union
+                                            select * from mine_altinn_notifikasjoner
+                                                union
+                                            select * from mine_altinn_reportee_notifikasjoner
+                                                union
+                                            select * from mine_altinn_rolle_notifikasjoner
+                                        )
+                                    order by n.frist nulls last
                                 ) as oppgaver
                             ) o
                             order by ${sorteringSql}
