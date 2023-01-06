@@ -260,8 +260,8 @@ class BrukerRepositoryImpl(
                    s.statuser#>>'{-1,tidspunkt}' desc 
                 """
                 BrukerAPI.SakSortering.FRIST -> """
-                    frist nulls last, o.oppgaver desc, sist_endret desc
-                """ /* Opplever at sortering på o.oppgaver desc setter [] før [null]*/
+                    frist nulls last, nye_oppgaver desc, sist_endret desc
+                """
             }
 
             val rows = database.nonTransactionalExecuteQuery(
@@ -384,33 +384,37 @@ class BrukerRepositoryImpl(
                                 s.statuser,
                                 s.sist_endret,
                                 o.oppgaver,
+                                (select count(*)
+                                 from unnest(o.oppgaver) as o2
+                                 where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
+                                ) as nye_oppgaver,
                                 (select o2 ->> 'frist'
                                 from unnest(o.oppgaver) as o2
                                 where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
                                 order by o2 ->> 'frist' nulls last
                                 limit 1) as frist
-                                from mine_saker_ikke_paginert s
-                                cross join lateral (
-                                    select array (
-                                        select jsonb_build_object( 
-                                        'tilstand', n.tilstand, 
-                                        'frist', n.frist, 
-                                        'paaminnelseTidspunkt', n.paaminnelse_tidspunkt 
+                            from mine_saker_ikke_paginert s
+                            cross join lateral (
+                                select array (
+                                    select jsonb_build_object( 
+                                    'tilstand', n.tilstand, 
+                                    'frist', n.frist, 
+                                    'paaminnelseTidspunkt', n.paaminnelse_tidspunkt 
+                                    )
+                                    from notifikasjon n
+                                    where n.grupperingsid = s.grupperingsid
+                                        and n.id in (
+                                            select * from mine_digisyfo_notifikasjoner
+                                                union
+                                            select * from mine_altinn_notifikasjoner
+                                                union
+                                            select * from mine_altinn_reportee_notifikasjoner
+                                                union
+                                            select * from mine_altinn_rolle_notifikasjoner
                                         )
-                                        from notifikasjon n
-                                            where n.grupperingsid = s.grupperingsid
-                                                and n.id in (
-                                                    select * from mine_digisyfo_notifikasjoner
-                                                        union
-                                                    select * from mine_altinn_notifikasjoner
-                                                        union
-                                                    select * from mine_altinn_reportee_notifikasjoner
-                                                        union
-                                                    select * from mine_altinn_rolle_notifikasjoner
-                                                )
-                                            order by n.frist nulls last
-                                    ) as oppgaver
-                                ) o
+                                    order by n.frist nulls last
+                                ) as oppgaver
+                            ) o
                             order by ${sorteringSql}
                             offset ? limit ? 
                         )
