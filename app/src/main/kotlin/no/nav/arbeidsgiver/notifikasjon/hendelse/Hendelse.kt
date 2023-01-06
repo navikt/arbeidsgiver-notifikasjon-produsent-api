@@ -178,9 +178,6 @@ object HendelseModel {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
             }
-            requireGraphql(virksomhetsnummer.isNotEmpty()) {
-                "virksomhetsnummer kan ikke være blankt"
-            }
         }
 
         companion object {
@@ -272,9 +269,6 @@ object HendelseModel {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
             }
-            requireGraphql(virksomhetsnummer.isNotEmpty()) {
-                "virksomhetsnummer kan ikke være blankt"
-            }
         }
 
         @JsonIgnore
@@ -345,9 +339,6 @@ object HendelseModel {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
-            }
-            requireGraphql(virksomhetsnummer.isNotEmpty()) {
-                "virksomhetsnummer kan ikke være blankt"
             }
         }
 

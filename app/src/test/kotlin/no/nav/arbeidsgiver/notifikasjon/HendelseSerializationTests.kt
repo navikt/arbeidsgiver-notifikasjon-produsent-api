@@ -19,7 +19,7 @@ class HendelseSerializationTests : DescribeSpec({
 
     describe("kun 'mottaker'") {
         val oppgaveOpprettet = OppgaveOpprettet(
-            virksomhetsnummer = "42",
+            virksomhetsnummer = "",
             notifikasjonId = uuid("0"),
             hendelseId = uuid("0"),
             produsentId = "",
@@ -55,7 +55,7 @@ class HendelseSerializationTests : DescribeSpec({
      * denne testen hvis det endres! */
     describe("har ikke 'aggregateId', men 'notifikasjonId' i HardDelete json") {
         val oppgaveOpprettet = HardDelete(
-            virksomhetsnummer = "42",
+            virksomhetsnummer = "",
             aggregateId = uuid("0"),
             hendelseId = uuid("0"),
             produsentId = "",
@@ -74,7 +74,7 @@ class HendelseSerializationTests : DescribeSpec({
      * denne testen hvis det endres! */
     describe("har ikke 'aggregateId', men 'notifikasjonId' i SoftDelete json") {
         val oppgaveOpprettet = SoftDelete(
-            virksomhetsnummer = "42",
+            virksomhetsnummer = "",
             aggregateId = uuid("0"),
             hendelseId = uuid("0"),
             produsentId = "",
@@ -91,7 +91,7 @@ class HendelseSerializationTests : DescribeSpec({
 
     describe("har ikke 'aggregateId' i json") {
         val oppgaveOpprettet = OppgaveOpprettet(
-            virksomhetsnummer = "42",
+            virksomhetsnummer = "",
             notifikasjonId = uuid("0"),
             hendelseId = uuid("0"),
             produsentId = "",

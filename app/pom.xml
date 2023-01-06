@@ -12,7 +12,7 @@
         <kotlin.version>1.7.20</kotlin.version>
         <ktor.version>2.1.2</ktor.version>
         <kotest.version>5.5.0</kotest.version>
-        <cxf.version>3.5.3</cxf.version>
+        <cxf.version>3.5.5</cxf.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
         <jvm.version>17</jvm.version>
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
