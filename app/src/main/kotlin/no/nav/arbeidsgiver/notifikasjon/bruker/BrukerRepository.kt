@@ -386,11 +386,11 @@ class BrukerRepositoryImpl(
                                 o.oppgaver,
                                 (select count(*)
                                  from unnest(o.oppgaver) as o2
-                                 where  o2 ->> 'tilstand' = 'NY'
+                                 where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
                                 ) as nye_oppgaver,
                                 (select o2 ->> 'frist'
                                 from unnest(o.oppgaver) as o2
-                                where  o2 ->> 'tilstand' = ${BrukerModel.Oppgave.Tilstand.NY}
+                                where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
                                 order by o2 ->> 'frist' nulls last
                                 limit 1) as frist
                             from mine_saker_ikke_paginert s
