@@ -5,7 +5,8 @@ permalink: /api/
 ---
 
 Interaktiv demo av API [er tilgjengelig på labs.nais.io](https://notifikasjon-fake-produsent-api.labs.nais.io/).
-
+Hvis du kjører en spørring i den interaktive demoen, så sendes et ekte nettverkskall. Du kan derfor bruke developer-tools for å se
+hvordan JSON-et til forespørselen og svaret ser ut.
 
 # Autentisering
 Tjenesten deres må autentisere seg med Azure AD, type server–server, som [beskrevet i nais-dokumentasjonen](https://doc.nais.io/security/auth/azure-ad/).
