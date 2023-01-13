@@ -118,7 +118,7 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
 
     describe("Skedulerer utgått for alle som har passert innenfor samme time, men ikke de som ikke har passert") {
         hendelseProdusent.clear()
-        val now = LocalDateTime.parse("2022-12-24T12:30:00")
+        val now = oppgaveOpprettet.opprettetTidspunkt.plusDays(14).toLocalDateTime()
         val passert1 = now.minus(1, ChronoUnit.HOURS) // key: 11:00
         val passert2 = now.minus(10, ChronoUnit.MINUTES) // key: 12:00
         val passert3 = now.minus(1, ChronoUnit.MINUTES) // key: 12:00
