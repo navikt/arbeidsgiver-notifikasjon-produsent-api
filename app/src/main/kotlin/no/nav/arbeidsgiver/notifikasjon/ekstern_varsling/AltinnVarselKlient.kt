@@ -368,10 +368,16 @@ private val marshaller = JAXBContext.newInstance(
 
 private fun INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage.serialize() =
     StringWriter().also {
-        marshaller.marshal(this, it)
+        marshaller.marshal(
+            no.altinn.services.common.fault._2009._10.ObjectFactory().createAltinnFault(this.faultInfo),
+            it
+        )
     }.toString()
 
 private fun SendNotificationResultList.serialize() =
     StringWriter().also {
-        marshaller.marshal(this, it)
+        marshaller.marshal(
+            no.altinn.schemas.services.serviceengine.notification._2015._06.ObjectFactory().createSendNotificationResultList(this),
+            it
+        )
     }.toString()
