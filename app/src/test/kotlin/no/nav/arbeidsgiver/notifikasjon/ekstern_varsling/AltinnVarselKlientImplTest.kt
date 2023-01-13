@@ -120,4 +120,20 @@ class AltinnVarselKlientImplTest : DescribeSpec({
             it.rå shouldNotBe null
         }
     }
+
+    describe("returnerer feil for kall med generell feil") {
+        answers.add { throw Exception("oof") }
+
+        val response = klient.send(
+            EksternVarsel.Sms(
+                fnrEllerOrgnr = "",
+                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null,
+                mobilnummer = "",
+                tekst = "",
+            )
+        )
+
+        response.isFailure shouldBe true
+    }
 })
