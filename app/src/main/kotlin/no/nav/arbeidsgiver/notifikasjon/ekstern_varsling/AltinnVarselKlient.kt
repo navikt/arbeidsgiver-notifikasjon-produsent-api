@@ -2,7 +2,9 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.databind.node.TextNode
 import io.ktor.http.HttpHeaders.Authorization
+import io.ktor.util.logging.*
 import kotlinx.coroutines.runBlocking
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
@@ -278,7 +280,12 @@ class AltinnVarselKlientImpl(
                 )
                 Result.success(
                     AltinnVarselKlient.AltinnResponse.Ok(
-                        rå = laxObjectMapper.valueToTree(response),
+                        rå = try {
+                            laxObjectMapper.valueToTree<JsonNode>(response)
+                        } catch (e: Throwable) {
+                            log.error(e)
+                            TextNode(e.message)
+                        },
                     )
                 )
             } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
