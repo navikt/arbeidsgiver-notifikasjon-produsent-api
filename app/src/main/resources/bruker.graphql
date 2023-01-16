@@ -1,7 +1,8 @@
 type Query {
     notifikasjoner: NotifikasjonerResultat!
     saker(
-        virksomhetsnummer: String!
+        virksomhetsnumre: [String!]
+        virksomhetsnummer: String
         offset: Int
         limit: Int
         tekstsoek: String

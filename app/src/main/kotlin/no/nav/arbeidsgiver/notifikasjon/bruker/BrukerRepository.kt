@@ -44,7 +44,7 @@ interface BrukerRepository {
 
     suspend fun hentSaker(
         fnr: String,
-        virksomhetsnummer: String,
+        virksomhetsnummer: List<String>,
         tilganger: Tilganger,
         tekstsoek: String?,
         offset: Int,
@@ -207,7 +207,7 @@ class BrukerRepositoryImpl(
 
     override suspend fun hentSaker(
         fnr: String,
-        virksomhetsnummer: String,
+        virksomhetsnummer: List<String>,
         tilganger: Tilganger,
         tekstsoek: String?,
         offset: Int,
@@ -221,20 +221,20 @@ class BrukerRepositoryImpl(
                     serviceEdition = it.serviceedition,
                     virksomhetsnummer = it.virksomhet
                 )
-            }.filter { it.virksomhetsnummer == virksomhetsnummer }
+            }.filter {  virksomhetsnummer.contains(it.virksomhetsnummer) }
             val tilgangerAltinnReporteeMottaker = tilganger.reportee.map {
                 AltinnReporteeMottaker(
                     virksomhetsnummer = it.virksomhet,
                     fnr = it.fnr
                 )
-            }.filter { it.virksomhetsnummer == virksomhetsnummer }
+            }.filter { virksomhetsnummer.contains(it.virksomhetsnummer) }
             val tilgangerAltinnRolleMottaker = tilganger.rolle.map {
                 AltinnRolleMottaker(
                     virksomhetsnummer = it.virksomhet,
                     roleDefinitionId = it.roleDefinitionId,
                     roleDefinitionCode = it.roleDefinitionCode,
                 )
-            }.filter { it.virksomhetsnummer == virksomhetsnummer }
+            }.filter { virksomhetsnummer.contains(it.virksomhetsnummer) }
 
             var tekstsoekElementer = (tekstsoek ?: "")
                 .trim()
@@ -312,7 +312,7 @@ class BrukerRepositoryImpl(
                         mine_digisyfo_saker as (
                             select sak_id
                             from mottaker_digisyfo_for_fnr
-                            where fnr_leder = ? and virksomhet = ? and sak_id is not null
+                            where fnr_leder = ? and virksomhet = any(?) and sak_id is not null
                         ),
                         mine_saker as (
                             (select * from mine_digisyfo_saker)
@@ -440,7 +440,7 @@ class BrukerRepositoryImpl(
                     jsonb(tilgangerAltinnReporteeMottaker)
                     jsonb(tilgangerAltinnRolleMottaker)
                     string(fnr)
-                    string(virksomhetsnummer)
+                    stringList(virksomhetsnummer)
                     tekstsoekElementer.forEach { string(it) }
                     string(fnr)
                     integer(offset)

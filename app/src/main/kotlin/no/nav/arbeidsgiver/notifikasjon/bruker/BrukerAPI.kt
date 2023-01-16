@@ -11,15 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Ti
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Scalars
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.createGraphQL
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
@@ -294,7 +286,13 @@ object BrukerAPI {
     ) {
         coDataFetcher("saker") { env ->
             val context = env.notifikasjonContext<Context>()
-            val virksomhetsnummer = env.getArgument<String>("virksomhetsnummer")
+
+            // TODO: fjern fallback når ingen klienter kaller med den lengre
+            val virksomhetsnumre = env.getArgumentOrDefault<List<String>>(
+                "virksomhetsnumre",
+                listOf(env.getArgument("virksomhetsnummer"))
+            )
+
             val tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null)
             val sortering = env.getTypedArgument<SakSortering>("sortering")
             val offset = env.getArgumentOrDefault("offset", 0) ?: 0
@@ -302,7 +300,7 @@ object BrukerAPI {
             val tilganger = tilgangerService.hentTilganger(context)
             val sakerResultat = brukerRepository.hentSaker(
                 fnr = context.fnr,
-                virksomhetsnummer = virksomhetsnummer,
+                virksomhetsnummer = virksomhetsnumre,
                 tilganger = tilganger,
                 tekstsoek = tekstsoek,
                 sortering =  sortering,

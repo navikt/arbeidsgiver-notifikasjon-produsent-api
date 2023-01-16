@@ -306,8 +306,8 @@ private fun TestApplicationEngine.hentSaker(
 ) = brukerApi(
     GraphQLRequest(
         """
-    query hentSaker(${'$'}virksomhetsnummer: String!, ${'$'}tekstsoek: String, ${'$'}sortering: SakSortering!, ${'$'}offset: Int, ${'$'}limit: Int){
-        saker(virksomhetsnummer: ${'$'}virksomhetsnummer, tekstsoek: ${'$'}tekstsoek, sortering: ${'$'}sortering, offset: ${'$'}offset, limit: ${'$'}limit) {
+    query hentSaker(${'$'}virksomhetsnumre: [String!]!, ${'$'}tekstsoek: String, ${'$'}sortering: SakSortering!, ${'$'}offset: Int, ${'$'}limit: Int){
+        saker(virksomhetsnumre: ${'$'}virksomhetsnumre, tekstsoek: ${'$'}tekstsoek, sortering: ${'$'}sortering, offset: ${'$'}offset, limit: ${'$'}limit) {
             saker {
                 id
                 tittel
@@ -336,7 +336,7 @@ private fun TestApplicationEngine.hentSaker(
     """.trimIndent(),
         "hentSaker",
         mapOf(
-            "virksomhetsnummer" to "42",
+            "virksomhetsnumre" to listOf("42"),
             "tekstsoek" to tekstsoek,
             "sortering" to sortering,
             "offset" to offset,

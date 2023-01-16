@@ -85,7 +85,7 @@ class BrukerRepositorySearchTest : DescribeSpec({
 private suspend fun BrukerRepositoryImpl.search(query: String): List<UUID> =
     hentSaker(
         fnr = "1",
-        virksomhetsnummer = "1",
+        virksomhetsnummer = listOf("1"),
         tilganger = BrukerModel.Tilganger(
             tjenestetilganger = listOf(
                 BrukerModel.Tilgang.Altinn(
