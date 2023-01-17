@@ -54,6 +54,8 @@ spec:
           namespace: arbeidsforhold
         - application: sykefravarsstatistikk
           namespace: arbeidsgiver
+        - application: min-ia
+          namespace: teamia
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
