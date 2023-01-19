@@ -33,7 +33,7 @@ class QuerySakerTests : DescribeSpec({
     val engine = ktorBrukerTestServer(
         altinn = AltinnStub(
             "0".repeat(11) to Tilganger(
-                tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1")),
+                tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1"), Tilgang.Altinn("43", "5441", "1")),
                 listOf(),
                 listOf(),
             )
@@ -213,6 +213,37 @@ class QuerySakerTests : DescribeSpec({
                 saker.first().id shouldBe sak2.sakId
             }
         }
+
+        context("søk på tvers av virksomheter") {
+            val sak1 = brukerRepository.opprettSak(uuid("1"), "42")
+            val sak2 = brukerRepository.opprettSak(uuid("2"), "43")
+
+            it("hentSaker med tom liste av virksomhetsnumre gir tom liste") {
+                val response = engine.hentSaker(virksomhetsnumre = arrayOf())
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 0
+            }
+
+            it("hentSaker med liste av virksomhetsnumre=42 gir riktig sak") {
+                val response = engine.hentSaker("42")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak1.sakId
+            }
+
+            it("hentSaker med liste av virksomhetsnumre=43 gir riktig sak") {
+                val response = engine.hentSaker("43")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak2.sakId
+            }
+
+            it("hentSaker med liste av virksomhetsnumre=42,43 gir riktig sak") {
+                val response = engine.hentSaker("42", "43")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 2
+            }
+        }
     }
 })
 
@@ -298,7 +329,49 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
     }
 }
 
+private suspend fun BrukerRepository.opprettSak(
+    sakId: UUID,
+    virksomhetsnummer: String,
+): SakOpprettet {
+    val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
+    val sak = SakOpprettet(
+        hendelseId = sakId,
+        sakId = sakId,
+        grupperingsid = sakId.toString(),
+        virksomhetsnummer = virksomhetsnummer,
+        produsentId = "test",
+        kildeAppNavn = "test",
+        merkelapp = "tag",
+        mottakere = listOf(AltinnMottaker("5441", "1", virksomhetsnummer)),
+        tittel = "er det no sak",
+        lenke = "#foo",
+        oppgittTidspunkt = oppgittTidspunkt,
+        mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
+    ).also {
+        oppdaterModellEtterHendelse(it)
+    }
+    NyStatusSak(
+        hendelseId = UUID.randomUUID(),
+        virksomhetsnummer = sak.virksomhetsnummer,
+        produsentId = sak.produsentId,
+        kildeAppNavn = sak.kildeAppNavn,
+        sakId = sak.sakId,
+        status = SakStatus.MOTTATT,
+        overstyrStatustekstMed = "noe",
+        mottattTidspunkt = oppgittTidspunkt,
+        idempotensKey = IdempotenceKey.initial(),
+        oppgittTidspunkt = null,
+        hardDelete = null,
+        nyLenkeTilSak = null,
+    ).also { hendelse ->
+        oppdaterModellEtterHendelse(hendelse)
+    }
+    return sak
+}
+
 private fun TestApplicationEngine.hentSaker(
+    vararg virksomhetsnumre: String = arrayOf("42"),
     tekstsoek: String? = null,
     offset: Int? = null,
     limit: Int? = null,
@@ -336,7 +409,7 @@ private fun TestApplicationEngine.hentSaker(
     """.trimIndent(),
         "hentSaker",
         mapOf(
-            "virksomhetsnumre" to listOf("42"),
+            "virksomhetsnumre" to virksomhetsnumre,
             "tekstsoek" to tekstsoek,
             "sortering" to sortering,
             "offset" to offset,
