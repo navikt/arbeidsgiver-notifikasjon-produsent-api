@@ -161,7 +161,7 @@ class HardDeleteTests : DescribeSpec({
             val notifikasjoner =
                 queryModel.hentSaker(
                     fnr = mottaker.naermesteLederFnr,
-                    virksomhetsnummer = mottaker.virksomhetsnummer,
+                    virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
                     tilganger = Tilganger.EMPTY,
                     tekstsoek = null,
                     offset = 0,
@@ -178,7 +178,7 @@ class HardDeleteTests : DescribeSpec({
             queryModel.oppdaterModellEtterHendelse(hardDeleteEvent)
             val sakerEtterSletting = queryModel.hentSaker(
                 fnr = mottaker.naermesteLederFnr,
-                virksomhetsnummer = mottaker.virksomhetsnummer,
+                virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
                 tilganger = Tilganger.EMPTY,
                 tekstsoek = null,
                 offset = 0,
