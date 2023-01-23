@@ -127,7 +127,6 @@ val TOI = Produsent(
     id = "toi",
     accessPolicy = basedOnEnv(
         prod = { listOf(
-            //"prod-gcp:helsearbeidsgiver:im-notifikasjon",
         ) },
         other = { listOf(
             "dev-gcp:toi:toi-arbeidsgiver-notifikasjon",
