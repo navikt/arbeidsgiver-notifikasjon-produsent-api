@@ -70,5 +70,9 @@ spec:
         - application: im-notifikasjon
           namespace: helsearbeidsgiver
           cluster: dev-gcp
+
+        - application: toi-arbeidsgiver-notifikasjon
+          namespace: toi
+          cluster: dev-gcp
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
