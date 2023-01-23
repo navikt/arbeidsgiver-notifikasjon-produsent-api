@@ -123,6 +123,23 @@ val HELSEARBEIDSGIVER = Produsent(
     )
 )
 
+val TOI = Produsent(
+    id = "toi",
+    accessPolicy = basedOnEnv(
+        prod = { listOf(
+        ) },
+        other = { listOf(
+            "dev-gcp:toi:toi-arbeidsgiver-notifikasjon",
+        ) },
+    ),
+    tillatteMerkelapper = listOf(
+        "Kandidater",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "5078", version = "1", description = "Rekruttering")
+    )
+)
+
 
 val PRODUSENT_LIST =
     listOf(
@@ -132,6 +149,7 @@ val PRODUSENT_LIST =
         PERMITTERING,
         FRITAKAGP,
         HELSEARBEIDSGIVER,
+        TOI,
     )
         .filter { it.accessPolicy.isNotEmpty() }
 
