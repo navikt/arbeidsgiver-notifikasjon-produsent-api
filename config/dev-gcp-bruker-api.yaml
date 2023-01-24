@@ -55,7 +55,6 @@ spec:
           namespace: teamsykmelding
       external:
         - host: fakedings.dev-gcp.nais.io # fakedings login
-        - host: navtestb2c.b2clogin.com # for login service
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
     - configmap: loginservice-idporten
