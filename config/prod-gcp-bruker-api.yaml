@@ -67,4 +67,3 @@ spec:
       value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
-    - configmap: loginservice-idporten

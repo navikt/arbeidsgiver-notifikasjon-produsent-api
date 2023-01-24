@@ -66,24 +66,6 @@ object HttpAuthProviders {
         )
     }
 
-    val LOGIN_SERVICE by lazy {
-        JWTAuthentication(
-            name = "loginservice",
-            config = {
-                verifier(
-                    audience = System.getenv("LOGINSERVICE_IDPORTEN_AUDIENCE"),
-                    discoveryUrl = System.getenv("LOGINSERVICE_IDPORTEN_DISCOVERY_URL"),
-                ) {
-                    `with id-porten login level 4`()
-                }
-
-                validate {
-                    BrukerPrincipal(fnr = it.payload.getClaim("pid").asString())
-                }
-            }
-        )
-    }
-
     val AZURE_AD by lazy {
         val preAuthorizedApps = AzurePreAuthorizedAppsImpl()
 

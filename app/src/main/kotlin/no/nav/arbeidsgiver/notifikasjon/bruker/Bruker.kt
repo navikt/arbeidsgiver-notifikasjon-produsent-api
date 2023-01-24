@@ -40,11 +40,9 @@ object Bruker {
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
-            HttpAuthProviders.LOGIN_SERVICE,
             HttpAuthProviders.TOKEN_X,
         )
         null, "dev-gcp" -> listOf(
-            HttpAuthProviders.LOGIN_SERVICE,
             HttpAuthProviders.TOKEN_X,
             HttpAuthProviders.FAKEDINGS_BRUKER
         )

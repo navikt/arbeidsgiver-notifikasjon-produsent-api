@@ -57,5 +57,4 @@ spec:
         - host: fakedings.dev-gcp.nais.io # fakedings login
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
-    - configmap: loginservice-idporten
 
