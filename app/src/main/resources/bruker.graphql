@@ -6,6 +6,7 @@ type Query {
         offset: Int
         limit: Int
         tekstsoek: String
+        sakstyper: [String!]
         sortering: SakSortering! = OPPDATERT
     ): SakerResultat!
     whoami: String
@@ -17,6 +18,9 @@ enum SakSortering {
     FRIST
 }
 
+type Sakstype {
+    navn: String!
+}
 
 type SakerResultat {
     saker: [Sak!]!
@@ -25,6 +29,8 @@ type SakerResultat {
     Antall saker for gitt filter, men uavhengig av offset/limit.
     """
     totaltAntallSaker: Int!
+
+    sakstyper: [Sakstype!]!
 
     feilAltinn: Boolean!
 }

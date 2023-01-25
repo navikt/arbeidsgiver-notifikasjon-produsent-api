@@ -87,6 +87,7 @@ object BrukerAPI {
     @JsonTypeName("SakerResultat")
     data class SakerResultat(
         val saker: List<Sak>,
+        val sakstyper: List<Sakstype>,
         val feilAltinn: Boolean,
         val totaltAntallSaker: Int,
     )
@@ -110,6 +111,11 @@ object BrukerAPI {
         val oppgaver: List<OppgaveMetadata>,
     ) : WithVirksomhet
 
+
+    @JsonTypeName("Sakstype")
+    data class Sakstype(
+        val name: String,
+    )
 
     @JsonTypeName("SakStatus")
     data class SakStatus(
@@ -293,19 +299,16 @@ object BrukerAPI {
                 listOf(env.getArgument("virksomhetsnummer"))
             )
 
-            val tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null)
-            val sortering = env.getTypedArgument<SakSortering>("sortering")
-            val offset = env.getArgumentOrDefault("offset", 0) ?: 0
-            val limit = env.getArgumentOrDefault("limit", 3) ?: 3
             val tilganger = tilgangerService.hentTilganger(context)
             val sakerResultat = brukerRepository.hentSaker(
                 fnr = context.fnr,
                 virksomhetsnummer = virksomhetsnumre,
                 tilganger = tilganger,
-                tekstsoek = tekstsoek,
-                sortering =  sortering,
-                offset = offset,
-                limit = limit,
+                sakstyper = env.getArgument("sakstyper"),
+                tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null),
+                sortering = env.getTypedArgument("sortering"),
+                offset = env.getArgumentOrDefault("offset", 0) ?: 0,
+                limit = env.getArgumentOrDefault("limit", 3) ?: 3,
             )
             val saker = sakerResultat.saker.map {
                 Sak(
@@ -336,6 +339,7 @@ object BrukerAPI {
             (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
             SakerResultat(
                 saker = saker,
+                sakstyper = listOf(),
                 feilAltinn = tilganger.harFeil,
                 totaltAntallSaker = sakerResultat.totaltAntallSaker
             )

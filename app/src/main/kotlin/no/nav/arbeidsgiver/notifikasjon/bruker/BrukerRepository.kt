@@ -47,6 +47,7 @@ interface BrukerRepository {
         virksomhetsnummer: List<String>,
         tilganger: Tilganger,
         tekstsoek: String?,
+        sakstyper: List<String>?,
         offset: Int,
         limit: Int,
         sortering: BrukerAPI.SakSortering,
@@ -210,6 +211,7 @@ class BrukerRepositoryImpl(
         virksomhetsnummer: List<String>,
         tilganger: Tilganger,
         tekstsoek: String?,
+        sakstyper: List<String>?,
         offset: Int,
         limit: Int,
         sortering: BrukerAPI.SakSortering,
@@ -252,7 +254,7 @@ class BrukerRepositoryImpl(
 
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
-                .ifNotBlank { "where $it" }
+                .ifNotBlank { "and $it" }
 
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
@@ -337,6 +339,7 @@ class BrukerRepositoryImpl(
                             join sak as s on s.id = ms.sak_id
                             join sak_status_json as status_json on s.id = status_json.sak_id
                             join sak_search as search on s.id = search.id
+                            where coalesce(s.merkelapp = any(?), true)
                             $tekstsoekSql
                         ),
                         mine_altinn_notifikasjoner as (
@@ -441,6 +444,7 @@ class BrukerRepositoryImpl(
                     jsonb(tilgangerAltinnRolleMottaker)
                     string(fnr)
                     stringList(virksomhetsnummer)
+                    nullableStringList(sakstyper)
                     tekstsoekElementer.forEach { string(it) }
                     string(fnr)
                     integer(offset)
