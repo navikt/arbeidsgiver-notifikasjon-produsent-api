@@ -114,7 +114,7 @@ object BrukerAPI {
 
     @JsonTypeName("Sakstype")
     data class Sakstype(
-        val name: String,
+        val navn: String,
     )
 
     @JsonTypeName("SakStatus")
@@ -339,7 +339,7 @@ object BrukerAPI {
             (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
             SakerResultat(
                 saker = saker,
-                sakstyper = listOf(),
+                sakstyper = sakerResultat.sakstyper.map { Sakstype(it) },
                 feilAltinn = tilganger.harFeil,
                 totaltAntallSaker = sakerResultat.totaltAntallSaker
             )
