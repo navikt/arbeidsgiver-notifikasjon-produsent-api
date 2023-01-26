@@ -164,6 +164,7 @@ class HardDeleteTests : DescribeSpec({
                     virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
                     tilganger = Tilganger.EMPTY,
                     tekstsoek = null,
+                    sakstyper = null,
                     offset = 0,
                     limit = Integer.MAX_VALUE,
                     sortering = BrukerAPI.SakSortering.OPPDATERT
@@ -181,6 +182,7 @@ class HardDeleteTests : DescribeSpec({
                 virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
                 tilganger = Tilganger.EMPTY,
                 tekstsoek = null,
+                sakstyper = null,
                 offset = 0,
                 limit = Integer.MAX_VALUE,
                 sortering = BrukerAPI.SakSortering.OPPDATERT

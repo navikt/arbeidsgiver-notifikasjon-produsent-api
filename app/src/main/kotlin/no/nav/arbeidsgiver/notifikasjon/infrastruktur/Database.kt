@@ -294,5 +294,13 @@ class ParameterSetters(
         preparedStatement.setArray(index++, array)
     }
 
+    fun nullableStringList(value: List<String>?) {
+        if (value == null) {
+            preparedStatement.setArray(index++, value)
+        } else {
+            stringList(value)
+        }
+    }
+
 
 }

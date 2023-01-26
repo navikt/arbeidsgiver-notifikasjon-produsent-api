@@ -40,6 +40,7 @@ interface BrukerRepository {
     class HentSakerResultat(
         val totaltAntallSaker: Int,
         val saker: List<BrukerModel.Sak>,
+        val sakstyper: List<String>,
     )
 
     suspend fun hentSaker(
@@ -47,6 +48,7 @@ interface BrukerRepository {
         virksomhetsnummer: List<String>,
         tilganger: Tilganger,
         tekstsoek: String?,
+        sakstyper: List<String>?,
         offset: Int,
         limit: Int,
         sortering: BrukerAPI.SakSortering,
@@ -210,6 +212,7 @@ class BrukerRepositoryImpl(
         virksomhetsnummer: List<String>,
         tilganger: Tilganger,
         tekstsoek: String?,
+        sakstyper: List<String>?,
         offset: Int,
         limit: Int,
         sortering: BrukerAPI.SakSortering,
@@ -252,7 +255,7 @@ class BrukerRepositoryImpl(
 
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
-                .ifNotBlank { "where $it" }
+                .ifNotBlank { "and $it" }
 
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
@@ -314,7 +317,7 @@ class BrukerRepositoryImpl(
                             from mottaker_digisyfo_for_fnr
                             where fnr_leder = ? and virksomhet = any(?) and sak_id is not null
                         ),
-                        mine_saker as (
+                        mine_sak_ider as (
                             (select * from mine_digisyfo_saker)
                             union 
                             (select * from mine_altinn_saker)
@@ -322,6 +325,11 @@ class BrukerRepositoryImpl(
                             (select * from mine_altinn_reportee_saker)
                             union 
                             (select * from mine_altinn_rolle_saker)
+                        ),
+                        mine_saker as (
+                            select *
+                                from mine_sak_ider as ms
+                                join sak as s on s.id = ms.sak_id
                         ),
                         mine_saker_ikke_paginert as (
                             select 
@@ -333,10 +341,10 @@ class BrukerRepositoryImpl(
                                 s.grupperingsid as grupperingsid,
                                 to_jsonb(status_json.statuser) as statuser,
                                 status_json.sist_endret as sist_endret
-                            from mine_saker as ms
-                            join sak as s on s.id = ms.sak_id
+                            from mine_saker as s
                             join sak_status_json as status_json on s.id = status_json.sak_id
                             join sak_search as search on s.id = search.id
+                            where coalesce(s.merkelapp = any(?), true)
                             $tekstsoekSql
                         ),
                         mine_altinn_notifikasjoner as (
@@ -433,7 +441,8 @@ class BrukerRepositoryImpl(
                                 'oppgaver', oppgaver
                             )),  
                             '[]'::jsonb
-                        ) from mine_saksoppgaver) as saker
+                        ) from mine_saksoppgaver) as saker,
+                        (select coalesce(jsonb_agg(distinct merkelapp), '[]'::jsonb) from mine_saker) as sakstyper
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
@@ -441,6 +450,7 @@ class BrukerRepositoryImpl(
                     jsonb(tilgangerAltinnRolleMottaker)
                     string(fnr)
                     stringList(virksomhetsnummer)
+                    nullableStringList(sakstyper)
                     tekstsoekElementer.forEach { string(it) }
                     string(fnr)
                     integer(offset)
@@ -450,6 +460,7 @@ class BrukerRepositoryImpl(
                 BrukerRepository.HentSakerResultat(
                     totaltAntallSaker = getInt("totalt_antall_saker"),
                     saker = laxObjectMapper.readValue(getString("saker")),
+                    sakstyper = laxObjectMapper.readValue(getString("sakstyper"))
                 )
             }
             return@coRecord rows.first()

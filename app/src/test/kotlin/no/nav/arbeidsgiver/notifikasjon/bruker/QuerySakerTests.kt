@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
@@ -16,12 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.FERDIG
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.*
@@ -89,7 +85,7 @@ class QuerySakerTests : DescribeSpec({
 
             val response = engine.hentSaker()
 
-            it("response inneholder riktig data") {
+            it("response inneholder riktig data for sak") {
                 val sak = response.getTypedContent<BrukerAPI.Sak>("saker/saker/0")
                 sak.id shouldBe sakOpprettet.sakId
                 sak.merkelapp shouldBe "tag"
@@ -219,29 +215,82 @@ class QuerySakerTests : DescribeSpec({
             val sak2 = brukerRepository.opprettSak(uuid("2"), "43")
 
             it("hentSaker med tom liste av virksomhetsnumre gir tom liste") {
-                val response = engine.hentSaker(virksomhetsnumre = arrayOf())
+                val response = engine.hentSaker(virksomhetsnumre = listOf())
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 0
             }
 
             it("hentSaker med liste av virksomhetsnumre=42 gir riktig sak") {
-                val response = engine.hentSaker("42")
+                val response = engine.hentSaker(listOf("42"))
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 1
                 saker.first().id shouldBe sak1.sakId
             }
 
             it("hentSaker med liste av virksomhetsnumre=43 gir riktig sak") {
-                val response = engine.hentSaker("43")
+                val response = engine.hentSaker(listOf("43"))
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 1
                 saker.first().id shouldBe sak2.sakId
             }
 
             it("hentSaker med liste av virksomhetsnumre=42,43 gir riktig sak") {
-                val response = engine.hentSaker("42", "43")
+                val response = engine.hentSaker(virksomhetsnumre = listOf("42", "43"))
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 2
+            }
+        }
+
+        context("søk på type sak") {
+            brukerRepository.opprettSak(uuid("1"), "42", "merkelapp1") // tilgang til 42
+            brukerRepository.opprettSak(uuid("2"), "43", "merkelapp2") // tilgang til 43
+            brukerRepository.opprettSak(uuid("3"), "44", "merkelapp3") // ikke tilgang til 44
+            brukerRepository.opprettSak(uuid("4"), "45", "merkelapp1") // ikke tilgang til 45
+
+
+            it("søk på null sakstyper returnere alle") {
+                val response = engine.hentSaker(listOf("42", "43", "44", "45"))
+                val saker = response.getTypedContent<List<UUID>>("$.saker.saker.*.id")
+                saker shouldContainExactlyInAnyOrder listOf(uuid("1"), uuid("2"))
+
+                val sakstyper = response.getTypedContent<List<String>>("$.saker.sakstyper.*.navn")
+                sakstyper shouldBe listOf("merkelapp1", "merkelapp2")
+            }
+
+            it("søk på merkelapp1") {
+                val response = engine.hentSaker(listOf("42", "43", "44", "45"), sakstyper = listOf("merkelapp1"))
+                val saker = response.getTypedContent<List<UUID>>("$.saker.saker.*.id")
+                saker shouldContainExactlyInAnyOrder listOf(uuid("1"))
+
+                val sakstyper = response.getTypedContent<List<String>>("$.saker.sakstyper.*.navn")
+                sakstyper shouldBe listOf("merkelapp1", "merkelapp2")
+            }
+
+            it("søk på merkelapp1 og merkelapp2") {
+                val response = engine.hentSaker(listOf("42", "43", "44", "45"), sakstyper = listOf("merkelapp1", "merkelapp2"))
+                val saker = response.getTypedContent<List<UUID>>("$.saker.saker.*.id")
+                saker shouldContainExactlyInAnyOrder listOf(uuid("1"), uuid("2"))
+
+                val sakstyper = response.getTypedContent<List<String>>("$.saker.sakstyper.*.navn")
+                sakstyper shouldBe listOf("merkelapp1", "merkelapp2")
+            }
+
+            it("søk på merkelapp3") {
+                val response = engine.hentSaker(listOf("42", "43", "44", "45"), sakstyper = listOf("merkelapp3"))
+                val saker = response.getTypedContent<List<UUID>>("$.saker.saker.*.id")
+                saker shouldContainExactlyInAnyOrder listOf()
+
+                val sakstyper = response.getTypedContent<List<String>>("$.saker.sakstyper.*.navn")
+                sakstyper shouldBe listOf("merkelapp1", "merkelapp2")
+            }
+
+            it("søk på tom liste") {
+                val response = engine.hentSaker(listOf("42", "43", "44", "45"), sakstyper = listOf())
+                val saker = response.getTypedContent<List<UUID>>("$.saker.saker.*.id")
+                saker shouldContainExactlyInAnyOrder listOf()
+
+                val sakstyper = response.getTypedContent<List<String>>("$.saker.sakstyper.*.navn")
+                sakstyper shouldBe listOf("merkelapp1", "merkelapp2")
             }
         }
     }
@@ -332,6 +381,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
 private suspend fun BrukerRepository.opprettSak(
     sakId: UUID,
     virksomhetsnummer: String,
+    merkelapp : String = "tag"
 ): SakOpprettet {
     val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
     val sak = SakOpprettet(
@@ -341,7 +391,7 @@ private suspend fun BrukerRepository.opprettSak(
         virksomhetsnummer = virksomhetsnummer,
         produsentId = "test",
         kildeAppNavn = "test",
-        merkelapp = "tag",
+        merkelapp = merkelapp,
         mottakere = listOf(AltinnMottaker("5441", "1", virksomhetsnummer)),
         tittel = "er det no sak",
         lenke = "#foo",
@@ -371,7 +421,8 @@ private suspend fun BrukerRepository.opprettSak(
 }
 
 private fun TestApplicationEngine.hentSaker(
-    vararg virksomhetsnumre: String = arrayOf("42"),
+    virksomhetsnumre: List<String> = listOf("42"),
+    sakstyper: List<String>? = null,
     tekstsoek: String? = null,
     offset: Int? = null,
     limit: Int? = null,
@@ -379,8 +430,8 @@ private fun TestApplicationEngine.hentSaker(
 ) = brukerApi(
     GraphQLRequest(
         """
-    query hentSaker(${'$'}virksomhetsnumre: [String!]!, ${'$'}tekstsoek: String, ${'$'}sortering: SakSortering!, ${'$'}offset: Int, ${'$'}limit: Int){
-        saker(virksomhetsnumre: ${'$'}virksomhetsnumre, tekstsoek: ${'$'}tekstsoek, sortering: ${'$'}sortering, offset: ${'$'}offset, limit: ${'$'}limit) {
+    query hentSaker(${'$'}virksomhetsnumre: [String!]!, ${'$'}sakstyper: [String!], ${'$'}tekstsoek: String, ${'$'}sortering: SakSortering!, ${'$'}offset: Int, ${'$'}limit: Int){
+        saker(virksomhetsnumre: ${'$'}virksomhetsnumre, sakstyper: ${'$'}sakstyper, tekstsoek: ${'$'}tekstsoek, sortering: ${'$'}sortering, offset: ${'$'}offset, limit: ${'$'}limit) {
             saker {
                 id
                 tittel
@@ -402,6 +453,9 @@ private fun TestApplicationEngine.hentSaker(
                     paaminnelseTidspunkt
                 }
             }
+            sakstyper {
+                navn
+            }
             feilAltinn
             totaltAntallSaker
         }
@@ -410,6 +464,7 @@ private fun TestApplicationEngine.hentSaker(
         "hentSaker",
         mapOf(
             "virksomhetsnumre" to virksomhetsnumre,
+            "sakstyper" to sakstyper,
             "tekstsoek" to tekstsoek,
             "sortering" to sortering,
             "offset" to offset,
