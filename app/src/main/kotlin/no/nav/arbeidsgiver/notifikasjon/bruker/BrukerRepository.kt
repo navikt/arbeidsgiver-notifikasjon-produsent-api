@@ -57,6 +57,7 @@ interface BrukerRepository {
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
     suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
+    suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String>
 
     val altinnRolle: AltinnRolleRepository
 }
@@ -881,6 +882,105 @@ class BrukerRepositoryImpl(
                 string(nærmesteLederLeesah.narmesteLederFnr)
                 string(nærmesteLederLeesah.orgnummer)
             }
+        }
+    }
+
+    override suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String> {
+        return timer.coRecord {
+            val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
+                AltinnMottaker(
+                    serviceCode = it.servicecode,
+                    serviceEdition = it.serviceedition,
+                    virksomhetsnummer = it.virksomhet
+                )
+            }
+            val tilgangerAltinnReporteeMottaker = tilganger.reportee.map {
+                AltinnReporteeMottaker(
+                    virksomhetsnummer = it.virksomhet,
+                    fnr = it.fnr
+                )
+            }
+            val tilgangerAltinnRolleMottaker = tilganger.rolle.map {
+                AltinnRolleMottaker(
+                    virksomhetsnummer = it.virksomhet,
+                    roleDefinitionId = it.roleDefinitionId,
+                    roleDefinitionCode = it.roleDefinitionCode,
+                )
+            }
+
+            val rows = database.nonTransactionalExecuteQuery(
+                /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+                """
+                    with 
+                        mine_altinntilganger as (
+                            select * from json_to_recordset(?::json) 
+                            as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                        ),
+                        mine_altinnreporteetilganger as (
+                            select * from json_to_recordset(?::json) 
+                            as (virksomhetsnummer text, "fnr" text)
+                        ),
+                        mine_altinnrolletilganger as (
+                            select * from json_to_recordset(?::json) 
+                            as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
+                        ),
+                        mine_altinn_saker as (
+                            select er.sak_id
+                            from mottaker_altinn_enkeltrettighet er
+                            join mine_altinntilganger at on 
+                                er.virksomhet = at.virksomhetsnummer and
+                                er.service_code = at."serviceCode" and
+                                er.service_edition = at."serviceEdition"
+                            where
+                                er.sak_id is not null
+                        ),
+                        mine_altinn_reportee_saker as (
+                            select rep.sak_id
+                            from mottaker_altinn_reportee rep
+                            join mine_altinnreporteetilganger at on 
+                                rep.virksomhet = at.virksomhetsnummer and
+                                rep.fnr = at."fnr"
+                            where
+                                rep.sak_id is not null
+                        ),
+                        mine_altinn_rolle_saker as (
+                            select rol.sak_id
+                            from mottaker_altinn_rolle rol
+                            join mine_altinnrolletilganger at on 
+                                rol.virksomhet = at.virksomhetsnummer and
+                                rol.role_definition_id = at."roleDefinitionId" and
+                                rol.role_definition_code = at."roleDefinitionCode"
+                            where
+                                rol.sak_id is not null
+                        ),
+                        mine_digisyfo_saker as (
+                            select sak_id
+                            from mottaker_digisyfo_for_fnr
+                            where fnr_leder = ? and sak_id is not null
+                        ),
+                        mine_sak_ider as (
+                            (select * from mine_digisyfo_saker)
+                            union 
+                            (select * from mine_altinn_saker)
+                            union 
+                            (select * from mine_altinn_reportee_saker)
+                            union 
+                            (select * from mine_altinn_rolle_saker)
+                        )
+                        select distinct s.merkelapp as merkelapp 
+                        from mine_sak_ider as ms
+                        join sak as s on s.id = ms.sak_id
+                    """,
+                {
+                    jsonb(tilgangerAltinnMottaker)
+                    jsonb(tilgangerAltinnReporteeMottaker)
+                    jsonb(tilgangerAltinnRolleMottaker)
+                    string(fnr)
+                }
+            ) {
+                getString("merkelapp")
+            }
+            return@coRecord rows
         }
     }
 }

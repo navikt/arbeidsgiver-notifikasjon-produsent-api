@@ -19,6 +19,7 @@ import java.util.*
 object BrukerAPI {
     private val notifikasjonerHentetCount = Metrics.meterRegistry.counter("notifikasjoner_hentet")
     private val sakerHentetCount = Metrics.meterRegistry.counter("saker_hentet")
+    private val sakstyperCounter = Metrics.meterRegistry.counter("saker_typer")
     private val altinnFeilCounter = Metrics.meterRegistry.counter("graphql.bruker.altinn.error")
     private val altinnSuccessCounter = Metrics.meterRegistry.counter("graphql.bruker.altinn.success")
 
@@ -117,6 +118,11 @@ object BrukerAPI {
         val navn: String,
     )
 
+    @JsonTypeName("SakstypeOverordnet")
+    data class SakstypeOverordnet(
+        val navn: String,
+    )
+
     @JsonTypeName("SakStatus")
     data class SakStatus(
         val type: SakStatusType,
@@ -192,6 +198,11 @@ object BrukerAPI {
                     tilgangerService = tilgangerService,
                 )
 
+                querySakstyper(
+                    brukerRepository = brukerRepository,
+                    tilgangerService = tilgangerService,
+                )
+
                 wire("Oppgave") {
                     coDataFetcher("virksomhet") { env ->
                         fetchVirksomhet<Notifikasjon.Oppgave>(virksomhetsinfoService, env)
@@ -219,6 +230,25 @@ object BrukerAPI {
             }
         }
     )
+
+    private fun TypeRuntimeWiring.Builder.querySakstyper(brukerRepository: BrukerRepository, tilgangerService: TilgangerService) {
+        coDataFetcher("sakstyper") { env ->
+            val context = env.notifikasjonContext<Context>()
+            val tilganger = tilgangerService.hentTilganger(context)
+            (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
+
+            val sakstyper = brukerRepository.hentSakstyper(
+                fnr = context.fnr,
+                tilganger = tilganger,
+            )
+
+            /* TODO: rapportere om feil med altinn? Det vil jo påvirke * filteret ... */
+            sakstyperCounter.increment(sakstyper.size.toDouble())
+            return@coDataFetcher sakstyper.map {
+                SakstypeOverordnet(it)
+            }
+        }
+    }
 
     private fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
         brukerRepository: BrukerRepository,
