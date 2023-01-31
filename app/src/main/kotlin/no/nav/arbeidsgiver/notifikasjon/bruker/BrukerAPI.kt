@@ -116,6 +116,7 @@ object BrukerAPI {
     @JsonTypeName("Sakstype")
     data class Sakstype(
         val navn: String,
+        val antall: Int,
     )
 
     @JsonTypeName("SakstypeOverordnet")
