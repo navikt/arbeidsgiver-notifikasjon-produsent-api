@@ -263,7 +263,7 @@ class QuerySakerTests : DescribeSpec({
                 saker shouldContainExactlyInAnyOrder listOf(uuid("1"))
 
                 val sakstyper = response.getTypedContent<List<String>>("$.saker.sakstyper.*.navn")
-                sakstyper shouldContainExactlyInAnyOrder listOf("merkelapp1")
+                sakstyper shouldContainExactlyInAnyOrder listOf("merkelapp1", "merkelapp2")
             }
 
             it("søk på merkelapp1 og merkelapp2") {
@@ -281,7 +281,7 @@ class QuerySakerTests : DescribeSpec({
                 saker shouldContainExactlyInAnyOrder listOf()
 
                 val sakstyper = response.getTypedContent<List<String>>("$.saker.sakstyper.*.navn")
-                sakstyper shouldContainExactlyInAnyOrder listOf()
+                sakstyper shouldContainExactlyInAnyOrder listOf("merkelapp1", "merkelapp2")
             }
 
             it("søk på tom liste") {
@@ -290,7 +290,7 @@ class QuerySakerTests : DescribeSpec({
                 saker shouldContainExactlyInAnyOrder listOf()
 
                 val sakstyper = response.getTypedContent<List<String>>("$.saker.sakstyper.*.navn")
-                sakstyper shouldContainExactlyInAnyOrder  listOf()
+                sakstyper shouldContainExactlyInAnyOrder listOf("merkelapp1", "merkelapp2")
             }
         }
     }
