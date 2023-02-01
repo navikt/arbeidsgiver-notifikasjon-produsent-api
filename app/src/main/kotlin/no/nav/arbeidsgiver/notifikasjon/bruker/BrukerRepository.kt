@@ -261,7 +261,7 @@ class BrukerRepositoryImpl(
 
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
-                .ifNotBlank { "and $it" }
+                .ifNotBlank { "where $it" }
 
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
@@ -337,7 +337,7 @@ class BrukerRepositoryImpl(
                                 from mine_sak_ider as ms
                                 join sak as s on s.id = ms.sak_id
                         ),
-                        mine_saker_ikke_paginert as (
+                        mine_saker_ikke_paginert_foer_sakstypefilter as (
                             select 
                                 s.id as "sakId", 
                                 s.virksomhetsnummer as virksomhetsnummer,
@@ -350,14 +350,18 @@ class BrukerRepositoryImpl(
                             from mine_saker as s
                             join sak_status_json as status_json on s.id = status_json.sak_id
                             join sak_search as search on s.id = search.id
-                            where coalesce(s.merkelapp = any(?), true)
                             $tekstsoekSql
+                        ),
+                        mine_saker_ikke_paginert as (
+                            select * 
+                            from mine_saker_ikke_paginert_foer_sakstypefilter
+                            where coalesce(merkelapp = any(?), true)
                         ),
                         mine_merkelapper as (
                             select 
                                 merkelapp as merkelapp,
                                 count(*) as antall
-                            from mine_saker_ikke_paginert
+                            from mine_saker_ikke_paginert_foer_sakstypefilter
                             group by merkelapp
                         ),
                         mine_altinn_notifikasjoner as (
@@ -468,8 +472,8 @@ class BrukerRepositoryImpl(
                     jsonb(tilgangerAltinnRolleMottaker)
                     string(fnr)
                     stringList(virksomhetsnummer)
-                    nullableStringList(sakstyper)
                     tekstsoekElementer.forEach { string(it) }
+                    nullableStringList(sakstyper)
                     string(fnr)
                     integer(offset)
                     integer(limit)
