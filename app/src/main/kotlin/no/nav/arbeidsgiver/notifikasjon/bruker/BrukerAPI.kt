@@ -370,7 +370,7 @@ object BrukerAPI {
             (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
             SakerResultat(
                 saker = saker,
-                sakstyper = sakerResultat.sakstyper.map { Sakstype(it) },
+                sakstyper = sakerResultat.sakstyper.map { Sakstype(navn = it.navn, antall = it.antall) },
                 feilAltinn = tilganger.harFeil,
                 totaltAntallSaker = sakerResultat.totaltAntallSaker
             )

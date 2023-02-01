@@ -40,7 +40,12 @@ interface BrukerRepository {
     class HentSakerResultat(
         val totaltAntallSaker: Int,
         val saker: List<BrukerModel.Sak>,
-        val sakstyper: List<String>,
+        val sakstyper: List<Sakstype>,
+    )
+
+    class Sakstype(
+        val navn: String,
+        val antall: Int,
     )
 
     suspend fun hentSaker(
@@ -348,6 +353,13 @@ class BrukerRepositoryImpl(
                             where coalesce(s.merkelapp = any(?), true)
                             $tekstsoekSql
                         ),
+                        mine_merkelapper as (
+                            select 
+                                merkelapp as merkelapp,
+                                count(*) as antall
+                            from mine_saker_ikke_paginert
+                            group by merkelapp
+                        ),
                         mine_altinn_notifikasjoner as (
                             select er.notifikasjon_id
                             from mottaker_altinn_enkeltrettighet er
@@ -443,7 +455,12 @@ class BrukerRepositoryImpl(
                             )),  
                             '[]'::jsonb
                         ) from mine_saksoppgaver) as saker,
-                        (select coalesce(jsonb_agg(distinct merkelapp), '[]'::jsonb) from mine_saker) as sakstyper
+                        (select 
+                            coalesce(jsonb_agg(jsonb_build_object(
+                                'navn', merkelapp,
+                                'antall', antall
+                            )), '[]'::jsonb) 
+                        from mine_merkelapper) as sakstyper
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
