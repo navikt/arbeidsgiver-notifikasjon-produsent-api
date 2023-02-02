@@ -109,12 +109,14 @@ object Produsent {
                     delete from mottaker_digisyfo
                     where id = ?
                 """,
-                    duplikateIder.flatMap { it.sorted().drop(1) }
+                    duplikateIder.flatMap { it.sorted().drop(1) }.take(10_000)
                 ) {
                     long(it)
                 }
 
-                log.info("fant ${duplikateIder.size} digisyfo-mottakere med duplikater. slettet ${resultat.sum()} rader av ${resultat.size} forsøkte")
+                if (duplikateIder.isNotEmpty()) {
+                    log.info("fant ${duplikateIder.size} digisyfo-mottakere med duplikater. slettet ${resultat.sum()} rader av ${resultat.size} forsøkte")
+                }
             }
 
             launchProcessingLoop(
@@ -139,12 +141,14 @@ object Produsent {
                     delete from mottaker_altinn_enkeltrettighet
                     where id = ?
                 """,
-                    duplikateIder.flatMap { it.sorted().drop(1) }
+                    duplikateIder.flatMap { it.sorted().drop(1) }.take(10_000)
                 ) {
                     long(it)
                 }
 
-                log.info("fant ${duplikateIder.size} altinn-mottakere med duplikater. slettet ${resultat.sum()} rader av ${resultat.size} forsøkte")
+                if (duplikateIder.isNotEmpty()) {
+                    log.info("fant ${duplikateIder.size} altinn-mottakere med duplikater. slettet ${resultat.sum()} rader av ${resultat.size} forsøkte")
+                }
             }
 
             launch {
