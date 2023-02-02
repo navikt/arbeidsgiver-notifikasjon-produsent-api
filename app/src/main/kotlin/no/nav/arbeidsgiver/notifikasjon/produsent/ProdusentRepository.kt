@@ -545,6 +545,25 @@ class ProdusentRepositoryImpl(
     }
 
     private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID, mottaker: NærmesteLederMottaker) {
+        val antallEksisterende = executeQuery(
+            """
+                select 1
+                from  mottaker_digisyfo
+                where notifikasjon_id = ? and virksomhet = ? and fnr_leder = ? and fnr_sykmeldt = ?
+            """,
+            {
+                uuid(notifikasjonId)
+                string(mottaker.virksomhetsnummer)
+                string(mottaker.naermesteLederFnr)
+                string(mottaker.ansattFnr)
+            }) {
+        }.size
+
+        if (antallEksisterende > 0) {
+            log.info("storeNærmesteLederMottaker idempotency slår til. $antallEksisterende duplikater finnes.")
+            return
+        }
+
         executeUpdate(
             """
             insert into mottaker_digisyfo(notifikasjon_id, virksomhet, fnr_leder, fnr_sykmeldt)
@@ -559,6 +578,24 @@ class ProdusentRepositoryImpl(
     }
 
     private fun Transaction.storeAltinnMottaker(notifikasjonId: UUID, mottaker: AltinnMottaker) {
+        val antallEksisterende = executeQuery(
+            """
+                select 1
+                from  mottaker_altinn_enkeltrettighet
+                where notifikasjon_id = ? and virksomhet = ? and service_code = ? and service_edition = ?
+            """,
+            {
+                uuid(notifikasjonId)
+                string(mottaker.virksomhetsnummer)
+                string(mottaker.serviceCode)
+                string(mottaker.serviceEdition)
+            }) {
+        }.size
+
+        if (antallEksisterende > 0) {
+            log.info("storeAltinnMottaker idempotency slår til. $antallEksisterende duplikater finnes.")
+            return
+        }
         executeUpdate(
             """
             insert into mottaker_altinn_enkeltrettighet
