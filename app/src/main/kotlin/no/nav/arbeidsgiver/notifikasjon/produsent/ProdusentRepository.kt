@@ -560,7 +560,6 @@ class ProdusentRepositoryImpl(
         }.size
 
         if (antallEksisterende > 0) {
-            log.info("storeNærmesteLederMottaker idempotency slår til. $antallEksisterende duplikater finnes.")
             return
         }
 
@@ -593,7 +592,6 @@ class ProdusentRepositoryImpl(
         }.size
 
         if (antallEksisterende > 0) {
-            log.info("storeAltinnMottaker idempotency slår til. $antallEksisterende duplikater finnes.")
             return
         }
         executeUpdate(
