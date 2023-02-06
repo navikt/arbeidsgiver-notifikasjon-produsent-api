@@ -14,8 +14,8 @@ spec:
   readiness:
     path: /internal/ready
   replicas:
-    min: 1
-    max: 2
+    min: 3
+    max: 3
   prometheus:
     enabled: true
     path: /internal/metrics
