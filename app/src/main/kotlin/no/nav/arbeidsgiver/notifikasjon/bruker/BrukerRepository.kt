@@ -816,6 +816,23 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnReporteeMottaker
     ) {
+        val antallEksisterende = executeQuery(
+            """
+                select 1
+                from mottaker_altinn_reportee
+                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and fnr = ?
+            """,
+            {
+                uuid((notifikasjonId ?: sakId)!!)
+                string(mottaker.virksomhetsnummer)
+                string(mottaker.fnr)
+            }) {
+        }.size
+
+        if (antallEksisterende > 0) {
+            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_altinn_reportee (antallEksisterende=$antallEksisterende)")
+            return
+        }
         executeUpdate(
             """
             insert into mottaker_altinn_reportee
@@ -835,6 +852,25 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnRolleMottaker
     ) {
+        val antallEksisterende = executeQuery(
+            """
+                select 1
+                from mottaker_altinn_rolle
+                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and role_definition_code = ? and role_definition_id = ?
+            """,
+            {
+                uuid((notifikasjonId ?: sakId)!!)
+                string(mottaker.virksomhetsnummer)
+                string(mottaker.roleDefinitionCode)
+                string(mottaker.roleDefinitionId)
+            }) {
+        }.size
+
+        if (antallEksisterende > 0) {
+            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_altinn_rolle (antallEksisterende=$antallEksisterende)")
+            return
+        }
+
         executeUpdate(
             """
             insert into mottaker_altinn_rolle
