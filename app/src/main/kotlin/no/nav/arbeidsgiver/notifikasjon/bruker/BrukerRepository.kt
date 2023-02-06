@@ -30,7 +30,6 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
-import kotlin.random.Random
 
 interface BrukerRepository {
     suspend fun hentNotifikasjoner(
@@ -739,29 +738,11 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: NærmesteLederMottaker
     ) {
-        val antallEksisterende = executeQuery(
-            """
-                select 1
-                from  mottaker_digisyfo
-                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and fnr_leder = ? and fnr_sykmeldt = ?
-            """,
-            {
-                uuid((notifikasjonId ?: sakId)!!)
-                string(mottaker.virksomhetsnummer)
-                string(mottaker.naermesteLederFnr)
-                string(mottaker.ansattFnr)
-            }) {
-        }.size
-
-        if (antallEksisterende > 0) {
-            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_digisyfo (antallEksisterende=$antallEksisterende)")
-            return
-        }
-
         executeUpdate(
             """
             insert into mottaker_digisyfo(notifikasjon_id, sak_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -777,30 +758,12 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnMottaker
     ) {
-        val antallEksisterende = executeQuery(
-            """
-                select 1
-                from mottaker_altinn_enkeltrettighet
-                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and service_code = ? and service_edition = ?
-            """,
-            {
-                uuid((notifikasjonId ?: sakId)!!)
-                string(mottaker.virksomhetsnummer)
-                string(mottaker.serviceCode)
-                string(mottaker.serviceEdition)
-            }) {
-        }.size
-
-        if (antallEksisterende > 0) {
-            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_altinn_enkeltrettighet (antallEksisterende=$antallEksisterende)")
-            return
-        }
-
         executeUpdate(
             """
             insert into mottaker_altinn_enkeltrettighet
                 (notifikasjon_id, sak_id, virksomhet, service_code, service_edition)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -816,28 +779,12 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnReporteeMottaker
     ) {
-        val antallEksisterende = executeQuery(
-            """
-                select 1
-                from mottaker_altinn_reportee
-                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and fnr = ?
-            """,
-            {
-                uuid((notifikasjonId ?: sakId)!!)
-                string(mottaker.virksomhetsnummer)
-                string(mottaker.fnr)
-            }) {
-        }.size
-
-        if (antallEksisterende > 0) {
-            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_altinn_reportee (antallEksisterende=$antallEksisterende)")
-            return
-        }
         executeUpdate(
             """
             insert into mottaker_altinn_reportee
                 (notifikasjon_id, sak_id, virksomhet, fnr)
             values (?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -852,30 +799,12 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnRolleMottaker
     ) {
-        val antallEksisterende = executeQuery(
-            """
-                select 1
-                from mottaker_altinn_rolle
-                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and role_definition_code = ? and role_definition_id = ?
-            """,
-            {
-                uuid((notifikasjonId ?: sakId)!!)
-                string(mottaker.virksomhetsnummer)
-                string(mottaker.roleDefinitionCode)
-                string(mottaker.roleDefinitionId)
-            }) {
-        }.size
-
-        if (antallEksisterende > 0) {
-            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_altinn_rolle (antallEksisterende=$antallEksisterende)")
-            return
-        }
-
         executeUpdate(
             """
             insert into mottaker_altinn_rolle
                 (notifikasjon_id, sak_id, virksomhet, role_definition_code, role_definition_id)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
