@@ -127,7 +127,7 @@ object Bruker {
                     """
                         select jsonb_agg(id) as idr
                         from mottaker_digisyfo
-                        group by notifikasjon_id
+                        group by notifikasjon_id, sak_id
                         having count(*) > 1
                         limit 100
                     """
@@ -159,7 +159,7 @@ object Bruker {
                     """
                         select jsonb_agg(id) as idr
                         from mottaker_altinn_enkeltrettighet
-                        group by notifikasjon_id
+                        group by notifikasjon_id, sak_id
                         having count(*) > 1
                         limit 100
                     """
