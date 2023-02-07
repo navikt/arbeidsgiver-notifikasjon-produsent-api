@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -18,7 +17,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
@@ -115,70 +113,6 @@ object Bruker {
                 pauseAfterEach = Duration.ofDays(1),
             ) {
                 altinnRolleService.await().lastRollerFraAltinn()
-            }
-
-            launchProcessingLoop(
-                "cleanup duplicate mottakere nærmeste leder",
-                pauseAfterEach = Duration.ofSeconds(2)
-            ) {
-                val db = database.await()
-
-                val duplikateIder = db.nonTransactionalExecuteQuery(
-                    """
-                        select jsonb_agg(id) as idr
-                        from mottaker_digisyfo
-                        group by notifikasjon_id, sak_id
-                        having count(*) > 1
-                        limit 100
-                    """
-                ) {
-                    laxObjectMapper.readValue<List<Long>>(getString("idr"))
-                }
-
-                val resultat = db.nonTransactionalExecuteBatch("""
-                    delete from mottaker_digisyfo
-                    where id = ?
-                """,
-                    duplikateIder.flatMap { it.sorted().drop(1) }.take(10_000)
-                ) {
-                    long(it)
-                }
-
-                if (duplikateIder.isNotEmpty()) {
-                    log.info("fant ${duplikateIder.size} digisyfo-mottakere med duplikater. slettet ${resultat.sum()} rader av ${resultat.size} forsøkte")
-                }
-            }
-
-            launchProcessingLoop(
-                "cleanup duplicate mottakere altinn",
-                pauseAfterEach = Duration.ofSeconds(2)
-            ) {
-                val db = database.await()
-
-                val duplikateIder = db.nonTransactionalExecuteQuery(
-                    """
-                        select jsonb_agg(id) as idr
-                        from mottaker_altinn_enkeltrettighet
-                        group by notifikasjon_id, sak_id
-                        having count(*) > 1
-                        limit 100
-                    """
-                ) {
-                    laxObjectMapper.readValue<List<Long>>(getString("idr"))
-                }
-
-                val resultat = db.nonTransactionalExecuteBatch("""
-                    delete from mottaker_altinn_enkeltrettighet
-                    where id = ?
-                """,
-                    duplikateIder.flatMap { it.sorted().drop(1) }.take(10_000)
-                ) {
-                    long(it)
-                }
-
-                if (duplikateIder.isNotEmpty()) {
-                    log.info("fant ${duplikateIder.size} altinn-mottakere med duplikater. slettet ${resultat.sum()} rader av ${resultat.size} forsøkte")
-                }
             }
         }
     }
