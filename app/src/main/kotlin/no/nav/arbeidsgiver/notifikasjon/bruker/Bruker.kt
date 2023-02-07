@@ -30,10 +30,7 @@ object Bruker {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = basedOnEnv(
-                dev = { "bruker-model-builder-1" },
-                other = { "bruker-model-builder" },
-            ),
+            groupId = "bruker-model-builder-2",
             replayPeriodically = true,
         )
     }
@@ -70,12 +67,12 @@ object Bruker {
                 BrukerRepositoryImpl(database.await())
             }
 
-//            launch {
-//                val brukerRepository = brukerRepositoryAsync.await()
-//                hendelsesstrøm.forEach { event ->
-//                    brukerRepository.oppdaterModellEtterHendelse(event)
-//                }
-//            }
+            launch {
+                val brukerRepository = brukerRepositoryAsync.await()
+                hendelsesstrøm.forEach { event ->
+                    brukerRepository.oppdaterModellEtterHendelse(event)
+                }
+            }
 
             launch {
                 val brukerRepository = brukerRepositoryAsync.await()
