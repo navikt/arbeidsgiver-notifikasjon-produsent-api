@@ -115,6 +115,11 @@ jobs:
           - kafka-backup
           - skedulert-utgaatt
           - skedulert-harddelete
+          - dataprodukt
+        exclude:
+          - cluster: prod-gcp
+            app: dataprodukt
+
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1

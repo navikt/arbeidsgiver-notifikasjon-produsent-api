@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.executable.statistikk.main as statistikk
 import no.nav.arbeidsgiver.notifikasjon.executable.skedulert_utgått.main as skedulertUtgåttMain
 import no.nav.arbeidsgiver.notifikasjon.executable.skedulert_harddelete.main as skedulertHardDeleteMain
 import no.nav.arbeidsgiver.notifikasjon.executable.skedulert_påminnelse.main as skedulertPåminnelseMain
+import no.nav.arbeidsgiver.notifikasjon.executable.dataprodukt.main as dataproduktMain
 
 /* start all */
 fun main() = runBlocking {
@@ -40,6 +41,10 @@ fun main() = runBlocking {
     }
     launch {
         skedulertPåminnelseMain()
+    }
+
+    launch {
+        dataproduktMain()
     }
     Unit
 }

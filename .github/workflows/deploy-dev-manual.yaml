@@ -20,6 +20,7 @@ jobs:
           - skedulert-utgaatt
           - skedulert-harddelete
           - skedulert-paaminnelse
+          - dataprodukt
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1
