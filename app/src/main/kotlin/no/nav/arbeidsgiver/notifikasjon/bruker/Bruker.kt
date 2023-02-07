@@ -70,12 +70,12 @@ object Bruker {
                 BrukerRepositoryImpl(database.await())
             }
 
-//            launch {
-//                val brukerRepository = brukerRepositoryAsync.await()
-//                hendelsesstrøm.forEach { event ->
-//                    brukerRepository.oppdaterModellEtterHendelse(event)
-//                }
-//            }
+            launch {
+                val brukerRepository = brukerRepositoryAsync.await()
+                hendelsesstrøm.forEach { event ->
+                    brukerRepository.oppdaterModellEtterHendelse(event)
+                }
+            }
 
             launch {
                 val brukerRepository = brukerRepositoryAsync.await()
