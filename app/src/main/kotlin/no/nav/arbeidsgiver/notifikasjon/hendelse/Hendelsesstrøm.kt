@@ -5,12 +5,12 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import java.util.concurrent.atomic.AtomicBoolean
 
 interface Hendelsesstrøm {
-    suspend fun forEach(
+    fun forEach(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (Hendelse, HendelseMetadata) -> Unit
     )
 
-    suspend fun forEach(
+    fun forEach(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (Hendelse) -> Unit
     ) {

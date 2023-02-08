@@ -23,7 +23,7 @@ class JsonNodeKafkaConsumer(
         configure = configure,
     )
 
-    suspend fun forEach(
+    fun forEach(
         body: suspend (JsonNode) -> Unit
     ) {
         consumer.forEach { record ->
