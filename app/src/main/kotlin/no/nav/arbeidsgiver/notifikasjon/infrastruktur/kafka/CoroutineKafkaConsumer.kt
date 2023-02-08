@@ -111,7 +111,7 @@ private constructor(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (ConsumerRecord<K, V>) -> Unit
     ) {
-        thread(name = "kafka-consumer") {
+        val t = thread(name = "kafka-consumer") {
             while (!stop.get() && !Health.terminating) {
                 replayer.replayWhenLeap()
                 consumer.resume(resumeQueue.pollAll())
@@ -127,6 +127,7 @@ private constructor(
                 })
             }
         }
+        t.join()
     }
 
     private fun forEachRecord(
