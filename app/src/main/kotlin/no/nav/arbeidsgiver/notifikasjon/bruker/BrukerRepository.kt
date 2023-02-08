@@ -764,6 +764,7 @@ class BrukerRepositoryImpl(
             """
             insert into mottaker_digisyfo(notifikasjon_id, sak_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -784,6 +785,7 @@ class BrukerRepositoryImpl(
             insert into mottaker_altinn_enkeltrettighet
                 (notifikasjon_id, sak_id, virksomhet, service_code, service_edition)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -804,6 +806,7 @@ class BrukerRepositoryImpl(
             insert into mottaker_altinn_reportee
                 (notifikasjon_id, sak_id, virksomhet, fnr)
             values (?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -823,6 +826,7 @@ class BrukerRepositoryImpl(
             insert into mottaker_altinn_rolle
                 (notifikasjon_id, sak_id, virksomhet, role_definition_code, role_definition_id)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)

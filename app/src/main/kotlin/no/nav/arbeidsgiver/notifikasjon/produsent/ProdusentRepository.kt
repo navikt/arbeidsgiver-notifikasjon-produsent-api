@@ -549,6 +549,7 @@ class ProdusentRepositoryImpl(
             """
             insert into mottaker_digisyfo(notifikasjon_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             uuid(notifikasjonId)
@@ -564,6 +565,7 @@ class ProdusentRepositoryImpl(
             insert into mottaker_altinn_enkeltrettighet
                 (notifikasjon_id, virksomhet, service_code, service_edition)
             values (?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             uuid(notifikasjonId)
@@ -579,6 +581,7 @@ class ProdusentRepositoryImpl(
             insert into mottaker_altinn_reportee
                 (notifikasjon_id, virksomhet, fnr)
             values (?, ?, ?)
+            on conflict do nothing
         """
         ) {
             uuid(notifikasjonId)
@@ -593,6 +596,7 @@ class ProdusentRepositoryImpl(
             insert into mottaker_altinn_rolle
                 (notifikasjon_id, virksomhet, role_definition_code, role_definition_id)
             values (?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             uuid(notifikasjonId)
