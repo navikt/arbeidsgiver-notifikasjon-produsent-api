@@ -28,7 +28,7 @@ class HendelsesstrømKafkaImpl(
         configure = configure,
     )
 
-    override fun forEach(
+    override suspend fun forEach(
         stop: AtomicBoolean,
         body: suspend (Hendelse, HendelseMetadata) -> Unit
     ) {

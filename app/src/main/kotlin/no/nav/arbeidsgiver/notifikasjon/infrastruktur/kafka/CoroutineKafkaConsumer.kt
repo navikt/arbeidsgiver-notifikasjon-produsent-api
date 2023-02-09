@@ -5,7 +5,9 @@ import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
@@ -25,10 +27,10 @@ import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
-import kotlin.concurrent.thread
 
 class CoroutineKafkaConsumer<K, V>
 private constructor(
@@ -44,6 +46,8 @@ private constructor(
 ) {
     private val pollBodyTimer = Timer.builder("kafka.poll.body")
         .register(Metrics.meterRegistry)
+
+    private val kafkaContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
     companion object {
         fun <K, V, KS : Deserializer<K>, VS: Deserializer<V>> new(
@@ -107,11 +111,11 @@ private constructor(
         enabled = replayPeriodically,
     )
 
-    fun forEach(
+    suspend fun forEach(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (ConsumerRecord<K, V>) -> Unit
     ) {
-        val t = thread(name = "kafka-consumer") {
+        withContext(kafkaContext) {
             while (!stop.get() && !Health.terminating) {
                 replayer.replayWhenLeap()
                 consumer.resume(resumeQueue.pollAll())
@@ -126,8 +130,8 @@ private constructor(
                     forEachRecord(records, body)
                 })
             }
+
         }
-        t.join()
     }
 
     private fun forEachRecord(
