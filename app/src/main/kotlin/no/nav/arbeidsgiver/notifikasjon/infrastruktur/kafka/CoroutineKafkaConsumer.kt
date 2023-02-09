@@ -2,11 +2,18 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
 import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Tags
+import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
@@ -20,6 +27,7 @@ import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
@@ -36,6 +44,11 @@ private constructor(
     private val onPartitionRevoked: ((partition: TopicPartition) -> Unit)?,
     private val configure: Properties.() -> Unit = {},
 ) {
+    private val pollBodyTimer = Timer.builder("kafka.poll.body")
+        .register(Metrics.meterRegistry)
+
+    private val kafkaContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+
     companion object {
         fun <K, V, KS : Deserializer<K>, VS: Deserializer<V>> new(
             topic: String,
@@ -98,32 +111,30 @@ private constructor(
         enabled = replayPeriodically,
     )
 
-
     suspend fun forEach(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (ConsumerRecord<K, V>) -> Unit
     ) {
-        while (!stop.get() && !Health.terminating) {
-            replayer.replayWhenLeap()
-            consumer.resume(resumeQueue.pollAll())
-            val records = try {
-                poll(Duration.ofMillis(1000))
-            } catch (e: Exception) {
-                log.error("Unrecoverable error during poll {}", consumer.assignment(), e)
-                throw e
+        withContext(kafkaContext) {
+            while (!stop.get() && !Health.terminating) {
+                replayer.replayWhenLeap()
+                consumer.resume(resumeQueue.pollAll())
+                val records = try {
+                    consumer.poll(Duration.ofMillis(1000))
+                } catch (e: Exception) {
+                    log.error("Unrecoverable error during poll {}", consumer.assignment(), e)
+                    throw e
+                }
+
+                pollBodyTimer.record(Runnable {
+                    forEachRecord(records, body)
+                })
             }
 
-            forEachRecord(records, body)
         }
-        log.info("kafka consumer stopped")
     }
 
-    private suspend fun poll(timeout: Duration): ConsumerRecords<K, V> =
-        withContext(Dispatchers.IO) {
-            consumer.poll(timeout)
-        }
-
-    private suspend fun forEachRecord(
+    private fun forEachRecord(
         records: ConsumerRecords<K, V>,
         body: suspend (ConsumerRecord<K, V>) -> Unit
     ) {
@@ -136,7 +147,9 @@ private constructor(
             records.records(partition).forEach currentRecord@{ record ->
                 try {
                     log.info("processing {}", record.loggableToString())
-                    body(record)
+                    runBlocking(Dispatchers.IO) {
+                        body(record)
+                    }
                     consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)

@@ -307,7 +307,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
 
     describe("Oppgave med påminnelse fører ikke til varsel nå") {
         val varselId = UUID.randomUUID()
-        val nyOppgave = HendelseModel.OppgaveOpprettet(
+        OppgaveOpprettet(
             virksomhetsnummer = "1",
             notifikasjonId = UUID.randomUUID(),
             hendelseId = UUID.randomUUID(),
@@ -430,5 +430,50 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         }
     }
 
+    describe("sendetidspunkt med localdatetime.min") {
+        OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = uuid("1"),
+            hendelseId = uuid("2"),
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = "1",
+            mottakere = listOf(AltinnMottaker(
+                virksomhetsnummer = "1",
+                serviceCode = "1",
+                serviceEdition = "1"
+            )),
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
+                    sendeTidspunkt = LocalDateTime.parse("-999999999-01-01T00:00")
+                ),
+            ),
+            hardDelete = null,
+            frist = null,
+            påminnelse = null,
+        ).also {
+            repository.oppdaterModellEtterHendelse(it)
+        }
+
+        it("job og varsel blir sendt fortløpende") {
+            val id = repository.findJob(lockTimeout = Duration.ofMinutes(1))
+            id shouldNot beNull()
+            val varsel = repository.findVarsel(id!!)
+            varsel shouldNot beNull()
+            varsel as EksternVarselTilstand
+            varsel.data.eksternVarsel.sendeTidspunkt shouldBe LocalDateTime.parse("-999999999-01-01T00:00")
+        }
+
+    }
 
 })

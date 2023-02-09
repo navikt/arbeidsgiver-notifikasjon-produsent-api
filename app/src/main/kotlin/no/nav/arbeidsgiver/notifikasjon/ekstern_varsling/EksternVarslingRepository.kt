@@ -213,7 +213,7 @@ class EksternVarslingRepository(
             string(varsel.fnrEllerOrgnr)
             string(varsel.smsTekst)
             string(varsel.sendevindu.toString())
-            timestamp_without_timezone_nullable(varsel.sendeTidspunkt)
+            nullableString(varsel.sendeTidspunkt?.toString())
         }
     }
 
@@ -265,7 +265,7 @@ class EksternVarslingRepository(
             string(varsel.tittel)
             string(varsel.htmlBody)
             string(varsel.sendevindu.toString())
-            timestamp_without_timezone_nullable(varsel.sendeTidspunkt)
+            nullableString(varsel.sendeTidspunkt?.toString())
         }
     }
 
@@ -383,14 +383,14 @@ class EksternVarslingRepository(
                         "SMS" -> EksternVarsel.Sms(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
                             sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
-                            sendeTidspunkt = getTimestamp("sendetidspunkt")?.toLocalDateTime(),
+                            sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
                             mobilnummer = getString("tlfnr"),
                             tekst = getString("sms_tekst"),
                         )
                         "EMAIL" -> EksternVarsel.Epost(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
                             sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
-                            sendeTidspunkt = getTimestamp("sendetidspunkt")?.toLocalDateTime(),
+                            sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
                             epostadresse = getString("epost_adresse"),
                             tittel = getString("tittel"),
                             body = getString("html_body")

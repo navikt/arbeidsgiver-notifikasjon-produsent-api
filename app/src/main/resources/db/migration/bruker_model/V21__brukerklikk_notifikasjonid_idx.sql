@@ -1,0 +1,1 @@
+create index brukerklikk_notifikasjonsid_index on brukerklikk (notifikasjonsid);
