@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
@@ -45,6 +46,13 @@ private constructor(
     private val configure: Properties.() -> Unit = {},
 ) {
     private val pollBodyTimer = Timer.builder("kafka.poll.body")
+        .register(Metrics.meterRegistry)
+
+    private val iterationEntryCounter = Counter.builder("kafka.poll.body.iteration")
+        .tag("point", "entry")
+        .register(Metrics.meterRegistry)
+    private val iterationExitCounter = Counter.builder("kafka.poll.body.iteration")
+        .tag("point", "exit")
         .register(Metrics.meterRegistry)
 
     private val kafkaContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
@@ -147,10 +155,12 @@ private constructor(
             records.records(partition).forEach currentRecord@{ record ->
                 try {
                     log.info("processing {}", record.loggableToString())
+                    iterationEntryCounter.increment()
                     runBlocking(Dispatchers.IO) {
                         body(record)
                     }
                     consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
+                    iterationExitCounter.increment()
                     log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)
                     return@currentRecord
