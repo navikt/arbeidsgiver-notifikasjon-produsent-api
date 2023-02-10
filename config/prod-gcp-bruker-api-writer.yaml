@@ -1,0 +1,36 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: notifikasjon-bruker-api-writer
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{image}}
+  resources:
+    requests:
+      cpu: 400m
+      memory: 512Mi
+    limits:
+      cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
+      memory: 1024Mi
+  liveness:
+    path: /internal/alive
+  readiness:
+    path: /internal/ready
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  kafka:
+    pool: nav-prod
+  env:
+    - name: JAVA_OPTS
+      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
+  gcp:
+    permissions:
+      - resource:
+          apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+          kind: Project
+        role: roles/cloudsql.client
+  envFrom:
+    - secret: google-sql-notifikasjon-bruker-api-bruker-model-bruker-a319af7c
