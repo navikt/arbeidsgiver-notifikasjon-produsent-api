@@ -42,11 +42,6 @@ object BrukerWriter {
             }
 
             launch {
-                brukerRepositoryAsync.await()
-                log.info("successfully connected to database, it seems")
-            }
-
-            launch {
                 val brukerRepository = brukerRepositoryAsync.await()
                 hendelsesstrøm.forEach { event ->
                     brukerRepository.oppdaterModellEtterHendelse(event)
