@@ -1,7 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.debug.CoroutinesBlockHoundIntegration
+import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
@@ -21,6 +24,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafka
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import reactor.blockhound.BlockHound
 import java.time.Duration
 
 object Bruker {
@@ -50,6 +54,7 @@ object Bruker {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
@@ -61,10 +66,16 @@ object Bruker {
         altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
+        DebugProbes.install()
+        BlockHound.install(CoroutinesBlockHoundIntegration())
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val brukerRepositoryAsync = async {
                 BrukerRepositoryImpl(database.await())
+            }
+
+            launchProcessingLoop("debug coroutines", pauseAfterEach = Duration.ofMinutes(1)) {
+                log.info("coroutines info: ${DebugProbes.dumpCoroutinesInfo()}")
             }
 
             launch {
