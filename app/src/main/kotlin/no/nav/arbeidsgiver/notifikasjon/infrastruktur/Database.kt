@@ -56,13 +56,14 @@ class Database private constructor(
     companion object {
         private val log = logger()
 
-        fun config(name: String) = Config(
-            host = System.getenv("DB_HOST") ?: "localhost",
-            port = System.getenv("DB_PORT") ?: "1337",
-            username = System.getenv("DB_USERNAME") ?: "postgres",
-            password = System.getenv("DB_PASSWORD") ?: "postgres",
-            database = System.getenv("DB_DATABASE") ?: name.replace('_', '-'),
+        fun config(name: String, envPrefix: String = "DB", jdbcOpts: Map<String, Any> = mapOf()) = Config(
+            host = System.getenv("${envPrefix}_HOST") ?: "localhost",
+            port = System.getenv("${envPrefix}_PORT") ?: "1337",
+            username = System.getenv("${envPrefix}_USERNAME") ?: "postgres",
+            password = System.getenv("${envPrefix}_PASSWORD") ?: "postgres",
+            database = System.getenv("${envPrefix}_DATABASE") ?: name.replace('_', '-'),
             migrationLocations = "db/migration/$name",
+            jdbcOpts = jdbcOpts,
         )
 
         private fun Config.asHikariConfig(): HikariConfig {
