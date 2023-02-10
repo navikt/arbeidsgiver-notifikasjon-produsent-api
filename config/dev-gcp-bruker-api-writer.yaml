@@ -27,4 +27,7 @@ spec:
         role: roles/cloudsql.client
   envFrom:
     - secret: google-sql-notifikasjon-bruker-api-bruker-model-bruker-a319af7c
+  env:
+    - name: CLOUD_SQL_INSTANCE
+      value: fager-dev-24f2:europe-north1:notifikasjon-bruker-api
 
