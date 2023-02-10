@@ -22,7 +22,10 @@ import java.time.Duration
 
 object BrukerWriter {
     private val log = logger()
-//    val databaseConfig = Database.config("bruker_model")
+    val databaseConfig = Database.config(
+        "bruker_model",
+        envPrefix = "DB_BRUKER_API_KAFKA_USER"
+    )
 //
 //    private val hendelsesstrøm by lazy {
 //        HendelsesstrømKafkaImpl(
@@ -36,14 +39,17 @@ object BrukerWriter {
 //        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
         httpPort: Int = 8080
     ) {
-        log.info("hello world")
-        Health.subsystemReady[Subsystem.DATABASE] = true
         runBlocking(Dispatchers.Default) {
-//            val database = openDatabaseAsync(databaseConfig)
-//            val brukerRepositoryAsync = async {
-//                BrukerRepositoryImpl(database.await())
-//            }
-//
+            val database = openDatabaseAsync(databaseConfig)
+            val brukerRepositoryAsync = async {
+                BrukerRepositoryImpl(database.await())
+            }
+
+            launch {
+                brukerRepositoryAsync.await()
+                log.info("successfully connected to database, it seems")
+            }
+
 //            launch {
 //                val brukerRepository = brukerRepositoryAsync.await()
 //                hendelsesstrøm.forEach { event ->
