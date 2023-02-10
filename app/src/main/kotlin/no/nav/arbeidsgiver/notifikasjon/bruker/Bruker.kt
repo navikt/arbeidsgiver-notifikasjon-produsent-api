@@ -2,25 +2,26 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnCachedImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.Duration
 
 object Bruker {
@@ -64,20 +65,6 @@ object Bruker {
             val database = openDatabaseAsync(databaseConfig)
             val brukerRepositoryAsync = async {
                 BrukerRepositoryImpl(database.await())
-            }
-
-//            launch {
-//                val brukerRepository = brukerRepositoryAsync.await()
-//                hendelsesstrøm.forEach { event ->
-//                    brukerRepository.oppdaterModellEtterHendelse(event)
-//                }
-//            }
-
-            launch {
-                val brukerRepository = brukerRepositoryAsync.await()
-                NærmesteLederKafkaListener().forEach { event ->
-                    brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
-                }
             }
 
             val altinnRolleService = async<AltinnRolleService> {
