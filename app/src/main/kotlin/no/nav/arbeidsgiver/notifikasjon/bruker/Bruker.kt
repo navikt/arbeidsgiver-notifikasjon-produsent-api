@@ -31,7 +31,6 @@ object Bruker {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
             groupId = "bruker-model-builder-2",
-            replayPeriodically = true,
         )
     }
 
