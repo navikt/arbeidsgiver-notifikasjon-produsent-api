@@ -27,12 +27,12 @@ object Bruker {
     private val log = logger()
     val databaseConfig = Database.config("bruker_model")
 
-    private val hendelsesstrøm by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "bruker-model-builder-2",
-        )
-    }
+//    private val hendelsesstrøm by lazy {
+//        HendelsesstrømKafkaImpl(
+//            topic = NOTIFIKASJON_TOPIC,
+//            groupId = "bruker-model-builder-2",
+//        )
+//    }
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
@@ -66,19 +66,19 @@ object Bruker {
                 BrukerRepositoryImpl(database.await())
             }
 
-            launch {
-                val brukerRepository = brukerRepositoryAsync.await()
-                hendelsesstrøm.forEach { event ->
-                    brukerRepository.oppdaterModellEtterHendelse(event)
-                }
-            }
+//            launch {
+//                val brukerRepository = brukerRepositoryAsync.await()
+//                hendelsesstrøm.forEach { event ->
+//                    brukerRepository.oppdaterModellEtterHendelse(event)
+//                }
+//            }
 
-            launch {
-                val brukerRepository = brukerRepositoryAsync.await()
-                NærmesteLederKafkaListener().forEach { event ->
-                    brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
-                }
-            }
+//            launch {
+//                val brukerRepository = brukerRepositoryAsync.await()
+//                NærmesteLederKafkaListener().forEach { event ->
+//                    brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
+//                }
+//            }
 
             val altinnRolleService = async<AltinnRolleService> {
                 AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
