@@ -67,7 +67,12 @@ object Bruker {
         httpPort: Int = 8080
     ) {
         DebugProbes.install()
-        BlockHound.install(CoroutinesBlockHoundIntegration())
+        BlockHound.builder()
+            .with(CoroutinesBlockHoundIntegration())
+            .blockingMethodCallback {
+                log.error("blocking call", Error(it.name))
+            }
+            .install()
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val brukerRepositoryAsync = async {
