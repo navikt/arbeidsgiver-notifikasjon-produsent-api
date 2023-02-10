@@ -48,12 +48,12 @@ object BrukerWriter {
                 }
             }
 
-            launch {
-                val brukerRepository = brukerRepositoryAsync.await()
-                NærmesteLederKafkaListener().forEach { event ->
-                    brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
-                }
-            }
+//            launch {
+//                val brukerRepository = brukerRepositoryAsync.await()
+//                NærmesteLederKafkaListener().forEach { event ->
+//                    brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
+//                }
+//            }
 //
 //            val altinnRolleService = async<AltinnRolleService> {
 //                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
