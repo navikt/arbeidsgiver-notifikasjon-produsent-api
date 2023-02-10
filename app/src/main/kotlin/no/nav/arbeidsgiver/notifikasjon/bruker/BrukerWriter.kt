@@ -10,6 +10,8 @@ import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
@@ -35,6 +37,7 @@ object BrukerWriter {
         httpPort: Int = 8080
     ) {
         log.info("hello world")
+        Health.subsystemReady[Subsystem.DATABASE] = true
         runBlocking(Dispatchers.Default) {
 //            val database = openDatabaseAsync(databaseConfig)
 //            val brukerRepositoryAsync = async {
