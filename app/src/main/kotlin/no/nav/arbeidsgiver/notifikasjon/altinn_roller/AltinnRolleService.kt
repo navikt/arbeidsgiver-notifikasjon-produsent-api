@@ -8,6 +8,14 @@ interface AltinnRolleService {
     suspend fun hentRoller(rolleDefinisjoner: Iterable<AltinnRolleDefinisjon>): Iterable<AltinnRolle>
 }
 
+class AltinnRolleServiceStub: AltinnRolleService {
+    override suspend fun lastRollerFraAltinn() {
+    }
+    override suspend fun hentRoller(rolleDefinisjoner: Iterable<AltinnRolleDefinisjon>): Iterable<AltinnRolle> {
+        return emptyList()
+    }
+}
+
 class AltinnRolleServiceImpl(
     private val altinnRolleClient: AltinnRolleClient,
     private val altinnRolleRepository: AltinnRolleRepository,
