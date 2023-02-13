@@ -204,18 +204,13 @@ fun Application.baseSetup(
             )
         }
 
-        exception<RuntimeException> { call, ex ->
+        exception<Throwable> { call, ex ->
             this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
                 )
             )
-        }
-
-        exception<Throwable> { _, ex ->
-            this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
-            throw ex
         }
     }
 
