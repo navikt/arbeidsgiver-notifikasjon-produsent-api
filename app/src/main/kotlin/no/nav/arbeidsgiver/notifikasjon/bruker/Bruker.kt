@@ -91,12 +91,12 @@ object Bruker {
                 graphql = graphql,
             )
 
-            launchProcessingLoop(
-                "last Altinnroller",
-                pauseAfterEach = Duration.ofDays(1),
-            ) {
-                altinnRolleService.await().lastRollerFraAltinn()
-            }
+//            launchProcessingLoop(
+//                "last Altinnroller",
+//                pauseAfterEach = Duration.ofDays(1),
+//            ) {
+//                altinnRolleService.await().lastRollerFraAltinn()
+//            }
         }
     }
 }
