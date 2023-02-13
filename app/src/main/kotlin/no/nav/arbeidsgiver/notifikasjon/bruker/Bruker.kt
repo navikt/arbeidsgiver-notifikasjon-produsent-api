@@ -1,10 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.debug.CoroutinesBlockHoundIntegration
+import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceStub
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
@@ -19,7 +20,10 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import reactor.blockhound.BlockHound
+import java.time.Duration
 
 object Bruker {
     private val log = logger()
@@ -47,6 +51,7 @@ object Bruker {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
 //        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
@@ -58,10 +63,22 @@ object Bruker {
         altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
+        DebugProbes.enableCreationStackTraces = false
+        DebugProbes.install()
+        BlockHound.builder()
+            .with(CoroutinesBlockHoundIntegration())
+            .blockingMethodCallback {
+                log.warn("blocking call", Error(it.name))
+            }
+            .install()
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val brukerRepositoryAsync = async {
                 BrukerRepositoryImpl(database.await())
+            }
+
+            launchProcessingLoop("debug coroutines", pauseAfterEach = Duration.ofMinutes(1)) {
+                log.info("coroutines info: ${DebugProbes.dumpCoroutinesInfo()}")
             }
 
 //            val altinnRolleService = async<AltinnRolleService> {

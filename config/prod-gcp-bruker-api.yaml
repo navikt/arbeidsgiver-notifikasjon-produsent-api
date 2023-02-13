@@ -66,6 +66,6 @@ spec:
           namespace: teamsykmelding
   env:
     - name: JAVA_OPTS
-      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
+      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2 -XX:+AllowRedefinitionToAddDeleteMethods"
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
