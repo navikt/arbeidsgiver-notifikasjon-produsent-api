@@ -5,8 +5,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceStub
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
@@ -20,9 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import java.time.Duration
 
 object Bruker {
     private val log = logger()
@@ -52,7 +49,7 @@ object Bruker {
 
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
-        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
+//        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
         suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
@@ -67,14 +64,14 @@ object Bruker {
                 BrukerRepositoryImpl(database.await())
             }
 
-            val altinnRolleService = async<AltinnRolleService> {
-                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
-            }
+//            val altinnRolleService = async<AltinnRolleService> {
+//                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
+//            }
 
             val graphql = async {
                 val tilgangerService = TilgangerServiceImpl(
                     altinn = altinn,
-                    altinnRolleService = altinnRolleService.await(),
+                    altinnRolleService = AltinnRolleServiceStub() //altinnRolleService.await(),
                 )
                 BrukerAPI.createBrukerGraphQL(
                     brukerRepository = brukerRepositoryAsync.await(),
@@ -91,12 +88,12 @@ object Bruker {
                 graphql = graphql,
             )
 
-            launchProcessingLoop(
-                "last Altinnroller",
-                pauseAfterEach = Duration.ofDays(1),
-            ) {
-                altinnRolleService.await().lastRollerFraAltinn()
-            }
+//            launchProcessingLoop(
+//                "last Altinnroller",
+//                pauseAfterEach = Duration.ofDays(1),
+//            ) {
+//                altinnRolleService.await().lastRollerFraAltinn()
+//            }
         }
     }
 }
