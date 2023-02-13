@@ -66,11 +66,12 @@ object Bruker {
         altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
+        DebugProbes.enableCreationStackTraces = false
         DebugProbes.install()
         BlockHound.builder()
             .with(CoroutinesBlockHoundIntegration())
             .blockingMethodCallback {
-                log.error("blocking call", Error(it.name))
+                log.warn("blocking call", Error(it.name))
             }
             .install()
         runBlocking(Dispatchers.Default) {
