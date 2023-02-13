@@ -38,6 +38,8 @@ spec:
         databases:
           - name: bruker-model
             envVarPrefix: DB
+            users:
+              - name: bruker-api-kafka-user
         autoBackupHour: 1
         maintenance:
           hour: 3

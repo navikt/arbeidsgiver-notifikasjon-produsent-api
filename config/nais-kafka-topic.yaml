@@ -21,6 +21,9 @@ spec:
     - application: notifikasjon-bruker-api
       team: fager
       access: readwrite
+    - application: notifikasjon-bruker-api-writer
+      team: fager
+      access: readwrite
     - application: notifikasjon-kafka-reaper
       team: fager
       access: readwrite

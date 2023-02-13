@@ -32,6 +32,8 @@ spec:
         databases:
           - name: bruker-model
             envVarPrefix: DB
+            users:
+              - name: bruker-api-kafka-user
   accessPolicy:
     inbound:
       rules:
