@@ -2,13 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
-import io.ktor.client.call.body
+import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.jackson.jackson
+import io.ktor.serialization.jackson.*
 
 interface Enhetsregisteret {
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -58,14 +58,14 @@ class EnhetsregisteretImpl(
     override suspend fun hentUnderenhet(orgnr: String) = timer.coRecord {
         val response: HttpResponse = try {
             httpClient.get("$baseUrl/enhetsregisteret/api/underenheter/$orgnr")
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             log.warn("kall mot $baseUrl feilet", e)
             return@coRecord Enhetsregisteret.Underenhet(orgnr, "")
         }
         if (response.status.isSuccess()) {
             try {
                 response.body()
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 log.warn("feil ved deserializing av response fra enhetsregisteret", e)
                 Enhetsregisteret.Underenhet(orgnr, "")
             }
