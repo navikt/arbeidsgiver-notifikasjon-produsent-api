@@ -18,6 +18,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
@@ -63,7 +64,6 @@ object Bruker {
         altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
-        DebugProbes.enableCreationStackTraces = false
         DebugProbes.install()
         BlockHound.builder()
             .with(CoroutinesBlockHoundIntegration())
@@ -78,7 +78,15 @@ object Bruker {
             }
 
             launchProcessingLoop("debug coroutines", pauseAfterEach = Duration.ofMinutes(1)) {
-                log.info("coroutines info: ${DebugProbes.dumpCoroutinesInfo()}")
+                laxObjectMapper.writeValueAsString(DebugProbes.dumpCoroutinesInfo().map {
+                    mapOf(
+                        "state" to it.state.toString(),
+                        "context" to it.context.toString(),
+                        "stack" to it.lastObservedStackTrace().joinToString("\n")
+                    )
+                }).let {
+                    log.info("coroutines info: $it")
+                }
             }
 
 //            val altinnRolleService = async<AltinnRolleService> {
