@@ -128,11 +128,12 @@ object Bruker {
                 pauseAfterEach = Duration.ofSeconds(60)
             ) {
 
-                val maxThreshold = 250
+                val maxThreshold = 1000
                 val metricName = MicrometerMetricsConfig().metricName
                 val activeConnections = Metrics.meterRegistry.get("$metricName.active").gauge().value()
 
                 if (activeConnections > maxThreshold) {
+                    log.warn("ktor activeConnections $activeConnections is over threshold $maxThreshold")
                     Health.subsystemAlive[Subsystem.KTOR] = false
                 }
             }
