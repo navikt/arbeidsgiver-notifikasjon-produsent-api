@@ -59,7 +59,13 @@ object Bruker {
         }
     }
 
-    private val coroutineGauges = ConcurrentHashMap<State, AtomicInteger>()
+    private val coroutineGauges = State.values().associateWith {
+        Metrics.meterRegistry.gauge(
+            "ktor.coroutines.count",
+            Tags.of("state", it.name),
+            AtomicInteger()
+        )
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun main(
@@ -87,15 +93,8 @@ object Bruker {
             }
 
             launchProcessingLoop("debug coroutines", pauseAfterEach = Duration.ofMinutes(1)) {
-                DebugProbes.dumpCoroutinesInfo().groupBy { it.state }.forEach {
-                    coroutineGauges.getOrPut(it.key) {
-                        Metrics.meterRegistry.gauge(
-                            "ktor.coroutines.count",
-                            Tags.of("state", it.key.name),
-                            AtomicInteger(it.value.size)
-                        )
-                    }
-                        .set(it.value.size)
+                DebugProbes.dumpCoroutinesInfo().groupBy { it.state }.forEach { (state, coroutines) ->
+                    coroutineGauges[state]?.set(coroutines.size)
                 }
             }
 
