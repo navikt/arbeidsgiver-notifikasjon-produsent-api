@@ -1,0 +1,33 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: notifikasjon-bruker-api-writer
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{image}}
+  liveness:
+    path: /internal/alive
+  readiness:
+    path: /internal/ready
+  replicas:
+    min: 1
+    max: 2
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  kafka:
+    pool: nav-dev
+  gcp:
+    permissions:
+      - resource:
+          apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+          kind: Project
+        role: roles/cloudsql.client
+  envFrom:
+    - secret: google-sql-notifikasjon-bruker-api-bruker-model-bruker-a319af7c
+  env:
+    - name: CLOUD_SQL_INSTANCE
+      value: fager-dev-24f2:europe-north1:notifikasjon-bruker-api
+
