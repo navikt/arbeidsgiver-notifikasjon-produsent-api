@@ -1,27 +1,37 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import io.ktor.server.metrics.micrometer.*
+import io.ktor.server.metrics.micrometer.MicrometerMetricsConfig
+import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.debug.CoroutinesBlockHoundIntegration
 import kotlinx.coroutines.debug.DebugProbes
+import kotlinx.coroutines.debug.State
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceStub
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnCachedImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import reactor.blockhound.BlockHound
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 object Bruker {
     private val log = logger()
@@ -49,6 +59,8 @@ object Bruker {
         }
     }
 
+    private val coroutineGauges = ConcurrentHashMap<State, AtomicInteger>()
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
@@ -75,14 +87,15 @@ object Bruker {
             }
 
             launchProcessingLoop("debug coroutines", pauseAfterEach = Duration.ofMinutes(1)) {
-                laxObjectMapper.writeValueAsString(DebugProbes.dumpCoroutinesInfo().map {
-                    mapOf(
-                        "state" to it.state.toString(),
-                        "context" to it.context.toString(),
-                        "stack" to it.lastObservedStackTrace().joinToString("\n")
-                    )
-                }).let {
-                    log.info("coroutines info: $it")
+                DebugProbes.dumpCoroutinesInfo().groupBy { it.state }.forEach {
+                    coroutineGauges.getOrPut(it.key) {
+                        Metrics.meterRegistry.gauge(
+                            "ktor.coroutines.count",
+                            Tags.of("state", it.key.name),
+                            AtomicInteger(it.value.size)
+                        )
+                    }
+                        .set(it.value.size)
                 }
             }
 
