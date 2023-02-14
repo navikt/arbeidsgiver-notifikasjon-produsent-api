@@ -61,7 +61,7 @@ object Bruker {
 
     private val coroutineGauges = State.values().associateWith {
         Metrics.meterRegistry.gauge(
-            "ktor.coroutines.count",
+            "kotlin.coroutines.count",
             Tags.of("state", it.name),
             AtomicInteger()
         )
