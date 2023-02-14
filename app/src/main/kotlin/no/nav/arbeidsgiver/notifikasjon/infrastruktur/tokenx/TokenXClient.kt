@@ -123,7 +123,7 @@ class TokenXClientImpl(
                     successCounter.increment()
                 }
                 .access_token
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             log.info("token exchange failed (audience='{}').", audience, e)
             failCounter.increment()
             throw e
