@@ -7,7 +7,7 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
-import io.ktor.server.netty.*
+import io.ktor.server.cio.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -78,7 +78,7 @@ fun CoroutineScope.launchHttpServer(
     application: Application.() -> Unit = { baseSetup(listOf(), customRoute) }
 ) {
     launch {
-        embeddedServer(Netty, port = httpPort, configure = {
+        embeddedServer(CIO, port = httpPort, configure = {
             connectionGroupSize = 16
             callGroupSize = 16
             workerGroupSize = 16
