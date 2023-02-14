@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
+import io.ktor.server.metrics.micrometer.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -7,13 +8,11 @@ import kotlinx.coroutines.debug.CoroutinesBlockHoundIntegration
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceStub
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnCachedImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
@@ -21,8 +20,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import reactor.blockhound.BlockHound
 import java.time.Duration
 
@@ -112,6 +109,20 @@ object Bruker {
                 extractContext = extractBrukerContext,
                 graphql = graphql,
             )
+
+            launchProcessingLoop(
+                "sjekk aktive ktor connections",
+                pauseAfterEach = Duration.ofSeconds(60)
+            ) {
+
+                val maxThreshold = 250
+                val metricName = MicrometerMetricsConfig().metricName
+                val activeConnections = Metrics.meterRegistry.get("$metricName.active").gauge().value()
+
+                if (activeConnections > maxThreshold) {
+                    Health.subsystemAlive[Subsystem.KTOR] = false
+                }
+            }
 
 //            launchProcessingLoop(
 //                "last Altinnroller",
