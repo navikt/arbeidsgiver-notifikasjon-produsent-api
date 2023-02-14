@@ -79,6 +79,7 @@ object Bruker {
         altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
+        DebugProbes.enableCreationStackTraces = false
         DebugProbes.install()
         BlockHound.builder()
             .with(CoroutinesBlockHoundIntegration())
