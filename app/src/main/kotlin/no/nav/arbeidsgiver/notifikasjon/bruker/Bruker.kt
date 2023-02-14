@@ -1,5 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
+import io.micrometer.core.instrument.Tag
+import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -70,7 +72,12 @@ object Bruker {
             launch {
                 val brukerRepository = brukerRepositoryAsync.await()
                 hendelsesstrøm.forEach { event ->
-                    brukerRepository.oppdaterModellEtterHendelse(event)
+                    Metrics.meterRegistry.timer(
+                        "brukerRepository_oppdaterModellEtterHendelse",
+                        Tags.of(Tag.of("hendelse", event.javaClass.simpleName))
+                    ).coRecord {
+                        brukerRepository.oppdaterModellEtterHendelse(event)
+                    }
                 }
             }
 

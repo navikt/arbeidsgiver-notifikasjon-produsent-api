@@ -101,37 +101,33 @@ class SuspendingAltinnClient(
         }
             ?.onEach(observer)
 
-    private suspend fun <T> withErrorHandler(body: suspend () -> List<T>): List<T>? {
-        initiatedCounter.increment()
-        return try {
-            body().also {
-                successCounter.increment()
-            }
-        } catch (error: Exception) {
-            null.also {
-                logException(error)
-                failCounter.count()
-            }
-        }
-    }
-
     suspend fun hentReportees(
         roleDefinitionId: String,
         selvbetjeningsToken: String,
     ): List<AltinnReportee>? {
         // TODO: ta i bruk proxy-klient når vi får utvidet den
         val baseUrl = "http://altinn-rettigheter-proxy.arbeidsgiver/altinn-rettigheter-proxy/ekstern/altinn"
-        return try {
+        return withErrorHandler {
             httpClient.get("${baseUrl}/api/serviceowner/reportees?ForceEIAuthentication&roleDefinitionId=$roleDefinitionId") {
                 headers {
                     append("Authorization", "Bearer $selvbetjeningsToken")
                     append("APIKEY", System.getenv("ALTINN_HEADER") ?: "default")
                 }
+            }.body()
+        }
+    }
+
+    private suspend fun <T> withErrorHandler(body: suspend () -> List<T>): List<T>? {
+        initiatedCounter.increment()
+        return try {
+            body().also {
+                successCounter.increment()
             }
-                .body()
-        } catch (e: Exception) {
-            logException(e)
-            null
+        } catch (exception: RuntimeException) {
+            null.also {
+                logException(exception)
+                failCounter.count()
+            }
         }
     }
 
