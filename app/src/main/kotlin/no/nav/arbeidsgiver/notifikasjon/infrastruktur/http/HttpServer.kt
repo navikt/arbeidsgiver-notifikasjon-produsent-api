@@ -78,11 +78,7 @@ fun CoroutineScope.launchHttpServer(
     application: Application.() -> Unit = { baseSetup(listOf(), customRoute) }
 ) {
     launch {
-        embeddedServer(CIO, port = httpPort, configure = {
-            connectionGroupSize = 16
-            callGroupSize = 16
-            workerGroupSize = 16
-        }) {
+        embeddedServer(CIO, port = httpPort) {
             application()
         }
             .start(wait = true)
