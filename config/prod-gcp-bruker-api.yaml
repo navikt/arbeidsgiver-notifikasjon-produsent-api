@@ -15,7 +15,7 @@ spec:
       cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
       memory: 1024Mi
   replicas:
-    max: 10
+    max: 24
   ingresses:
     - https://ag-notifikasjon-bruker-api.nav.no/
   liveness:

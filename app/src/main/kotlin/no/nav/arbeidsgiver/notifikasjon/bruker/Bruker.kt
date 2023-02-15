@@ -1,36 +1,26 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import io.ktor.server.metrics.micrometer.MicrometerMetricsConfig
+import io.ktor.server.metrics.micrometer.*
 import io.micrometer.core.instrument.Tags
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
+import io.micrometer.core.instrument.search.MeterNotFoundException
+import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.CoroutinesBlockHoundIntegration
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.debug.State
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceStub
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnCachedImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import reactor.blockhound.BlockHound
 import java.time.Duration
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 object Bruker {
@@ -125,12 +115,18 @@ object Bruker {
 
             launchProcessingLoop(
                 "sjekk aktive ktor connections",
-                pauseAfterEach = Duration.ofSeconds(60)
+                pauseAfterEach = Duration.ofSeconds(60),
+                init = { delay(Duration.ofSeconds(60).toMillis()) }
             ) {
 
                 val maxThreshold = 1000
                 val metricName = MicrometerMetricsConfig().metricName
-                val activeConnections = Metrics.meterRegistry.get("$metricName.active").gauge().value()
+                val activeConnections : Double = try {
+                    Metrics.meterRegistry.get("$metricName.active").gauge().value()
+                } catch (e: MeterNotFoundException) {
+                    log.warn("ktor activeConnections count not available", e)
+                    0.0
+                }
 
                 if (activeConnections > maxThreshold) {
                     log.warn("ktor activeConnections $activeConnections is over threshold $maxThreshold")
