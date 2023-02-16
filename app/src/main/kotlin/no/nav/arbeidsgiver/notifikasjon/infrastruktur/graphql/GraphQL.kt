@@ -65,7 +65,7 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
                 fetcher(env)
             } catch (e: GraphqlErrorException) {
                 handleUnexpectedError(e, e)
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 handleUnexpectedError(e, UnhandledGraphQLExceptionError(e, fieldName))
             }
         }
