@@ -15,10 +15,12 @@ import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeRuntimeWiring
+import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.intellij.lang.annotations.Language
@@ -58,11 +60,16 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
     fieldName: String,
     fetcher: suspend (DataFetchingEnvironment) -> T,
 ) {
+    val timer = Timer.builder("graphql.datafetcher")
+        .tag("fieldName", fieldName)
+        .register(meterRegistry)
     dataFetcher(fieldName) { env ->
         val ctx = env.notifikasjonContext<WithCoroutineScope>()
         ctx.coroutineScope.future(Dispatchers.IO) {
             try {
-                fetcher(env)
+                timer.coRecord {
+                    fetcher(env)
+                }
             } catch (e: GraphqlErrorException) {
                 handleUnexpectedError(e, e)
             } catch (e: RuntimeException) {
