@@ -41,7 +41,7 @@ inline fun <reified T: Any> toFromStringScalar(
                 if (input is StringValue)
                     try {
                         parser(input.value)
-                    } catch (e: Exception) {
+                    } catch (e: RuntimeException) {
                         throw CoercingParseLiteralException(e)
                     }
                 else
@@ -51,7 +51,7 @@ inline fun <reified T: Any> toFromStringScalar(
                 if (input is String)
                     try {
                         parser(input)
-                    } catch (e: Exception) {
+                    } catch (e: RuntimeException) {
                         throw CoercingParseValueException(e)
                     }
                 else

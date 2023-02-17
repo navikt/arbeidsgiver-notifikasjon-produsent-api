@@ -56,7 +56,7 @@ class TokenXPlugin internal constructor(
                     try {
                         val accessToken = plugin.tokenXClient.exchange(subjectToken, plugin.audience)
                         context.bearerAuth(accessToken)
-                    } catch (e: Exception) {
+                    } catch (e: RuntimeException) {
                         log.warn("failed to set bearer auth header due to exception in exchange ${e.message}", e)
                     }
                 }

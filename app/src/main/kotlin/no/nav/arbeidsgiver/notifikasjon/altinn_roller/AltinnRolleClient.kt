@@ -46,7 +46,7 @@ class AltinnRolleClientImpl : AltinnRolleClient {
             e
         )
         null
-    } catch (e: Exception) {
+    } catch (e: RuntimeException) {
         log.warn("serviceowner/roledefinitions feiler: : '${e.message}' ", e)
         null
     }

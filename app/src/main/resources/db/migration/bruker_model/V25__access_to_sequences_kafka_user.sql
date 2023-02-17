@@ -1,0 +1,1 @@
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "bruker-api-kafka-user";

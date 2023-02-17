@@ -8,6 +8,7 @@ enum class Subsystem {
     DATABASE,
     AUTOSLETT_SERVICE,
     KAFKA,
+    KTOR,
 }
 
 object Health {
@@ -16,6 +17,7 @@ object Health {
     val subsystemAlive = ConcurrentHashMap(mapOf(
         Subsystem.DATABASE to true,
         Subsystem.KAFKA to true,
+        Subsystem.KTOR to true,
         Subsystem.AUTOSLETT_SERVICE to true,
     ))
 
