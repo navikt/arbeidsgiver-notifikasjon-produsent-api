@@ -24,6 +24,13 @@ suspend fun <T> Timer.coRecord(body: suspend () -> T): T {
     val start = Metrics.clock.monotonicTime()
     try {
         return body()
+    } catch (t: Throwable) {
+        Timer.builder(this.id.name)
+            .tags(this.id.tags)
+            .tag("throwable", t.javaClass.canonicalName)
+            .register(Metrics.meterRegistry)
+            .record(Metrics.clock.monotonicTime() - start, TimeUnit.NANOSECONDS)
+        throw t
     } finally {
         val end = Metrics.clock.monotonicTime()
         this.record(end - start, TimeUnit.NANOSECONDS)
