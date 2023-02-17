@@ -287,16 +287,6 @@ nyBeskjed: {
                     }
                 }
                 {
-                    altinnRolle: {
-                        roleDefinitionCode: "DAGL"
-                    }
-                }
-                {
-                    altinnReportee: {
-                        fnr: $reporteeFnr
-                    }
-                }
-                {
                     naermesteLeder: {
                         ansattFnr: $ansattFnr
                         naermesteLederFnr: $naermesteLederFnr

@@ -54,8 +54,6 @@ class QuerySakerFristTests : DescribeSpec({
                         altinnMottakerMedTilgang.serviceEdition
                     )
                 ),
-                listOf(),
-                listOf(),
             )
         ),
         brukerRepository = brukerRepository,

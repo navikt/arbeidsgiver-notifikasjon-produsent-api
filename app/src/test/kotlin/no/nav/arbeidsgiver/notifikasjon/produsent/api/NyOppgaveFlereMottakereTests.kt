@@ -6,7 +6,6 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
@@ -144,42 +143,6 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
                     ansattFnr = "3",
                     naermesteLederFnr = "2",
                     virksomhetsnummer = "0"
-                )
-            )
-        }
-    }
-
-    describe("sender 1 altinnRolle i 'mottaker'") {
-        produsentRepository.altinnRolle.leggTilAltinnRoller(
-            listOf(AltinnRolle("196", "DAGL"), AltinnRolle("195", "BOBE"))
-        )
-
-        val response = engine.produsentApi(
-            nyOppgave(
-                """
-            mottaker: {
-                altinnRolle: {
-                    roleDefinitionCode: "DAGL"                    
-                }
-            }
-        """
-            )
-        )
-        it("no error in response") {
-            val errors = response.getGraphqlErrors()
-            errors.shouldBeEmpty()
-        }
-
-        it("en mottaker registrert") {
-            val resultType = response.getTypedContent<String>("$.nyOppgave.__typename")
-            resultType shouldBe "NyOppgaveVellykket"
-
-            val id = response.getTypedContent<UUID>("/nyOppgave/id")
-            val mottakere = engine.hentMottakere(id)
-            mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnRolleMottaker(
-                    roleDefinitionCode = "DAGL",
-                    roleDefinitionId = "196"
                 )
             )
         }

@@ -1,15 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -119,21 +116,6 @@ internal data class NaermesteLederMottakerInput(
         )
 }
 
-internal data class AltinnRolleMottakerInput(
-    val roleDefinitionCode: String,
-) {
-    suspend fun tilDomene(
-        virksomhetsnummer: String,
-        finnRolleId: suspend (String) -> AltinnRolle?
-    ): Mottaker =
-        AltinnRolleMottaker(
-            roleDefinitionCode = roleDefinitionCode,
-            roleDefinitionId = finnRolleId(roleDefinitionCode)?.RoleDefinitionId
-                ?: throw UkjentRolleException("klarte ikke finne altinnrolle $roleDefinitionCode"),
-            virksomhetsnummer = virksomhetsnummer
-        )
-}
-
 internal data class AltinnMottakerInput(
     val serviceCode: String,
     val serviceEdition: String,
@@ -146,38 +128,23 @@ internal data class AltinnMottakerInput(
         )
 }
 
-internal data class AltinnReporteeMottakerInput(
-    val fnr: String,
-) {
-    fun tilDomene(virksomhetsnummer: String): Mottaker =
-        AltinnReporteeMottaker(
-            fnr = fnr,
-            virksomhetsnummer = virksomhetsnummer
-        )
-}
-
 internal class UkjentRolleException(message: String) : RuntimeException(message)
 
 
 internal data class MottakerInput(
     val altinn: AltinnMottakerInput?,
-    val altinnReportee: AltinnReporteeMottakerInput?,
     val naermesteLeder: NaermesteLederMottakerInput?,
-    val altinnRolle: AltinnRolleMottakerInput?
 ) {
 
-    suspend fun tilDomene(
+    fun tilDomene(
         virksomhetsnummer: String,
-        finnRolleId: suspend (String) -> AltinnRolle?
     ): Mottaker {
-        check(listOfNotNull(altinn, naermesteLeder, altinnReportee,altinnRolle).size == 1) {
+        check(listOfNotNull(altinn, naermesteLeder).size == 1) {
             "Ugyldig mottaker"
         }
         return altinn?.tilDomene(virksomhetsnummer)
-            ?: (altinnReportee?.tilDomene(virksomhetsnummer)
                 ?: (naermesteLeder?.tilDomene(virksomhetsnummer)
-                    ?: (altinnRolle?.tilDomene(virksomhetsnummer, finnRolleId)
-                        ?: throw IllegalArgumentException("Ugyldig mottaker"))))
+                        ?: throw IllegalArgumentException("Ugyldig mottaker"))
     }
 }
 

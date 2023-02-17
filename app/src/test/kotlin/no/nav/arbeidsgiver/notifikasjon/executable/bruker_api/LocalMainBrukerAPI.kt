@@ -45,8 +45,6 @@ fun main() {
                         )
                     }
                 },
-                listOf(),
-                listOf(),
             )
         }
     )

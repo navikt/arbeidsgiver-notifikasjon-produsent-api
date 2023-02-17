@@ -3,9 +3,11 @@ package no.nav.arbeidsgiver.notifikasjon.hendelse
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.UgyldigPåminnelseTidspunktException
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
+import java.lang.RuntimeException
 import java.time.*
 import java.util.*
 
@@ -483,11 +485,39 @@ object HendelseModel {
     sealed class Mottaker
 
     @JsonTypeName("altinnRolle")
-    data class AltinnRolleMottaker(
-        val roleDefinitionCode: String,
-        val roleDefinitionId: String,
-        val virksomhetsnummer: String
-    ) : Mottaker()
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @Deprecated("Eksisterer i dev, men brukes ikke")
+    data class _AltinnRolleMottaker(val virksomhetsnummer: String) : Mottaker() {
+        companion object {
+            @JsonCreator
+            @JvmStatic
+            fun jsonConstructor(
+                //roleDefinitionCode : String,
+                //roleDefinitionId: String,
+                virksomhetsnummer: String,
+            ) : _AltinnRolleMottaker = basedOnEnv(
+                prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
+                other = { _AltinnRolleMottaker(virksomhetsnummer) },
+            )
+        }
+    }
+
+    @JsonTypeName("altinnReportee")
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @Deprecated("Eksisterer i dev, men brukes ikke")
+    data class _AltinnReporteeMottaker(val virksomhetsnummer: String) : Mottaker() {
+        companion object {
+            @JsonCreator
+            @JvmStatic
+            fun jsonConstructor(
+                //fnr: String,
+                virksomhetsnummer: String,
+            ) : _AltinnReporteeMottaker = basedOnEnv(
+                prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
+                other = { _AltinnReporteeMottaker(virksomhetsnummer) },
+            )
+        }
+    }
 
     @JsonTypeName("naermesteLeder")
     data class NærmesteLederMottaker(
@@ -500,12 +530,6 @@ object HendelseModel {
     data class AltinnMottaker(
         val serviceCode: String,
         val serviceEdition: String,
-        val virksomhetsnummer: String,
-    ) : Mottaker()
-
-    @JsonTypeName("altinnReportee")
-    data class AltinnReporteeMottaker(
-        val fnr: String,
         val virksomhetsnummer: String,
     ) : Mottaker()
 
@@ -576,6 +600,12 @@ val HendelseModel.Mottaker.virksomhetsnummer: String
     get() = when (this) {
         is HendelseModel.NærmesteLederMottaker -> this.virksomhetsnummer
         is HendelseModel.AltinnMottaker -> this.virksomhetsnummer
-        is HendelseModel.AltinnReporteeMottaker -> this.virksomhetsnummer
-        is HendelseModel.AltinnRolleMottaker -> this.virksomhetsnummer
+        is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
+            prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
+            other = { this.virksomhetsnummer },
+        )
+        is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
+            prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
+            other = { this.virksomhetsnummer },
+        )
     }

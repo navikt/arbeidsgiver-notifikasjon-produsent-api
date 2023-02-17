@@ -30,8 +30,6 @@ class QuerySakerTests : DescribeSpec({
         altinn = AltinnStub(
             "0".repeat(11) to Tilganger(
                 tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1"), Tilgang.Altinn("43", "5441", "1")),
-                listOf(),
-                listOf(),
             )
         ),
         brukerRepository = brukerRepository,
