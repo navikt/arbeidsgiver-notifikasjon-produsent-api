@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
+import org.apache.http.ConnectionClosedException
 
 interface Enhetsregisteret {
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,7 +54,22 @@ class EnhetsregisteretImpl(
             registry = Metrics.meterRegistry
             staticPath = "/enhetsregisteret/api/underenheter/"
         }
+        install(HttpRequestRetry) {
+            maxRetries = 2
+            retryOnExceptionIf { _, cause ->
+                cause is ConnectionClosedException
+                //cause is NoHttpResponseException ||
+                //cause is SocketException ||
+                //cause is SSLHandshakeException
+            }
+            delayMillis { 100L }
+        }
         expectSuccess = false
+        engine {
+            socketTimeout = 1000
+            connectTimeout = 1000
+            connectionRequestTimeout = 1000
+        }
     }
 
     override suspend fun hentUnderenhet(orgnr: String) = timer.coRecord {
