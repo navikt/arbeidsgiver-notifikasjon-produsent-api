@@ -23,8 +23,8 @@ open class AltinnRolleRepositoryImpl(
             """,
             roller
         ) {
-            string(it.RoleDefinitionId)
-            string(it.RoleDefinitionCode)
+            text(it.RoleDefinitionId)
+            text(it.RoleDefinitionCode)
         }
     }
 
@@ -35,7 +35,7 @@ open class AltinnRolleRepositoryImpl(
                 from altinn_rolle                
                 where role_definition_code = ?
         """,
-            { string(rolleKode) }
+            { text(rolleKode) }
         ) {
             AltinnRolle(
                 RoleDefinitionCode = getString("role_definition_code"),

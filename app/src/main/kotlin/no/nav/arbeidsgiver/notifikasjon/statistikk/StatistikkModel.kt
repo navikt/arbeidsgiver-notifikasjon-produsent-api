@@ -315,11 +315,11 @@ class StatistikkModel(
                     on conflict do nothing;
                     """
                 ) {
-                    string(hendelse.produsentId)
+                    text(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.merkelapp)
-                    string(hendelse.mottakere.oppsummering())
-                    string(hendelse.tekst.toHash())
+                    text(hendelse.merkelapp)
+                    text(hendelse.mottakere.oppsummering())
+                    text(hendelse.tekst.toHash())
                     timestamp_with_timezone(hendelse.opprettetTidspunkt)
                 }
 
@@ -348,11 +348,11 @@ class StatistikkModel(
                     on conflict do nothing;
                     """
                 ) {
-                    string(hendelse.produsentId)
+                    text(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.merkelapp)
-                    string(hendelse.mottakere.oppsummering())
-                    string(hendelse.tekst.toHash())
+                    text(hendelse.merkelapp)
+                    text(hendelse.mottakere.oppsummering())
+                    text(hendelse.tekst.toHash())
                     timestamp_without_timezone_utc(hendelse.opprettetTidspunkt)
                     nullableDate(hendelse.frist)
                 }
@@ -416,7 +416,7 @@ class StatistikkModel(
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.varselId)
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.produsentId)
+                    text(hendelse.produsentId)
                 }
             }
             is EksterntVarselFeilet -> {
@@ -432,8 +432,8 @@ class StatistikkModel(
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.varselId)
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.produsentId)
-                    string(hendelse.altinnFeilkode)
+                    text(hendelse.produsentId)
+                    text(hendelse.altinnFeilkode)
                 }
             }
             is SoftDelete -> {
@@ -471,10 +471,10 @@ class StatistikkModel(
                     on conflict do nothing;
                     """
                 ) {
-                    string(hendelse.produsentId)
+                    text(hendelse.produsentId)
                     uuid(hendelse.sakId)
-                    string(hendelse.merkelapp)
-                    string(hendelse.mottakere.oppsummering())
+                    text(hendelse.merkelapp)
+                    text(hendelse.mottakere.oppsummering())
                     timestamp_with_timezone(hendelse.oppgittTidspunkt ?: hendelse.mottattTidspunkt)
                 }
             }
@@ -506,21 +506,21 @@ class StatistikkModel(
             when (eksterntVarsel) {
                 is EpostVarselKontaktinfo -> {
                     uuid(eksterntVarsel.varselId)
-                    string("epost_kontaktinfo")
+                    text("epost_kontaktinfo")
                     uuid(notifikasjonId)
-                    string(produsentId)
-                    string(merkelapp)
-                    string(eksterntVarsel.epostAddr)
-                    string((eksterntVarsel.tittel + eksterntVarsel.htmlBody).toHash())
+                    text(produsentId)
+                    text(merkelapp)
+                    text(eksterntVarsel.epostAddr)
+                    text((eksterntVarsel.tittel + eksterntVarsel.htmlBody).toHash())
                 }
                 is SmsVarselKontaktinfo -> {
                     uuid(eksterntVarsel.varselId)
-                    string("sms_kontaktinfo")
+                    text("sms_kontaktinfo")
                     uuid(notifikasjonId)
-                    string(produsentId)
-                    string(merkelapp)
-                    string(eksterntVarsel.tlfnr)
-                    string(eksterntVarsel.smsTekst.toHash())
+                    text(produsentId)
+                    text(merkelapp)
+                    text(eksterntVarsel.tlfnr)
+                    text(eksterntVarsel.smsTekst.toHash())
                 }
             }
         }

@@ -68,8 +68,8 @@ class ProdusentRepositoryImpl(
                     merkelapp = ?
             """
         ) {
-            string(eksternId)
-            string(merkelapp)
+            text(eksternId)
+            text(merkelapp)
         }
             .firstOrNull()
 
@@ -89,7 +89,7 @@ class ProdusentRepositoryImpl(
             """
         ) {
             stringList(merkelapper)
-            grupperingsid?.let { string(grupperingsid) }
+            grupperingsid?.let { text(grupperingsid) }
             integer(antall)
             integer(offset)
         }
@@ -100,8 +100,8 @@ class ProdusentRepositoryImpl(
                grupperingsid = ? and merkelapp = ?
             """,
             variables = {
-                string(grupperingsid)
-                string(merkelapp)
+                text(grupperingsid)
+                text(merkelapp)
             }
         )
             .firstOrNull()
@@ -250,12 +250,12 @@ class ProdusentRepositoryImpl(
                 """
             ) {
                 uuid(sakOpprettet.sakId)
-                string(sakOpprettet.merkelapp)
-                string(sakOpprettet.grupperingsid)
-                string(sakOpprettet.virksomhetsnummer)
+                text(sakOpprettet.merkelapp)
+                text(sakOpprettet.grupperingsid)
+                text(sakOpprettet.virksomhetsnummer)
                 jsonb(sakOpprettet.mottakere)
-                string(sakOpprettet.tittel)
-                string(sakOpprettet.lenke)
+                text(sakOpprettet.tittel)
+                text(sakOpprettet.lenke)
             }
 
             executeUpdate("""
@@ -289,10 +289,10 @@ class ProdusentRepositoryImpl(
                 on conflict do nothing;
             """) {
                 uuid(nyStatusSak.hendelseId)
-                string(nyStatusSak.idempotensKey)
+                text(nyStatusSak.idempotensKey)
                 uuid(sakId)
-                string(nyStatusSak.status.name)
-                nullableString(nyStatusSak.overstyrStatustekstMed)
+                text(nyStatusSak.status.name)
+                nullableText(nyStatusSak.overstyrStatustekstMed)
                 nullableTimestamptz(nyStatusSak.oppgittTidspunkt)
                 timestamp_with_timezone(nyStatusSak.mottattTidspunkt)
             }
@@ -391,13 +391,13 @@ class ProdusentRepositoryImpl(
             """
             ) {
                 uuid(beskjedOpprettet.notifikasjonId)
-                string(beskjedOpprettet.merkelapp)
-                string(beskjedOpprettet.tekst)
-                nullableString(beskjedOpprettet.grupperingsid)
-                string(beskjedOpprettet.lenke)
-                string(beskjedOpprettet.eksternId)
+                text(beskjedOpprettet.merkelapp)
+                text(beskjedOpprettet.tekst)
+                nullableText(beskjedOpprettet.grupperingsid)
+                text(beskjedOpprettet.lenke)
+                text(beskjedOpprettet.eksternId)
                 timestamp_with_timezone(beskjedOpprettet.opprettetTidspunkt)
-                string(beskjedOpprettet.virksomhetsnummer)
+                text(beskjedOpprettet.virksomhetsnummer)
             }
 
             for (mottaker in beskjedOpprettet.mottakere) {
@@ -444,13 +444,13 @@ class ProdusentRepositoryImpl(
             """
             ) {
                 uuid(oppgaveOpprettet.notifikasjonId)
-                string(oppgaveOpprettet.merkelapp)
-                string(oppgaveOpprettet.tekst)
-                nullableString(oppgaveOpprettet.grupperingsid)
-                string(oppgaveOpprettet.lenke)
-                string(oppgaveOpprettet.eksternId)
+                text(oppgaveOpprettet.merkelapp)
+                text(oppgaveOpprettet.tekst)
+                nullableText(oppgaveOpprettet.grupperingsid)
+                text(oppgaveOpprettet.lenke)
+                text(oppgaveOpprettet.eksternId)
                 timestamp_with_timezone(oppgaveOpprettet.opprettetTidspunkt)
-                string(oppgaveOpprettet.virksomhetsnummer)
+                text(oppgaveOpprettet.virksomhetsnummer)
                 nullableDate(oppgaveOpprettet.frist)
             }
 
@@ -518,7 +518,7 @@ class ProdusentRepositoryImpl(
             where varsel_id = ?
             """
         ) {
-            string(eksterntVarselFeilet.feilmelding)
+            text(eksterntVarselFeilet.feilmelding)
             uuid(eksterntVarselFeilet.varselId)
         }
         database.nonTransactionalExecuteUpdate(
@@ -529,7 +529,7 @@ class ProdusentRepositoryImpl(
             where varsel_id = ?
             """
         ) {
-            string(eksterntVarselFeilet.feilmelding)
+            text(eksterntVarselFeilet.feilmelding)
             uuid(eksterntVarselFeilet.varselId)
         }
     }
@@ -553,9 +553,9 @@ class ProdusentRepositoryImpl(
         """
         ) {
             uuid(notifikasjonId)
-            string(mottaker.virksomhetsnummer)
-            string(mottaker.naermesteLederFnr)
-            string(mottaker.ansattFnr)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.naermesteLederFnr)
+            text(mottaker.ansattFnr)
         }
     }
 
@@ -569,9 +569,9 @@ class ProdusentRepositoryImpl(
         """
         ) {
             uuid(notifikasjonId)
-            string(mottaker.virksomhetsnummer)
-            string(mottaker.serviceCode)
-            string(mottaker.serviceEdition)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.serviceCode)
+            text(mottaker.serviceEdition)
         }
     }
 
@@ -585,8 +585,8 @@ class ProdusentRepositoryImpl(
         """
         ) {
             uuid(notifikasjonId)
-            string(mottaker.virksomhetsnummer)
-            string(mottaker.fnr)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.fnr)
         }
     }
 
@@ -600,9 +600,9 @@ class ProdusentRepositoryImpl(
         """
         ) {
             uuid(notifikasjonId)
-            string(mottaker.virksomhetsnummer)
-            string(mottaker.roleDefinitionCode)
-            string(mottaker.roleDefinitionId)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.roleDefinitionCode)
+            text(mottaker.roleDefinitionId)
         }
     }
 }

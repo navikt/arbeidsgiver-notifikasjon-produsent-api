@@ -2,6 +2,7 @@
 
 package no.nav.arbeidsgiver.notifikasjon.dataprodukt
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
@@ -26,7 +27,10 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontakti
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.ScheduledTime
 import java.security.MessageDigest
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.*
 
 class DataproduktModel(
@@ -35,30 +39,87 @@ class DataproduktModel(
     val log = logger()
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
+        database.nonTransactionalExecuteUpdate("""
+            insert into aggregat_hendelse(
+                hendelse_id,
+                hendelse_type,
+                aggregat_id,
+                kilde_app_navn,
+                virksomhetsnummer,
+                produsent_id,
+                kafka_timestamp 
+            ) values (?, ?, ?, ? ,?, ?)
+            on conflict do nothing
+        """) {
+            with(hendelse) {
+                uuid(hendelseId)
+                text(hendelse::class.simpleName!!)
+                uuid(aggregateId)
+                text(kildeAppNavn)
+                text(virksomhetsnummer)
+                nullableText(produsentId)
+                instantAsText(metadata.timestamp)
+            }
+        }
+
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         @Suppress("UNUSED_VARIABLE") val ignore : Any = when (hendelse) {
             is BeskjedOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon 
-                        (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
-                    values (?, ?, 'beskjed', ?, ?, ?, ?)
+                    (
+                        notifikasjon_id,
+                        notifikasjon_type,
+                        produsent_id,
+                        merkelapp,
+                        ekstern_id,
+                        tekst,
+                        grupperingsid,
+                        lenke,
+                        opprettet_tidspunkt
+                    )
+                    values (?, 'BESKJED', ?, ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
-                    string(hendelse.produsentId)
-                    uuid(hendelse.notifikasjonId)
-                    string(hendelse.merkelapp)
-                    string(hendelse.mottakere.oppsummering())
-                    string(hendelse.tekst.toHash())
-                    timestamp_with_timezone(hendelse.opprettetTidspunkt)
+                    with(hendelse) {
+                        uuid(notifikasjonId)
+                        text(produsentId)
+                        text(merkelapp)
+                        text(eksternId)
+                        text(tekst)
+                        nullableText(grupperingsid)
+                        text(lenke)
+                        instantAsText(opprettetTidspunkt)
+                    }
+                }
+
+                storeMottakere(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    sakId = null,
+                    mottakere = hendelse.mottakere,
+                )
+
+                if (hendelse.hardDelete != null) {
+                    with(hendelse) {
+                        storeHardDelete(
+                            aggregatId = aggregateId,
+                            bestillingHendelsesid = hendelseId,
+                            bestillingType = "OPPRETTELSE",
+                            spesifikasjon = hendelse.hardDelete,
+                            utregnetTidspunkt = ScheduledTime(hendelse.hardDelete, metadata.timestamp).happensAt(),
+                        )
+                    }
                 }
 
                 oppdaterVarselBestilling(
                     notifikasjonId = hendelse.notifikasjonId,
                     produsentId = hendelse.produsentId,
                     merkelapp = hendelse.merkelapp,
-                    iterable = hendelse.eksterneVarsler
+                    eksterneVarsler = hendelse.eksterneVarsler,
+                    opprinnelse = "BeskjedOpprettet.eksterneVarsler",
+                    statusUtsending = "UTSENDING_BESTILT",
                 )
             }
             is OppgaveOpprettet -> {
@@ -79,11 +140,11 @@ class DataproduktModel(
                     on conflict do nothing;
                     """
                 ) {
-                    string(hendelse.produsentId)
+                    text(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.merkelapp)
-                    string(hendelse.mottakere.oppsummering())
-                    string(hendelse.tekst.toHash())
+                    text(hendelse.merkelapp)
+                    text(hendelse.mottakere.oppsummering())
+                    text(hendelse.tekst.toHash())
                     timestamp_without_timezone_utc(hendelse.opprettetTidspunkt)
                     nullableDate(hendelse.frist)
                 }
@@ -92,7 +153,7 @@ class DataproduktModel(
                     notifikasjonId = hendelse.notifikasjonId,
                     produsentId = hendelse.produsentId,
                     merkelapp = hendelse.merkelapp,
-                    iterable = hendelse.eksterneVarsler
+                    eksterneVarsler = hendelse.eksterneVarsler
                 )
             }
             is OppgaveUtført -> {
@@ -147,7 +208,7 @@ class DataproduktModel(
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.varselId)
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.produsentId)
+                    text(hendelse.produsentId)
                 }
             }
             is EksterntVarselFeilet -> {
@@ -163,8 +224,8 @@ class DataproduktModel(
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.varselId)
                     uuid(hendelse.notifikasjonId)
-                    string(hendelse.produsentId)
-                    string(hendelse.altinnFeilkode)
+                    text(hendelse.produsentId)
+                    text(hendelse.altinnFeilkode)
                 }
             }
             is SoftDelete -> {
@@ -202,10 +263,10 @@ class DataproduktModel(
                     on conflict do nothing;
                     """
                 ) {
-                    string(hendelse.produsentId)
+                    text(hendelse.produsentId)
                     uuid(hendelse.sakId)
-                    string(hendelse.merkelapp)
-                    string(hendelse.mottakere.oppsummering())
+                    text(hendelse.merkelapp)
+                    text(hendelse.mottakere.oppsummering())
                     timestamp_with_timezone(hendelse.oppgittTidspunkt ?: hendelse.mottattTidspunkt)
                 }
             }
@@ -218,42 +279,147 @@ class DataproduktModel(
         }
     }
 
+    private suspend fun storeHardDelete(
+        aggregatId: UUID,
+        bestillingType: String,
+        bestillingHendelsesid: UUID,
+        strategi: String? = null,
+        spesifikasjon: HendelseModel.LocalDateTimeOrDuration,
+        utregnetTidspunkt: Instant,
+    ) {
+        database.nonTransactionalExecuteUpdate("""
+            insert into hard_delete_bestilling
+            (
+                aggregat_id,
+                bestilling_type,
+                bestilling_hendelsesid,
+                strategi,
+                spesifikasjon,
+                utregnet_tidspunkt
+            )
+            values (?, ?, ?, ?, ?, ?)
+            on conflict do nothing
+        """) {
+            uuid(aggregatId)
+            text(bestillingType)
+            uuid(bestillingHendelsesid)
+            nullableText(strategi)
+            text(spesifikasjon.toString())
+            instantAsText(utregnetTidspunkt)
+        }
+    }
+
+    private suspend fun storeMottakere(notifikasjonId: UUID?, sakId: UUID?, mottakere: List<Mottaker>) {
+        database.nonTransactionalExecuteBatch("""
+            insert into mottaker_naermeste_leder (sak_id, notifikasjon_id, virksomhetsnummer, fnr_leder, fnr_ansatt)
+            values (?, ?, ?, ?, ?)
+        """,
+            mottakere.filterIsInstance<NærmesteLederMottaker>()
+        ) {
+            nullableUuid(sakId)
+            nullableUuid(notifikasjonId)
+            text(it.virksomhetsnummer)
+            text(it.naermesteLederFnr)
+            text(it.ansattFnr)
+        }
+
+        database.nonTransactionalExecuteBatch("""
+            insert into mottaker_enkeltrettighet (sak_id, notifikasjon_id, virksomhetsnummer, service_code, service_edition)
+            values (?, ?, ?, ?, ?)
+        """,
+            mottakere.filterIsInstance<AltinnMottaker>()
+        ) {
+            nullableUuid(sakId)
+            nullableUuid(notifikasjonId)
+            text(it.virksomhetsnummer)
+            text(it.serviceCode)
+            text(it.serviceEdition)
+        }
+    }
+
     private suspend fun oppdaterVarselBestilling(
         notifikasjonId: UUID,
         produsentId: String,
         merkelapp: String,
-        iterable: List<EksterntVarsel>,
+        opprinnelse: String,
+        eksterneVarsler: List<EksterntVarsel>,
+        statusUtsending: String,
     ) {
         database.nonTransactionalExecuteBatch(
             """
-            insert into varsel_bestilling 
-                (varsel_id, varsel_type, notifikasjon_id, produsent_id, merkelapp, mottaker, checksum)
+            insert into ekstern_varsel
+            (
+                varsel_id,
+                varsel_type,
+                notifikasjon_id,
+                merkelapp,
+                sendevindu,
+                sendetidspunkt,
+                produsent_id,
+                html_tittel,
+                html_body,
+                opprinnelse,
+                status_utsending
+            )
             values
-                (?, ?, ?, ?, ?, ?, ?)
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             on conflict do nothing;
             """,
-            iterable
+            eksterneVarsler
         ) { eksterntVarsel ->
             when (eksterntVarsel) {
                 is EpostVarselKontaktinfo -> {
-                    uuid(eksterntVarsel.varselId)
-                    string("epost_kontaktinfo")
-                    uuid(notifikasjonId)
-                    string(produsentId)
-                    string(merkelapp)
-                    string(eksterntVarsel.epostAddr)
-                    string((eksterntVarsel.tittel + eksterntVarsel.htmlBody).toHash())
+                    with(eksterntVarsel) {
+                        uuid(varselId)
+                        text("EPOST") //varsel_type
+                        uuid(notifikasjonId)
+                        text(merkelapp)
+                        enumAsText(sendevindu)
+                        nullableLocalDateTimeAsText(sendeTidspunkt)
+                        text(produsentId)
+                        text(tittel)
+                        text(htmlBody)
+                        text(opprinnelse)
+                        text(statusUtsending)
+                    }
                 }
                 is SmsVarselKontaktinfo -> {
-                    uuid(eksterntVarsel.varselId)
-                    string("sms_kontaktinfo")
-                    uuid(notifikasjonId)
-                    string(produsentId)
-                    string(merkelapp)
-                    string(eksterntVarsel.tlfnr)
-                    string(eksterntVarsel.smsTekst.toHash())
+                    with(eksterntVarsel) {
+                        uuid(varselId)
+                        text("SMS") //varsel_type
+                        uuid(notifikasjonId)
+                        text(merkelapp)
+                        enumAsText(sendevindu)
+                        nullableLocalDateTimeAsText(sendeTidspunkt)
+                        text(produsentId)
+                        text(smsTekst)
+                        text(opprinnelse)
+                        text(statusUtsending)
+                    }
                 }
             }
+        }
+
+        database.nonTransactionalExecuteBatch("""
+            insert into ekstern_varsel_mottaker_tlf(varsel_id, tlf) 
+            values (?, ?)
+            on conflict do nothing
+        """,
+            eksterneVarsler.filterIsInstance<SmsVarselKontaktinfo>()
+        ) {
+            uuid(it.varselId)
+            text(it.tlfnr)
+        }
+
+        database.nonTransactionalExecuteBatch("""
+            insert into ekstern_varsel_mottaker_epost (varsel_id, epost) 
+            values (?, ?)
+            on conflict do nothing
+        """,
+            eksterneVarsler.filterIsInstance<EpostVarselKontaktinfo>()
+        ) {
+            uuid(it.varselId)
+            text(it.epostAddr)
         }
     }
 }

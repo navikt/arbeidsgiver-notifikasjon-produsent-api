@@ -174,8 +174,8 @@ class BrukerRepositoryImpl(
                 jsonb(tilgangerAltinnMottaker)
                 jsonb(tilgangerAltinnReporteeMottaker)
                 jsonb(tilgangerAltinnRolleMottaker)
-                string(fnr)
-                string(fnr)
+                text(fnr)
+                text(fnr)
             }
         ) {
             when (val type = getString("type")) {
@@ -470,11 +470,11 @@ class BrukerRepositoryImpl(
                     jsonb(tilgangerAltinnMottaker)
                     jsonb(tilgangerAltinnReporteeMottaker)
                     jsonb(tilgangerAltinnRolleMottaker)
-                    string(fnr)
+                    text(fnr)
                     stringList(virksomhetsnummer)
-                    tekstsoekElementer.forEach { string(it) }
+                    tekstsoekElementer.forEach { text(it) }
                     nullableStringList(sakstyper)
-                    string(fnr)
+                    text(fnr)
                     integer(offset)
                     integer(limit)
                 }
@@ -569,7 +569,7 @@ class BrukerRepositoryImpl(
             on conflict do nothing
         """
         ) {
-            string(brukerKlikket.fnr)
+            text(brukerKlikket.fnr)
             uuid(brukerKlikket.notifikasjonId)
         }
     }
@@ -595,13 +595,13 @@ class BrukerRepositoryImpl(
             """
             ) {
                 uuid(beskjedOpprettet.notifikasjonId)
-                string(beskjedOpprettet.merkelapp)
-                string(beskjedOpprettet.tekst)
-                nullableString(beskjedOpprettet.grupperingsid)
-                string(beskjedOpprettet.lenke)
-                string(beskjedOpprettet.eksternId)
+                text(beskjedOpprettet.merkelapp)
+                text(beskjedOpprettet.tekst)
+                nullableText(beskjedOpprettet.grupperingsid)
+                text(beskjedOpprettet.lenke)
+                text(beskjedOpprettet.eksternId)
                 timestamp_with_timezone(beskjedOpprettet.opprettetTidspunkt)
-                string(beskjedOpprettet.virksomhetsnummer)
+                text(beskjedOpprettet.virksomhetsnummer)
             }
 
             for (mottaker in beskjedOpprettet.mottakere) {
@@ -626,11 +626,11 @@ class BrukerRepositoryImpl(
             """
             ) {
                 uuid(sakOpprettet.sakId)
-                string(sakOpprettet.virksomhetsnummer)
-                string(sakOpprettet.tittel)
-                string(sakOpprettet.lenke)
-                string(sakOpprettet.merkelapp)
-                string(sakOpprettet.grupperingsid)
+                text(sakOpprettet.virksomhetsnummer)
+                text(sakOpprettet.tittel)
+                text(sakOpprettet.lenke)
+                text(sakOpprettet.merkelapp)
+                text(sakOpprettet.grupperingsid)
             }
 
             executeUpdate(
@@ -639,7 +639,7 @@ class BrukerRepositoryImpl(
             """
             ) {
                 uuid(sakOpprettet.sakId)
-                string("${sakOpprettet.tittel} ${sakOpprettet.merkelapp}")
+                text("${sakOpprettet.tittel} ${sakOpprettet.merkelapp}")
             }
 
             for (mottaker in sakOpprettet.mottakere) {
@@ -679,8 +679,8 @@ class BrukerRepositoryImpl(
             ) {
                 uuid(nyStatusSak.hendelseId)
                 uuid(nyStatusSak.sakId)
-                string(nyStatusSak.status.name)
-                nullableString(nyStatusSak.overstyrStatustekstMed)
+                text(nyStatusSak.status.name)
+                nullableText(nyStatusSak.overstyrStatustekstMed)
                 timestamp_with_timezone(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
             }
 
@@ -691,8 +691,8 @@ class BrukerRepositoryImpl(
                 where id = ?
             """
             ) {
-                string(nyStatusSak.status.name)
-                nullableString(nyStatusSak.overstyrStatustekstMed)
+                text(nyStatusSak.status.name)
+                nullableText(nyStatusSak.overstyrStatustekstMed)
                 uuid(nyStatusSak.sakId)
             }
             if (nyStatusSak.nyLenkeTilSak != null) {
@@ -703,7 +703,7 @@ class BrukerRepositoryImpl(
                     WHERE id = ?
                 """
                 ) {
-                    string(nyStatusSak.nyLenkeTilSak)
+                    text(nyStatusSak.nyLenkeTilSak)
                     uuid(nyStatusSak.sakId)
                 }
             }
@@ -769,9 +769,9 @@ class BrukerRepositoryImpl(
         ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
-            string(mottaker.virksomhetsnummer)
-            string(mottaker.naermesteLederFnr)
-            string(mottaker.ansattFnr)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.naermesteLederFnr)
+            text(mottaker.ansattFnr)
         }
     }
 
@@ -790,9 +790,9 @@ class BrukerRepositoryImpl(
         ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
-            string(mottaker.virksomhetsnummer)
-            string(mottaker.serviceCode)
-            string(mottaker.serviceEdition)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.serviceCode)
+            text(mottaker.serviceEdition)
         }
     }
 
@@ -811,8 +811,8 @@ class BrukerRepositoryImpl(
         ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
-            string(mottaker.virksomhetsnummer)
-            string(mottaker.fnr)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.fnr)
         }
     }
 
@@ -831,9 +831,9 @@ class BrukerRepositoryImpl(
         ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
-            string(mottaker.virksomhetsnummer)
-            string(mottaker.roleDefinitionCode)
-            string(mottaker.roleDefinitionId)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.roleDefinitionCode)
+            text(mottaker.roleDefinitionId)
         }
     }
 
@@ -860,13 +860,13 @@ class BrukerRepositoryImpl(
             """
             ) {
                 uuid(oppgaveOpprettet.notifikasjonId)
-                string(oppgaveOpprettet.merkelapp)
-                string(oppgaveOpprettet.tekst)
-                nullableString(oppgaveOpprettet.grupperingsid)
-                string(oppgaveOpprettet.lenke)
-                string(oppgaveOpprettet.eksternId)
+                text(oppgaveOpprettet.merkelapp)
+                text(oppgaveOpprettet.tekst)
+                nullableText(oppgaveOpprettet.grupperingsid)
+                text(oppgaveOpprettet.lenke)
+                text(oppgaveOpprettet.eksternId)
                 timestamp_with_timezone(oppgaveOpprettet.opprettetTidspunkt)
-                string(oppgaveOpprettet.virksomhetsnummer)
+                text(oppgaveOpprettet.virksomhetsnummer)
                 nullableDate(oppgaveOpprettet.frist)
             }
 
@@ -903,9 +903,9 @@ class BrukerRepositoryImpl(
             """
             ) {
                 uuid(nærmesteLederLeesah.narmesteLederId)
-                string(nærmesteLederLeesah.fnr)
-                string(nærmesteLederLeesah.narmesteLederFnr)
-                string(nærmesteLederLeesah.orgnummer)
+                text(nærmesteLederLeesah.fnr)
+                text(nærmesteLederLeesah.narmesteLederFnr)
+                text(nærmesteLederLeesah.orgnummer)
             }
         }
     }
@@ -1000,7 +1000,7 @@ class BrukerRepositoryImpl(
                     jsonb(tilgangerAltinnMottaker)
                     jsonb(tilgangerAltinnReporteeMottaker)
                     jsonb(tilgangerAltinnRolleMottaker)
-                    string(fnr)
+                    text(fnr)
                 }
             ) {
                 getString("merkelapp")

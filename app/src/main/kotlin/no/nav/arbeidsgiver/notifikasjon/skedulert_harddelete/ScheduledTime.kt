@@ -3,15 +3,14 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.LocalDateTimeOrDuration
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import java.time.Instant
-import java.time.OffsetDateTime
 
 class ScheduledTime(
     private val spec: LocalDateTimeOrDuration,
-    val baseTime: OffsetDateTime
+    val baseTime: Instant,
 ) {
     fun happensAt(): Instant = when (spec) {
         is LocalDateTimeOrDuration.LocalDateTime -> spec.value.atOslo().toInstant()
-        is LocalDateTimeOrDuration.Duration -> (baseTime + spec.value).toInstant()
+        is LocalDateTimeOrDuration.Duration -> baseTime + spec.value
     }
 
     fun omOrNull() = spec.omOrNull()
@@ -20,7 +19,7 @@ class ScheduledTime(
     companion object {
         fun parse(spec: String, base: String) = ScheduledTime(
             spec = LocalDateTimeOrDuration.parse(spec),
-            baseTime = OffsetDateTime.parse(base),
+            baseTime = Instant.parse(base),
         )
     }
 }

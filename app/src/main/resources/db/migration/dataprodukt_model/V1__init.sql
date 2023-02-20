@@ -9,7 +9,7 @@ create table aggregat_hendelse
     kilde_app_navn    text not null,
     virksomhetsnummer text not null,
     produsent_id      text null,
-    tidspunkt         text not null -- fra kafka-metadata
+    kafka_timestamp   text not null
 );
 
 create table sak
@@ -63,7 +63,6 @@ create table notifikasjon
     lenke                  text not null,
     opprettet_tidspunkt    text not null,
     soft_deleted_tidspunkt text,
-    skedulert_hard_delete  text,
 
     utgaatt_tidspunkt      text,
     utfoert_tidspunkt      text,
@@ -71,7 +70,6 @@ create table notifikasjon
     paaminnelse_tidspunkt_spesifikasjon_type text, -- enum: KONKRET / ETTER_OPPRETTELSE / FOER_FRIST
     paaminnelse_tidspunkt_spesifikasjon_tid  text, -- dato eller period, avhengig av type
     paaminnelse_tidspunkt_utregnet_tid text
-
 );
 
 create table mottaker_naermeste_leder
@@ -83,6 +81,15 @@ create table mottaker_naermeste_leder
     fnr_ansatt text not null
 );
 
+create unique index mottaker_naermeste_leder_unique
+on mottaker_naermeste_leder(
+    coalesce(notifikasjon_id, '00000000-00000000-00000000-00000000'),
+    coalesce(sak_id, '00000000-00000000-00000000-00000000'),
+    virksomhetsnummer,
+    fnr_leder,
+    fnr_ansatt
+);
+
 create table mottaker_enkeltrettighet
 (
     sak_id          uuid,
@@ -91,6 +98,16 @@ create table mottaker_enkeltrettighet
     service_code    text not null,
     service_edition text not null
 );
+
+create unique index mottaker_enkeltrettighet_unique
+on mottaker_enkeltrettighet(
+    coalesce(notifikasjon_id, '00000000-00000000-00000000-00000000'),
+    coalesce(sak_id, '00000000-00000000-00000000-00000000'),
+    virksomhetsnummer,
+    service_code,
+    service_edition
+);
+
 
 create table notifikasjon_klikk
 (
@@ -104,17 +121,27 @@ create table ekstern_varsel
     varsel_id          uuid not null primary key,
     varsel_type        text not null, -- enum: EPOST / SMS
     notifikasjon_id    uuid not null,
-    kontekst           text not null, -- enum: OPPRETTELSE, PAAMINNELSE
+    produsent_id       text not null,
     merkelapp          text,
     sendevindu         text not null,
-    sendetidspunkt     text null,
-    bestillt_tidspunkt text not null,
-    utfoert_tidpunkt   text not null,
-    produsent_id       text not null,
+    sendetidspunkt     text null, -- fra bestillingen
+    altinn_svar_timestamp text null,
     sms_tekst          text,
     html_tittel        text,
     html_body          text,
-    status             text not null, -- enum: BESTILT / VELLYKKET / FEILET
+
+    -- enum:
+    -- * OppgaveOpprettet.påminnelse
+    -- * BeskjedOpprettet.eksterneVarsler
+    -- * OppgaveOpprettet.eksterneVarsler
+    opprinnelse           text not null, -- enum: OPPRETTELSE, PAAMINNELSE
+
+    -- UTSENDING_IKKE_AVGJORT
+    -- +-> UTSENDING_BESTILT
+    -- |+-> UTSENDING_VELLYKKET
+    -- |+-> UTSENDING_FEILET
+    -- +-> INGEN_UTSENDING
+    status_utsending  text not null,
     feilkode           text
 );
 
@@ -136,5 +163,3 @@ create table ekstern_varsel_mottaker_epost
 --     service_code text not null,
 --     service_edition text not null
 -- );
-
--- Skal vi ha mottaker_sms mottaker_epost mottaker_servicecode?

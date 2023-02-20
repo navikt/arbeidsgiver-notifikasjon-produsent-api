@@ -74,7 +74,7 @@ class SkedulertHardDeleteRepository(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
                 )
             }
 
@@ -83,7 +83,7 @@ class SkedulertHardDeleteRepository(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
                 )
             }
 
@@ -92,7 +92,7 @@ class SkedulertHardDeleteRepository(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
                 )
             }
 
@@ -100,7 +100,7 @@ class SkedulertHardDeleteRepository(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = timestamp.atOffset(ZoneOffset.UTC),
+                    opprettetTidspunkt = timestamp,
                     eksisterende = hent(hendelse.aggregateId),
                 )
             }
@@ -109,7 +109,7 @@ class SkedulertHardDeleteRepository(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = timestamp.atOffset(ZoneOffset.UTC),
+                    opprettetTidspunkt = timestamp,
                     eksisterende = hent(hendelse.aggregateId),
                 )
             }
@@ -117,7 +117,7 @@ class SkedulertHardDeleteRepository(
             is HendelseModel.NyStatusSak -> {
                 upsert(
                     aggregateId = hendelse.aggregateId,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
                     hardDelete = hendelse.hardDelete,
                     eksisterende = hent(hendelse.aggregateId),
                 )
@@ -150,10 +150,10 @@ class SkedulertHardDeleteRepository(
                 """
         ) {
             uuid(hendelse.aggregateId)
-            string(aggregateType)
-            string(hendelse.virksomhetsnummer)
-            string(hendelse.produsentId ?: "ukjent")
-            string(merkelapp)
+            text(aggregateType)
+            text(hendelse.virksomhetsnummer)
+            text(hendelse.produsentId ?: "ukjent")
+            text(merkelapp)
         }
     }
 
@@ -203,7 +203,7 @@ class SkedulertHardDeleteRepository(
     private suspend fun upsert(
         aggregateId: UUID,
         hardDelete: HendelseModel.HardDeleteUpdate?,
-        opprettetTidspunkt: OffsetDateTime,
+        opprettetTidspunkt: Instant,
         eksisterende: SkedulertHardDelete?,
     ) {
         if (hardDelete == null) return
@@ -221,7 +221,7 @@ class SkedulertHardDeleteRepository(
     private suspend fun upsert(
         aggregateId: UUID,
         hardDelete: HendelseModel.LocalDateTimeOrDuration?,
-        opprettetTidspunkt: OffsetDateTime,
+        opprettetTidspunkt: Instant,
     ) {
         if (hardDelete == null) return
         val scheduledTime = ScheduledTime(hardDelete, opprettetTidspunkt)
@@ -245,8 +245,8 @@ class SkedulertHardDeleteRepository(
             uuid(aggregateId)
             timestamp_without_timezone_utc(scheduledTime.happensAt())
             timestamp_without_timezone_utc(scheduledTime.baseTime)
-            nullableString(scheduledTime.omOrNull()?.toString())
-            nullableString(scheduledTime.denOrNull()?.toString())
+            nullableText(scheduledTime.omOrNull()?.toString())
+            nullableText(scheduledTime.denOrNull()?.toString())
         }
     }
 }
