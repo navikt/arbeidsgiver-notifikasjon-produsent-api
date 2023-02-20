@@ -30,7 +30,6 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
-import kotlin.random.Random
 
 interface BrukerRepository {
     suspend fun hentNotifikasjoner(
@@ -41,7 +40,12 @@ interface BrukerRepository {
     class HentSakerResultat(
         val totaltAntallSaker: Int,
         val saker: List<BrukerModel.Sak>,
-        val sakstyper: List<String>,
+        val sakstyper: List<Sakstype>,
+    )
+
+    class Sakstype(
+        val navn: String,
+        val antall: Int,
     )
 
     suspend fun hentSaker(
@@ -58,6 +62,7 @@ interface BrukerRepository {
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
     suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
+    suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String>
 
     val altinnRolle: AltinnRolleRepository
 }
@@ -256,7 +261,7 @@ class BrukerRepositoryImpl(
 
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
-                .ifNotBlank { "and $it" }
+                .ifNotBlank { "where $it" }
 
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
@@ -332,7 +337,7 @@ class BrukerRepositoryImpl(
                                 from mine_sak_ider as ms
                                 join sak as s on s.id = ms.sak_id
                         ),
-                        mine_saker_ikke_paginert as (
+                        mine_saker_ikke_paginert_foer_sakstypefilter as (
                             select 
                                 s.id as "sakId", 
                                 s.virksomhetsnummer as virksomhetsnummer,
@@ -345,8 +350,19 @@ class BrukerRepositoryImpl(
                             from mine_saker as s
                             join sak_status_json as status_json on s.id = status_json.sak_id
                             join sak_search as search on s.id = search.id
-                            where coalesce(s.merkelapp = any(?), true)
                             $tekstsoekSql
+                        ),
+                        mine_saker_ikke_paginert as (
+                            select * 
+                            from mine_saker_ikke_paginert_foer_sakstypefilter
+                            where coalesce(merkelapp = any(?), true)
+                        ),
+                        mine_merkelapper as (
+                            select 
+                                merkelapp as merkelapp,
+                                count(*) as antall
+                            from mine_saker_ikke_paginert_foer_sakstypefilter
+                            group by merkelapp
                         ),
                         mine_altinn_notifikasjoner as (
                             select er.notifikasjon_id
@@ -443,7 +459,12 @@ class BrukerRepositoryImpl(
                             )),  
                             '[]'::jsonb
                         ) from mine_saksoppgaver) as saker,
-                        (select coalesce(jsonb_agg(distinct merkelapp), '[]'::jsonb) from mine_saker) as sakstyper
+                        (select 
+                            coalesce(jsonb_agg(jsonb_build_object(
+                                'navn', merkelapp,
+                                'antall', antall
+                            )), '[]'::jsonb) 
+                        from mine_merkelapper) as sakstyper
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
@@ -451,8 +472,8 @@ class BrukerRepositoryImpl(
                     jsonb(tilgangerAltinnRolleMottaker)
                     string(fnr)
                     stringList(virksomhetsnummer)
-                    nullableStringList(sakstyper)
                     tekstsoekElementer.forEach { string(it) }
+                    nullableStringList(sakstyper)
                     string(fnr)
                     integer(offset)
                     integer(limit)
@@ -739,29 +760,11 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: NærmesteLederMottaker
     ) {
-        val antallEksisterende = executeQuery(
-            """
-                select 1
-                from  mottaker_digisyfo
-                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and fnr_leder = ? and fnr_sykmeldt = ?
-            """,
-            {
-                uuid((notifikasjonId ?: sakId)!!)
-                string(mottaker.virksomhetsnummer)
-                string(mottaker.naermesteLederFnr)
-                string(mottaker.ansattFnr)
-            }) {
-        }.size
-
-        if (antallEksisterende > 0) {
-            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_digisyfo (antallEksisterende=$antallEksisterende)")
-            return
-        }
-
         executeUpdate(
             """
             insert into mottaker_digisyfo(notifikasjon_id, sak_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -777,30 +780,12 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnMottaker
     ) {
-        val antallEksisterende = executeQuery(
-            """
-                select 1
-                from mottaker_altinn_enkeltrettighet
-                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and service_code = ? and service_edition = ?
-            """,
-            {
-                uuid((notifikasjonId ?: sakId)!!)
-                string(mottaker.virksomhetsnummer)
-                string(mottaker.serviceCode)
-                string(mottaker.serviceEdition)
-            }) {
-        }.size
-
-        if (antallEksisterende > 0) {
-            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_altinn_enkeltrettighet (antallEksisterende=$antallEksisterende)")
-            return
-        }
-
         executeUpdate(
             """
             insert into mottaker_altinn_enkeltrettighet
                 (notifikasjon_id, sak_id, virksomhet, service_code, service_edition)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -816,28 +801,12 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnReporteeMottaker
     ) {
-        val antallEksisterende = executeQuery(
-            """
-                select 1
-                from mottaker_altinn_reportee
-                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and fnr = ?
-            """,
-            {
-                uuid((notifikasjonId ?: sakId)!!)
-                string(mottaker.virksomhetsnummer)
-                string(mottaker.fnr)
-            }) {
-        }.size
-
-        if (antallEksisterende > 0) {
-            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_altinn_reportee (antallEksisterende=$antallEksisterende)")
-            return
-        }
         executeUpdate(
             """
             insert into mottaker_altinn_reportee
                 (notifikasjon_id, sak_id, virksomhet, fnr)
             values (?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -852,30 +821,12 @@ class BrukerRepositoryImpl(
         sakId: UUID?,
         mottaker: AltinnRolleMottaker
     ) {
-        val antallEksisterende = executeQuery(
-            """
-                select 1
-                from mottaker_altinn_rolle
-                where coalesce(notifikasjon_id, sak_id) = ? and virksomhet = ? and role_definition_code = ? and role_definition_id = ?
-            """,
-            {
-                uuid((notifikasjonId ?: sakId)!!)
-                string(mottaker.virksomhetsnummer)
-                string(mottaker.roleDefinitionCode)
-                string(mottaker.roleDefinitionId)
-            }) {
-        }.size
-
-        if (antallEksisterende > 0) {
-            if (Random.nextInt(50) == 0) log.info("skipping insert into mottaker_altinn_rolle (antallEksisterende=$antallEksisterende)")
-            return
-        }
-
         executeUpdate(
             """
             insert into mottaker_altinn_rolle
                 (notifikasjon_id, sak_id, virksomhet, role_definition_code, role_definition_id)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """
         ) {
             nullableUuid(notifikasjonId)
@@ -956,6 +907,105 @@ class BrukerRepositoryImpl(
                 string(nærmesteLederLeesah.narmesteLederFnr)
                 string(nærmesteLederLeesah.orgnummer)
             }
+        }
+    }
+
+    override suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String> {
+        return timer.coRecord {
+            val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
+                AltinnMottaker(
+                    serviceCode = it.servicecode,
+                    serviceEdition = it.serviceedition,
+                    virksomhetsnummer = it.virksomhet
+                )
+            }
+            val tilgangerAltinnReporteeMottaker = tilganger.reportee.map {
+                AltinnReporteeMottaker(
+                    virksomhetsnummer = it.virksomhet,
+                    fnr = it.fnr
+                )
+            }
+            val tilgangerAltinnRolleMottaker = tilganger.rolle.map {
+                AltinnRolleMottaker(
+                    virksomhetsnummer = it.virksomhet,
+                    roleDefinitionId = it.roleDefinitionId,
+                    roleDefinitionCode = it.roleDefinitionCode,
+                )
+            }
+
+            val rows = database.nonTransactionalExecuteQuery(
+                /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+                """
+                    with 
+                        mine_altinntilganger as (
+                            select * from json_to_recordset(?::json) 
+                            as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                        ),
+                        mine_altinnreporteetilganger as (
+                            select * from json_to_recordset(?::json) 
+                            as (virksomhetsnummer text, "fnr" text)
+                        ),
+                        mine_altinnrolletilganger as (
+                            select * from json_to_recordset(?::json) 
+                            as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
+                        ),
+                        mine_altinn_saker as (
+                            select er.sak_id
+                            from mottaker_altinn_enkeltrettighet er
+                            join mine_altinntilganger at on 
+                                er.virksomhet = at.virksomhetsnummer and
+                                er.service_code = at."serviceCode" and
+                                er.service_edition = at."serviceEdition"
+                            where
+                                er.sak_id is not null
+                        ),
+                        mine_altinn_reportee_saker as (
+                            select rep.sak_id
+                            from mottaker_altinn_reportee rep
+                            join mine_altinnreporteetilganger at on 
+                                rep.virksomhet = at.virksomhetsnummer and
+                                rep.fnr = at."fnr"
+                            where
+                                rep.sak_id is not null
+                        ),
+                        mine_altinn_rolle_saker as (
+                            select rol.sak_id
+                            from mottaker_altinn_rolle rol
+                            join mine_altinnrolletilganger at on 
+                                rol.virksomhet = at.virksomhetsnummer and
+                                rol.role_definition_id = at."roleDefinitionId" and
+                                rol.role_definition_code = at."roleDefinitionCode"
+                            where
+                                rol.sak_id is not null
+                        ),
+                        mine_digisyfo_saker as (
+                            select sak_id
+                            from mottaker_digisyfo_for_fnr
+                            where fnr_leder = ? and sak_id is not null
+                        ),
+                        mine_sak_ider as (
+                            (select * from mine_digisyfo_saker)
+                            union 
+                            (select * from mine_altinn_saker)
+                            union 
+                            (select * from mine_altinn_reportee_saker)
+                            union 
+                            (select * from mine_altinn_rolle_saker)
+                        )
+                        select distinct s.merkelapp as merkelapp 
+                        from mine_sak_ider as ms
+                        join sak as s on s.id = ms.sak_id
+                    """,
+                {
+                    jsonb(tilgangerAltinnMottaker)
+                    jsonb(tilgangerAltinnReporteeMottaker)
+                    jsonb(tilgangerAltinnRolleMottaker)
+                    string(fnr)
+                }
+            ) {
+                getString("merkelapp")
+            }
+            return@coRecord rows
         }
     }
 }

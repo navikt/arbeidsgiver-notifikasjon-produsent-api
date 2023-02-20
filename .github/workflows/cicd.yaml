@@ -107,6 +107,7 @@ jobs:
           - prod-gcp
         app:
           - bruker-api
+          - bruker-api-writer
           - produsent-api
           - kafka-reaper
           - statistikk

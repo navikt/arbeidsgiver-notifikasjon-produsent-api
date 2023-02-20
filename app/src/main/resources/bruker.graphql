@@ -1,5 +1,9 @@
 type Query {
     notifikasjoner: NotifikasjonerResultat!
+    """
+    Alle sakstyper som finnes for brukeren.
+    """
+    sakstyper: [SakstypeOverordnet!]!
     saker(
         virksomhetsnumre: [String!]
         virksomhetsnummer: String
@@ -18,8 +22,13 @@ enum SakSortering {
     FRIST
 }
 
+type SakstypeOverordnet {
+    navn: String!
+}
+
 type Sakstype {
     navn: String!
+    antall: Int!
 }
 
 type SakerResultat {
@@ -30,6 +39,9 @@ type SakerResultat {
     """
     totaltAntallSaker: Int!
 
+    """
+    Hvilke sakstyper (med antall) som finnes for valgte virksomheter.
+    """
     sakstyper: [Sakstype!]!
 
     feilAltinn: Boolean!

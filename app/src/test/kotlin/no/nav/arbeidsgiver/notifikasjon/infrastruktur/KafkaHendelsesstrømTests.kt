@@ -29,14 +29,14 @@ class KafkaHendelsesstrømTests: DescribeSpec({
         hendelsesstrøm.forEach(stop) { hendelse ->
             receivedHendelse.add(hendelse)
             received.add(hendelse.hendelseId)
-            if (sent == received || (received - sent).isNotEmpty() ) {
+            if (sent == received || (received - sent).isNotEmpty()) {
                 stop.set(true)
             }
         }
 
         it("should have exactly the same ids and events we sent") {
-            sent shouldBe received
-            EksempelHendelse.Alle shouldContainExactlyInAnyOrder receivedHendelse
+            received shouldBe sent
+            receivedHendelse shouldContainExactlyInAnyOrder EksempelHendelse.Alle
         }
     }
 })

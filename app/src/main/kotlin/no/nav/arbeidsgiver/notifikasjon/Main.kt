@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDelete
 import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
 import no.nav.arbeidsgiver.notifikasjon.dataprodukt.Dataprodukt
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerWriter
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -23,6 +24,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         when (val navn = System.getenv("NAIS_APP_NAME")) {
             "notifikasjon-produsent-api" -> Produsent.main()
             "notifikasjon-bruker-api" -> Bruker.main()
+            "notifikasjon-bruker-api-writer" -> BrukerWriter.main()
             "notifikasjon-kafka-reaper" -> KafkaReaper.main()
             "notifikasjon-statistikk" -> Statistikk.main()
             "notifikasjon-ekstern-varsling" -> EksternVarsling.main()

@@ -1,14 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClient
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleClientImpl
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceImpl
+import io.ktor.server.metrics.micrometer.*
+import io.micrometer.core.instrument.Tags
+import io.micrometer.core.instrument.search.MeterNotFoundException
+import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.CoroutinesBlockHoundIntegration
+import kotlinx.coroutines.debug.DebugProbes
+import kotlinx.coroutines.debug.State
+import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceStub
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
@@ -18,27 +17,22 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import reactor.blockhound.BlockHound
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicInteger
 
 object Bruker {
     private val log = logger()
     val databaseConfig = Database.config("bruker_model")
 
-    private val hendelsesstrøm by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = basedOnEnv(
-                dev = { "bruker-model-builder-1" },
-                other = { "bruker-model-builder" },
-            ),
-            replayPeriodically = true,
-        )
-    }
+//    private val hendelsesstrøm by lazy {
+//        HendelsesstrømKafkaImpl(
+//            topic = NOTIFIKASJON_TOPIC,
+//            groupId = "bruker-model-builder-2",
+//        )
+//    }
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
@@ -55,9 +49,18 @@ object Bruker {
         }
     }
 
+    private val coroutineGauges = State.values().associateWith {
+        Metrics.meterRegistry.gauge(
+            "kotlin.coroutines.count",
+            Tags.of("state", it.name),
+            AtomicInteger()
+        )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
-        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
+//        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
         suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
@@ -66,34 +69,34 @@ object Bruker {
         altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
+        DebugProbes.enableCreationStackTraces = false
+        DebugProbes.install()
+        BlockHound.builder()
+            .with(CoroutinesBlockHoundIntegration())
+            .blockingMethodCallback {
+                log.warn("blocking call", Error(it.name))
+            }
+            .install()
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val brukerRepositoryAsync = async {
                 BrukerRepositoryImpl(database.await())
             }
 
-            launch {
-                val brukerRepository = brukerRepositoryAsync.await()
-                hendelsesstrøm.forEach { event ->
-                    brukerRepository.oppdaterModellEtterHendelse(event)
+            launchProcessingLoop("debug coroutines", pauseAfterEach = Duration.ofMinutes(1)) {
+                DebugProbes.dumpCoroutinesInfo().groupBy { it.state }.forEach { (state, coroutines) ->
+                    coroutineGauges[state]?.set(coroutines.size)
                 }
             }
 
-            launch {
-                val brukerRepository = brukerRepositoryAsync.await()
-                NærmesteLederKafkaListener().forEach { event ->
-                    brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
-                }
-            }
-
-            val altinnRolleService = async<AltinnRolleService> {
-                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
-            }
+//            val altinnRolleService = async<AltinnRolleService> {
+//                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
+//            }
 
             val graphql = async {
                 val tilgangerService = TilgangerServiceImpl(
                     altinn = altinn,
-                    altinnRolleService = altinnRolleService.await(),
+                    altinnRolleService = AltinnRolleServiceStub() //altinnRolleService.await(),
                 )
                 BrukerAPI.createBrukerGraphQL(
                     brukerRepository = brukerRepositoryAsync.await(),
@@ -111,75 +114,32 @@ object Bruker {
             )
 
             launchProcessingLoop(
-                "last Altinnroller",
-                pauseAfterEach = Duration.ofDays(1),
+                "sjekk aktive ktor connections",
+                pauseAfterEach = Duration.ofSeconds(60),
+                init = { delay(Duration.ofSeconds(60).toMillis()) }
             ) {
-                altinnRolleService.await().lastRollerFraAltinn()
-            }
 
-            launchProcessingLoop(
-                "cleanup duplicate mottakere nærmeste leder",
-                pauseAfterEach = Duration.ofSeconds(2)
-            ) {
-                val db = database.await()
-
-                val duplikateIder = db.nonTransactionalExecuteQuery(
-                    """
-                        select jsonb_agg(id) as idr
-                        from mottaker_digisyfo
-                        group by notifikasjon_id
-                        having count(*) > 1
-                        limit 100
-                    """
-                ) {
-                    laxObjectMapper.readValue<List<Long>>(getString("idr"))
+                val maxThreshold = 1000
+                val metricName = MicrometerMetricsConfig().metricName
+                val activeConnections : Double = try {
+                    Metrics.meterRegistry.get("$metricName.active").gauge().value()
+                } catch (e: MeterNotFoundException) {
+                    log.warn("ktor activeConnections count not available", e)
+                    0.0
                 }
 
-                val resultat = db.nonTransactionalExecuteBatch("""
-                    delete from mottaker_digisyfo
-                    where id = ?
-                """,
-                    duplikateIder.flatMap { it.sorted().drop(1) }.take(10_000)
-                ) {
-                    long(it)
-                }
-
-                if (duplikateIder.isNotEmpty()) {
-                    log.info("fant ${duplikateIder.size} digisyfo-mottakere med duplikater. slettet ${resultat.sum()} rader av ${resultat.size} forsøkte")
+                if (activeConnections > maxThreshold) {
+                    log.warn("ktor activeConnections $activeConnections is over threshold $maxThreshold")
+                    Health.subsystemAlive[Subsystem.KTOR] = false
                 }
             }
 
-            launchProcessingLoop(
-                "cleanup duplicate mottakere altinn",
-                pauseAfterEach = Duration.ofSeconds(2)
-            ) {
-                val db = database.await()
-
-                val duplikateIder = db.nonTransactionalExecuteQuery(
-                    """
-                        select jsonb_agg(id) as idr
-                        from mottaker_altinn_enkeltrettighet
-                        group by notifikasjon_id
-                        having count(*) > 1
-                        limit 100
-                    """
-                ) {
-                    laxObjectMapper.readValue<List<Long>>(getString("idr"))
-                }
-
-                val resultat = db.nonTransactionalExecuteBatch("""
-                    delete from mottaker_altinn_enkeltrettighet
-                    where id = ?
-                """,
-                    duplikateIder.flatMap { it.sorted().drop(1) }.take(10_000)
-                ) {
-                    long(it)
-                }
-
-                if (duplikateIder.isNotEmpty()) {
-                    log.info("fant ${duplikateIder.size} altinn-mottakere med duplikater. slettet ${resultat.sum()} rader av ${resultat.size} forsøkte")
-                }
-            }
+//            launchProcessingLoop(
+//                "last Altinnroller",
+//                pauseAfterEach = Duration.ofDays(1),
+//            ) {
+//                altinnRolleService.await().lastRollerFraAltinn()
+//            }
         }
     }
 }

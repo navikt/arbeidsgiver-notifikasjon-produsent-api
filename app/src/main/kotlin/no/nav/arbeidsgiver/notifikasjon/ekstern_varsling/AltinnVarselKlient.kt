@@ -282,7 +282,7 @@ class AltinnVarselKlientImpl(
                     AltinnVarselKlient.AltinnResponse.Ok(
                         rå = try {
                             laxObjectMapper.valueToTree<JsonNode>(response)
-                        } catch (e: Throwable) {
+                        } catch (e: RuntimeException) {
                             log.error(e)
                             TextNode(e.message)
                         },
@@ -300,7 +300,7 @@ class AltinnVarselKlientImpl(
                         rå = laxObjectMapper.valueToTree(e),
                     )
                 )
-            } catch (e: Throwable) {
+            } catch (e: RuntimeException) {
                 Result.failure(e)
             }
         }

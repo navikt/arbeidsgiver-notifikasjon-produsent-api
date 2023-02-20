@@ -32,6 +32,8 @@ spec:
         databases:
           - name: bruker-model
             envVarPrefix: DB
+            users:
+              - name: bruker-api-kafka-user
   accessPolicy:
     inbound:
       rules:
@@ -57,4 +59,7 @@ spec:
         - host: fakedings.dev-gcp.nais.io # fakedings login
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
+  env:
+    - name: JAVA_OPTS
+      value: -XX:+AllowRedefinitionToAddDeleteMethods
 
