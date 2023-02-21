@@ -139,6 +139,22 @@ val TOI = Produsent(
     )
 )
 
+val ARBEIDSGIVERDIALOG = Produsent(
+    id = "arbeidsgiver-dialog",
+    accessPolicy = basedOnEnv(
+        prod = { listOf() },
+        other = { listOf(
+            "dev-gcp:team-dialog:crm-arbeidsgiver-notifikasjon",
+        ) },
+    ),
+    tillatteMerkelapper = listOf(
+        "Midlertidig Lønnstilskudd",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig Lønnstilskudd")
+    )
+)
+
 
 val PRODUSENT_LIST =
     listOf(
@@ -149,6 +165,7 @@ val PRODUSENT_LIST =
         FRITAKAGP,
         HELSEARBEIDSGIVER,
         TOI,
+        ARBEIDSGIVERDIALOG,
     )
         .filter { it.accessPolicy.isNotEmpty() }
 
