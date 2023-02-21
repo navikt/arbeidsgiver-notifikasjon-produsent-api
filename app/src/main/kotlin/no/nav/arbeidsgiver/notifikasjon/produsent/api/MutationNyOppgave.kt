@@ -9,7 +9,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateFørFrist
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateKonkret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -48,11 +47,10 @@ internal class MutationNyOppgave(
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>,
     ) {
-        suspend fun tilDomene(
+        fun tilDomene(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
-            finnRolleId: suspend (String) -> AltinnRolle?,
         ): OppgaveOpprettet {
             val alleMottakere = listOfNotNull(mottaker) + mottakere
             return OppgaveOpprettet(
@@ -63,7 +61,7 @@ internal class MutationNyOppgave(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = alleMottakere.map { it.tilDomene(metadata.virksomhetsnummer, finnRolleId) },
+                mottakere = alleMottakere.map { it.tilDomene(metadata.virksomhetsnummer) },
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = metadata.virksomhetsnummer,
                 produsentId = produsentId,
@@ -193,7 +191,6 @@ internal class MutationNyOppgave(
                 id = id,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
-                finnRolleId = produsentRepository.altinnRolle::hentAltinnrolle
             )
         } catch (e: UkjentRolleException){
             return Error.UkjentRolle(e.message!!)

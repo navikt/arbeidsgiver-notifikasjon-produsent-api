@@ -17,8 +17,6 @@ val FAGER_TESTPRODUSENT = Produsent(
         ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
         ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
         NærmesteLederDefinisjon,
-        AltinnReporteeDefinisjon,
-        AltinnRolleDefinisjon("DAGL")
     )
 )
 

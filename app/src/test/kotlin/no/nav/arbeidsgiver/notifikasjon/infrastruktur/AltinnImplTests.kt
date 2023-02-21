@@ -29,15 +29,6 @@ class AltinnImplTests : DescribeSpec({
             status = null,
             socialSecurityNumber = null
         )
-        val virksomhet2 = AltinnReportee(
-            name = "virksomhet2",
-            type = "Business",
-            organizationNumber = "2",
-            parentOrganizationNumber = null,
-            organizationForm = null,
-            status = null,
-            socialSecurityNumber = null
-        )
         coEvery {
             klient.hentOrganisasjoner(
                 any(),
@@ -47,21 +38,12 @@ class AltinnImplTests : DescribeSpec({
                 false
             )
         } returns listOf(virksomhet1)
-        coEvery {
-            klient.hentOrganisasjoner(
-                any(),
-                Subject(fnr),
-                true
-            )
-        } returns listOf(virksomhet2)
-        // TODO: legg til roller
 
-        val tilganger = altinn.hentTilganger(fnr, "token", listOf(def), listOf())
+        val tilganger = altinn.hentTilganger(fnr, "token", listOf(def))
 
         it("returnerer tilganger") {
-            tilganger.tjenestetilganger + tilganger.reportee + tilganger.rolle shouldContainExactlyInAnyOrder listOf(
+            tilganger.tjenestetilganger  shouldContainExactlyInAnyOrder listOf(
                 BrukerModel.Tilgang.Altinn("1", def.code, def.version),
-                BrukerModel.Tilgang.AltinnReportee(fnr = fnr, virksomhet = "2")
             )
         }
 

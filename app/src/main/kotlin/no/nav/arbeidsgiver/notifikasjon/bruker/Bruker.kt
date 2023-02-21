@@ -7,7 +7,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.CoroutinesBlockHoundIntegration
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.debug.State
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceStub
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
@@ -60,7 +59,6 @@ object Bruker {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
-//        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
         suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
@@ -89,14 +87,9 @@ object Bruker {
                 }
             }
 
-//            val altinnRolleService = async<AltinnRolleService> {
-//                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
-//            }
-
             val graphql = async {
                 val tilgangerService = TilgangerServiceImpl(
-                    altinn = altinn,
-                    altinnRolleService = AltinnRolleServiceStub() //altinnRolleService.await(),
+                    altinn = altinn
                 )
                 BrukerAPI.createBrukerGraphQL(
                     brukerRepository = brukerRepositoryAsync.await(),
@@ -133,13 +126,6 @@ object Bruker {
                     Health.subsystemAlive[Subsystem.KTOR] = false
                 }
             }
-
-//            launchProcessingLoop(
-//                "last Altinnroller",
-//                pauseAfterEach = Duration.ofDays(1),
-//            ) {
-//                altinnRolleService.await().lastRollerFraAltinn()
-//            }
         }
     }
 }

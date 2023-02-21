@@ -4,7 +4,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.should
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beOfType
-import io.mockk.every
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
@@ -14,9 +13,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class TilgangsstyringTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
-        produsentRepository = mockk {
-            every { altinnRolle } returns mockk()
-        }
+        produsentRepository = mockk()
     )
 
     describe("tilgangsstyring av produsent-api") {
