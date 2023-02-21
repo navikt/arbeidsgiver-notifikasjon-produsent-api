@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.github.benmanes.caffeine.cache.AsyncCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.async
@@ -21,18 +20,11 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import java.time.Duration
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class AltinnRolle(
-    val RoleDefinitionId: String,
-    val RoleDefinitionCode: String
-)
-
 interface Altinn {
     suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
-        roller: Iterable<AltinnRolle>,
     ): Tilganger
 }
 
@@ -46,7 +38,6 @@ class AltinnImpl(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
-        roller: Iterable<AltinnRolle>,
     ): Tilganger =
         timer.coRecord {
             supervisorScope {
@@ -56,18 +47,7 @@ class AltinnImpl(
                         hentTilganger(fnr, code, version, selvbetjeningsToken)
                     }
                 }
-                val rolleTilganger = roller.map {
-                    val (RoleDefinitionId, RoleDefinitionCode) = it
-                    async {
-                        hentTilgangerForRolle(RoleDefinitionId, RoleDefinitionCode, selvbetjeningsToken)
-                    }
-                }
-                val reporteeTilganger = async {
-                    hentTilganger(fnr, selvbetjeningsToken)
-                }
-                return@supervisorScope tjenesteTilganger.awaitAll().flatten() +
-                        reporteeTilganger.await() +
-                        rolleTilganger.awaitAll().flatten()
+                return@supervisorScope tjenesteTilganger.awaitAll().flatten()
             }
         }
 
@@ -105,47 +85,6 @@ class AltinnImpl(
             }
         )
     }
-
-    private suspend fun hentTilganger(
-        fnr: String,
-        selvbetjeningsToken: String,
-    ): Tilganger {
-        val reporteeList = klient.hentOrganisasjoner(
-            SelvbetjeningToken(selvbetjeningsToken),
-            Subject(fnr),
-            true
-        ) ?: return Tilganger.FAILURE
-
-        return Tilganger(
-            reportee = reporteeList.map {
-                BrukerModel.Tilgang.AltinnReportee(
-                    virksomhet = it.organizationNumber!!,
-                    fnr = fnr
-                )
-            }
-        )
-    }
-
-    private suspend fun hentTilgangerForRolle(
-        roleDefinitionId: String,
-        roleDefinitionCode: String,
-        selvbetjeningsToken: String,
-    ): Tilganger {
-        val reportees = klient.hentReportees(
-            roleDefinitionId = roleDefinitionId,
-            selvbetjeningsToken = selvbetjeningsToken,
-        ) ?: return Tilganger.FAILURE
-
-        return Tilganger(
-            rolle = reportees.map {
-                BrukerModel.Tilgang.AltinnRolle(
-                    virksomhet = it.organizationNumber!!,
-                    roleDefinitionId = roleDefinitionId,
-                    roleDefinitionCode = roleDefinitionCode
-                )
-            }
-        )
-    }
 }
 
 class AltinnCachedImpl(
@@ -164,20 +103,18 @@ class AltinnCachedImpl(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
-        roller: Iterable<AltinnRolle>
     ): Tilganger =
-        cache.getAsync(TilgangerCacheKey(fnr, tjenester, roller)) { cacheKey ->
-            altinnImpl.hentTilganger(cacheKey.fnr, selvbetjeningsToken, cacheKey.tjenester, cacheKey.roller)
+        cache.getAsync(TilgangerCacheKey(fnr, tjenester)) { cacheKey ->
+            altinnImpl.hentTilganger(cacheKey.fnr, selvbetjeningsToken, cacheKey.tjenester)
         }
 }
 
 internal data class TilgangerCacheKey(
     val fnr: String,
     val tjenester: Iterable<ServicecodeDefinisjon>,
-    val roller: Iterable<AltinnRolle>,
 )
 
-suspend fun <K : Any, V : Any> AsyncCache<K, V>.getAsync(key: K, loader: suspend (K) -> V) =
+suspend fun <K : Any, V : Any> AsyncCache<K, V>.getAsync(key: K, loader: suspend (K) -> V): V =
     supervisorScope {
         get(key) { key, _ ->
             future {

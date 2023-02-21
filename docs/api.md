@@ -48,8 +48,6 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
   * [Mutation](#mutation)
   * [Objects](#objects)
     * [AltinnMottaker](#altinnmottaker)
-    * [AltinnReporteeMottaker](#altinnreporteemottaker)
-    * [AltinnRolleMottaker](#altinnrollemottaker)
     * [Beskjed](#beskjed)
     * [BeskjedData](#beskjeddata)
     * [DuplikatEksternIdOgMerkelapp](#duplikateksternidogmerkelapp)
@@ -86,8 +84,6 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
     * [UkjentRolle](#ukjentrolle)
   * [Inputs](#inputs)
     * [AltinnMottakerInput](#altinnmottakerinput)
-    * [AltinnReporteeMottakerInput](#altinnreporteemottakerinput)
-    * [AltinnRolleMottakerInput](#altinnrollemottakerinput)
     * [EksterntVarselEpostInput](#eksterntvarselepostinput)
     * [EksterntVarselInput](#eksterntvarselinput)
     * [EksterntVarselSmsInput](#eksterntvarselsmsinput)
@@ -946,56 +942,6 @@ ID-en som dere ga oss da dere opprettet saken.
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-
-#### AltinnReporteeMottaker
-
-<table>
-<thead>
-<tr>
-<th align="left">Field</th>
-<th align="right">Argument</th>
-<th align="left">Type</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td colspan="2" valign="top"><strong>fnr</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>virksomhetsnummer</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-
-#### AltinnRolleMottaker
-
-<table>
-<thead>
-<tr>
-<th align="left">Field</th>
-<th align="right">Argument</th>
-<th align="left">Type</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td colspan="2" valign="top"><strong>roleDefinitionCode</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>roleDefinitionId</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
 <td></td>
 </tr>
@@ -1940,59 +1886,6 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 </tbody>
 </table>
 
-#### AltinnReporteeMottakerInput
-
-Spesifiser mottaker ved hjelp av fødselsnummer.
-Flere skjemaer krever kun en "tilknytning" til et orgnr for å sende inn/se status.
-Tilknytningen er da at man er "reportee" for virksomheten, uten å spesifisere noen enkeltrettighet.
-
-Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen. Dersom personen ikke lenger er tilknyttet
-virksomheten så vil de hverken se historiske eller nye notifikasjoner knyttet til virksomheten.
-
-<table>
-<thead>
-<tr>
-<th colspan="2" align="left">Field</th>
-<th align="left">Type</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td colspan="2" valign="top"><strong>fnr</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-
-#### AltinnRolleMottakerInput
-
-Spesifiser mottaker ved hjelp av rollekode.  Enhver som har den gitte rollen vil kunne se notifikasjonen.
-
-Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
-bruker mister en Altinn-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn-tilgangen.
-Og motsatt, hvis en bruker får en Altinn-rolle, vil de se tidligere notifikasjoner for den Altinn-tilgangen.
-
-Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
-
-<table>
-<thead>
-<tr>
-<th colspan="2" align="left">Field</th>
-<th align="left">Type</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td colspan="2" valign="top"><strong>roleDefinitionCode</strong></td>
-<td valign="top"><a href="#string">String</a>!</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-
 #### EksterntVarselEpostInput
 
 <table>
@@ -2315,16 +2208,6 @@ Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer
 <tr>
 <td colspan="2" valign="top"><strong>naermesteLeder</strong></td>
 <td valign="top"><a href="#naermesteledermottakerinput">NaermesteLederMottakerInput</a></td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>altinnRolle</strong></td>
-<td valign="top"><a href="#altinnrollemottakerinput">AltinnRolleMottakerInput</a></td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong>altinnReportee</strong></td>
-<td valign="top"><a href="#altinnreporteemottakerinput">AltinnReporteeMottakerInput</a></td>
 <td></td>
 </tr>
 </tbody>
@@ -3144,14 +3027,6 @@ av "eventual consistency" i systemet vårt.</td>
 <tbody>
 <tr>
 <td valign="top"><strong><a href="#altinnmottaker">AltinnMottaker</a></strong></td>
-<td></td>
-</tr>
-<tr>
-<td valign="top"><strong><a href="#altinnreporteemottaker">AltinnReporteeMottaker</a></strong></td>
-<td></td>
-</tr>
-<tr>
-<td valign="top"><strong><a href="#altinnrollemottaker">AltinnRolleMottaker</a></strong></td>
 <td></td>
 </tr>
 <tr>

@@ -10,7 +10,6 @@ import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleService
 import no.nav.arbeidsgiver.notifikasjon.bruker.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
@@ -34,8 +33,7 @@ fun Spec.ktorBrukerTestServer(
     brukerRepository: BrukerRepository = mockk(relaxed = true),
     kafkaProducer: HendelseProdusent = NoopHendelseProdusent,
     altinn: Altinn = AltinnStub(),
-    altinnRolleService: AltinnRolleService = mockk(relaxed = true),
-    tilgangerService: TilgangerService = TilgangerServiceImpl(altinn, altinnRolleService),
+    tilgangerService: TilgangerService = TilgangerServiceImpl(altinn),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
     val engine = TestApplicationEngine(

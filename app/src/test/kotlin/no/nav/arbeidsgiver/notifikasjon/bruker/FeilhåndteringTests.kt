@@ -31,12 +31,6 @@ class FeilhåndteringTests : DescribeSpec({
                 suspendingAltinnClient.hentOrganisasjoner(any(), any(), any(), any(), any())
             } returns null
             coEvery {
-                suspendingAltinnClient.hentOrganisasjoner(any(), any(), any())
-            } returns null
-            coEvery {
-                suspendingAltinnClient.hentReportees(any(), any())
-            } returns null
-            coEvery {
                 queryModel.hentNotifikasjoner(any(), any())
             } returns listOf()
 

@@ -69,11 +69,6 @@
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-debug</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.projectreactor.tools</groupId>
-            <artifactId>blockhound</artifactId>
-            <version>1.0.7.RELEASE</version>
-        </dependency>
 
         <!-- http/ktor-server -->
         <dependency>

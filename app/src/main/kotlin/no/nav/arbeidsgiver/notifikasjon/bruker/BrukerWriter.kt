@@ -13,7 +13,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 
 object BrukerWriter {
-    private val log = logger()
     val databaseConfig = Database.config(
         "bruker_model",
         envPrefix = "DB_BRUKER_API_KAFKA_USER",
@@ -32,7 +31,6 @@ object BrukerWriter {
     }
 
     fun main(
-//        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
@@ -54,18 +52,6 @@ object BrukerWriter {
                     brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
                 }
             }
-
-//            val altinnRolleService = async<AltinnRolleService> {
-//                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
-//            }
-//
-//
-//            launchProcessingLoop(
-//                "last Altinnroller",
-//                pauseAfterEach = Duration.ofDays(1),
-//            ) {
-//                altinnRolleService.await().lastRollerFraAltinn()
-//            }
 
             launchHttpServer(httpPort = httpPort)
         }

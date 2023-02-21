@@ -12,17 +12,6 @@ object BrukerModel {
             val servicecode: String,
             val serviceedition: String,
         ) : Tilgang
-
-        data class AltinnReportee(
-            val virksomhet: String,
-            val fnr: String,
-        ) : Tilgang
-
-        data class AltinnRolle(
-            val virksomhet: String,
-            val roleDefinitionId: String,
-            val roleDefinitionCode: String,
-        ) : Tilgang
     }
 
     sealed interface Notifikasjon {
@@ -96,15 +85,11 @@ object BrukerModel {
 
     data class Tilganger(
         val tjenestetilganger: List<Tilgang.Altinn> = listOf(),
-        val reportee: List<Tilgang.AltinnReportee> = listOf(),
-        val rolle: List<Tilgang.AltinnRolle> = listOf(),
         val harFeil: Boolean = false,
     ) {
 
         operator fun plus(other: Tilganger) = Tilganger(
             tjenestetilganger = this.tjenestetilganger + other.tjenestetilganger,
-            reportee = this.reportee + other.reportee,
-            rolle = this.rolle + other.rolle,
             harFeil = this.harFeil || other.harFeil,
         )
 
