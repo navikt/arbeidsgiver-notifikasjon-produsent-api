@@ -21,3 +21,6 @@ GRANT ALL PRIVILEGES ON DATABASE "skedulert-harddelete-model" TO postgres;
 
 CREATE DATABASE "kafka-backup-model";
 GRANT ALL PRIVILEGES ON DATABASE "kafka-backup-model" TO postgres;
+
+CREATE DATABASE "dataprodukt-model";
+GRANT ALL PRIVILEGES ON DATABASE "dataprodukt-model" TO postgres;

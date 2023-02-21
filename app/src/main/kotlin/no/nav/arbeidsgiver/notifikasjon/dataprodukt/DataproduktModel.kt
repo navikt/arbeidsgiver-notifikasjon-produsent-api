@@ -48,7 +48,7 @@ class DataproduktModel(
                 virksomhetsnummer,
                 produsent_id,
                 kafka_timestamp 
-            ) values (?, ?, ?, ? ,?, ?)
+            ) values (?, ?, ?, ?, ? ,?, ?)
             on conflict do nothing
         """) {
             with(hendelse) {
@@ -79,7 +79,7 @@ class DataproduktModel(
                         lenke,
                         opprettet_tidspunkt
                     )
-                    values (?, 'BESKJED', ?, ?, ?, ?, ?, ?)
+                    values (?, 'BESKJED', ?, ?, ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
@@ -123,152 +123,28 @@ class DataproduktModel(
                 )
             }
             is OppgaveOpprettet -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    insert into notifikasjon(
-                        produsent_id, 
-                        notifikasjon_id, 
-                        notifikasjon_type, 
-                        merkelapp, 
-                        mottaker, 
-                        checksum, 
-                        opprettet_tidspunkt,
-                        frist
-                    )
-                    values
-                    (?, ?, 'oppgave', ?, ?, ?, ?, ?)
-                    on conflict do nothing;
-                    """
-                ) {
-                    text(hendelse.produsentId)
-                    uuid(hendelse.notifikasjonId)
-                    text(hendelse.merkelapp)
-                    text(hendelse.mottakere.oppsummering())
-                    text(hendelse.tekst.toHash())
-                    timestamp_without_timezone_utc(hendelse.opprettetTidspunkt)
-                    nullableDate(hendelse.frist)
-                }
-
-                oppdaterVarselBestilling(
-                    notifikasjonId = hendelse.notifikasjonId,
-                    produsentId = hendelse.produsentId,
-                    merkelapp = hendelse.merkelapp,
-                    eksterneVarsler = hendelse.eksterneVarsler
-                )
             }
             is OppgaveUtført -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    update notifikasjon 
-                        set utfoert_tidspunkt = ?,
-                            utgaatt_tidspunkt = null
-                        where notifikasjon_id = ?
-                    """
-                ) {
-                    timestamp_without_timezone_utc(metadata.timestamp)
-                    uuid(hendelse.notifikasjonId)
-                }
-            }
-            is OppgaveUtgått -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    update notifikasjon 
-                        set utgaatt_tidspunkt = ?
-                        where notifikasjon_id = ?
-                    """
-                ) {
-                    timestamp_without_timezone_utc(metadata.timestamp)
-                    uuid(hendelse.notifikasjonId)
-                }
+
             }
             is BrukerKlikket -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    insert into notifikasjon_klikk 
-                        (hendelse_id, notifikasjon_id, klikket_paa_tidspunkt)
-                    values (?, ?, ?)
-                    on conflict do nothing;
-                    """
-                ) {
-                    uuid(hendelse.hendelseId)
-                    uuid(hendelse.notifikasjonId)
-                    timestamp_without_timezone_utc(metadata.timestamp)
-                }
+
             }
             is EksterntVarselVellykket -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    insert into varsel_resultat 
-                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
-                    values
-                    (?, ?, ?, ?, 'vellykket')
-                    on conflict do nothing;
-                    """
-                ) {
-                    uuid(hendelse.hendelseId)
-                    uuid(hendelse.varselId)
-                    uuid(hendelse.notifikasjonId)
-                    text(hendelse.produsentId)
-                }
+
             }
             is EksterntVarselFeilet -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    insert into varsel_resultat 
-                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status, feilkode)
-                    values
-                        (?, ?, ?, ?, 'feilet', ?)
-                    on conflict do nothing;
-                    """
-                ) {
-                    uuid(hendelse.hendelseId)
-                    uuid(hendelse.varselId)
-                    uuid(hendelse.notifikasjonId)
-                    text(hendelse.produsentId)
-                    text(hendelse.altinnFeilkode)
-                }
+
             }
             is SoftDelete -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    update notifikasjon 
-                        set soft_deleted_tidspunkt = ?
-                        where notifikasjon_id = ?
-                    """
-                ) {
-                    timestamp_without_timezone_utc(hendelse.deletedAt)
-                    uuid(hendelse.aggregateId)
-                }
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    update sak 
-                        set soft_deleted_tidspunkt = ?
-                        where sak_id = ?
-                    """
-                ) {
-                    timestamp_without_timezone_utc(hendelse.deletedAt)
-                    uuid(hendelse.aggregateId)
-                }
+
             }
             is HardDelete -> {
                 // noop
             }
 
             is SakOpprettet -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
-                    insert into sak 
-                        (produsent_id, sak_id, merkelapp, mottaker, opprettet_tidspunkt)
-                    values (?, ?, ?, ?, ?)
-                    on conflict do nothing;
-                    """
-                ) {
-                    text(hendelse.produsentId)
-                    uuid(hendelse.sakId)
-                    text(hendelse.merkelapp)
-                    text(hendelse.mottakere.oppsummering())
-                    timestamp_with_timezone(hendelse.oppgittTidspunkt ?: hendelse.mottattTidspunkt)
-                }
+
             }
             is NyStatusSak -> {
                 // noop
@@ -276,6 +152,8 @@ class DataproduktModel(
             is PåminnelseOpprettet -> {
                 // noop
             }
+
+            is OppgaveUtgått -> {}
         }
     }
 
@@ -313,6 +191,7 @@ class DataproduktModel(
         database.nonTransactionalExecuteBatch("""
             insert into mottaker_naermeste_leder (sak_id, notifikasjon_id, virksomhetsnummer, fnr_leder, fnr_ansatt)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """,
             mottakere.filterIsInstance<NærmesteLederMottaker>()
         ) {
@@ -326,6 +205,7 @@ class DataproduktModel(
         database.nonTransactionalExecuteBatch("""
             insert into mottaker_enkeltrettighet (sak_id, notifikasjon_id, virksomhetsnummer, service_code, service_edition)
             values (?, ?, ?, ?, ?)
+            on conflict do nothing
         """,
             mottakere.filterIsInstance<AltinnMottaker>()
         ) {
@@ -356,13 +236,14 @@ class DataproduktModel(
                 sendevindu,
                 sendetidspunkt,
                 produsent_id,
+                sms_tekst,
                 html_tittel,
                 html_body,
                 opprinnelse,
                 status_utsending
             )
             values
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             on conflict do nothing;
             """,
             eksterneVarsler
@@ -377,6 +258,7 @@ class DataproduktModel(
                         enumAsText(sendevindu)
                         nullableLocalDateTimeAsText(sendeTidspunkt)
                         text(produsentId)
+                        nullableText(null)
                         text(tittel)
                         text(htmlBody)
                         text(opprinnelse)
@@ -393,6 +275,8 @@ class DataproduktModel(
                         nullableLocalDateTimeAsText(sendeTidspunkt)
                         text(produsentId)
                         text(smsTekst)
+                        nullableText(null)
+                        nullableText(null)
                         text(opprinnelse)
                         text(statusUtsending)
                     }
