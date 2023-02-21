@@ -23,7 +23,7 @@ jobs:
           - skedulert-paaminnelse
           - dataprodukt
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - uses: nais/deploy/actions/deploy@v1
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
