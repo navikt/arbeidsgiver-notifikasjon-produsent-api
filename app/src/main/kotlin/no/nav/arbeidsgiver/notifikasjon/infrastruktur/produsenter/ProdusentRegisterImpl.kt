@@ -10,7 +10,6 @@ val FAGER_TESTPRODUSENT = Produsent(
     ),
     tillatteMerkelapper = listOf(
         "fager",
-        "Permittering", "Nedbemanning", "Innskrenking av arbeidstid", // TODO: remove
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1"),
