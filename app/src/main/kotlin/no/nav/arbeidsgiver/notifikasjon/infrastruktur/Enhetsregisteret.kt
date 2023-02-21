@@ -68,7 +68,7 @@ class EnhetsregisteretImpl(
         engine {
             socketTimeout = 1000
             connectTimeout = 1000
-            connectionRequestTimeout = 1000
+            connectionRequestTimeout = 2000
         }
     }
 
