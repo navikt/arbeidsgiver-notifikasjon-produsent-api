@@ -148,7 +148,7 @@ val ARBEIDSGIVERDIALOG = Produsent(
         ) },
     ),
     tillatteMerkelapper = listOf(
-        "Midlertidig Lønnstilskudd",
+        "Lønnstilskudd",
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig Lønnstilskudd")
