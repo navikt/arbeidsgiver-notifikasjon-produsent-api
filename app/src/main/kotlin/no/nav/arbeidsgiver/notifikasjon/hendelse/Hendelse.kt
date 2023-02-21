@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.requireGraphql
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.UgyldigPåminnelseTidspunktException
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import java.lang.RuntimeException
@@ -489,6 +490,8 @@ object HendelseModel {
     @Deprecated("Eksisterer i dev, men brukes ikke")
     data class _AltinnRolleMottaker(val virksomhetsnummer: String) : Mottaker() {
         companion object {
+            val log = logger()
+
             @JsonCreator
             @JvmStatic
             fun jsonConstructor(
@@ -497,7 +500,10 @@ object HendelseModel {
                 virksomhetsnummer: String,
             ) : _AltinnRolleMottaker = basedOnEnv(
                 prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
-                other = { _AltinnRolleMottaker(virksomhetsnummer) },
+                other = {
+                    log.warn("deserialisering av mottaker @type=altinnRolle ikke lenger støttet.")
+                    _AltinnRolleMottaker(virksomhetsnummer)
+                },
             )
         }
     }
@@ -507,6 +513,8 @@ object HendelseModel {
     @Deprecated("Eksisterer i dev, men brukes ikke")
     data class _AltinnReporteeMottaker(val virksomhetsnummer: String) : Mottaker() {
         companion object {
+            val log = logger()
+
             @JsonCreator
             @JvmStatic
             fun jsonConstructor(
@@ -514,7 +522,10 @@ object HendelseModel {
                 virksomhetsnummer: String,
             ) : _AltinnReporteeMottaker = basedOnEnv(
                 prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
-                other = { _AltinnReporteeMottaker(virksomhetsnummer) },
+                other = {
+                    log.warn("deserialisering av mottaker @type=altinnReportee ikke lenger støttet.")
+                    _AltinnReporteeMottaker(virksomhetsnummer)
+                },
             )
         }
     }
