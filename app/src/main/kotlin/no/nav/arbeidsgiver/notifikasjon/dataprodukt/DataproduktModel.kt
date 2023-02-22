@@ -183,14 +183,14 @@ class DataproduktModel(
                     mottakere = hendelse.mottakere,
                 )
 
-                if (hendelse.hardDelete != null) {
-                    with(hendelse) {
+                with(hendelse) {
+                    if (hardDelete != null) {
                         storeHardDelete(
                             aggregatId = aggregateId,
                             bestillingHendelsesid = hendelseId,
                             bestillingType = "OPPRETTELSE",
-                            spesifikasjon = hendelse.hardDelete,
-                            utregnetTidspunkt = ScheduledTime(hendelse.hardDelete, metadata.timestamp).happensAt(),
+                            spesifikasjon = hardDelete,
+                            utregnetTidspunkt = ScheduledTime(hardDelete, metadata.timestamp).happensAt(),
                         )
                     }
                 }
@@ -205,6 +205,54 @@ class DataproduktModel(
                 )
             }
             is OppgaveUtført -> {
+                with(hendelse) {
+                    if (hardDelete != null) {
+                        storeHardDelete(
+                            aggregatId = aggregateId,
+                            bestillingHendelsesid = hendelseId,
+                            bestillingType = "STATUSENDRING",
+                            strategi = hardDelete.strategi.toString(),
+                            spesifikasjon = hardDelete.nyTid,
+                            utregnetTidspunkt = ScheduledTime(hardDelete.nyTid, metadata.timestamp).happensAt(),
+                        )
+                    }
+                }
+
+                database.nonTransactionalExecuteUpdate(
+                    """
+                       update notifikasjon 
+                       set utfoert_tidspunkt = ?
+                       where notifikasjon_id = ?
+                    """
+                ) {
+                    instantAsText(metadata.timestamp)
+                    uuid(hendelse.notifikasjonId)
+                }
+            }
+            is OppgaveUtgått -> {
+                with(hendelse) {
+                    if (hardDelete != null) {
+                        storeHardDelete(
+                            aggregatId = aggregateId,
+                            bestillingHendelsesid = hendelseId,
+                            bestillingType = "STATUSENDRING",
+                            strategi = hardDelete.strategi.toString(),
+                            spesifikasjon = hardDelete.nyTid,
+                            utregnetTidspunkt = ScheduledTime(hardDelete.nyTid, utgaattTidspunkt.toInstant()).happensAt(),
+                        )
+                    }
+                }
+
+                database.nonTransactionalExecuteUpdate(
+                    """
+                       update notifikasjon 
+                       set utgaatt_tidspunkt = ?
+                       where notifikasjon_id = ?
+                    """
+                ) {
+                    instantAsText(metadata.timestamp)
+                    uuid(hendelse.notifikasjonId)
+                }
 
             }
             is BrukerKlikket -> {
@@ -233,7 +281,6 @@ class DataproduktModel(
                 // noop
             }
 
-            is OppgaveUtgått -> {}
         }
     }
 
