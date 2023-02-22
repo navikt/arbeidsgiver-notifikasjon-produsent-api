@@ -279,10 +279,13 @@ class ParameterSetters(
     fun timestamp_with_timezone(value: OffsetDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
     fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
-    fun instantAsText(value: OffsetDateTime) = instantAsText(value.toInstant())
+    fun toInstantAsText(value: OffsetDateTime) = instantAsText(value.toInstant())
     fun instantAsText(value: Instant) = text(value.toString())
+    fun nullableInstantAsText(value: Instant?) = nullableText(value?.toString())
 
     fun nullableLocalDateTimeAsText(value: LocalDateTime?) = nullableText(value?.toString())
+    fun localDateTimeAsText(value: LocalDateTime) = text(value.toString())
+    fun periodAsText(value: ISO8601Period) = text(value.toString())
 
     fun nullableDate(value: LocalDate?) =
         preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) } )

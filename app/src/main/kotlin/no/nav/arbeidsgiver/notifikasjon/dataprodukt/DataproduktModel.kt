@@ -22,6 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
@@ -30,7 +31,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.ScheduledTime
 import java.security.MessageDigest
 import java.time.Instant
-import java.time.ZoneOffset
 import java.util.*
 
 class DataproduktModel(
@@ -91,7 +91,7 @@ class DataproduktModel(
                         text(tekst)
                         nullableText(grupperingsid)
                         text(lenke)
-                        instantAsText(opprettetTidspunkt)
+                        toInstantAsText(opprettetTidspunkt)
                     }
                 }
 
@@ -123,6 +123,86 @@ class DataproduktModel(
                 )
             }
             is OppgaveOpprettet -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    insert into notifikasjon 
+                    (
+                        notifikasjon_id,
+                        notifikasjon_type,
+                        produsent_id,
+                        merkelapp,
+                        ekstern_id,
+                        tekst,
+                        grupperingsid,
+                        lenke,
+                        opprettet_tidspunkt,
+                        frist,
+                        paaminnelse_tidspunkt_spesifikasjon_type,
+                        paaminnelse_tidspunkt_spesifikasjon_tid,
+                        paaminnelse_tidspunkt_utregnet_tid
+                    )
+                    values (?, 'OPPGAVE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    on conflict do nothing;
+                    """
+                ) {
+                    with(hendelse) {
+                        uuid(notifikasjonId)
+                        text(produsentId)
+                        text(merkelapp)
+                        text(eksternId)
+                        text(tekst)
+                        nullableText(grupperingsid)
+                        text(lenke)
+                        toInstantAsText(opprettetTidspunkt)
+                        nullableDate(frist)
+                        when (val tidspunkt = påminnelse?.tidspunkt) {
+                            is PåminnelseTidspunkt.Konkret -> {
+                                text("Konkret")
+                                localDateTimeAsText(tidspunkt.konkret)
+                            }
+                            is PåminnelseTidspunkt.EtterOpprettelse -> {
+                                text("EtterOpprettelse")
+                                periodAsText(tidspunkt.etterOpprettelse)
+                            }
+                            is PåminnelseTidspunkt.FørFrist -> {
+                                text("FørFrist")
+                                periodAsText(tidspunkt.førFrist)
+                            }
+                            null -> {
+                                nullableText(null)
+                                nullableText(null)
+                            }
+                        }
+                        nullableInstantAsText(påminnelse?.tidspunkt?.påminnelseTidspunkt)
+                    }
+                }
+
+                storeMottakere(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    sakId = null,
+                    mottakere = hendelse.mottakere,
+                )
+
+                if (hendelse.hardDelete != null) {
+                    with(hendelse) {
+                        storeHardDelete(
+                            aggregatId = aggregateId,
+                            bestillingHendelsesid = hendelseId,
+                            bestillingType = "OPPRETTELSE",
+                            spesifikasjon = hendelse.hardDelete,
+                            utregnetTidspunkt = ScheduledTime(hendelse.hardDelete, metadata.timestamp).happensAt(),
+                        )
+                    }
+                }
+
+                oppdaterVarselBestilling(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    produsentId = hendelse.produsentId,
+                    merkelapp = hendelse.merkelapp,
+                    eksterneVarsler = hendelse.eksterneVarsler,
+                    opprinnelse = "OppgaveOpprettet.eksterneVarsler",
+                    statusUtsending = "UTSENDING_BESTILT",
+                )
             }
             is OppgaveUtført -> {
 
