@@ -113,7 +113,7 @@ class DataproduktModel(
                     }
                 }
 
-                oppdaterVarselBestilling(
+                opprettVarselBestilling(
                     notifikasjonId = hendelse.notifikasjonId,
                     produsentId = hendelse.produsentId,
                     merkelapp = hendelse.merkelapp,
@@ -137,9 +137,9 @@ class DataproduktModel(
                         lenke,
                         opprettet_tidspunkt,
                         frist,
-                        paaminnelse_tidspunkt_spesifikasjon_type,
-                        paaminnelse_tidspunkt_spesifikasjon_tid,
-                        paaminnelse_tidspunkt_utregnet_tid
+                        paaminnelse_bestilling_spesifikasjon_type,
+                        paaminnelse_bestilling_spesifikasjon_tid,
+                        paaminnelse_bestilling_utregnet_tid
                     )
                     values (?, 'OPPGAVE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     on conflict do nothing;
@@ -195,7 +195,18 @@ class DataproduktModel(
                     }
                 }
 
-                oppdaterVarselBestilling(
+                if (hendelse.påminnelse != null) {
+                    opprettVarselBestilling(
+                        notifikasjonId = hendelse.notifikasjonId,
+                        produsentId = hendelse.produsentId,
+                        merkelapp = hendelse.merkelapp,
+                        eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
+                        opprinnelse = "OppgaveOpprettet.påminnelse",
+                        statusUtsending = "UTSENDING_IKKE_AVGJORT",
+                    )
+                }
+
+                opprettVarselBestilling(
                     notifikasjonId = hendelse.notifikasjonId,
                     produsentId = hendelse.produsentId,
                     merkelapp = hendelse.merkelapp,
@@ -255,6 +266,29 @@ class DataproduktModel(
                 }
 
             }
+            is PåminnelseOpprettet -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                        update notifikasjon 
+                        set paaminnelse_tidspunkt = ?
+                        where notifikasjon_id = ?
+                    """
+                ) {
+                    instantAsText(hendelse.opprettetTidpunkt)
+                    uuid(hendelse.notifikasjonId)
+                }
+
+                database.nonTransactionalExecuteBatch(
+                    """
+                       update ekstern_varsel
+                       set status_utsending = 'UTSENDING_BESTILT'
+                       where varsel_id = ?
+                    """,
+                    hendelse.eksterneVarsler
+                ) {
+                    uuid(it.varselId)
+                }
+            }
             is BrukerKlikket -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -280,17 +314,14 @@ class DataproduktModel(
 
             }
             is HardDelete -> {
-                // noop
+
             }
 
             is SakOpprettet -> {
 
             }
             is NyStatusSak -> {
-                // noop
-            }
-            is PåminnelseOpprettet -> {
-                // noop
+
             }
 
         }
@@ -356,7 +387,7 @@ class DataproduktModel(
         }
     }
 
-    private suspend fun oppdaterVarselBestilling(
+    private suspend fun opprettVarselBestilling(
         notifikasjonId: UUID,
         produsentId: String,
         merkelapp: String,

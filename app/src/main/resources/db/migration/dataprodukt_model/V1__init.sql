@@ -53,23 +53,24 @@ create table hard_delete_bestilling
 
 create table notifikasjon
 (
-    notifikasjon_id        uuid not null primary key,
-    notifikasjon_type      text not null, -- enum: BESKJED / OPPGAVE
-    produsent_id           text not null,
-    merkelapp              text not null,
-    ekstern_id             text not null,
-    tekst                  text not null,
-    grupperingsid          text null,
-    lenke                  text not null,
-    opprettet_tidspunkt    text not null,
-    soft_deleted_tidspunkt text,
+    notifikasjon_id                           uuid not null primary key,
+    notifikasjon_type                         text not null, -- enum: BESKJED / OPPGAVE
+    produsent_id                              text not null,
+    merkelapp                                 text not null,
+    ekstern_id                                text not null,
+    tekst                                     text not null,
+    grupperingsid                             text null,
+    lenke                                     text not null,
+    opprettet_tidspunkt                       text not null,
+    soft_deleted_tidspunkt                    text,
 
-    utgaatt_tidspunkt      text,
-    utfoert_tidspunkt      text,
-    frist                  date null,
-    paaminnelse_tidspunkt_spesifikasjon_type text, -- enum: KONKRET / ETTER_OPPRETTELSE / FOER_FRIST
-    paaminnelse_tidspunkt_spesifikasjon_tid  text, -- dato eller period, avhengig av type
-    paaminnelse_tidspunkt_utregnet_tid text
+    utgaatt_tidspunkt                         text,
+    utfoert_tidspunkt                         text,
+    paaminnelse_tidspunkt                     text,
+    frist                                     date null,
+    paaminnelse_bestilling_spesifikasjon_type text,          -- enum: KONKRET / ETTER_OPPRETTELSE / FOER_FRIST
+    paaminnelse_bestilling_spesifikasjon_tid  text,          -- dato eller period, avhengig av type
+    paaminnelse_bestilling_utregnet_tid       text
 );
 
 create table mottaker_naermeste_leder
@@ -135,7 +136,7 @@ create table ekstern_varsel
     -- * OppgaveOpprettet.påminnelse
     -- * BeskjedOpprettet.eksterneVarsler
     -- * OppgaveOpprettet.eksterneVarsler
-    opprinnelse           text not null, -- enum: OPPRETTELSE, PAAMINNELSE
+    opprinnelse           text not null,
 
     -- UTSENDING_IKKE_AVGJORT
     -- +-> UTSENDING_BESTILT
