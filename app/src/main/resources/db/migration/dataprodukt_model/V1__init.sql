@@ -111,6 +111,7 @@ on mottaker_enkeltrettighet(
 
 create table notifikasjon_klikk
 (
+    hendelse_id           uuid not null primary key,
     notifikasjon_id       uuid not null,
     fnr                   text not null,
     klikket_paa_tidspunkt text not null

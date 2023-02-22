@@ -245,9 +245,9 @@ class DataproduktModel(
 
                 database.nonTransactionalExecuteUpdate(
                     """
-                       update notifikasjon 
-                       set utgaatt_tidspunkt = ?
-                       where notifikasjon_id = ?
+                        update notifikasjon 
+                        set utgaatt_tidspunkt = ?
+                        where notifikasjon_id = ?
                     """
                 ) {
                     instantAsText(metadata.timestamp)
@@ -256,6 +256,18 @@ class DataproduktModel(
 
             }
             is BrukerKlikket -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                        insert into notifikasjon_klikk (hendelse_id, notifikasjon_id, fnr, klikket_paa_tidspunkt) 
+                        values (?, ?, ?, ?)
+                        on conflict do nothing
+                    """
+                ) {
+                    uuid(hendelse.hendelseId)
+                    uuid(hendelse.notifikasjonId)
+                    text(hendelse.fnr)
+                    instantAsText(metadata.timestamp)
+                }
 
             }
             is EksterntVarselVellykket -> {
