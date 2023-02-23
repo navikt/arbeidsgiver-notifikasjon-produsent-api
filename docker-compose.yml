@@ -21,17 +21,16 @@ services:
       - BITNAMI_DEBUG=true
 
   postgres:
-    image: "postgres:12.10"
+    image: "postgres:12.11"
     ports:
       - "1337:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ./local-db-init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ${PWD}/local-db-init.sql:/docker-entrypoint-initdb.d/init.sql
 
-volumes:
-  database-data:
+
 
 networks:
   my-net:
