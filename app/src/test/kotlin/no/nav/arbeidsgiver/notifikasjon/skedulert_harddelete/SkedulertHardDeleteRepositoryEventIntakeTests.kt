@@ -526,6 +526,7 @@ private suspend fun SkedulertHardDeleteRepository.oppgaveUtført(
         produsentId = idsuffix,
         kildeAppNavn = idsuffix,
         hardDelete = hardDelete,
+        nyLenke = null,
     ),
     Instant.parse(mottattTidspunkt)
 )

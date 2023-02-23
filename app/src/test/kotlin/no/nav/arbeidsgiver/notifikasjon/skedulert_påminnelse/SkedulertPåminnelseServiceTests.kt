@@ -94,6 +94,7 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
                 produsentId = oppgaveOpprettet.virksomhetsnummer,
                 kildeAppNavn = oppgaveOpprettet.virksomhetsnummer,
                 hardDelete = null,
+                nyLenke = null,
             ),
             HendelseModel.OppgaveUtgått(
                 notifikasjonId = oppgaveOpprettet.aggregateId,
@@ -102,7 +103,8 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
                 produsentId = oppgaveOpprettet.virksomhetsnummer,
                 kildeAppNavn = oppgaveOpprettet.virksomhetsnummer,
                 hardDelete = null,
-                utgaattTidspunkt = OffsetDateTime.now()
+                utgaattTidspunkt = OffsetDateTime.now(),
+                nyLenke = null,
             )
         )) { hendelse ->
             hendelseProdusent.clear()

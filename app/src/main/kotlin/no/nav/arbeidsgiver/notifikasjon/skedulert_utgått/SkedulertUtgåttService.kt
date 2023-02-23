@@ -60,7 +60,8 @@ class SkedulertUtgåttService(
                 produsentId = utgått.produsentId,
                 kildeAppNavn = NaisEnvironment.clientId,
                 hardDelete = null,
-                utgaattTidspunkt = fristLocalDateTime.atOslo().toOffsetDateTime()
+                utgaattTidspunkt = fristLocalDateTime.atOslo().toOffsetDateTime(),
+                nyLenke = null,
             ))
         }
     }
