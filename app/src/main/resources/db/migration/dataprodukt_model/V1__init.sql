@@ -31,7 +31,7 @@ create table sak_status
 (
     status_id                      uuid not null primary key, -- aka. hendelse_id
     idempotens_key                 text not null,
-    sak_id                         uuid not null references sak (sak_id),
+    sak_id                         uuid not null references sak (sak_id) on delete cascade,
     status                         text not null,
     overstyr_statustekst_med       text null,
     oppgitt_tidspunkt              text null,
@@ -43,7 +43,7 @@ create table sak_status
 
 create table hard_delete_bestilling
 (
-    aggregat_id uuid not null primary key,
+    aggregat_id uuid not null primary key references aggregat_hendelse(hendelse_id) on delete cascade,
     bestilling_type text not null, -- enum: OPPRETTELSE, STATUSENDRING, MANUELT
     bestilling_hendelsesid uuid not null,
     strategi text null, --- enum: FORLENG, OVERSKRIV
@@ -75,8 +75,8 @@ create table notifikasjon
 
 create table mottaker_naermeste_leder
 (
-    sak_id          uuid,
-    notifikasjon_id uuid,
+    sak_id          uuid references sak(sak_id) on delete cascade,
+    notifikasjon_id uuid references notifikasjon(notifikasjon_id) on delete cascade,
     virksomhetsnummer text not null,
     fnr_leder    text not null,
     fnr_ansatt text not null
@@ -93,8 +93,8 @@ on mottaker_naermeste_leder(
 
 create table mottaker_enkeltrettighet
 (
-    sak_id          uuid,
-    notifikasjon_id uuid,
+    sak_id          uuid references sak(sak_id) on delete cascade,
+    notifikasjon_id uuid references notifikasjon(notifikasjon_id) on delete cascade,
     virksomhetsnummer text not null,
     service_code    text not null,
     service_edition text not null
@@ -113,7 +113,7 @@ on mottaker_enkeltrettighet(
 create table notifikasjon_klikk
 (
     hendelse_id           uuid not null primary key,
-    notifikasjon_id       uuid not null,
+    notifikasjon_id       uuid not null references notifikasjon(notifikasjon_id) on delete cascade,
     fnr                   text not null,
     klikket_paa_tidspunkt text not null
 );
@@ -122,7 +122,7 @@ create table ekstern_varsel
 (
     varsel_id          uuid not null primary key,
     varsel_type        text not null, -- enum: EPOST / SMS
-    notifikasjon_id    uuid not null,
+    notifikasjon_id    uuid not null references notifikasjon(notifikasjon_id) on delete cascade,
     produsent_id       text not null,
     merkelapp          text,
     sendevindu         text not null,
@@ -158,10 +158,3 @@ create table ekstern_varsel_mottaker_epost
     varsel_id uuid not null primary key references ekstern_varsel (varsel_id) on delete cascade,
     epost     text not null
 );
-
--- create table ekstern_varsel_mottaker_enkeltrettighet
--- (
---     varsel_id uuid not null primary key references ekstern_varsel(varsel_id) on delete cascade,
---     service_code text not null,
---     service_edition text not null
--- );

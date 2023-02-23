@@ -229,6 +229,8 @@ class DataproduktModel(
                     }
                 }
 
+                markerIngenUtsendingPåPåminnelseEksterneVarsler(hendelse.notifikasjonId)
+
                 database.nonTransactionalExecuteUpdate(
                     """
                        update notifikasjon 
@@ -241,6 +243,8 @@ class DataproduktModel(
                 }
             }
             is OppgaveUtgått -> {
+                markerIngenUtsendingPåPåminnelseEksterneVarsler(hendelse.notifikasjonId)
+
                 with(hendelse) {
                     if (hardDelete != null) {
                         storeHardDelete(
@@ -264,8 +268,8 @@ class DataproduktModel(
                     instantAsText(metadata.timestamp)
                     uuid(hendelse.notifikasjonId)
                 }
-
             }
+
             is PåminnelseOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -278,17 +282,9 @@ class DataproduktModel(
                     uuid(hendelse.notifikasjonId)
                 }
 
-                database.nonTransactionalExecuteBatch(
-                    """
-                       update ekstern_varsel
-                       set status_utsending = 'UTSENDING_BESTILT'
-                       where varsel_id = ?
-                    """,
-                    hendelse.eksterneVarsler
-                ) {
-                    uuid(it.varselId)
-                }
+                updateEksternVarsel(hendelse.eksterneVarsler.map { it.varselId }, "UTSENDING_BESTILT")
             }
+
             is BrukerKlikket -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -305,16 +301,50 @@ class DataproduktModel(
 
             }
             is EksterntVarselVellykket -> {
-
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET")
             }
             is EksterntVarselFeilet -> {
-
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode)
             }
+
             is SoftDelete -> {
-
+                database.nonTransactionalExecuteUpdate("""
+                    update notifikasjon
+                    set soft_deleted_tidspunkt = ?
+                    where notifikasjon_id = ?
+                """) {
+                    instantAsText(metadata.timestamp)
+                    uuid(hendelse.aggregateId)
+                }
+                database.nonTransactionalExecuteUpdate("""
+                    update sak 
+                    set soft_deleted_tidspunkt = ?
+                    where sak_id = ?
+                """) {
+                    instantAsText(metadata.timestamp)
+                    uuid(hendelse.aggregateId)
+                }
             }
-            is HardDelete -> {
 
+            is HardDelete -> {
+                database.nonTransactionalExecuteUpdate("""
+                    delete from notifikasjon
+                    where notifikasjon_id = ?
+                """) {
+                    uuid(hendelse.aggregateId)
+                }
+                database.nonTransactionalExecuteUpdate("""
+                    delete from sak 
+                    where sak_id = ?
+                """) {
+                    uuid(hendelse.aggregateId)
+                }
+                database.nonTransactionalExecuteUpdate("""
+                    delete from aggregat_hendelse
+                    where aggregat_id = ?
+                """) {
+                    uuid(hendelse.aggregateId)
+                }
             }
 
             is SakOpprettet -> {
@@ -326,6 +356,37 @@ class DataproduktModel(
 
         }
     }
+
+    private suspend fun markerIngenUtsendingPåPåminnelseEksterneVarsler(notifikasjonId: UUID) {
+        database.nonTransactionalExecuteUpdate(
+            """
+                        update ekstern_varsel
+                        set status_utsending = 'INGEN_UTSENDING'
+                        where
+                            notifikasjon_id = ?
+                            and opprinnelse = 'OppgaveOpprettet.påminnelse'
+                            and status_utsending = 'UTSENDING_IKKE_AVGJORT'
+                    """
+        ) {
+            uuid(notifikasjonId)
+        }
+    }
+
+    private suspend fun updateEksternVarsel(eksterneVarselIder: List<UUID>, statusUtsending: String, feilkode: String? = null) =
+        database.nonTransactionalExecuteBatch(
+            """
+                           update ekstern_varsel
+                           set 
+                            status_utsending = ?,
+                            feilkode = ?
+                           where varsel_id = ?
+                        """,
+            eksterneVarselIder
+        ) {
+            text(statusUtsending)
+            nullableText(feilkode)
+            uuid(it)
+        }
 
     private suspend fun storeHardDelete(
         aggregatId: UUID,
