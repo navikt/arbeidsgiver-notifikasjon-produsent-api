@@ -54,8 +54,6 @@ class QuerySakerFristTests : DescribeSpec({
                         altinnMottakerMedTilgang.serviceEdition
                     )
                 ),
-                listOf(),
-                listOf(),
             )
         ),
         brukerRepository = brukerRepository,
@@ -316,6 +314,7 @@ private suspend fun BrukerRepository.opprettSak(
                 produsentId = "1",
                 kildeAppNavn = "1",
                 hardDelete = null,
+                nyLenke = null,
             )
 
             BrukerModel.Oppgave.Tilstand.UTGAATT -> HendelseModel.OppgaveUtgått(
@@ -325,7 +324,8 @@ private suspend fun BrukerRepository.opprettSak(
                 produsentId = "1",
                 kildeAppNavn = "1",
                 hardDelete = null,
-                utgaattTidspunkt = OffsetDateTime.now()
+                utgaattTidspunkt = OffsetDateTime.now(),
+                nyLenke = null,
             )
         }?.also { oppdaterModellEtterHendelse(it) }
     }

@@ -1,12 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
@@ -63,8 +60,6 @@ interface BrukerRepository {
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
     suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
     suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String>
-
-    val altinnRolle: AltinnRolleRepository
 }
 
 class BrukerRepositoryImpl(
@@ -72,7 +67,6 @@ class BrukerRepositoryImpl(
 ) : BrukerRepository {
     private val log = logger()
     private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
-    override val altinnRolle: AltinnRolleRepository = AltinnRolleRepositoryImpl(database)
 
     override suspend fun hentNotifikasjoner(
         fnr: String,
@@ -85,19 +79,6 @@ class BrukerRepositoryImpl(
                 virksomhetsnummer = it.virksomhet
             )
         }
-        val tilgangerAltinnReporteeMottaker = tilganger.reportee.map {
-            AltinnReporteeMottaker(
-                virksomhetsnummer = it.virksomhet,
-                fnr = it.fnr
-            )
-        }
-        val tilgangerAltinnRolleMottaker = tilganger.rolle.map {
-            AltinnRolleMottaker(
-                virksomhetsnummer = it.virksomhet,
-                roleDefinitionId = it.roleDefinitionId,
-                roleDefinitionCode = it.roleDefinitionCode,
-            )
-        }
 
         database.nonTransactionalExecuteQuery(
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
@@ -106,14 +87,6 @@ class BrukerRepositoryImpl(
                 mine_altinntilganger as (
                     select * from json_to_recordset(?::json) 
                     as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
-                ),
-                mine_altinnreporteetilganger as (
-                    select * from json_to_recordset(?::json) 
-                    as (virksomhetsnummer text, "fnr" text)
-                ),
-                mine_altinnrolletilganger as (
-                    select * from json_to_recordset(?::json) 
-                    as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
                 ),
                 mine_altinn_notifikasjoner as (
                     select er.notifikasjon_id
@@ -125,25 +98,6 @@ class BrukerRepositoryImpl(
                     where
                         er.notifikasjon_id is not null
                 ),
-                mine_altinn_reportee_notifikasjoner as (
-                    select rep.notifikasjon_id
-                    from mottaker_altinn_reportee rep
-                    join mine_altinnreporteetilganger at on 
-                        rep.virksomhet = at.virksomhetsnummer and
-                        rep.fnr = at."fnr"
-                    where
-                        rep.notifikasjon_id is not null
-                ),
-                mine_altinn_rolle_notifikasjoner as (
-                    select rol.notifikasjon_id
-                    from mottaker_altinn_rolle rol
-                    join mine_altinnrolletilganger at on 
-                        rol.virksomhet = at.virksomhetsnummer and
-                        rol.role_definition_id = at."roleDefinitionId" and
-                        rol.role_definition_code = at."roleDefinitionCode"
-                    where
-                        rol.notifikasjon_id is not null
-                ),
                 mine_digisyfo_notifikasjoner as (
                     select notifikasjon_id 
                     from mottaker_digisyfo_for_fnr
@@ -153,10 +107,6 @@ class BrukerRepositoryImpl(
                     (select * from mine_digisyfo_notifikasjoner)
                     union 
                     (select * from mine_altinn_notifikasjoner)
-                    union 
-                    (select * from mine_altinn_reportee_notifikasjoner)
-                    union 
-                    (select * from mine_altinn_rolle_notifikasjoner)
                 )
             select 
                 n.*, 
@@ -172,8 +122,6 @@ class BrukerRepositoryImpl(
             """,
             {
                 jsonb(tilgangerAltinnMottaker)
-                jsonb(tilgangerAltinnReporteeMottaker)
-                jsonb(tilgangerAltinnRolleMottaker)
                 text(fnr)
                 text(fnr)
             }
@@ -231,19 +179,6 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer = it.virksomhet
                 )
             }.filter {  virksomhetsnummer.contains(it.virksomhetsnummer) }
-            val tilgangerAltinnReporteeMottaker = tilganger.reportee.map {
-                AltinnReporteeMottaker(
-                    virksomhetsnummer = it.virksomhet,
-                    fnr = it.fnr
-                )
-            }.filter { virksomhetsnummer.contains(it.virksomhetsnummer) }
-            val tilgangerAltinnRolleMottaker = tilganger.rolle.map {
-                AltinnRolleMottaker(
-                    virksomhetsnummer = it.virksomhet,
-                    roleDefinitionId = it.roleDefinitionId,
-                    roleDefinitionCode = it.roleDefinitionCode,
-                )
-            }.filter { virksomhetsnummer.contains(it.virksomhetsnummer) }
 
             var tekstsoekElementer = (tekstsoek ?: "")
                 .trim()
@@ -281,14 +216,6 @@ class BrukerRepositoryImpl(
                             select * from json_to_recordset(?::json) 
                             as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
                         ),
-                        mine_altinnreporteetilganger as (
-                            select * from json_to_recordset(?::json) 
-                            as (virksomhetsnummer text, "fnr" text)
-                        ),
-                        mine_altinnrolletilganger as (
-                            select * from json_to_recordset(?::json) 
-                            as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
-                        ),
                         mine_altinn_saker as (
                             select er.sak_id
                             from mottaker_altinn_enkeltrettighet er
@@ -299,25 +226,6 @@ class BrukerRepositoryImpl(
                             where
                                 er.sak_id is not null
                         ),
-                        mine_altinn_reportee_saker as (
-                            select rep.sak_id
-                            from mottaker_altinn_reportee rep
-                            join mine_altinnreporteetilganger at on 
-                                rep.virksomhet = at.virksomhetsnummer and
-                                rep.fnr = at."fnr"
-                            where
-                                rep.sak_id is not null
-                        ),
-                        mine_altinn_rolle_saker as (
-                            select rol.sak_id
-                            from mottaker_altinn_rolle rol
-                            join mine_altinnrolletilganger at on 
-                                rol.virksomhet = at.virksomhetsnummer and
-                                rol.role_definition_id = at."roleDefinitionId" and
-                                rol.role_definition_code = at."roleDefinitionCode"
-                            where
-                                rol.sak_id is not null
-                        ),
                         mine_digisyfo_saker as (
                             select sak_id
                             from mottaker_digisyfo_for_fnr
@@ -327,10 +235,6 @@ class BrukerRepositoryImpl(
                             (select * from mine_digisyfo_saker)
                             union 
                             (select * from mine_altinn_saker)
-                            union 
-                            (select * from mine_altinn_reportee_saker)
-                            union 
-                            (select * from mine_altinn_rolle_saker)
                         ),
                         mine_saker as (
                             select *
@@ -374,25 +278,6 @@ class BrukerRepositoryImpl(
                             where
                                 er.notifikasjon_id is not null
                         ),
-                        mine_altinn_reportee_notifikasjoner as (
-                            select rep.notifikasjon_id
-                            from mottaker_altinn_reportee rep
-                            join mine_altinnreporteetilganger at on 
-                                rep.virksomhet = at.virksomhetsnummer and
-                                rep.fnr = at."fnr"
-                            where
-                                rep.notifikasjon_id is not null
-                        ),
-                        mine_altinn_rolle_notifikasjoner as (
-                            select rol.notifikasjon_id
-                            from mottaker_altinn_rolle rol
-                            join mine_altinnrolletilganger at on 
-                                rol.virksomhet = at.virksomhetsnummer and
-                                rol.role_definition_id = at."roleDefinitionId" and
-                                rol.role_definition_code = at."roleDefinitionCode"
-                            where
-                                rol.notifikasjon_id is not null
-                        ),
                         mine_digisyfo_notifikasjoner as (
                             select notifikasjon_id 
                             from mottaker_digisyfo_for_fnr
@@ -432,10 +317,6 @@ class BrukerRepositoryImpl(
                                             select * from mine_digisyfo_notifikasjoner
                                                 union
                                             select * from mine_altinn_notifikasjoner
-                                                union
-                                            select * from mine_altinn_reportee_notifikasjoner
-                                                union
-                                            select * from mine_altinn_rolle_notifikasjoner
                                         )
                                     order by n.frist nulls last
                                 ) as oppgaver
@@ -468,8 +349,6 @@ class BrukerRepositoryImpl(
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
-                    jsonb(tilgangerAltinnReporteeMottaker)
-                    jsonb(tilgangerAltinnRolleMottaker)
                     text(fnr)
                     stringList(virksomhetsnummer)
                     tekstsoekElementer.forEach { text(it) }
@@ -539,10 +418,13 @@ class BrukerRepositoryImpl(
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
-            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
+            SET 
+            tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}',
+            lenke = coalesce(?, lenke)
             WHERE id = ?
         """
         ) {
+            nullableText(utførtHendelse.nyLenke)
             uuid(utførtHendelse.notifikasjonId)
         }
     }
@@ -552,11 +434,13 @@ class BrukerRepositoryImpl(
             """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}',
-                utgaatt_tidspunkt = ?
+                utgaatt_tidspunkt = ?,
+                lenke = coalesce(?, lenke)
             WHERE id = ?
         """
         ) {
             timestamp_with_timezone(utgåttHendelse.utgaattTidspunkt)
+            nullableText(utgåttHendelse.nyLenke)
             uuid(utgåttHendelse.notifikasjonId)
         }
     }
@@ -742,15 +626,13 @@ class BrukerRepositoryImpl(
                 sakId = sakId,
                 mottaker = mottaker
             )
-            is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(
-                notifikasjonId = notifikasjonId,
-                sakId = sakId,
-                mottaker = mottaker
+            is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
+                prod = { throw java.lang.RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
+                other = {  },
             )
-            is AltinnRolleMottaker -> storeAltinnRolleMottaker(
-                notifikasjonId = notifikasjonId,
-                sakId = sakId,
-                mottaker = mottaker
+            is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
+                prod = { throw java.lang.RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
+                other = {  },
             )
         }
     }
@@ -795,48 +677,6 @@ class BrukerRepositoryImpl(
             text(mottaker.serviceEdition)
         }
     }
-
-    private fun Transaction.storeAltinnReporteeMottaker(
-        notifikasjonId: UUID?,
-        sakId: UUID?,
-        mottaker: AltinnReporteeMottaker
-    ) {
-        executeUpdate(
-            """
-            insert into mottaker_altinn_reportee
-                (notifikasjon_id, sak_id, virksomhet, fnr)
-            values (?, ?, ?, ?)
-            on conflict do nothing
-        """
-        ) {
-            nullableUuid(notifikasjonId)
-            nullableUuid(sakId)
-            text(mottaker.virksomhetsnummer)
-            text(mottaker.fnr)
-        }
-    }
-
-    private fun Transaction.storeAltinnRolleMottaker(
-        notifikasjonId: UUID?,
-        sakId: UUID?,
-        mottaker: AltinnRolleMottaker
-    ) {
-        executeUpdate(
-            """
-            insert into mottaker_altinn_rolle
-                (notifikasjon_id, sak_id, virksomhet, role_definition_code, role_definition_id)
-            values (?, ?, ?, ?, ?)
-            on conflict do nothing
-        """
-        ) {
-            nullableUuid(notifikasjonId)
-            nullableUuid(sakId)
-            text(mottaker.virksomhetsnummer)
-            text(mottaker.roleDefinitionCode)
-            text(mottaker.roleDefinitionId)
-        }
-    }
-
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
         database.transaction {
@@ -919,19 +759,6 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer = it.virksomhet
                 )
             }
-            val tilgangerAltinnReporteeMottaker = tilganger.reportee.map {
-                AltinnReporteeMottaker(
-                    virksomhetsnummer = it.virksomhet,
-                    fnr = it.fnr
-                )
-            }
-            val tilgangerAltinnRolleMottaker = tilganger.rolle.map {
-                AltinnRolleMottaker(
-                    virksomhetsnummer = it.virksomhet,
-                    roleDefinitionId = it.roleDefinitionId,
-                    roleDefinitionCode = it.roleDefinitionCode,
-                )
-            }
 
             val rows = database.nonTransactionalExecuteQuery(
                 /*  quotes are necessary for fields from json, otherwise they are lower-cased */
@@ -940,14 +767,6 @@ class BrukerRepositoryImpl(
                         mine_altinntilganger as (
                             select * from json_to_recordset(?::json) 
                             as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
-                        ),
-                        mine_altinnreporteetilganger as (
-                            select * from json_to_recordset(?::json) 
-                            as (virksomhetsnummer text, "fnr" text)
-                        ),
-                        mine_altinnrolletilganger as (
-                            select * from json_to_recordset(?::json) 
-                            as (virksomhetsnummer text, "roleDefinitionId" text, "roleDefinitionCode" text)
                         ),
                         mine_altinn_saker as (
                             select er.sak_id
@@ -959,25 +778,6 @@ class BrukerRepositoryImpl(
                             where
                                 er.sak_id is not null
                         ),
-                        mine_altinn_reportee_saker as (
-                            select rep.sak_id
-                            from mottaker_altinn_reportee rep
-                            join mine_altinnreporteetilganger at on 
-                                rep.virksomhet = at.virksomhetsnummer and
-                                rep.fnr = at."fnr"
-                            where
-                                rep.sak_id is not null
-                        ),
-                        mine_altinn_rolle_saker as (
-                            select rol.sak_id
-                            from mottaker_altinn_rolle rol
-                            join mine_altinnrolletilganger at on 
-                                rol.virksomhet = at.virksomhetsnummer and
-                                rol.role_definition_id = at."roleDefinitionId" and
-                                rol.role_definition_code = at."roleDefinitionCode"
-                            where
-                                rol.sak_id is not null
-                        ),
                         mine_digisyfo_saker as (
                             select sak_id
                             from mottaker_digisyfo_for_fnr
@@ -987,10 +787,6 @@ class BrukerRepositoryImpl(
                             (select * from mine_digisyfo_saker)
                             union 
                             (select * from mine_altinn_saker)
-                            union 
-                            (select * from mine_altinn_reportee_saker)
-                            union 
-                            (select * from mine_altinn_rolle_saker)
                         )
                         select distinct s.merkelapp as merkelapp 
                         from mine_sak_ider as ms
@@ -998,8 +794,6 @@ class BrukerRepositoryImpl(
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
-                    jsonb(tilgangerAltinnReporteeMottaker)
-                    jsonb(tilgangerAltinnRolleMottaker)
                     text(fnr)
                 }
             ) {

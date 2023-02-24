@@ -30,6 +30,7 @@ internal class MutationOppgaveUtgaatt(
                     context = env.notifikasjonContext(),
                     id = env.getTypedArgument("id"),
                     hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
+                    nyLenke = env.getTypedArgumentOrNull("nyLenke"),
                 )
             }
             coDataFetcher("oppgaveUtgaattByEksternId") { env ->
@@ -44,7 +45,8 @@ internal class MutationOppgaveUtgaatt(
             context = env.notifikasjonContext(),
             eksternId = env.getTypedArgument("eksternId"),
             merkelapp = env.getTypedArgument("merkelapp"),
-            hardDelete = env.getTypedArgumentOrNull("hardDelete")
+            hardDelete = env.getTypedArgumentOrNull("hardDelete"),
+            nyLenke = env.getTypedArgumentOrNull("nyLenke"),
         )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -59,9 +61,10 @@ internal class MutationOppgaveUtgaatt(
         context: ProdusentAPI.Context,
         id: UUID,
         hardDelete: HardDeleteUpdateInput?,
+        nyLenke: String?,
     ): OppgaveUtgaattResultat {
         val notifikasjon = hentNotifikasjon(produsentRepository, id) { error -> return error }
-        return oppgaveUtgått(context, notifikasjon, hardDelete)
+        return oppgaveUtgått(context, notifikasjon, hardDelete, nyLenke)
     }
 
     private suspend fun oppgaveUtgått(
@@ -69,15 +72,17 @@ internal class MutationOppgaveUtgaatt(
         eksternId: String,
         merkelapp: String,
         hardDelete: HardDeleteUpdateInput?,
+        nyLenke: String?,
     ): OppgaveUtgaattResultat {
         val notifikasjon = hentNotifikasjon(produsentRepository, eksternId, merkelapp) { error -> return error }
-        return oppgaveUtgått(context, notifikasjon, hardDelete)
+        return oppgaveUtgått(context, notifikasjon, hardDelete, nyLenke)
     }
 
     private suspend fun oppgaveUtgått(
         context: ProdusentAPI.Context,
         notifikasjon: ProdusentModel.Notifikasjon,
         hardDelete: HardDeleteUpdateInput?,
+        nyLenke: String?,
     ): OppgaveUtgaattResultat {
 
         if (notifikasjon !is ProdusentModel.Oppgave) {
@@ -100,6 +105,7 @@ internal class MutationOppgaveUtgaatt(
             kildeAppNavn = context.appName,
             hardDelete = hardDelete?.tilDomene(),
             utgaattTidspunkt = OffsetDateTime.now(),
+            nyLenke = nyLenke,
         )
 
         hendelseDispatcher.send(utgåttHendelse)

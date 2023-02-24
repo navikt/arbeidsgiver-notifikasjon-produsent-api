@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.util
 
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 
 open class AltinnStub(
@@ -22,7 +21,6 @@ open class AltinnStub(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>,
-        roller: Iterable<AltinnRolle>,
     ): Tilganger =
         hentAlleTilgangerImpl(fnr, selvbetjeningsToken)
 }

@@ -1,0 +1,15 @@
+### https://altinn.github.io/docs/referanse/openapi-swagger/metadata-api/metadata/#/Services/GetMetadata
+
+https://altinn.no/api/metadata?language=1033&%24top=2000&%24filter=ServiceOwnerCode%20eq%20%27NAV%27
+Accept: application/json
+
+###
+
+https://altinn.no/api/metadata?language=1033&%24top=2000&%24filter=ServiceCode%20eq%20%275902%27
+Accept: application/json
+
+### https://altinn.github.io/docs/referanse/openapi-swagger/metadata-api/metadata/#/Services/GetMetadataLookup
+
+https://altinn.no//api/metadata/lookup/5902/1
+Accept: application/json
+

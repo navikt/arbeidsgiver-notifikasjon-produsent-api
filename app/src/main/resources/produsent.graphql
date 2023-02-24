@@ -129,8 +129,6 @@ type Beskjed {
 
 union Mottaker =
     | AltinnMottaker
-    | AltinnReporteeMottaker
-    | AltinnRolleMottaker
     | NaermesteLederMottaker
 
 type AltinnMottaker {
@@ -139,20 +137,10 @@ type AltinnMottaker {
     virksomhetsnummer: String!
 }
 
-type AltinnReporteeMottaker {
-    fnr: String!
-    virksomhetsnummer: String!
-}
-
 type NaermesteLederMottaker {
     naermesteLederFnr: String!
     ansattFnr: String!
     virksomhetsnummer: String!
-}
-
-type AltinnRolleMottaker {
-    roleDefinitionCode: String!
-    roleDefinitionId: String!
 }
 
 type OppgaveData {
@@ -426,6 +414,14 @@ type Mutation {
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
         hardDelete: HardDeleteUpdateInput
+
+        """
+        Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
+        opprettelse av oppgave. F.eks. for å peke på en kvitterings-side.
+
+        Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
+        """
+        nyLenke: String = null
     ): OppgaveUtfoertResultat!
 
     """
@@ -469,6 +465,14 @@ type Mutation {
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
         hardDelete: HardDeleteUpdateInput
+
+        """
+        Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
+        opprettelse av oppgave. F.eks. for å peke på en kvitterings-side.
+
+        Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
+        """
+        nyLenke: String = null
     ): OppgaveUtfoertResultat!
 
     """
@@ -484,6 +488,14 @@ type Mutation {
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
         hardDelete: HardDeleteUpdateInput
+
+        """
+        Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
+        opprettelse av oppgave. F.eks. for å peke på en kvitterings-side.
+
+        Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
+        """
+        nyLenke: String = null
     ): OppgaveUtgaattResultat!
 
 
@@ -505,6 +517,14 @@ type Mutation {
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
         hardDelete: HardDeleteUpdateInput
+
+        """
+        Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
+        opprettelse av oppgave. F.eks. for å peke på en kvitterings-side.
+
+        Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
+        """
+        nyLenke: String = null
     ): OppgaveUtgaattResultat!
 
 
@@ -981,8 +1001,6 @@ Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer
 input MottakerInput @ExactlyOneFieldGiven {
     altinn: AltinnMottakerInput
     naermesteLeder: NaermesteLederMottakerInput
-    altinnRolle:AltinnRolleMottakerInput
-    altinnReportee: AltinnReporteeMottakerInput
 }
 
 """
@@ -1008,31 +1026,6 @@ Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
 input NaermesteLederMottakerInput {
     naermesteLederFnr: String!
     ansattFnr: String!
-}
-
-"""
-Spesifiser mottaker ved hjelp av fødselsnummer.
-Flere skjemaer krever kun en "tilknytning" til et orgnr for å sende inn/se status.
-Tilknytningen er da at man er "reportee" for virksomheten, uten å spesifisere noen enkeltrettighet.
-
-Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen. Dersom personen ikke lenger er tilknyttet
-virksomheten så vil de hverken se historiske eller nye notifikasjoner knyttet til virksomheten.
-"""
-input AltinnReporteeMottakerInput {
-    fnr: String!
-}
-
-"""
-Spesifiser mottaker ved hjelp av rollekode.  Enhver som har den gitte rollen vil kunne se notifikasjonen.
-
-Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
-bruker mister en Altinn-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn-tilgangen.
-Og motsatt, hvis en bruker får en Altinn-rolle, vil de se tidligere notifikasjoner for den Altinn-tilgangen.
-
-Tilgangssjekken utføres hver gang en bruker ønsker se notifikasjonen.
-"""
-input AltinnRolleMottakerInput {
-    roleDefinitionCode: String!
 }
 
 

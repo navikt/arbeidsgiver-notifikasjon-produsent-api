@@ -1,8 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AppName
@@ -61,40 +59,16 @@ object NærmesteLederDefinisjon : MottakerDefinisjon() {
         }
 }
 
-object AltinnReporteeDefinisjon : MottakerDefinisjon() {
-    override fun akseptererMottaker(mottaker: Mottaker): Boolean =
-        when (mottaker) {
-            is AltinnReporteeMottaker -> true
-            else -> false
-        }
-}
-
-data class AltinnRolleDefinisjon(val roleCode: String) : MottakerDefinisjon() {
-    override fun akseptererMottaker(mottaker: Mottaker): Boolean =
-        when (mottaker) {
-            is AltinnRolleMottaker ->
-                mottaker.roleDefinitionCode == roleCode
-            else -> false
-        }
-}
-
-
 object MottakerRegister {
     val servicecodeDefinisjoner: List<ServicecodeDefinisjon>
         get() {
             return MOTTAKER_REGISTER.filterIsInstance<ServicecodeDefinisjon>()
-        }
-    val rolleDefinisjoner: List<AltinnRolleDefinisjon>
-        get() {
-            return MOTTAKER_REGISTER.filterIsInstance<AltinnRolleDefinisjon>()
         }
 
     fun erDefinert(mottakerDefinisjon: MottakerDefinisjon): Boolean =
         when (mottakerDefinisjon) {
             is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
             is NærmesteLederDefinisjon -> true
-            is AltinnReporteeDefinisjon -> true
-            is AltinnRolleDefinisjon -> true
         }
 }
 

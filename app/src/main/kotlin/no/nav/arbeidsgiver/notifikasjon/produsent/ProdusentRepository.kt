@@ -1,9 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
@@ -17,12 +16,11 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepository
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import java.lang.RuntimeException
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
@@ -39,16 +37,12 @@ interface ProdusentRepository {
     ): List<ProdusentModel.Notifikasjon>
     suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak?
     suspend fun hentSak(id: UUID): ProdusentModel.Sak?
-
-    val altinnRolle : AltinnRolleRepository
 }
 
 class ProdusentRepositoryImpl(
     private val database: Database,
 ) : ProdusentRepository {
     val log = logger()
-
-    override val altinnRolle: AltinnRolleRepository = AltinnRolleRepositoryImpl(database)
 
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
@@ -171,7 +165,7 @@ class ProdusentRepositoryImpl(
                 valgt_notifikasjon.*, 
                 coalesce(ev.eksterne_varsler_json, '[]'::json) as eksterne_varsler,
                 coalesce(pev.paaminnelse_eksterne_varsler_json, '[]'::json) as paaminnelse_eksterne_varsler,
-                (coalesce(ma.mottakere::jsonb, '[]'::jsonb) || coalesce(mar.mottakere::jsonb, '[]'::jsonb) || coalesce(md.mottakere::jsonb, '[]'::jsonb) || coalesce(maro.mottakere::jsonb, '[]'::jsonb)) as mottakere
+                (coalesce(ma.mottakere::jsonb, '[]'::jsonb)  || coalesce(md.mottakere::jsonb, '[]'::jsonb)) as mottakere
             from valgt_notifikasjon
             left join eksterne_varsler_json ev 
                 on ev.notifikasjon_id = valgt_notifikasjon.id
@@ -179,12 +173,8 @@ class ProdusentRepositoryImpl(
                 on pev.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_altinn_enkeltrettighet_json ma
                 on ma.notifikasjon_id = valgt_notifikasjon.id
-            left join mottakere_altinn_reportee_json mar
-                on mar.notifikasjon_id = valgt_notifikasjon.id
             left join mottakere_digisyfo_json md
                 on md.notifikasjon_id = valgt_notifikasjon.id
-            left join mottaker_altinn_rolle_json maro
-                on maro.notifikasjon_id = valgt_notifikasjon.id
             """,
             setup
         ) {
@@ -539,8 +529,14 @@ class ProdusentRepositoryImpl(
         @Suppress("UNUSED_VARIABLE") val ignored = when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
-            is AltinnReporteeMottaker -> storeAltinnReporteeMottaker(notifikasjonId, mottaker)
-            is AltinnRolleMottaker -> storeAltinnRolleMottaker(notifikasjonId, mottaker)
+            is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
+                prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
+                other = {  },
+            )
+            is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
+                prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
+                other = {  },
+            )
         }
     }
 
@@ -572,37 +568,6 @@ class ProdusentRepositoryImpl(
             text(mottaker.virksomhetsnummer)
             text(mottaker.serviceCode)
             text(mottaker.serviceEdition)
-        }
-    }
-
-    private fun Transaction.storeAltinnReporteeMottaker(notifikasjonId: UUID, mottaker: AltinnReporteeMottaker) {
-        executeUpdate(
-            """
-            insert into mottaker_altinn_reportee
-                (notifikasjon_id, virksomhet, fnr)
-            values (?, ?, ?)
-            on conflict do nothing
-        """
-        ) {
-            uuid(notifikasjonId)
-            text(mottaker.virksomhetsnummer)
-            text(mottaker.fnr)
-        }
-    }
-
-    private fun Transaction.storeAltinnRolleMottaker(notifikasjonId: UUID, mottaker: AltinnRolleMottaker) {
-        executeUpdate(
-            """
-            insert into mottaker_altinn_rolle
-                (notifikasjon_id, virksomhet, role_definition_code, role_definition_id)
-            values (?, ?, ?, ?)
-            on conflict do nothing
-        """
-        ) {
-            uuid(notifikasjonId)
-            text(mottaker.virksomhetsnummer)
-            text(mottaker.roleDefinitionCode)
-            text(mottaker.roleDefinitionId)
         }
     }
 }

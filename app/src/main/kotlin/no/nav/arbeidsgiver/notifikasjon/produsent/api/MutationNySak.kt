@@ -3,18 +3,18 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import java.lang.RuntimeException
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -63,7 +63,6 @@ internal class MutationNySak(
                 id = sakId,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
-                finnRolleId = produsentRepository.altinnRolle::hentAltinnrolle,
                 mottattTidspunkt = mottattTidspunkt,
             )
         } catch (e: UkjentRolleException) {
@@ -127,11 +126,10 @@ internal class MutationNySak(
         val status: SaksStatusInput,
         val hardDelete: FutureTemporalInput?,
     ) {
-        suspend fun somSakOpprettetHendelse(
+        fun somSakOpprettetHendelse(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
-            finnRolleId: suspend (String) -> AltinnRolle?,
             mottattTidspunkt: OffsetDateTime,
         ) = SakOpprettet(
             hendelseId = id,
@@ -141,7 +139,7 @@ internal class MutationNySak(
             sakId = id,
             grupperingsid = grupperingsid,
             merkelapp = merkelapp,
-            mottakere = mottakere.map { it.tilDomene(virksomhetsnummer, finnRolleId) },
+        mottakere = mottakere.map { it.tilDomene(virksomhetsnummer) },
             tittel = tittel,
             lenke = lenke,
             oppgittTidspunkt = status.tidspunkt,
@@ -200,13 +198,17 @@ private fun MottakerInput.sammeSom(mottaker: Mottaker): Boolean {
         is AltinnMottaker ->
             mottaker.serviceCode == this.altinn?.serviceCode &&
                     mottaker.serviceEdition == this.altinn.serviceEdition
-        is AltinnRolleMottaker ->
-            mottaker.roleDefinitionCode == this.altinnRolle?.roleDefinitionCode
-        is AltinnReporteeMottaker ->
-            mottaker.fnr == this.altinnReportee?.fnr
         is NærmesteLederMottaker ->
             mottaker.ansattFnr == this.naermesteLeder?.ansattFnr &&
                     mottaker.naermesteLederFnr == this.naermesteLeder.naermesteLederFnr
+        is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
+            prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
+            other = { false },
+        )
+        is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
+            prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
+            other = { false },
+        )
     }
 }
 

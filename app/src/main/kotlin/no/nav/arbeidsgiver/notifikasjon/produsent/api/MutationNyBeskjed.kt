@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnRolle
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -46,11 +45,10 @@ internal class MutationNyBeskjed(
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>
     ) {
-        suspend fun tilDomene(
+        fun tilDomene(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
-            finnRolleId: suspend (String) -> AltinnRolle?
         ): BeskjedOpprettet {
             val alleMottakere = listOfNotNull(mottaker) + mottakere
             return BeskjedOpprettet(
@@ -61,7 +59,7 @@ internal class MutationNyBeskjed(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = alleMottakere.map { it.tilDomene(metadata.virksomhetsnummer, finnRolleId) },
+                mottakere = alleMottakere.map { it.tilDomene(metadata.virksomhetsnummer) },
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = metadata.virksomhetsnummer,
                 produsentId = produsentId,
@@ -85,7 +83,6 @@ internal class MutationNyBeskjed(
                 id = id,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
-                finnRolleId = produsentRepository.altinnRolle::hentAltinnrolle
             )
         } catch (e: UkjentRolleException) {
             return Error.UkjentRolle(e.message!!)

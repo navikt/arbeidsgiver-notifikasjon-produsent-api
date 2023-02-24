@@ -57,8 +57,6 @@ class AltinnTilgangsstyringTests : DescribeSpec({
                         serviceedition = "1",
                     )
                 },
-                listOf(),
-                listOf(),
             )
         )
 

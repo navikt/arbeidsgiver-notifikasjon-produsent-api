@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.util
 import com.fasterxml.jackson.databind.node.NullNode
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
@@ -124,10 +123,6 @@ object EksempelHendelse {
                 ansattFnr = "1",
                 virksomhetsnummer = "1"
             ),
-            AltinnReporteeMottaker(
-                fnr = "1",
-                virksomhetsnummer = "1"
-            )
         ),
         tekst = "1",
         grupperingsid = null,
@@ -260,10 +255,6 @@ object EksempelHendelse {
                 ansattFnr = "1",
                 naermesteLederFnr = "2"
             ),
-            AltinnReporteeMottaker(
-                fnr = "1",
-                virksomhetsnummer = "1"
-            )
         ),
         tekst = "1",
         grupperingsid = null,
@@ -387,7 +378,8 @@ object EksempelHendelse {
         hardDelete = HendelseModel.HardDeleteUpdate(
             nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
-        )
+        ),
+        nyLenke = null,
     )
     val OppgaveUtgått = HendelseModel.OppgaveUtgått(
         virksomhetsnummer = "1",
@@ -399,7 +391,8 @@ object EksempelHendelse {
         hardDelete = HendelseModel.HardDeleteUpdate(
             nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
-        )
+        ),
+        nyLenke = null,
     )
     val SoftDelete = HendelseModel.SoftDelete(
         virksomhetsnummer = "1",
@@ -463,10 +456,6 @@ object EksempelHendelse {
                 ansattFnr = "1",
                 naermesteLederFnr = "2"
             ),
-            AltinnReporteeMottaker(
-                fnr = "1",
-                virksomhetsnummer = "1"
-            )
         ),
         tittel = "foo",
         lenke = "#foo",

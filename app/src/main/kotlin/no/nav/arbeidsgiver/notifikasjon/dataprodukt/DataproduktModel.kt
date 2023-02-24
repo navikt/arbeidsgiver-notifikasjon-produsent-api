@@ -4,8 +4,6 @@ package no.nav.arbeidsgiver.notifikasjon.dataprodukt
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnReporteeMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRolleMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
@@ -27,8 +25,10 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.ScheduledTime
+import java.lang.RuntimeException
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.*
@@ -609,8 +609,14 @@ fun List<Mottaker>.oppsummering(): String =
         when (it) {
             is NærmesteLederMottaker -> "NærmesteLeder"
             is AltinnMottaker -> "Altinn:${it.serviceCode}:${it.serviceEdition}"
-            is AltinnReporteeMottaker -> "AltinnReporteeMottaker"
-            is AltinnRolleMottaker -> "AltinnRolle:${it.roleDefinitionCode}"
+            is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
+                prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
+                other = { "AltinnRolleMottaker" },
+            )
+            is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
+                prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
+                other = { "AltinnReporteeMottaker" },
+            )
         }
     }
         .sorted()

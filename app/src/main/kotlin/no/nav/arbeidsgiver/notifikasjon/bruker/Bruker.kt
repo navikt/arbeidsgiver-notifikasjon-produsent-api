@@ -4,10 +4,8 @@ import io.ktor.server.metrics.micrometer.*
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.search.MeterNotFoundException
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.CoroutinesBlockHoundIntegration
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.debug.State
-import no.nav.arbeidsgiver.notifikasjon.altinn_roller.AltinnRolleServiceStub
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
@@ -19,20 +17,12 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import reactor.blockhound.BlockHound
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
 object Bruker {
     private val log = logger()
     val databaseConfig = Database.config("bruker_model")
-
-//    private val hendelsesstrøm by lazy {
-//        HendelsesstrømKafkaImpl(
-//            topic = NOTIFIKASJON_TOPIC,
-//            groupId = "bruker-model-builder-2",
-//        )
-//    }
 
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
@@ -60,7 +50,6 @@ object Bruker {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
-//        altinnRolleClient: AltinnRolleClient = AltinnRolleClientImpl(),
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
         suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
@@ -71,12 +60,6 @@ object Bruker {
     ) {
         DebugProbes.enableCreationStackTraces = false
         DebugProbes.install()
-        BlockHound.builder()
-            .with(CoroutinesBlockHoundIntegration())
-            .blockingMethodCallback {
-                log.warn("blocking call", Error(it.name))
-            }
-            .install()
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val brukerRepositoryAsync = async {
@@ -89,14 +72,9 @@ object Bruker {
                 }
             }
 
-//            val altinnRolleService = async<AltinnRolleService> {
-//                AltinnRolleServiceImpl(altinnRolleClient, brukerRepositoryAsync.await().altinnRolle)
-//            }
-
             val graphql = async {
                 val tilgangerService = TilgangerServiceImpl(
-                    altinn = altinn,
-                    altinnRolleService = AltinnRolleServiceStub() //altinnRolleService.await(),
+                    altinn = altinn
                 )
                 BrukerAPI.createBrukerGraphQL(
                     brukerRepository = brukerRepositoryAsync.await(),
@@ -133,13 +111,6 @@ object Bruker {
                     Health.subsystemAlive[Subsystem.KTOR] = false
                 }
             }
-
-//            launchProcessingLoop(
-//                "last Altinnroller",
-//                pauseAfterEach = Duration.ofDays(1),
-//            ) {
-//                altinnRolleService.await().lastRollerFraAltinn()
-//            }
         }
     }
 }
