@@ -519,6 +519,18 @@ Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
 </td>
 </tr>
 <tr>
+<td colspan="2" align="right" valign="top">nyLenke</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
+opprettelse av oppgave. F.eks. for å peke på en kvitterings-side.
+
+Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>oppgaveUtfoertByEksternId</strong> ⚠️</td>
 <td valign="top"><a href="#oppgaveutfoertresultat">OppgaveUtfoertResultat</a>!</td>
 <td>
@@ -597,6 +609,18 @@ Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
 </td>
 </tr>
 <tr>
+<td colspan="2" align="right" valign="top">nyLenke</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
+opprettelse av oppgave. F.eks. for å peke på en kvitterings-side.
+
+Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
+
+</td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong>oppgaveUtgaatt</strong></td>
 <td valign="top"><a href="#oppgaveutgaattresultat">OppgaveUtgaattResultat</a>!</td>
 <td>
@@ -620,6 +644,18 @@ ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
 <td>
 
 Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">nyLenke</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
+opprettelse av oppgave. F.eks. for å peke på en kvitterings-side.
+
+Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
 
 </td>
 </tr>
@@ -656,6 +692,18 @@ ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
 <td>
 
 Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">nyLenke</td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
+opprettelse av oppgave. F.eks. for å peke på en kvitterings-side.
+
+Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
 
 </td>
 </tr>
