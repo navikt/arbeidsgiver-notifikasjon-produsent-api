@@ -237,12 +237,14 @@ class DataproduktModel(
 
                 database.nonTransactionalExecuteUpdate(
                     """
-                       update notifikasjon 
-                       set utfoert_tidspunkt = ?
-                       where notifikasjon_id = ?
+                        update notifikasjon
+                        set utfoert_tidspunkt = ?,
+                            ny_lenke = ?
+                        where notifikasjon_id = ?
                     """
                 ) {
                     instantAsText(metadata.timestamp)
+                    nullableText(hendelse.nyLenke)
                     uuid(hendelse.notifikasjonId)
                 }
             }
@@ -265,11 +267,13 @@ class DataproduktModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                         update notifikasjon 
-                        set utgaatt_tidspunkt = ?
+                        set utgaatt_tidspunkt = ?, 
+                            ny_lenke = ?
                         where notifikasjon_id = ?
                     """
                 ) {
                     instantAsText(metadata.timestamp)
+                    nullableText(hendelse.nyLenke)
                     uuid(hendelse.notifikasjonId)
                 }
             }
