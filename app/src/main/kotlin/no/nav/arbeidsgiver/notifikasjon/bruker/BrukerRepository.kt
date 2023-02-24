@@ -418,10 +418,13 @@ class BrukerRepositoryImpl(
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
-            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
+            SET 
+            tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}',
+            lenke = coalesce(?, lenke)
             WHERE id = ?
         """
         ) {
+            nullableString(utførtHendelse.nyLenke)
             uuid(utførtHendelse.notifikasjonId)
         }
     }
@@ -431,11 +434,13 @@ class BrukerRepositoryImpl(
             """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}',
-                utgaatt_tidspunkt = ?
+                utgaatt_tidspunkt = ?,
+                lenke = coalesce(?, lenke)
             WHERE id = ?
         """
         ) {
             timestamp_with_timezone(utgåttHendelse.utgaattTidspunkt)
+            nullableString(utgåttHendelse.nyLenke)
             uuid(utgåttHendelse.notifikasjonId)
         }
     }

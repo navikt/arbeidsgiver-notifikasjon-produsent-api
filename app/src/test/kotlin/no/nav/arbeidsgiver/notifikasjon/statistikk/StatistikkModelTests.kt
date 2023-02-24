@@ -116,6 +116,7 @@ class StatistikkModelTests : DescribeSpec({
             kildeAppNavn = "",
             produsentId = "",
             hardDelete = null,
+            nyLenke = null,
         )
 
 
@@ -194,6 +195,7 @@ class StatistikkModelTests : DescribeSpec({
                 kildeAppNavn = bestilling.kildeAppNavn,
                 hardDelete = null,
                 utgaattTidspunkt = OffsetDateTime.now(),
+                nyLenke = null,
             )
 
             model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))

@@ -225,6 +225,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 produsentId = oppgaveOpprettet.produsentId,
                 kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
                 hardDelete = null,
+                nyLenke = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -492,6 +493,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 produsentId = oppgaveOpprettet.produsentId,
                 kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
                 hardDelete = null,
+                nyLenke = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)

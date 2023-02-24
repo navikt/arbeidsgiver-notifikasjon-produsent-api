@@ -399,6 +399,7 @@ object HendelseModel {
         override val kildeAppNavn: String,
         val hardDelete: HardDeleteUpdate?,
         val utgaattTidspunkt: OffsetDateTime,
+        val nyLenke: String?,
     ) : Hendelse(), Notifikasjon {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
@@ -412,6 +413,7 @@ object HendelseModel {
         override val produsentId: String,
         override val kildeAppNavn: String,
         val hardDelete: HardDeleteUpdate?,
+        val nyLenke: String?,
     ) : Hendelse(), Notifikasjon {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId

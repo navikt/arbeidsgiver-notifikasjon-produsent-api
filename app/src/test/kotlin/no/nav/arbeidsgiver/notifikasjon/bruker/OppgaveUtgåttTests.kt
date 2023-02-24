@@ -59,7 +59,8 @@ class OppgaveUtgåttTests : DescribeSpec({
             produsentId = "1",
             kildeAppNavn = "1",
             hardDelete = null,
-            utgaattTidspunkt = OffsetDateTime.parse("2018-12-03T10:15:30+01:00")
+            utgaattTidspunkt = OffsetDateTime.parse("2018-12-03T10:15:30+01:00"),
+            nyLenke = null,
         )
         queryModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
         queryModel.oppdaterModellEtterHendelse(oppgaveUtgått)
