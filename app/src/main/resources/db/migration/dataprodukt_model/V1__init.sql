@@ -23,7 +23,6 @@ create table sak
     lenke                  text not null,
     oppgitt_tidspunkt      text not null,
     mottatt_tidspunkt      text not null,
-    skedulert_hard_delete  text,
     soft_deleted_tidspunkt text
 );
 
@@ -36,8 +35,6 @@ create table sak_status
     overstyr_statustekst_med       text null,
     oppgitt_tidspunkt              text null,
     mottatt_tidspunkt              text not null,
-    skedulert_hard_delete_strategi text null, -- FORLENG, OVERSKRIV
-    skedulert_hard_delete_ny_tid   text null,
     ny_lenke_til_sak               text null
 );
 
@@ -61,6 +58,7 @@ create table notifikasjon
     tekst                                     text not null,
     grupperingsid                             text null,
     lenke                                     text not null,
+    ny_lenke                                  text null,
     opprettet_tidspunkt                       text not null,
     soft_deleted_tidspunkt                    text,
 

@@ -77,9 +77,10 @@ class DataproduktModel(
                         tekst,
                         grupperingsid,
                         lenke,
+                        ny_lenke,
                         opprettet_tidspunkt
                     )
-                    values (?, 'BESKJED', ?, ?, ?, ?, ?, ?, ?)
+                    values (?, 'BESKJED', ?, ?, ?, ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
@@ -91,6 +92,7 @@ class DataproduktModel(
                         text(tekst)
                         nullableText(grupperingsid)
                         text(lenke)
+                        nullableText(null)
                         toInstantAsText(opprettetTidspunkt)
                     }
                 }
@@ -135,13 +137,14 @@ class DataproduktModel(
                         tekst,
                         grupperingsid,
                         lenke,
+                        ny_lenke,
                         opprettet_tidspunkt,
                         frist,
                         paaminnelse_bestilling_spesifikasjon_type,
                         paaminnelse_bestilling_spesifikasjon_tid,
                         paaminnelse_bestilling_utregnet_tid
                     )
-                    values (?, 'OPPGAVE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    values (?, 'OPPGAVE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
@@ -153,6 +156,7 @@ class DataproduktModel(
                         text(tekst)
                         nullableText(grupperingsid)
                         text(lenke)
+                        nullableText(null)
                         toInstantAsText(opprettetTidspunkt)
                         nullableDate(frist)
                         when (val tidspunkt = påminnelse?.tidspunkt) {
@@ -348,10 +352,71 @@ class DataproduktModel(
             }
 
             is SakOpprettet -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                        insert into sak (
+                            sak_id, grupperings_id, virksomhetsnummer, produsent_id, merkelapp, tittel, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
+                        ) 
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        on conflict do nothing
+                    """
+                ) {
+                    uuid(hendelse.sakId)
+                    nullableText(hendelse.grupperingsid)
+                    text(hendelse.virksomhetsnummer)
+                    text(hendelse.produsentId)
+                    text(hendelse.merkelapp)
+                    text(hendelse.tittel)
+                    text(hendelse.lenke)
+                    nullableInstantAsText(hendelse.oppgittTidspunkt?.toInstant())
+                    instantAsText(hendelse.mottattTidspunkt.toInstant())
+                    nullableInstantAsText(null)
+                }
 
+                with(hendelse) {
+                    if (hardDelete != null) {
+                        storeHardDelete(
+                            aggregatId = aggregateId,
+                            bestillingHendelsesid = hendelseId,
+                            bestillingType = "OPPRETTELSE",
+                            spesifikasjon = hardDelete,
+                            utregnetTidspunkt = ScheduledTime(hardDelete, metadata.timestamp).happensAt(),
+                        )
+                    }
+                }
             }
             is NyStatusSak -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                        insert into sak_status (
+                            status_id, idempotens_key, sak_id, status, overstyr_statustekst_med, oppgitt_tidspunkt, mottatt_tidspunkt, ny_lenke_til_sak
+                        ) 
+                        values (?, ?, ?, ?, ?, ?, ?, ?)
+                        on conflict do nothing
+                    """
+                ) {
+                    uuid(hendelse.hendelseId)
+                    text(hendelse.idempotensKey)
+                    uuid(hendelse.sakId)
+                    text(hendelse.status.toString())
+                    nullableText(hendelse.overstyrStatustekstMed)
+                    nullableInstantAsText(hendelse.oppgittTidspunkt?.toInstant())
+                    instantAsText(hendelse.mottattTidspunkt.toInstant())
+                    nullableText(hendelse.nyLenkeTilSak)
+                }
 
+                with(hendelse) {
+                    if (hardDelete != null) {
+                        storeHardDelete(
+                            aggregatId = aggregateId,
+                            bestillingHendelsesid = hendelseId,
+                            bestillingType = "STATUSENDRING",
+                            strategi = hardDelete.strategi.toString(),
+                            spesifikasjon = hardDelete.nyTid,
+                            utregnetTidspunkt = ScheduledTime(hardDelete.nyTid, opprettetTidspunkt.toInstant()).happensAt(),
+                        )
+                    }
+                }
             }
 
         }
