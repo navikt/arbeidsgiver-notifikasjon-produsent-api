@@ -32,7 +32,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             merkelapp = "1",
-            eksternId = "1",
+            eksternId = id.toString(),
             mottakere = listOf(
                 AltinnMottaker(
                     virksomhetsnummer = "1",
@@ -74,7 +74,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             merkelapp = "1",
-            eksternId = "1",
+            eksternId = id.toString(),
             mottakere = listOf(
                 AltinnMottaker(
                     virksomhetsnummer = "1",
@@ -121,7 +121,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             merkelapp = "1",
-            eksternId = "1",
+            eksternId = id.toString(),
             mottakere = listOf(
                 AltinnMottaker(
                     virksomhetsnummer = "1",
@@ -168,7 +168,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             merkelapp = "1",
-            eksternId = "1",
+            eksternId = id.toString(),
             mottakere = listOf(
                 AltinnMottaker(
                     virksomhetsnummer = "1",
@@ -212,7 +212,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             merkelapp = "1",
-            eksternId = "1",
+            eksternId = id.toString(),
             mottakere = listOf(
                 AltinnMottaker(
                     virksomhetsnummer = "1",
@@ -261,7 +261,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             merkelapp = "1",
-            eksternId = "1",
+            eksternId = id.toString(),
             mottakere = listOf(
                 AltinnMottaker(
                     virksomhetsnummer = "1",
@@ -310,7 +310,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             merkelapp = "1",
-            eksternId = "2",
+            eksternId = id.toString(),
             mottakere = listOf(
                 AltinnMottaker(
                     virksomhetsnummer = "1",
