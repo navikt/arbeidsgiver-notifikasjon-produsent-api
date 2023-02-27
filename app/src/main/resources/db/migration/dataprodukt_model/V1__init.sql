@@ -3,35 +3,49 @@ grant all on all tables in schema public to cloudsqliamuser;
 
 create extension if not exists pgcrypto;
 
+create table salt(salt text not null);
+insert into salt(salt)
+values (gen_salt('md5'));
+
+create function pseudonymize(val text)
+    returns text
+as
+$$
+select crypt(val, (select salt from salt))::text;
+$$
+language sql
+immutable;
+
 create table aggregat_hendelse
 (
-    hendelse_id       uuid not null primary key,
-    hendelse_type     text not null,
-    aggregat_id       uuid not null,
-    kilde_app_navn    text not null,
-    virksomhetsnummer text not null,
-    virksomhetsnummer_enc text generated always as (encode(sha256(virksomhetsnummer::bytea), 'hex')) stored,
-    produsent_id      text null,
-    kafka_timestamp   text not null
+    hendelse_id             uuid not null primary key,
+    hendelse_type           text not null,
+    aggregat_id             uuid not null,
+    kilde_app_navn          text not null,
+    virksomhetsnummer       text not null,
+    virksomhetsnummer_pseud text generated always as (pseudonymize(virksomhetsnummer)) stored,
+    produsent_id            text null,
+    kafka_timestamp         text not null
 );
 revoke select (virksomhetsnummer) on aggregat_hendelse from public;
 
 create table sak
 (
-    sak_id                 uuid not null primary key,
-    grupperings_id         text not null,
-    grupperings_id_enc     text generated always as (encode(sha256(grupperings_id::bytea), 'hex')) stored,
-    virksomhetsnummer      text not null,
-    virksomhetsnummer_enc  text generated always as (encode(sha256(virksomhetsnummer::bytea), 'hex')) stored,
-    produsent_id           text not null,
-    merkelapp              text not null,
-    tittel                 text not null,
-    lenke                  text not null,
-    oppgitt_tidspunkt      text not null,
-    mottatt_tidspunkt      text not null,
-    soft_deleted_tidspunkt text
+    sak_id                  uuid not null primary key,
+    grupperings_id          text not null,
+    grupperings_id_pseud    text generated always as (pseudonymize(grupperings_id)) stored,
+    virksomhetsnummer       text not null,
+    virksomhetsnummer_pseud text generated always as (pseudonymize(virksomhetsnummer)) stored,
+    produsent_id            text not null,
+    merkelapp               text not null,
+    tittel                  text not null,
+    tittel_pseud            text generated always as (pseudonymize(tittel)) stored,
+    lenke                   text not null,
+    oppgitt_tidspunkt       text not null,
+    mottatt_tidspunkt       text not null,
+    soft_deleted_tidspunkt  text
 );
-revoke select (virksomhetsnummer, grupperings_id) on sak from public;
+revoke select (virksomhetsnummer, grupperings_id, tittel) on sak from public;
 
 create table sak_status
 (
@@ -63,8 +77,9 @@ create table notifikasjon
     merkelapp                                 text not null,
     ekstern_id                                text not null,
     tekst                                     text not null,
+    tekst_pseud                               text generated always as (pseudonymize(tekst)) stored,
     grupperingsid                             text null,
-    grupperingsid_enc                         text generated always as (encode(sha256(grupperingsid::bytea), 'hex')) stored,
+    grupperingsid_pseud                       text generated always as (pseudonymize(grupperingsid)) stored,
     lenke                                     text not null,
     ny_lenke                                  text null,
     opprettet_tidspunkt                       text not null,
@@ -78,18 +93,18 @@ create table notifikasjon
     paaminnelse_bestilling_spesifikasjon_tid  text,          -- dato eller period, avhengig av type
     paaminnelse_bestilling_utregnet_tid       text
 );
-revoke select (grupperingsid) on notifikasjon from public;
+revoke select (tekst, grupperingsid) on notifikasjon from public;
 
 create table mottaker_naermeste_leder
 (
-    sak_id          uuid references sak(sak_id) on delete cascade,
-    notifikasjon_id uuid references notifikasjon(notifikasjon_id) on delete cascade,
-    virksomhetsnummer text not null,
-    virksomhetsnummer_enc text generated always as (encode(sha256(virksomhetsnummer::bytea), 'hex')) stored,
-    fnr_leder    text not null,
-    fnr_leder_enc text generated always as (encode(sha256(fnr_leder::bytea), 'hex')) stored,
-    fnr_ansatt text not null,
-    fnr_ansatt_enc text generated always as (encode(sha256(fnr_ansatt::bytea), 'hex')) stored
+    sak_id                  uuid references sak (sak_id) on delete cascade,
+    notifikasjon_id         uuid references notifikasjon (notifikasjon_id) on delete cascade,
+    virksomhetsnummer       text not null,
+    virksomhetsnummer_pseud text generated always as (pseudonymize(virksomhetsnummer)) stored,
+    fnr_leder               text not null,
+    fnr_leder_pseud         text generated always as (pseudonymize(fnr_leder)) stored,
+    fnr_ansatt              text not null,
+    fnr_ansatt_pseud        text generated always as (pseudonymize(fnr_ansatt)) stored
 );
 revoke select (virksomhetsnummer, fnr_leder, fnr_ansatt) on mottaker_naermeste_leder from public;
 
@@ -107,7 +122,7 @@ create table mottaker_enkeltrettighet
     sak_id          uuid references sak(sak_id) on delete cascade,
     notifikasjon_id uuid references notifikasjon(notifikasjon_id) on delete cascade,
     virksomhetsnummer text not null,
-    virksomhetsnummer_enc text generated always as (encode(sha256(virksomhetsnummer::bytea), 'hex')) stored,
+    virksomhetsnummer_pseud text generated always as (pseudonymize(virksomhetsnummer)) stored,
     service_code    text not null,
     service_edition text not null
 );
@@ -128,7 +143,7 @@ create table notifikasjon_klikk
     hendelse_id           uuid not null primary key,
     notifikasjon_id       uuid not null references notifikasjon(notifikasjon_id) on delete cascade,
     fnr                   text not null,
-    fnr_enc text generated always as (encode(sha256(fnr::bytea), 'hex')) stored,
+    fnr_pseud text generated always as (pseudonymize(fnr)) stored,
     klikket_paa_tidspunkt text not null
 );
 revoke select (fnr) on notifikasjon_klikk from public;
