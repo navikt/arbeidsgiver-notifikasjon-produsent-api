@@ -1,0 +1,20 @@
+name: terraform dev
+
+on:
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.DEV_GCP_CREDS }}
+      VAR_FILE: dev.tfvars
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+      - run: terraform init
+      - run: terraform fmt -check
+      - run: terraform validate
+      - run: terraform plan -no-color -var-file=${ env.VAR_FILE }
+      - run: terraform apply -auto-approve -no-color -var-file=${ env.VAR_FILE }
