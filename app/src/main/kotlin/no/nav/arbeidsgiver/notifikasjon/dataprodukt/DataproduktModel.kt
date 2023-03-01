@@ -360,15 +360,14 @@ class DataproduktModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                         insert into sak (
-                            sak_id, grupperings_id, virksomhetsnummer, produsent_id, merkelapp, tittel, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
+                            sak_id, grupperings_id, produsent_id, merkelapp, tittel, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
                         ) 
-                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?)
                         on conflict do nothing
                     """
                 ) {
                     uuid(hendelse.sakId)
                     nullableText(hendelse.grupperingsid)
-                    text(hendelse.virksomhetsnummer)
                     text(hendelse.produsentId)
                     text(hendelse.merkelapp)
                     text(hendelse.tittel)

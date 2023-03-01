@@ -1,5 +1,6 @@
 CREATE ROLE cloudsqliamuser;
 create role "bruker-api-kafka-user";
+create user sa_notifikasjon_dataprodukt_exporter;
 
 CREATE DATABASE "bruker-model";
 GRANT ALL PRIVILEGES ON DATABASE "bruker-model" TO postgres;
