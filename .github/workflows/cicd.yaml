@@ -118,10 +118,6 @@ jobs:
           - skedulert-utgaatt
           - skedulert-harddelete
           - dataprodukt
-        exclude:
-          - cluster: prod-gcp
-            app: dataprodukt
-
     steps:
       - uses: actions/checkout@v3
       - uses: nais/deploy/actions/deploy@v1
