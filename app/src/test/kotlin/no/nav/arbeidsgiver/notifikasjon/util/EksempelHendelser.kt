@@ -14,6 +14,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.util.*
 
 
 object EksempelHendelse {
@@ -21,354 +22,380 @@ object EksempelHendelse {
         .map { uuid(it.toString()) }
         .iterator()
 
-    val BeskjedOpprettet = BeskjedOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = uuid("1"),
-        hendelseId = hendelseId.next(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        merkelapp = "1",
-        eksternId = "1",
-        mottakere = listOf(AltinnMottaker(
+    private fun <T> withId(blokk: (id: UUID)-> T ) : T = hendelseId.next().let { blokk.invoke(it) }
+
+    val BeskjedOpprettet = withId { id ->
+        BeskjedOpprettet(
             virksomhetsnummer = "1",
-            serviceCode = "1",
-            serviceEdition = "1"
-        )),
-        tekst = "1",
-        grupperingsid = null,
-        lenke = "",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-        eksterneVarsler = listOf(
-            SmsVarselKontaktinfo(
-                varselId = uuid("3"),
-                fnrEllerOrgnr = "1",
-                tlfnr = "1",
-                smsTekst = "hey",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = id.toString(),
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                )
             ),
-            EpostVarselKontaktinfo(
-                varselId = uuid("4"),
-                fnrEllerOrgnr = "1",
-                epostAddr = "1",
-                tittel = "hey",
-                htmlBody = "body",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            )
-        ),
-        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-    )
-    val BeskjedOpprettet_2_Mottakere = BeskjedOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = uuid("1"),
-        hendelseId = hendelseId.next(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        merkelapp = "1",
-        eksternId = "1",
-        mottakere = listOf(
-            AltinnMottaker(
-                virksomhetsnummer = "1",
-                serviceCode = "1",
-                serviceEdition = "1"
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
             ),
-            NærmesteLederMottaker(
-                naermesteLederFnr = "1",
-                ansattFnr = "1",
-                virksomhetsnummer = "1"
-            )
-        ),
-        tekst = "1",
-        grupperingsid = null,
-        lenke = "",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-        eksterneVarsler = listOf(
-            SmsVarselKontaktinfo(
-                varselId = uuid("3"),
-                fnrEllerOrgnr = "1",
-                tlfnr = "1",
-                smsTekst = "hey",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            ),
-            EpostVarselKontaktinfo(
-                varselId = uuid("4"),
-                fnrEllerOrgnr = "1",
-                epostAddr = "1",
-                tittel = "hey",
-                htmlBody = "body",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            )
-        ),
-        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-    )
-    val BeskjedOpprettet_3_Mottakere = BeskjedOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = uuid("1"),
-        hendelseId = hendelseId.next(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        merkelapp = "1",
-        eksternId = "1",
-        mottakere = listOf(
-            AltinnMottaker(
-                virksomhetsnummer = "1",
-                serviceCode = "1",
-                serviceEdition = "1"
-            ),
-            NærmesteLederMottaker(
-                naermesteLederFnr = "1",
-                ansattFnr = "1",
-                virksomhetsnummer = "1"
-            ),
-        ),
-        tekst = "1",
-        grupperingsid = null,
-        lenke = "",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-        eksterneVarsler = listOf(
-            SmsVarselKontaktinfo(
-                varselId = uuid("3"),
-                fnrEllerOrgnr = "1",
-                tlfnr = "1",
-                smsTekst = "hey",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            ),
-            EpostVarselKontaktinfo(
-                varselId = uuid("4"),
-                fnrEllerOrgnr = "1",
-                epostAddr = "1",
-                tittel = "hey",
-                htmlBody = "body",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            )
-        ),
-        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-    )
-    val OppgaveOpprettet = HendelseModel.OppgaveOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = uuid("1"),
-        hendelseId = hendelseId.next(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        merkelapp = "1",
-        eksternId = "1",
-        mottakere = listOf(AltinnMottaker(
-            virksomhetsnummer = "1",
-            serviceCode = "1",
-            serviceEdition = "1"
-        )),
-        tekst = "1",
-        grupperingsid = null,
-        lenke = "",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-        eksterneVarsler = listOf(
-            SmsVarselKontaktinfo(
-                varselId = uuid("3"),
-                fnrEllerOrgnr = "1",
-                tlfnr = "1",
-                smsTekst = "hey",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            ),
-            EpostVarselKontaktinfo(
-                varselId = uuid("4"),
-                fnrEllerOrgnr = "1",
-                epostAddr = "1",
-                tittel = "hey",
-                htmlBody = "body",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            )
-        ),
-        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-        frist = null,
-        påminnelse = null,
-    )
-    val OppgaveOpprettet_2_Mottakere = HendelseModel.OppgaveOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = uuid("1"),
-        hendelseId = hendelseId.next(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        merkelapp = "1",
-        eksternId = "1",
-        mottakere = listOf(
-            AltinnMottaker(
-                virksomhetsnummer = "1",
-                serviceCode = "1",
-                serviceEdition = "1"
-            ),
-            NærmesteLederMottaker(
-                virksomhetsnummer = "1",
-                ansattFnr = "1",
-                naermesteLederFnr = "2"
-            )
-        ),
-        tekst = "1",
-        grupperingsid = null,
-        lenke = "",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-        eksterneVarsler = listOf(
-            SmsVarselKontaktinfo(
-                varselId = uuid("3"),
-                fnrEllerOrgnr = "1",
-                tlfnr = "1",
-                smsTekst = "hey",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            ),
-            EpostVarselKontaktinfo(
-                varselId = uuid("4"),
-                fnrEllerOrgnr = "1",
-                epostAddr = "1",
-                tittel = "hey",
-                htmlBody = "body",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            )
-        ),
-        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-        frist = null,
-        påminnelse = null,
-    )
-    val OppgaveOpprettet_3_Mottakere = HendelseModel.OppgaveOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = uuid("1"),
-        hendelseId = hendelseId.next(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        merkelapp = "1",
-        eksternId = "1",
-        mottakere = listOf(
-            AltinnMottaker(
-                virksomhetsnummer = "1",
-                serviceCode = "1",
-                serviceEdition = "1"
-            ),
-            NærmesteLederMottaker(
-                virksomhetsnummer = "1",
-                ansattFnr = "1",
-                naermesteLederFnr = "2"
-            ),
-        ),
-        tekst = "1",
-        grupperingsid = null,
-        lenke = "",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-        eksterneVarsler = listOf(
-            SmsVarselKontaktinfo(
-                varselId = uuid("3"),
-                fnrEllerOrgnr = "1",
-                tlfnr = "1",
-                smsTekst = "hey",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            ),
-            EpostVarselKontaktinfo(
-                varselId = uuid("4"),
-                fnrEllerOrgnr = "1",
-                epostAddr = "1",
-                tittel = "hey",
-                htmlBody = "body",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            )
-        ),
-        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-        frist = null,
-        påminnelse = null,
-    )
-    val OppgaveOpprettet_MedFrist = HendelseModel.OppgaveOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = uuid("3"),
-        hendelseId = hendelseId.next(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        merkelapp = "1",
-        eksternId = "2",
-        mottakere = listOf(AltinnMottaker(
-            virksomhetsnummer = "1",
-            serviceCode = "1",
-            serviceEdition = "1"
-        )),
-        frist = LocalDate.parse("2020-01-02"),
-        tekst = "1",
-        grupperingsid = null,
-        lenke = "",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-        eksterneVarsler = listOf(
-            SmsVarselKontaktinfo(
-                varselId = uuid("3"),
-                fnrEllerOrgnr = "1",
-                tlfnr = "1",
-                smsTekst = "hey",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            ),
-            EpostVarselKontaktinfo(
-                varselId = uuid("4"),
-                fnrEllerOrgnr = "1",
-                epostAddr = "1",
-                tittel = "hey",
-                htmlBody = "body",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            )
-        ),
-        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-        påminnelse = null,
-    )
-    val OppgaveOpprettet_MedPåminnelse = HendelseModel.OppgaveOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = uuid("3"),
-        hendelseId = hendelseId.next(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        merkelapp = "1",
-        eksternId = "2",
-        mottakere = listOf(AltinnMottaker(
-            virksomhetsnummer = "1",
-            serviceCode = "1",
-            serviceEdition = "1"
-        )),
-        frist = LocalDate.parse("2020-01-22"),
-        tekst = "1",
-        grupperingsid = null,
-        lenke = "",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-        eksterneVarsler = listOf(
-            SmsVarselKontaktinfo(
-                varselId = uuid("3"),
-                fnrEllerOrgnr = "1",
-                tlfnr = "1",
-                smsTekst = "hey",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            ),
-            EpostVarselKontaktinfo(
-                varselId = uuid("4"),
-                fnrEllerOrgnr = "1",
-                epostAddr = "1",
-                tittel = "hey",
-                htmlBody = "body",
-                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null
-            )
-        ),
-        hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-        påminnelse = HendelseModel.Påminnelse(
-            tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
-                konkret = LocalDateTime.parse("2020-01-14T01:01"),
-                påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
-            ),
-            eksterneVarsler = listOf()
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
         )
-    )
+    }
+    val BeskjedOpprettet_2_Mottakere = withId { id ->
+        BeskjedOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = id.toString(),
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+                NærmesteLederMottaker(
+                    naermesteLederFnr = "1",
+                    ansattFnr = "1",
+                    virksomhetsnummer = "1"
+                )
+            ),
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
+            ),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+        )
+    }
+    val BeskjedOpprettet_3_Mottakere = withId { id ->
+        BeskjedOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = id.toString(),
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+                NærmesteLederMottaker(
+                    naermesteLederFnr = "1",
+                    ansattFnr = "1",
+                    virksomhetsnummer = "1"
+                ),
+            ),
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
+            ),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+        )
+    }
+    val OppgaveOpprettet = withId { id ->
+        HendelseModel.OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = id.toString(),
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                )
+            ),
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
+            ),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            frist = null,
+            påminnelse = null,
+        )
+    }
+    val OppgaveOpprettet_2_Mottakere = withId { id ->
+        HendelseModel.OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = id.toString(),
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+                NærmesteLederMottaker(
+                    virksomhetsnummer = "1",
+                    ansattFnr = "1",
+                    naermesteLederFnr = "2"
+                )
+            ),
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
+            ),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            frist = null,
+            påminnelse = null,
+        )
+    }
+    val OppgaveOpprettet_3_Mottakere = withId { id ->
+        HendelseModel.OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = id.toString(),
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+                NærmesteLederMottaker(
+                    virksomhetsnummer = "1",
+                    ansattFnr = "1",
+                    naermesteLederFnr = "2"
+                ),
+            ),
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
+            ),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            frist = null,
+            påminnelse = null,
+        )
+    }
+    val OppgaveOpprettet_MedFrist = withId { id ->
+        HendelseModel.OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = id.toString(),
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                )
+            ),
+            frist = LocalDate.parse("2020-01-02"),
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
+            ),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            påminnelse = null,
+        )
+    }
+    val OppgaveOpprettet_MedPåminnelse = withId { id ->
+        HendelseModel.OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = "2",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                )
+            ),
+            frist = LocalDate.parse("2020-01-22"),
+            tekst = "1",
+            grupperingsid = null,
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
+            ),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            påminnelse = HendelseModel.Påminnelse(
+                tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+                    konkret = LocalDateTime.parse("2020-01-14T01:01"),
+                    påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
+                ),
+                eksterneVarsler = listOf()
+            )
+        )
+    }
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
@@ -437,32 +464,34 @@ object EksempelHendelse {
         altinnFeilkode = "42",
         feilmelding = "oops"
     )
-    val SakOpprettet = HendelseModel.SakOpprettet(
-        hendelseId = hendelseId.next(),
-        virksomhetsnummer = "1",
-        produsentId = "1",
-        kildeAppNavn = "1",
-        sakId = uuid("0"),
-        grupperingsid = "1",
-        merkelapp = "tag",
-        mottakere = listOf(
-            AltinnMottaker(
-                virksomhetsnummer = "1",
-                serviceCode = "1",
-                serviceEdition = "1"
+    val SakOpprettet = withId { id ->
+        HendelseModel.SakOpprettet(
+            hendelseId = id,
+            virksomhetsnummer = "1",
+            produsentId = "1",
+            kildeAppNavn = "1",
+            sakId = id,
+            grupperingsid = "1",
+            merkelapp = "tag",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+                NærmesteLederMottaker(
+                    virksomhetsnummer = "1",
+                    ansattFnr = "1",
+                    naermesteLederFnr = "2"
+                ),
             ),
-            NærmesteLederMottaker(
-                virksomhetsnummer = "1",
-                ansattFnr = "1",
-                naermesteLederFnr = "2"
-            ),
-        ),
-        tittel = "foo",
-        lenke = "#foo",
-        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
-        mottattTidspunkt = OffsetDateTime.now(),
-        hardDelete = null,
-    )
+            tittel = "foo",
+            lenke = "#foo",
+            oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+            mottattTidspunkt = OffsetDateTime.now(),
+            hardDelete = null,
+        )
+    }
     val NyStatusSak = HendelseModel.NyStatusSak(
         hendelseId = hendelseId.next(),
         virksomhetsnummer = "1",

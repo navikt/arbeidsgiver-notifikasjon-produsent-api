@@ -10,4 +10,5 @@ enum class Port(val port: Int) {
     SKEDULERT_UTGÅTT(8087),
     SKEDULERT_HARDDELETE(8088),
     SKEDULERT_PÅMINNELSE(8089),
+    DATAPRODUKT(8090),
 }

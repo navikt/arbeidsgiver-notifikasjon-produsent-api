@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDelete
 import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
+import no.nav.arbeidsgiver.notifikasjon.dataprodukt.Dataprodukt
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerWriter
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
@@ -33,6 +34,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-skedulert-paaminnelse" -> SkedulertPåminnelse.main()
             "notifikasjon-skedulert-harddelete" -> SkedulertHardDelete.main()
             "notifikasjon-hendelse-transformer" -> HendelseTransformer.main()
+            "notifikasjon-dataprodukt" -> Dataprodukt.main()
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
         }
     } catch (e: Exception) {

@@ -51,3 +51,6 @@ spec:
     - application: notifikasjon-skedulert-paaminnelse
       team: fager
       access: readwrite
+    - application: notifikasjon-dataprodukt
+      team: fager
+      access: read

@@ -47,7 +47,7 @@ class KafkaReaperModelImpl(
             ) {
                 uuid(hendelse.hendelseId)
                 uuid(hendelse.aggregateId)
-                string(hendelse.typeNavn)
+                text(hendelse.typeNavn)
             }
 
             if (hendelse is HardDelete) {

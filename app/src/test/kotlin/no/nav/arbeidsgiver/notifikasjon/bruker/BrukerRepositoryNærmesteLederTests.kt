@@ -75,7 +75,7 @@ private suspend fun Database.hentAnsatte(narmesteLederFnr: String): List<Nærmes
             select * from naermeste_leder_kobling 
                 where naermeste_leder_fnr = ?
             """, {
-            string(narmesteLederFnr)
+            text(narmesteLederFnr)
         }) {
         NærmesteLederFor(
             ansattFnr = getString("fnr"),

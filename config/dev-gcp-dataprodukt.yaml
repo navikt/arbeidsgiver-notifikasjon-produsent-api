@@ -1,0 +1,30 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: notifikasjon-dataprodukt
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{image}}
+  liveness:
+    path: /internal/alive
+  readiness:
+    path: /internal/ready
+  replicas:
+    min: 1
+    max: 1
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  kafka:
+    pool: nav-dev
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_12
+        tier: db-f1-micro
+        diskAutoresize: true
+        highAvailability: false
+        databases:
+          - name: dataprodukt-model
+            envVarPrefix: DB

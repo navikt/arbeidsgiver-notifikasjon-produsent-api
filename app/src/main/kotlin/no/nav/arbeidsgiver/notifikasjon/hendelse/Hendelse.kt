@@ -53,10 +53,14 @@ object HendelseModel {
         }
 
         @JsonTypeName("LocalDateTime")
-        data class LocalDateTime(val value: java.time.LocalDateTime) : LocalDateTimeOrDuration
+        data class LocalDateTime(val value: java.time.LocalDateTime) : LocalDateTimeOrDuration {
+            override fun toString() = value.toString()
+        }
 
         @JsonTypeName("Duration")
-        data class Duration(val value: ISO8601Period) : LocalDateTimeOrDuration
+        data class Duration(val value: ISO8601Period) : LocalDateTimeOrDuration {
+            override fun toString() = value.toString()
+        }
 
         fun omOrNull() = when (this) {
             is LocalDateTime -> null

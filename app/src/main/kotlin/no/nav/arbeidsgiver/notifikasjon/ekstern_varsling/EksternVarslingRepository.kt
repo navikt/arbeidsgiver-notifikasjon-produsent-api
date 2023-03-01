@@ -104,7 +104,7 @@ class EksternVarslingRepository(
                 varsel_id = ? 
         """) {
             jsonb(råRespons)
-            string(sendeStatus.toString())
+            text(sendeStatus.toString())
             uuid(varselId)
         }
     }
@@ -208,12 +208,12 @@ class EksternVarslingRepository(
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
             timestamp_without_timezone_utc(notifikasjonOpprettet)
-            string(produsentId)
-            string(varsel.tlfnr)
-            string(varsel.fnrEllerOrgnr)
-            string(varsel.smsTekst)
-            string(varsel.sendevindu.toString())
-            nullableString(varsel.sendeTidspunkt?.toString())
+            text(produsentId)
+            text(varsel.tlfnr)
+            text(varsel.fnrEllerOrgnr)
+            text(varsel.smsTekst)
+            text(varsel.sendevindu.toString())
+            nullableText(varsel.sendeTidspunkt?.toString())
         }
     }
 
@@ -259,13 +259,13 @@ class EksternVarslingRepository(
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
             timestamp_without_timezone_utc(notifikasjonOpprettet)
-            string(produsentId)
-            string(varsel.epostAddr)
-            string(varsel.fnrEllerOrgnr)
-            string(varsel.tittel)
-            string(varsel.htmlBody)
-            string(varsel.sendevindu.toString())
-            nullableString(varsel.sendeTidspunkt?.toString())
+            text(produsentId)
+            text(varsel.epostAddr)
+            text(varsel.fnrEllerOrgnr)
+            text(varsel.tittel)
+            text(varsel.htmlBody)
+            text(varsel.sendevindu.toString())
+            nullableText(varsel.sendeTidspunkt?.toString())
         }
     }
 
@@ -355,8 +355,8 @@ class EksternVarslingRepository(
                 RETURNING varsel_id
                     """,
             setup = {
-                string(podName)
-                string(lockTimeout.toString())
+                text(podName)
+                text(lockTimeout.toString())
 
             },
             transform = {
@@ -491,14 +491,14 @@ class EksternVarslingRepository(
                 jsonb(response.rå)
                 when (response) {
                     is AltinnVarselKlient.AltinnResponse.Ok -> {
-                        string("OK")
-                        nullableString(null)
-                        nullableString(null)
+                        text("OK")
+                        nullableText(null)
+                        nullableText(null)
                     }
                     is AltinnVarselKlient.AltinnResponse.Feil -> {
-                        string("FEIL")
-                        nullableString(response.feilmelding)
-                        nullableString(response.feilkode)
+                        text("FEIL")
+                        nullableText(response.feilmelding)
+                        nullableText(response.feilkode)
                     }
                 }
                 uuid(varselId)
@@ -557,7 +557,7 @@ class EksternVarslingRepository(
             where mottaker = ?
             and skal_sendes = true
         """, {
-            string(mottaker)
+            text(mottaker)
         }) {
             this.getString("mottaker")
         }.isNotEmpty()

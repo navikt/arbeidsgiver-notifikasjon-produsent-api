@@ -259,8 +259,11 @@ class ParameterSetters(
 ) {
     private var index = 1
 
-    fun string(value: String) = preparedStatement.setString(index++, value)
-    fun nullableString(value: String?) = preparedStatement.setString(index++, value)
+
+    fun <T: Enum<T>>enumAsText(value: T) = text(value.toString())
+
+    fun text(value: String) = preparedStatement.setString(index++, value)
+    fun nullableText(value: String?) = preparedStatement.setString(index++, value)
     fun integer(value: Int) = preparedStatement.setInt(index++, value)
     fun long(value: Long) = preparedStatement.setLong(index++, value)
     fun boolean(newState: Boolean) = preparedStatement.setBoolean(index++, newState)
@@ -273,17 +276,23 @@ class ParameterSetters(
     fun timestamp_without_timezone_utc(value: OffsetDateTime) = timestamp_without_timezone(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
     fun timestamp_without_timezone_utc(value: Instant) = timestamp_without_timezone(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
     fun timestamp_without_timezone(value: LocalDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
-    fun timestamp_without_timezone_nullable(value: LocalDateTime?) = preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
     fun timestamp_with_timezone(value: OffsetDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
     fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
+    fun toInstantAsText(value: OffsetDateTime) = instantAsText(value.toInstant())
+    fun instantAsText(value: Instant) = text(value.toString())
+    fun nullableInstantAsText(value: Instant?) = nullableText(value?.toString())
+
+    fun nullableLocalDateTimeAsText(value: LocalDateTime?) = nullableText(value?.toString())
+    fun localDateTimeAsText(value: LocalDateTime) = text(value.toString())
+    fun periodAsText(value: ISO8601Period) = text(value.toString())
 
     fun nullableDate(value: LocalDate?) =
         preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) } )
 
 
     inline fun <reified T> jsonb(value: T) =
-        string(
+        text(
             laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)
         )
 
@@ -302,6 +311,4 @@ class ParameterSetters(
             stringList(value)
         }
     }
-
-
 }

@@ -1,0 +1,38 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: notifikasjon-dataprodukt
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{image}}
+  liveness:
+    path: /internal/alive
+  readiness:
+    path: /internal/ready
+  replicas:
+    min: 1
+    max: 1
+  resources:
+    limits:
+      cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  kafka:
+    pool: nav-prod
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_12
+        tier: db-custom-1-3840
+        diskAutoresize: true
+        databases:
+          - name: dataprodukt-model
+            envVarPrefix: DB
+        autoBackupHour: 1
+        maintenance:
+          hour: 3
+  env:
+    - name: JAVA_OPTS
+      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
