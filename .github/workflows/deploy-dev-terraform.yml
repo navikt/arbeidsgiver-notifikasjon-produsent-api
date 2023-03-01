@@ -19,5 +19,5 @@ jobs:
       - run: terraform init
       - run: terraform fmt -check
       - run: terraform validate
-      - run: terraform plan -no-color -var-file=${ env.VAR_FILE }
-      - run: terraform apply -auto-approve -no-color -var-file=${ env.VAR_FILE }
+      - run: terraform plan -no-color -var-file=${{ env.VAR_FILE }}
+      - run: terraform apply -auto-approve -no-color -var-file=${{ env.VAR_FILE }}
