@@ -471,7 +471,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             sakId = id,
-            grupperingsid = "1",
+            grupperingsid = id.toString(),
             merkelapp = "tag",
             mottakere = listOf(
                 AltinnMottaker(
@@ -499,7 +499,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             sakId = id,
-            grupperingsid = "1",
+            grupperingsid = id.toString(),
             merkelapp = "tag",
             mottakere = listOf(
                 AltinnMottaker(
