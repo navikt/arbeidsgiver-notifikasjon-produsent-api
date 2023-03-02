@@ -537,20 +537,6 @@ class BrukerRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: NyStatusSak) {
-        val sakFinnes = database.nonTransactionalExecuteQuery(
-            """
-                    select exists(select 1 from sak where id=?) as exists
-                """, {
-                uuid(nyStatusSak.sakId)
-            }) {
-            getBoolean("exists")
-        }[0]
-
-        if (!sakFinnes) {
-            log.warn("hopper over oppdaterModellEtterNyStatusSak for sak {} som ikke finnes", nyStatusSak.sakId)
-            return
-        }
-
         database.transaction {
             executeUpdate(
                 """
@@ -591,7 +577,6 @@ class BrukerRepositoryImpl(
                     uuid(nyStatusSak.sakId)
                 }
             }
-
         }
     }
 
