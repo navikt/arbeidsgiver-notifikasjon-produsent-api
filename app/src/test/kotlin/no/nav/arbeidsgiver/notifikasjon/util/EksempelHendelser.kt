@@ -543,7 +543,7 @@ object EksempelHendelse {
         virksomhetsnummer = "1",
         produsentId = "1",
         kildeAppNavn = "1",
-        sakId = uuid("0"),
+        sakId = SakOpprettet.sakId,
         status = HendelseModel.SakStatus.MOTTATT,
         overstyrStatustekstMed = "noe",
         oppgittTidspunkt = null,
