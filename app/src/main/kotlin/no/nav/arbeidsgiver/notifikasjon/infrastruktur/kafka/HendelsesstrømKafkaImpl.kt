@@ -28,6 +28,14 @@ class HendelsesstrømKafkaImpl(
         configure = configure,
     )
 
+
+    /**
+     * 7.Sep 2022 oppstod en feil med idempotens på sak,
+     * der vi endte med å opprette en duplikat sakstatus hvor saksid peker på feil sak som ikke finnes.
+     * Ble diskutert i den gamle alerts kanalen: https://nav-it.slack.com/archives/G01KA7H11C5/p1662538289557259
+     */
+    private val brokenHendelseId = UUID.fromString("75977ac3-5ccd-42d2-ada0-93482462b8a9")!!
+
     override suspend fun forEach(
         stop: AtomicBoolean,
         body: suspend (Hendelse, HendelseMetadata) -> Unit
@@ -36,6 +44,8 @@ class HendelsesstrømKafkaImpl(
             val recordValue = record.value()
             if (recordValue == null) {
                 log.info("skipping tombstoned event key=${record.key()}")
+            } else if (recordValue.hendelseId == brokenHendelseId) {
+                /* do nothing */
             } else {
                 body(recordValue, HendelseMetadata(Instant.ofEpochMilli(record.timestamp())))
             }

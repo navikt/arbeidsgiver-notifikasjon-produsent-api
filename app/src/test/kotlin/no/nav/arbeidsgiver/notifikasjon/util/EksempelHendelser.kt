@@ -538,30 +538,6 @@ object EksempelHendelse {
         nyLenkeTilSak = null,
     )
 
-    /**
-     * 7.Sep 2022 oppstod en feil med idempotens på sak,
-     * der vi endte med å opprette en duplikat sakstatus på men hvor saksid peker på feil sak som ikke finnes.
-     * Ble diskutert i den gamle alerts kanalen: https://nav-it.slack.com/archives/G01KA7H11C5/p1662538289557259
-     *
-     * Når en konsument skal håndtere NyStatusSak er det viktig at man antar at det kan ha skjed på en sak som ikke finnes.
-     */
-    val NyStatusSakUtenSakOpprettet = HendelseModel.NyStatusSak(
-        hendelseId = hendelseId.next(),
-        virksomhetsnummer = "1",
-        produsentId = "1",
-        kildeAppNavn = "1",
-        sakId = uuid("0"),
-        status = HendelseModel.SakStatus.MOTTATT,
-        overstyrStatustekstMed = "noe",
-        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
-        mottattTidspunkt = OffsetDateTime.now(),
-        idempotensKey = IdempotenceKey.initial(),
-        hardDelete = HendelseModel.HardDeleteUpdate(
-            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
-            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
-        ),
-        nyLenkeTilSak = null,
-    )
     val NyStatusSak_NullOppgittTs = HendelseModel.NyStatusSak(
         hendelseId = hendelseId.next(),
         virksomhetsnummer = "1",
@@ -616,7 +592,6 @@ object EksempelHendelse {
         SakOpprettetNullOppgittTs,
         NyStatusSak,
         NyStatusSak_NullOppgittTs,
-        NyStatusSakUtenSakOpprettet,
         PåminnelseOpprettet,
     )
 }

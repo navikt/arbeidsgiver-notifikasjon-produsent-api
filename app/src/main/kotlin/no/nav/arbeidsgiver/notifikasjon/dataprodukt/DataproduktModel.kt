@@ -387,20 +387,6 @@ class DataproduktModel(
                 }
             }
             is NyStatusSak -> {
-                val sakFinnes = database.nonTransactionalExecuteQuery(
-                    """
-                    select exists(select 1 from sak where sak_id=?) as exists
-                """, {
-                        uuid(hendelse.sakId)
-                    }) {
-                    getBoolean("exists")
-                }[0]
-
-                if (!sakFinnes) {
-                    log.warn("hopper over oppdaterModellEtterNyStatusSak for sak {} som ikke finnes", hendelse.sakId)
-                    return
-                }
-
                 database.nonTransactionalExecuteUpdate(
                     """
                         insert into sak_status (
@@ -433,7 +419,6 @@ class DataproduktModel(
                     }
                 }
             }
-
         }
     }
 
