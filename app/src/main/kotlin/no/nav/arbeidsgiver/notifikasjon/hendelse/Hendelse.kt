@@ -230,6 +230,13 @@ object HendelseModel {
         }
     }
 
+    /**
+     * 7.Sep 2022 oppstod en feil med idempotens på sak,
+     * der vi endte med å opprette en duplikat sakstatus på men hvor saksid peker på feil sak som ikke finnes.
+     * Ble diskutert i den gamle alerts kanalen: https://nav-it.slack.com/archives/G01KA7H11C5/p1662538289557259
+     *
+     * Når en konsument skal håndtere NyStatusSak er det viktig at man antar at det kan ha skjed på en sak som ikke finnes.
+     */
     @JsonTypeName("NyStatusSak")
     data class NyStatusSak(
         override val hendelseId: UUID,

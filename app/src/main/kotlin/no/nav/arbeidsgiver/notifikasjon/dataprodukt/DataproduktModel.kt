@@ -25,11 +25,8 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.ScheduledTime
-import java.lang.RuntimeException
-import java.security.MessageDigest
 import java.time.Instant
 import java.util.*
 
@@ -390,6 +387,20 @@ class DataproduktModel(
                 }
             }
             is NyStatusSak -> {
+                val sakFinnes = database.nonTransactionalExecuteQuery(
+                    """
+                    select exists(select 1 from sak where sak_id=?) as exists
+                """, {
+                        uuid(hendelse.sakId)
+                    }) {
+                    getBoolean("exists")
+                }[0]
+
+                if (!sakFinnes) {
+                    log.warn("hopper over oppdaterModellEtterNyStatusSak for sak {} som ikke finnes", hendelse.sakId)
+                    return
+                }
+
                 database.nonTransactionalExecuteUpdate(
                     """
                         insert into sak_status (
