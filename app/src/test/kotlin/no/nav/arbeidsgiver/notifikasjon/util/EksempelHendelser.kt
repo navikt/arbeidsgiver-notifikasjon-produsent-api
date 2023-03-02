@@ -471,7 +471,7 @@ object EksempelHendelse {
             produsentId = "1",
             kildeAppNavn = "1",
             sakId = id,
-            grupperingsid = "1",
+            grupperingsid = id.toString(),
             merkelapp = "tag",
             mottakere = listOf(
                 AltinnMottaker(
@@ -488,6 +488,34 @@ object EksempelHendelse {
             tittel = "foo",
             lenke = "#foo",
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+            mottattTidspunkt = OffsetDateTime.now(),
+            hardDelete = null,
+        )
+    }
+    val SakOpprettetNullOppgittTs = withId { id ->
+        HendelseModel.SakOpprettet(
+            hendelseId = id,
+            virksomhetsnummer = "1",
+            produsentId = "1",
+            kildeAppNavn = "1",
+            sakId = id,
+            grupperingsid = id.toString(),
+            merkelapp = "tag",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+                NærmesteLederMottaker(
+                    virksomhetsnummer = "1",
+                    ansattFnr = "1",
+                    naermesteLederFnr = "2"
+                ),
+            ),
+            tittel = "foo",
+            lenke = "#foo",
+            oppgittTidspunkt = null,
             mottattTidspunkt = OffsetDateTime.now(),
             hardDelete = null,
         )
@@ -534,6 +562,23 @@ object EksempelHendelse {
         ),
         nyLenkeTilSak = null,
     )
+    val NyStatusSak_NullOppgittTs = HendelseModel.NyStatusSak(
+        hendelseId = hendelseId.next(),
+        virksomhetsnummer = "1",
+        produsentId = "1",
+        kildeAppNavn = "1",
+        sakId = uuid("0"),
+        status = HendelseModel.SakStatus.MOTTATT,
+        overstyrStatustekstMed = "noe",
+        oppgittTidspunkt = null,
+        mottattTidspunkt = OffsetDateTime.now(),
+        idempotensKey = IdempotenceKey.initial(),
+        hardDelete = HendelseModel.HardDeleteUpdate(
+            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+        ),
+        nyLenkeTilSak = null,
+    )
     val PåminnelseOpprettet = HendelseModel.PåminnelseOpprettet(
         virksomhetsnummer = "1",
         hendelseId = hendelseId.next(),
@@ -568,7 +613,9 @@ object EksempelHendelse {
         EksterntVarselVellykket,
         EksterntVarselFeilet,
         SakOpprettet,
+        SakOpprettetNullOppgittTs,
         NyStatusSak,
+        NyStatusSak_NullOppgittTs,
         NyStatusSakUtenSakOpprettet,
         PåminnelseOpprettet,
     )
