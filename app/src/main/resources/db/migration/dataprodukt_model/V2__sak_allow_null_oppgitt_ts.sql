@@ -1,0 +1,1 @@
+alter table sak alter column oppgitt_tidspunkt drop not null
