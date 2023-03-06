@@ -294,7 +294,11 @@ class DataproduktModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                         insert into notifikasjon_klikk (hendelse_id, notifikasjon_id, fnr, klikket_paa_tidspunkt) 
-                        values (?, ?, ?, ?)
+                        select val.hendelse_id, val.notifikasjon_id, val.fnr, val.klikket_paa_tidspunkt
+                        from  (
+                          values (?, ?, ?, ?)
+                        ) val (hendelse_id, notifikasjon_id, fnr, klikket_paa_tidspunkt)
+                        join  notifikasjon using (notifikasjon_id)
                         on conflict do nothing
                     """
                 ) {

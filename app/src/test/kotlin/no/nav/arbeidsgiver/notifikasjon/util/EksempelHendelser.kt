@@ -444,6 +444,13 @@ object EksempelHendelse {
         kildeAppNavn = "1",
         fnr = "42"
     )
+    val BrukerKlikketPåDeletedNotifikasjon = HendelseModel.BrukerKlikket(
+        virksomhetsnummer = "1",
+        notifikasjonId = UUID.randomUUID(),
+        hendelseId = hendelseId.next(),
+        kildeAppNavn = "1",
+        fnr = "42"
+    )
     val EksterntVarselVellykket = HendelseModel.EksterntVarselVellykket(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
@@ -586,6 +593,7 @@ object EksempelHendelse {
         SoftDelete,
         HardDelete,
         BrukerKlikket,
+        BrukerKlikketPåDeletedNotifikasjon,
         EksterntVarselVellykket,
         EksterntVarselFeilet,
         SakOpprettet,
