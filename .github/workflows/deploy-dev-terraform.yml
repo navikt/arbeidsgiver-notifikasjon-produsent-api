@@ -16,8 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
-      - run: terraform init
+      - run: terraform init -backend-config=backend.dev.conf
       - run: terraform fmt -check
       - run: terraform validate
-      - run: terraform plan -no-color -var-file=${{ env.VAR_FILE }}
-      - run: terraform apply -auto-approve -no-color -var-file=${{ env.VAR_FILE }}
+      - run: terraform apply -auto-approve -var-file=${{ env.VAR_FILE }}
