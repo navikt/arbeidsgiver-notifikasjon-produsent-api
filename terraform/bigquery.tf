@@ -103,6 +103,7 @@ resource "google_bigquery_table" "aggregat_hendelse" {
 }
 
 resource "google_bigquery_data_transfer_config" "aggregat_hendelse" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "aggregat_hendelse"
   location               = var.region
@@ -144,6 +145,7 @@ resource "google_bigquery_table" "sak" {
 }
 
 resource "google_bigquery_data_transfer_config" "sak" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "sak"
   location               = var.region
@@ -189,6 +191,7 @@ resource "google_bigquery_table" "sak_status" {
 }
 
 resource "google_bigquery_data_transfer_config" "sak_status" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "sak_status"
   location               = var.region
@@ -232,6 +235,7 @@ resource "google_bigquery_table" "hard_delete_bestilling" {
 }
 
 resource "google_bigquery_data_transfer_config" "hard_delete_bestilling" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "hard_delete_bestilling"
   location               = var.region
@@ -271,6 +275,7 @@ resource "google_bigquery_table" "mottaker_naermeste_leder" {
 }
 
 resource "google_bigquery_data_transfer_config" "mottaker_naermeste_leder" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "mottaker_naermeste_leder"
   location               = var.region
@@ -308,6 +313,7 @@ resource "google_bigquery_table" "mottaker_enkeltrettighet" {
 }
 
 resource "google_bigquery_data_transfer_config" "mottaker_enkeltrettighet" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "mottaker_enkeltrettighet"
   location               = var.region
@@ -345,6 +351,7 @@ resource "google_bigquery_table" "notifikasjon_klikk" {
 }
 
 resource "google_bigquery_data_transfer_config" "notifikasjon_klikk" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "notifikasjon_klikk"
   location               = var.region
@@ -380,6 +387,7 @@ resource "google_bigquery_table" "ekstern_varsel" {
 }
 
 resource "google_bigquery_data_transfer_config" "ekstern_varsel" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel"
   location               = var.region
@@ -439,6 +447,7 @@ resource "google_bigquery_table" "ekstern_varsel_mottaker_tlf" {
 }
 
 resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_tlf" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel_mottaker_tlf"
   location               = var.region
@@ -470,6 +479,7 @@ resource "google_bigquery_table" "ekstern_varsel_mottaker_epost" {
 }
 
 resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_epost" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel_mottaker_epost"
   location               = var.region
