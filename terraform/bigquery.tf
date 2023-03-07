@@ -43,6 +43,7 @@ resource "google_bigquery_table" "notifikasjon" {
 }
 
 resource "google_bigquery_data_transfer_config" "notifikasjon" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
   data_source_id         = "scheduled_query"
   display_name           = "notifikasjon"
   location               = var.region
