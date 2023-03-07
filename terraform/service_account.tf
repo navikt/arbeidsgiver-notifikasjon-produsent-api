@@ -5,7 +5,7 @@ resource "google_service_account" "sa-notifikasjon-dataprodukt" {
 }
 
 resource "google_project_iam_member" "sa-notifikasjon-dataprodukt-roles" {
-  for_each = toset(["bigqueryconnection.serviceAgent", "bigquery.jobUser", "bigquery.metadataViewer"])
+  for_each = toset(["bigqueryconnection.serviceAgent", "bigquery.jobUser", "bigquery.metadataViewer", "bigquery.connectionUser"])
   project  = var.project
   role     = "roles/${each.key}"
   member   = "serviceAccount:${google_service_account.sa-notifikasjon-dataprodukt.email}"
