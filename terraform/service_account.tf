@@ -11,6 +11,7 @@ resource "google_project_iam_member" "sa-notifikasjon-dataprodukt-roles" {
     "bigquery.metadataViewer",
     "bigquery.connectionUser",
     "bigquery.dataEditor",
+    "cloudsql.client",
   ])
   project = var.project
   role    = "roles/${each.key}"
