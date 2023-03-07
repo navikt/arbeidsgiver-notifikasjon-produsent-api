@@ -10,7 +10,7 @@ resource "google_project_iam_member" "sa-notifikasjon-dataprodukt-roles" {
     "bigquery.jobUser",
     "bigquery.metadataViewer",
     "bigquery.connectionUser",
-    "bigquery.tables.create",
+    "bigquery.dataEditor",
   ])
   project = var.project
   role    = "roles/${each.key}"
