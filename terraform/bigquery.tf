@@ -25,6 +25,8 @@ resource "google_bigquery_connection" "this" {
   friendly_name = "Notifikasjon dataprodukt connection"
   description   = "Connection mot postgresql-databasen til notifikasjon dataprodukt"
   location      = var.region
+  project       = var.project
+
   cloud_sql {
     instance_id = data.google_sql_database_instance.this.connection_name
     database    = "dataprodukt-model"
@@ -34,6 +36,22 @@ resource "google_bigquery_connection" "this" {
       password = google_sql_user.this.password
     }
   }
+}
+
+resource "google_bigquery_connection_iam_member" "sa_bq_connection_admin" {
+  project       = google_bigquery_connection.this.project
+  location      = google_bigquery_connection.this.location
+  connection_id = google_bigquery_connection.this.connection_id
+  role          = "roles/bigquery.connectionAdmin"
+  member        = "serviceAccount:${google_service_account.sa-notifikasjon-dataprodukt.email}"
+}
+
+resource "google_bigquery_connection_iam_member" "sa_bq_cloudsql_client" {
+  project       = google_bigquery_connection.this.project
+  location      = google_bigquery_connection.this.location
+  connection_id = google_bigquery_connection.this.connection_id
+  role          = "roles/cloudsql.client"
+  member        = "serviceAccount:${google_service_account.sa-notifikasjon-dataprodukt.email}"
 }
 
 resource "google_bigquery_table" "notifikasjon" {
