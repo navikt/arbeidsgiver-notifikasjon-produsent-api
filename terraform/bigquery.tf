@@ -40,6 +40,16 @@ resource "google_bigquery_connection" "this" {
   }
 }
 
+resource "google_project_iam_member" "sa-bq-roles" {
+  for_each = toset([
+    "roles/bigquery.connectionAdmin",
+    "cloudsql.client",
+  ])
+  project = var.project
+  role    = "roles/${each.key}"
+  member  = "serviceAccount:${google_bigquery_connection.this.cloud_sql.service_account_id}"
+}
+
 resource "google_bigquery_table" "notifikasjon" {
   dataset_id          = google_bigquery_dataset.this.dataset_id
   table_id            = "notifikasjon"
