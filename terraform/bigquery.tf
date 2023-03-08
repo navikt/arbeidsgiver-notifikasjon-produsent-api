@@ -42,7 +42,7 @@ resource "google_bigquery_connection" "this" {
 
 resource "google_project_iam_member" "sa-bq-roles" {
   for_each = toset([
-    "roles/bigquery.connectionAdmin",
+    "bigquery.connectionAdmin",
     "cloudsql.client",
   ])
   project = var.project
