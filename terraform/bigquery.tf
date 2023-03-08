@@ -30,9 +30,9 @@ resource "google_bigquery_connection" "this" {
 
 
   cloud_sql {
-    instance_id        = data.google_sql_database_instance.this.connection_name
-    database           = "dataprodukt-model"
-    type               = "POSTGRES"
+    instance_id = data.google_sql_database_instance.this.connection_name
+    database    = "dataprodukt-model"
+    type        = "POSTGRES"
     credential {
       username = google_sql_user.this.name
       password = google_sql_user.this.password
