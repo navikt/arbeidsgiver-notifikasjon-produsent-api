@@ -38,22 +38,6 @@ resource "google_bigquery_connection" "this" {
   }
 }
 
-resource "google_bigquery_connection_iam_member" "sa_bq_connection_admin" {
-  project       = google_bigquery_connection.this.project
-  location      = google_bigquery_connection.this.location
-  connection_id = google_bigquery_connection.this.connection_id
-  role          = "roles/bigquery.connectionAdmin"
-  member        = "serviceAccount:${google_service_account.sa-notifikasjon-dataprodukt.email}"
-}
-
-resource "google_bigquery_connection_iam_member" "sa_bq_cloudsql_client" {
-  project       = google_bigquery_connection.this.project
-  location      = google_bigquery_connection.this.location
-  connection_id = google_bigquery_connection.this.connection_id
-  role          = "roles/cloudsql.client"
-  member        = "serviceAccount:${google_service_account.sa-notifikasjon-dataprodukt.email}"
-}
-
 resource "google_bigquery_table" "notifikasjon" {
   dataset_id          = google_bigquery_dataset.this.dataset_id
   table_id            = "notifikasjon"
