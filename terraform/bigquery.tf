@@ -2,11 +2,12 @@ resource "google_bigquery_dataset" "this" {
   dataset_id    = "notifikasjon_platform_dataset"
   friendly_name = "Notifikasjon platform dataset"
   location      = var.region
-  #  project       = var.project
+  project       = var.project
 }
 
 data "google_sql_database_instance" "this" {
-  name = "notifikasjon-dataprodukt"
+  name    = "notifikasjon-dataprodukt"
+  project = var.project
 }
 
 resource "random_password" "this" {
@@ -29,7 +30,6 @@ resource "google_bigquery_connection" "this" {
 
 
   cloud_sql {
-    service_account_id = google_service_account.sa-notifikasjon-dataprodukt.email
     instance_id        = data.google_sql_database_instance.this.connection_name
     database           = "dataprodukt-model"
     type               = "POSTGRES"
