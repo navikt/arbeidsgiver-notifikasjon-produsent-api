@@ -47,7 +47,7 @@ resource "google_project_iam_member" "sa-bq-roles" {
   ])
   project = var.project
   role    = "roles/${each.key}"
-  member  = "serviceAccount:${google_bigquery_connection.this.cloud_sql.service_account_id}"
+  member  = "serviceAccount:${google_bigquery_connection.this.cloud_sql[0].service_account_id}"
 }
 
 resource "google_bigquery_table" "notifikasjon" {
