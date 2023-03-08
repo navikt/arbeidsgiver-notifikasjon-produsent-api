@@ -27,10 +27,12 @@ resource "google_bigquery_connection" "this" {
   location      = var.region
   project       = var.project
 
+
   cloud_sql {
-    instance_id = data.google_sql_database_instance.this.connection_name
-    database    = "dataprodukt-model"
-    type        = "POSTGRES"
+    service_account_id = google_service_account.sa-notifikasjon-dataprodukt.email
+    instance_id        = data.google_sql_database_instance.this.connection_name
+    database           = "dataprodukt-model"
+    type               = "POSTGRES"
     credential {
       username = google_sql_user.this.name
       password = google_sql_user.this.password
