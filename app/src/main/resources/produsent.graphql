@@ -885,6 +885,7 @@ input PaaminnelseEksterntVarselEpostInput {
 input EksterntVarselInput @ExactlyOneFieldGiven {
     sms: EksterntVarselSmsInput
     epost: EksterntVarselEpostInput
+    altinntjeneste: EksterntVarselAltinntjenesteInput
 }
 
 """
@@ -963,9 +964,38 @@ input EksterntVarselEpostInput {
     sendetidspunkt: SendetidspunktInput!
 }
 
-input SmsMottakerInput @ExactlyOneFieldGiven {
+"""
+Med denne typen vil varsel sendes til virksomheten vha tjenesten i Altinn.
+Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det mest sannsynlig blir sendt som epost, men i enkelte tilfeller
+vil bli sendt sms.
+
+De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med tjenestekoden som oppgis) vil bli varslet.
+Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
+
+
+TODO: note to self, remove below
+TokenTextOnly mal:
+type   | subject | notificationText
+SMS    |         | {0}{1}
+EMAIL  | {0}     | {1}
+"""
+input EksterntVarselAltinntjenesteInput {
+    mottaker: AltinntjenesteMottakerInput!
+    """
+    Subject/emne til e-posten, eller tekst i sms
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    tittel: String!
+    """
+    Kroppen til e-posten. Dersom det sendes SMS blir dette feltet lagt til i kroppen på sms etter tittel
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    innhold: String!
+    sendetidspunkt: SendetidspunktInput!
+}
+
+input SmsMottakerInput {
     kontaktinfo: SmsKontaktInfoInput
-    # altinntjeneste: Altinntjeneste
 }
 
 input SmsKontaktInfoInput {
@@ -974,9 +1004,8 @@ input SmsKontaktInfoInput {
     tlf: String!
 }
 
-input EpostMottakerInput @ExactlyOneFieldGiven {
+input EpostMottakerInput {
     kontaktinfo: EpostKontaktInfoInput
-    # altinntjeneste: Altinntjeneste
 }
 
 input EpostKontaktInfoInput {
@@ -985,11 +1014,10 @@ input EpostKontaktInfoInput {
     epostadresse: String!
 }
 
-# input Altinntjeneste {
-#     virksomhetsnummer: String!
-#     serviceCode: String!
-#     serviceCodeEdition: String!
-# }
+input AltinntjenesteMottakerInput {
+    serviceCode: String!
+    serviceEdition: String!
+}
 
 """
 Hvem som skal se notifikasjonen.

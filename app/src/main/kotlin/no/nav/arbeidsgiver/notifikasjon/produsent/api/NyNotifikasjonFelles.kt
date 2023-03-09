@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
@@ -14,6 +15,7 @@ import java.util.*
 internal data class EksterntVarselInput(
     val sms: Sms?,
     val epost: Epost?,
+    val altinntjeneste: Altinntjeneste?,
 ) {
 
     fun tilDomene(virksomhetsnummer: String): EksterntVarsel {
@@ -22,6 +24,9 @@ internal data class EksterntVarselInput(
         }
         if (epost != null) {
             return epost.tilDomene(virksomhetsnummer)
+        }
+        if (altinntjeneste != null) {
+            return altinntjeneste.tilDomene(virksomhetsnummer)
         }
         throw RuntimeException("Feil format")
     }
@@ -33,7 +38,7 @@ internal data class EksterntVarselInput(
     ) {
 
         fun tilDomene(virksomhetsnummer: String): SmsVarselKontaktinfo {
-            val (sendevindu, sendeTidspunkt) = sendetidspunkt.somSakOpprettetHendelse()
+            val (sendevindu, sendeTidspunkt) = sendetidspunkt.somVinduOgTidspunkt()
             if (mottaker.kontaktinfo != null) {
                 return SmsVarselKontaktinfo(
                     varselId = UUID.randomUUID(),
@@ -78,7 +83,7 @@ internal data class EksterntVarselInput(
         val sendetidspunkt: SendetidspunktInput,
     ) {
         fun tilDomene(virksomhetsnummer: String): EpostVarselKontaktinfo {
-            val (sendevindu, sendeTidspunkt) = sendetidspunkt.somSakOpprettetHendelse()
+            val (sendevindu, sendeTidspunkt) = sendetidspunkt.somVinduOgTidspunkt()
             if (mottaker.kontaktinfo != null) {
                 return EpostVarselKontaktinfo(
                     varselId = UUID.randomUUID(),
@@ -100,6 +105,32 @@ internal data class EksterntVarselInput(
         data class Kontaktinfo(
             val fnr: String?,
             val epostadresse: String,
+        )
+    }
+
+    data class Altinntjeneste(
+        val mottaker: Mottaker,
+        val tittel: String,
+        val innhold: String,
+        val sendetidspunkt: SendetidspunktInput,
+    ) {
+        fun tilDomene(virksomhetsnummer: String): AltinntjenesteVarselKontaktinfo {
+            val (sendevindu, sendeTidspunkt) = sendetidspunkt.somVinduOgTidspunkt()
+            return AltinntjenesteVarselKontaktinfo(
+                varselId = UUID.randomUUID(),
+                serviceCode = mottaker.serviceCode,
+                serviceEdition = mottaker.serviceEdition,
+                virksomhetsnummer = virksomhetsnummer,
+                tittel = tittel,
+                innhold = innhold,
+                sendevindu = sendevindu,
+                sendeTidspunkt = sendeTidspunkt
+            )
+        }
+
+        data class Mottaker(
+            val serviceCode: String,
+            val serviceEdition: String,
         )
     }
 }
@@ -160,7 +191,7 @@ internal data class NyEksterntVarselResultat(
     val id: UUID,
 )
 
-internal fun EksterntVarselInput.SendetidspunktInput.somSakOpprettetHendelse(): Pair<EksterntVarselSendingsvindu, LocalDateTime?> {
+internal fun EksterntVarselInput.SendetidspunktInput.somVinduOgTidspunkt(): Pair<EksterntVarselSendingsvindu, LocalDateTime?> {
     val sendevindu = this.sendevindu?.somDomene ?: EksterntVarselSendingsvindu.SPESIFISERT
 
     if (sendevindu == EksterntVarselSendingsvindu.SPESIFISERT) {
