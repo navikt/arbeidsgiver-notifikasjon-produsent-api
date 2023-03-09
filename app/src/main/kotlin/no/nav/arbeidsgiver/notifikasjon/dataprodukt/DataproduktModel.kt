@@ -287,7 +287,11 @@ class DataproduktModel(
                     uuid(hendelse.notifikasjonId)
                 }
 
-                updateEksternVarsel(hendelse.eksterneVarsler.map { it.varselId }, "UTSENDING_BESTILT")
+                updateEksternVarsel(
+                    hendelse.eksterneVarsler.map { it.varselId },
+                    "UTSENDING_BESTILT",
+                    timestamp = metadata.timestamp
+                )
             }
 
             is BrukerKlikket -> {
@@ -310,10 +314,10 @@ class DataproduktModel(
 
             }
             is EksterntVarselVellykket -> {
-                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET")
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET", null, metadata.timestamp)
             }
             is EksterntVarselFeilet -> {
-                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode)
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode,  metadata.timestamp)
             }
 
             is SoftDelete -> {
@@ -440,19 +444,26 @@ class DataproduktModel(
         }
     }
 
-    private suspend fun updateEksternVarsel(eksterneVarselIder: List<UUID>, statusUtsending: String, feilkode: String? = null) =
+    private suspend fun updateEksternVarsel(
+        eksterneVarselIder: List<UUID>,
+        statusUtsending: String,
+        feilkode: String? = null,
+        timestamp: Instant
+    ) =
         database.nonTransactionalExecuteBatch(
             """
                            update ekstern_varsel
                            set 
                             status_utsending = ?,
-                            feilkode = ?
+                            feilkode = ?,
+                            altinn_svar_timestamp = ?
                            where varsel_id = ?
                         """,
             eksterneVarselIder
         ) {
             text(statusUtsending)
             nullableText(feilkode)
+            instantAsText(timestamp)
             uuid(it)
         }
 
