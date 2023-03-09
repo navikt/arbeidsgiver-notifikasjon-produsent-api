@@ -287,11 +287,7 @@ class DataproduktModel(
                     uuid(hendelse.notifikasjonId)
                 }
 
-                updateEksternVarsel(
-                    hendelse.eksterneVarsler.map { it.varselId },
-                    "UTSENDING_BESTILT",
-                    timestamp = metadata.timestamp
-                )
+                updateEksternVarsel(hendelse.eksterneVarsler.map { it.varselId }, "UTSENDING_BESTILT")
             }
 
             is BrukerKlikket -> {
@@ -448,7 +444,7 @@ class DataproduktModel(
         eksterneVarselIder: List<UUID>,
         statusUtsending: String,
         feilkode: String? = null,
-        timestamp: Instant
+        timestamp: Instant? = null,
     ) =
         database.nonTransactionalExecuteBatch(
             """
@@ -463,7 +459,7 @@ class DataproduktModel(
         ) {
             text(statusUtsending)
             nullableText(feilkode)
-            instantAsText(timestamp)
+            nullableInstantAsText(timestamp)
             uuid(it)
         }
 
