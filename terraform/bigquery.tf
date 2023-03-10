@@ -2,11 +2,12 @@ resource "google_bigquery_dataset" "this" {
   dataset_id    = "notifikasjon_platform_dataset"
   friendly_name = "Notifikasjon platform dataset"
   location      = var.region
-  #  project       = var.project
+  project       = var.project
 }
 
 data "google_sql_database_instance" "this" {
-  name = "notifikasjon-dataprodukt"
+  name    = "notifikasjon-dataprodukt"
+  project = var.project
 }
 
 resource "random_password" "this" {
@@ -25,6 +26,9 @@ resource "google_bigquery_connection" "this" {
   friendly_name = "Notifikasjon dataprodukt connection"
   description   = "Connection mot postgresql-databasen til notifikasjon dataprodukt"
   location      = var.region
+  project       = var.project
+
+
   cloud_sql {
     instance_id = data.google_sql_database_instance.this.connection_name
     database    = "dataprodukt-model"
@@ -34,6 +38,16 @@ resource "google_bigquery_connection" "this" {
       password = google_sql_user.this.password
     }
   }
+}
+
+resource "google_project_iam_member" "sa-bq-roles" {
+  for_each = toset([
+    "bigquery.connectionAdmin",
+    "cloudsql.client",
+  ])
+  project = var.project
+  role    = "roles/${each.key}"
+  member  = "serviceAccount:${google_bigquery_connection.this.cloud_sql[0].service_account_id}"
 }
 
 resource "google_bigquery_table" "notifikasjon" {
@@ -459,13 +473,13 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_tlf" {
     query                           = <<EOF
     SELECT
         varsel_id,
-        tlf
+        tlf_pseud
      FROM EXTERNAL_QUERY(
     '${google_bigquery_connection.this.location}.${google_bigquery_connection.this.connection_id}',
     '''
     select
         varsel_id::text,
-        tlf
+        tlf_pseud
     from ekstern_varsel_mottaker_tlf
     ''');
 EOF
@@ -491,13 +505,13 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_epost" 
     query                           = <<EOF
     SELECT
         varsel_id,
-        epost
+        epost_pseud
      FROM EXTERNAL_QUERY(
     '${google_bigquery_connection.this.location}.${google_bigquery_connection.this.connection_id}',
     '''
     select
         varsel_id::text,
-        epost
+        epost_pseud
     from ekstern_varsel_mottaker_epost
     ''');
 EOF
