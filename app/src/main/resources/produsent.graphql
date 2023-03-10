@@ -972,12 +972,10 @@ vil bli sendt sms.
 De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med tjenestekoden som oppgis) vil bli varslet.
 Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
 
-
-TODO: note to self, remove below
-TokenTextOnly mal:
-type   | subject | notificationText
-SMS    |         | {0}{1}
-EMAIL  | {0}     | {1}
+Malen som benyttes er TokenTextOnly og den ser slik ut:
+type   | subject  | notificationText
+SMS    |          | {tittel}{innhold}
+EMAIL  | {tittel} | {innhold}
 """
 input EksterntVarselAltinntjenesteInput {
     mottaker: AltinntjenesteMottakerInput!
@@ -994,7 +992,7 @@ input EksterntVarselAltinntjenesteInput {
     sendetidspunkt: SendetidspunktInput!
 }
 
-input SmsMottakerInput {
+input SmsMottakerInput @ExactlyOneFieldGiven {
     kontaktinfo: SmsKontaktInfoInput
 }
 
@@ -1004,7 +1002,7 @@ input SmsKontaktInfoInput {
     tlf: String!
 }
 
-input EpostMottakerInput {
+input EpostMottakerInput @ExactlyOneFieldGiven {
     kontaktinfo: EpostKontaktInfoInput
 }
 
