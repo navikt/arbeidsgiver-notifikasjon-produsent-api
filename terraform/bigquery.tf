@@ -473,13 +473,13 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_tlf" {
     query                           = <<EOF
     SELECT
         varsel_id,
-        tlf
+        tlf_pseud
      FROM EXTERNAL_QUERY(
     '${google_bigquery_connection.this.location}.${google_bigquery_connection.this.connection_id}',
     '''
     select
         varsel_id::text,
-        tlf
+        tlf_pseud
     from ekstern_varsel_mottaker_tlf
     ''');
 EOF
@@ -505,13 +505,13 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_epost" 
     query                           = <<EOF
     SELECT
         varsel_id,
-        epost
+        epost_pseud
      FROM EXTERNAL_QUERY(
     '${google_bigquery_connection.this.location}.${google_bigquery_connection.this.connection_id}',
     '''
     select
         varsel_id::text,
-        epost
+        epost_pseud
     from ekstern_varsel_mottaker_epost
     ''');
 EOF
