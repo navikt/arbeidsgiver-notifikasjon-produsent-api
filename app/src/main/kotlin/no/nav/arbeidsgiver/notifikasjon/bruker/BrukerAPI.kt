@@ -91,6 +91,13 @@ object BrukerAPI {
         val sakstyper: List<Sakstype>,
         val feilAltinn: Boolean,
         val totaltAntallSaker: Int,
+        val oppgaveTilstandInfo: List<OppgaveTilstandInfo>
+    )
+
+    @JsonTypeName("OppgaveTilstandInfo")
+    data class OppgaveTilstandInfo (
+        val tilstand: Notifikasjon.Oppgave.Tilstand,
+        val antall: Int,
     )
 
     @JsonTypeName("OppgaveMetadata")
@@ -111,7 +118,6 @@ object BrukerAPI {
         val frister: List<LocalDate?>,
         val oppgaver: List<OppgaveMetadata>,
     ) : WithVirksomhet
-
 
     @JsonTypeName("Sakstype")
     data class Sakstype(
@@ -340,6 +346,7 @@ object BrukerAPI {
                 sortering = env.getTypedArgument("sortering"),
                 offset = env.getArgumentOrDefault("offset", 0) ?: 0,
                 limit = env.getArgumentOrDefault("limit", 3) ?: 3,
+                oppgaveTilstand = env.getTypedArgumentOrNull("oppgaveTilstand"),
             )
             val saker = sakerResultat.saker.map {
                 Sak(
@@ -372,7 +379,8 @@ object BrukerAPI {
                 saker = saker,
                 sakstyper = sakerResultat.sakstyper.map { Sakstype(navn = it.navn, antall = it.antall) },
                 feilAltinn = tilganger.harFeil,
-                totaltAntallSaker = sakerResultat.totaltAntallSaker
+                totaltAntallSaker = sakerResultat.totaltAntallSaker,
+                oppgaveTilstandInfo = listOf() //TODO Fikse dette!
             )
         }
     }

@@ -23,6 +23,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import org.json.simple.JSONArray
+import org.json.simple.JSONObject
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -38,7 +40,8 @@ interface BrukerRepository {
         val totaltAntallSaker: Int,
         val saker: List<BrukerModel.Sak>,
         val sakstyper: List<Sakstype>,
-    )
+        val oppgaveTilstanderMedAntall: Map<BrukerModel.Oppgave.Tilstand, Int>,
+        )
 
     class Sakstype(
         val navn: String,
@@ -54,6 +57,7 @@ interface BrukerRepository {
         offset: Int,
         limit: Int,
         sortering: BrukerAPI.SakSortering,
+        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): HentSakerResultat
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -170,6 +174,7 @@ class BrukerRepositoryImpl(
         offset: Int,
         limit: Int,
         sortering: BrukerAPI.SakSortering,
+        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): BrukerRepository.HentSakerResultat {
         return timer.coRecord {
             val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
@@ -295,14 +300,21 @@ class BrukerRepositoryImpl(
                                 s.sist_endret,
                                 o.oppgaver,
                                 (select count(*)
-                                 from unnest(o.oppgaver) as o2
-                                 where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
+                                     from unnest(o.oppgaver) as o2
+                                     where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
                                 ) as nye_oppgaver,
                                 (select o2 ->> 'frist'
-                                from unnest(o.oppgaver) as o2
-                                where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
-                                order by o2 ->> 'frist' nulls last
-                                limit 1) as frist
+                                    from unnest(o.oppgaver) as o2
+                                    where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
+                                    order by o2 ->> 'frist' nulls last
+                                    limit 1
+                                ) as frist,
+                                (select json_agg(jsonb_build_object('tilstand', tilstand, 'antall', antall)) 
+                                    from (select o2 ->> 'tilstand' as tilstand, count(*) as antall 
+                                        from unnest(o.oppgaver) as o2
+                                        group by o2 ->> 'tilstand'
+                                    ) as oppgave_tilstand
+                                ) as oppgave_tilstander
                             from mine_saker_ikke_paginert s
                             cross join lateral (
                                 select array (
@@ -326,6 +338,16 @@ class BrukerRepositoryImpl(
                         )
                     select
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
+                        
+                         (select json_agg(json_build_object('tilstand', tilstand, 'antall', antall)) 
+                            from (
+                                select
+                                     oppgave_tilstand->>'tilstand' as tilstand,
+                                     sum((oppgave_tilstand->>'antall')::int) as antall
+                                    from mine_saksoppgaver, json_array_elements(oppgave_tilstander) as oppgave_tilstand
+                                    group by oppgave_tilstand->>'tilstand'
+                            ) subquery   
+                        ) as mine_oppgaver_tilstander,
                         (select coalesce(
                             jsonb_agg(jsonb_build_object(
                                 'sakId', "sakId",
@@ -361,7 +383,8 @@ class BrukerRepositoryImpl(
                 BrukerRepository.HentSakerResultat(
                     totaltAntallSaker = getInt("totalt_antall_saker"),
                     saker = laxObjectMapper.readValue(getString("saker")),
-                    sakstyper = laxObjectMapper.readValue(getString("sakstyper"))
+                    sakstyper = laxObjectMapper.readValue(getString("sakstyper")),
+                    oppgaveTilstanderMedAntall = mapOf()//laxObjectMapper.readValue(getString("mine_oppgaver_tilstander"))
                 )
             }
             return@coRecord rows.first()
