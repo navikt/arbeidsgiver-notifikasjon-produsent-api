@@ -380,7 +380,7 @@ object BrukerAPI {
                 sakstyper = sakerResultat.sakstyper.map { Sakstype(navn = it.navn, antall = it.antall) },
                 feilAltinn = tilganger.harFeil,
                 totaltAntallSaker = sakerResultat.totaltAntallSaker,
-                oppgaveTilstandInfo = listOf() //TODO Fikse dette!
+                oppgaveTilstandInfo = sakerResultat.oppgaveTilstanderMedAntall.entries.map{ (tilstand, antall) -> OppgaveTilstandInfo(tilstand.tilBrukerAPI(), antall)}
             )
         }
     }

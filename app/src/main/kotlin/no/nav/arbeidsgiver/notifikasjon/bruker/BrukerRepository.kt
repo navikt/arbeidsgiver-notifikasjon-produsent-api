@@ -23,8 +23,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import org.json.simple.JSONArray
-import org.json.simple.JSONObject
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -339,7 +337,7 @@ class BrukerRepositoryImpl(
                     select
                         (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
                         
-                         (select json_agg(json_build_object('tilstand', tilstand, 'antall', antall)) 
+                         (select coalesce(json_object_agg( tilstand,  antall), '{}'::json)
                             from (
                                 select
                                      oppgave_tilstand->>'tilstand' as tilstand,
@@ -384,7 +382,7 @@ class BrukerRepositoryImpl(
                     totaltAntallSaker = getInt("totalt_antall_saker"),
                     saker = laxObjectMapper.readValue(getString("saker")),
                     sakstyper = laxObjectMapper.readValue(getString("sakstyper")),
-                    oppgaveTilstanderMedAntall = mapOf()//laxObjectMapper.readValue(getString("mine_oppgaver_tilstander"))
+                    oppgaveTilstanderMedAntall = laxObjectMapper.readValue(getString("mine_oppgaver_tilstander"))
                 )
             }
             return@coRecord rows.first()
