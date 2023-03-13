@@ -286,7 +286,7 @@ class BrukerRepositoryImpl(
                             from mottaker_digisyfo_for_fnr
                             where fnr_leder = ? and notifikasjon_id is not null
                         ),
-                        mine_saksoppgaver as (
+                        mine_saker_med_oppgaver as (
                             select
                                 s."sakId",
                                 s.virksomhetsnummer,
@@ -331,6 +331,11 @@ class BrukerRepositoryImpl(
                                     order by n.frist nulls last
                                 ) as oppgaver
                             ) o
+                            where exists(
+                                select * 
+                                from unnest(o.oppgaver) as op
+                                where op->> 'tilstand' = any(?)
+                            )
                             order by ${sorteringSql}
                             offset ? limit ? 
                         )
@@ -342,7 +347,7 @@ class BrukerRepositoryImpl(
                                 select
                                      oppgave_tilstand->>'tilstand' as tilstand,
                                      sum((oppgave_tilstand->>'antall')::int) as antall
-                                    from mine_saksoppgaver, json_array_elements(oppgave_tilstander) as oppgave_tilstand
+                                    from mine_saker_med_oppgaver, json_array_elements(oppgave_tilstander) as oppgave_tilstand
                                     group by oppgave_tilstand->>'tilstand'
                             ) subquery   
                         ) as mine_oppgaver_tilstander,
@@ -359,7 +364,7 @@ class BrukerRepositoryImpl(
                                 'oppgaver', oppgaver
                             )),  
                             '[]'::jsonb
-                        ) from mine_saksoppgaver) as saker,
+                        ) from mine_saker_med_oppgaver) as saker,
                         (select 
                             coalesce(jsonb_agg(jsonb_build_object(
                                 'navn', merkelapp,
@@ -374,6 +379,7 @@ class BrukerRepositoryImpl(
                     tekstsoekElementer.forEach { text(it) }
                     nullableStringList(sakstyper)
                     text(fnr)
+                    enumAsTextList(oppgaveTilstand ?: BrukerModel.Oppgave.Tilstand.values().toList())
                     integer(offset)
                     integer(limit)
                 }
