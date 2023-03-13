@@ -310,10 +310,10 @@ class DataproduktModel(
 
             }
             is EksterntVarselVellykket -> {
-                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET")
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET", null, metadata.timestamp)
             }
             is EksterntVarselFeilet -> {
-                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode)
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode,  metadata.timestamp)
             }
 
             is SoftDelete -> {
@@ -360,15 +360,14 @@ class DataproduktModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                         insert into sak (
-                            sak_id, grupperings_id, virksomhetsnummer, produsent_id, merkelapp, tittel, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
+                            sak_id, grupperings_id, produsent_id, merkelapp, tittel, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
                         ) 
-                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?)
                         on conflict do nothing
                     """
                 ) {
                     uuid(hendelse.sakId)
                     nullableText(hendelse.grupperingsid)
-                    text(hendelse.virksomhetsnummer)
                     text(hendelse.produsentId)
                     text(hendelse.merkelapp)
                     text(hendelse.tittel)
@@ -441,19 +440,26 @@ class DataproduktModel(
         }
     }
 
-    private suspend fun updateEksternVarsel(eksterneVarselIder: List<UUID>, statusUtsending: String, feilkode: String? = null) =
+    private suspend fun updateEksternVarsel(
+        eksterneVarselIder: List<UUID>,
+        statusUtsending: String,
+        feilkode: String? = null,
+        timestamp: Instant? = null,
+    ) =
         database.nonTransactionalExecuteBatch(
             """
                            update ekstern_varsel
                            set 
                             status_utsending = ?,
-                            feilkode = ?
+                            feilkode = ?,
+                            altinn_svar_timestamp = ?
                            where varsel_id = ?
                         """,
             eksterneVarselIder
         ) {
             text(statusUtsending)
             nullableText(feilkode)
+            nullableInstantAsText(timestamp)
             uuid(it)
         }
 
