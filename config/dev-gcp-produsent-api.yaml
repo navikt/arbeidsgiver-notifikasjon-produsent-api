@@ -74,9 +74,14 @@ spec:
         - application: toi-arbeidsgiver-notifikasjon
           namespace: toi
           cluster: dev-gcp
-
-        - application: crm-arbeidsgiver-notifikasjon
-          namespace: team-dialog
+          
+        - application: saas-proxy
+          namespace: teamcrm
           cluster: dev-gcp
+
+        - application: salesforce
+          namespace: teamcrm
+          cluster: dev-external
+
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
