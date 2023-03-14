@@ -201,15 +201,13 @@ class BrukerRepositoryImpl(
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
                 .ifNotBlank { "where $it" }
 
-            val oppgaveTilstandSql = if (oppgaveTilstand?.size ?:0   > 0) {
-                "where exists(" +
-                        "select *" +
-                        "from unnest(o.oppgaver) as op" +
-                        "where op->> 'tilstand' = any($oppgaveTilstand)" +
-                        ")"
-            } else {
-                ""
-            }
+            val oppgaveTilstandSql = if ((oppgaveTilstand?.size ?: 0) > 0) {
+                """where exists(
+                        select *
+                        from unnest(o.oppgaver) as op
+                        where op->> 'tilstand' = any($oppgaveTilstand)
+                        )"""
+            } else ""
 
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
