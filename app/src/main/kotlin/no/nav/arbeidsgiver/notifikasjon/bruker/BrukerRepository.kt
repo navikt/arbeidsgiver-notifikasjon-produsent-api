@@ -201,13 +201,14 @@ class BrukerRepositoryImpl(
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
                 .ifNotBlank { "where $it" }
 
-            val oppgaveTilstandSql = if ((oppgaveTilstand?.size ?: 0) > 0) {
+            val oppgaveTilstandSql = if (oppgaveTilstand != null) {
                 """where exists(
                         select *
                         from unnest(o.oppgaver) as op
-                        where op->> 'tilstand' = any($oppgaveTilstand)
+                        where op->> 'tilstand' = any(?)
                         )"""
             } else ""
+
 
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
@@ -383,6 +384,7 @@ class BrukerRepositoryImpl(
                     tekstsoekElementer.forEach { text(it) }
                     nullableStringList(sakstyper)
                     text(fnr)
+                    if (oppgaveTilstand != null) enumAsTextList(oppgaveTilstand)
                     integer(offset)
                     integer(limit)
                 }

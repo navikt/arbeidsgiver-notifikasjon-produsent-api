@@ -133,11 +133,11 @@ class OppgaveTilstandTests : DescribeSpec({
     }
 
     describe("Sak med oppgave med frist og påminnelse") {
-        val sak1 = opprettSak("1")
-        opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
-        opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
-        opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
-        opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtgått(it!!) }
+        val sak = opprettSak("1")
+        opprettOppgave(sak, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
+        opprettOppgave(sak, LocalDate.parse("2023-05-15"))
+        opprettOppgave(sak, LocalDate.parse("2023-05-15"))
+        opprettOppgave(sak, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtgått(it!!) }
 
         val res =
             engine.hentSaker().getTypedContent<Set<Object>>("$.saker.oppgaveTilstandInfo")
@@ -158,8 +158,27 @@ class OppgaveTilstandTests : DescribeSpec({
             )
         )
     }
-}
-)
+
+    describe("Sak med oppgave med frist med filter"){
+        val sak1 = opprettSak("1")
+        opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
+        opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
+        opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
+        opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtgått(it!!) }
+
+        val sak2 = opprettSak("2")
+        opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
+        opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtført(it!!) }
+        opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtgått(it!!) }
+
+        val res =
+            engine.hentSakerMedFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
+
+
+        res shouldBe listOf(uuid(sak1).toString())
+    }
+})
+
 
 private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
     brukerApi(
@@ -176,3 +195,15 @@ private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
     )
 
 
+private fun TestApplicationEngine.hentSakerMedFilter(): TestApplicationResponse =
+    brukerApi(
+        """
+            {   
+                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST, oppgaveTilstand: [NY]){
+                    saker {
+                        id 
+                    }
+                }
+            }
+        """.trimIndent()
+    )
