@@ -144,7 +144,7 @@ val ARBEIDSGIVERDIALOG = Produsent(
     accessPolicy = basedOnEnv(
         prod = { listOf() },
         other = { listOf(
-            "dev-gcp:team-dialog:crm-arbeidsgiver-notifikasjon",
+            "dev-external:teamcrm:salesforce",
         ) },
     ),
     tillatteMerkelapper = listOf(
