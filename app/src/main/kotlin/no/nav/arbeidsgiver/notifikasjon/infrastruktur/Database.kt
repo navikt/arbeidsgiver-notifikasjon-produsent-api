@@ -296,8 +296,8 @@ class ParameterSetters(
             laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)
         )
 
-    fun enumAsTextList(value: List<Enum<*>>) {
-        stringList(value.map { it.toString() })
+    fun nullableEnumAsTextList(value: List<Enum<*>>?) {
+        nullableStringList(value?.map { it.toString() })
     }
 
     fun stringList(value: List<String>) {
