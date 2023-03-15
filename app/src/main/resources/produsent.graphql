@@ -843,6 +843,7 @@ input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
 input PaaminnelseEksterntVarselInput @ExactlyOneFieldGiven {
     sms: PaaminnelseEksterntVarselSmsInput
     epost: PaaminnelseEksterntVarselEpostInput
+    altinntjeneste: PaaminnelseEksterntVarselAltinntjenesteInput
 }
 
 input PaaminnelseEksterntVarselSmsInput {
@@ -873,6 +874,27 @@ input PaaminnelseEksterntVarselEpostInput {
     OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker kanal.
     """
     epostHtmlBody: String!
+
+    """
+    Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+    til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+    det ved første mulighet.
+    """
+    sendevindu: Sendevindu!
+}
+
+input PaaminnelseEksterntVarselAltinntjenesteInput {
+    mottaker: AltinntjenesteMottakerInput!
+    """
+    Subject/emne til e-posten, eller tekst i sms
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    tittel: String!
+    """
+    Kroppen til e-posten. Dersom det sendes SMS blir dette feltet lagt til i kroppen på sms etter tittel
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    innhold: String!
 
     """
     Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn
