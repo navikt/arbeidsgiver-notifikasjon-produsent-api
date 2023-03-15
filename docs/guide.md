@@ -318,8 +318,104 @@ Se bruksvilkårene for flere detaljer.
 
 Vi støtter ekstern varsling der dere som produsent har kontaktinformasjon (telefonnummer eller e-postadresse) til den som skal varsles. 
 
-Vil dere sende sms/epost til arbeidsgivere basert på tjenestekode i Altinn eller KoFuVi-registeret, så ta kontakt med oss,
-så vi kan prioritere utvikling av dette.
+Vil dere sende sms/epost til arbeidsgivere basert på tjenestekode i Altinn se neste avsnitt 
+
+```graphql
+mutation OpprettNyBeskjed(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $lenke: String!
+  $epostHtmlBody: String!
+  $ansattFnr: String!
+  $naermesteLederFnr: String!
+  $tlf: String!
+  $epost: String!
+) {
+  nyBeskjed(
+    nyBeskjed: {
+      metadata: { eksternId: $eksternId, virksomhetsnummer: $virksomhetsnummer }
+      mottakere: [{
+        naermesteLeder: {
+          ansattFnr: $ansattFnr
+          naermesteLederFnr: $naermesteLederFnr
+        }
+      }]
+      notifikasjon: {
+        merkelapp: "Sykemelding"
+        tekst: "Du har mottatt en ny sykemelding."
+        lenke: $lenke
+      }
+      eksterneVarsler: [
+        {
+          sms: {
+            mottaker: {
+              kontaktinfo: {
+                tlf: $tlf
+              }
+            }
+            smsTekst: "Du har en ny sykemelding. Logg inn på NAV på Min side – arbeidsgiver for å finne den"
+            sendetidspunkt: {
+              sendevindu: NKS_AAPNINGSTID
+            }
+          }
+        }
+        {
+          epost: {
+            mottaker: {
+              kontaktinfo: {
+                epostadresse: $epost
+              }
+            }
+            epostTittel: "Du har en ny sykemelding."
+            epostHtmlBody: $epostHtmlBody
+            sendetidspunkt: {
+              sendevindu: LOEPENDE
+            }
+          }
+        }
+      ]
+    }
+  ) {
+    __typename
+    ... on NyBeskjedVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+```
+med variabler
+```json
+{
+  "eksternId": "1234556",
+  "virksomhetsnummer":"012345678",
+  "lenke": "https://dev.nav.no/sykemelding/12345",
+  "tlf": "123445",
+  "epost": "foobar@baz.no",
+  "epostHtmlBody": "<h1>Du har en ny sykemelding.</h1><br>Logg inn på NAV sin hjemmeside som arbeidsgiver. <br> Hilsen NAV",
+  "ansattFnr": "1234",
+  "naermesteLederFnr": "1234"
+}
+```
+
+## Hvordan opprette beskjed med varsling mot tjenestekode i Altinn (enkelttjeneste)
+
+Vi støtter også ekstern varsling der dere som produsent ønsker å varsle alle med tilgang til en enkeltrettighet på en virksomhet. 
+Her gjelder samme retningslinjer og bruksvilkår hva gjelder personopplysninger.
+
+Når dere bruker denne varslingsmekanismen så kan ikke vi garantere om det er SMS eller Epost som blir sendt, men vi vil si til Altinn at de
+skal velge Epost dersom den er tilgjengelig. Hvis en bruker i Altinn har oppgitt SMS og ikke Epost i tilknytning til tjenesten på den gitte virksomheten så 
+vil de motta SMS. Det er derfor viktig at man tenker over tittel og innhold slik at den blir forståelig uavhengig av medium.
+Dvs samme tittel og innhold blir brukt i begge tilfeller i altinn, og reglene for hvordan formatering blir er definert der som følger:
+
+type   | subject  | notificationText
+SMS    |          | {tittel}{innhold}
+EMAIL  | {tittel} | {innhold}
+
+De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med tjenestekoden som oppgis) vil bli varslet.
+Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
 
 ```graphql
 mutation OpprettNyBeskjed(
