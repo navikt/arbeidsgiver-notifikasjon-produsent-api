@@ -69,16 +69,16 @@ jobs:
       - run: mvn -B package
         working-directory: app
 
-      - name: Add coverage to PR
-        id: jacoco
-        uses: madrapps/jacoco-report@v1.2
-        if: github.event_name == 'pull_request'
-        with:
-          paths: ${{ github.workspace }}/app/target/site/jacoco/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 0
-          min-coverage-changed-files: 0
-          title: ":space_invader: jacococo go nogo :space_invader:"
+#      - name: Add coverage to PR
+#        id: jacoco
+#        uses: madrapps/jacoco-report@v1.2
+#        if: github.event_name == 'pull_request'
+#        with:
+#          paths: ${{ github.workspace }}/app/target/site/jacoco/jacoco.xml
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          min-coverage-overall: 0
+#          min-coverage-changed-files: 0
+#          title: ":space_invader: jacococo go nogo :space_invader:"
 
       - name: Login to GitHub Package Repository
         if: github.event_name != 'pull_request'
