@@ -177,7 +177,7 @@ internal class MutationNyOppgave(
                     serviceCode = mottaker.serviceCode,
                     serviceEdition = mottaker.serviceEdition,
                     virksomhetsnummer = virksomhetsnummer,
-                    tittel = tittel,
+                    tittel = tittel.ensureSuffix(". "),
                     innhold = innhold,
                     sendevindu = sendevindu.somDomene,
                     sendeTidspunkt = null

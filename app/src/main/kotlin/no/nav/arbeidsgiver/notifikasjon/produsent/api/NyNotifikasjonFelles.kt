@@ -121,7 +121,7 @@ internal data class EksterntVarselInput(
                 serviceCode = mottaker.serviceCode,
                 serviceEdition = mottaker.serviceEdition,
                 virksomhetsnummer = virksomhetsnummer,
-                tittel = tittel,
+                tittel = tittel.ensureSuffix(". "),
                 innhold = innhold,
                 sendevindu = sendevindu,
                 sendeTidspunkt = sendeTidspunkt
