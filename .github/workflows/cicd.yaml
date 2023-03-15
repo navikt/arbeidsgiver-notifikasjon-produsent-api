@@ -88,6 +88,16 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: nais/docker-build-push@v0
+        id: gar-push
+        with:
+          team: fager
+          tag: ${{ github.sha }}
+          dockerfile: app/Dockerfile
+          docker_context: app
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+
       - name: Build container image
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v2
@@ -99,16 +109,6 @@ jobs:
             ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
           cache-from: type=registry,ref=${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
           cache-to: type=inline
-
-      - uses: nais/docker-build-push@v0
-        id: gar-push
-        with:
-          team: fager
-          tag: ${{ github.sha }}
-          dockerfile: app/Dockerfile
-          docker_context: app
-          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
 
   deploy:
     needs: [build]

@@ -28,6 +28,14 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: nais/docker-build-push@v0
+        with:
+          team: fager
+          tag: ${{ github.sha }}
+          docker_context: app
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+
       - name: Build container image
         uses: docker/build-push-action@v2
         with:
@@ -38,11 +46,3 @@ jobs:
             ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
           cache-from: type=registry,ref=${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
           cache-to: type=inline
-
-      - uses: nais/docker-build-push@v0
-        with:
-          team: fager
-          tag: ${{ github.sha }}
-          docker_context: app
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
-          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
