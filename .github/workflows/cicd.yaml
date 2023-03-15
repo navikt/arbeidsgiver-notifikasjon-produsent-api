@@ -10,6 +10,9 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: "read"
+      id-token: "write"
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -97,6 +100,13 @@ jobs:
           cache-from: type=registry,ref=${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
           cache-to: type=inline
 
+      - uses: nais/docker-build-push@v0
+        id: gar-push
+        with:
+          team: fager
+          tag: ${{ github.sha }}
+          docker_context: app
+
   deploy:
     needs: [build]
     runs-on: ubuntu-20.04
@@ -123,7 +133,8 @@ jobs:
       - uses: nais/deploy/actions/deploy@v1
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
-          IMAGE: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+          #IMAGE: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+          IMAGE: ${{ steps.gar-push.outputs.image }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
