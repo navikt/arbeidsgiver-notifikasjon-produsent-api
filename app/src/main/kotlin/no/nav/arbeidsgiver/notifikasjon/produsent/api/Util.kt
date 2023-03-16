@@ -133,3 +133,9 @@ internal inline fun tilgangsstyrProdusent(
     tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
     return produsent
 }
+
+fun String.ensurePrefix(prefix: String) =
+    prefix + removePrefix(prefix)
+
+fun String.ensureSuffix(suffix: String) =
+    removeSuffix(suffix) + suffix

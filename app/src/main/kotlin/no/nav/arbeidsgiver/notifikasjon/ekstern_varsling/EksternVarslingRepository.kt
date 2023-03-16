@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
@@ -139,7 +140,7 @@ class EksternVarslingRepository(
             }
             for (varsel in varsler) {
                 putOnJobQueue(varsel.varselId)
-                when (varsel) {
+                @Suppress("UNUSED_VARIABLE") val ignored = when (varsel) {
                     is SmsVarselKontaktinfo -> insertSmsVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
@@ -147,6 +148,13 @@ class EksternVarslingRepository(
                         notifikasjonOpprettet = notifikasjonOpprettet,
                     )
                     is EpostVarselKontaktinfo -> insertEpostVarsel(
+                        varsel = varsel,
+                        produsentId = produsentId,
+                        notifikasjonsId = notifikasjonsId,
+                        notifikasjonOpprettet = notifikasjonOpprettet,
+                    )
+
+                    is AltinntjenesteVarselKontaktinfo -> insertAltinntjenesteVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
                         notifikasjonsId = notifikasjonsId,
@@ -264,6 +272,61 @@ class EksternVarslingRepository(
             text(varsel.fnrEllerOrgnr)
             text(varsel.tittel)
             text(varsel.htmlBody)
+            text(varsel.sendevindu.toString())
+            nullableText(varsel.sendeTidspunkt?.toString())
+        }
+    }
+
+    private fun Transaction.insertAltinntjenesteVarsel(
+        varsel: AltinntjenesteVarselKontaktinfo,
+        notifikasjonsId: UUID,
+        produsentId: String,
+        notifikasjonOpprettet: OffsetDateTime,
+    ) {
+        executeUpdate("""
+            INSERT INTO ekstern_varsel_kontaktinfo
+            (
+                varsel_id,
+                notifikasjon_id,
+                notifikasjon_opprettet,
+                produsent_id,
+                varsel_type,
+                service_code,
+                service_edition,
+                fnr_eller_orgnr,
+                tjeneste_tittel,
+                tjeneste_innhold,
+                sendevindu,
+                sendetidspunkt,
+                state
+            )
+            VALUES 
+            (
+                ?, /* varsel_id */
+                ?, /* notifikasjon_id */
+                ?, /* notifikasjon_opprettet */
+                ?, /* produsent_id */
+                'ALTINNTJENESTE',
+                ?, /* service_code */
+                ?, /* service_edition */
+                ?, /* fnr_eller_orgnr */
+                ?, /* tjeneste_tittel */
+                ?, /* tjeneste_innhold */
+                ?, /* sendevindu */
+                ?, /* sendetidspunkt */
+                'NY' /* tilstand */
+            )
+            ON CONFLICT DO NOTHING;
+        """) {
+            uuid(varsel.varselId)
+            uuid(notifikasjonsId)
+            timestamp_without_timezone_utc(notifikasjonOpprettet)
+            text(produsentId)
+            text(varsel.serviceCode)
+            text(varsel.serviceEdition)
+            text(varsel.virksomhetsnummer)
+            text(varsel.tittel)
+            text(varsel.innhold)
             text(varsel.sendevindu.toString())
             nullableText(varsel.sendeTidspunkt?.toString())
         }
@@ -394,6 +457,15 @@ class EksternVarslingRepository(
                             epostadresse = getString("epost_adresse"),
                             tittel = getString("tittel"),
                             body = getString("html_body")
+                        )
+                        "ALTINNTJENESTE" -> EksternVarsel.Altinntjeneste(
+                            fnrEllerOrgnr = getString("fnr_eller_orgnr"),
+                            sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
+                            sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
+                            serviceCode = getString("service_code"),
+                            serviceEdition = getString("service_edition"),
+                            tittel = getString("tjeneste_tittel"),
+                            innhold = getString("tjeneste_innhold")
                         )
                         else -> throw Error("Ukjent varsel_type '$varselType'")
                     }
