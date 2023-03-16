@@ -383,7 +383,7 @@
                 <version>2.22.2</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <kotest.framework.parallelism>8</kotest.framework.parallelism>
+                        <kotest.framework.parallelism>4</kotest.framework.parallelism>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
