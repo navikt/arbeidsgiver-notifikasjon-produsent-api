@@ -409,10 +409,11 @@ Når dere bruker denne varslingsmekanismen så kan ikke vi garantere om det er S
 skal velge Epost dersom den er tilgjengelig. Hvis en bruker i Altinn har oppgitt SMS og ikke Epost i tilknytning til tjenesten på den gitte virksomheten så 
 vil de motta SMS. Det er derfor viktig at man tenker over tittel og innhold slik at den blir forståelig uavhengig av medium.
 Dvs samme tittel og innhold blir brukt i begge tilfeller i altinn, og reglene for hvordan formatering blir er definert der som følger:
-
+<pre>
 type   | subject  | notificationText
 SMS    |          | {tittel}{innhold}
 EMAIL  | {tittel} | {innhold}
+</pre>
 
 De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med tjenestekoden som oppgis) vil bli varslet.
 Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
