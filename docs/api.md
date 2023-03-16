@@ -1971,9 +1971,11 @@ De som har registrert sin kontaktadresse på underenheten (enten uten filter ell
 Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
 
 Malen som benyttes er TokenTextOnly og den ser slik ut:
+<pre>
 type   | subject  | notificationText
 SMS    |          | {tittel}{innhold}
 EMAIL  | {tittel} | {innhold}
+</pre>
 
 <table>
 <thead>
