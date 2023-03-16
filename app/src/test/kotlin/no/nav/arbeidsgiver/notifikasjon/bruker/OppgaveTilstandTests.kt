@@ -171,11 +171,22 @@ class OppgaveTilstandTests : DescribeSpec({
         opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtført(it!!) }
         opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtgått(it!!) }
 
+        val sak3 = opprettSak("3")
+
         val res =
             engine.hentSakerMedFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
 
 
         res shouldBe listOf(uuid(sak1).toString())
+    }
+
+    describe("Saker uten oppgaver"){
+        //val sak1 = opprettSak("1")
+        val sak2 = opprettSak("2")
+        opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
+
+        val res = engine.hentSakerUtenFilter().getTypedContent<Int>("$.saker")
+        res shouldBe 1
     }
 })
 
@@ -200,6 +211,19 @@ private fun TestApplicationEngine.hentSakerMedFilter(): TestApplicationResponse 
         """
             {   
                 saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST, oppgaveTilstand: [NY]){
+                    saker {
+                        id 
+                    }
+                }
+            }
+        """.trimIndent()
+    )
+
+private fun TestApplicationEngine.hentSakerUtenFilter(): TestApplicationResponse =
+    brukerApi(
+        """
+            {   
+                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST){
                     saker {
                         id 
                     }

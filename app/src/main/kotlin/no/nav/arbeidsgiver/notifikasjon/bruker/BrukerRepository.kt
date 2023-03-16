@@ -38,8 +38,13 @@ interface BrukerRepository {
         val totaltAntallSaker: Int,
         val saker: List<BrukerModel.Sak>,
         val sakstyper: List<Sakstype>,
-        val oppgaveTilstanderMedAntall: Map<BrukerModel.Oppgave.Tilstand, Int>,
+        val oppgaveTilstanderMedAntall: List<Oppgavetilstand>,
         )
+
+    class Oppgavetilstand(
+        val navn: BrukerModel.Oppgave.Tilstand,
+        val antall: Int,
+    )
 
     class Sakstype(
         val navn: String,
@@ -281,9 +286,13 @@ class BrukerRepositoryImpl(
                                 )
                         ),
                         mine_saker_med_oppgaver as (
-                            select s.*, o.id as oppgave_id, o.tilstand as oppgave_tilstand, o.frist as oppgave_frist, o.paaminnelse_tidspunkt as oppgave_paaminnelse_tidspunkt
+                            select 
+                            s.*, o.id as oppgave_id, 
+                            o.tilstand as oppgave_tilstand, 
+                            o.frist as oppgave_frist, 
+                            o.paaminnelse_tidspunkt as oppgave_paaminnelse_tidspunkt
                             from mine_saker s
-                            left join mine_oppgaver as o --TODO: Fikse left join med følgefeil  
+                            join mine_oppgaver as o --TODO: Fikse left join med følgefeil  
                                 on o.grupperingsid = s.grupperingsid
                         ),
                         mine_saker_med_tekstsøk as (
@@ -317,7 +326,7 @@ class BrukerRepositoryImpl(
                         ),
                         mine_merkelapper as (
                             select 
-                                merkelapp as merkelapp,
+                                merkelapp as sakstype,
                                 count(distinct id) as antall
                             from mine_saker_oppgave_tilstandfiltrert
                             group by merkelapp
@@ -365,17 +374,17 @@ class BrukerRepositoryImpl(
                             from mine_saker_filtrert
                             ) as totalt_antall_saker,
                     
-                        (select coalesce( jsonb_agg(jsonb_build_array(tilstand, antall) ), '[]'::jsonb)
+                        (select coalesce(jsonb_agg( jsonb_build_object('navn', sakstype, 'antall', antall)), '[]'::jsonb)
+                            from mine_merkelapper
+                        ) as sakstyper,
+                        
+                        (select coalesce(jsonb_agg( jsonb_build_object('navn', tilstand, 'antall', antall)), '[]'::jsonb)
                             from mine_oppgavetilstander
                         ) as oppgavetilstander,
                             
-                        (select coalesce(jsonb_agg(jsonb_build_array(merkelapp, antall)), '[]'::jsonb) 
-                            from mine_merkelapper
-                        ) as merkelapper,
-                            
                         (select 
                             coalesce(jsonb_agg(jsonb_build_object(
-                                'id', id,
+                                'sakId', id,
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
                                 'lenke', lenke,
@@ -408,7 +417,7 @@ class BrukerRepositoryImpl(
                     totaltAntallSaker = getInt("totalt_antall_saker"),
                     saker = laxObjectMapper.readValue(getString("saker")),
                     sakstyper = laxObjectMapper.readValue(getString("sakstyper")),
-                    oppgaveTilstanderMedAntall = laxObjectMapper.readValue(getString("mine_oppgaver_tilstander"))
+                    oppgaveTilstanderMedAntall = laxObjectMapper.readValue(getString("oppgavetilstander"))
                 )
             }
             return@coRecord rows.first()
