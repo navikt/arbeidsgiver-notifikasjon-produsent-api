@@ -68,6 +68,8 @@ jobs:
 
       - run: mvn -B package
         working-directory: app
+        env:
+          MAVEN_OPTS: -Xmx3g
 
       - name: Login to GitHub Package Repository
         if: github.event_name != 'pull_request'
