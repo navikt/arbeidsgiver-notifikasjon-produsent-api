@@ -519,9 +519,8 @@ EOF
 }
 
 resource "google_bigquery_table" "ekstern_varsel_resultat" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "ekstern_varsel_resultat"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "ekstern_varsel_resultat"
 }
 
 resource "google_bigquery_data_transfer_config" "ekstern_varsel_resultat" {
@@ -531,7 +530,7 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_resultat" {
   location               = var.region
   schedule               = "every day 00:00"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
-  params = {
+  params                 = {
     destination_table_name_template = google_bigquery_table.ekstern_varsel_resultat.table_id
     write_disposition               = "WRITE_TRUNCATE"
     query                           = <<EOF
