@@ -517,3 +517,39 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_epost" 
 EOF
   }
 }
+
+resource "google_bigquery_table" "ekstern_varsel_resultat" {
+  dataset_id          = google_bigquery_dataset.this.dataset_id
+  table_id            = "ekstern_varsel_resultat"
+  deletion_protection = false
+}
+
+resource "google_bigquery_data_transfer_config" "ekstern_varsel_resultat" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
+  data_source_id         = "scheduled_query"
+  display_name           = "ekstern_varsel_resultat"
+  location               = var.region
+  schedule               = "every day 00:00"
+  destination_dataset_id = google_bigquery_dataset.this.dataset_id
+  params = {
+    destination_table_name_template = google_bigquery_table.ekstern_varsel_resultat.table_id
+    write_disposition               = "WRITE_TRUNCATE"
+    query                           = <<EOF
+    SELECT
+        varsel_id,
+        resultat_name_pseud,
+        resultat_receiver_pseud,
+        resultat_type
+     FROM EXTERNAL_QUERY(
+    '${google_bigquery_connection.this.location}.${google_bigquery_connection.this.connection_id}',
+    '''
+    select
+        varsel_id::text,
+        resultat_name_pseud,
+        resultat_receiver_pseud,
+        resultat_type
+    from ekstern_varsel_resultat
+    ''');
+EOF
+  }
+}
