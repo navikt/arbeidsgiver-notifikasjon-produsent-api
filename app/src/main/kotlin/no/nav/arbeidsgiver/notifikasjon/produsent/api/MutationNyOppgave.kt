@@ -115,12 +115,14 @@ internal class MutationNyOppgave(
     class PaaminnelseEksterntVarselInput(
         val sms: Sms?,
         val epost: Epost?,
+        val altinntjeneste: Altinntjeneste?,
     ) {
         fun tilDomene(virksomhetsnummer: String): HendelseModel.EksterntVarsel =
             when {
                 sms != null -> sms.tilDomene(virksomhetsnummer)
                 epost != null -> epost.tilDomene(virksomhetsnummer)
-                else -> error("graphql-validation failed, neither sms nor epost defined")
+                altinntjeneste != null -> altinntjeneste.tilDomene(virksomhetsnummer)
+                else -> error("graphql-validation failed, neither sms nor epost nor altinntjeneste defined")
             }
 
         class Sms(
@@ -162,6 +164,30 @@ internal class MutationNyOppgave(
                 }
                 throw RuntimeException("mottaker mangler for epost")
             }
+        }
+        data class Altinntjeneste(
+            val mottaker: Mottaker,
+            val tittel: String,
+            val innhold: String,
+            val sendevindu: EksterntVarselInput.Sendevindu,
+        ) {
+            fun tilDomene(virksomhetsnummer: String): HendelseModel.AltinntjenesteVarselKontaktinfo {
+                return HendelseModel.AltinntjenesteVarselKontaktinfo(
+                    varselId = UUID.randomUUID(),
+                    serviceCode = mottaker.serviceCode,
+                    serviceEdition = mottaker.serviceEdition,
+                    virksomhetsnummer = virksomhetsnummer,
+                    tittel = tittel.ensureSuffix(". "),
+                    innhold = innhold,
+                    sendevindu = sendevindu.somDomene,
+                    sendeTidspunkt = null
+                )
+            }
+
+            data class Mottaker(
+                val serviceCode: String,
+                val serviceEdition: String,
+            )
         }
     }
 

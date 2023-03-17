@@ -28,6 +28,16 @@ sealed interface EksternVarsel {
         val tittel: String,
         val body: String
     ): EksternVarsel
+
+    data class Altinntjeneste(
+        override val fnrEllerOrgnr: String,
+        override val sendeVindu: EksterntVarselSendingsvindu,
+        override val sendeTidspunkt: LocalDateTime?,
+        val serviceCode: String,
+        val serviceEdition: String,
+        val tittel: String,
+        val innhold: String
+    ): EksternVarsel
 }
 
 data class EksternVarselStatiskData(

@@ -10,6 +10,9 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: "read"
+      id-token: "write"
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -66,17 +69,6 @@ jobs:
       - run: mvn -B package
         working-directory: app
 
-      - name: Add coverage to PR
-        id: jacoco
-        uses: madrapps/jacoco-report@v1.2
-        if: github.event_name == 'pull_request'
-        with:
-          paths: ${{ github.workspace }}/app/target/site/jacoco/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 0
-          min-coverage-changed-files: 0
-          title: ":space_invader: jacococo go nogo :space_invader:"
-
       - name: Login to GitHub Package Repository
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
@@ -85,17 +77,15 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build container image
-        if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v2
+      - uses: nais/docker-build-push@v0
+        id: gar-push
         with:
-          context: app
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
-          cache-from: type=registry,ref=${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:latest
-          cache-to: type=inline
+          team: fager
+          tag: ${{ github.sha }}
+          dockerfile: app/Dockerfile
+          docker_context: app
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
 
   deploy:
     needs: [build]
@@ -120,10 +110,16 @@ jobs:
           - dataprodukt
     steps:
       - uses: actions/checkout@v3
+      - uses: nais/login@v0
+        id: login
+        with:
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          team: fager
       - uses: nais/deploy/actions/deploy@v1
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
-          IMAGE: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+          IMAGE: ${{ steps.login.outputs.registry }}/${{ github.repository }}/${{ github.repository_owner }}:${{ github.sha }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml

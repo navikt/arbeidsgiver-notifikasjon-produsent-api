@@ -61,6 +61,16 @@ object EksempelHendelse {
                     htmlBody = "body",
                     sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                     sendeTidspunkt = null
+                ),
+                HendelseModel.AltinntjenesteVarselKontaktinfo(
+                    varselId = uuid("5"),
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1",
+                    tittel = "hey",
+                    innhold = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
                 )
             ),
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),

@@ -7,15 +7,13 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
 
 data class GraphQLError(
     val message: String,
     val locations: Any?,
     val extensions: Map<String, Any>?
 )
-
-fun String.ensurePrefix(prefix: String) =
-    prefix + removePrefix(prefix)
 
 fun TestApplicationResponse.validateStatusOK() {
     val status = this.status()
