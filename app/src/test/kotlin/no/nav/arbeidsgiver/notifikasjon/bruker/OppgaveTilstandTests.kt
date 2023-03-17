@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -171,7 +172,7 @@ class OppgaveTilstandTests : DescribeSpec({
         opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtført(it!!) }
         opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtgått(it!!) }
 
-        val sak3 = opprettSak("3")
+       val sak3 = opprettSak("3")
 
         val res =
             engine.hentSakerMedFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
@@ -180,13 +181,17 @@ class OppgaveTilstandTests : DescribeSpec({
         res shouldBe listOf(uuid(sak1).toString())
     }
 
-    describe("Saker uten oppgaver"){
-        //val sak1 = opprettSak("1")
+    describe("Saker med og uten oppgaver"){
+        val sak1 = opprettSak("1")
         val sak2 = opprettSak("2")
         opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
 
-        val res = engine.hentSakerUtenFilter().getTypedContent<Int>("$.saker")
-        res shouldBe 1
+        val res = engine.hentSakerUtenFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
+
+        it ("skal returnere saker med og uten oppgaver"){
+            res shouldContainExactlyInAnyOrder listOf(sak1, sak2)
+        }
+
     }
 })
 
@@ -226,6 +231,14 @@ private fun TestApplicationEngine.hentSakerUtenFilter(): TestApplicationResponse
                 saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST){
                     saker {
                         id 
+                    }
+                    oppgaveTilstandInfo {
+                        tilstand
+                        antall
+                    }
+                    sakstyper {
+                        navn
+                        antall                    
                     }
                 }
             }

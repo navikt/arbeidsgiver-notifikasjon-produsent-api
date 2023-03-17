@@ -218,10 +218,10 @@ class BrukerRepositoryImpl(
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
                 BrukerAPI.SakSortering.OPPRETTET -> """
-                   s.statuser#>>'{-1,tidspunkt}' desc 
+                   statuser#>>'{-1,tidspunkt}' desc 
                 """
                 BrukerAPI.SakSortering.FRIST -> """
-                    frist nulls last, nye_oppgaver desc, sist_endret desc
+                    tidligste_frist nulls last, nye_oppgaver desc, sist_endret desc
                 """
             }
 
@@ -292,7 +292,7 @@ class BrukerRepositoryImpl(
                             o.frist as oppgave_frist, 
                             o.paaminnelse_tidspunkt as oppgave_paaminnelse_tidspunkt
                             from mine_saker s
-                            join mine_oppgaver as o --TODO: Fikse left join med følgefeil  
+                            left join mine_oppgaver as o --TODO: Fikse left join med følgefeil  
                                 on o.grupperingsid = s.grupperingsid
                         ),
                         mine_saker_med_tekstsøk as (
@@ -310,19 +310,7 @@ class BrukerRepositoryImpl(
                         mine_saker_oppgave_tilstandfiltrert as (
                             select * 
                             from mine_saker_med_tekstsøk
-                            where coalesce(oppgave_tilstand = any(?), true)
-                        ),
-                        mine_saker_filtrert as (
-                            select * 
-                            from mine_saker_med_tekstsøk
-                            where coalesce(merkelapp = any(?), true)
-                            and coalesce(oppgave_tilstand = any(?), true)
-                        ),
-                        mine_saker_paginert as (
-                            select * 
-                            from mine_saker_filtrert
-                            --order by TODO: sorteringSql
-                            limit ? offset ?
+                            where coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
                         ),
                         mine_merkelapper as (
                             select 
@@ -336,38 +324,50 @@ class BrukerRepositoryImpl(
                                 oppgave_tilstand as tilstand,
                                 count(*) as antall
                             from mine_saker_sakstypefiltrert
+                            where oppgave_tilstand is not null
                             group by tilstand
                         ),
+                        mine_saker_filtrert as (
+                            select * 
+                            from mine_saker_med_tekstsøk
+                            where coalesce(merkelapp = any(?), true)
+                            and coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
+                        ),
                         mine_saker_aggregerte_oppgaver_uten_statuser as (
-                            select 
+                           select 
                                 id,
                                 virksomhetsnummer,
                                 tittel,
                                 lenke,
                                 merkelapp,
                                 grupperingsid,
-                                jsonb_agg(jsonb_build_object(
-                                    'id', oppgave_id,
-                                    'tilstand', oppgave_tilstand,
-                                    'frist', oppgave_frist,
-                                    'paaminnelse_tidspunkt', oppgave_paaminnelse_tidspunkt
-                                )) as oppgaver
-                            from mine_saker_paginert
+                                count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
+                                min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist,
+                                case
+                                    when count(*) filter (where oppgave_tilstand is not null) = 0 then '[]'::jsonb
+                                    else jsonb_agg(
+                                        jsonb_build_object(
+                                            'tilstand', oppgave_tilstand,
+                                            'frist', oppgave_frist,
+                                            'paaminnelseTidspunkt', oppgave_paaminnelse_tidspunkt
+                                    ) order by oppgave_frist nulls last    
+                                ) end as oppgaver
+                            from mine_saker_filtrert
                             group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid
                         ),
-                        mine_saker_aggregerte_oppgaver as (
+                        mine_saker_paginert as (
                             select 
                                 id,
                                 virksomhetsnummer,
                                 tittel,
                                 lenke,
                                 merkelapp,
-                                grupperingsid,
                                 statuser,
-                                sist_endret,
                                 oppgaver
                             from mine_saker_aggregerte_oppgaver_uten_statuser
                             join sak_status_json as js on js.sak_id = id
+                            order by ${sorteringSql}
+                            limit ? offset ?
                         )
                     select
                         (select count(*) 
@@ -389,13 +389,11 @@ class BrukerRepositoryImpl(
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'merkelapp', merkelapp,
-                                'grupperingsid', grupperingsid,
                                 'statuser', statuser,
-                                'sist_endret', sist_endret,
                                 'oppgaver', oppgaver
                                     
                             )), '[]'::jsonb) 
-                            from mine_saker_aggregerte_oppgaver
+                            from mine_saker_paginert
                             ) as saker
                         
                     """,
