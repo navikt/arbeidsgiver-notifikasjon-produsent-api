@@ -14,7 +14,6 @@ import java.time.Instant
 class DataproduktEksterVarselVellykketTests : DescribeSpec({
     val database = testDatabase(Dataprodukt.databaseConfig)
     val subject = DataproduktModel(database)
-
     val meta = HendelseMetadata(Instant.now())
 
     val altinntjenesteVarselKontaktinfo = HendelseModel.AltinntjenesteVarselKontaktinfo(
