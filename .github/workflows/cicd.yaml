@@ -64,7 +64,7 @@ jobs:
       - run: mvn -B package
         working-directory: app
         env:
-          MAVEN_OPTS: -Dkotlin.daemon.jvm.options=-Xmx6g
+          MAVEN_OPTS: -Xmx4g -Dkotlin.daemon.jvm.options=-Xmx4g
 
       - uses: nais/docker-build-push@v0
         id: gar-push
