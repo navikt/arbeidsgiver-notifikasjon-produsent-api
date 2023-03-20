@@ -39,7 +39,7 @@ interface BrukerRepository {
         val saker: List<BrukerModel.Sak>,
         val sakstyper: List<Sakstype>,
         val oppgaveTilstanderMedAntall: List<Oppgavetilstand>,
-        )
+    )
 
     class Oppgavetilstand(
         val navn: BrukerModel.Oppgave.Tilstand,
@@ -205,16 +205,7 @@ class BrukerRepositoryImpl(
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
                 .ifNotBlank { "where $it" }
-
-            val oppgaveTilstandSql = if (oppgaveTilstand != null) {
-                """where exists(
-                        select *
-                        from unnest(o.oppgaver) as op
-                        where op->> 'tilstand' = any(?)
-                        )"""
-            } else ""
-
-
+            
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
                 BrukerAPI.SakSortering.OPPRETTET -> """
