@@ -80,7 +80,7 @@ class DataproduktEksterVarselVellykketTests : DescribeSpec({
     }
 })
 
-val vellykketRespons = """
+const val vellykketRespons = """
 {
   "notificationResult": [
     {
