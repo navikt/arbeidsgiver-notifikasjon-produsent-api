@@ -88,6 +88,9 @@ jobs:
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
 
   deploy:
+    permissions:
+      contents: "read"
+      id-token: "write"
     needs: [build]
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
