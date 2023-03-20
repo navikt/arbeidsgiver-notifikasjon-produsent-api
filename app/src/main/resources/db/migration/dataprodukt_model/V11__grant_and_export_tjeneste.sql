@@ -1,0 +1,2 @@
+grant select on ekstern_varsel_mottaker_tjeneste to sa_notifikasjon_dataprodukt_exporter;
+grant select on ekstern_varsel_resultat to sa_notifikasjon_dataprodukt_exporter;
