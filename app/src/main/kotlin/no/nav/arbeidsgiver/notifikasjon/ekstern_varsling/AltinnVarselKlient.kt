@@ -13,13 +13,12 @@ import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2015._
 import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureServiceImpl
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
@@ -72,6 +71,7 @@ class AltinnVarselKlientMedFilter(
         val mottaker = when (eksternVarsel) {
             is EksternVarsel.Sms -> eksternVarsel.mobilnummer
             is EksternVarsel.Epost -> eksternVarsel.epostadresse
+            is EksternVarsel.Altinntjeneste -> "${eksternVarsel.serviceCode}:${eksternVarsel.serviceEdition}"
         }
         return if (repository.mottakerErPåAllowList(mottaker)) {
             altinnVarselKlient.send(eksternVarsel)
@@ -121,44 +121,15 @@ class AltinnVarselKlientImpl(
                 mobilnummer = eksternVarsel.mobilnummer,
                 tekst = eksternVarsel.tekst,
             )
+
+            is EksternVarsel.Altinntjeneste -> sendAltinntjeneste(
+                virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
+                serviceCode = eksternVarsel.serviceCode,
+                serviceEdition = eksternVarsel.serviceEdition,
+                tittel = eksternVarsel.tittel,
+                innhold = eksternVarsel.innhold,
+            )
         }
-    }
-
-    suspend fun sendSms(
-        mottaker: AltinnMottaker,
-        tekst: String,
-    ): Result<AltinnVarselKlient.AltinnResponse> {
-        return send(StandaloneNotificationBEList().withStandaloneNotification(
-            StandaloneNotification().apply {
-                languageID = 1044
-                notificationType = ns("NotificationType", "TokenTextOnly")
-                reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
-                service = ns("Service", Service().apply {
-                    serviceCode = mottaker.serviceCode
-                    serviceEdition = mottaker.serviceEdition.toInt()
-                })
-
-                receiverEndPoints = ns("ReceiverEndPoints",
-                    ReceiverEndPointBEList().withReceiverEndPoint(
-                        ReceiverEndPoint().apply {
-                            transportType = ns("TransportType", TransportType.SMS)
-                        }
-                    )
-                )
-
-                textTokens = ns("TextTokens",
-                    TextTokenSubstitutionBEList().withTextToken(
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", tekst)
-                        },
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", "")
-                        }
-                    )
-                )
-                useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
-            }
-        ))
     }
 
     suspend fun sendSms(
@@ -192,44 +163,6 @@ class AltinnVarselKlientImpl(
                     )
                 )
                 useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
-            }
-        ))
-    }
-
-    suspend fun sendEpost(
-        mottaker: AltinnMottaker,
-        tittel: String,
-        tekst: String,
-    ): Result<AltinnVarselKlient.AltinnResponse> {
-        return send(StandaloneNotificationBEList().withStandaloneNotification(
-            StandaloneNotification().apply {
-                languageID = 1044
-                notificationType = ns("NotificationType", "TokenTextOnly")
-                reporteeNumber = ns("ReporteeNumber", mottaker.virksomhetsnummer)
-                service = ns("Service", Service().apply {
-                    serviceCode = mottaker.serviceCode
-                    serviceEdition = mottaker.serviceEdition.toInt()
-                })
-
-                receiverEndPoints = ns("ReceiverEndPoints",
-                    ReceiverEndPointBEList().withReceiverEndPoint(
-                        ReceiverEndPoint().apply {
-                            transportType = ns("TransportType", TransportType.EMAIL)
-                        }
-                    )
-                )
-
-                textTokens = ns("TextTokens",
-                    TextTokenSubstitutionBEList().withTextToken(
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", tittel)
-                        },
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", tekst)
-                        }
-                    )
-                )
-                fromAddress = ns("FromAddress", "ikke-svar@nav.no")
             }
         ))
     }
@@ -270,6 +203,46 @@ class AltinnVarselKlientImpl(
         ))
     }
 
+    suspend fun sendAltinntjeneste(
+        serviceCode: String,
+        serviceEdition: String,
+        virksomhetsnummer: String,
+        tittel: String,
+        innhold: String,
+    ): Result<AltinnVarselKlient.AltinnResponse> {
+        return send(StandaloneNotificationBEList().withStandaloneNotification(
+            StandaloneNotification().apply {
+                languageID = 1044
+                notificationType = ns("NotificationType", "TokenTextOnly")
+                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
+                service = ns("Service", Service().apply {
+                    this.serviceCode = serviceCode
+                    this.serviceEdition = serviceEdition.toInt()
+                })
+
+                receiverEndPoints = ns("ReceiverEndPoints",
+                    ReceiverEndPointBEList().withReceiverEndPoint(
+                        ReceiverEndPoint().apply {
+                            transportType = ns("TransportType", TransportType.EMAIL_PREFERRED)
+                        }
+                    )
+                )
+
+                textTokens = ns("TextTokens",
+                    TextTokenSubstitutionBEList().withTextToken(
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", tittel)
+                        },
+                        TextToken().apply {
+                            tokenValue = ns("TokenValue", innhold)
+                        }
+                    )
+                )
+                fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+            }
+        ))
+    }
+
     private suspend fun send(payload: StandaloneNotificationBEList): Result<AltinnVarselKlient.AltinnResponse> {
         return blockingIO {
             try {
@@ -293,13 +266,17 @@ class AltinnVarselKlientImpl(
                     "Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}",
                     e
                 )
-                Result.success(
-                    AltinnVarselKlient.AltinnResponse.Feil(
-                        feilkode = e.faultInfo.errorID.toString(),
-                        feilmelding = e.faultInfo.altinnErrorMessage.value,
-                        rå = laxObjectMapper.valueToTree(e),
+                if (e.isRetryable()) {
+                    Result.failure(e)
+                } else {
+                    Result.success(
+                        AltinnVarselKlient.AltinnResponse.Feil(
+                            feilkode = e.faultInfo.errorID.toString(),
+                            feilmelding = e.faultInfo.altinnErrorMessage.value,
+                            rå = laxObjectMapper.valueToTree(e),
+                        )
                     )
-                )
+                }
             } catch (e: RuntimeException) {
                 Result.failure(e)
             }
@@ -364,3 +341,13 @@ fun <PORT_TYPE> createServicePort(
         }
     })
 }.create(clazz)
+
+/**
+ * TAG-2054
+ * https://altinn.github.io/docs/api/tjenesteeiere/soap/feilkoder/
+ */
+private val retryableErrorIds = listOf(
+    44, // intern teknisk feil i altinn. ikke dokumentert
+)
+private fun INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
+    .isRetryable() = retryableErrorIds.contains(this.faultInfo.errorID)

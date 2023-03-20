@@ -14,6 +14,7 @@ import io.kotest.matchers.types.instanceOf
 import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -64,6 +65,16 @@ class EksternVarslingRepositoryTests: DescribeSpec({
                 htmlBody = "body",
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
+            ),
+            AltinntjenesteVarselKontaktinfo(
+                varselId = uuid("5"),
+                virksomhetsnummer = "1",
+                serviceCode = "1",
+                serviceEdition = "1",
+                tittel = "hey",
+                innhold = "body",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
             )
         ),
         hardDelete = null,
@@ -75,10 +86,10 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
         val id1 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
-
         it("should pick and delete a job") {
             id1 shouldNot beNull()
-            id1 shouldBeIn listOf(uuid("3"), uuid("4"))
+            id1 shouldBeIn listOf(uuid("3"), uuid("4"), uuid("5"))
+            repository.findVarsel(id1!!) shouldNot beNull()
         }
         repository.deleteFromJobQueue(id1!!)
 
@@ -86,13 +97,24 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         it("should pick and delete another job") {
             id2 shouldNot beNull()
             id1 shouldNotBe id2
-            id2 shouldBeIn listOf(uuid("3"), uuid("4"))
+            id2 shouldBeIn listOf(uuid("3"), uuid("4"), uuid("5"))
+            repository.findVarsel(id2!!) shouldNot beNull()
         }
         repository.deleteFromJobQueue(id2!!)
 
         val id3 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
+        it("should pick and delete last job") {
+            id3 shouldNot beNull()
+            id3 shouldNotBe id1
+            id3 shouldNotBe id2
+            id3 shouldBeIn listOf(uuid("3"), uuid("4"), uuid("5"))
+            repository.findVarsel(id3!!) shouldNot beNull()
+        }
+        repository.deleteFromJobQueue(id3!!)
+
+        val id4 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
         it("should be no more jobs to pick") {
-            id3 should beNull()
+            id4 should beNull()
         }
     }
 

@@ -4,6 +4,7 @@ package no.nav.arbeidsgiver.notifikasjon.dataprodukt
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
@@ -310,10 +311,31 @@ class DataproduktModel(
 
             }
             is EksterntVarselVellykket -> {
-                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET")
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET", null, metadata.timestamp)
+                database.nonTransactionalExecuteBatch(
+                    """
+                           insert into ekstern_varsel_resultat (varsel_id, resultat_name, resultat_receiver, resultat_type)
+                           values (?, ?, ?, ?)
+                           on conflict do nothing 
+                        """,
+                    hendelse.råRespons.at("/notificationResult/0/endPoints/value/endPointResult").elements()
+                        .asSequence()
+                        .map {
+                            mapOf(
+                                "resultat_name" to it.at("/name/value").asText(),
+                                "resultat_receiver" to it.at("/receiverAddress/value").asText(),
+                                "resultat_type" to it.at("/transportType").asText(),
+                            )
+                        }.toList()
+                ) {
+                    uuid(hendelse.varselId)
+                    text(it["resultat_name"]!!)
+                    text(it["resultat_receiver"]!!)
+                    text(it["resultat_type"]!!)
+                }
             }
             is EksterntVarselFeilet -> {
-                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode)
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode,  metadata.timestamp)
             }
 
             is SoftDelete -> {
@@ -440,19 +462,26 @@ class DataproduktModel(
         }
     }
 
-    private suspend fun updateEksternVarsel(eksterneVarselIder: List<UUID>, statusUtsending: String, feilkode: String? = null) =
+    private suspend fun updateEksternVarsel(
+        eksterneVarselIder: List<UUID>,
+        statusUtsending: String,
+        feilkode: String? = null,
+        timestamp: Instant? = null,
+    ) =
         database.nonTransactionalExecuteBatch(
             """
                            update ekstern_varsel
                            set 
                             status_utsending = ?,
-                            feilkode = ?
+                            feilkode = ?,
+                            altinn_svar_timestamp = ?
                            where varsel_id = ?
                         """,
             eksterneVarselIder
         ) {
             text(statusUtsending)
             nullableText(feilkode)
+            nullableInstantAsText(timestamp)
             uuid(it)
         }
 
@@ -538,16 +567,18 @@ class DataproduktModel(
                 sms_tekst,
                 html_tittel,
                 html_body,
+                tjeneste_tittel,
+                tjeneste_innhold,
                 opprinnelse,
                 status_utsending
             )
             values
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             on conflict do nothing;
             """,
             eksterneVarsler
         ) { eksterntVarsel ->
-            when (eksterntVarsel) {
+            @Suppress("UNUSED_VARIABLE") val ignored = when (eksterntVarsel) {
                 is EpostVarselKontaktinfo -> {
                     with(eksterntVarsel) {
                         uuid(varselId)
@@ -560,6 +591,8 @@ class DataproduktModel(
                         nullableText(null)
                         text(tittel)
                         text(htmlBody)
+                        nullableText(null)
+                        nullableText(null)
                         text(opprinnelse)
                         text(statusUtsending)
                     }
@@ -576,9 +609,28 @@ class DataproduktModel(
                         text(smsTekst)
                         nullableText(null)
                         nullableText(null)
+                        nullableText(null)
+                        nullableText(null)
                         text(opprinnelse)
                         text(statusUtsending)
                     }
+                }
+
+                is AltinntjenesteVarselKontaktinfo -> with(eksterntVarsel) {
+                    uuid(varselId)
+                    text("SMS") //varsel_type
+                    uuid(notifikasjonId)
+                    text(merkelapp)
+                    enumAsText(sendevindu)
+                    nullableLocalDateTimeAsText(sendeTidspunkt)
+                    text(produsentId)
+                    nullableText(null)
+                    nullableText(null)
+                    nullableText(null)
+                    nullableText(tittel)
+                    nullableText(innhold)
+                    text(opprinnelse)
+                    text(statusUtsending)
                 }
             }
         }
@@ -603,6 +655,18 @@ class DataproduktModel(
         ) {
             uuid(it.varselId)
             text(it.epostAddr)
+        }
+
+        database.nonTransactionalExecuteBatch("""
+            insert into ekstern_varsel_mottaker_tjeneste (varsel_id, tjenestekode, tjenesteversjon) 
+            values (?, ?, ?)
+            on conflict do nothing
+        """,
+            eksterneVarsler.filterIsInstance<AltinntjenesteVarselKontaktinfo>()
+        ) {
+            uuid(it.varselId)
+            text(it.serviceCode)
+            text(it.serviceEdition)
         }
     }
 }

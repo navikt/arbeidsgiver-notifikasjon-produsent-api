@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
@@ -167,6 +168,12 @@ fun EksterntVarsel.tilProdusentModel(): ProdusentModel.EksterntVarsel {
                 feilmelding = null,
             )
         is EpostVarselKontaktinfo ->
+            ProdusentModel.EksterntVarsel(
+                varselId = this.varselId,
+                status = ProdusentModel.EksterntVarsel.Status.NY,
+                feilmelding = null,
+            )
+        is AltinntjenesteVarselKontaktinfo ->
             ProdusentModel.EksterntVarsel(
                 varselId = this.varselId,
                 status = ProdusentModel.EksterntVarsel.Status.NY,

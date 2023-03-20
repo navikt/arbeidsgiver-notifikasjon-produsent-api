@@ -12,7 +12,7 @@
         <kotlin.version>1.7.20</kotlin.version>
         <ktor.version>2.2.2</ktor.version>
         <kotest.version>5.5.0</kotest.version>
-        <cxf.version>3.5.3</cxf.version>
+        <cxf.version>3.5.5</cxf.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
         <jvm.version>17</jvm.version>
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
@@ -381,26 +381,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.7</version>
-                <executions>
-                    <execution>
-                        <id>jacoco-init</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>jacoco-site</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -136,4 +136,37 @@ class AltinnVarselKlientImplTest : DescribeSpec({
 
         response.isFailure shouldBe true
     }
+
+    /**
+     * TAG-2054
+     */
+    describe("returnerer feil for teknisk feil som bør fosøkes på nytt") {
+        val feilkode = 44
+        val faultOF = no.altinn.services.common.fault._2009._10.ObjectFactory()
+        val altinnFault = AltinnFault()
+            .withErrorID(feilkode)
+            .withErrorGuid(faultOF.createAltinnFaultErrorGuid("uuid"))
+            .withUserId(faultOF.createAltinnFaultUserId("oof"))
+            .withUserGuid(faultOF.createAltinnFaultUserGuid("uuid"))
+            .withAltinnErrorMessage(faultOF.createAltinnFaultAltinnErrorMessage("fubar"))
+            .withAltinnExtendedErrorMessage(faultOF.createAltinnFaultAltinnExtendedErrorMessage("this api"))
+            .withAltinnLocalizedErrorMessage(faultOF.createAltinnFaultAltinnLocalizedErrorMessage("my head"))
+        val ex = INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage(
+            "faultfaultfaustmessagemassage",
+            altinnFault
+        )
+        answers.add { throw ex }
+
+        val response = klient.send(
+            EksternVarsel.Sms(
+                fnrEllerOrgnr = "",
+                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null,
+                mobilnummer = "",
+                tekst = "",
+            )
+        )
+
+        response.isFailure shouldBe true
+    }
 })

@@ -14,7 +14,7 @@ object Dataprodukt {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "dataprodukt-model-builder-1",
+            groupId = "dataprodukt-model-builder-2",
             replayPeriodically = true,
         )
     }
