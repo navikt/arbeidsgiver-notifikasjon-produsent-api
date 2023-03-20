@@ -71,10 +71,10 @@ resource "google_bigquery_data_transfer_config" "notifikasjon" {
         notifikasjon_type,
         produsent_id,
         merkelapp,
-        ekstern_id,
+        ekstern_id_pseud,
         tekst_pseud,
         grupperingsid_pseud,
-        lenke,
+        lenke_pseud,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", opprettet_tidspunkt, "UTC") as opprettet_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", soft_deleted_tidspunkt, "UTC") as soft_deleted_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", utgaatt_tidspunkt, "UTC") as utgaatt_tidspunkt,
@@ -91,10 +91,10 @@ resource "google_bigquery_data_transfer_config" "notifikasjon" {
         notifikasjon_type,
         produsent_id,
         merkelapp,
-        ekstern_id,
+        ekstern_id_pseud,
         tekst_pseud,
         grupperingsid_pseud,
-        lenke,
+        lenke_pseud,
         opprettet_tidspunkt,
         soft_deleted_tidspunkt,
         utgaatt_tidspunkt,
@@ -172,7 +172,7 @@ resource "google_bigquery_data_transfer_config" "sak" {
         produsent_id,
         merkelapp,
         tittel_pseud,
-        lenke,
+        lenke_pseud,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", oppgitt_tidspunkt, "UTC") as oppgitt_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", mottatt_tidspunkt, "UTC") as mottatt_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", soft_deleted_tidspunkt, "UTC") as soft_deleted_tidspunkt
@@ -185,7 +185,7 @@ resource "google_bigquery_data_transfer_config" "sak" {
         produsent_id,
         merkelapp,
         tittel_pseud,
-        lenke,
+        lenke_pseud,
         oppgitt_tidspunkt,
         mottatt_tidspunkt,
         soft_deleted_tidspunkt
@@ -219,7 +219,7 @@ resource "google_bigquery_data_transfer_config" "sak_status" {
         overstyr_statustekst_med,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", oppgitt_tidspunkt, "UTC") as oppgitt_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", mottatt_tidspunkt, "UTC") as mottatt_tidspunkt,
-        ny_lenke_til_sak
+        ny_lenke_til_sak_pseud
      FROM EXTERNAL_QUERY(
     '${google_bigquery_connection.this.location}.${google_bigquery_connection.this.connection_id}',
     '''
@@ -231,7 +231,7 @@ resource "google_bigquery_data_transfer_config" "sak_status" {
         overstyr_statustekst_med,
         oppgitt_tidspunkt,
         mottatt_tidspunkt,
-        ny_lenke_til_sak
+        ny_lenke_til_sak_pseud
     from sak_status
     ''');
 EOF
