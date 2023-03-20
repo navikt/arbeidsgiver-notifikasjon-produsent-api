@@ -51,9 +51,8 @@ resource "google_project_iam_member" "sa-bq-roles" {
 }
 
 resource "google_bigquery_table" "notifikasjon" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "notifikasjon"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "notifikasjon"
 }
 
 resource "google_bigquery_data_transfer_config" "notifikasjon" {
@@ -111,9 +110,8 @@ EOF
 }
 
 resource "google_bigquery_table" "aggregat_hendelse" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "aggregat_hendelse"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "aggregat_hendelse"
 }
 
 resource "google_bigquery_data_transfer_config" "aggregat_hendelse" {
@@ -153,9 +151,8 @@ EOF
 }
 
 resource "google_bigquery_table" "sak" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "sak"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "sak"
 }
 
 resource "google_bigquery_data_transfer_config" "sak" {
@@ -199,9 +196,8 @@ EOF
 }
 
 resource "google_bigquery_table" "sak_status" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "sak_status"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "sak_status"
 }
 
 resource "google_bigquery_data_transfer_config" "sak_status" {
@@ -243,9 +239,8 @@ EOF
 }
 
 resource "google_bigquery_table" "hard_delete_bestilling" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "hard_delete_bestilling"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "hard_delete_bestilling"
 }
 
 resource "google_bigquery_data_transfer_config" "hard_delete_bestilling" {
@@ -283,9 +278,8 @@ EOF
 }
 
 resource "google_bigquery_table" "mottaker_naermeste_leder" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "mottaker_naermeste_leder"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "mottaker_naermeste_leder"
 }
 
 resource "google_bigquery_data_transfer_config" "mottaker_naermeste_leder" {
@@ -321,9 +315,8 @@ EOF
 }
 
 resource "google_bigquery_table" "mottaker_enkeltrettighet" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "mottaker_enkeltrettighet"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "mottaker_enkeltrettighet"
 }
 
 resource "google_bigquery_data_transfer_config" "mottaker_enkeltrettighet" {
@@ -359,9 +352,8 @@ EOF
 }
 
 resource "google_bigquery_table" "notifikasjon_klikk" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "notifikasjon_klikk"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "notifikasjon_klikk"
 }
 
 resource "google_bigquery_data_transfer_config" "notifikasjon_klikk" {
@@ -395,9 +387,8 @@ EOF
 }
 
 resource "google_bigquery_table" "ekstern_varsel" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "ekstern_varsel"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "ekstern_varsel"
 }
 
 resource "google_bigquery_data_transfer_config" "ekstern_varsel" {
@@ -455,9 +446,8 @@ EOF
 }
 
 resource "google_bigquery_table" "ekstern_varsel_mottaker_tlf" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "ekstern_varsel_mottaker_tlf"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "ekstern_varsel_mottaker_tlf"
 }
 
 resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_tlf" {
@@ -487,9 +477,8 @@ EOF
 }
 
 resource "google_bigquery_table" "ekstern_varsel_mottaker_epost" {
-  dataset_id          = google_bigquery_dataset.this.dataset_id
-  table_id            = "ekstern_varsel_mottaker_epost"
-  deletion_protection = false
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "ekstern_varsel_mottaker_epost"
 }
 
 resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_epost" {
