@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 
 object Dataprodukt {
     val databaseConfig = Database.config("dataprodukt_model")
+
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
@@ -23,6 +24,9 @@ object Dataprodukt {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
 
+            launch {
+                database.await()
+            }
             launch {
                 val dataproduktModel = DataproduktModel(database.await())
                 hendelsesstrøm.forEach { hendelse, metadata ->
