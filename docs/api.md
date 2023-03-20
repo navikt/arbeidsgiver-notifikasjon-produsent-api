@@ -84,6 +84,8 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
     * [UkjentRolle](#ukjentrolle)
   * [Inputs](#inputs)
     * [AltinnMottakerInput](#altinnmottakerinput)
+    * [AltinntjenesteMottakerInput](#altinntjenestemottakerinput)
+    * [EksterntVarselAltinntjenesteInput](#eksterntvarselaltinntjenesteinput)
     * [EksterntVarselEpostInput](#eksterntvarselepostinput)
     * [EksterntVarselInput](#eksterntvarselinput)
     * [EksterntVarselSmsInput](#eksterntvarselsmsinput)
@@ -97,6 +99,7 @@ Med dette angitt kan dere søke i kibana etter `x_correlation_id`.
     * [NotifikasjonInput](#notifikasjoninput)
     * [NyBeskjedInput](#nybeskjedinput)
     * [NyOppgaveInput](#nyoppgaveinput)
+    * [PaaminnelseEksterntVarselAltinntjenesteInput](#paaminnelseeksterntvarselaltinntjenesteinput)
     * [PaaminnelseEksterntVarselEpostInput](#paaminnelseeksterntvarselepostinput)
     * [PaaminnelseEksterntVarselInput](#paaminnelseeksterntvarselinput)
     * [PaaminnelseEksterntVarselSmsInput](#paaminnelseeksterntvarselsmsinput)
@@ -1934,6 +1937,88 @@ Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikas
 </tbody>
 </table>
 
+#### AltinntjenesteMottakerInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>serviceCode</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>serviceEdition</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+#### EksterntVarselAltinntjenesteInput
+
+Med denne typen vil varsel sendes til virksomheten vha tjenesten i Altinn.
+Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det mest sannsynlig blir sendt som epost, men i enkelte tilfeller
+vil bli sendt sms.
+
+De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med tjenestekoden som oppgis) vil bli varslet.
+Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
+
+Malen som benyttes er TokenTextOnly og den ser slik ut:
+<pre>
+type   | subject  | notificationText
+SMS    |          | {tittel}{innhold}
+EMAIL  | {tittel} | {innhold}
+</pre>
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>mottaker</strong></td>
+<td valign="top"><a href="#altinntjenestemottakerinput">AltinntjenesteMottakerInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>tittel</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Subject/emne til e-posten, eller tekst i sms
+OBS: Det er ikke lov med personopplysninger i teksten.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>innhold</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Kroppen til e-posten. Dersom det sendes SMS blir dette feltet lagt til i kroppen på sms etter tittel
+OBS: Det er ikke lov med personopplysninger i teksten.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>sendetidspunkt</strong></td>
+<td valign="top"><a href="#sendetidspunktinput">SendetidspunktInput</a>!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 #### EksterntVarselEpostInput
 
 <table>
@@ -1997,6 +2082,11 @@ OBS: Det er ikke lov med personopplysninger i teksten. E-post er ikke en sikker 
 <tr>
 <td colspan="2" valign="top"><strong>epost</strong></td>
 <td valign="top"><a href="#eksterntvarselepostinput">EksterntVarselEpostInput</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>altinntjeneste</strong></td>
+<td valign="top"><a href="#eksterntvarselaltinntjenesteinput">EksterntVarselAltinntjenesteInput</a></td>
 <td></td>
 </tr>
 </tbody>
@@ -2468,6 +2558,56 @@ Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du 
 </tbody>
 </table>
 
+#### PaaminnelseEksterntVarselAltinntjenesteInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong>mottaker</strong></td>
+<td valign="top"><a href="#altinntjenestemottakerinput">AltinntjenesteMottakerInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>tittel</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Subject/emne til e-posten, eller tekst i sms
+OBS: Det er ikke lov med personopplysninger i teksten.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>innhold</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td>
+
+Kroppen til e-posten. Dersom det sendes SMS blir dette feltet lagt til i kroppen på sms etter tittel
+OBS: Det er ikke lov med personopplysninger i teksten.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>sendevindu</strong></td>
+<td valign="top"><a href="#sendevindu">Sendevindu</a>!</td>
+<td>
+
+Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+det ved første mulighet.
+
+</td>
+</tr>
+</tbody>
+</table>
+
 #### PaaminnelseEksterntVarselEpostInput
 
 <table>
@@ -2537,6 +2677,11 @@ det ved første mulighet.
 <tr>
 <td colspan="2" valign="top"><strong>epost</strong></td>
 <td valign="top"><a href="#paaminnelseeksterntvarselepostinput">PaaminnelseEksterntVarselEpostInput</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong>altinntjeneste</strong></td>
+<td valign="top"><a href="#paaminnelseeksterntvarselaltinntjenesteinput">PaaminnelseEksterntVarselAltinntjenesteInput</a></td>
 <td></td>
 </tr>
 </tbody>
