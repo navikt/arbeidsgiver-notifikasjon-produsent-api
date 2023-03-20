@@ -27,6 +27,7 @@ class DataproduktEksterVarselVellykketTests : DescribeSpec({
         sendevindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
         sendeTidspunkt = null
     )
+
     describe("Dataprodukt ekstern varsel vellykket med flere mottakere i respons") {
         subject.oppdaterModellEtterHendelse(
             EksempelHendelse.BeskjedOpprettet.copy(
