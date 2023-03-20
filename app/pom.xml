@@ -320,7 +320,7 @@
 
                 <configuration>
                     <jvmTarget>${jvm.version}</jvmTarget>
-                    <languageVersion>1.5</languageVersion>
+                    <languageVersion>1.6</languageVersion>
                     <args>
                         <arg>-opt-in=kotlin.RequiresOptIn</arg>
                     </args>
@@ -359,7 +359,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.2</version>
                 <configuration>
                     <attach>false</attach>
                     <finalName>${project.artifactId}</finalName>
