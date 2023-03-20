@@ -71,10 +71,10 @@ resource "google_bigquery_data_transfer_config" "notifikasjon" {
         notifikasjon_type,
         produsent_id,
         merkelapp,
-        ekstern_id,
+        ekstern_id_pseud,
         tekst_pseud,
         grupperingsid_pseud,
-        lenke,
+        lenke_pseud,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", opprettet_tidspunkt, "UTC") as opprettet_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", soft_deleted_tidspunkt, "UTC") as soft_deleted_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", utgaatt_tidspunkt, "UTC") as utgaatt_tidspunkt,
@@ -91,10 +91,10 @@ resource "google_bigquery_data_transfer_config" "notifikasjon" {
         notifikasjon_type,
         produsent_id,
         merkelapp,
-        ekstern_id,
+        ekstern_id_pseud,
         tekst_pseud,
         grupperingsid_pseud,
-        lenke,
+        lenke_pseud,
         opprettet_tidspunkt,
         soft_deleted_tidspunkt,
         utgaatt_tidspunkt,
@@ -172,7 +172,7 @@ resource "google_bigquery_data_transfer_config" "sak" {
         produsent_id,
         merkelapp,
         tittel_pseud,
-        lenke,
+        lenke_pseud,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", oppgitt_tidspunkt, "UTC") as oppgitt_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", mottatt_tidspunkt, "UTC") as mottatt_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", soft_deleted_tidspunkt, "UTC") as soft_deleted_tidspunkt
@@ -185,7 +185,7 @@ resource "google_bigquery_data_transfer_config" "sak" {
         produsent_id,
         merkelapp,
         tittel_pseud,
-        lenke,
+        lenke_pseud,
         oppgitt_tidspunkt,
         mottatt_tidspunkt,
         soft_deleted_tidspunkt
@@ -219,7 +219,7 @@ resource "google_bigquery_data_transfer_config" "sak_status" {
         overstyr_statustekst_med,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", oppgitt_tidspunkt, "UTC") as oppgitt_tidspunkt,
         PARSE_TIMESTAMP("%FT%R:%E*SZ", mottatt_tidspunkt, "UTC") as mottatt_tidspunkt,
-        ny_lenke_til_sak
+        ny_lenke_til_sak_pseud
      FROM EXTERNAL_QUERY(
     '${google_bigquery_connection.this.location}.${google_bigquery_connection.this.connection_id}',
     '''
@@ -231,7 +231,7 @@ resource "google_bigquery_data_transfer_config" "sak_status" {
         overstyr_statustekst_med,
         oppgitt_tidspunkt,
         mottatt_tidspunkt,
-        ny_lenke_til_sak
+        ny_lenke_til_sak_pseud
     from sak_status
     ''');
 EOF
@@ -502,6 +502,41 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_epost" 
         varsel_id::text,
         epost_pseud
     from ekstern_varsel_mottaker_epost
+    ''');
+EOF
+  }
+}
+
+resource "google_bigquery_table" "ekstern_varsel_resultat" {
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "ekstern_varsel_resultat"
+}
+
+resource "google_bigquery_data_transfer_config" "ekstern_varsel_resultat" {
+  service_account_name   = google_service_account.sa-notifikasjon-dataprodukt.email
+  data_source_id         = "scheduled_query"
+  display_name           = "ekstern_varsel_resultat"
+  location               = var.region
+  schedule               = "every day 00:00"
+  destination_dataset_id = google_bigquery_dataset.this.dataset_id
+  params = {
+    destination_table_name_template = google_bigquery_table.ekstern_varsel_resultat.table_id
+    write_disposition               = "WRITE_TRUNCATE"
+    query                           = <<EOF
+    SELECT
+        varsel_id,
+        resultat_name_pseud,
+        resultat_receiver_pseud,
+        resultat_type
+     FROM EXTERNAL_QUERY(
+    '${google_bigquery_connection.this.location}.${google_bigquery_connection.this.connection_id}',
+    '''
+    select
+        varsel_id::text,
+        resultat_name_pseud,
+        resultat_receiver_pseud,
+        resultat_type
+    from ekstern_varsel_resultat
     ''');
 EOF
   }
