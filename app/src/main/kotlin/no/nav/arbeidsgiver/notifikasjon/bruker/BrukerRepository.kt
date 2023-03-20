@@ -38,6 +38,12 @@ interface BrukerRepository {
         val totaltAntallSaker: Int,
         val saker: List<BrukerModel.Sak>,
         val sakstyper: List<Sakstype>,
+        val oppgaveTilstanderMedAntall: List<Oppgavetilstand>,
+    )
+
+    class Oppgavetilstand(
+        val navn: BrukerModel.Oppgave.Tilstand,
+        val antall: Int,
     )
 
     class Sakstype(
@@ -54,6 +60,7 @@ interface BrukerRepository {
         offset: Int,
         limit: Int,
         sortering: BrukerAPI.SakSortering,
+        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): HentSakerResultat
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
@@ -170,6 +177,7 @@ class BrukerRepositoryImpl(
         offset: Int,
         limit: Int,
         sortering: BrukerAPI.SakSortering,
+        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): BrukerRepository.HentSakerResultat {
         return timer.coRecord {
             val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
@@ -197,14 +205,14 @@ class BrukerRepositoryImpl(
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
                 .ifNotBlank { "where $it" }
-
+            
             val sorteringSql = when (sortering) {
                 BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
                 BrukerAPI.SakSortering.OPPRETTET -> """
-                   s.statuser#>>'{-1,tidspunkt}' desc 
+                   statuser#>>'{-1,tidspunkt}' desc 
                 """
                 BrukerAPI.SakSortering.FRIST -> """
-                    frist nulls last, nye_oppgaver desc, sist_endret desc
+                    tidligste_frist nulls last, nye_oppgaver desc, sist_endret desc
                 """
             }
 
@@ -213,23 +221,34 @@ class BrukerRepositoryImpl(
                 """
                     with 
                         mine_altinntilganger as (
-                            select * from json_to_recordset(?::json) 
+                            select
+                                virksomhetsnummer as virksomhet,
+                                "serviceCode" as service_code,
+                                "serviceEdition" as service_edition from json_to_recordset(?::json) 
                             as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
                         ),
                         mine_altinn_saker as (
                             select er.sak_id
                             from mottaker_altinn_enkeltrettighet er
-                            join mine_altinntilganger at on 
-                                er.virksomhet = at.virksomhetsnummer and
-                                er.service_code = at."serviceCode" and
-                                er.service_edition = at."serviceEdition"
-                            where
-                                er.sak_id is not null
+                            join mine_altinntilganger using (virksomhet, service_code, service_edition)
+                            where er.sak_id is not null
+                        ),
+                        mine_altinn_notifikasjoner as (
+                            select er.notifikasjon_id
+                            from mottaker_altinn_enkeltrettighet er
+                            join mine_altinntilganger using (virksomhet, service_code, service_edition) 
+                            where 
+                                er.notifikasjon_id is not null
                         ),
                         mine_digisyfo_saker as (
                             select sak_id
                             from mottaker_digisyfo_for_fnr
                             where fnr_leder = ? and virksomhet = any(?) and sak_id is not null
+                        ),
+                        mine_digisyfo_notifikasjoner as (
+                            select notifikasjon_id 
+                            from mottaker_digisyfo_for_fnr
+                            where fnr_leder = ? and notifikasjon_id is not null
                         ),
                         mine_sak_ider as (
                             (select * from mine_digisyfo_saker)
@@ -241,127 +260,153 @@ class BrukerRepositoryImpl(
                                 from mine_sak_ider as ms
                                 join sak as s on s.id = ms.sak_id
                         ),
-                        mine_saker_ikke_paginert_foer_sakstypefilter as (
-                            select 
-                                s.id as "sakId", 
-                                s.virksomhetsnummer as virksomhetsnummer,
-                                s.tittel as tittel,
-                                s.lenke as lenke,
-                                s.merkelapp as merkelapp,
-                                s.grupperingsid as grupperingsid,
-                                to_jsonb(status_json.statuser) as statuser,
-                                status_json.sist_endret as sist_endret
-                            from mine_saker as s
-                            join sak_status_json as status_json on s.id = status_json.sak_id
-                            join sak_search as search on s.id = search.id
-                            $tekstsoekSql
+                        mine_oppgaver as (
+                            select
+                                id,
+                                tilstand, 
+                                frist, 
+                                paaminnelse_tidspunkt,
+                                grupperingsid
+                            from notifikasjon
+                            where 
+                                type = 'OPPGAVE' and
+                                id in (
+                                        select * from mine_digisyfo_notifikasjoner
+                                            union
+                                        select * from mine_altinn_notifikasjoner
+                                )
                         ),
-                        mine_saker_ikke_paginert as (
+                        mine_saker_med_oppgaver as (
+                            select 
+                            s.*, o.id as oppgave_id, 
+                            o.tilstand as oppgave_tilstand, 
+                            o.frist as oppgave_frist, 
+                            o.paaminnelse_tidspunkt as oppgave_paaminnelse_tidspunkt
+                            from mine_saker s
+                            left join mine_oppgaver as o --TODO: Fikse left join med følgefeil  
+                                on o.grupperingsid = s.grupperingsid
+                        ),
+                        mine_saker_med_tekstsøk as (
+                            select s.*, ssj.statuser, ssj.sist_endret
+                            from mine_saker_med_oppgaver as s
+                            join sak_status_json as ssj on s.id = ssj.sak_id
+                            join sak_search as search on s.id = search.id
+                            ${tekstsoekSql}
+                        ),
+                        mine_saker_sakstypefiltrert as (
                             select * 
-                            from mine_saker_ikke_paginert_foer_sakstypefilter
+                            from mine_saker_med_tekstsøk
                             where coalesce(merkelapp = any(?), true)
+                        ),
+                        mine_saker_oppgave_tilstandfiltrert as (
+                            select * 
+                            from mine_saker_med_tekstsøk
+                            where coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
                         ),
                         mine_merkelapper as (
                             select 
-                                merkelapp as merkelapp,
-                                count(*) as antall
-                            from mine_saker_ikke_paginert_foer_sakstypefilter
+                                merkelapp as sakstype,
+                                count(distinct id) as antall
+                            from mine_saker_oppgave_tilstandfiltrert
                             group by merkelapp
                         ),
-                        mine_altinn_notifikasjoner as (
-                            select er.notifikasjon_id
-                            from mottaker_altinn_enkeltrettighet er
-                            join mine_altinntilganger at on 
-                                er.virksomhet = at.virksomhetsnummer and
-                                er.service_code = at."serviceCode" and
-                                er.service_edition = at."serviceEdition"
-                            where
-                                er.notifikasjon_id is not null
+                        mine_oppgavetilstander as (
+                            select 
+                                oppgave_tilstand as tilstand,
+                                count(*) as antall
+                            from mine_saker_sakstypefiltrert
+                            where oppgave_tilstand is not null
+                            group by tilstand
                         ),
-                        mine_digisyfo_notifikasjoner as (
-                            select notifikasjon_id 
-                            from mottaker_digisyfo_for_fnr
-                            where fnr_leder = ? and notifikasjon_id is not null
+                        mine_saker_filtrert as (
+                            select * 
+                            from mine_saker_med_tekstsøk
+                            where coalesce(merkelapp = any(?), true)
+                            and coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
                         ),
-                        mine_saksoppgaver as (
-                            select
-                                s."sakId",
-                                s.virksomhetsnummer,
-                                s.tittel,
-                                s.lenke,
-                                s.merkelapp,
-                                s.grupperingsid,
-                                s.statuser,
-                                s.sist_endret,
-                                o.oppgaver,
-                                (select count(*)
-                                 from unnest(o.oppgaver) as o2
-                                 where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
-                                ) as nye_oppgaver,
-                                (select o2 ->> 'frist'
-                                from unnest(o.oppgaver) as o2
-                                where  o2 ->> 'tilstand' = '${BrukerModel.Oppgave.Tilstand.NY}'
-                                order by o2 ->> 'frist' nulls last
-                                limit 1) as frist
-                            from mine_saker_ikke_paginert s
-                            cross join lateral (
-                                select array (
-                                    select jsonb_build_object( 
-                                    'tilstand', n.tilstand, 
-                                    'frist', n.frist, 
-                                    'paaminnelseTidspunkt', n.paaminnelse_tidspunkt 
-                                    )
-                                    from notifikasjon n
-                                    where n.grupperingsid = s.grupperingsid
-                                        and n.id in (
-                                            select * from mine_digisyfo_notifikasjoner
-                                                union
-                                            select * from mine_altinn_notifikasjoner
-                                        )
-                                    order by n.frist nulls last
-                                ) as oppgaver
-                            ) o
+                        mine_saker_aggregerte_oppgaver_uten_statuser as (
+                           select 
+                                id,
+                                virksomhetsnummer,
+                                tittel,
+                                lenke,
+                                merkelapp,
+                                grupperingsid,
+                                count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
+                                min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist,
+                                case
+                                    when count(*) filter (where oppgave_tilstand is not null) = 0 then '[]'::jsonb
+                                    else jsonb_agg(
+                                        jsonb_build_object(
+                                            'tilstand', oppgave_tilstand,
+                                            'frist', oppgave_frist,
+                                            'paaminnelseTidspunkt', oppgave_paaminnelse_tidspunkt
+                                    ) order by oppgave_frist nulls last    
+                                ) end as oppgaver
+                            from mine_saker_filtrert
+                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid
+                        ),
+                        mine_saker_paginert as (
+                            select 
+                                id,
+                                virksomhetsnummer,
+                                tittel,
+                                lenke,
+                                merkelapp,
+                                statuser,
+                                oppgaver
+                            from mine_saker_aggregerte_oppgaver_uten_statuser
+                            join sak_status_json as js on js.sak_id = id
                             order by ${sorteringSql}
-                            offset ? limit ? 
+                            limit ? offset ?
                         )
                     select
-                        (select count(*) from mine_saker_ikke_paginert) as totalt_antall_saker,
-                        (select coalesce(
-                            jsonb_agg(jsonb_build_object(
-                                'sakId', "sakId",
+                        (select count(*) 
+                            from mine_saker_filtrert
+                            ) as totalt_antall_saker,
+                    
+                        (select coalesce(jsonb_agg( jsonb_build_object('navn', sakstype, 'antall', antall)), '[]'::jsonb)
+                            from mine_merkelapper
+                        ) as sakstyper,
+                        
+                        (select coalesce(jsonb_agg( jsonb_build_object('navn', tilstand, 'antall', antall)), '[]'::jsonb)
+                            from mine_oppgavetilstander
+                        ) as oppgavetilstander,
+                            
+                        (select 
+                            coalesce(jsonb_agg(jsonb_build_object(
+                                'sakId', id,
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'merkelapp', merkelapp,
-                                'grupperingsid', grupperingsid,
                                 'statuser', statuser,
-                                'sist_endret', sist_endret,
                                 'oppgaver', oppgaver
-                            )),  
-                            '[]'::jsonb
-                        ) from mine_saksoppgaver) as saker,
-                        (select 
-                            coalesce(jsonb_agg(jsonb_build_object(
-                                'navn', merkelapp,
-                                'antall', antall
+                                    
                             )), '[]'::jsonb) 
-                        from mine_merkelapper) as sakstyper
+                            from mine_saker_paginert
+                            ) as saker
+                        
                     """,
                 {
                     jsonb(tilgangerAltinnMottaker)
                     text(fnr)
                     stringList(virksomhetsnummer)
+                    text(fnr)
                     tekstsoekElementer.forEach { text(it) }
                     nullableStringList(sakstyper)
-                    text(fnr)
-                    integer(offset)
+                    nullableEnumAsTextList(oppgaveTilstand)
+                    nullableStringList(sakstyper)
+                    nullableEnumAsTextList(oppgaveTilstand)
                     integer(limit)
+                    integer(offset)
                 }
             ) {
                 BrukerRepository.HentSakerResultat(
                     totaltAntallSaker = getInt("totalt_antall_saker"),
                     saker = laxObjectMapper.readValue(getString("saker")),
-                    sakstyper = laxObjectMapper.readValue(getString("sakstyper"))
+                    sakstyper = laxObjectMapper.readValue(getString("sakstyper")),
+                    oppgaveTilstanderMedAntall = laxObjectMapper.readValue(getString("oppgavetilstander"))
                 )
             }
             return@coRecord rows.first()

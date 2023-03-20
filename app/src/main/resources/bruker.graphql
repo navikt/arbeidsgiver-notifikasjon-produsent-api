@@ -11,6 +11,7 @@ type Query {
         limit: Int
         tekstsoek: String
         sakstyper: [String!]
+        oppgaveTilstand: [OppgaveTilstand!]
         sortering: SakSortering! = OPPDATERT
     ): SakerResultat!
     whoami: String
@@ -44,7 +45,14 @@ type SakerResultat {
     """
     sakstyper: [Sakstype!]!
 
+    oppgaveTilstandInfo: [OppgaveTilstandInfo!]!
+
     feilAltinn: Boolean!
+}
+
+type OppgaveTilstandInfo {
+    tilstand: OppgaveTilstand!
+    antall: Int!
 }
 
 type OppgaveMetadata {
