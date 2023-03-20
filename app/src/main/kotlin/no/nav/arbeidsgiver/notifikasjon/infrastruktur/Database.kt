@@ -296,6 +296,10 @@ class ParameterSetters(
             laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)
         )
 
+    fun nullableEnumAsTextList(value: List<Enum<*>>?) {
+        nullableStringList(value?.map { it.toString() })
+    }
+
     fun stringList(value: List<String>) {
         val array = preparedStatement.connection.createArrayOf(
             "text",
