@@ -266,13 +266,17 @@ class AltinnVarselKlientImpl(
                     "Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}",
                     e
                 )
-                Result.success(
-                    AltinnVarselKlient.AltinnResponse.Feil(
-                        feilkode = e.faultInfo.errorID.toString(),
-                        feilmelding = e.faultInfo.altinnErrorMessage.value,
-                        rå = laxObjectMapper.valueToTree(e),
+                if (e.isRetryable()) {
+                    Result.failure(e)
+                } else {
+                    Result.success(
+                        AltinnVarselKlient.AltinnResponse.Feil(
+                            feilkode = e.faultInfo.errorID.toString(),
+                            feilmelding = e.faultInfo.altinnErrorMessage.value,
+                            rå = laxObjectMapper.valueToTree(e),
+                        )
                     )
-                )
+                }
             } catch (e: RuntimeException) {
                 Result.failure(e)
             }
@@ -337,3 +341,13 @@ fun <PORT_TYPE> createServicePort(
         }
     })
 }.create(clazz)
+
+/**
+ * TAG-2054
+ * https://altinn.github.io/docs/api/tjenesteeiere/soap/feilkoder/
+ */
+private val retryableErrorIds = listOf(
+    44, // intern teknisk feil i altinn. ikke dokumentert
+)
+private fun INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
+    .isRetryable() = retryableErrorIds.contains(this.faultInfo.errorID)
