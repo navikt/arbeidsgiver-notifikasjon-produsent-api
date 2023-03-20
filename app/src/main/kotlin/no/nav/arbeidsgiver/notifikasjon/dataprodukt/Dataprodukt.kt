@@ -25,9 +25,6 @@ object Dataprodukt {
             val database = openDatabaseAsync(databaseConfig)
 
             launch {
-                database.await()
-            }
-            launch {
                 val dataproduktModel = DataproduktModel(database.await())
                 hendelsesstrøm.forEach { hendelse, metadata ->
                     dataproduktModel.oppdaterModellEtterHendelse(hendelse, metadata)
