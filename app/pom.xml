@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <kotlin.version>1.7.20</kotlin.version>
+        <kotlin.version>1.8.10</kotlin.version>
         <ktor.version>2.2.2</ktor.version>
         <kotest.version>5.5.0</kotest.version>
         <cxf.version>3.5.5</cxf.version>
