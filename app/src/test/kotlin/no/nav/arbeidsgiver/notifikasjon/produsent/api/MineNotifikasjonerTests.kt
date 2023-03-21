@@ -17,7 +17,7 @@ import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 class MineNotifikasjonerTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
+    val database = testDatabase(Produsent.databaseConfig, cleanContext = false)
     val produsentModel = ProdusentRepositoryImpl(database)
     val engine = ktorProdusentTestServer(produsentRepository = produsentModel)
     val virksomhetsnummer = "123"
@@ -29,7 +29,7 @@ class MineNotifikasjonerTests : DescribeSpec({
     )
     val grupperingsid = "sak1"
 
-    beforeContainer {
+    describe("mineNotifikasjoner") {
         val uuid = UUID.randomUUID()
         produsentModel.oppdaterModellEtterHendelse(
             OppgaveOpprettet(
@@ -108,9 +108,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 hardDelete = null,
             )
         )
-    }
 
-    describe("mineNotifikasjoner") {
         context("produsent mangler tilgang til merkelapp") {
             val response = engine.produsentApi(
                 """

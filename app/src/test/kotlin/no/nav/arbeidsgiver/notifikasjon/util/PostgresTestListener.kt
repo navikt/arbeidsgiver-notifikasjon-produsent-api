@@ -11,7 +11,11 @@ import java.sql.SQLException
 import java.util.*
 
 val ids = generateSequence() { UUID.randomUUID() }.iterator()
-fun TestConfiguration.testDatabase(config: Database.Config): Database =
+fun TestConfiguration.testDatabase(
+    config: Database.Config,
+    cleanDescribe : Boolean = true,
+    cleanContext : Boolean = true,
+): Database =
     runBlocking {
         val db = "${config.database}_${ids.next()}"
         try {
@@ -31,12 +35,35 @@ fun TestConfiguration.testDatabase(config: Database.Config): Database =
                 database = db,
             )
         )
+    }.also {
+        listener(
+            PostgresTestListener(
+                database = it,
+                cleanDescribe = cleanDescribe,
+                cleanContext = cleanContext
+            )
+        )
     }
-        .also { listener(PostgresTestListener(it)) }
 
-class PostgresTestListener(private val database: Database): TestListener {
+
+class PostgresTestListener(
+    private val database: Database,
+    private val cleanDescribe : Boolean = true,
+    private val cleanContext : Boolean = true,
+): TestListener {
 
     override suspend fun beforeContainer(testCase: TestCase) {
+        if (testCase.descriptor.isRootTest() && cleanDescribe) {
+            // describe
+            cleanDb()
+        }
+        if (cleanContext && !testCase.descriptor.isRootTest()) {
+            // context
+            cleanDb()
+        }
+    }
+
+    private suspend fun cleanDb() {
         database.withFlyway({
             cleanDisabled(false)
         }) {

@@ -26,7 +26,6 @@ class OppgaveUtgåttTests : DescribeSpec({
         produsentRepository = produsentModel
     )
 
-
     describe("OppgaveUtgått-oppførsel") {
         val virksomhetsnummer = "123"
         val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
