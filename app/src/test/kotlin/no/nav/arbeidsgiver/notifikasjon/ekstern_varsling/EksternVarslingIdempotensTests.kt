@@ -24,4 +24,16 @@ class EksternVarslingIdempotensTests : DescribeSpec({
             }
         }
     }
+
+    describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
+        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
+            context("$i - ${hendelse.typeNavn}") {
+                repository.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
+                    virksomhetsnummer = hendelse.virksomhetsnummer,
+                    aggregateId = hendelse.aggregateId,
+                ))
+                repository.oppdaterModellEtterHendelse(hendelse)
+            }
+        }
+    }
 })

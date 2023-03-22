@@ -28,4 +28,16 @@ class DataproduktIdempotensTests : DescribeSpec({
             }
         }
     }
+
+    describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
+        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
+            context("$i - ${hendelse.typeNavn}") {
+                subject.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
+                    virksomhetsnummer = hendelse.virksomhetsnummer,
+                    aggregateId = hendelse.aggregateId,
+                ), metadata)
+                subject.oppdaterModellEtterHendelse(hendelse, metadata)
+            }
+        }
+    }
 })
