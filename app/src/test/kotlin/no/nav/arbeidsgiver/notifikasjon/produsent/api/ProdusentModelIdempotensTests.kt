@@ -3,11 +3,11 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.typeNavn
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import no.nav.arbeidsgiver.notifikasjon.util.uuid
 
 class ProdusentModelIdempotensTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
@@ -32,6 +32,14 @@ class ProdusentModelIdempotensTests : DescribeSpec({
                 ) {
                 }.size
                 antallMottakere shouldBe 1
+            }
+        }
+    }
+
+    describe("Håndterer partial replay hvor midt i hendelsesforløp") {
+        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
+            context("$i - ${hendelse.typeNavn}") {
+                produsentModel.oppdaterModellEtterHendelse(hendelse)
             }
         }
     }

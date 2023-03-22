@@ -5,7 +5,7 @@ import io.kotest.datatest.withData
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
-class KafkaReaperModelTest : DescribeSpec({
+class KafkaReaperModelIdempotensTest : DescribeSpec({
     val database = testDatabase(KafkaReaper.databaseConfig)
     val model = KafkaReaperModelImpl(database)
 
@@ -13,6 +13,14 @@ class KafkaReaperModelTest : DescribeSpec({
         withData(EksempelHendelse.Alle) { hendelse ->
             model.oppdaterModellEtterHendelse(hendelse)
             model.oppdaterModellEtterHendelse(hendelse)
+        }
+    }
+
+    describe("Håndterer partial replay hvor midt i hendelsesforløp") {
+        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
+            context("$i - ${hendelse.typeNavn}") {
+                model.oppdaterModellEtterHendelse(hendelse)
+            }
         }
     }
 })

@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.typeNavn
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
@@ -13,6 +14,14 @@ class EksternVarslingIdempotensTests : DescribeSpec({
         withData(EksempelHendelse.Alle) { hendelse ->
             repository.oppdaterModellEtterHendelse(hendelse)
             repository.oppdaterModellEtterHendelse(hendelse)
+        }
+    }
+
+    describe("Håndterer partial replay hvor midt i hendelsesforløp") {
+        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
+            context("$i - ${hendelse.typeNavn}") {
+                repository.oppdaterModellEtterHendelse(hendelse)
+            }
         }
     }
 })
