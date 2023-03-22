@@ -36,7 +36,6 @@ class HendelsesstrømKafkaImpl(
      */
     private val brokenHendelseId: Set<UUID> = setOf(
         UUID.fromString("75977ac3-5ccd-42d2-ada0-93482462b8a9"),
-        UUID.fromString("32a62734-95db-433d-8e39-b0dbcea57939"),
     )
 
     override suspend fun forEach(
