@@ -2,6 +2,7 @@
 
 package no.nav.arbeidsgiver.notifikasjon.dataprodukt
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
@@ -33,10 +34,15 @@ import java.util.*
 
 class DataproduktModel(
     val database: Database,
-) {
+) : HardDeletedRepository(database) {
     val log = logger()
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
+        if (erHardDeleted(hendelse.aggregateId)) {
+            log.info("skipping harddeleted event {}", hendelse)
+            return
+        }
+        registrerHardDelete(hendelse)
         database.nonTransactionalExecuteUpdate("""
             insert into aggregat_hendelse(
                 hendelse_id,
