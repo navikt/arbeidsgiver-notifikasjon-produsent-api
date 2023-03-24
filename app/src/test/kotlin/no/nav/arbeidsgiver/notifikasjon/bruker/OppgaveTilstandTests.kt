@@ -140,11 +140,18 @@ class OppgaveTilstandTests : DescribeSpec({
         opprettOppgave(sak, LocalDate.parse("2023-05-15"))
         opprettOppgave(sak, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtgått(it!!) }
 
+        val sak2 = opprettSak("2")
+        opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
+        opprettOppgave(sak2, LocalDate.parse("2023-05-15"))
+
+        val sak3 = opprettSak("3")
+        opprettOppgave(sak3, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
+
         val res =
-            engine.hentSaker().getTypedContent<Set<Object>>("$.saker.oppgaveTilstandInfo")
+            engine.hentSaker().getTypedContent<List<Object>>("$.saker.oppgaveTilstandInfo")
 
 
-        res shouldBe setOf(
+        res shouldContainExactlyInAnyOrder listOf(
             mapOf(
                 "tilstand" to "NY",
                 "antall" to 2
@@ -155,7 +162,7 @@ class OppgaveTilstandTests : DescribeSpec({
             ),
             mapOf(
                 "tilstand" to "UTFOERT",
-                "antall" to 1
+                "antall" to 3
             )
         )
     }
