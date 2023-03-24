@@ -246,14 +246,18 @@ class ProdusentRepositoryImpl(
                 jsonb(sakOpprettet.mottakere)
                 text(sakOpprettet.tittel)
                 text(sakOpprettet.lenke)
-            }
-
-            executeUpdate("""
-                insert into sak_id (incoming_sak_id, sak_id) values (?, ?)
-                on conflict do nothing
-            """) {
-                uuid(sakOpprettet.sakId)
-                uuid(sakOpprettet.sakId)
+            }.also {
+                if (it == 0) {
+                    // noop. saken finnes allerede
+                } else {
+                    executeUpdate("""
+                        insert into sak_id (incoming_sak_id, sak_id) values (?, ?)
+                        on conflict do nothing
+                    """) {
+                        uuid(sakOpprettet.sakId)
+                        uuid(sakOpprettet.sakId)
+                    }
+                }
             }
         }
     }
