@@ -248,8 +248,7 @@ class ProdusentRepositoryImpl(
                 text(sakOpprettet.lenke)
             }.also {
                 if (it == 0) {
-                    // TODO: dersom dette er via HendelseDispatcher bør det propageres som en forretningsfeil
-                    // TODO: dersom det er via consumer så bør vi bare gå videre, evt logge det
+                    // noop. saken finnes allerede
                 } else {
                     executeUpdate("""
                         insert into sak_id (incoming_sak_id, sak_id) values (?, ?)
