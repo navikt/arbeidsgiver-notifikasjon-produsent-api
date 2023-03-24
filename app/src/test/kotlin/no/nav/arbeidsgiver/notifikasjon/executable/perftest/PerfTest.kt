@@ -2,13 +2,16 @@
 
 package no.nav.arbeidsgiver.notifikasjon.executable.perftest
 
+
 import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.apache.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
+import io.ktor.serialization.jackson.*
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.FAGER_TESTPRODUSENT
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
@@ -24,16 +27,20 @@ fun main() = runBlocking {
         //nyBeskjed(1, Api.PRODUSENT_LOCAL)
         //nySak(10, Api.PRODUSENT_GCP)
         //nyOppgave(10, Api.PRODUSENT_GCP)
-        //nyeSakerMedOppgaver(400, Api.PRODUSENT_GCP, it) Oppretter mange saker med noen ugyldige merkelapper.
+        nyeSakerMedOppgaver(500, Api.PRODUSENT_GCP, it, 400)// Oppretter mange saker med noen ugyldige merkelapper.
         //hentNotifikasjoner(1, Api.BRUKER_GCP)
     }
 }
 
 val client = HttpClient(Apache) {
+    install(ContentNegotiation) {
+        jackson()
+    }
     engine {
         socketTimeout = 0
         connectTimeout = 0
         connectionRequestTimeout = 0
+
         customizeClient {
             setMaxConnTotal(250)
         }
@@ -198,7 +205,11 @@ suspend fun nyBeskjed(count: Int, api: Api = Api.PRODUSENT_GCP) {
                     }""".trimMarginAndNewline()
             )
         }
-            .body<HttpResponse>()
+            .body<HttpResponse>().bodyAsText().also {
+                require(it.contains("Vellykket")) {
+                    "Feil ved opprettelse av oppgave: $it"
+                }
+            }
     }
 }
 
@@ -259,20 +270,21 @@ suspend fun nyOppgave(count: Int, api: Api = Api.PRODUSENT_GCP) {
                     }""".trimMarginAndNewline()
             )
         }
-            .body<HttpResponse>()
+            .body<HttpResponse>().bodyAsText().also {
+                require(it.contains("Vellykket")) {
+                    "Feil ved opprettelse av oppgave: $it"
+                }
+            }
     }
 }
 
 suspend fun nyOppgaveMasseproduksjon(
     virksomhet: String,
-    grupperingsid: Int,
+    grupperingsid: String,
     tjeneste: ServicecodeDefinisjon,
     client: HttpClient,
-    api: Api = Api.PRODUSENT_GCP
+    api: Api
 ) {
-    val eksterIder = generateSequence(1) { it + 1 }.iterator()
-
-
     val (tjenesteKode, tjenesteVersjon) = tjeneste
     client.post(api.url) {
         headers {
@@ -295,9 +307,9 @@ suspend fun nyOppgaveMasseproduksjon(
                               }
                           },
                           metadata: {
-                            eksternId: \"$run-${eksterIder.next()}\"
+                            eksternId: \"$run-${UUID.randomUUID()}\"
                             virksomhetsnummer: \"$virksomhet\"
-                            grupperingsid: \"perftest-${grupperingsid}\"
+                            grupperingsid: \"$grupperingsid\"
                           }
                       }) {
                           __typename
@@ -312,7 +324,12 @@ suspend fun nyOppgaveMasseproduksjon(
             }""".trimMarginAndNewline()
         )
     }
-        .body<HttpResponse>()
+        .body<HttpResponse>().bodyAsText().also {
+            require(it.contains("Vellykket")) {
+                "Feil ved opprettelse av oppgave: $it"
+            }
+        }
+
 
 }
 
@@ -372,7 +389,11 @@ suspend fun nySak(count: Int, api: Api = Api.PRODUSENT_GCP) {
                     }""".trimMarginAndNewline()
             )
         }
-            .body<HttpResponse>()
+            .body<HttpResponse>().bodyAsText().also {
+                require(it.contains("Vellykket")) {
+                    "Feil ved opprettelse av sak: $it"
+                }
+            }
     }
 
 }
@@ -383,8 +404,16 @@ fun wannabeBetaIshDistribution(x: Int, antallVirksomheter: Int, maxSaker: Int): 
 }
 
 
-suspend fun nyeSakerMedOppgaver(maxSaker: Int, api: Api = Api.PRODUSENT_GCP, client: HttpClient) {
-    val virksomheterAntallSaker: Map<String, Int> = virksomhetsnumre
+suspend fun nyeSakerMedOppgaver(
+    maxSaker: Int,
+    api: Api = Api.PRODUSENT_GCP,
+    client: HttpClient,
+    antallVirksomheter: Int
+) {
+    val virksomheterAntallSaker: Map<String, Int> = generateSequence {
+        Random.nextLong(100000000, 999999999).toString()
+    }
+        .take(antallVirksomheter)
         .mapIndexed { index, virksomhetsnr ->
             virksomhetsnr to wannabeBetaIshDistribution(
                 index,
@@ -393,20 +422,20 @@ suspend fun nyeSakerMedOppgaver(maxSaker: Int, api: Api = Api.PRODUSENT_GCP, cli
             )
         }
         .toMap()
-    val tjenester = FAGER_TESTPRODUSENT.tillatteMottakere.take(1) // tving inntektsmelding
+    val tjenester = FAGER_TESTPRODUSENT.tillatteMottakere.drop(1)
         .filterIsInstance<ServicecodeDefinisjon>()
         .asSequence()
         .looping()
         .iterator()
     val grupperingsidSequence = generateSequence(1) { it + 1 }.iterator()
 
-    virksomheterAntallSaker.map { (virksomhetsnummer, antallSaker) ->
+    virksomheterAntallSaker.forEach { (virksomhetsnummer, antallSaker) ->
         val tjeneste = tjenester.next()
         (1..antallSaker).map {
-            var grupperingsid = grupperingsidSequence.next()
-                nySakMasseproduksjon(virksomhetsnummer, grupperingsid, tjeneste, client)
+            var grupperingsid = "${Instant.now()}${grupperingsidSequence.next()}"
+            nySakMasseproduksjon(virksomhetsnummer, grupperingsid, tjeneste, client, api)
             (1..(1..4).random()).map {
-                nyOppgaveMasseproduksjon(virksomhetsnummer, grupperingsid, tjeneste, client)
+                nyOppgaveMasseproduksjon(virksomhetsnummer, grupperingsid, tjeneste, client, api)
             }
         }
     }
@@ -416,14 +445,15 @@ suspend fun nyeSakerMedOppgaver(maxSaker: Int, api: Api = Api.PRODUSENT_GCP, cli
 
 suspend fun nySakMasseproduksjon(
     virksomhet: String,
-    grupperingsid: Int,
+    grupperingsid: String,
     tjeneste: ServicecodeDefinisjon,
     client: HttpClient,
-    api: Api = Api.PRODUSENT_GCP
+    api: Api
 ) {
     val navn = listOf("Tor", "Per", "Ragnhild", "Muhammed", "Sara", "Alex", "Nina")
     val typeSak = listOf("er syk", "har lønnstilskudd", "har mentortilskudd")
     val merkelapp = listOf("fager", "fager2", "fager3")
+
     fun genererTittel() = "${navn.random()} ${typeSak.random()}."
 
     val (tjenesteKode, tjenesteVersjon) = tjeneste
@@ -436,7 +466,7 @@ suspend fun nySakMasseproduksjon(
             """{
                  "query": "mutation {
                       nySak(
-                          grupperingsid: \"perftest-${grupperingsid}\"
+                          grupperingsid: \"$grupperingsid\"
                           merkelapp: \"${merkelapp.random()}\"
                           virksomhetsnummer: \"$virksomhet\"
                           mottakere: [
@@ -462,7 +492,11 @@ suspend fun nySakMasseproduksjon(
             }""".trimMarginAndNewline()
         )
     }
-        .body<HttpResponse>()
+        .body<HttpResponse>().bodyAsText().also {
+            require(it.contains("Vellykket")) {
+                "Feil ved opprettelse av sak: $it"
+            }
+        }
 }
 
 
@@ -510,6 +544,7 @@ val run = Instant.now()!!
 val virksomhetsnumre = listOf(
     "315066786",
     "315064295",
+    "999999999",
     "315064562",
     "315064228",
     "315063892",
