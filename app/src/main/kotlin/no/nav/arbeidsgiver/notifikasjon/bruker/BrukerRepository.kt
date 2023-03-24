@@ -361,7 +361,7 @@ class BrukerRepositoryImpl(
                             limit ? offset ?
                         )
                     select
-                        (select count(*) 
+                        (select count(distinct id) 
                             from mine_saker_filtrert
                             ) as totalt_antall_saker,
                     
