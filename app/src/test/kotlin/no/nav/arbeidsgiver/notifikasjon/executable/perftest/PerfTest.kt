@@ -22,9 +22,9 @@ import kotlin.system.measureTimeMillis
 fun main() = runBlocking {
     client.use {
         //nyBeskjed(1, Api.PRODUSENT_LOCAL)
-        nySak(10, Api.PRODUSENT_GCP)
-        nyOppgave(10, Api.PRODUSENT_GCP)
-
+        //nySak(10, Api.PRODUSENT_GCP)
+        //nyOppgave(10, Api.PRODUSENT_GCP)
+        //nyeSakerMedOppgaver(400, Api.PRODUSENT_GCP, it) Oppretter mange saker med noen ugyldige merkelapper.
         //hentNotifikasjoner(1, Api.BRUKER_GCP)
     }
 }
@@ -263,6 +263,59 @@ suspend fun nyOppgave(count: Int, api: Api = Api.PRODUSENT_GCP) {
     }
 }
 
+suspend fun nyOppgaveMasseproduksjon(
+    virksomhet: String,
+    grupperingsid: Int,
+    tjeneste: ServicecodeDefinisjon,
+    client: HttpClient,
+    api: Api = Api.PRODUSENT_GCP
+) {
+    val eksterIder = generateSequence(1) { it + 1 }.iterator()
+
+
+    val (tjenesteKode, tjenesteVersjon) = tjeneste
+    client.post(api.url) {
+        headers {
+            append(HttpHeaders.ContentType, "application/json")
+            append(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
+        }
+        setBody(
+            """{
+                 "query": "mutation {
+                      nyOppgave(nyOppgave: {
+                          notifikasjon: {
+                            lenke: \"https://min-side-arbeidsgiver.dev.nav.no/min-side-arbeidsgiver/?bedrift=$virksomhet\",
+                            tekst: \"Dette er en test.\",
+                            merkelapp: \"fager\",
+                          }
+                          mottaker: {
+                              altinn: {
+                                  serviceCode: \"$tjenesteKode\",
+                                  serviceEdition: \"$tjenesteVersjon\",
+                              }
+                          },
+                          metadata: {
+                            eksternId: \"$run-${eksterIder.next()}\"
+                            virksomhetsnummer: \"$virksomhet\"
+                            grupperingsid: \"perftest-${grupperingsid}\"
+                          }
+                      }) {
+                          __typename
+                          ... on NyOppgaveVellykket {
+                            id
+                          }
+                          ... on Error {
+                            feilmelding
+                          }
+                      }
+                 }"
+            }""".trimMarginAndNewline()
+        )
+    }
+        .body<HttpResponse>()
+
+}
+
 suspend fun nySak(count: Int, api: Api = Api.PRODUSENT_GCP) {
     val navn = listOf("Tor", "Per", "Ragnhild", "Muhammed", "Sara", "Alex", "Nina")
     val typeSak = listOf("er syk", "har lønnstilskudd", "har mentortilskudd")
@@ -321,7 +374,97 @@ suspend fun nySak(count: Int, api: Api = Api.PRODUSENT_GCP) {
         }
             .body<HttpResponse>()
     }
+
 }
+
+fun wannabeBetaIshDistribution(x: Int, antallVirksomheter: Int, maxSaker: Int): Int {
+    val k = kotlin.math.ln(maxSaker.toDouble()) / antallVirksomheter
+    return kotlin.math.exp(k * x).toInt()
+}
+
+
+suspend fun nyeSakerMedOppgaver(maxSaker: Int, api: Api = Api.PRODUSENT_GCP, client: HttpClient) {
+    val virksomheterAntallSaker: Map<String, Int> = virksomhetsnumre
+        .mapIndexed { index, virksomhetsnr ->
+            virksomhetsnr to wannabeBetaIshDistribution(
+                index,
+                virksomhetsnumre.size,
+                maxSaker
+            )
+        }
+        .toMap()
+    val tjenester = FAGER_TESTPRODUSENT.tillatteMottakere.take(1) // tving inntektsmelding
+        .filterIsInstance<ServicecodeDefinisjon>()
+        .asSequence()
+        .looping()
+        .iterator()
+    val grupperingsidSequence = generateSequence(1) { it + 1 }.iterator()
+
+    virksomheterAntallSaker.map { (virksomhetsnummer, antallSaker) ->
+        val tjeneste = tjenester.next()
+        (1..antallSaker).map {
+            var grupperingsid = grupperingsidSequence.next()
+                nySakMasseproduksjon(virksomhetsnummer, grupperingsid, tjeneste, client)
+            (1..(1..4).random()).map {
+                nyOppgaveMasseproduksjon(virksomhetsnummer, grupperingsid, tjeneste, client)
+            }
+        }
+    }
+
+
+}
+
+suspend fun nySakMasseproduksjon(
+    virksomhet: String,
+    grupperingsid: Int,
+    tjeneste: ServicecodeDefinisjon,
+    client: HttpClient,
+    api: Api = Api.PRODUSENT_GCP
+) {
+    val navn = listOf("Tor", "Per", "Ragnhild", "Muhammed", "Sara", "Alex", "Nina")
+    val typeSak = listOf("er syk", "har lønnstilskudd", "har mentortilskudd")
+    val merkelapp = listOf("fager", "fager2", "fager3")
+    fun genererTittel() = "${navn.random()} ${typeSak.random()}."
+
+    val (tjenesteKode, tjenesteVersjon) = tjeneste
+    client.post(api.url) {
+        headers {
+            append(HttpHeaders.ContentType, "application/json")
+            append(HttpHeaders.Authorization, "Bearer $tokenDingsToken")
+        }
+        setBody(
+            """{
+                 "query": "mutation {
+                      nySak(
+                          grupperingsid: \"perftest-${grupperingsid}\"
+                          merkelapp: \"${merkelapp.random()}\"
+                          virksomhetsnummer: \"$virksomhet\"
+                          mottakere: [
+                              {altinn: {
+                                  serviceCode: \"$tjenesteKode\",
+                                  serviceEdition: \"$tjenesteVersjon\"
+                              }}
+                          ]
+                          
+                          tittel: \"${genererTittel()}\",                              
+                          lenke: \"https://min-side-arbeidsgiver.dev.nav.no/min-side-arbeidsgiver/?bedrift=$virksomhet\",
+                          initiellStatus: MOTTATT
+                      ) {
+                          __typename
+                          ... on NySakVellykket {
+                            id
+                          }
+                          ... on Error {
+                            feilmelding
+                          }
+                      }
+                 }"
+            }""".trimMarginAndNewline()
+        )
+    }
+        .body<HttpResponse>()
+}
+
 
 class ProgressBar(
     val title: String,
