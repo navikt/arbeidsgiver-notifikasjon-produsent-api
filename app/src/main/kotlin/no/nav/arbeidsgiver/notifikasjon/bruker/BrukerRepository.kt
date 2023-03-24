@@ -313,7 +313,7 @@ class BrukerRepositoryImpl(
                         mine_oppgavetilstander as (
                             select 
                                 oppgave_tilstand as tilstand,
-                                count(*) as antall
+                                count(distinct id) as antall
                             from mine_saker_sakstypefiltrert
                             where oppgave_tilstand is not null
                             group by tilstand
@@ -361,7 +361,7 @@ class BrukerRepositoryImpl(
                             limit ? offset ?
                         )
                     select
-                        (select count(*) 
+                        (select count(distinct id) 
                             from mine_saker_filtrert
                             ) as totalt_antall_saker,
                     

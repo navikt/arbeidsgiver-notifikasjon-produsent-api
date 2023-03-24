@@ -59,7 +59,7 @@ class OppgaveTilstandTests : DescribeSpec({
             frist = frist,
             påminnelse = null,
         ).also { queryModel.oppdaterModellEtterHendelse(it) }
-        return oppgaveId;
+        return oppgaveId
     }
 
     fun opprettStatus(id: UUID) = HendelseModel.NyStatusSak(
@@ -108,7 +108,7 @@ class OppgaveTilstandTests : DescribeSpec({
         return uuid.toString()
     }
     suspend fun oppgaveTilstandUtført(id: UUID) {
-        var hendelse = HendelseModel.OppgaveUtført(
+        val hendelse = HendelseModel.OppgaveUtført(
         virksomhetsnummer= "1",
         notifikasjonId = id,
         hendelseId=  UUID.randomUUID(),
@@ -117,10 +117,10 @@ class OppgaveTilstandTests : DescribeSpec({
         hardDelete = null,
         nyLenke = null,
         )
-        queryModel.oppdaterModellEtterHendelse(hendelse);
+        queryModel.oppdaterModellEtterHendelse(hendelse)
     }
     suspend fun oppgaveTilstandUtgått(id: UUID) {
-        var hendelse = HendelseModel.OppgaveUtgått(
+        val hendelse = HendelseModel.OppgaveUtgått(
             virksomhetsnummer= "1",
             notifikasjonId = id,
             hendelseId= UUID.randomUUID(),
@@ -130,7 +130,7 @@ class OppgaveTilstandTests : DescribeSpec({
             utgaattTidspunkt = OffsetDateTime.now(),
             nyLenke = null,
         )
-        queryModel.oppdaterModellEtterHendelse(hendelse);
+        queryModel.oppdaterModellEtterHendelse(hendelse)
     }
 
     describe("Sak med oppgave med frist og påminnelse") {
@@ -140,24 +140,35 @@ class OppgaveTilstandTests : DescribeSpec({
         opprettOppgave(sak, LocalDate.parse("2023-05-15"))
         opprettOppgave(sak, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtgått(it!!) }
 
-        val res =
-            engine.hentSaker().getTypedContent<Set<Object>>("$.saker.oppgaveTilstandInfo")
+        val sak2 = opprettSak("2")
+        opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
+        opprettOppgave(sak2, LocalDate.parse("2023-05-15"))
 
+        val sak3 = opprettSak("3")
+        opprettOppgave(sak3, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
 
-        res shouldBe setOf(
-            mapOf(
-                "tilstand" to "NY",
-                "antall" to 2
-            ),
-            mapOf(
-                "tilstand" to "UTGAATT",
-                "antall" to 1
-            ),
-            mapOf(
-                "tilstand" to "UTFOERT",
-                "antall" to 1
+        val res = engine.hentSaker()
+
+        it ("Teller kun saken en gang for hver tilstand") {
+            res.getTypedContent<List<Any>>("$.saker.oppgaveTilstandInfo") shouldContainExactlyInAnyOrder listOf(
+                mapOf(
+                    "tilstand" to "NY",
+                    "antall" to 2
+                ),
+                mapOf(
+                    "tilstand" to "UTGAATT",
+                    "antall" to 1
+                ),
+                mapOf(
+                    "tilstand" to "UTFOERT",
+                    "antall" to 3
+                )
             )
-        )
+        }
+
+        it ("totaltAntallSaker teller saker og ikke oppgaver") {
+            res.getTypedContent<Int>("$.saker.totaltAntallSaker") shouldBe 3
+        }
     }
 
     describe("Sak med oppgave med frist med filter"){
@@ -172,7 +183,7 @@ class OppgaveTilstandTests : DescribeSpec({
         opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtført(it!!) }
         opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtgått(it!!) }
 
-       val sak3 = opprettSak("3")
+       opprettSak("3")
 
         val res =
             engine.hentSakerMedFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
@@ -205,6 +216,7 @@ private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
                         tilstand
                         antall            
                     }
+                    totaltAntallSaker
                 }
             }
         """.trimIndent()

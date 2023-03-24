@@ -92,7 +92,7 @@ internal class MutationNySak(
             eksisterende == null -> {
                 log.info("oppretter ny sak med id $sakId")
                 hendelseDispatcher.send(sakOpprettetHendelse, statusoppdateringHendelse)
-                check(produsentRepository.hentSak(sakId) == null) {
+                check(produsentRepository.hentSak(sakId) != null) {
                     """
                         Sak med id $sakId ble produsert til kafka men ble ikke lagret i produsent-databasen. 
                         Dette er sannsynligvis en race condition to saker med samme koordinat opprettet samtidig.

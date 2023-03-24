@@ -10,6 +10,8 @@ val FAGER_TESTPRODUSENT = Produsent(
     ),
     tillatteMerkelapper = listOf(
         "fager",
+        "fager2",
+        "fager3"
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1"),
