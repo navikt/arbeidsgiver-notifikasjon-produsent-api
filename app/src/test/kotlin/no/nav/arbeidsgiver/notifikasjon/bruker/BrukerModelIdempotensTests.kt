@@ -33,14 +33,6 @@ class BrukerModelIdempotensTests : DescribeSpec({
 
     }
 
-    describe("Håndterer partial replay hvor midt i hendelsesforløp") {
-        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
-            context("$i - ${hendelse.typeNavn}") {
-                queryModel.oppdaterModellEtterHendelse(hendelse)
-            }
-        }
-    }
-
     describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {

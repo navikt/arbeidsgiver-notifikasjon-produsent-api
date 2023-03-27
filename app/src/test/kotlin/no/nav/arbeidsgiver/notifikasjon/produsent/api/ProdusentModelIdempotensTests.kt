@@ -63,14 +63,6 @@ class ProdusentModelIdempotensTests : DescribeSpec({
         }
     }
 
-    describe("Håndterer partial replay hvor midt i hendelsesforløp") {
-        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
-            context("$i - ${hendelse.typeNavn}") {
-                produsentModel.oppdaterModellEtterHendelse(hendelse)
-            }
-        }
-    }
-
     describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {

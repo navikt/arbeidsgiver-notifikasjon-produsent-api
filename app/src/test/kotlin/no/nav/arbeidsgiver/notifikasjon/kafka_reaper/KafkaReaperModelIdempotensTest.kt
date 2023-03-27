@@ -16,9 +16,13 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         }
     }
 
-    describe("Håndterer partial replay hvor midt i hendelsesforløp") {
+    describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {
+                model.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
+                    virksomhetsnummer = hendelse.virksomhetsnummer,
+                    aggregateId = hendelse.aggregateId,
+                ))
                 model.oppdaterModellEtterHendelse(hendelse)
             }
         }
