@@ -11,27 +11,25 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 
 object Dataprodukt {
     val databaseConfig = Database.config("dataprodukt_model")
-//    private val hendelsesstrøm by lazy {
-//        HendelsesstrømKafkaImpl(
-//            topic = NOTIFIKASJON_TOPIC,
-//            groupId = "dataprodukt-model-builder-2",
-//            replayPeriodically = true,
-//        )
-//    }
+
+    private val hendelsesstrøm by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "dataprodukt-model-builder-3",
+            replayPeriodically = true,
+        )
+    }
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
 
             launch {
-                database.await()
+                val dataproduktModel = DataproduktModel(database.await())
+                hendelsesstrøm.forEach { hendelse, metadata ->
+                    dataproduktModel.oppdaterModellEtterHendelse(hendelse, metadata)
+                }
             }
-//            launch {
-//                val dataproduktModel = DataproduktModel(database.await())
-//                hendelsesstrøm.forEach { hendelse, metadata ->
-//                    dataproduktModel.oppdaterModellEtterHendelse(hendelse, metadata)
-//                }
-//            }
 
             launchHttpServer(httpPort = httpPort)
         }
