@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
@@ -71,7 +72,7 @@ interface BrukerRepository {
 
 class BrukerRepositoryImpl(
     private val database: Database
-) : BrukerRepository {
+) : BrukerRepository, HardDeletedRepository(database) {
     private val log = logger()
     private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
@@ -424,6 +425,12 @@ class BrukerRepositoryImpl(
         }.getOrNull(0)
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+        if (erHardDeleted(hendelse.aggregateId)) {
+            log.info("skipping harddeleted event {}", hendelse)
+            return
+        }
+        registrerHardDelete(hendelse)
+
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         @Suppress("UNUSED_VARIABLE") val ignored: Unit = when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
