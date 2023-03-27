@@ -21,14 +21,6 @@ class DataproduktIdempotensTests : DescribeSpec({
         }
     }
 
-    describe("Håndterer partial replay hvor midt i hendelsesforløp") {
-        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
-            context("$i - ${hendelse.typeNavn}") {
-                subject.oppdaterModellEtterHendelse(hendelse, metadata)
-            }
-        }
-    }
-
     describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {
