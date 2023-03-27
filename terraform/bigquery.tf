@@ -579,7 +579,7 @@ resource "google_bigquery_table" "ekstern_varsel_view" {
   dataset_id = google_bigquery_dataset.this.dataset_id
   table_id   = "ekstern_varsel_view"
 
-  materialized_view {
+  view {
     query          = <<EOF
 SELECT
   varsel_id, notifikasjon_id, varsel_type, n.produsent_id,
@@ -599,6 +599,6 @@ SELECT
   left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_tlf` using (varsel_id)
   left join `notifikasjon_platform_dataset.ekstern_varsel_resultat` using (varsel_id)
 EOF
-    enable_refresh = true
+    use_legacy_sql = false
   }
 }
