@@ -96,8 +96,9 @@ class KafkaReaperModelImpl(
     override suspend fun fjernRelasjon(hendelseId: UUID) {
         database.nonTransactionalExecuteUpdate(
             """
-                DELETE FROM notifikasjon_hendelse_relasjon
-                WHERE hendelse_id = ?
+                delete from notifikasjon_hendelse_relasjon
+                where hendelse_id = ? 
+                and hendelse_type != 'HardDelete'
             """
         ) {
             uuid(hendelseId)

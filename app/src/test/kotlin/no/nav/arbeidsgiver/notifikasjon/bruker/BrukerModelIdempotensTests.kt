@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.typeNavn
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
@@ -27,6 +28,19 @@ class BrukerModelIdempotensTests : DescribeSpec({
                 ) {
                 }.size
                 antallMottakere shouldBe 1
+            }
+        }
+
+    }
+
+    describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
+        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
+            context("$i - ${hendelse.typeNavn}") {
+                queryModel.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
+                    virksomhetsnummer = hendelse.virksomhetsnummer,
+                    aggregateId = hendelse.aggregateId,
+                ))
+                queryModel.oppdaterModellEtterHendelse(hendelse)
             }
         }
     }

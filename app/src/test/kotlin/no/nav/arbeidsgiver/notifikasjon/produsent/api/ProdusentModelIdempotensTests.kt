@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.typeNavn
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
@@ -58,6 +59,18 @@ class ProdusentModelIdempotensTests : DescribeSpec({
             it("kun en sak opprettes") {
                 produsentModel.hentSak(sakId1) shouldNotBe null
                 produsentModel.hentSak(sakId2) shouldBe null
+            }
+        }
+    }
+
+    describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
+        EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
+            context("$i - ${hendelse.typeNavn}") {
+                produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
+                    virksomhetsnummer = hendelse.virksomhetsnummer,
+                    aggregateId = hendelse.aggregateId,
+                ))
+                produsentModel.oppdaterModellEtterHendelse(hendelse)
             }
         }
     }
