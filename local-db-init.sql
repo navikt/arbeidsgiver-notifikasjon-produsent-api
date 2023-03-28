@@ -1,5 +1,6 @@
 CREATE ROLE cloudsqliamuser;
 create role "bruker-api-kafka-user";
+create role "notifikasjon-bruker-api";
 create user sa_notifikasjon_dataprodukt_exporter;
 
 CREATE DATABASE "bruker-model";
