@@ -22,7 +22,7 @@ object EksempelHendelse {
         .map { uuid(it.toString()) }
         .iterator()
 
-    private fun <T> withId(blokk: (id: UUID)-> T ) : T = hendelseId.next().let { blokk.invoke(it) }
+    private fun <T> withId(blokk: (id: UUID)-> T) : T = hendelseId.next().let { blokk.invoke(it) }
 
     val BeskjedOpprettet = withId { id ->
         BeskjedOpprettet(
