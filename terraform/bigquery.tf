@@ -602,3 +602,40 @@ EOF
     use_legacy_sql = false
   }
 }
+
+resource "google_bigquery_table" "hard_delete_notifikasjon_view" {
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "hard_delete_notifikasjon_view"
+
+  view {
+    query          = <<EOF
+select
+  notifikasjon_id, notifikasjon_type, produsent_id, merkelapp,
+  ekstern_id_pseud, tekst_pseud, grupperingsid_pseud, lenke_pseud,
+  opprettet_tidspunkt, soft_deleted_tidspunkt, utgaatt_tidspunkt, utfoert_tidspunkt,
+  frist, paaminnelse_bestilling_spesifikasjon_type, paaminnelse_bestilling_spesifikasjon_tid, paaminnelse_bestilling_utregnet_tid,
+  bestilling_type, bestilling_hendelsesid, strategi, spesifikasjon, utregnet_tidspunkt
+  from `notifikasjon_platform_dataset.notifikasjon` n
+  left join `notifikasjon_platform_dataset.hard_delete_bestilling` h on h.aggregat_id = n.notifikasjon_id
+EOF
+    use_legacy_sql = false
+  }
+}
+
+resource "google_bigquery_table" "hard_delete_sak_view" {
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "hard_delete_sak_view"
+
+  view {
+    query          = <<EOF
+select
+  sak_id, produsent_id, merkelapp,
+  tittel_pseud, grupperings_id_pseud, lenke_pseud,
+  oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt,
+  bestilling_type, bestilling_hendelsesid, strategi, spesifikasjon, utregnet_tidspunkt
+  from `notifikasjon_platform_dataset.sak` s
+  left join `notifikasjon_platform_dataset.hard_delete_bestilling` h on h.aggregat_id = s.sak_id
+EOF
+    use_legacy_sql = false
+  }
+}
