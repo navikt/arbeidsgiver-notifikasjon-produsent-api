@@ -574,3 +574,31 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_tjenest
 EOF
   }
 }
+
+resource "google_bigquery_table" "ekstern_varsel_view" {
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "ekstern_varsel_view"
+
+  view {
+    query          = <<EOF
+SELECT
+  varsel_id, notifikasjon_id, varsel_type, n.produsent_id,
+ n.merkelapp, sendevindu, sendetidspunkt, altinn_svar_timestamp,
+ sms_tekst, html_tittel, html_body, opprinnelse, status_utsending,
+ feilkode, notifikasjon_type, ekstern_id_pseud, tekst_pseud,
+ grupperingsid_pseud, lenke_pseud, opprettet_tidspunkt,
+ soft_deleted_tidspunkt, utgaatt_tidspunkt, utfoert_tidspunkt,
+ frist, paaminnelse_bestilling_spesifikasjon_type,
+ paaminnelse_bestilling_spesifikasjon_tid, paaminnelse_bestilling_utregnet_tid,
+ epost_pseud, tlf_pseud, tjenestekode, tjenesteversjon, resultat_name_pseud,
+ resultat_receiver_pseud, resultat_type
+ FROM `notifikasjon_platform_dataset.ekstern_varsel`
+  join `notifikasjon_platform_dataset.notifikasjon` n using (notifikasjon_id)
+  left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_epost` using (varsel_id)
+  left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_tjeneste` using (varsel_id)
+  left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_tlf` using (varsel_id)
+  left join `notifikasjon_platform_dataset.ekstern_varsel_resultat` using (varsel_id)
+EOF
+    use_legacy_sql = false
+  }
+}
