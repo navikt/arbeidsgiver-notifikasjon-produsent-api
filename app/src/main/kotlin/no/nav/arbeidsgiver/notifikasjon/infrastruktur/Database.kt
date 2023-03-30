@@ -28,7 +28,6 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.*
-import kotlin.time.Duration.Companion.seconds
 
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
  * takes care of of cleaning up all resources, and where it's clear whether you
