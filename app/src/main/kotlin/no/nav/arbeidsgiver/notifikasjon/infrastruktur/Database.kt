@@ -20,6 +20,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -91,8 +92,15 @@ class Database private constructor(
              * ready to connect to the the database before the sidecare
              * is ready.
              */
-            while (!hikariConfig.connectionPossible()) {
-                delay(1000)
+            var tryingFor = Duration.ofSeconds(0)
+            val sleepFor = Duration.ofSeconds(1)
+            while (true) {
+                val e = hikariConfig.connectionPossible() ?: break
+                if (tryingFor >= Duration.ofMinutes(1)) {
+                    throw e
+                }
+                delay(sleepFor.toMillis())
+                tryingFor += sleepFor
             }
 
             val dataSource = NonBlockingDataSource(HikariDataSource(hikariConfig))
@@ -103,7 +111,7 @@ class Database private constructor(
             return Database(config, dataSource)
         }
 
-        private suspend fun HikariConfig.connectionPossible(): Boolean {
+        private suspend fun HikariConfig.connectionPossible(): Exception? {
             log.info("attempting database connection")
             return try {
                 withContext(Dispatchers.IO) {
@@ -114,10 +122,10 @@ class Database private constructor(
                     }
                 }
                 log.info("attempting database connection: success")
-                true
+                null
             } catch (e: Exception) {
                 log.info("attempting database connection: fail with exception", e)
-                false
+                e
             }
         }
 
