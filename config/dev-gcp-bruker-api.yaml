@@ -57,6 +57,7 @@ spec:
           namespace: teamsykmelding
       external:
         - host: fakedings.dev-gcp.nais.io # fakedings login
+        - host: api-gw-q1.oera.no # fallback for altinn-rettigheter-proxy-client
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
 
