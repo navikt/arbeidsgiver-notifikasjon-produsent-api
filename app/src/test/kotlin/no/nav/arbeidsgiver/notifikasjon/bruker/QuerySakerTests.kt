@@ -136,6 +136,12 @@ class QuerySakerTests : DescribeSpec({
                 response.getTypedContent<List<Any>>("saker/saker") should beEmpty()
                 response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
+
+            it("offset og limit 0 gir fortsatt totalt antall saker") {
+                val response = engine.hentSaker(offset = 0, limit = 0)
+                response.getTypedContent<List<Any>>("saker/saker") should beEmpty()
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
         }
 
         context("paginering med offset og limit angitt sortert på opprettet") {
