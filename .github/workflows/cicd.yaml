@@ -69,14 +69,6 @@ jobs:
       - run: mvn -B package
         working-directory: app
 
-      - name: Login to GitHub Package Repository
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: nais/docker-build-push@v0
         id: gar-push
         with:
