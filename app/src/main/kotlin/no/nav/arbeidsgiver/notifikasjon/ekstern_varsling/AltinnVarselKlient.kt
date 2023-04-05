@@ -347,6 +347,7 @@ fun <PORT_TYPE> createServicePort(
  * https://altinn.github.io/docs/api/tjenesteeiere/soap/feilkoder/
  */
 private val retryableErrorIds = listOf(
+    0, // intern generell feil i altinn.
     44, // intern teknisk feil i altinn. ikke dokumentert
 )
 private fun INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage

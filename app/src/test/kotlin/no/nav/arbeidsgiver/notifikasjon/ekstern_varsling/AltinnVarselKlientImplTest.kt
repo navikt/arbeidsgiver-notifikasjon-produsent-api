@@ -89,7 +89,7 @@ class AltinnVarselKlientImplTest : DescribeSpec({
     describe("returnerer ok for kall med AltinnFault") {
         val faultOF = no.altinn.services.common.fault._2009._10.ObjectFactory()
         val altinnFault = AltinnFault()
-            .withErrorID(0)
+            .withErrorID(30010)
             .withErrorGuid(faultOF.createAltinnFaultErrorGuid("uuid"))
             .withUserId(faultOF.createAltinnFaultUserId("oof"))
             .withUserGuid(faultOF.createAltinnFaultUserGuid("uuid"))
