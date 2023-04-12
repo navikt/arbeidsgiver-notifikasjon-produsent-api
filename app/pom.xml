@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <kotlin.version>1.7.20</kotlin.version>
+        <kotlin.version>1.8.20</kotlin.version>
         <ktor.version>2.2.2</ktor.version>
         <kotest.version>5.5.0</kotest.version>
         <cxf.version>3.5.5</cxf.version>
@@ -325,7 +325,7 @@
 
                 <configuration>
                     <jvmTarget>${jvm.version}</jvmTarget>
-                    <languageVersion>1.5</languageVersion>
+                    <languageVersion>1.6</languageVersion>
                     <args>
                         <arg>-opt-in=kotlin.RequiresOptIn</arg>
                     </args>
@@ -364,7 +364,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.2</version>
                 <configuration>
                     <attach>false</attach>
                     <finalName>${project.artifactId}</finalName>
