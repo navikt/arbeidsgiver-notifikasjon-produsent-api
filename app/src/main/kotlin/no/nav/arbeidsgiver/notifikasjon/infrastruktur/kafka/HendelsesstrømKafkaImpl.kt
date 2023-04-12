@@ -1,5 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import kotlinx.coroutines.slf4j.MDCContext
+import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
@@ -49,11 +51,22 @@ class HendelsesstrømKafkaImpl(
             } else if (recordValue.hendelseId in brokenHendelseId) {
                 /* do nothing */
             } else {
-                body(recordValue, HendelseMetadata(Instant.ofEpochMilli(record.timestamp())))
+                withContext(recordValue.asMdcContext()) {
+                    body(recordValue, HendelseMetadata(Instant.ofEpochMilli(record.timestamp())))
+                }
             }
         }
     }
 }
+
+
+private fun Hendelse.asMdcContext() = MDCContext(
+    mapOf(
+        "aggregateId" to aggregateId.toString(),
+        "produsentId" to (produsentId ?: ""),
+        "hendelseId" to hendelseId.toString(),
+    )
+)
 
 
 
