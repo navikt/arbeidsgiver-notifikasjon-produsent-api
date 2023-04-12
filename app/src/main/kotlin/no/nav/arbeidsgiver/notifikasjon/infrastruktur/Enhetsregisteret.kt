@@ -9,8 +9,10 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
 import org.apache.http.ConnectionClosedException
+import javax.net.ssl.SSLHandshakeException
 
 interface Enhetsregisteret {
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -57,10 +59,9 @@ class EnhetsregisteretImpl(
         install(HttpRequestRetry) {
             maxRetries = 2
             retryOnExceptionIf { _, cause ->
-                cause is ConnectionClosedException
-                //cause is NoHttpResponseException ||
-                //cause is SocketException ||
-                //cause is SSLHandshakeException
+                cause is ConnectionClosedException ||
+                cause is SocketTimeoutException ||
+                cause is SSLHandshakeException
             }
             delayMillis { 100L }
         }
