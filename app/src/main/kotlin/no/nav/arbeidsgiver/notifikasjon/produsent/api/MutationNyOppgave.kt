@@ -252,7 +252,6 @@ internal class MutationNyOppgave(
                         )
                     }
                 )
-                    .also { println(it)}
             }
             eksisterende.erDuplikatAv(domeneNyOppgave.tilProdusentModel()) &&
             eksisterende is ProdusentModel.Oppgave -> {
