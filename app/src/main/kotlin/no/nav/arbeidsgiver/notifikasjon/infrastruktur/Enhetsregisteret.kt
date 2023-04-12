@@ -59,7 +59,7 @@ class EnhetsregisteretImpl(
         install(HttpRequestRetry) {
             maxRetries = 2
             retryOnExceptionIf { _, cause ->
-                cause is ConnectionClosedException
+                cause is ConnectionClosedException ||
                 cause is SocketTimeoutException ||
                 cause is SSLHandshakeException
             }
