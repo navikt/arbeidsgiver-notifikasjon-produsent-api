@@ -422,20 +422,18 @@ Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
 mutation OpprettNyBeskjed(
   $eksternId: String!
   $virksomhetsnummer: String!
+  $serviceCode: String!
+  $serviceEdition: String!
   $lenke: String!
-  $epostHtmlBody: String!
-  $ansattFnr: String!
-  $naermesteLederFnr: String!
-  $tlf: String!
-  $epost: String!
+  $innhold: String!
 ) {
   nyBeskjed(
     nyBeskjed: {
       metadata: { eksternId: $eksternId, virksomhetsnummer: $virksomhetsnummer }
       mottakere: [{
-        naermesteLeder: {
-          ansattFnr: $ansattFnr
-          naermesteLederFnr: $naermesteLederFnr
+        altinn: {
+          serviceCode: $serviceCode
+          serviceEdition: $serviceEdition
         }
       }]
       notifikasjon: {
@@ -445,29 +443,15 @@ mutation OpprettNyBeskjed(
       }
       eksterneVarsler: [
         {
-          sms: {
+          altinntjeneste: {
             mottaker: {
-              kontaktinfo: {
-                tlf: $tlf
-              }
+              serviceCode: $serviceCode
+              serviceEdition: $serviceEdition
             }
-            smsTekst: "Du har en ny sykemelding. Logg inn på NAV på Min side – arbeidsgiver for å finne den"
+            tittel: "Du har mottatt en ny sykemelding."
+            innhold: $innhold
             sendetidspunkt: {
               sendevindu: NKS_AAPNINGSTID
-            }
-          }
-        }
-        {
-          epost: {
-            mottaker: {
-              kontaktinfo: {
-                epostadresse: $epost
-              }
-            }
-            epostTittel: "Du har en ny sykemelding."
-            epostHtmlBody: $epostHtmlBody
-            sendetidspunkt: {
-              sendevindu: LOEPENDE
             }
           }
         }
@@ -489,12 +473,10 @@ med variabler
 {
   "eksternId": "1234556",
   "virksomhetsnummer":"012345678",
+  "serviceCode": "4936",
+  "serviceEdition": "1",
   "lenke": "https://dev.nav.no/sykemelding/12345",
-  "tlf": "123445",
-  "epost": "foobar@baz.no",
-  "epostHtmlBody": "<h1>Du har en ny sykemelding.</h1><br>Logg inn på NAV sin hjemmeside som arbeidsgiver. <br> Hilsen NAV",
-  "ansattFnr": "1234",
-  "naermesteLederFnr": "1234"
+  "innhold": "Logg inn på NAV sin hjemmeside som arbeidsgiver. Hilsen NAV"
 }
 ```
 
