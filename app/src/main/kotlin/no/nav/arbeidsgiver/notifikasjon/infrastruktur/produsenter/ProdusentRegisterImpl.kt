@@ -109,7 +109,7 @@ val HELSEARBEIDSGIVER = Produsent(
     id = "helsearbeidsgiver",
     accessPolicy = basedOnEnv(
         prod = { listOf(
-            //"prod-gcp:helsearbeidsgiver:im-notifikasjon",
+            "prod-gcp:helsearbeidsgiver:im-notifikasjon",
         ) },
         other = { listOf(
             "dev-gcp:helsearbeidsgiver:im-notifikasjon",
