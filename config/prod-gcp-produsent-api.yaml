@@ -55,6 +55,10 @@ spec:
           namespace: toi
           cluster: prod-gcp
 
+        - application: im-notifikasjon
+          namespace: helsearbeidsgiver
+          cluster: prod-gcp
+
   azure:
     application:
       enabled: true
