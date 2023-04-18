@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.Tags
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
@@ -522,6 +523,15 @@ class StatistikkModel(
                     text(merkelapp)
                     text(eksterntVarsel.tlfnr)
                     text(eksterntVarsel.smsTekst.toHash())
+                }
+                is AltinntjenesteVarselKontaktinfo -> {
+                    uuid(eksterntVarsel.varselId)
+                    text("altinntjeneste_kontaktinfo")
+                    uuid(notifikasjonId)
+                    text(produsentId)
+                    text(merkelapp)
+                    text("${eksterntVarsel.serviceCode}:${eksterntVarsel.serviceEdition}")
+                    text((eksterntVarsel.tittel + eksterntVarsel.innhold).toHash())
                 }
             }
         }
