@@ -57,6 +57,16 @@ class StatistikkModelTests : DescribeSpec({
             sendevindu = NKS_ÅPNINGSTID,
             sendeTidspunkt = null,
         )
+        val altinntjenesteBestilling = HendelseModel.AltinntjenesteVarselKontaktinfo(
+            varselId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac000004"),
+            virksomhetsnummer = "1234567789",
+            serviceCode = "4631",
+            serviceEdition = "1",
+            tittel = "jau",
+            innhold = "jaujau",
+            sendevindu = NKS_ÅPNINGSTID,
+            sendeTidspunkt = null,
+        )
         val bestilling = OppgaveOpprettet(
             merkelapp = "foo",
             eksternId = "42",
@@ -74,7 +84,7 @@ class StatistikkModelTests : DescribeSpec({
             virksomhetsnummer = "1337",
             kildeAppNavn = "",
             produsentId = "",
-            eksterneVarsler = listOf(epostBestilling, smsBestilling, smsBestilling2),
+            eksterneVarsler = listOf(epostBestilling, smsBestilling, smsBestilling2, altinntjenesteBestilling),
             hardDelete = null,
             frist = null,
             påminnelse = null,
@@ -97,6 +107,15 @@ class StatistikkModelTests : DescribeSpec({
             produsentId = bestilling.produsentId,
             kildeAppNavn = bestilling.kildeAppNavn,
             varselId = smsBestilling.varselId,
+            råRespons = NullNode.instance,
+        )
+        val altinntjenesteVellykket = EksterntVarselVellykket(
+            virksomhetsnummer = bestilling.virksomhetsnummer,
+            notifikasjonId = bestilling.notifikasjonId,
+            hendelseId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac111113"),
+            produsentId = bestilling.produsentId,
+            kildeAppNavn = bestilling.kildeAppNavn,
+            varselId = altinntjenesteBestilling.varselId,
             råRespons = NullNode.instance,
         )
 
@@ -136,6 +155,7 @@ class StatistikkModelTests : DescribeSpec({
             model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(epostFeilet, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(smsVellykket, HendelseMetadata(now()))
+            model.oppdaterModellEtterHendelse(altinntjenesteVellykket, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(brukerKlikket, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(oppgaveUtført, HendelseMetadata(now()))
 
@@ -145,10 +165,12 @@ class StatistikkModelTests : DescribeSpec({
 
                 val bestilt = meterRegistry.get("antall_varsler").tag("status", "bestilt").gauge().value()
                 val feilet = meterRegistry.get("antall_varsler").tag("status", "feilet").gauge().value()
-                val vellykket = meterRegistry.get("antall_varsler").tag("status", "vellykket").gauge().value()
+                val vellykketSms = meterRegistry.get("antall_varsler").tag("status", "vellykket").tag("varsel_type", "sms_kontaktinfo").gauge().value()
+                val vellykketAltinn = meterRegistry.get("antall_varsler").tag("status", "vellykket").tag("varsel_type", "altinntjeneste_kontaktinfo").gauge().value()
                 bestilt shouldBe 1
                 feilet shouldBe 1
-                vellykket shouldBe 1
+                vellykketSms shouldBe 1
+                vellykketAltinn shouldBe 1
             }
 
             it("utførthistogram inneholder informasjon om klikket på eller ikke") {
