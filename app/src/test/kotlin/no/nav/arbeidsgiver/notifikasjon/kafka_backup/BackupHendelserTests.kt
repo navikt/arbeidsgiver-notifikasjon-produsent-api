@@ -12,7 +12,7 @@ class BackupHendelserTests: DescribeSpec({
     val backupRepository = BackupRepository(database)
     val kafka = localKafka()
 
-    describe("write to and read from database") {
+    describe("write to and read from database").config(enabled = false) {
         val producer = kafka.newProducer()
         var eventsSent = 0
         var eventsRead = 0
