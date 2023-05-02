@@ -8,7 +8,7 @@ metadata:
 spec:
   image: {{image}}
   ingresses:
-    - https://ag-notifikasjon-bruker-api.dev.nav.no/
+    - https://ag-notifikasjon-bruker-api.intern.dev.nav.no/
   liveness:
     path: /internal/alive
   readiness:
