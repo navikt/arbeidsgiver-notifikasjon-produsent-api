@@ -18,7 +18,7 @@ class KafkaHendelsesstrømTests: DescribeSpec({
     val received = mutableSetOf<UUID>()
     val receivedHendelse = mutableSetOf<Hendelse>()
 
-    describe("reading and writing from kafka").config(enabled = false) {
+    describe("reading and writing from kafka") {
         val kafkaProducer = localKafka.newProducer()
         val hendelsesstrøm = localKafka.newConsumer()
         withData(EksempelHendelse.Alle) {
