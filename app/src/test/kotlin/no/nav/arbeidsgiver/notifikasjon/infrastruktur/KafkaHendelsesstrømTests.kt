@@ -39,4 +39,5 @@ class KafkaHendelsesstrømTests: DescribeSpec({
             receivedHendelse shouldContainExactlyInAnyOrder EksempelHendelse.Alle
         }
     }
+
 })
