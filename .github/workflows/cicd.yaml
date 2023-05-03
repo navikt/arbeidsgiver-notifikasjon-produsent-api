@@ -33,6 +33,8 @@ jobs:
           - 9092:9092
         env:
           ALLOW_PLAINTEXT_LISTENER: yes
+          KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
+          KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
           BITNAMI_DEBUG: true
         options: >-
           --health-cmd "kafka-broker-api-versions.sh --version"
