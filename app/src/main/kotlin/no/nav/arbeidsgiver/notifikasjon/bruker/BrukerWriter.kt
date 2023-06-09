@@ -31,14 +31,6 @@ object BrukerWriter {
         )
     }
 
-    private val replayHendelsesstrøm by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "bruker-model-builder-2-oneoff-1",
-            replayPeriodically = false,
-        )
-    }
-
     fun main(
         httpPort: Int = 8080
     ) {
@@ -52,15 +44,6 @@ object BrukerWriter {
                 val brukerRepository = brukerRepositoryAsync.await()
                 hendelsesstrøm.forEach { event ->
                     brukerRepository.oppdaterModellEtterHendelse(event)
-                }
-            }
-
-            launch {
-                val brukerRepository = brukerRepositoryAsync.await()
-                replayHendelsesstrøm.forEach { event ->
-                    if (event is HendelseModel.SakOpprettet) {
-                        brukerRepository.oppdaterModellEtterHendelse(event)
-                    }
                 }
             }
 

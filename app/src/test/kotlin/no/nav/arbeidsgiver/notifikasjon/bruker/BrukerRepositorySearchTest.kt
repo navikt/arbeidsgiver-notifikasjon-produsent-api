@@ -24,6 +24,7 @@ class BrukerRepositorySearchTest : DescribeSpec({
         repo.insertSak("8", "Litt rare symboler // \\x % _")
 
         withData(
+            null to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
             "" to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
             " " to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
             "zzzzz" to listOf(),
@@ -82,7 +83,7 @@ class BrukerRepositorySearchTest : DescribeSpec({
 })
 
 
-private suspend fun BrukerRepositoryImpl.search(query: String): List<UUID> =
+private suspend fun BrukerRepositoryImpl.search(query: String?): List<UUID> =
     hentSaker(
         fnr = "1",
         virksomhetsnummer = listOf("1"),
