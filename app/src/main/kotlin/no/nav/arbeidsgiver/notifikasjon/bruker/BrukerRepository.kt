@@ -196,6 +196,7 @@ class BrukerRepositoryImpl(
                 .map { it.replace("\\", "\\\\") }
                 .map { it.replace("_", "\\_") }
                 .map { it.replace("%", "\\%") }
+                .filter { it != "" }
 
             val truncateSearchTerms = 10
             if (tekstsoekElementer.size > truncateSearchTerms) {
