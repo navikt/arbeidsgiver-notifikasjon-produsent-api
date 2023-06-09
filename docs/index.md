@@ -3,7 +3,7 @@ layout: page
 title: Introduksjon
 permalink: /
 ---
-Notfikasjoner og saker gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker å sende notifkasjoner om på notifkasjonsplatformen. Dere kan også velge å vise en søknad eller skjema som en «sak» på Min side – arbeidsgiver så arbeidsgiveren lett kan finne den igjen. Se hvordan det ser ut på [testversjonen i labs](https://arbeidsgiver.labs.nais.io/min-side-arbeidsgiver/?) . 
+Notfikasjoner og saker gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker å sende notifkasjoner om på notifkasjonsplatformen. Dere kan også velge å vise en søknad eller skjema som en «sak» på Min side – arbeidsgiver så arbeidsgiveren lett kan finne den igjen. Se hvordan det ser ut på [testversjonen i labs](https://arbeidsgiver.ekstern.dev.nav.no/min-side-arbeidsgiver). 
 
 ## Hvilket problem skal vi løse? 
 
