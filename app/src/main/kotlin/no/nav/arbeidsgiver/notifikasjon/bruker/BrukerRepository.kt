@@ -571,10 +571,14 @@ class BrukerRepositoryImpl(
 
             executeUpdate(
                 """
-                insert into sak_search(id, text) values (?, lower(?)) on conflict do nothing
+                insert into sak_search(id, text)
+                values (?, lower(?)) 
+                on conflict (id) do update
+                set text = lower(?)
             """
             ) {
                 uuid(sakOpprettet.sakId)
+                text("${sakOpprettet.tittel} ${sakOpprettet.merkelapp}")
                 text("${sakOpprettet.tittel} ${sakOpprettet.merkelapp}")
             }
 
@@ -606,17 +610,6 @@ class BrukerRepositoryImpl(
                 timestamp_with_timezone(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
             }
 
-            executeUpdate(
-                """
-                update sak_search
-                set text =  text || ' ' || lower(?) || ' ' || lower(coalesce(?, ''))
-                where id = ?
-            """
-            ) {
-                text(nyStatusSak.status.name)
-                nullableText(nyStatusSak.overstyrStatustekstMed)
-                uuid(nyStatusSak.sakId)
-            }
             if (nyStatusSak.nyLenkeTilSak != null) {
                 executeUpdate(
                     """

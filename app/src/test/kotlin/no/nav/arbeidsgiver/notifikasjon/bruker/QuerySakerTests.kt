@@ -199,14 +199,14 @@ class QuerySakerTests : DescribeSpec({
                 saker.first().id shouldBe sak1.sakId
             }
 
-            it("søk på status returnerer riktig sak") {
+            xit("søk på status returnerer riktig sak") {
                 val response = engine.hentSaker(tekstsoek = "ferdig")
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 1
                 saker.first().id shouldBe sak2.sakId
             }
 
-            it("søk på statustekst returnerer riktig sak") {
+            xit("søk på statustekst returnerer riktig sak") {
                 val response = engine.hentSaker(tekstsoek = "avblåst")
                 val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
                 saker shouldHaveSize 1
