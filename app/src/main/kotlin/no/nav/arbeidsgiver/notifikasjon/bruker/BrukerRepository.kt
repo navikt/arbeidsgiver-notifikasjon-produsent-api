@@ -280,12 +280,13 @@ class BrukerRepositoryImpl(
                         ),
                         mine_saker_med_oppgaver as (
                             select 
-                            s.*, o.id as oppgave_id, 
+                            s.*,
+                            o.id as oppgave_id, 
                             o.tilstand as oppgave_tilstand, 
                             o.frist as oppgave_frist, 
                             o.paaminnelse_tidspunkt as oppgave_paaminnelse_tidspunkt
                             from mine_saker s
-                            left join mine_oppgaver as o --TODO: Fikse left join med følgefeil  
+                            left join mine_oppgaver as o
                                 on o.grupperingsid = s.grupperingsid
                         ),
                         mine_saker_med_tekstsøk as (
@@ -293,7 +294,7 @@ class BrukerRepositoryImpl(
                             from mine_saker_med_oppgaver as s
                             join sak_status_json as ssj on s.id = ssj.sak_id
                             join sak_search as search on s.id = search.id
-                            ${tekstsoekSql}
+                            $tekstsoekSql
                         ),
                         mine_saker_sakstypefiltrert as (
                             select * 
@@ -359,7 +360,7 @@ class BrukerRepositoryImpl(
                                 oppgaver
                             from mine_saker_aggregerte_oppgaver_uten_statuser
                             join sak_status_json as js on js.sak_id = id
-                            order by ${sorteringSql}
+                            order by $sorteringSql
                             limit ? offset ?
                         )
                     select
