@@ -296,11 +296,8 @@ class BrukerRepositoryImpl(
                             join sak_search as search on s.id = search.id
                             $tekstsoekSql
                         ),
-                        mine_saker_sakstypefiltrert as (
-                            select * 
-                            from mine_saker_med_tekstsøk
-                            where coalesce(merkelapp = any(?), true)
-                        ),
+                        
+                        -- Beregn antall saker pr. merkelap
                         mine_saker_oppgave_tilstandfiltrert as (
                             select * 
                             from mine_saker_med_tekstsøk
@@ -313,6 +310,13 @@ class BrukerRepositoryImpl(
                             from mine_saker_oppgave_tilstandfiltrert
                             group by merkelapp
                         ),
+                        
+                        -- Beregn antall saker pr. oppgave-tilstand
+                        mine_saker_sakstypefiltrert as (
+                            select * 
+                            from mine_saker_med_tekstsøk
+                            where coalesce(merkelapp = any(?), true)
+                        ),
                         mine_oppgavetilstander as (
                             select 
                                 oppgave_tilstand as tilstand,
@@ -321,6 +325,7 @@ class BrukerRepositoryImpl(
                             where oppgave_tilstand is not null
                             group by tilstand
                         ),
+                        
                         mine_saker_filtrert as (
                             select * 
                             from mine_saker_med_tekstsøk
@@ -397,8 +402,8 @@ class BrukerRepositoryImpl(
                     stringList(virksomhetsnummer)
                     text(fnr)
                     tekstsoekElementer.forEach { text(it) }
-                    nullableStringList(sakstyper)
                     nullableEnumAsTextList(oppgaveTilstand)
+                    nullableStringList(sakstyper)
                     nullableStringList(sakstyper)
                     nullableEnumAsTextList(oppgaveTilstand)
                     integer(limit)
