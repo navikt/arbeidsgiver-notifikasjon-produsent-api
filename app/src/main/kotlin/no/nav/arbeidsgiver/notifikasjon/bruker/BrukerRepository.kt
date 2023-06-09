@@ -209,12 +209,12 @@ class BrukerRepositoryImpl(
                 .ifNotBlank { "where $it" }
             
             val sorteringSql = when (sortering) {
-                BrukerAPI.SakSortering.OPPDATERT -> "sist_endret desc"
+                BrukerAPI.SakSortering.OPPDATERT -> "js.sist_endret desc"
                 BrukerAPI.SakSortering.OPPRETTET -> """
-                   statuser#>>'{-1,tidspunkt}' desc 
+                   js.statuser#>>'{-1,tidspunkt}' desc 
                 """
                 BrukerAPI.SakSortering.FRIST -> """
-                    tidligste_frist nulls last, nye_oppgaver desc, sist_endret desc
+                    sak.tidligste_frist nulls last, sak.nye_oppgaver desc, js.sist_endret desc
                 """
             }
 
@@ -290,9 +290,8 @@ class BrukerRepositoryImpl(
                                 on o.grupperingsid = s.grupperingsid
                         ),
                         mine_saker_med_tekstsøk as (
-                            select s.*, ssj.statuser, ssj.sist_endret
+                            select s.*
                             from mine_saker_med_oppgaver as s
-                            join sak_status_json as ssj on s.id = ssj.sak_id
                             join sak_search as search on s.id = search.id
                             $tekstsoekSql
                         ),
@@ -356,14 +355,14 @@ class BrukerRepositoryImpl(
                         ),
                         mine_saker_paginert as (
                             select 
-                                id,
-                                virksomhetsnummer,
-                                tittel,
-                                lenke,
-                                merkelapp,
-                                statuser,
-                                oppgaver
-                            from mine_saker_aggregerte_oppgaver_uten_statuser
+                                sak.id,
+                                sak.virksomhetsnummer,
+                                sak.tittel,
+                                sak.lenke,
+                                sak.merkelapp,
+                                js.statuser,
+                                sak.oppgaver
+                            from mine_saker_aggregerte_oppgaver_uten_statuser sak
                             join sak_status_json as js on js.sak_id = id
                             order by $sorteringSql
                             limit ? offset ?
@@ -390,10 +389,9 @@ class BrukerRepositoryImpl(
                                 'merkelapp', merkelapp,
                                 'statuser', statuser,
                                 'oppgaver', oppgaver
-                                    
                             )), '[]'::jsonb) 
                             from mine_saker_paginert
-                            ) as saker
+                        ) as saker
                         
                     """,
                 {
