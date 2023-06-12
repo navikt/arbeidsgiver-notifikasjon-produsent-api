@@ -17,6 +17,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import java.io.File
+import java.io.FileWriter
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -69,6 +71,21 @@ object Bruker {
             launchProcessingLoop("debug coroutines", pauseAfterEach = Duration.ofMinutes(1)) {
                 DebugProbes.dumpCoroutinesInfo().groupBy { it.state }.forEach { (state, coroutines) ->
                     coroutineGauges[state]?.set(coroutines.size)
+                }
+            }
+
+            launchProcessingLoop("debug threads", pauseAfterEach = Duration.ofMinutes(10)) {
+                val allThreads = Thread.getAllStackTraces()
+                val stringBuilder = StringBuilder()
+                for ((thread, stackTrace) in allThreads) {
+                    stringBuilder.append("Thread ${thread.name} (state=${thread.state}):\n")
+                    for (line in stackTrace) {
+                        stringBuilder.append(" $line\n")
+                    }
+                    stringBuilder.append("\n")
+                }
+                FileWriter("/tmp/threads.txt", false).use { file ->
+                    file.write(stringBuilder.toString())
                 }
             }
 
