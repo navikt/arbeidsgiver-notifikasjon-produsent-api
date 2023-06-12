@@ -58,6 +58,7 @@ spec:
       external:
         - host: fakedings.dev-gcp.nais.io # fakedings login
         - host: api-gw-q1.oera.no # fallback for altinn-rettigheter-proxy-client
+        - host: ereg-services-q1.dev-fss-pub.nais.io # ereg brukes i bruker-api
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
 

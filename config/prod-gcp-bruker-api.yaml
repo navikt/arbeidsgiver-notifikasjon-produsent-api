@@ -66,6 +66,7 @@ spec:
           namespace: teamsykmelding
       external:
         - host: api-gw.oera.no # fallback for altinn-rettigheter-proxy-client
+        - host: ereg-services.prod-fss-pub.nais.io # ereg brukes i bruker-api
   env:
     - name: JAVA_OPTS
       value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"

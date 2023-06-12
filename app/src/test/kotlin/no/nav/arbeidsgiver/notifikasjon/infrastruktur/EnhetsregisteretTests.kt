@@ -24,7 +24,7 @@ class EnhetsregisteretTests : DescribeSpec({
         mockServerClient.`when`(
             HttpRequest.request()
                 .withMethod("GET")
-                .withPath("/enhetsregisteret/api/underenheter/$orgnr")
+                .withPath("/v1/organisasjon/$orgnr/noekkelinfo")
         ).respond(
             withContentType
         )
@@ -42,7 +42,7 @@ class EnhetsregisteretTests : DescribeSpec({
 
 
             it("inneholder navn på enhet") {
-                enhet.navn shouldBe "ARBEIDS- OG VELFERDSETATEN"
+                enhet.navn shouldBe "NAV IKT FOOBAR"
             }
 
             context("når det gjøres flere kall til samme enhet") {
@@ -82,65 +82,31 @@ class EnhetsregisteretTests : DescribeSpec({
         private const val orgnr = "889640782"
         private val enhetJson = """
             {
-              "organisasjonsnummer": "889640782",
-              "navn": "ARBEIDS- OG VELFERDSETATEN",
-              "organisasjonsform": {
-                "kode": "ORGL",
-                "beskrivelse": "Organisasjonsledd",
-                "_links": {
-                  "self": {
-                    "href": "https://data.brreg.no/enhetsregisteret/api/organisasjonsformer/ORGL"
-                  }
+              "organisasjonsnummer": "990983666",
+              "navn": {
+                "navnelinje1": "NAV IKT",
+                "navnelinje2": "FOOBAR",
+                "navnelinje3": "",
+                "navnelinje4": null,
+                "bruksperiode": {
+                  "fom": "2015-02-23T08:04:53.2"
+                },
+                "gyldighetsperiode": {
+                  "fom": "2010-04-09"
                 }
               },
-              "hjemmeside": "www.nav.no",
-              "postadresse": {
-                "land": "Norge",
+              "enhetstype": "BEDR",
+              "adresse": {
+                "type": "Forretningsadresse",
+                "adresselinje1": "Sannergata 2",
+                "postnummer": "0557",
                 "landkode": "NO",
-                "postnummer": "8601",
-                "poststed": "MO I RANA",
-                "adresse": [
-                  "Postboks 354"
-                ],
-                "kommune": "RANA",
-                "kommunenummer": "1833"
-              },
-              "registreringsdatoEnhetsregisteret": "2006-03-23",
-              "registrertIMvaregisteret": true,
-              "naeringskode1": {
-                "beskrivelse": "Offentlig administrasjon tilknyttet helsestell, sosial virksomhet, undervisning, kirke, kultur og miljøvern",
-                "kode": "84.120"
-              },
-              "antallAnsatte": 1608,
-              "overordnetEnhet": "983887457",
-              "forretningsadresse": {
-                "land": "Norge",
-                "landkode": "NO",
-                "postnummer": "0661",
-                "poststed": "OSLO",
-                "adresse": [
-                  "Fyrstikkalléen 1"
-                ],
-                "kommune": "OSLO",
-                "kommunenummer": "0301"
-              },
-              "institusjonellSektorkode": {
-                "kode": "6100",
-                "beskrivelse": "Statsforvaltningen"
-              },
-              "registrertIForetaksregisteret": false,
-              "registrertIStiftelsesregisteret": false,
-              "registrertIFrivillighetsregisteret": false,
-              "konkurs": false,
-              "underAvvikling": false,
-              "underTvangsavviklingEllerTvangsopplosning": false,
-              "maalform": "Bokmål",
-              "_links": {
-                "self": {
-                  "href": "https://data.brreg.no/enhetsregisteret/api/enheter/889640782"
+                "kommunenummer": "0301",
+                "bruksperiode": {
+                  "fom": "2015-02-23T10:38:34.403"
                 },
-                "overordnetEnhet": {
-                  "href": "https://data.brreg.no/enhetsregisteret/api/enheter/983887457"
+                "gyldighetsperiode": {
+                  "fom": "2007-08-23"
                 }
               }
             }
