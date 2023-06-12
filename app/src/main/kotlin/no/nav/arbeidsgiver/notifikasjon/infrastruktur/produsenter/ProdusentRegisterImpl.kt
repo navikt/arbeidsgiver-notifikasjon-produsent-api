@@ -143,11 +143,11 @@ val TOI = Produsent(
 
 val ARBEIDSGIVERDIALOG = Produsent(
     id = "arbeidsgiver-dialog",
-    accessPolicy = basedOnEnv(
-        prod = { listOf() },
-        other = { listOf(
-            "dev-external:teamcrm:salesforce",
-        ) },
+    accessPolicy = listOf(
+        basedOnEnv(
+            prod = { "prod-external:teamcrm:salesforce" },
+            other = { "dev-external:teamcrm:salesforce" },
+        ),
     ),
     tillatteMerkelapper = listOf(
         "Lønnstilskudd",

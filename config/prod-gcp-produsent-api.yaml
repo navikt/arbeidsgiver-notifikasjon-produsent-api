@@ -59,6 +59,10 @@ spec:
           namespace: helsearbeidsgiver
           cluster: prod-gcp
 
+        - application: salesforce
+          namespace: teamcrm
+          cluster: prod-external
+
   azure:
     application:
       enabled: true
