@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import io.ktor.server.metrics.micrometer.*
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.search.MeterNotFoundException
 import kotlinx.coroutines.*
@@ -17,8 +16,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
-import java.io.File
-import java.io.FileWriter
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -74,21 +71,6 @@ object Bruker {
                 }
             }
 
-            launchProcessingLoop("debug threads", pauseAfterEach = Duration.ofMinutes(10)) {
-                val allThreads = Thread.getAllStackTraces()
-                val stringBuilder = StringBuilder()
-                for ((thread, stackTrace) in allThreads) {
-                    stringBuilder.append("Thread ${thread.name} (state=${thread.state}):\n")
-                    for (line in stackTrace) {
-                        stringBuilder.append(" $line\n")
-                    }
-                    stringBuilder.append("\n")
-                }
-                FileWriter("/tmp/threads.txt", false).use { file ->
-                    file.write(stringBuilder.toString())
-                }
-            }
-
             val graphql = async {
                 val tilgangerService = TilgangerServiceImpl(
                     altinn = altinn
@@ -115,7 +97,12 @@ object Bruker {
             ) {
 
                 val maxThreshold = 1000
-                val metricName = MicrometerMetricsConfig().metricName
+
+                // Equal to [MicrometerMetricsConfig().metricName]. But doing that
+                // creates a new thread on every invocation, which causes the number
+                // of threads to increase over time.
+                val metricName = "ktor.http.server.requests"
+
                 val activeConnections : Double = try {
                     Metrics.meterRegistry.get("$metricName.active").gauge().value()
                 } catch (e: MeterNotFoundException) {
