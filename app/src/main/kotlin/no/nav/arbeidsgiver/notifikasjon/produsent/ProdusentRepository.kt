@@ -344,23 +344,27 @@ class ProdusentRepositoryImpl(
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
-            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
+            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}',
+            utfoert_tidspunkt = ?
             WHERE id = ?
         """
         ) {
+            offsetDateTimeAsText(utførtHendelse.utfoertTidspunkt)
             uuid(utførtHendelse.notifikasjonId)
         }
     }
 
-    private suspend fun oppdaterModellEtterOppgaveUtgått(utførtHendelse: OppgaveUtgått) {
+    private suspend fun oppdaterModellEtterOppgaveUtgått(utgåttHendelse: OppgaveUtgått) {
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
-            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}'
+            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}',
+            utgaatt_tidspunkt = ?
             WHERE id = ?
         """
         ) {
-            uuid(utførtHendelse.notifikasjonId)
+            offsetDateTimeAsText(utgåttHendelse.utgaattTidspunkt)
+            uuid(utgåttHendelse.notifikasjonId)
         }
     }
 

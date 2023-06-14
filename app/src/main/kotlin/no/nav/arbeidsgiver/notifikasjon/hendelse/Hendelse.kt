@@ -82,17 +82,29 @@ object HendelseModel {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed interface PåminnelseTidspunkt {
         companion object {
-            fun createAndValidateKonkret(konkret: LocalDateTime, opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) =
+            fun createAndValidateKonkret(
+                konkret: LocalDateTime,
+                opprettetTidspunkt: OffsetDateTime,
+                frist: LocalDate?
+            ) =
                 Konkret(konkret, konkret.inOsloAsInstant()).apply {
                     validerGrenseVerdier(opprettetTidspunkt, frist)
                 }
 
-            fun createAndValidateEtterOpprettelse(etterOpprettelse: ISO8601Period, opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) =
-                EtterOpprettelse(etterOpprettelse,  (opprettetTidspunkt + etterOpprettelse).toInstant()).apply {
+            fun createAndValidateEtterOpprettelse(
+                etterOpprettelse: ISO8601Period,
+                opprettetTidspunkt: OffsetDateTime,
+                frist: LocalDate?
+            ) =
+                EtterOpprettelse(etterOpprettelse, (opprettetTidspunkt + etterOpprettelse).toInstant()).apply {
                     validerGrenseVerdier(opprettetTidspunkt, frist)
                 }
 
-            fun createAndValidateFørFrist(førFrist: ISO8601Period, opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) : FørFrist {
+            fun createAndValidateFørFrist(
+                førFrist: ISO8601Period,
+                opprettetTidspunkt: OffsetDateTime,
+                frist: LocalDate?
+            ): FørFrist {
                 if (frist == null) {
                     throw UgyldigPåminnelseTidspunktException("du må oppgi `frist`, siden `foerFrist` skal være relativ til denne")
                 }
@@ -103,6 +115,7 @@ object HendelseModel {
             }
 
         }
+
         fun validerGrenseVerdier(opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) {
             if (påminnelseTidspunkt < opprettetTidspunkt.toInstant()) {
                 throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være før oppgaven er opprettet")
@@ -418,6 +431,7 @@ object HendelseModel {
         override val kildeAppNavn: String,
         val hardDelete: HardDeleteUpdate?,
         val nyLenke: String?,
+        val utfoertTidspunkt: OffsetDateTime?, //Vi har ikke utfoertTidspunkt på tidligere hendelser. Hentes fra metadata til kafka-eventet.
     ) : Hendelse(), Notifikasjon {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
@@ -504,7 +518,7 @@ object HendelseModel {
                 //roleDefinitionCode : String,
                 //roleDefinitionId: String,
                 virksomhetsnummer: String,
-            ) : _AltinnRolleMottaker = basedOnEnv(
+            ): _AltinnRolleMottaker = basedOnEnv(
                 prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
                 other = {
                     log.warn("deserialisering av mottaker @type=altinnRolle ikke lenger støttet.")
@@ -526,7 +540,7 @@ object HendelseModel {
             fun jsonConstructor(
                 //fnr: String,
                 virksomhetsnummer: String,
-            ) : _AltinnReporteeMottaker = basedOnEnv(
+            ): _AltinnReporteeMottaker = basedOnEnv(
                 prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
                 other = {
                     log.warn("deserialisering av mottaker @type=altinnReportee ikke lenger støttet.")
@@ -634,6 +648,7 @@ val HendelseModel.Mottaker.virksomhetsnummer: String
             prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
             other = { this.virksomhetsnummer },
         )
+
         is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
             prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
             other = { this.virksomhetsnummer },

@@ -57,6 +57,7 @@ object BrukerAPI {
             val opprettetTidspunkt: OffsetDateTime,
             val sorteringTidspunkt: OffsetDateTime,
             val utgaattTidspunkt: OffsetDateTime?,
+            val utfoertTidspunkt: OffsetDateTime?,
             val paaminnelseTidspunkt: OffsetDateTime?,
             val frist: LocalDate?,
             val id: UUID,
@@ -299,6 +300,7 @@ object BrukerAPI {
                                 sorteringTidspunkt = notifikasjon.sorteringTidspunkt,
                                 utgaattTidspunkt = notifikasjon.utgaattTidspunkt,
                                 paaminnelseTidspunkt = notifikasjon.paaminnelseTidspunkt,
+                                utfoertTidspunkt = notifikasjon.utfoertTidspunkt,
                                 frist = notifikasjon.frist,
                                 id = notifikasjon.id,
                                 virksomhet = Virksomhet(

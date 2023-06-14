@@ -44,6 +44,7 @@ object BrukerModel {
         override val virksomhetsnummer: String,
         val opprettetTidspunkt: OffsetDateTime,
         val utgaattTidspunkt: OffsetDateTime?,
+        val utfoertTidspunkt: OffsetDateTime?,
         val paaminnelseTidspunkt: OffsetDateTime?,
         val frist: LocalDate?,
         override val id: UUID,

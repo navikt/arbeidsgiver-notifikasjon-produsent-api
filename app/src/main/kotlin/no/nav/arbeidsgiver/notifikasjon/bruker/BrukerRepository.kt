@@ -125,7 +125,7 @@ class BrukerRepositoryImpl(
                 klikk.notifikasjonsid = n.id
                 and klikk.fnr = ?
             order by 
-                coalesce(paaminnelse_tidspunkt, opprettet_tidspunkt) desc
+                coalesce(paaminnelse_tidspunkt, opprettet_tidspunkt, utfoert_tidspunkt) desc
             limit 200
             """,
             {
@@ -156,6 +156,7 @@ class BrukerRepositoryImpl(
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     utgaattTidspunkt = getObject("utgaatt_tidspunkt", OffsetDateTime::class.java),
+                    utfoertTidspunkt = getObject("utfoert_tidspunkt", OffsetDateTime::class.java),
                     paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java),
                     frist = getObject("frist", LocalDate::class.java),
                     id = getObject("id", UUID::class.java),

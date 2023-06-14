@@ -289,6 +289,7 @@ class ParameterSetters(
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
     fun toInstantAsText(value: OffsetDateTime) = instantAsText(value.toInstant())
     fun instantAsText(value: Instant) = text(value.toString())
+    fun offsetDateTimeAsText(value: OffsetDateTime) = text(value.toString())
     fun nullableInstantAsText(value: Instant?) = nullableText(value?.toString())
 
     fun nullableLocalDateTimeAsText(value: LocalDateTime?) = nullableText(value?.toString())
