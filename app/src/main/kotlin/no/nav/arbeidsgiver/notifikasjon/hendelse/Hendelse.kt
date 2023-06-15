@@ -33,7 +33,13 @@ object HendelseModel {
 
     data class HendelseMetadata(
         val timestamp: Instant
-    )
+    ) {
+        companion object {
+            fun fromKafkaTimestamp(kafkaTimestamp: Long) =
+                HendelseMetadata(Instant.ofEpochMilli(kafkaTimestamp))
+        }
+    }
+
 
     interface Notifikasjon {
         val notifikasjonId: UUID

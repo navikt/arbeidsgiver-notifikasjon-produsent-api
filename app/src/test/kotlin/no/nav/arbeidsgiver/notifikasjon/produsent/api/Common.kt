@@ -1,12 +1,15 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.TOKENDINGS_TOKEN
 import no.nav.arbeidsgiver.notifikasjon.util.post
 import org.intellij.lang.annotations.Language
+import java.time.Instant
 
 fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResponse {
     return post(
@@ -36,5 +39,9 @@ val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
             )
         )
     }
+}
+
+suspend fun ProdusentRepository.oppdaterModellEtterHendelse( hendelse: HendelseModel.Hendelse){
+    oppdaterModellEtterHendelse(hendelse, HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z")))
 }
 

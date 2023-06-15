@@ -52,7 +52,7 @@ class HendelsesstrømKafkaImpl(
                 /* do nothing */
             } else {
                 withContext(recordValue.asMdcContext()) {
-                    body(recordValue, HendelseMetadata(Instant.ofEpochMilli(record.timestamp())))
+                    body(recordValue, HendelseMetadata.fromKafkaTimestamp(record.timestamp()))
                 }
             }
         }

@@ -11,7 +11,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class OppgaveTilstandTests : DescribeSpec({
+class SakerMedOppgaveTilstandTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
 
