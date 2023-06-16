@@ -39,7 +39,7 @@ private constructor(
     groupId: String,
     keyDeserializer: Class<*>,
     valueDeserializer: Class<*>,
-    seekToBeginning: Boolean = false,
+    private val seekToBeginning: Boolean = false,
     replayPeriodically: Boolean = false,
     private val onPartitionAssigned: ((partition: TopicPartition, maxOffset: Long) -> Unit)?,
     private val onPartitionRevoked: ((partition: TopicPartition) -> Unit)?,
@@ -154,14 +154,14 @@ private constructor(
             val retries = retriesForPartition(partition.partition())
             records.records(partition).forEach currentRecord@{ record ->
                 try {
-                    log.info("processing {}", record.loggableToString())
+                    if (!seekToBeginning) log.info("processing {}", record.loggableToString())
                     iterationEntryCounter.increment()
                     runBlocking(Dispatchers.IO) {
                         body(record)
                     }
                     consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     iterationExitCounter.increment()
-                    log.info("successfully processed {}", record.loggableToString())
+                    if (!seekToBeginning) log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)
                     return@currentRecord
                 } catch (e: Exception) {
