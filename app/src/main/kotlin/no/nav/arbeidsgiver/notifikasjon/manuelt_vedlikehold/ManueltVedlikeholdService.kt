@@ -17,6 +17,7 @@ class ManueltVedlikeholdService(
     private val log = logger()
     private val aggregatesSeen = ConcurrentHashMap<UUID, String>()
     private val aggregatesDeleted = ConcurrentHashMap<UUID, Unit>()
+    private var stopProcessing = false
 
     private val aggregatesToDelete = basedOnEnv<List<String>>(
         prod = { listOf(
@@ -56,6 +57,8 @@ class ManueltVedlikeholdService(
     }
 
     suspend fun performHardDeletes() {
+        if (stopProcessing) return
+
         for (aggregateId in aggregatesToDelete) {
             val virksomhetsnummer = aggregatesSeen[aggregateId]
 
@@ -80,5 +83,6 @@ class ManueltVedlikeholdService(
             log.info("sending HardDelete for aggregateid {}", aggregateId)
             hendelseProdusent.send(hardDelete)
         }
+        stopProcessing = true
     }
 }
