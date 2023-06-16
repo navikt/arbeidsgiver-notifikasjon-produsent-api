@@ -9,6 +9,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
@@ -18,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.*
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -28,7 +30,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
     val produsentModel = ProdusentRepositoryImpl(database)
     val kafkaProducer = mockk<HendelseProdusent>()
 
-    coEvery { kafkaProducer.send(ofType<SoftDelete>()) } returns Unit
+    coEvery { kafkaProducer.sendOgHentMetadata(ofType<SoftDelete>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
 
     afterSpec {
         unmockkAll()
@@ -108,7 +110,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify { kafkaProducer.send(ofType<SoftDelete>()) }
+                coVerify { kafkaProducer.sendOgHentMetadata(ofType<SoftDelete>()) }
             }
 
             it("har slettet-status i modellen") {
@@ -317,7 +319,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify { kafkaProducer.send(ofType<SoftDelete>()) }
+                coVerify { kafkaProducer.sendOgHentMetadata(ofType<SoftDelete>()) }
             }
 
             it("har fått slettet tidspunkt") {

@@ -406,9 +406,9 @@ object BrukerAPI {
                 kildeAppNavn = NaisEnvironment.clientId,
             )
 
-            hendelseProdusent.send(hendelse)
+            val metadata = hendelseProdusent.sendOgHentMetadata(hendelse)
 
-            brukerRepository.oppdaterModellEtterHendelse(hendelse)
+            brukerRepository.oppdaterModellEtterHendelse(hendelse, metadata)
 
             BrukerKlikk(
                 id = "${context.fnr}-${hendelse.notifikasjonId}",

@@ -24,6 +24,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import kotlin.time.ExperimentalTime
@@ -34,7 +35,7 @@ class NyOppgaveTests : DescribeSpec({
     val produsentRepository = ProdusentRepositoryImpl(database)
 
     val kafkaProducer = mockk<HendelseProdusent>()
-    coEvery { kafkaProducer.send(any()) } returns Unit
+    coEvery { kafkaProducer.sendOgHentMetadata(any()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = kafkaProducer,
@@ -46,7 +47,7 @@ class NyOppgaveTests : DescribeSpec({
 
         it("sends message to kafka") {
             coVerify {
-                kafkaProducer.send(withArg { oppgaveOpprettet: OppgaveOpprettet ->
+                kafkaProducer.sendOgHentMetadata(withArg { oppgaveOpprettet: OppgaveOpprettet ->
                     oppgaveOpprettet.notifikasjonId shouldBe nyOppgave.id
                     oppgaveOpprettet.lenke shouldBe "https://foo.bar"
                     oppgaveOpprettet.tekst shouldBe "hello world"
@@ -79,7 +80,7 @@ class NyOppgaveTests : DescribeSpec({
 
         it("sends message to kafka") {
             coVerify {
-                kafkaProducer.send(withArg { oppgaveOpprettet: OppgaveOpprettet ->
+                kafkaProducer.sendOgHentMetadata(withArg { oppgaveOpprettet: OppgaveOpprettet ->
                     oppgaveOpprettet.notifikasjonId shouldBe nyOppgave.id
                     oppgaveOpprettet.lenke shouldBe "https://foo.bar"
                     oppgaveOpprettet.tekst shouldBe "hello world"

@@ -42,8 +42,8 @@ object BrukerWriter {
 
             launch {
                 val brukerRepository = brukerRepositoryAsync.await()
-                hendelsesstrøm.forEach { event ->
-                    brukerRepository.oppdaterModellEtterHendelse(event)
+                hendelsesstrøm.forEach { event, metadata ->
+                    brukerRepository.oppdaterModellEtterHendelse(event, metadata)
                 }
             }
 

@@ -22,6 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.time.ExperimentalTime
@@ -31,7 +32,7 @@ class NyBeskjedTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
     val kafkaProducer = mockk<HendelseProdusent>()
-    coEvery { kafkaProducer.send(any()) } returns Unit
+    coEvery { kafkaProducer.sendOgHentMetadata(any()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = kafkaProducer,
@@ -92,7 +93,7 @@ class NyBeskjedTests : DescribeSpec({
 
         it("sends message to kafka") {
             coVerify {
-                kafkaProducer.send(withArg { beskjedOpprettet: BeskjedOpprettet ->
+                kafkaProducer.sendOgHentMetadata(withArg { beskjedOpprettet: BeskjedOpprettet ->
                     beskjedOpprettet.notifikasjonId shouldBe nyBeskjed.id
                     beskjedOpprettet.lenke shouldBe "https://foo.bar"
                     beskjedOpprettet.tekst shouldBe "hello world"

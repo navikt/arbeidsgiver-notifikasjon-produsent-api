@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFei
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
@@ -64,7 +65,7 @@ interface BrukerRepository {
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): HentSakerResultat
 
-    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
     suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
     suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String>
@@ -430,7 +431,7 @@ class BrukerRepositoryImpl(
             getString("virksomhetsnummer")!!
         }.getOrNull(0)
 
-    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         if (erHardDeleted(hendelse.aggregateId)) {
             log.info("skipping harddeleted event {}", hendelse)
             return
@@ -444,7 +445,7 @@ class BrukerRepositoryImpl(
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
-            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
+            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
             is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
@@ -472,16 +473,18 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført) {
+    private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført, metdata: HendelseMetadata) {
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
             SET 
             tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}',
+            utfoert_tidspunkt = ?,
             lenke = coalesce(?, lenke)
             WHERE id = ?
         """
         ) {
+            timestamp_with_timezone(utførtHendelse.utfoertTidspunkt?: metdata.timestamp.atOffset(ZoneOffset.UTC))
             nullableText(utførtHendelse.nyLenke)
             uuid(utførtHendelse.notifikasjonId)
         }
