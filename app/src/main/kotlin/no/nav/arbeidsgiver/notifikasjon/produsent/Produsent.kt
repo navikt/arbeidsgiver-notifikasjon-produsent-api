@@ -60,8 +60,8 @@ object Produsent {
 
             launch {
                 val produsentRepository = produsentRepositoryAsync.await()
-                hendelsesstrøm.forEach { event ->
-                    produsentRepository.oppdaterModellEtterHendelse(event)
+                hendelsesstrøm.forEach { event, metadata ->
+                    produsentRepository.oppdaterModellEtterHendelse(event, metadata)
                 }
             }
 

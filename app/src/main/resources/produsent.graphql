@@ -422,6 +422,13 @@ type Mutation {
         Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
         """
         nyLenke: String = null
+
+        """
+        Tidspunkt for når oppgaven ble utført.
+
+        Optional: hvis ikke oppgitt/null, så blir den satt til now().
+        """
+        utfoertTidspunkt: ISO8601DateTime = null
     ): OppgaveUtfoertResultat!
 
     """
@@ -473,6 +480,13 @@ type Mutation {
         Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
         """
         nyLenke: String = null
+
+        """
+        Tidspunkt for når oppgaven ble utført.
+
+        Optional: hvis ikke oppgitt/null, så blir den satt til now().
+        """
+        utfoertTidspunkt: ISO8601DateTime = null
     ): OppgaveUtfoertResultat!
 
     """
@@ -496,6 +510,13 @@ type Mutation {
         Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
         """
         nyLenke: String = null
+
+        """
+        Tidspunkt for når oppgaven utgikk.
+
+        Optional: hvis ikke oppgitt/null, så blir den satt til now().
+        """
+        utgaattTidspunkt: ISO8601DateTime = null
     ): OppgaveUtgaattResultat!
 
 
@@ -525,6 +546,13 @@ type Mutation {
         Optional: hvis ikke oppgitt/null, så beholdes forrige lenke.
         """
         nyLenke: String = null
+
+        """
+        Tidspunkt for når oppgaven utgikk.
+
+        Optional: hvis ikke oppgitt/null, så blir den satt til now().
+        """
+        utgaattTidspunkt: ISO8601DateTime = null
     ): OppgaveUtgaattResultat!
 
 

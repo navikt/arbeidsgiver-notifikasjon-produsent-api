@@ -226,6 +226,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
                 hardDelete = null,
                 nyLenke = null,
+                utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -494,6 +495,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
                 hardDelete = null,
                 nyLenke = null,
+                utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)

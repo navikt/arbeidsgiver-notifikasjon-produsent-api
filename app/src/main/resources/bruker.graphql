@@ -109,6 +109,7 @@ type Oppgave {
     sorteringTidspunkt: ISO8601DateTime!
     paaminnelseTidspunkt: ISO8601DateTime
     utgaattTidspunkt: ISO8601DateTime
+    utfoertTidspunkt: ISO8601DateTime
     frist: ISO8601Date
     id: ID!
     virksomhet: Virksomhet!

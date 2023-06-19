@@ -136,6 +136,7 @@ class StatistikkModelTests : DescribeSpec({
             produsentId = "",
             hardDelete = null,
             nyLenke = null,
+            utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
         )
 
 

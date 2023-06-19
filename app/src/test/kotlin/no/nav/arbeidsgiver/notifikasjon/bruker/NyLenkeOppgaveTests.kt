@@ -66,6 +66,7 @@ private fun oppgaveUtført(nyLenke: String?) = HendelseModel.OppgaveUtført(
     kildeAppNavn = "test",
     hardDelete = null,
     nyLenke = nyLenke,
+    utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
 )
 
 suspend fun BrukerRepository.hentLenke() =

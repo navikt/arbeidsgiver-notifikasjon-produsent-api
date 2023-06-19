@@ -10,6 +10,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.*
 
 internal class MutationOppgaveUtfoert(
@@ -17,8 +19,8 @@ internal class MutationOppgaveUtfoert(
     private val produsentRepository: ProdusentRepository,
 ) {
     private val oppgaveUtfoertByEksternIdCalls = Counter.builder("graphql.mutation")
-            .tag("field", "oppgaveUtfoertByEksternId")
-            .register(Metrics.meterRegistry)
+        .tag("field", "oppgaveUtfoertByEksternId")
+        .register(Metrics.meterRegistry)
 
     fun wire(runtime: RuntimeWiring.Builder) {
         runtime.resolveSubtypes<OppgaveUtfoertResultat>()
@@ -30,6 +32,7 @@ internal class MutationOppgaveUtfoert(
                     id = env.getTypedArgument("id"),
                     hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
                     nyLenke = env.getTypedArgumentOrNull("nyLenke"),
+                    utfoertTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("utfoertTidspunkt"),
                 )
             }
             coDataFetcher("oppgaveUtfoertByEksternId") { env ->
@@ -49,6 +52,7 @@ internal class MutationOppgaveUtfoert(
             merkelapp = env.getTypedArgument("merkelapp"),
             hardDelete = env.getTypedArgumentOrNull("hardDelete"),
             nyLenke = env.getTypedArgumentOrNull("nyLenke"),
+            utfoertTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("utfoertTidspunkt"),
         )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -64,9 +68,10 @@ internal class MutationOppgaveUtfoert(
         id: UUID,
         hardDelete: HardDeleteUpdateInput?,
         nyLenke: String?,
+        utfoertTidspunkt: OffsetDateTime?,
     ): OppgaveUtfoertResultat {
         val notifikasjon = hentNotifikasjon(produsentRepository, id) { error -> return error }
-        return oppgaveUtført(context, notifikasjon, hardDelete, nyLenke)
+        return oppgaveUtført(context, notifikasjon, hardDelete, nyLenke, utfoertTidspunkt)
     }
 
     private suspend fun oppgaveUtført(
@@ -75,9 +80,10 @@ internal class MutationOppgaveUtfoert(
         merkelapp: String,
         hardDelete: HardDeleteUpdateInput?,
         nyLenke: String?,
+        utfoertTidspunkt: OffsetDateTime?,
     ): OppgaveUtfoertResultat {
         val notifikasjon = hentNotifikasjon(produsentRepository, eksternId, merkelapp) { error -> return error }
-        return oppgaveUtført(context, notifikasjon, hardDelete, nyLenke)
+        return oppgaveUtført(context, notifikasjon, hardDelete, nyLenke, utfoertTidspunkt)
     }
 
     private suspend fun oppgaveUtført(
@@ -85,6 +91,7 @@ internal class MutationOppgaveUtfoert(
         notifikasjon: ProdusentModel.Notifikasjon,
         hardDelete: HardDeleteUpdateInput?,
         nyLenke: String?,
+        utfoertTidspunkt: OffsetDateTime?,
     ): OppgaveUtfoertResultat {
 
         if (notifikasjon !is ProdusentModel.Oppgave) {
@@ -103,6 +110,7 @@ internal class MutationOppgaveUtfoert(
             kildeAppNavn = context.appName,
             hardDelete = hardDelete?.tilDomene(),
             nyLenke = nyLenke,
+            utfoertTidspunkt = utfoertTidspunkt ?: OffsetDateTime.now(),
         )
 
         hendelseDispatcher.send(utførtHendelse)

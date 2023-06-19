@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFei
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
@@ -23,18 +24,20 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import java.lang.RuntimeException
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 interface ProdusentRepository {
     suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon?
     suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon?
-    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun finnNotifikasjoner(
         merkelapper: List<String>,
         grupperingsid: String?,
         antall: Int,
         offset: Int,
     ): List<ProdusentModel.Notifikasjon>
+
     suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak?
     suspend fun hentSak(id: UUID): ProdusentModel.Sak?
 }
@@ -134,18 +137,18 @@ class ProdusentRepositoryImpl(
             """,
             variables
         ) {
-                ProdusentModel.Sak(
-                    merkelapp = getString("merkelapp"),
-                    tittel = getString("tittel"),
-                    grupperingsid = getString("grupperingsid"),
-                    lenke = getString("lenke"),
-                    mottakere = laxObjectMapper.readValue(getString("mottakere")),
-                    opprettetTidspunkt = getObject("tidspunkt_mottatt", OffsetDateTime::class.java),
-                    id = getObject("id", UUID::class.java),
-                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
-                    virksomhetsnummer = getString("virksomhetsnummer"),
-                    statusoppdateringer = laxObjectMapper.readValue(getString("statusoppdateringer"))
-                )
+            ProdusentModel.Sak(
+                merkelapp = getString("merkelapp"),
+                tittel = getString("tittel"),
+                grupperingsid = getString("grupperingsid"),
+                lenke = getString("lenke"),
+                mottakere = laxObjectMapper.readValue(getString("mottakere")),
+                opprettetTidspunkt = getObject("tidspunkt_mottatt", OffsetDateTime::class.java),
+                id = getObject("id", UUID::class.java),
+                deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
+                virksomhetsnummer = getString("virksomhetsnummer"),
+                statusoppdateringer = laxObjectMapper.readValue(getString("statusoppdateringer"))
+            )
         }
     }
 
@@ -192,6 +195,7 @@ class ProdusentRepositoryImpl(
                     eksterneVarsler = laxObjectMapper.readValue(getString("eksterne_varsler")),
                     virksomhetsnummer = getString("virksomhetsnummer"),
                 )
+
                 "OPPGAVE" -> ProdusentModel.Oppgave(
                     merkelapp = getString("merkelapp"),
                     tilstand = ProdusentModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
@@ -208,19 +212,20 @@ class ProdusentRepositoryImpl(
                     frist = getObject("frist", LocalDate::class.java),
                     påminnelseEksterneVarsler = laxObjectMapper.readValue(getString("paaminnelse_eksterne_varsler")),
                 )
+
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
 
-    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         @Suppress("UNUSED_VARIABLE") val ignored: Unit = when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
             is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
-            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse)
+            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is PåminnelseOpprettet -> /* Ignorer */ Unit
             is BrukerKlikket -> /* Ignorer */ Unit
@@ -233,7 +238,8 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: SakOpprettet) {
         database.transaction {
-            executeUpdate("""
+            executeUpdate(
+                """
                     insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, lenke, tidspunkt_mottatt)
                     values (?, ?, ?, ?, ?::jsonb, ?, ?, now())
                     on conflict do nothing
@@ -250,10 +256,12 @@ class ProdusentRepositoryImpl(
                 if (it == 0) {
                     // noop. saken finnes allerede
                 } else {
-                    executeUpdate("""
+                    executeUpdate(
+                        """
                         insert into sak_id (incoming_sak_id, sak_id) values (?, ?)
                         on conflict do nothing
-                    """) {
+                    """
+                    ) {
                         uuid(sakOpprettet.sakId)
                         uuid(sakOpprettet.sakId)
                     }
@@ -276,12 +284,14 @@ class ProdusentRepositoryImpl(
         database.transaction {
             val sakId = finnDbSakId(nyStatusSak.sakId) ?: return@transaction // log? metric?
 
-            executeUpdate("""
+            executeUpdate(
+                """
                 insert into sak_status
                 (id, idempotence_key, sak_id, status, overstyr_statustekst_med, tidspunkt_oppgitt, tidspunkt_mottatt)
                 values (?, ?, ?, ?, ?, ?, ?)
                 on conflict do nothing;
-            """) {
+            """
+            ) {
                 uuid(nyStatusSak.hendelseId)
                 text(nyStatusSak.idempotensKey)
                 uuid(sakId)
@@ -327,7 +337,7 @@ class ProdusentRepositoryImpl(
                 timestamp_with_timezone(softDelete.deletedAt)
                 uuid(softDelete.aggregateId)
             }
-           executeUpdate(
+            executeUpdate(
                 """
                 UPDATE sak
                 SET deleted_at = ?
@@ -340,27 +350,31 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført) {
+    private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført, metadata: HendelseMetadata) {
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
-            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}'
+            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}',
+            utfoert_tidspunkt = ?
             WHERE id = ?
         """
         ) {
+            offsetDateTimeAsText(utførtHendelse.utfoertTidspunkt ?: metadata.timestamp.atOffset(ZoneOffset.UTC))
             uuid(utførtHendelse.notifikasjonId)
         }
     }
 
-    private suspend fun oppdaterModellEtterOppgaveUtgått(utførtHendelse: OppgaveUtgått) {
+    private suspend fun oppdaterModellEtterOppgaveUtgått(utgåttHendelse: OppgaveUtgått) {
         database.nonTransactionalExecuteUpdate(
             """
             UPDATE notifikasjon
-            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}'
+            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}',
+            utgaatt_tidspunkt = ?
             WHERE id = ?
         """
         ) {
-            uuid(utførtHendelse.notifikasjonId)
+            offsetDateTimeAsText(utgåttHendelse.utgaattTidspunkt)
+            uuid(utgåttHendelse.notifikasjonId)
         }
     }
 
@@ -535,11 +549,12 @@ class ProdusentRepositoryImpl(
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
             is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
                 prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
-                other = {  },
+                other = { },
             )
+
             is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
                 prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
-                other = {  },
+                other = { },
             )
         }
     }

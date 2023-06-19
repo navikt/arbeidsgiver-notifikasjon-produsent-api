@@ -417,6 +417,7 @@ object EksempelHendelse {
             strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
         ),
         nyLenke = null,
+        utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
     )
     val OppgaveUtgått = HendelseModel.OppgaveUtgått(
         virksomhetsnummer = "1",

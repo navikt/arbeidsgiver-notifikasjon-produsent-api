@@ -11,7 +11,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class OppgaveTilstandTests : DescribeSpec({
+class SakerMedOppgaveTilstandTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
     val queryModel = BrukerRepositoryImpl(database)
 
@@ -75,7 +75,8 @@ class OppgaveTilstandTests : DescribeSpec({
         idempotensKey = IdempotenceKey.initial(),
         hardDelete = null,
         nyLenkeTilSak = null,
-    )
+
+        )
 
     suspend fun opprettSak(
         id: String,
@@ -107,23 +108,26 @@ class OppgaveTilstandTests : DescribeSpec({
 
         return uuid.toString()
     }
+
     suspend fun oppgaveTilstandUtført(id: UUID) {
         val hendelse = HendelseModel.OppgaveUtført(
-        virksomhetsnummer= "1",
-        notifikasjonId = id,
-        hendelseId=  UUID.randomUUID(),
-        produsentId = "1",
-        kildeAppNavn = "1",
-        hardDelete = null,
-        nyLenke = null,
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = UUID.randomUUID(),
+            produsentId = "1",
+            kildeAppNavn = "1",
+            hardDelete = null,
+            nyLenke = null,
+            utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
         )
         queryModel.oppdaterModellEtterHendelse(hendelse)
     }
+
     suspend fun oppgaveTilstandUtgått(id: UUID) {
         val hendelse = HendelseModel.OppgaveUtgått(
-            virksomhetsnummer= "1",
+            virksomhetsnummer = "1",
             notifikasjonId = id,
-            hendelseId= UUID.randomUUID(),
+            hendelseId = UUID.randomUUID(),
             produsentId = "1",
             kildeAppNavn = "1",
             hardDelete = null,
@@ -149,7 +153,7 @@ class OppgaveTilstandTests : DescribeSpec({
 
         val res = engine.hentSaker()
 
-        it ("Teller kun saken en gang for hver tilstand") {
+        it("Teller kun saken en gang for hver tilstand") {
             res.getTypedContent<List<Any>>("$.saker.oppgaveTilstandInfo") shouldContainExactlyInAnyOrder listOf(
                 mapOf(
                     "tilstand" to "NY",
@@ -166,12 +170,12 @@ class OppgaveTilstandTests : DescribeSpec({
             )
         }
 
-        it ("totaltAntallSaker teller saker og ikke oppgaver") {
+        it("totaltAntallSaker teller saker og ikke oppgaver") {
             res.getTypedContent<Int>("$.saker.totaltAntallSaker") shouldBe 3
         }
     }
 
-    describe("Sak med oppgave med frist med filter"){
+    describe("Sak med oppgave med frist med filter") {
         val sak1 = opprettSak("1")
         opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
         opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
@@ -180,10 +184,10 @@ class OppgaveTilstandTests : DescribeSpec({
 
         val sak2 = opprettSak("2")
         opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
-        opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtført(it!!) }
-        opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also {oppgaveTilstandUtgått(it!!) }
+        opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also { oppgaveTilstandUtført(it!!) }
+        opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also { oppgaveTilstandUtgått(it!!) }
 
-       opprettSak("3")
+        opprettSak("3")
 
         val res =
             engine.hentSakerMedFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
@@ -192,14 +196,14 @@ class OppgaveTilstandTests : DescribeSpec({
         res shouldBe listOf(uuid(sak1).toString())
     }
 
-    describe("Saker med og uten oppgaver"){
+    describe("Saker med og uten oppgaver") {
         val sak1 = opprettSak("1")
         val sak2 = opprettSak("2")
         opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
 
         val res = engine.hentSakerUtenFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
 
-        it ("skal returnere saker med og uten oppgaver"){
+        it("skal returnere saker med og uten oppgaver") {
             res shouldContainExactlyInAnyOrder listOf(sak1, sak2)
         }
 

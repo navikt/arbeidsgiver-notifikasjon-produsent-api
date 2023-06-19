@@ -10,11 +10,12 @@ internal class HendelseDispatcher(
 ) {
 
     internal suspend fun send(vararg hendelser: HendelseModel.Hendelse) {
+        val metadatas = ArrayList<HendelseModel.HendelseMetadata>()
         for (hendelse in hendelser) {
-            kafkaProducer.send(hendelse)
+            metadatas.add(kafkaProducer.sendOgHentMetadata(hendelse))
         }
-        for (hendelse in hendelser) {
-            produsentRepository.oppdaterModellEtterHendelse(hendelse)
+        for ((hendelse, metadata) in hendelser.zip(metadatas)) {
+            produsentRepository.oppdaterModellEtterHendelse(hendelse, metadata)
         }
     }
 }

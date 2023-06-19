@@ -49,6 +49,7 @@ class BrukerApiTests : DescribeSpec({
                 klikketPaa = false,
                 frist = null,
                 paaminnelseTidspunkt = null,
+                utfoertTidspunkt = null,
             )
 
             coEvery {

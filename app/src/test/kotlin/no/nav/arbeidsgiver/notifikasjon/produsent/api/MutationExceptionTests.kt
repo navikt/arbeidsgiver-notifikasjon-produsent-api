@@ -122,7 +122,7 @@ class MutationExceptionTests : DescribeSpec({
     describe("robusthet ved intern feil") {
         withData(gyldigeMutations) { query ->
             val ex = RuntimeException("woops!")
-            coEvery { kafkaProducer.send(any()) }.throws(ex)
+            coEvery { kafkaProducer.sendOgHentMetadata(any()) }.throws(ex)
             val response = engine.produsentApi(query)
             response.getGraphqlErrors() shouldHaveSize 1
             response.getGraphqlErrors().first().message shouldContainIgnoringCase ex.message!!

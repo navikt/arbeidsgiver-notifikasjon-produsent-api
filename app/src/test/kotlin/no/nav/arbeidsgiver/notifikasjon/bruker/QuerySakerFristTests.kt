@@ -315,6 +315,7 @@ private suspend fun BrukerRepository.opprettSak(
                 kildeAppNavn = "1",
                 hardDelete = null,
                 nyLenke = null,
+                utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
             )
 
             BrukerModel.Oppgave.Tilstand.UTGAATT -> HendelseModel.OppgaveUtgått(

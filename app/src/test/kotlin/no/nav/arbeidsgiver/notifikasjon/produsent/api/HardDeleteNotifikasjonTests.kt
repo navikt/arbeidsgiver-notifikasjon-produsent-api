@@ -7,6 +7,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -16,6 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.*
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -26,7 +28,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
     val produsentModel = ProdusentRepositoryImpl(database)
     val kafkaProducer = mockk<HendelseProdusent>()
 
-    coEvery { kafkaProducer.send(ofType<HardDelete>()) } returns Unit
+    coEvery { kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
 
     afterSpec {
         unmockkAll()
@@ -104,7 +106,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify { kafkaProducer.send(ofType<HardDelete>()) }
+                coVerify { kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) }
             }
 
             it("har blitt fjernet fra modellen") {
@@ -287,7 +289,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify { kafkaProducer.send(ofType<HardDelete>()) }
+                coVerify { kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) }
             }
 
             it("finnes ikke i modellen") {
