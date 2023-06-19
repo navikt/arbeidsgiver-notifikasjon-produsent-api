@@ -37,7 +37,7 @@ class LogConfig : ContextAwareBase(), Configurator {
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
             level = basedOnEnv(
                 prod = { Level.INFO },
-                dev = { Level.DEBUG },
+                dev = { Level.INFO },
                 other = { Level.WARN }
             )
             addAppender(rootAppender)
@@ -47,7 +47,7 @@ class LogConfig : ContextAwareBase(), Configurator {
         lc.getLogger("io.netty").level = Level.INFO
 
         if (naisCluster == null || naisCluster == "dev-gcp") {
-            lc.getLogger("io.ktor.auth.jwt").level = Level.TRACE
+            lc.getLogger("io.ktor.auth.jwt").level = Level.INFO
         }
         return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY
     }

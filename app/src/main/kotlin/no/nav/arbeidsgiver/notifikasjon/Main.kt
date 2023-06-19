@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaper
+import no.nav.arbeidsgiver.notifikasjon.manuelt_vedlikehold.ManueltVedlikehold
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.SkedulertPåminnelse
 import no.nav.arbeidsgiver.notifikasjon.skedulert_utgått.SkedulertUtgått
@@ -35,6 +36,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-skedulert-harddelete" -> SkedulertHardDelete.main()
             "notifikasjon-hendelse-transformer" -> HendelseTransformer.main()
             "notifikasjon-dataprodukt" -> Dataprodukt.main()
+            "notifikasjon-manuelt-vedlikehold" -> ManueltVedlikehold.main()
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
         }
     } catch (e: Exception) {

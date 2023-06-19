@@ -90,6 +90,7 @@ jobs:
           - skedulert-utgaatt
           - skedulert-harddelete
           - dataprodukt
+          - manuelt-vedlikehold
     steps:
       - uses: actions/checkout@v3
       - uses: nais/login@v0
