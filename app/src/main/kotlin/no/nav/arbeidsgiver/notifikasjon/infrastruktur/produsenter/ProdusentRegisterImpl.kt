@@ -145,8 +145,8 @@ val ARBEIDSGIVERDIALOG = Produsent(
     id = "arbeidsgiver-dialog",
     accessPolicy = listOf(
         basedOnEnv(
-            prod = { "prod-external:teamcrm:salesforce" },
-            other = { "dev-external:teamcrm:salesforce" },
+            prod = { "prod-gcp:teamcrm:saas-proxy" },
+            other = { "dev-gcp:teamcrm:saas-proxy" },
         ),
     ),
     tillatteMerkelapper = listOf(

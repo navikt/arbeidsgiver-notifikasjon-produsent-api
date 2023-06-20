@@ -59,9 +59,9 @@ spec:
           namespace: helsearbeidsgiver
           cluster: prod-gcp
 
-        - application: salesforce
+        - application: saas-proxy
           namespace: teamcrm
-          cluster: prod-external
+          cluster: prod-gcp
 
   azure:
     application:
