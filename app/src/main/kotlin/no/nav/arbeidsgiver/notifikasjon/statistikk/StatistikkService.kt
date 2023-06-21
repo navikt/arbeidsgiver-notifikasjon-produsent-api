@@ -25,9 +25,9 @@ class StatistikkServiceImpl(
         .description("Unike tekster")
         .register(Metrics.meterRegistry)
 
-    private val antallUnikeVarselTekster = MultiGauge.builder("antall_unike_varseltekster")
-        .description("Unike tekster i eksterne varsler")
-        .register(Metrics.meterRegistry)
+//    private val antallUnikeVarselTekster = MultiGauge.builder("antall_unike_varseltekster")
+//        .description("Unike tekster i eksterne varsler")
+//        .register(Metrics.meterRegistry)
 
     private val antallKlikk = MultiGauge.builder("antall_klikk")
         .description("Antall klikk på notifikasjon")
@@ -53,7 +53,7 @@ class StatistikkServiceImpl(
         antallNotifikasjoner.register(statistikkModel.antallNotifikasjoner(), true)
         antallSaker.register(statistikkModel.antallSaker(), true)
         antallUnikeTekster.register(statistikkModel.antallUnikeTekster(), true)
-        antallUnikeVarselTekster.register(statistikkModel.antallUnikeVarselTekster(), true)
+//        antallUnikeVarselTekster.register(statistikkModel.antallUnikeVarselTekster(), true)
         antallKlikk.register(statistikkModel.antallKlikk(), true)
         antallUtførte.register(statistikkModel.antallUtførteHistogram(), true)
         antallVarsler.register(statistikkModel.antallVarsler(), true)
