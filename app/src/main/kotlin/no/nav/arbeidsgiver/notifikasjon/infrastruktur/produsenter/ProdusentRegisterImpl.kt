@@ -143,11 +143,15 @@ val TOI = Produsent(
 
 val ARBEIDSGIVERDIALOG = Produsent(
     id = "arbeidsgiver-dialog",
-    accessPolicy = listOf(
-        basedOnEnv(
-            prod = { "prod-gcp:teamcrm:saas-proxy" },
-            other = { "dev-gcp:teamcrm:saas-proxy" },
-        ),
+    accessPolicy = basedOnEnv(
+        prod = { listOf(
+            "prod-external:teamcrm:salesforce",
+            "prod-gcp:teamcrm:saas-proxy",
+        )},
+        other = { listOf(
+            "dev-external:teamcrm:salesforce",
+            "dev-gcp:teamcrm:saas-proxy",
+        )},
     ),
     tillatteMerkelapper = listOf(
         "Lønnstilskudd",
