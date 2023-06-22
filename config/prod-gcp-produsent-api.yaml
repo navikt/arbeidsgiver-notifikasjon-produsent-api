@@ -63,6 +63,10 @@ spec:
           namespace: teamcrm
           cluster: prod-gcp
 
+        - application: salesforce
+          namespace: teamcrm
+          cluster: prod-external
+
   azure:
     application:
       enabled: true
