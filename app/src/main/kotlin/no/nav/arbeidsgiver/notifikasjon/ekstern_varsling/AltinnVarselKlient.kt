@@ -316,7 +316,7 @@ fun <PORT_TYPE> createServicePort(
     })
     outInterceptors.add(LoggingOutInterceptor().apply {
         addSensitiveProtocolHeaderNames(setOf("Authorization"))
-        addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber", "ns2:ReceiverAddress", "ns2:TokenValue"))
+        addSensitiveElementNames(setOf("systemUserName", "systemPassword", "ns2:ReporteeNumber", "a:ReporteeNumber", "a:ReceiverAddress"))
     })
 
     /* inject Azure AD token */
