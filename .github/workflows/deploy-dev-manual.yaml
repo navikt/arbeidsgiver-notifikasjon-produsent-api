@@ -25,7 +25,7 @@ jobs:
           - skedulert-harddelete
           - skedulert-paaminnelse
           - dataprodukt
-          - manuelt-vedlikehold
+          #- manuelt-vedlikehold
     steps:
       - uses: actions/checkout@v3
       - name: NAIS login

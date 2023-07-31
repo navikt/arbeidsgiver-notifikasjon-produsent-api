@@ -46,6 +46,10 @@ class LogConfig : ContextAwareBase(), Configurator {
         lc.getLogger("org.apache.kafka").level = Level.INFO
         lc.getLogger("io.netty").level = Level.INFO
 
+        if (naisCluster == "prod-gcp") {
+            lc.getLogger("org.apache.cxf.services.INotificationAgencyExternalBasic").level = Level.WARN
+        }
+
         if (naisCluster == null || naisCluster == "dev-gcp") {
             lc.getLogger("io.ktor.auth.jwt").level = Level.INFO
         }
