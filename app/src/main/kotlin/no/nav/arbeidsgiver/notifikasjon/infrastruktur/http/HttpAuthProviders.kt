@@ -1,6 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
 import com.auth0.jwk.JwkProviderBuilder
+import com.auth0.jwt.interfaces.Claim
+import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.Verification
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
@@ -134,7 +136,9 @@ object HttpAuthProviders {
     }
 
     fun Verification.`with id-porten login level 4`() {
-        withClaim("acr", "Level4")
+        withClaim("acr") { claim, _ ->
+            claim.asString() in listOf("Level4", "idporten-loa-high")
+        }
     }
 
     private fun JWTAuthenticationProvider.Config.verifier(
