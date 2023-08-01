@@ -58,6 +58,8 @@ spec:
           namespace: arbeidsgiver
         - application: min-ia
           namespace: teamia
+        - application: forebyggingsplan-frontend
+          namespace: teamia
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
