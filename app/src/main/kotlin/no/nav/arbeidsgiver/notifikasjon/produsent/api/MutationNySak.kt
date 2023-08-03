@@ -10,11 +10,15 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import java.lang.RuntimeException
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -146,7 +150,7 @@ internal class MutationNySak(
             sakId = id,
             grupperingsid = grupperingsid,
             merkelapp = merkelapp,
-        mottakere = mottakere.map { it.tilDomene(virksomhetsnummer) },
+            mottakere = mottakere.map { it.tilDomene(virksomhetsnummer) },
             tittel = tittel,
             lenke = lenke,
             oppgittTidspunkt = status.tidspunkt,
