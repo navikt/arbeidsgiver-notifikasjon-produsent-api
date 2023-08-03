@@ -338,6 +338,7 @@ class BrukerRepositoryImpl(
                                 merkelapp,
                                 grupperingsid,
                                 sist_endret_tidspunkt,
+                                opprettet_tidspunkt,
                                 count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
                                 min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist,
                                 case
@@ -350,7 +351,7 @@ class BrukerRepositoryImpl(
                                     ) order by oppgave_frist nulls last    
                                 ) end as oppgaver
                             from mine_saker_filtrert
-                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt
+                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt, opprettet_tidspunkt
                         ),
                         mine_saker_paginert as (
                             select 
@@ -571,9 +572,9 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt
+                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt, opprettet_tidspunkt
                 )
-                values (?, ?, ? ,?, ?, ?, ?)
+                values (?, ?, ? ,?, ?, ?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -583,6 +584,7 @@ class BrukerRepositoryImpl(
                 text(sakOpprettet.lenke)
                 text(sakOpprettet.merkelapp)
                 text(sakOpprettet.grupperingsid)
+                instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
                 instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
             }
 

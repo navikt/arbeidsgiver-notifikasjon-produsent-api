@@ -352,9 +352,11 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
 
 private suspend fun BrukerRepository.opprettSakMedTidspunkt(
     sakId: UUID,
-    vararg shift: Duration,
+    opprettetShift: Duration,
+    vararg restShift: Duration,
 ) {
-    val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
+    val shift = listOf(opprettetShift) + restShift
+    val mottattTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
     val sak = SakOpprettet(
         hendelseId = sakId,
         sakId = sakId,
@@ -366,8 +368,8 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
         mottakere = listOf(AltinnMottaker("5441", "1", "42")),
         tittel = "er det no sak",
         lenke = "#foo",
-        oppgittTidspunkt = oppgittTidspunkt,
-        mottattTidspunkt = OffsetDateTime.now(),
+        oppgittTidspunkt = null,
+        mottattTidspunkt = mottattTidspunkt.plus(opprettetShift),
         hardDelete = null,
     ).also {
         oppdaterModellEtterHendelse(it)
@@ -381,9 +383,9 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
             sakId = sak.sakId,
             status = SakStatus.MOTTATT,
             overstyrStatustekstMed = "noe",
-            mottattTidspunkt = oppgittTidspunkt.plus(it),
-            idempotensKey = IdempotenceKey.initial(),
             oppgittTidspunkt = null,
+            mottattTidspunkt = mottattTidspunkt.plus(it),
+            idempotensKey = IdempotenceKey.initial(),
             hardDelete = null,
             nyLenkeTilSak = null,
         ).also { hendelse ->
