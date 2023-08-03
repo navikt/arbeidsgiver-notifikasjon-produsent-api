@@ -6,7 +6,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.*
+import io.ktor.server.testing.TestApplicationEngine
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.OPPRETTET
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
@@ -17,7 +17,12 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.FERDIG
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.*
@@ -199,19 +204,24 @@ class QuerySakerTests : DescribeSpec({
                 saker.first().id shouldBe sak1.sakId
             }
 
-            xit("søk på status returnerer riktig sak") {
-                val response = engine.hentSaker(tekstsoek = "ferdig")
-                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
-                saker shouldHaveSize 1
-                saker.first().id shouldBe sak2.sakId
-            }
-
-            xit("søk på statustekst returnerer riktig sak") {
-                val response = engine.hentSaker(tekstsoek = "avblåst")
-                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
-                saker shouldHaveSize 1
-                saker.first().id shouldBe sak2.sakId
-            }
+            /** TAG-2137 ignored: vi skrudde av tekstsøk for status, siden vi hadde en
+             * resource leak i forbindelse med replay av hendelser. Søketeksten
+             * ble lengere for hver replay. Quick-fix var å bare bruke tittelen
+             * på saken.
+             */
+            //xit("søk på status returnerer riktig sak") {
+            //    val response = engine.hentSaker(tekstsoek = "ferdig")
+            //    val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+            //    saker shouldHaveSize 1
+            //    saker.first().id shouldBe sak2.sakId
+            //}
+            //
+            //xit("søk på statustekst returnerer riktig sak") {
+            //    val response = engine.hentSaker(tekstsoek = "avblåst")
+            //    val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+            //    saker shouldHaveSize 1
+            //    saker.first().id shouldBe sak2.sakId
+            //}
         }
 
         context("søk på tvers av virksomheter") {
@@ -342,9 +352,11 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
 
 private suspend fun BrukerRepository.opprettSakMedTidspunkt(
     sakId: UUID,
-    vararg shift: Duration,
+    opprettetShift: Duration,
+    vararg restShift: Duration,
 ) {
-    val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
+    val shift = listOf(opprettetShift) + restShift
+    val mottattTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
     val sak = SakOpprettet(
         hendelseId = sakId,
         sakId = sakId,
@@ -356,8 +368,8 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
         mottakere = listOf(AltinnMottaker("5441", "1", "42")),
         tittel = "er det no sak",
         lenke = "#foo",
-        oppgittTidspunkt = oppgittTidspunkt,
-        mottattTidspunkt = OffsetDateTime.now(),
+        oppgittTidspunkt = null,
+        mottattTidspunkt = mottattTidspunkt.plus(opprettetShift),
         hardDelete = null,
     ).also {
         oppdaterModellEtterHendelse(it)
@@ -371,9 +383,9 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
             sakId = sak.sakId,
             status = SakStatus.MOTTATT,
             overstyrStatustekstMed = "noe",
-            mottattTidspunkt = oppgittTidspunkt.plus(it),
-            idempotensKey = IdempotenceKey.initial(),
             oppgittTidspunkt = null,
+            mottattTidspunkt = mottattTidspunkt.plus(it),
+            idempotensKey = IdempotenceKey.initial(),
             hardDelete = null,
             nyLenkeTilSak = null,
         ).also { hendelse ->

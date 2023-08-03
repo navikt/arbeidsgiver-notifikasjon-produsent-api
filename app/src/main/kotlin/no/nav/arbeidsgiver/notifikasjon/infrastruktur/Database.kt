@@ -84,7 +84,10 @@ class Database private constructor(
             }
         }
 
-        suspend fun openDatabase(config: Config): Database {
+        suspend fun openDatabase(
+            config: Config,
+            flywayAction: Flyway.() -> Unit = { migrate () },
+        ): Database {
             val hikariConfig = config.asHikariConfig()
 
             /* When the application runs in kubernetes and connects to the
@@ -105,7 +108,7 @@ class Database private constructor(
 
             val dataSource = NonBlockingDataSource(HikariDataSource(hikariConfig))
             dataSource.withFlyway(config.migrationLocations) {
-                migrate()
+                flywayAction()
             }
 
             return Database(config, dataSource)
