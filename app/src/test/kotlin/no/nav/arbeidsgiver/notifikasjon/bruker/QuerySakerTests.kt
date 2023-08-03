@@ -6,7 +6,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.*
+import io.ktor.server.testing.TestApplicationEngine
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.OPPRETTET
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
@@ -17,7 +17,12 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.FERDIG
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.*
@@ -199,19 +204,24 @@ class QuerySakerTests : DescribeSpec({
                 saker.first().id shouldBe sak1.sakId
             }
 
-            xit("søk på status returnerer riktig sak") {
-                val response = engine.hentSaker(tekstsoek = "ferdig")
-                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
-                saker shouldHaveSize 1
-                saker.first().id shouldBe sak2.sakId
-            }
-
-            xit("søk på statustekst returnerer riktig sak") {
-                val response = engine.hentSaker(tekstsoek = "avblåst")
-                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
-                saker shouldHaveSize 1
-                saker.first().id shouldBe sak2.sakId
-            }
+            /** TAG-2137 ignored: vi skrudde av tekstsøk for status, siden vi hadde en
+             * resource leak i forbindelse med replay av hendelser. Søketeksten
+             * ble lengere for hver replay. Quick-fix var å bare bruke tittelen
+             * på saken.
+             */
+            //xit("søk på status returnerer riktig sak") {
+            //    val response = engine.hentSaker(tekstsoek = "ferdig")
+            //    val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+            //    saker shouldHaveSize 1
+            //    saker.first().id shouldBe sak2.sakId
+            //}
+            //
+            //xit("søk på statustekst returnerer riktig sak") {
+            //    val response = engine.hentSaker(tekstsoek = "avblåst")
+            //    val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+            //    saker shouldHaveSize 1
+            //    saker.first().id shouldBe sak2.sakId
+            //}
         }
 
         context("søk på tvers av virksomheter") {

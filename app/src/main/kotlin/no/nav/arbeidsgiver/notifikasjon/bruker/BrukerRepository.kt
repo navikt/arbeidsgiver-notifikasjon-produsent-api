@@ -21,8 +21,14 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ifNotBlank
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.LocalDate
@@ -209,16 +215,6 @@ class BrukerRepositoryImpl(
             val tekstsoekSql = tekstsoekElementer
                 .joinToString(separator = " and ") { """ search.text like '%' || ? || '%' """ }
                 .ifNotBlank { "where $it" }
-            
-            val sorteringSql = when (sortering) {
-                BrukerAPI.SakSortering.OPPDATERT -> "js.sist_endret desc"
-                BrukerAPI.SakSortering.OPPRETTET -> """
-                   js.statuser#>>'{-1,tidspunkt}' desc 
-                """
-                BrukerAPI.SakSortering.FRIST -> """
-                    sak.tidligste_frist nulls last, sak.nye_oppgaver desc, js.sist_endret desc
-                """
-            }
 
             val rows = database.nonTransactionalExecuteQuery(
                 /*  quotes are necessary for fields from json, otherwise they are lower-cased */
@@ -260,7 +256,7 @@ class BrukerRepositoryImpl(
                             (select * from mine_altinn_saker)
                         ),
                         mine_saker as (
-                            select *
+                            select s.*
                                 from mine_sak_ider as ms
                                 join sak as s on s.id = ms.sak_id
                         ),
@@ -341,6 +337,7 @@ class BrukerRepositoryImpl(
                                 lenke,
                                 merkelapp,
                                 grupperingsid,
+                                sist_endret_tidspunkt,
                                 count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
                                 min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist,
                                 case
@@ -353,7 +350,7 @@ class BrukerRepositoryImpl(
                                     ) order by oppgave_frist nulls last    
                                 ) end as oppgaver
                             from mine_saker_filtrert
-                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid
+                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt
                         ),
                         mine_saker_paginert as (
                             select 
@@ -366,7 +363,17 @@ class BrukerRepositoryImpl(
                                 sak.oppgaver
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
                             join sak_status_json as js on js.sak_id = id
-                            order by $sorteringSql
+                            order by ${
+                                when (sortering) {
+                                    BrukerAPI.SakSortering.OPPDATERT -> "js.sist_endret desc"
+                                    BrukerAPI.SakSortering.OPPRETTET -> """
+                                       js.statuser#>>'{-1,tidspunkt}' desc 
+                                    """
+                                    BrukerAPI.SakSortering.FRIST -> """
+                                        sak.tidligste_frist nulls last, sak.nye_oppgaver desc, js.sist_endret desc
+                                    """
+                                }
+                            }
                             limit ? offset ?
                         )
                     select
@@ -564,9 +571,9 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid
+                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt
                 )
-                values (?, ?, ? ,?, ?, ?)
+                values (?, ?, ? ,?, ?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -576,6 +583,7 @@ class BrukerRepositoryImpl(
                 text(sakOpprettet.lenke)
                 text(sakOpprettet.merkelapp)
                 text(sakOpprettet.grupperingsid)
+                instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
             }
 
             executeUpdate(
@@ -617,6 +625,15 @@ class BrukerRepositoryImpl(
                 text(nyStatusSak.status.name)
                 nullableText(nyStatusSak.overstyrStatustekstMed)
                 timestamp_with_timezone(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
+            }
+
+            executeUpdate("""
+                update sak
+                set sist_endret_tidspunkt = greatest(sist_endret_tidspunkt, ?)
+                where id = ?
+            """) {
+                instantAsText((nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt).toInstant())
+                uuid(nyStatusSak.sakId)
             }
 
             if (nyStatusSak.nyLenkeTilSak != null) {
