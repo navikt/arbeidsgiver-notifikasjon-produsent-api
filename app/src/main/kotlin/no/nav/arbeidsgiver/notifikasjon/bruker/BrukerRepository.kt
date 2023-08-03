@@ -588,6 +588,23 @@ class BrukerRepositoryImpl(
                 instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
             }
 
+
+            /** Slettes etter migrering er kjørt og feltene har fått "not null"-constraint.
+             *  NB. `greatest('foo', null) = 'foo'`, og `least('foo', null) = 'foo'`.
+             **/
+            executeUpdate("""
+                update sak
+                set 
+                    sist_endret_tidspunkt = greatest(sist_endret_tidspunkt, ?),
+                    opprettet_tidspunkt = least(opprettet_tidspunkt, ?)
+                where 
+                    id = ?
+            """) {
+                instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
+                instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
+                uuid(sakOpprettet.sakId)
+            }
+
             executeUpdate(
                 """
                 insert into sak_search(id, text)
