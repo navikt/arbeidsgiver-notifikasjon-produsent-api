@@ -58,7 +58,7 @@ object BrukerWriter {
             launch {
                 val brukerRepository = brukerRepositoryAsync.await()
                 rebuildQueryModel.forEach { event, metadata ->
-                    if (event is HendelseModel.SakOpprettet || event is HendelseModel.NyStatusSak) {
+                    if (event is HendelseModel.SakOpprettet) {
                         brukerRepository.oppdaterModellEtterHendelse(event, metadata)
                     }
                 }
