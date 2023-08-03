@@ -309,10 +309,10 @@ class ParameterSetters(
         )
 
     fun nullableEnumAsTextList(value: List<Enum<*>>?) {
-        nullableStringList(value?.map { it.toString() })
+        nullableTextArray(value?.map { it.toString() })
     }
 
-    fun stringList(value: List<String>) {
+    fun textArray(value: List<String>) {
         val array = preparedStatement.connection.createArrayOf(
             "text",
             value.toTypedArray()
@@ -320,11 +320,11 @@ class ParameterSetters(
         preparedStatement.setArray(index++, array)
     }
 
-    fun nullableStringList(value: List<String>?) {
+    fun nullableTextArray(value: List<String>?) {
         if (value == null) {
             preparedStatement.setArray(index++, value)
         } else {
-            stringList(value)
+            textArray(value)
         }
     }
 }

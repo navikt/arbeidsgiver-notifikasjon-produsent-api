@@ -18,12 +18,13 @@ object BrukerModel {
         val id: UUID
         val virksomhetsnummer: String
         val sorteringTidspunkt: OffsetDateTime
+        val grupperingsid: String?
     }
 
     data class Beskjed(
         val merkelapp: String,
         val tekst: String,
-        val grupperingsid: String? = null,
+        override val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
         override val virksomhetsnummer: String,
@@ -38,7 +39,7 @@ object BrukerModel {
     data class Oppgave(
         val merkelapp: String,
         val tekst: String,
-        val grupperingsid: String? = null,
+        override val grupperingsid: String? = null,
         val lenke: String,
         val eksternId: String,
         override val virksomhetsnummer: String,

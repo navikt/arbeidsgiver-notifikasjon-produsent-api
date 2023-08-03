@@ -26,7 +26,7 @@ class BrukerApiTests : DescribeSpec({
             val beskjed = BrukerModel.Beskjed(
                 merkelapp = "foo",
                 tekst = "",
-                grupperingsid = "",
+                grupperingsid = null,
                 lenke = "",
                 eksternId = "",
                 virksomhetsnummer = "43",
@@ -78,6 +78,9 @@ class BrukerApiTests : DescribeSpec({
                                         virksomhetsnummer
                                         navn
                                     }
+                                    sak {
+                                        tittel
+                                    }
                                 }
                                 ...on Oppgave {
                                     brukerKlikk { 
@@ -95,6 +98,9 @@ class BrukerApiTests : DescribeSpec({
                                     virksomhet {
                                         virksomhetsnummer
                                         navn
+                                    }
+                                    sak {
+                                        tittel
                                     }
                                 }
                             }
