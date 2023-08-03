@@ -10,11 +10,14 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 fun TestConfiguration.testDatabase(config: Database.Config): Database =
     runBlocking {
         Database.openDatabase(
-            config.copy(
+            config = config.copy(
                 // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
                 jdbcOpts = mapOf("preparedStatementCacheQueries" to 0),
                 port = "1337",
-            )
+            ),
+            flywayAction = {
+                /* noop. stuff happens in PostgresTestListener.beforeContainer. */
+            }
         )
     }
         .also { listener(PostgresTestListener(it)) }
