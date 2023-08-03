@@ -56,6 +56,10 @@ class BrukerApiTests : DescribeSpec({
                 queryModel.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed, oppgave)
 
+            coEvery {
+                queryModel.hentSakerForNotifikasjoner(any(), any(), any())
+            } returns emptyMap()
+
             val response = engine.brukerApi(
                 """
                     {
