@@ -46,6 +46,7 @@ object BrukerAPI {
             val id: UUID,
             val brukerKlikk: BrukerKlikk,
             override val virksomhet: Virksomhet,
+            val sak: SakMetadata?,
         ) : Notifikasjon(), WithVirksomhet
 
         @JsonTypeName("Oppgave")
@@ -63,6 +64,7 @@ object BrukerAPI {
             val id: UUID,
             val brukerKlikk: BrukerKlikk,
             override val virksomhet: Virksomhet,
+            val sak: SakMetadata?,
         ) : Notifikasjon(), WithVirksomhet {
             enum class Tilstand {
                 NY,
@@ -79,6 +81,11 @@ object BrukerAPI {
             }
         }
     }
+
+    @JsonTypeName("SakMetadata")
+    data class SakMetadata(
+        val tittel: String,
+    )
 
     enum class SakSortering {
         OPPDATERT,
@@ -267,11 +274,13 @@ object BrukerAPI {
             val context = env.notifikasjonContext<Context>()
             val tilganger = tilgangerService.hentTilganger(context)
 
-            val notifikasjoner = brukerRepository
-                .hentNotifikasjoner(
-                    context.fnr,
-                    tilganger
-                )
+            val notifikasjonerDb = brukerRepository.hentNotifikasjoner(context.fnr, tilganger)
+            val sakstitler = brukerRepository.hentSakerForNotifikasjoner(
+                notifikasjonerDb.mapNotNull { it.grupperingsid },
+                context.fnr,
+                tilganger
+            )
+            val notifikasjoner = notifikasjonerDb
                 .map { notifikasjon ->
                     when (notifikasjon) {
                         is BrukerModel.Beskjed ->
@@ -288,7 +297,8 @@ object BrukerAPI {
                                 brukerKlikk = BrukerKlikk(
                                     id = "${context.fnr}-${notifikasjon.id}",
                                     klikketPaa = notifikasjon.klikketPaa
-                                )
+                                ),
+                                sak = sakstitler[notifikasjon.grupperingsid]?.let { SakMetadata(tittel = it) },
                             )
                         is BrukerModel.Oppgave ->
                             Notifikasjon.Oppgave(
@@ -309,7 +319,8 @@ object BrukerAPI {
                                 brukerKlikk = BrukerKlikk(
                                     id = "${context.fnr}-${notifikasjon.id}",
                                     klikketPaa = notifikasjon.klikketPaa
-                                )
+                                ),
+                                sak = sakstitler[notifikasjon.grupperingsid]?.let { SakMetadata(tittel = it) },
                             )
                     }
                 }
@@ -317,7 +328,7 @@ object BrukerAPI {
             (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
 
             return@coDataFetcher NotifikasjonerResultat(
-                notifikasjoner,
+                notifikasjoner = notifikasjoner,
                 feilAltinn = tilganger.harFeil,
                 feilDigiSyfo = false,
             )

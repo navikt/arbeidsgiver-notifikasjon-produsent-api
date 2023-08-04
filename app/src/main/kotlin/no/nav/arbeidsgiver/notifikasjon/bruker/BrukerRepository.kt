@@ -75,6 +75,11 @@ interface BrukerRepository {
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
     suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
     suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String>
+    suspend fun hentSakerForNotifikasjoner(
+        grupperingsid: List<String>,
+        fnr: String,
+        tilganger: Tilganger
+    ): Map<String, String>
 }
 
 class BrukerRepositoryImpl(
@@ -407,12 +412,12 @@ class BrukerRepositoryImpl(
                 {
                     jsonb(tilgangerAltinnMottaker)
                     text(fnr)
-                    stringList(virksomhetsnummer)
+                    textArray(virksomhetsnummer)
                     text(fnr)
                     tekstsoekElementer.forEach { text(it) }
                     nullableEnumAsTextList(oppgaveTilstand)
-                    nullableStringList(sakstyper)
-                    nullableStringList(sakstyper)
+                    nullableTextArray(sakstyper)
+                    nullableTextArray(sakstyper)
                     nullableEnumAsTextList(oppgaveTilstand)
                     integer(limit)
                     integer(offset)
@@ -461,6 +466,63 @@ class BrukerRepositoryImpl(
             is EksterntVarselVellykket -> Unit
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
         }
+    }
+
+    override suspend fun hentSakerForNotifikasjoner(
+        grupperingsid: List<String>,
+        fnr: String,
+        tilganger: Tilganger
+    ): Map<String, String> = timer.coRecord {
+        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
+            AltinnMottaker(
+                serviceCode = it.servicecode,
+                serviceEdition = it.serviceedition,
+                virksomhetsnummer = it.virksomhet
+            )
+        }
+
+        val rows = database.nonTransactionalExecuteQuery(
+            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+            """
+                with 
+                    mine_altinntilganger as (
+                        select
+                            virksomhetsnummer as virksomhet,
+                            "serviceCode" as service_code,
+                            "serviceEdition" as service_edition from json_to_recordset(?::json) 
+                        as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                    ),
+                    mine_altinn_saker as (
+                        select er.sak_id
+                        from mottaker_altinn_enkeltrettighet er
+                        join mine_altinntilganger using (virksomhet, service_code, service_edition)
+                        where er.sak_id is not null
+                    ),
+                    mine_digisyfo_saker as (
+                        select sak_id
+                        from mottaker_digisyfo_for_fnr
+                        where fnr_leder = ? and sak_id is not null
+                    ),
+                    mine_sak_ider as (
+                        (select * from mine_digisyfo_saker)
+                        union 
+                        (select * from mine_altinn_saker)
+                    )
+                    
+                select s.*
+                    from mine_sak_ider as ms
+                    join sak as s on s.id = ms.sak_id
+                    where s.grupperingsid = any(?)
+                """,
+            {
+                jsonb(tilgangerAltinnMottaker)
+                text(fnr)
+                textArray(grupperingsid)
+            }
+        ) {
+            getString("grupperingsid") to getString("tittel")
+        }
+        return@coRecord rows.toMap()
     }
 
     private suspend fun oppdaterModellEtterDelete(aggregateId: UUID) {

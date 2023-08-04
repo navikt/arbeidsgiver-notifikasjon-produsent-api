@@ -85,7 +85,7 @@ class ProdusentRepositoryImpl(
                 offset ?
             """
         ) {
-            stringList(merkelapper)
+            textArray(merkelapper)
             grupperingsid?.let { text(grupperingsid) }
             integer(antall)
             integer(offset)
