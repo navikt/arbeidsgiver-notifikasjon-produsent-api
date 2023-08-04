@@ -42,7 +42,6 @@ class DataproduktModel(
             log.info("skipping harddeleted event {}", hendelse)
             return
         }
-        registrerHardDelete(hendelse)
         database.nonTransactionalExecuteUpdate("""
             insert into aggregat_hendelse(
                 hendelse_id,
@@ -364,23 +363,26 @@ class DataproduktModel(
             }
 
             is HardDelete -> {
-                database.nonTransactionalExecuteUpdate("""
-                    delete from notifikasjon
-                    where notifikasjon_id = ?
-                """) {
-                    uuid(hendelse.aggregateId)
-                }
-                database.nonTransactionalExecuteUpdate("""
-                    delete from sak 
-                    where sak_id = ?
-                """) {
-                    uuid(hendelse.aggregateId)
-                }
-                database.nonTransactionalExecuteUpdate("""
-                    delete from aggregat_hendelse
-                    where aggregat_id = ?
-                """) {
-                    uuid(hendelse.aggregateId)
+                database.transaction {
+                    executeUpdate("""
+                        delete from notifikasjon
+                        where notifikasjon_id = ?
+                    """) {
+                        uuid(hendelse.aggregateId)
+                    }
+                    executeUpdate("""
+                        delete from sak 
+                        where sak_id = ?
+                    """) {
+                        uuid(hendelse.aggregateId)
+                    }
+                    executeUpdate("""
+                        delete from aggregat_hendelse
+                        where aggregat_id = ?
+                    """) {
+                        uuid(hendelse.aggregateId)
+                    }
+                    registrerHardDelete(this, hendelse)
                 }
             }
 
