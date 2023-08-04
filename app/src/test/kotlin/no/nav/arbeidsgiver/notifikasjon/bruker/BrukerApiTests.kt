@@ -26,7 +26,7 @@ class BrukerApiTests : DescribeSpec({
             val beskjed = BrukerModel.Beskjed(
                 merkelapp = "foo",
                 tekst = "",
-                grupperingsid = "",
+                grupperingsid = null,
                 lenke = "",
                 eksternId = "",
                 virksomhetsnummer = "43",
@@ -56,6 +56,10 @@ class BrukerApiTests : DescribeSpec({
                 queryModel.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed, oppgave)
 
+            coEvery {
+                queryModel.hentSakerForNotifikasjoner(any(), any(), any())
+            } returns emptyMap()
+
             val response = engine.brukerApi(
                 """
                     {
@@ -78,6 +82,9 @@ class BrukerApiTests : DescribeSpec({
                                         virksomhetsnummer
                                         navn
                                     }
+                                    sak {
+                                        tittel
+                                    }
                                 }
                                 ...on Oppgave {
                                     brukerKlikk { 
@@ -95,6 +102,9 @@ class BrukerApiTests : DescribeSpec({
                                     virksomhet {
                                         virksomhetsnummer
                                         navn
+                                    }
+                                    sak {
+                                        tittel
                                     }
                                 }
                             }

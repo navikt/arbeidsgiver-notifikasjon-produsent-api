@@ -33,6 +33,9 @@ class FeilhåndteringTests : DescribeSpec({
             coEvery {
                 queryModel.hentNotifikasjoner(any(), any())
             } returns listOf()
+            coEvery {
+                queryModel.hentSakerForNotifikasjoner(any(), any(), any())
+            } returns emptyMap()
 
             val response = engine.brukerApi(
                 """
