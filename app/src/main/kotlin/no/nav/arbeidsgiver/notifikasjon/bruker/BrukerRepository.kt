@@ -449,7 +449,6 @@ class BrukerRepositoryImpl(
             log.info("skipping harddeleted event {}", hendelse)
             return
         }
-        registrerHardDelete(hendelse)
 
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         @Suppress("UNUSED_VARIABLE") val ignored: Unit = when (hendelse) {
@@ -461,7 +460,9 @@ class BrukerRepositoryImpl(
             is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
-            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
+            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId) { tx ->
+                registrerHardDelete(tx, hendelse)
+            }
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
@@ -525,7 +526,7 @@ class BrukerRepositoryImpl(
         return@coRecord rows.toMap()
     }
 
-    private suspend fun oppdaterModellEtterDelete(aggregateId: UUID) {
+    private suspend fun oppdaterModellEtterDelete(aggregateId: UUID, callback: (tx: Transaction) -> Unit = {}) {
         database.transaction({
             throw RuntimeException("Delete", it)
         }) {
@@ -540,6 +541,8 @@ class BrukerRepositoryImpl(
             executeUpdate(""" DELETE FROM sak WHERE id = ?;""") {
                 uuid(aggregateId)
             }
+
+            callback(this)
         }
     }
 
