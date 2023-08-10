@@ -452,7 +452,7 @@ class BrukerRepositoryImpl(
 
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         @Suppress("UNUSED_VARIABLE") val ignored: Unit = when (hendelse) {
-            is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
+            is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse, metadata)
             is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
@@ -632,7 +632,10 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: SakOpprettet) {
+    private suspend fun oppdaterModellEtterSakOpprettet(
+        sakOpprettet: SakOpprettet,
+        hendelseMetadata: HendelseMetadata,
+    ) {
         database.transaction {
             executeUpdate(
                 """
@@ -649,8 +652,8 @@ class BrukerRepositoryImpl(
                 text(sakOpprettet.lenke)
                 text(sakOpprettet.merkelapp)
                 text(sakOpprettet.grupperingsid)
-                instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
-                instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
+                instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
+                instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
             }
 
 
@@ -665,8 +668,8 @@ class BrukerRepositoryImpl(
                 where 
                     id = ?
             """) {
-                instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
-                instantAsText((sakOpprettet.oppgittTidspunkt ?: sakOpprettet.mottattTidspunkt).toInstant())
+                instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
+                instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
                 uuid(sakOpprettet.sakId)
             }
 
