@@ -58,6 +58,6 @@ suspend fun SkedulertHardDeleteRepository.insert(
                 beregnetSlettetid.toInstant().asOsloLocalDateTime().toString()
             ),
         ),
-        timestamp = Instant.EPOCH,
+        kafkaTimestamp = Instant.EPOCH,
     )
 }

@@ -8,7 +8,6 @@ import java.sql.ResultSet
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.util.*
 
 class SkedulertHardDeleteRepository(
@@ -66,7 +65,7 @@ class SkedulertHardDeleteRepository(
         )
     }
 
-    suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, timestamp: Instant) {
+    suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         @Suppress("UNUSED_VARIABLE") val ignored = when (hendelse) {
             is HendelseModel.BeskjedOpprettet -> {
@@ -92,7 +91,7 @@ class SkedulertHardDeleteRepository(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt(kafkaTimestamp),
                 )
             }
 
@@ -100,7 +99,7 @@ class SkedulertHardDeleteRepository(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = timestamp,
+                    opprettetTidspunkt = kafkaTimestamp,
                     eksisterende = hent(hendelse.aggregateId),
                 )
             }
@@ -109,7 +108,7 @@ class SkedulertHardDeleteRepository(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     hardDelete = hendelse.hardDelete,
-                    opprettetTidspunkt = timestamp,
+                    opprettetTidspunkt = kafkaTimestamp,
                     eksisterende = hent(hendelse.aggregateId),
                 )
             }

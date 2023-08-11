@@ -27,8 +27,8 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import java.lang.RuntimeException
 import java.security.MessageDigest
+import java.time.ZoneOffset.UTC
 import java.util.*
 
 /* potensielle målinger:
@@ -477,7 +477,7 @@ class StatistikkModel(
                     uuid(hendelse.sakId)
                     text(hendelse.merkelapp)
                     text(hendelse.mottakere.oppsummering())
-                    timestamp_with_timezone(hendelse.oppgittTidspunkt ?: hendelse.mottattTidspunkt)
+                    timestamp_with_timezone(hendelse.opprettetTidspunkt(metadata.timestamp.atOffset(UTC)))
                 }
             }
             is NyStatusSak -> {

@@ -34,7 +34,7 @@ object BrukerWriter {
     private val rebuildQueryModel by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "bruker-model-builder-2-rebuild-august-2023-2",
+            groupId = "bruker-model-builder-2-rebuild-august-2023-3",
             replayPeriodically = false,
         )
     }
@@ -58,7 +58,7 @@ object BrukerWriter {
             launch {
                 val brukerRepository = brukerRepositoryAsync.await()
                 rebuildQueryModel.forEach { event, metadata ->
-                    if (event is HendelseModel.SakOpprettet) {
+                    if (event is HendelseModel.SakOpprettet || event is HendelseModel.NyStatusSak) {
                         brukerRepository.oppdaterModellEtterHendelse(event, metadata)
                     }
                 }

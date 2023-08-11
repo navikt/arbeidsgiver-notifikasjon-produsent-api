@@ -403,7 +403,7 @@ class DataproduktModel(
                     text(hendelse.tittel)
                     text(hendelse.lenke)
                     nullableInstantAsText(hendelse.oppgittTidspunkt?.toInstant())
-                    instantAsText(hendelse.mottattTidspunkt.toInstant())
+                    instantAsText(hendelse.mottattTidspunkt?.toInstant() ?: metadata.timestamp)
                     nullableInstantAsText(null)
                 }
 
