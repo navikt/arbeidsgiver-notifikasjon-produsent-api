@@ -371,12 +371,12 @@ class BrukerRepositoryImpl(
                             join sak_status_json as js on js.sak_id = id
                             order by ${
                                 when (sortering) {
-                                    BrukerAPI.SakSortering.OPPDATERT -> "js.sist_endret desc"
+                                    BrukerAPI.SakSortering.OPPDATERT -> "sak.sist_endret_tidspunkt desc"
                                     BrukerAPI.SakSortering.OPPRETTET -> """
-                                       js.statuser#>>'{-1,tidspunkt}' desc 
+                                       sak.opprettet_tidspunkt desc 
                                     """
                                     BrukerAPI.SakSortering.FRIST -> """
-                                        sak.tidligste_frist nulls last, sak.nye_oppgaver desc, js.sist_endret desc
+                                        sak.tidligste_frist nulls last, sak.nye_oppgaver desc, sak.sist_endret_tidspunkt desc
                                     """
                                 }
                             }
