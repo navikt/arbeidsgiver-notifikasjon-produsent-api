@@ -361,6 +361,8 @@ object BrukerAPI {
                 limit = env.getArgumentOrDefault("limit", 3) ?: 3,
                 oppgaveTilstand = env.getTypedArgumentOrNull("oppgaveTilstand"),
             )
+            val berikelser = brukerRepository.berikSaker(sakerResultat.saker)
+                .associateBy { it.sakId }
             val saker = sakerResultat.saker.map {
                 Sak(
                     id = it.sakId,
@@ -370,14 +372,14 @@ object BrukerAPI {
                     virksomhet = Virksomhet(
                         virksomhetsnummer = it.virksomhetsnummer,
                     ),
-                    sisteStatus = it.statuser.map { sakStatus ->
+                    sisteStatus = berikelser[it.sakId]!!.sisteStatus.let { sakStatus ->
                         val type = SakStatusType.fraModel(sakStatus.status)
                         SakStatus(
                             type = type,
                             tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
                             tidspunkt = sakStatus.tidspunkt
                         )
-                    }.first(),
+                    },
                     frister = it.oppgaver.filter { o -> o.tilstand == BrukerModel.Oppgave.Tilstand.NY } .map { o -> o.frist },
                     oppgaver = it.oppgaver.map { o -> OppgaveMetadata(
                         tilstand = o.tilstand.tilBrukerAPI(),

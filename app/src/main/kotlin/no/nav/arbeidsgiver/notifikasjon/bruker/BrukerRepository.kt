@@ -26,6 +26,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getUuid
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ifNotBlank
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -70,6 +71,12 @@ interface BrukerRepository {
         sortering: BrukerAPI.SakSortering,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): HentSakerResultat
+
+    /** Denne funksjonaliteten var tidligere en del av [hentSaker], men vi greide ikke
+     * å overbevise postgres til å ikke gjøre en full merge-join med [sak_status]-tabellen,
+     * og dette virker som en akse
+     */
+    suspend fun berikSaker(saker: List<BrukerModel.Sak>): List<BrukerModel.Sakberikelse>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
@@ -155,7 +162,7 @@ class BrukerRepositoryImpl(
                     eksternId = getString("ekstern_id"),
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
-                    id = getObject("id", UUID::class.java),
+                    id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa")
                 )
                 "OPPGAVE" -> BrukerModel.Oppgave(
@@ -171,7 +178,7 @@ class BrukerRepositoryImpl(
                     utfoertTidspunkt = getObject("utfoert_tidspunkt", OffsetDateTime::class.java),
                     paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java),
                     frist = getObject("frist", LocalDate::class.java),
-                    id = getObject("id", UUID::class.java),
+                    id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa")
                 )
                 else ->
@@ -365,7 +372,6 @@ class BrukerRepositoryImpl(
                                 sak.tittel,
                                 sak.lenke,
                                 sak.merkelapp,
-                                js.statuser,
                                 sak.oppgaver
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
                             join sak_status_json as js on js.sak_id = id
@@ -402,7 +408,6 @@ class BrukerRepositoryImpl(
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'merkelapp', merkelapp,
-                                'statuser', statuser,
                                 'oppgaver', oppgaver
                             )), '[]'::jsonb) 
                             from mine_saker_paginert
@@ -431,6 +436,42 @@ class BrukerRepositoryImpl(
                 )
             }
             return@coRecord rows.first()
+        }
+    }
+
+    override suspend fun berikSaker(saker: List<BrukerModel.Sak>): List<BrukerModel.Sakberikelse> {
+        /* Antagelse: bruker har tilgang til oppgitte saker.
+         * Vi beriker med saks-statuser, som har samme tilganger som sakene.
+         * Hvis man i fremtiden beriker med data fra oppgaver, må man se på tilgangsstyring for det.
+         */
+        return database.nonTransactionalExecuteQuery("""
+            with sak_status_med_rank as (
+              select
+                    sak_id,
+                    status,
+                    overstyrt_statustekst,
+                    tidspunkt,
+                    rank() over (partition by sak_id order by tidspunkt desc) dest_rank
+                from sak_status
+                where sak_id = any(?)
+            )
+            select 
+                sak_id, 
+                json_build_object(
+                    'status', status,
+                    'overstyrtStatustekst', overstyrt_statustekst,
+                    'tidspunkt', tidspunkt
+                ) as siste_status
+            from sak_status_med_rank where dest_rank = 1
+        """,
+            {
+                uuidArray(saker.map { it.sakId })
+            }
+        ) {
+            BrukerModel.Sakberikelse(
+                sakId = getUuid("sak_id"),
+                sisteStatus = laxObjectMapper.readValue(getString("siste_status"))
+            )
         }
     }
 
