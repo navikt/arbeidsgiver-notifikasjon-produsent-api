@@ -327,4 +327,16 @@ class ParameterSetters(
             textArray(value)
         }
     }
+
+    fun uuidArray(value: Collection<UUID>) {
+        val array = preparedStatement.connection.createArrayOf(
+            "uuid",
+            value.toTypedArray()
+        )
+        preparedStatement.setArray(index++, array)
+    }
 }
+
+
+fun ResultSet.getUuid(column: String): UUID =
+    getObject(column, UUID::class.java)

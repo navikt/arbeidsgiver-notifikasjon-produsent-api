@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZoneOffset.UTC
 import java.util.*
 
 object BrukerAPI {
@@ -361,6 +362,8 @@ object BrukerAPI {
                 limit = env.getArgumentOrDefault("limit", 3) ?: 3,
                 oppgaveTilstand = env.getTypedArgumentOrNull("oppgaveTilstand"),
             )
+            val berikelser = brukerRepository.berikSaker(sakerResultat.saker)
+                .associateBy { it.sakId }
             val saker = sakerResultat.saker.map {
                 Sak(
                     id = it.sakId,
@@ -370,14 +373,22 @@ object BrukerAPI {
                     virksomhet = Virksomhet(
                         virksomhetsnummer = it.virksomhetsnummer,
                     ),
-                    sisteStatus = it.statuser.map { sakStatus ->
-                        val type = SakStatusType.fraModel(sakStatus.status)
-                        SakStatus(
-                            type = type,
-                            tekst = sakStatus.overstyrtStatustekst ?: type.visningsTekst,
-                            tidspunkt = sakStatus.tidspunkt
+                    sisteStatus = when (val sisteStatus = berikelser[it.sakId]?.sisteStatus) {
+                        null -> SakStatus(
+                            type = BrukerAPI.SakStatusType.MOTTATT,
+                            tekst = BrukerAPI.SakStatusType.MOTTATT.visningsTekst,
+                            tidspunkt = it.opprettetTidspunkt.atOffset(UTC),
                         )
-                    }.first(),
+                        else ->  {
+                            val type = SakStatusType.fraModel(sisteStatus.status)
+                            SakStatus(
+                                type = type,
+                                tekst = sisteStatus.overstyrtStatustekst ?: type.visningsTekst,
+                                tidspunkt = sisteStatus.tidspunkt
+                            )
+                        }
+
+                    },
                     frister = it.oppgaver.filter { o -> o.tilstand == BrukerModel.Oppgave.Tilstand.NY } .map { o -> o.frist },
                     oppgaver = it.oppgaver.map { o -> OppgaveMetadata(
                         tilstand = o.tilstand.tilBrukerAPI(),

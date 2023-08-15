@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
@@ -74,12 +75,16 @@ object BrukerModel {
         val tittel: String,
         val lenke: String,
         val merkelapp: String,
-        val statuser: List<SakStatus>,
         val oppgaver: List<OppgaveMetadata>,
+        val opprettetTidspunkt: Instant,
+    )
+
+    data class Sakberikelse(
+        val sakId: UUID,
+        val sisteStatus: SakStatus,
     )
 
     data class SakStatus(
-        val sakStatusId: UUID,
         val status: HendelseModel.SakStatus,
         val overstyrtStatustekst: String?,
         val tidspunkt: OffsetDateTime

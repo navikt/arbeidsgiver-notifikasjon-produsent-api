@@ -28,6 +28,8 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class QuerySakerTests : DescribeSpec({
+    val fallbackTimeNotUsed = OffsetDateTime.parse("2020-01-01T01:01:01Z")
+
     val database = testDatabase(Bruker.databaseConfig)
     val brukerRepository = BrukerRepositoryImpl(database)
 
@@ -77,8 +79,14 @@ class QuerySakerTests : DescribeSpec({
             val response = engine.hentSaker()
 
             it("response inneholder riktig data") {
-                val saker = response.getTypedContent<List<Any>>("saker/saker")
-                saker should beEmpty()
+                val sak = response.getTypedContent<BrukerAPI.Sak>("saker/saker/0")
+                sak.id shouldBe sakOpprettet.sakId
+                sak.merkelapp shouldBe "tag"
+                sak.lenke shouldBe sakOpprettet.lenke
+                sak.tittel shouldBe sakOpprettet.tittel
+                sak.virksomhet.virksomhetsnummer shouldBe sakOpprettet.virksomhetsnummer
+                sak.sisteStatus.tekst shouldBe "Mottatt"
+                sak.sisteStatus.tidspunkt shouldBe sakOpprettet.opprettetTidspunkt(fallbackTimeNotUsed)
             }
         }
 
