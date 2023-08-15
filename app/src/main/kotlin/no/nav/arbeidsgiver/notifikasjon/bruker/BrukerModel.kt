@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
@@ -75,6 +76,7 @@ object BrukerModel {
         val lenke: String,
         val merkelapp: String,
         val oppgaver: List<OppgaveMetadata>,
+        val opprettetTidspunkt: Instant,
     )
 
     data class Sakberikelse(

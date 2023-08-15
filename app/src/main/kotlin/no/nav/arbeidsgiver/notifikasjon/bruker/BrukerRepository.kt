@@ -372,9 +372,9 @@ class BrukerRepositoryImpl(
                                 sak.tittel,
                                 sak.lenke,
                                 sak.merkelapp,
-                                sak.oppgaver
+                                sak.oppgaver,
+                                sak.opprettet_tidspunkt
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
-                            join sak_status_json as js on js.sak_id = id
                             order by ${
                                 when (sortering) {
                                     BrukerAPI.SakSortering.OPPDATERT -> "sak.sist_endret_tidspunkt desc"
@@ -408,7 +408,8 @@ class BrukerRepositoryImpl(
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'merkelapp', merkelapp,
-                                'oppgaver', oppgaver
+                                'oppgaver', oppgaver,
+                                'opprettetTidspunkt', opprettet_tidspunkt
                             )), '[]'::jsonb) 
                             from mine_saker_paginert
                         ) as saker
