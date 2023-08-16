@@ -98,6 +98,7 @@ type OppgaveTidslinjeElement {
 
 type BeskjedTidslinjeElement {
     tittel: String!
+    tidspunkt: ISO8601DateTime!
 }
 
 enum SakStatusType {

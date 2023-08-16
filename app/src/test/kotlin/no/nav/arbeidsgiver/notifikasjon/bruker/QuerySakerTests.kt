@@ -476,6 +476,20 @@ private fun TestApplicationEngine.hentSaker(
                     tilstand
                     paaminnelseTidspunkt
                 }
+                tidslinje {
+                    ...on OppgaveTidslinjeElement {
+                        tittel
+                        status
+                        paaminnelseTidspunkt
+                        utgaattTidspunkt
+                        utfoertTidspunkt
+                        frist
+                    }
+                    ...on BeskjedTidslinjeElement {
+                        tittel
+                        tidspunkt
+                    }
+                }
             }
             sakstyper {
                 navn
