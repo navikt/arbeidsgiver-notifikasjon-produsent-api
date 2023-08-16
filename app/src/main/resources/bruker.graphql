@@ -73,6 +73,8 @@ type Sak {
     """
     frister: [ISO8601Date]!
     oppgaver: [OppgaveMetadata!]!
+
+    tidslinje: [TidslinjeElement!]!
 }
 
 type SakStatus {
@@ -81,11 +83,27 @@ type SakStatus {
     tidspunkt: ISO8601DateTime!
 }
 
+union TidslinjeElement =
+    | OppgaveTidslinjeElement
+    | BeskjedTidslinjeElement
+
+type OppgaveTidslinjeElement {
+    tittel: String!
+    status: OppgaveTilstand!
+    paaminnelseTidspunkt: ISO8601DateTime
+    utgaattTidspunkt: ISO8601DateTime
+    utfoertTidspunkt: ISO8601DateTime
+    frist: ISO8601Date
+}
+
+type BeskjedTidslinjeElement {
+    tittel: String!
+}
+
 enum SakStatusType {
     MOTTATT
     UNDER_BEHANDLING
     FERDIG
-
 }
 
 type SakMetadata {
