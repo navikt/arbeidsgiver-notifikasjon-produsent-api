@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.util.*
@@ -126,6 +127,7 @@ object BrukerAPI {
         val sisteStatus: SakStatus,
         val frister: List<LocalDate?>,
         val oppgaver: List<OppgaveMetadata>,
+        val tidslinje: List<TidslinjeElement>,
     ) : WithVirksomhet
 
     @JsonTypeName("Sakstype")
@@ -159,6 +161,24 @@ object BrukerAPI {
             }
         }
     }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed class TidslinjeElement
+
+    @JsonTypeName("OppgaveTidslinjeElement")
+    data class OppgaveTidslinjeElement(
+        val tittel: String,
+        val status: Notifikasjon.Oppgave.Tilstand,
+        val paaminnelseTidspunkt: OffsetDateTime?,
+        val utgaattTidspunkt: OffsetDateTime?,
+        val utfoertTidspunkt: OffsetDateTime?,
+        val frist: LocalDate?,
+    ) : TidslinjeElement()
+
+    @JsonTypeName("BeskjedTidslinjeElement")
+    data class BeskjedTidslinjeElement(
+        val tittel: String,
+    ) : TidslinjeElement()
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class NotifikasjonKlikketPaaResultat
@@ -198,6 +218,7 @@ object BrukerAPI {
 
             resolveSubtypes<Notifikasjon>()
             resolveSubtypes<NotifikasjonKlikketPaaResultat>()
+            resolveSubtypes<TidslinjeElement>()
 
             wire("Query") {
                 dataFetcher("whoami") {
@@ -394,7 +415,8 @@ object BrukerAPI {
                         tilstand = o.tilstand.tilBrukerAPI(),
                         frist = o.frist,
                         paaminnelseTidspunkt = o.paaminnelseTidspunkt
-                    )}
+                    )},
+                    tidslinje = emptyList(), // TODO: implementer tidslinje
                 )
             }
             sakerHentetCount.increment(saker.size.toDouble())
