@@ -131,15 +131,15 @@ fun TestApplicationEngine.querySakerJson(
                 }
                 tidslinje {
                     ...on OppgaveTidslinjeElement {
-                        tittel
-                        status
+                        tekst
+                        tilstand
                         paaminnelseTidspunkt
                         utgaattTidspunkt
                         utfoertTidspunkt
                         frist
                     }
                     ...on BeskjedTidslinjeElement {
-                        tittel
+                        tekst
                         opprettetTidspunkt
                     }
                 }

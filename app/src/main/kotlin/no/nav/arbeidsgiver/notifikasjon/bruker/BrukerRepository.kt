@@ -76,7 +76,11 @@ interface BrukerRepository {
      * å overbevise postgres til å ikke gjøre en full merge-join med [sak_status]-tabellen,
      * og dette virker som en akse
      */
-    suspend fun berikSaker(saker: List<BrukerModel.Sak>): List<BrukerModel.Sakberikelse>
+    suspend fun berikSaker(
+        saker: List<BrukerModel.Sak>,
+        fnr: String,
+        tilganger: Tilganger,
+    ): Map<UUID, BrukerModel.Sakberikelse>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
@@ -373,7 +377,8 @@ class BrukerRepositoryImpl(
                                 sak.lenke,
                                 sak.merkelapp,
                                 sak.oppgaver,
-                                sak.opprettet_tidspunkt
+                                sak.opprettet_tidspunkt,
+                                sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
                             order by ${
                                 when (sortering) {
@@ -409,7 +414,8 @@ class BrukerRepositoryImpl(
                                 'lenke', lenke,
                                 'merkelapp', merkelapp,
                                 'oppgaver', oppgaver,
-                                'opprettetTidspunkt', opprettet_tidspunkt
+                                'opprettetTidspunkt', opprettet_tidspunkt,
+                                'grupperingsid', grupperingsid
                             )), '[]'::jsonb) 
                             from mine_saker_paginert
                         ) as saker
@@ -440,12 +446,83 @@ class BrukerRepositoryImpl(
         }
     }
 
-    override suspend fun berikSaker(saker: List<BrukerModel.Sak>): List<BrukerModel.Sakberikelse> {
-        /* Antagelse: bruker har tilgang til oppgitte saker.
-         * Vi beriker med saks-statuser, som har samme tilganger som sakene.
-         * Hvis man i fremtiden beriker med data fra oppgaver, må man se på tilgangsstyring for det.
-         */
-        return database.nonTransactionalExecuteQuery("""
+    override suspend fun berikSaker(
+        saker: List<BrukerModel.Sak>,
+        fnr: String,
+        tilganger: Tilganger,
+    ): Map<UUID, BrukerModel.Sakberikelse> {
+        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
+            AltinnMottaker(
+                serviceCode = it.servicecode,
+                serviceEdition = it.serviceedition,
+                virksomhetsnummer = it.virksomhet
+            )
+        }
+        val tidslinjer = database.nonTransactionalExecuteQuery(
+            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+            """
+            with 
+                mine_altinntilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                ),
+                mine_altinn_notifikasjoner as (
+                    select er.notifikasjon_id
+                    from mottaker_altinn_enkeltrettighet er
+                    join mine_altinntilganger at on 
+                        er.virksomhet = at.virksomhetsnummer and
+                        er.service_code = at."serviceCode" and
+                        er.service_edition = at."serviceEdition"
+                    where
+                        er.notifikasjon_id is not null
+                ),
+                mine_digisyfo_notifikasjoner as (
+                    select notifikasjon_id 
+                    from mottaker_digisyfo_for_fnr
+                    where fnr_leder = ? and notifikasjon_id is not null
+                )
+            select * 
+            from notifikasjon
+            where
+                grupperingsid = any(?)
+                and id in (
+                    (select * from mine_digisyfo_notifikasjoner)
+                    union 
+                    (select * from mine_altinn_notifikasjoner)
+                )
+            """,
+            {
+                jsonb(tilgangerAltinnMottaker)
+                text(fnr)
+                textArray(saker.mapNotNull { it.grupperingsid})
+            }
+        ) {
+            when (val type = getString("type")) {
+                "BESKJED" -> BrukerModel.TidslinjeElement.Beskjed(
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant(),
+                )
+
+                "OPPGAVE" -> BrukerModel.TidslinjeElement.Oppgave(
+                    tilstand = BrukerModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant(),
+                    utgaattTidspunkt = getObject("utgaatt_tidspunkt", OffsetDateTime::class.java)?.toInstant(),
+                    utfoertTidspunkt = getObject("utfoert_tidspunkt", OffsetDateTime::class.java)?.toInstant(),
+                    paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java)?.toInstant(),
+                    frist = getObject("frist", LocalDate::class.java),
+                )
+
+                else ->
+                    throw Exception("Ukjent notifikasjonstype '$type'")
+            }
+        }
+            .groupBy { it.grupperingsid }
+            .mapValues { it.value.sortedByDescending { it.opprettetTidspunkt } }
+
+        val sisteStatuser = database.nonTransactionalExecuteQuery("""
             with sak_status_med_rank as (
               select
                     sak_id,
@@ -469,9 +546,17 @@ class BrukerRepositoryImpl(
                 uuidArray(saker.map { it.sakId })
             }
         ) {
+            getUuid("sak_id") to laxObjectMapper.readValue<BrukerModel.SakStatus>(getString("siste_status"))
+        }
+            .toMap()
+
+        return saker.associateBy({ it.sakId }) {
             BrukerModel.Sakberikelse(
-                sakId = getUuid("sak_id"),
-                sisteStatus = laxObjectMapper.readValue(getString("siste_status"))
+                sisteStatus = sisteStatuser[it.sakId],
+                tidslinje = when (it.grupperingsid) {
+                    null -> listOf()
+                    else -> tidslinjer[it.grupperingsid].orEmpty()
+                }
             )
         }
     }

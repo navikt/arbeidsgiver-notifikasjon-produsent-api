@@ -88,9 +88,9 @@ union TidslinjeElement =
     | BeskjedTidslinjeElement
 
 type OppgaveTidslinjeElement {
-    tittel: String!
+    tekst: String!
     opprettetTidspunkt: ISO8601DateTime!
-    status: OppgaveTilstand!
+    tilstand: OppgaveTilstand!
     paaminnelseTidspunkt: ISO8601DateTime
     utgaattTidspunkt: ISO8601DateTime
     utfoertTidspunkt: ISO8601DateTime
@@ -98,7 +98,7 @@ type OppgaveTidslinjeElement {
 }
 
 type BeskjedTidslinjeElement {
-    tittel: String!
+    tekst: String!
     opprettetTidspunkt: ISO8601DateTime!
 }
 
