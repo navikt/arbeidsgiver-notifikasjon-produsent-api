@@ -89,6 +89,7 @@ union TidslinjeElement =
 
 type OppgaveTidslinjeElement {
     tittel: String!
+    opprettetTidspunkt: ISO8601DateTime!
     status: OppgaveTilstand!
     paaminnelseTidspunkt: ISO8601DateTime
     utgaattTidspunkt: ISO8601DateTime
@@ -98,7 +99,7 @@ type OppgaveTidslinjeElement {
 
 type BeskjedTidslinjeElement {
     tittel: String!
-    tidspunkt: ISO8601DateTime!
+    opprettetTidspunkt: ISO8601DateTime!
 }
 
 enum SakStatusType {

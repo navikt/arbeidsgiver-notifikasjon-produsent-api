@@ -487,7 +487,7 @@ private fun TestApplicationEngine.hentSaker(
                     }
                     ...on BeskjedTidslinjeElement {
                         tittel
-                        tidspunkt
+                        opprettetTidspunkt
                     }
                 }
             }
