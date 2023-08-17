@@ -168,6 +168,7 @@ object BrukerAPI {
     @JsonTypeName("OppgaveTidslinjeElement")
     data class OppgaveTidslinjeElement(
         val tittel: String,
+        val opprettetTidspunkt: OffsetDateTime,
         val status: Notifikasjon.Oppgave.Tilstand,
         val paaminnelseTidspunkt: OffsetDateTime?,
         val utgaattTidspunkt: OffsetDateTime?,
@@ -178,6 +179,7 @@ object BrukerAPI {
     @JsonTypeName("BeskjedTidslinjeElement")
     data class BeskjedTidslinjeElement(
         val tittel: String,
+        val opprettetTidspunkt: OffsetDateTime,
     ) : TidslinjeElement()
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
