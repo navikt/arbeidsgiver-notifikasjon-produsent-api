@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.OPPRETTET
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.FERDIG
@@ -37,38 +36,14 @@ class QuerySakerTests : DescribeSpec({
     )
 
     describe("Query.saker") {
-        val sakOpprettet = SakOpprettet(
-            hendelseId = uuid("0"),
-            virksomhetsnummer = "42",
-            produsentId = "test",
-            kildeAppNavn = "test",
-            sakId = uuid("0"),
-            grupperingsid = "42",
-            merkelapp = "tag",
-            mottakere = listOf(AltinnMottaker("5441", "1", "42")),
-            tittel = "er det no sak",
-            lenke = "#foo",
-            oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
-            mottattTidspunkt = OffsetDateTime.now(),
-            hardDelete = null,
-        )
-        val statusSak = NyStatusSak(
-            hendelseId = uuid("1"),
-            virksomhetsnummer = sakOpprettet.virksomhetsnummer,
-            produsentId = sakOpprettet.produsentId,
-            kildeAppNavn = sakOpprettet.kildeAppNavn,
-            sakId = sakOpprettet.sakId,
-            status = SakStatus.MOTTATT,
-            overstyrStatustekstMed = "noe",
-            oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
-            mottattTidspunkt = OffsetDateTime.now(),
-            idempotensKey = IdempotenceKey.initial(),
-            hardDelete = null,
-            nyLenkeTilSak = null,
-        )
-
         context("med sak opprettet men ingen status") {
-            brukerRepository.oppdaterModellEtterHendelse(sakOpprettet)
+            val sakOpprettet = brukerRepository.sakOpprettet(
+                virksomhetsnummer = "42",
+                merkelapp = "tag",
+                mottakere = listOf(AltinnMottaker("5441", "1", "42")),
+                oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+                mottattTidspunkt = OffsetDateTime.now(),
+            )
 
             val response = engine.hentSaker()
 
@@ -85,8 +60,22 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("med sak og status") {
-            brukerRepository.oppdaterModellEtterHendelse(sakOpprettet)
-            brukerRepository.oppdaterModellEtterHendelse(statusSak)
+            val sakOpprettet = brukerRepository.sakOpprettet(
+                virksomhetsnummer = "42",
+                grupperingsid = "42",
+                merkelapp = "tag",
+                mottakere = listOf(AltinnMottaker("5441", "1", "42")),
+                oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+                mottattTidspunkt = OffsetDateTime.now(),
+            )
+            brukerRepository.nyStatusSak(
+                sak = sakOpprettet,
+                status = SakStatus.MOTTATT,
+                overstyrStatustekstMed = "noe",
+                oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+                mottattTidspunkt = OffsetDateTime.now(),
+                idempotensKey = IdempotenceKey.initial(),
+            )
 
             val response = engine.hentSaker()
 
@@ -317,37 +306,21 @@ private suspend fun BrukerRepository.opprettSakForTekstsøk(
     status: SakStatus = SakStatus.MOTTATT,
     overstyrStatustekst: String? = null,
 ): SakOpprettet {
-    val sakOpprettet = SakOpprettet(
-        hendelseId = UUID.randomUUID(),
+    val sakOpprettet = sakOpprettet(
         virksomhetsnummer = "42",
-        produsentId = "test",
-        kildeAppNavn = "test",
-        sakId = UUID.randomUUID(),
-        grupperingsid = UUID.randomUUID().toString(),
         merkelapp = "tag",
         mottakere = listOf(AltinnMottaker("5441", "1", "42")),
         tittel = tittel,
-        lenke = "#foo",
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
-        hardDelete = null,
     )
-    oppdaterModellEtterHendelse(sakOpprettet)
-    oppdaterModellEtterHendelse(
-        NyStatusSak(
-            hendelseId = UUID.randomUUID(),
-            virksomhetsnummer = sakOpprettet.virksomhetsnummer,
-            produsentId = sakOpprettet.produsentId,
-            kildeAppNavn = sakOpprettet.kildeAppNavn,
-            sakId = sakOpprettet.sakId,
-            status = status,
-            overstyrStatustekstMed = overstyrStatustekst,
-            oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
-            mottattTidspunkt = OffsetDateTime.now(),
-            idempotensKey = IdempotenceKey.initial(),
-            hardDelete = null,
-            nyLenkeTilSak = null,
-        )
+    nyStatusSak(
+        sak = sakOpprettet,
+        status = status,
+        overstyrStatustekstMed = overstyrStatustekst,
+        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        mottattTidspunkt = OffsetDateTime.now(),
+        idempotensKey = IdempotenceKey.initial(),
     )
     return sakOpprettet
 }
@@ -359,40 +332,23 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
 ) {
     val shift = listOf(opprettetShift) + restShift
     val mottattTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
-    val sak = SakOpprettet(
-        hendelseId = sakId,
+    val sak = sakOpprettet(
         sakId = sakId,
         grupperingsid = sakId.toString(),
         virksomhetsnummer = "42",
-        produsentId = "test",
-        kildeAppNavn = "test",
         merkelapp = "tag",
         mottakere = listOf(AltinnMottaker("5441", "1", "42")),
-        tittel = "er det no sak",
-        lenke = "#foo",
-        oppgittTidspunkt = null,
         mottattTidspunkt = mottattTidspunkt.plus(opprettetShift),
-        hardDelete = null,
-    ).also {
-        oppdaterModellEtterHendelse(it)
-    }
+    )
+
     shift.forEach {
-        NyStatusSak(
-            hendelseId = UUID.randomUUID(),
-            virksomhetsnummer = sak.virksomhetsnummer,
-            produsentId = sak.produsentId,
-            kildeAppNavn = sak.kildeAppNavn,
-            sakId = sak.sakId,
+        nyStatusSak(
+            sak = sak,
             status = SakStatus.MOTTATT,
             overstyrStatustekstMed = "noe",
-            oppgittTidspunkt = null,
             mottattTidspunkt = mottattTidspunkt.plus(it),
             idempotensKey = IdempotenceKey.initial(),
-            hardDelete = null,
-            nyLenkeTilSak = null,
-        ).also { hendelse ->
-            oppdaterModellEtterHendelse(hendelse)
-        }
+        )
     }
 }
 
@@ -402,39 +358,21 @@ private suspend fun BrukerRepository.opprettSak(
     merkelapp : String = "tag"
 ): SakOpprettet {
     val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
-    val sak = SakOpprettet(
-        hendelseId = sakId,
+    val sak = sakOpprettet(
         sakId = sakId,
-        grupperingsid = sakId.toString(),
         virksomhetsnummer = virksomhetsnummer,
-        produsentId = "test",
-        kildeAppNavn = "test",
         merkelapp = merkelapp,
         mottakere = listOf(AltinnMottaker("5441", "1", virksomhetsnummer)),
-        tittel = "er det no sak",
-        lenke = "#foo",
         oppgittTidspunkt = oppgittTidspunkt,
         mottattTidspunkt = OffsetDateTime.now(),
-        hardDelete = null,
-    ).also {
-        oppdaterModellEtterHendelse(it)
-    }
-    NyStatusSak(
-        hendelseId = UUID.randomUUID(),
-        virksomhetsnummer = sak.virksomhetsnummer,
-        produsentId = sak.produsentId,
-        kildeAppNavn = sak.kildeAppNavn,
-        sakId = sak.sakId,
+    )
+    nyStatusSak(
+        sak,
         status = SakStatus.MOTTATT,
         overstyrStatustekstMed = "noe",
         mottattTidspunkt = oppgittTidspunkt,
         idempotensKey = IdempotenceKey.initial(),
-        oppgittTidspunkt = null,
-        hardDelete = null,
-        nyLenkeTilSak = null,
-    ).also { hendelse ->
-        oppdaterModellEtterHendelse(hendelse)
-    }
+    )
     return sak
 }
 

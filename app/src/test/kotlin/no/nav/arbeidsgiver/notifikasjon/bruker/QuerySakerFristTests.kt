@@ -252,8 +252,7 @@ private suspend fun BrukerRepository.opprettSak(
     mottakerSak: List<HendelseModel.Mottaker>,
 ): SakOpprettet {
     val sakId = UUID.randomUUID()
-    val sakOpprettet = SakOpprettet(
-        hendelseId = sakId,
+    val sakOpprettet = sakOpprettet(
         virksomhetsnummer = "42",
         produsentId = "test",
         kildeAppNavn = "test",
@@ -266,13 +265,13 @@ private suspend fun BrukerRepository.opprettSak(
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
         hardDelete = null,
-    ).also { oppdaterModellEtterHendelse(it) }
-    NyStatusSak(
+    )
+    nyStatusSak(
+        sak = sakOpprettet,
         hendelseId = UUID.randomUUID(),
         virksomhetsnummer = sakOpprettet.virksomhetsnummer,
         produsentId = sakOpprettet.produsentId,
         kildeAppNavn = sakOpprettet.kildeAppNavn,
-        sakId = sakOpprettet.sakId,
         status = MOTTATT,
         overstyrStatustekstMed = null,
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
@@ -280,12 +279,11 @@ private suspend fun BrukerRepository.opprettSak(
         idempotensKey = IdempotenceKey.initial(),
         hardDelete = null,
         nyLenkeTilSak = null,
-    ).also { oppdaterModellEtterHendelse(it) }
+    )
 
     for ((tilstand, frist, mottakere) in tilstander) {
         val oppgaveId = UUID.randomUUID()
-        HendelseModel.OppgaveOpprettet(
-            hendelseId = oppgaveId,
+        val oppgave = oppgaveOpprettet(
             notifikasjonId = oppgaveId,
             virksomhetsnummer = "1",
             produsentId = "1",
@@ -301,32 +299,24 @@ private suspend fun BrukerRepository.opprettSak(
             hardDelete = null,
             frist = frist,
             påminnelse = null,
-        ).also { oppdaterModellEtterHendelse(it) }
+        )
 
         when (tilstand) {
-            BrukerModel.Oppgave.Tilstand.NY -> null
-            BrukerModel.Oppgave.Tilstand.UTFOERT -> HendelseModel.OppgaveUtført(
-                hendelseId = UUID.randomUUID(),
-                notifikasjonId = oppgaveId,
-                virksomhetsnummer = "1",
-                produsentId = "1",
-                kildeAppNavn = "1",
+            BrukerModel.Oppgave.Tilstand.NY -> {}
+            BrukerModel.Oppgave.Tilstand.UTFOERT -> oppgaveUtført(
+                oppgave,
                 hardDelete = null,
                 nyLenke = null,
                 utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
             )
 
-            BrukerModel.Oppgave.Tilstand.UTGAATT -> HendelseModel.OppgaveUtgått(
-                hendelseId = UUID.randomUUID(),
-                notifikasjonId = oppgaveId,
-                virksomhetsnummer = "1",
-                produsentId = "1",
-                kildeAppNavn = "1",
+            BrukerModel.Oppgave.Tilstand.UTGAATT -> oppgaveUtgått(
+                oppgave,
                 hardDelete = null,
                 utgaattTidspunkt = OffsetDateTime.now(),
                 nyLenke = null,
             )
-        }?.also { oppdaterModellEtterHendelse(it) }
+        }
     }
     return sakOpprettet
 }

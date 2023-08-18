@@ -5,7 +5,6 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Sakstype
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
@@ -126,8 +125,7 @@ private suspend fun BrukerRepository.opprettSak(
 ): SakOpprettet {
     val sakId = UUID.randomUUID()
     val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
-    val sak = SakOpprettet(
-        hendelseId = sakId,
+    val sak = sakOpprettet(
         sakId = sakId,
         grupperingsid = sakId.toString(),
         virksomhetsnummer = tilgang.virksomhetsnummer,
@@ -140,15 +138,13 @@ private suspend fun BrukerRepository.opprettSak(
         oppgittTidspunkt = oppgittTidspunkt,
         mottattTidspunkt = OffsetDateTime.now(),
         hardDelete = null,
-    ).also {
-        oppdaterModellEtterHendelse(it)
-    }
-    NyStatusSak(
+    )
+    nyStatusSak(
+        sak = sak,
         hendelseId = UUID.randomUUID(),
         virksomhetsnummer = sak.virksomhetsnummer,
         produsentId = sak.produsentId,
         kildeAppNavn = sak.kildeAppNavn,
-        sakId = sak.sakId,
         status = MOTTATT,
         overstyrStatustekstMed = "noe",
         mottattTidspunkt = oppgittTidspunkt,
@@ -156,9 +152,7 @@ private suspend fun BrukerRepository.opprettSak(
         oppgittTidspunkt = null,
         hardDelete = null,
         nyLenkeTilSak = null,
-    ).also { hendelse ->
-        oppdaterModellEtterHendelse(hendelse)
-    }
+    )
     return sak
 }
 

@@ -7,22 +7,23 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.virksomhetsnummer
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import java.time.OffsetDateTime
-import java.util.*
 
 class NærmesteLederTilgangsstyringTests: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val model = BrukerRepositoryImpl(database)
+    val brukerRepository = BrukerRepositoryImpl(database)
+
+    suspend fun beskjedOpprettet(mottaker: Mottaker) = brukerRepository.beskjedOpprettet(
+        virksomhetsnummer = mottaker.virksomhetsnummer,
+        mottakere = listOf(mottaker),
+    )
 
     describe("Tilgangsstyring av nærmeste leder") {
-
         val virksomhet1 = "1".repeat(9)
         val virksomhet2 = "2".repeat(9)
         val nærmesteLeder = "1".repeat(11)
@@ -47,30 +48,16 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             virksomhetsnummer = virksomhet2,
         )
 
-        val beskjed1 = beskjedOpprettet(
-            eksternId = "1",
-            mottaker = mottaker1,
-            id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098571"),
-        ).also { model.oppdaterModellEtterHendelse(it) }
-
-        beskjedOpprettet(
-            eksternId = "2",
-            mottaker = mottaker2,
-            id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098572"),
-        ).also { model.oppdaterModellEtterHendelse(it) }
-
-        val beskjed3 = beskjedOpprettet(
-            eksternId = "3",
-            mottaker = mottaker3,
-            id = UUID.fromString("c49fb832-1d2c-4557-bc64-a4c926098573"),
-        ).also { model.oppdaterModellEtterHendelse(it) }
+        val beskjed1 = beskjedOpprettet(mottaker = mottaker1)
+        beskjedOpprettet(mottaker = mottaker2)
+        val beskjed3 = beskjedOpprettet(mottaker = mottaker3)
 
         it("ingen ansatte gir ingen notifikasjoner") {
-            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
+            val notifikasjoner = brukerRepository.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
             notifikasjoner should beEmpty()
         }
 
-        model.oppdaterModellEtterNærmesteLederLeesah(
+        brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
             NarmesteLederLeesah(
                 narmesteLederId = uuid("12"),
                 fnr = mottaker1.ansattFnr,
@@ -80,13 +67,13 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             )
         )
         it("får notifikasjon om nåværende ansatt") {
-            val notifikasjoner = model.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
+            val notifikasjoner = brukerRepository.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
             notifikasjoner shouldHaveSize 1
             val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
             beskjed.id shouldBe beskjed1.notifikasjonId
         }
 
-        model.oppdaterModellEtterNærmesteLederLeesah(
+        brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
             NarmesteLederLeesah(
                 narmesteLederId = uuid("13"),
                 fnr = mottaker1.ansattFnr,
@@ -101,7 +88,7 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             selv om du er nærmeste leder for den personen i denne virksomheten
             """.trimMargin()
         ) {
-            val notifikasjoner = model.hentNotifikasjoner(
+            val notifikasjoner = brukerRepository.hentNotifikasjoner(
                 nærmesteLeder,
                 Tilganger.EMPTY,
                 //ansatte(mottaker1.copy(virksomhetsnummer = virksomhet2))
@@ -115,19 +102,3 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
     }
 })
 
-fun beskjedOpprettet(mottaker: Mottaker, id: UUID, eksternId: String) = BeskjedOpprettet(
-    virksomhetsnummer = mottaker.virksomhetsnummer,
-    merkelapp = "",
-    eksternId = eksternId,
-    mottakere = listOf(mottaker),
-    hendelseId = id,
-    notifikasjonId = id,
-    tekst = "test",
-    lenke = "https://nav.no",
-    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
-    kildeAppNavn = "",
-    produsentId = "",
-    grupperingsid = null,
-    eksterneVarsler = listOf(),
-    hardDelete = null,
-)

@@ -4,7 +4,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
@@ -12,13 +11,11 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
-import java.time.ZoneOffset.UTC
-import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
 class HardDeleteTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val queryModel = BrukerRepositoryImpl(database)
+    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("HardDelete av notifikasjon") {
         val uuid1 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
@@ -30,21 +27,10 @@ class HardDeleteTests : DescribeSpec({
             virksomhetsnummer = "1337"
         )
 
-        val opprettEvent = fun (id: UUID) = BeskjedOpprettet(
-            merkelapp = "foo",
-            eksternId = id.toString(),
+        suspend fun opprettBeskjed(id: UUID) = brukerRepository.beskjedOpprettet(
             mottakere = listOf(mottaker),
-            hendelseId = id,
             notifikasjonId = id,
-            tekst = "teste",
-            grupperingsid = "gr1",
-            lenke = "foo.no/bar",
-            opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS),
             virksomhetsnummer = mottaker.virksomhetsnummer,
-            kildeAppNavn = "",
-            produsentId = "",
-            eksterneVarsler = listOf(),
-            hardDelete = null,
         )
 
         val hardDeleteEvent = HardDelete(
@@ -57,33 +43,33 @@ class HardDeleteTests : DescribeSpec({
         )
 
 
-        it("oppretter to beskjeder i databasen") {
-            queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid1))
-            queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid2))
-            queryModel.oppdaterModellEtterNærmesteLederLeesah(
-                NarmesteLederLeesah(
-                    narmesteLederId = uuid("43"),
-                    fnr = mottaker.ansattFnr,
-                    narmesteLederFnr = mottaker.naermesteLederFnr,
-                    orgnummer = mottaker.virksomhetsnummer,
-                    aktivTom = null,
-                )
+        opprettBeskjed(uuid1)
+        opprettBeskjed(uuid2)
+        brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
+            NarmesteLederLeesah(
+                narmesteLederId = uuid("43"),
+                fnr = mottaker.ansattFnr,
+                narmesteLederFnr = mottaker.naermesteLederFnr,
+                orgnummer = mottaker.virksomhetsnummer,
+                aktivTom = null,
             )
+        )
 
-            val notifikasjoner =
-                queryModel.hentNotifikasjoner(
-                    mottaker.naermesteLederFnr,
-                    Tilganger.EMPTY,
-                )
-                    .map { it.id }
-                    .sorted()
+        val notifikasjoner =
+            brukerRepository.hentNotifikasjoner(
+                mottaker.naermesteLederFnr,
+                Tilganger.EMPTY,
+            )
+                .map { it.id }
+                .sorted()
 
+        it("oppretter to beskjeder i databasen") {
             notifikasjoner shouldContainExactly listOf(uuid1, uuid2).sorted()
         }
 
         it("sletter kun ønsket beskjed") {
-            queryModel.oppdaterModellEtterHendelse(hardDeleteEvent)
-            val notifikasjonerEtterSletting = queryModel.hentNotifikasjoner(
+            brukerRepository.oppdaterModellEtterHendelse(hardDeleteEvent)
+            val notifikasjonerEtterSletting = brukerRepository.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
                 Tilganger.EMPTY,
             )
@@ -103,10 +89,9 @@ class HardDeleteTests : DescribeSpec({
             virksomhetsnummer = "1337"
         )
 
-        val opprettEvent = fun (id: UUID) = HendelseModel.SakOpprettet(
+        suspend fun opprettEvent(id: UUID) = brukerRepository.sakOpprettet(
             merkelapp = "foo",
             mottakere = listOf(mottaker),
-            hendelseId = id,
             sakId = id,
             tittel = "teste",
             grupperingsid = "gr1",
@@ -118,9 +103,8 @@ class HardDeleteTests : DescribeSpec({
             oppgittTidspunkt = null,
             hardDelete = null,
         )
-        val opprettStatusEvent = fun (id: UUID) = HendelseModel.NyStatusSak(
-            hendelseId = id,
-            sakId = id,
+        suspend fun opprettStatusEvent(sak: HendelseModel.SakOpprettet) = brukerRepository.nyStatusSak(
+            sak,
             virksomhetsnummer = mottaker.virksomhetsnummer,
             kildeAppNavn = "",
             produsentId = "",
@@ -144,11 +128,11 @@ class HardDeleteTests : DescribeSpec({
 
 
         it("oppretter to saker i databasen") {
-            queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid1))
-            queryModel.oppdaterModellEtterHendelse(opprettStatusEvent(uuid1))
-            queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid2))
-            queryModel.oppdaterModellEtterHendelse(opprettStatusEvent(uuid2))
-            queryModel.oppdaterModellEtterNærmesteLederLeesah(
+            val sak1 = opprettEvent(uuid1)
+            brukerRepository.oppdaterModellEtterHendelse(opprettStatusEvent(sak1))
+            val sak2 = opprettEvent(uuid2)
+            brukerRepository.oppdaterModellEtterHendelse(opprettStatusEvent(sak2))
+            brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
                     narmesteLederId = uuid("43"),
                     fnr = mottaker.ansattFnr,
@@ -159,7 +143,7 @@ class HardDeleteTests : DescribeSpec({
             )
 
             val notifikasjoner =
-                queryModel.hentSaker(
+                brukerRepository.hentSaker(
                     fnr = mottaker.naermesteLederFnr,
                     virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
                     tilganger = Tilganger.EMPTY,
@@ -177,8 +161,8 @@ class HardDeleteTests : DescribeSpec({
         }
 
         it("sletter kun ønsket sak") {
-            queryModel.oppdaterModellEtterHendelse(hardDeleteEvent)
-            val sakerEtterSletting = queryModel.hentSaker(
+            brukerRepository.oppdaterModellEtterHendelse(hardDeleteEvent)
+            val sakerEtterSletting = brukerRepository.hentSaker(
                 fnr = mottaker.naermesteLederFnr,
                 virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
                 tilganger = Tilganger.EMPTY,

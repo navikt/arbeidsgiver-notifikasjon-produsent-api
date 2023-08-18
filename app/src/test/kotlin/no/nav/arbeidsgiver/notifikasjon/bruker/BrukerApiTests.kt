@@ -13,10 +13,10 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class BrukerApiTests : DescribeSpec({
-    val queryModel: BrukerRepositoryImpl = mockk()
+    val brukerRepository: BrukerRepositoryImpl = mockk()
 
     val engine = ktorBrukerTestServer(
-        brukerRepository = queryModel,
+        brukerRepository = brukerRepository,
     )
 
     describe("graphql bruker-api") {
@@ -52,11 +52,11 @@ class BrukerApiTests : DescribeSpec({
             )
 
             coEvery {
-                queryModel.hentNotifikasjoner(any(), any())
+                brukerRepository.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed, oppgave)
 
             coEvery {
-                queryModel.hentSakerForNotifikasjoner(any(), any(), any())
+                brukerRepository.hentSakerForNotifikasjoner(any(), any(), any())
             } returns emptyMap()
 
             val response = engine.queryNotifikasjonerJson()
