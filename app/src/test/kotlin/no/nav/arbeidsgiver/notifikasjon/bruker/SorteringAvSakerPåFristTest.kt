@@ -2,13 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.FRIST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 class SorteringAvSakerPåFristTest : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
@@ -128,7 +128,8 @@ class SorteringAvSakerPåFristTest : DescribeSpec({
         val sak7 = opprettSakMedOppgaver("7")
         val sak8 = opprettSakMedOppgaver("8", null)
 
-        val res = engine.hentSaker().getTypedContent<List<UUID>>("$.saker.saker.*.id")
+        val res = engine.querySakerJson(virksomhetsnummer = "1", limit = 10, sortering = FRIST)
+            .getTypedContent<List<UUID>>("$.saker.saker.*.id")
 
         res shouldBe listOf(sak2, sak3, sak4, sak5, sak1, sak8, sak6, sak7)
 
@@ -136,17 +137,4 @@ class SorteringAvSakerPåFristTest : DescribeSpec({
 
 }
 )
-
-private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
-    brukerApi(
-        """
-            {
-                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST ){
-                    saker {
-                        id                                                
-                    }
-                }
-            }
-        """.trimIndent()
-    )
 

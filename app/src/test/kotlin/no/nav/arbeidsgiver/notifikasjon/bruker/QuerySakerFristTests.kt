@@ -12,11 +12,9 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -333,30 +331,11 @@ private suspend fun BrukerRepository.opprettSak(
     return sakOpprettet
 }
 
-private fun TestApplicationEngine.hentSaker() = brukerApi(
-    GraphQLRequest(
-        """
-    query hentSaker(${'$'}virksomhetsnumre: [String!]!, ${'$'}sortering: SakSortering!, ${'$'}limit: Int){
-        saker(virksomhetsnumre: ${'$'}virksomhetsnumre, sortering: ${'$'}sortering, limit: ${'$'}limit) {
-            saker {
-                id
-                frister
-                oppgaver{
-                    frist
-                    tilstand
-                    paaminnelseTidspunkt
-                }
-            }
-        }
-    }
-    """.trimIndent(),
-        "hentSaker",
-        mapOf(
-            "virksomhetsnumre" to listOf("42"),
-            "limit" to 10,
-            "sortering" to BrukerAPI.SakSortering.FRIST
-        )
+private fun TestApplicationEngine.hentSaker() =
+    querySakerJson(
+        virksomhetsnumre = listOf("42"),
+        limit = 10,
+        sortering = BrukerAPI.SakSortering.FRIST
     )
-)
 
 private infix fun <A, B, C> Pair<A, B>.to(third: C) = Triple(this.first, this.second, third)

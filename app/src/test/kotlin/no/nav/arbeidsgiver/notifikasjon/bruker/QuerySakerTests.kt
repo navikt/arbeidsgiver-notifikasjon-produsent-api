@@ -6,7 +6,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.TestApplicationEngine
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.OPPRETTET
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
@@ -15,14 +15,8 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.FERDIG
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.*
@@ -451,62 +445,11 @@ private fun TestApplicationEngine.hentSaker(
     offset: Int? = null,
     limit: Int? = null,
     sortering: BrukerAPI.SakSortering = BrukerAPI.SakSortering.OPPDATERT,
-) = brukerApi(
-    GraphQLRequest(
-        """
-    query hentSaker(${'$'}virksomhetsnumre: [String!]!, ${'$'}sakstyper: [String!], ${'$'}tekstsoek: String, ${'$'}sortering: SakSortering!, ${'$'}offset: Int, ${'$'}limit: Int){
-        saker(virksomhetsnumre: ${'$'}virksomhetsnumre, sakstyper: ${'$'}sakstyper, tekstsoek: ${'$'}tekstsoek, sortering: ${'$'}sortering, offset: ${'$'}offset, limit: ${'$'}limit) {
-            saker {
-                id
-                tittel
-                lenke
-                merkelapp
-                virksomhet {
-                    navn
-                    virksomhetsnummer
-                }
-                sisteStatus {
-                    type
-                    tekst
-                    tidspunkt
-                }
-                frister
-                oppgaver {
-                    frist
-                    tilstand
-                    paaminnelseTidspunkt
-                }
-                tidslinje {
-                    ...on OppgaveTidslinjeElement {
-                        tittel
-                        status
-                        paaminnelseTidspunkt
-                        utgaattTidspunkt
-                        utfoertTidspunkt
-                        frist
-                    }
-                    ...on BeskjedTidslinjeElement {
-                        tittel
-                        opprettetTidspunkt
-                    }
-                }
-            }
-            sakstyper {
-                navn
-            }
-            feilAltinn
-            totaltAntallSaker
-        }
-    }
-    """.trimIndent(),
-        "hentSaker",
-        mapOf(
-            "virksomhetsnumre" to virksomhetsnumre,
-            "sakstyper" to sakstyper,
-            "tekstsoek" to tekstsoek,
-            "sortering" to sortering,
-            "offset" to offset,
-            "limit" to limit,
-        )
+) = querySakerJson(
+        virksomhetsnumre = virksomhetsnumre,
+        sakstyper = sakstyper,
+        tekstsoek = tekstsoek,
+        offset = offset,
+        limit = limit,
+        sortering = sortering,
     )
-)

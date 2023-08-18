@@ -3,12 +3,11 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldNotContainAnyOf
-import io.ktor.server.testing.TestApplicationEngine
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.virksomhetsnummer
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -124,13 +123,7 @@ class SakstyperQueryTests : DescribeSpec({
 })
 
 private fun TestApplicationEngine.querySakstyper(): Set<String> =
-    brukerApi("""
-        query {
-            sakstyper {
-                navn
-            }
-        }
-    """.trimIndent())
+    querySakstyperJson()
         .getTypedContent<List<String>>("$.sakstyper.*.navn")
         .toSet()
 

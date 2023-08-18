@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.FRIST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
@@ -12,7 +12,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
@@ -142,28 +142,11 @@ class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
         )
 
         val res =
-            engine.hentSaker().getTypedContent<List<OffsetDateTime>>("$.saker.saker.*.oppgaver.*.paaminnelseTidspunkt")
+            engine.querySakerJson(virksomhetsnummer = "1", limit = 10, sortering = FRIST)
+                .getTypedContent<List<OffsetDateTime>>("$.saker.saker.*.oppgaver.*.paaminnelseTidspunkt")
 
         res.first().inOsloLocalDateTime() shouldBe påminnelsestidspunktLocalDateTime
     }
 }
 )
-
-private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
-    brukerApi(
-        """
-            {
-                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST ){
-                    saker {
-                        id
-                        oppgaver {
-                            paaminnelseTidspunkt   
-                            frist
-                            tilstand
-                        }
-                    }
-                }
-            }
-        """.trimIndent()
-    )
 

@@ -7,7 +7,6 @@ import io.kotest.matchers.shouldNot
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import java.time.OffsetDateTime
@@ -60,58 +59,7 @@ class BrukerApiTests : DescribeSpec({
                 queryModel.hentSakerForNotifikasjoner(any(), any(), any())
             } returns emptyMap()
 
-            val response = engine.brukerApi(
-                """
-                    {
-                        notifikasjoner{
-                            notifikasjoner {
-                                __typename
-                                ...on Beskjed {
-                                    brukerKlikk { 
-                                        __typename
-                                        id
-                                        klikketPaa 
-                                    }
-                                    lenke
-                                    tekst
-                                    merkelapp
-                                    opprettetTidspunkt
-                                    sorteringTidspunkt
-                                    id
-                                    virksomhet {
-                                        virksomhetsnummer
-                                        navn
-                                    }
-                                    sak {
-                                        tittel
-                                    }
-                                }
-                                ...on Oppgave {
-                                    brukerKlikk { 
-                                        __typename
-                                        id
-                                        klikketPaa 
-                                    }
-                                    lenke
-                                    tilstand
-                                    tekst
-                                    merkelapp
-                                    opprettetTidspunkt
-                                    sorteringTidspunkt
-                                    id
-                                    virksomhet {
-                                        virksomhetsnummer
-                                        navn
-                                    }
-                                    sak {
-                                        tittel
-                                    }
-                                }
-                            }
-                        }
-                    }
-                """.trimIndent()
-            )
+            val response = engine.queryNotifikasjonerJson()
 
             it("response inneholder riktig data") {
                 response.getTypedContent<List<BrukerAPI.Notifikasjon>>("notifikasjoner/notifikasjoner").let {

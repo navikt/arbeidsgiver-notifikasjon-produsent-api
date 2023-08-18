@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDate
@@ -54,44 +53,12 @@ class OppgaveMedFristTests : DescribeSpec({
         )
         queryModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-        val oppgave = hentOppgave(engine)
+        val oppgave = engine.queryNotifikasjonerJson()
+            .getTypedContent<BrukerAPI.Notifikasjon.Oppgave>("notifikasjoner/notifikasjoner/0")
 
         it("har frist") {
             oppgave.frist shouldBe oppgaveOpprettet.frist
         }
-
     }
 })
 
-private fun hentOppgave(engine: TestApplicationEngine): BrukerAPI.Notifikasjon.Oppgave =
-    engine.brukerApi(
-        """
-                {
-                    notifikasjoner{
-                        notifikasjoner {
-                            __typename
-                            ...on Oppgave {
-                                brukerKlikk { 
-                                    __typename
-                                    id
-                                    klikketPaa 
-                                }
-                                lenke
-                                tilstand
-                                tekst
-                                merkelapp
-                                opprettetTidspunkt
-                                sorteringTidspunkt
-                                utgaattTidspunkt
-                                id
-                                frist
-                                virksomhet {
-                                    virksomhetsnummer
-                                    navn
-                                }
-                            }
-                        }
-                    }
-                }
-            """.trimIndent()
-    ).getTypedContent("notifikasjoner/notifikasjoner/0")

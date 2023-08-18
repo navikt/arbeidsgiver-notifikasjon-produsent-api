@@ -3,13 +3,14 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.FRIST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 class SakerMedOppgaveTilstandTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
@@ -151,7 +152,11 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         val sak3 = opprettSak("3")
         opprettOppgave(sak3, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
 
-        val res = engine.hentSaker()
+        val res = engine.querySakerJson(
+            virksomhetsnummer = "1",
+            limit = 10,
+            sortering = FRIST,
+        )
 
         it("Teller kun saken en gang for hver tilstand") {
             res.getTypedContent<List<Any>>("$.saker.oppgaveTilstandInfo") shouldContainExactlyInAnyOrder listOf(
@@ -190,7 +195,12 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         opprettSak("3")
 
         val res =
-            engine.hentSakerMedFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
+            engine.querySakerJson(
+                virksomhetsnummer = "1",
+                limit = 10,
+                sortering = FRIST,
+                oppgaveTilstand = listOf(NY)
+            ).getTypedContent<List<String>>("$.saker.saker.*.id")
 
 
         res shouldBe listOf(uuid(sak1).toString())
@@ -201,7 +211,11 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         val sak2 = opprettSak("2")
         opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { oppgaveTilstandUtført(it!!) }
 
-        val res = engine.hentSakerUtenFilter().getTypedContent<List<String>>("$.saker.saker.*.id")
+        val res = engine.querySakerJson(
+            virksomhetsnummer = "1",
+            limit = 10,
+            sortering = FRIST,
+        ).getTypedContent<List<String>>("$.saker.saker.*.id")
 
         it("skal returnere saker med og uten oppgaver") {
             res shouldContainExactlyInAnyOrder listOf(sak1, sak2)
@@ -211,52 +225,3 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
 })
 
 
-private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
-    brukerApi(
-        """
-            {
-                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST ){
-                    oppgaveTilstandInfo {
-                        tilstand
-                        antall            
-                    }
-                    totaltAntallSaker
-                }
-            }
-        """.trimIndent()
-    )
-
-
-private fun TestApplicationEngine.hentSakerMedFilter(): TestApplicationResponse =
-    brukerApi(
-        """
-            {   
-                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST, oppgaveTilstand: [NY]){
-                    saker {
-                        id 
-                    }
-                }
-            }
-        """.trimIndent()
-    )
-
-private fun TestApplicationEngine.hentSakerUtenFilter(): TestApplicationResponse =
-    brukerApi(
-        """
-            {   
-                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST){
-                    saker {
-                        id 
-                    }
-                    oppgaveTilstandInfo {
-                        tilstand
-                        antall
-                    }
-                    sakstyper {
-                        navn
-                        antall                    
-                    }
-                }
-            }
-        """.trimIndent()
-    )

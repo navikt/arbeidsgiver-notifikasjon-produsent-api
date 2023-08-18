@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
@@ -65,7 +64,8 @@ class OppgaveUførtTests : DescribeSpec({
         queryModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
         queryModel.oppdaterModellEtterHendelse(oppgaveUtført)
 
-        val oppgave = hentOppgave(engine)
+        val oppgave = engine.queryNotifikasjonerJson()
+            .getTypedContent<BrukerAPI.Notifikasjon.Oppgave>("notifikasjoner/notifikasjoner/0")
 
         it("har tilstand utført og utført tidspunkt") {
             oppgave.tilstand shouldBe BrukerAPI.Notifikasjon.Oppgave.Tilstand.UTFOERT
@@ -75,35 +75,3 @@ class OppgaveUførtTests : DescribeSpec({
 
     }
 })
-
-private fun hentOppgave(engine: TestApplicationEngine): BrukerAPI.Notifikasjon.Oppgave =
-    engine.brukerApi(
-        """
-                {
-                    notifikasjoner{
-                        notifikasjoner {
-                            __typename
-                            ...on Oppgave {
-                                brukerKlikk { 
-                                    __typename
-                                    id
-                                    klikketPaa 
-                                }
-                                lenke
-                                tilstand
-                                tekst
-                                merkelapp
-                                opprettetTidspunkt
-                                sorteringTidspunkt
-                                utfoertTidspunkt
-                                id
-                                virksomhet {
-                                    virksomhetsnummer
-                                    navn
-                                }
-                            }
-                        }
-                    }
-                }
-            """.trimIndent()
-    ).getTypedContent("notifikasjoner/notifikasjoner/0")

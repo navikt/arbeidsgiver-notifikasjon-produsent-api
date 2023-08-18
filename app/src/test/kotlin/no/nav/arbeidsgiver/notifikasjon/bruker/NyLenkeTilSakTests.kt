@@ -26,15 +26,10 @@ class NyLenkeTilSakTests : DescribeSpec({
         }
     )
 
-    fun hentLenke() = engine.brukerApi(
-        """ 
-                {
-                    saker(virksomhetsnummer: "1", offset: 0, limit: 1) {
-                        saker {
-                            lenke
-                        }
-                    }
-                }"""
+    fun hentLenke() = engine.querySakerJson(
+        virksomhetsnummer = "1",
+        offset = 0,
+        limit = 1,
     ).getTypedContent<String>("saker/saker/0/lenke")
 
 

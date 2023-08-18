@@ -8,9 +8,11 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -164,30 +166,10 @@ private fun TestApplicationEngine.hentSakstyper(
     virksomhetsnumre: List<String> = listOf(tilgang1.virksomhetsnummer, tilgang2.virksomhetsnummer),
     sakstyper: List<String>? = null,
     tekstsoek: String? = null,
-    offset: Int? = null,
-    limit: Int? = null,
-    sortering: BrukerAPI.SakSortering = BrukerAPI.SakSortering.OPPDATERT,
-): List<Sakstype> = brukerApi(
-    GraphQLRequest(
-        """
-            query hentSaker(${'$'}virksomhetsnumre: [String!]!, ${'$'}sakstyper: [String!], ${'$'}tekstsoek: String, ${'$'}sortering: SakSortering!, ${'$'}offset: Int, ${'$'}limit: Int){
-                saker(virksomhetsnumre: ${'$'}virksomhetsnumre, sakstyper: ${'$'}sakstyper, tekstsoek: ${'$'}tekstsoek, sortering: ${'$'}sortering, offset: ${'$'}offset, limit: ${'$'}limit) {
-                    sakstyper {
-                        navn
-                        antall
-                    }
-                }
-            }
-    """.trimIndent(),
-        "hentSaker",
-        mapOf(
-            "virksomhetsnumre" to virksomhetsnumre,
-            "sakstyper" to sakstyper,
-            "tekstsoek" to tekstsoek,
-            "sortering" to sortering,
-            "offset" to offset,
-            "limit" to limit,
-        )
+): List<Sakstype> =
+    querySakerJson(
+        virksomhetsnumre = virksomhetsnumre,
+        sakstyper = sakstyper,
+        tekstsoek = tekstsoek,
     )
-)
     .getTypedContent("$.saker.sakstyper")

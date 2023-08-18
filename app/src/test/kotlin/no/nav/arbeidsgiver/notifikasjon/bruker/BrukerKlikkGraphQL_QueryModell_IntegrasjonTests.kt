@@ -6,7 +6,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -57,21 +56,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         )
 
         /* sjekk at beskjed ikke er klikket på */
-        val response = engine.brukerApi(
-            """
-            {
-                notifikasjoner{
-                    notifikasjoner {
-                        ...on Beskjed {
-                            brukerKlikk {
-                                klikketPaa
-                            }
-                        }
-                    }
-                }
-            }
-            """
-        )
+        val response = engine.queryNotifikasjonerJson()
 
         val klikkMarkørFørKlikk = response.getTypedContent<Boolean>("$.notifikasjoner.notifikasjoner[0].brukerKlikk.klikketPaa")
 
@@ -92,21 +77,7 @@ class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
         queryModel.oppdaterModellEtterHendelse(brukerKlikket)
 
         /* sjekk at beskjed ikke er klikket på */
-        val responseEtterKlikk = engine.brukerApi(
-            """
-            {
-                notifikasjoner{
-                    notifikasjoner {
-                        ...on Beskjed {
-                            brukerKlikk {
-                                klikketPaa
-                            }
-                        }
-                    }
-                }
-            }
-            """
-        )
+        val responseEtterKlikk = engine.queryNotifikasjonerJson()
         val klikkMarkørEtterKlikk = responseEtterKlikk.getTypedContent<Boolean>("$.notifikasjoner.notifikasjoner[0].brukerKlikk.klikketPaa")
 
         it("notifikasjon er klikket på") {

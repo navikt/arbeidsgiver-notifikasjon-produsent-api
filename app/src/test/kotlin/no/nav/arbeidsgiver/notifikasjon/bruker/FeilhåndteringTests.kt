@@ -11,7 +11,6 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
@@ -37,16 +36,7 @@ class FeilhåndteringTests : DescribeSpec({
                 queryModel.hentSakerForNotifikasjoner(any(), any(), any())
             } returns emptyMap()
 
-            val response = engine.brukerApi(
-                """
-                    {
-                        notifikasjoner{
-                            feilAltinn
-                            feilDigiSyfo                    
-                        }
-                    }
-                """.trimIndent()
-            )
+            val response = engine.queryNotifikasjonerJson()
 
             it("status is 200 OK") {
                 response.status() shouldBe HttpStatusCode.OK
