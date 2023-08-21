@@ -47,7 +47,7 @@ val TEST_TILGANG_1 = BrukerModel.Tilgang.Altinn(
     serviceedition = TEST_SERVICE_EDITION_1,
 )
 
-val TEST_OPPRETTET_TIDSPUNKT_1 = OffsetDateTime.MIN
+val TEST_OPPRETTET_TIDSPUNKT_1 = OffsetDateTime.parse("2020-01-01T01:01:01+01")
 
 /* Use randomness to prevent implicit dependencies in unit tests on default values.
  * If it is important that fields match for a certain behaviour, the unit-test should set them
