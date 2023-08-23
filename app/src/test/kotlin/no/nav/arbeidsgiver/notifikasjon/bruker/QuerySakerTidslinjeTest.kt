@@ -4,8 +4,10 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.core.test.TestScope
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.haveSize
+import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNot
 import io.kotest.matchers.types.instanceOf
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.UTFOERT
@@ -59,6 +61,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
                 it.tekst shouldBe oppgave0.tekst
                 it.tilstand shouldBe NY
+                it.id shouldNot beNull()
             }
 
             val tidslinje1 = fetchTidslinje(sak1)

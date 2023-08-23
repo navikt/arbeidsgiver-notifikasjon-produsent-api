@@ -166,6 +166,7 @@ object BrukerAPI {
 
     @JsonTypeName("OppgaveTidslinjeElement")
     data class OppgaveTidslinjeElement(
+        val id: UUID,
         val tekst: String,
         val opprettetTidspunkt: OffsetDateTime,
         val tilstand: Notifikasjon.Oppgave.Tilstand,
@@ -177,6 +178,7 @@ object BrukerAPI {
 
     @JsonTypeName("BeskjedTidslinjeElement")
     data class BeskjedTidslinjeElement(
+        val id: UUID,
         val tekst: String,
         val opprettetTidspunkt: OffsetDateTime,
     ) : TidslinjeElement()
@@ -420,6 +422,7 @@ object BrukerAPI {
                     tidslinje = berikelse?.tidslinje.orEmpty().map {element ->
                         when (element) {
                             is BrukerModel.TidslinjeElement.Oppgave -> OppgaveTidslinjeElement(
+                                id = element.id,
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
                                 tilstand = element.tilstand.tilBrukerAPI(),
@@ -429,6 +432,7 @@ object BrukerAPI {
                                 frist = element.frist,
                             )
                             is BrukerModel.TidslinjeElement.Beskjed -> BeskjedTidslinjeElement(
+                                id = element.id,
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
                             )

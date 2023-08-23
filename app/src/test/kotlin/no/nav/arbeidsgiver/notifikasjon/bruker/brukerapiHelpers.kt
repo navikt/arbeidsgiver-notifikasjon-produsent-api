@@ -135,6 +135,7 @@ fun TestApplicationEngine.querySakerJson(
                 tidslinje {
                     __typename
                     ...on OppgaveTidslinjeElement {
+                        id
                         tekst
                         tilstand
                         opprettetTidspunkt
@@ -144,6 +145,7 @@ fun TestApplicationEngine.querySakerJson(
                         frist
                     }
                     ...on BeskjedTidslinjeElement {
+                        id
                         tekst
                         opprettetTidspunkt
                     }

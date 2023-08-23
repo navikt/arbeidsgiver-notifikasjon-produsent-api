@@ -499,12 +499,14 @@ class BrukerRepositoryImpl(
         ) {
             when (val type = getString("type")) {
                 "BESKJED" -> BrukerModel.TidslinjeElement.Beskjed(
+                    id = getUuid("id"),
                     tekst = getString("tekst"),
                     grupperingsid = getString("grupperingsid"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant(),
                 )
 
                 "OPPGAVE" -> BrukerModel.TidslinjeElement.Oppgave(
+                    id = getUuid("id"),
                     tilstand = BrukerModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
                     tekst = getString("tekst"),
                     grupperingsid = getString("grupperingsid"),

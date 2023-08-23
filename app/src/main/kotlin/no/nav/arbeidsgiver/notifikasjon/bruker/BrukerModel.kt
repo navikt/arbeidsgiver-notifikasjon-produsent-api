@@ -86,9 +86,11 @@ object BrukerModel {
     )
 
     sealed interface TidslinjeElement {
+        val id: UUID
         val grupperingsid: String
         val opprettetTidspunkt: Instant
         data class Oppgave(
+            override val id: UUID,
             val tekst: String,
             override val grupperingsid: String,
             override val opprettetTidspunkt: Instant,
@@ -99,6 +101,7 @@ object BrukerModel {
             val frist: LocalDate?,
         ): TidslinjeElement
         data class Beskjed(
+            override val id: UUID,
             val tekst: String,
             override val grupperingsid: String,
             override val opprettetTidspunkt: Instant,
