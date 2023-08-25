@@ -11,18 +11,17 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 
 class FeilhåndteringTests : DescribeSpec({
-    val queryModel: BrukerRepositoryImpl = mockk()
+    val brukerRepository: BrukerRepositoryImpl = mockk()
     val suspendingAltinnClient = mockk<SuspendingAltinnClient>()
 
     val engine = ktorBrukerTestServer(
         altinn = AltinnImpl(suspendingAltinnClient),
-        brukerRepository = queryModel,
+        brukerRepository = brukerRepository,
     )
 
     describe("graphql bruker-api feilhåndtering errors tilganger") {
@@ -31,22 +30,13 @@ class FeilhåndteringTests : DescribeSpec({
                 suspendingAltinnClient.hentOrganisasjoner(any(), any(), any(), any(), any())
             } returns null
             coEvery {
-                queryModel.hentNotifikasjoner(any(), any())
+                brukerRepository.hentNotifikasjoner(any(), any())
             } returns listOf()
             coEvery {
-                queryModel.hentSakerForNotifikasjoner(any(), any(), any())
+                brukerRepository.hentSakerForNotifikasjoner(any(), any(), any())
             } returns emptyMap()
 
-            val response = engine.brukerApi(
-                """
-                    {
-                        notifikasjoner{
-                            feilAltinn
-                            feilDigiSyfo                    
-                        }
-                    }
-                """.trimIndent()
-            )
+            val response = engine.queryNotifikasjonerJson()
 
             it("status is 200 OK") {
                 response.status() shouldBe HttpStatusCode.OK
@@ -59,7 +49,7 @@ class FeilhåndteringTests : DescribeSpec({
             it("feil Altinn") {
                 response.getTypedContent<Boolean>("notifikasjoner/feilAltinn") shouldBe true
                 response.getTypedContent<Boolean>("notifikasjoner/feilDigiSyfo") shouldBe false
-                coVerify { queryModel.hentNotifikasjoner(any(), Tilganger.FAILURE) }
+                coVerify { brukerRepository.hentNotifikasjoner(any(), Tilganger.FAILURE) }
             }
         }
     }

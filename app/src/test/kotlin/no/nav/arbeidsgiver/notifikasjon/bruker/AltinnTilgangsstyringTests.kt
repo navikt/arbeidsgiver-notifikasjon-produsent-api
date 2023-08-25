@@ -5,51 +5,39 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
-import java.util.*
 
 class AltinnTilgangsstyringTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val model = BrukerRepositoryImpl(database)
-
-    fun lagMelding(id: UUID, serviceCode: String) = BeskjedOpprettet(
-        virksomhetsnummer = "1",
-        notifikasjonId = id,
-        hendelseId = id,
-        produsentId = "p",
-        kildeAppNavn = "k",
-        merkelapp = "m",
-        eksternId = id.toString(),
-        mottakere = listOf(
-            AltinnMottaker(
-                virksomhetsnummer = "1",
-                serviceCode = serviceCode,
-                serviceEdition = "1",
-            )
-        ),
-        tekst = "",
-        lenke = "https://dev.nav.no",
-        opprettetTidspunkt = OffsetDateTime.parse("2020-02-02T02:02:02+02"),
-        eksterneVarsler = listOf(),
-        grupperingsid = null,
-        hardDelete = null,
-    )
+    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("Tilgangsstyring med altinn-tjenester") {
-        listOf(
-            lagMelding(uuid("0"), "HarTilgang0"),
-            lagMelding(uuid("1"), "HarTilgang1"),
-            lagMelding(uuid("2"), "IkkeTilgang2"),
-            lagMelding(uuid("3"), "IkkeTilgang3"),
-
-            ).forEach {
-            model.oppdaterModellEtterHendelse(it)
+        for ((id, serviceCode) in listOf(
+            "0" to  "HarTilgang0",
+            "1" to  "HarTilgang1",
+            "2" to  "IkkeTilgang2",
+            "3" to  "IkkeTilgang3",
+        )) {
+            val uuid = uuid(id)
+            brukerRepository.beskjedOpprettet(
+                virksomhetsnummer = "1",
+                notifikasjonId = uuid,
+                merkelapp = "m",
+                eksternId = uuid.toString(),
+                mottakere = listOf(
+                    AltinnMottaker(
+                        virksomhetsnummer = "1",
+                        serviceCode = serviceCode,
+                        serviceEdition = "1",
+                    )
+                ),
+                opprettetTidspunkt = OffsetDateTime.parse("2020-02-02T02:02:02+02"),
+            )
         }
 
-        val notifikasjoner = model.hentNotifikasjoner(
+        val notifikasjoner = brukerRepository.hentNotifikasjoner(
             fnr = "",
             tilganger = Tilganger(
                 tjenestetilganger = listOf("HarTilgang0", "HarTilgang1").map {

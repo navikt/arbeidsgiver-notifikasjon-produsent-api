@@ -30,7 +30,7 @@ class ResumeScheduledJobsTests: DescribeSpec({
             repository.jobQueueCount() shouldBe 0
 
             database.waitQueue() shouldContainAll (0..4).map { uuid("$it")  }
-            repository.waitQueueCount() shouldBe 5
+            repository.waitQueueCount().first shouldBe 5
         }
 
         repository.rescheduleWaitingJobs(dateTime("02"))
@@ -38,7 +38,7 @@ class ResumeScheduledJobsTests: DescribeSpec({
         it("one job requeued") {
             repository.jobQueueCount() shouldBe 1
             database.jobQueue() shouldContainInOrder listOf(uuid("0"))
-            repository.waitQueueCount() shouldBe 4
+            repository.waitQueueCount().first shouldBe 4
             database.waitQueue() shouldContainAll (1..4).map { uuid("$it")  }
         }
 
@@ -47,7 +47,7 @@ class ResumeScheduledJobsTests: DescribeSpec({
         it("two jobs requeued") {
             repository.jobQueueCount() shouldBe 3
             database.jobQueue() shouldContainInOrder listOf("0", "1", "2").map(::uuid)
-            repository.waitQueueCount() shouldBe 2
+            repository.waitQueueCount().first shouldBe 2
             database.waitQueue() shouldContainAll (3..4).map { uuid("$it")  }
         }
 
@@ -56,7 +56,7 @@ class ResumeScheduledJobsTests: DescribeSpec({
         it("two more jobs requeued") {
             repository.jobQueueCount() shouldBe 5
             database.jobQueue() shouldContainInOrder listOf("0", "1", "2", "3", "4").map(::uuid)
-            repository.waitQueueCount() shouldBe 0
+            repository.waitQueueCount().first shouldBe 0
             database.waitQueue() shouldContainAll emptyList()
         }
     }

@@ -12,11 +12,9 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -254,8 +252,7 @@ private suspend fun BrukerRepository.opprettSak(
     mottakerSak: List<HendelseModel.Mottaker>,
 ): SakOpprettet {
     val sakId = UUID.randomUUID()
-    val sakOpprettet = SakOpprettet(
-        hendelseId = sakId,
+    val sakOpprettet = sakOpprettet(
         virksomhetsnummer = "42",
         produsentId = "test",
         kildeAppNavn = "test",
@@ -268,13 +265,13 @@ private suspend fun BrukerRepository.opprettSak(
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
         hardDelete = null,
-    ).also { oppdaterModellEtterHendelse(it) }
-    NyStatusSak(
+    )
+    nyStatusSak(
+        sak = sakOpprettet,
         hendelseId = UUID.randomUUID(),
         virksomhetsnummer = sakOpprettet.virksomhetsnummer,
         produsentId = sakOpprettet.produsentId,
         kildeAppNavn = sakOpprettet.kildeAppNavn,
-        sakId = sakOpprettet.sakId,
         status = MOTTATT,
         overstyrStatustekstMed = null,
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
@@ -282,12 +279,11 @@ private suspend fun BrukerRepository.opprettSak(
         idempotensKey = IdempotenceKey.initial(),
         hardDelete = null,
         nyLenkeTilSak = null,
-    ).also { oppdaterModellEtterHendelse(it) }
+    )
 
     for ((tilstand, frist, mottakere) in tilstander) {
         val oppgaveId = UUID.randomUUID()
-        HendelseModel.OppgaveOpprettet(
-            hendelseId = oppgaveId,
+        val oppgave = oppgaveOpprettet(
             notifikasjonId = oppgaveId,
             virksomhetsnummer = "1",
             produsentId = "1",
@@ -303,60 +299,33 @@ private suspend fun BrukerRepository.opprettSak(
             hardDelete = null,
             frist = frist,
             påminnelse = null,
-        ).also { oppdaterModellEtterHendelse(it) }
+        )
 
         when (tilstand) {
-            BrukerModel.Oppgave.Tilstand.NY -> null
-            BrukerModel.Oppgave.Tilstand.UTFOERT -> HendelseModel.OppgaveUtført(
-                hendelseId = UUID.randomUUID(),
-                notifikasjonId = oppgaveId,
-                virksomhetsnummer = "1",
-                produsentId = "1",
-                kildeAppNavn = "1",
+            BrukerModel.Oppgave.Tilstand.NY -> {}
+            BrukerModel.Oppgave.Tilstand.UTFOERT -> oppgaveUtført(
+                oppgave,
                 hardDelete = null,
                 nyLenke = null,
                 utfoertTidspunkt = OffsetDateTime.parse("2023-01-05T00:00:00+01")
             )
 
-            BrukerModel.Oppgave.Tilstand.UTGAATT -> HendelseModel.OppgaveUtgått(
-                hendelseId = UUID.randomUUID(),
-                notifikasjonId = oppgaveId,
-                virksomhetsnummer = "1",
-                produsentId = "1",
-                kildeAppNavn = "1",
+            BrukerModel.Oppgave.Tilstand.UTGAATT -> oppgaveUtgått(
+                oppgave,
                 hardDelete = null,
                 utgaattTidspunkt = OffsetDateTime.now(),
                 nyLenke = null,
             )
-        }?.also { oppdaterModellEtterHendelse(it) }
+        }
     }
     return sakOpprettet
 }
 
-private fun TestApplicationEngine.hentSaker() = brukerApi(
-    GraphQLRequest(
-        """
-    query hentSaker(${'$'}virksomhetsnumre: [String!]!, ${'$'}sortering: SakSortering!, ${'$'}limit: Int){
-        saker(virksomhetsnumre: ${'$'}virksomhetsnumre, sortering: ${'$'}sortering, limit: ${'$'}limit) {
-            saker {
-                id
-                frister
-                oppgaver{
-                    frist
-                    tilstand
-                    paaminnelseTidspunkt
-                }
-            }
-        }
-    }
-    """.trimIndent(),
-        "hentSaker",
-        mapOf(
-            "virksomhetsnumre" to listOf("42"),
-            "limit" to 10,
-            "sortering" to BrukerAPI.SakSortering.FRIST
-        )
+private fun TestApplicationEngine.hentSaker() =
+    querySakerJson(
+        virksomhetsnumre = listOf("42"),
+        limit = 10,
+        sortering = BrukerAPI.SakSortering.FRIST
     )
-)
 
 private infix fun <A, B, C> Pair<A, B>.to(third: C) = Triple(this.first, this.second, third)

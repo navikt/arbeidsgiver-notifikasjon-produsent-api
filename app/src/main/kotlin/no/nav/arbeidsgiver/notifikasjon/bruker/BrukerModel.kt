@@ -77,12 +77,36 @@ object BrukerModel {
         val merkelapp: String,
         val oppgaver: List<OppgaveMetadata>,
         val opprettetTidspunkt: Instant,
+        val grupperingsid: String?,
     )
 
     data class Sakberikelse(
-        val sakId: UUID,
-        val sisteStatus: SakStatus,
+        val sisteStatus: SakStatus?,
+        val tidslinje: List<TidslinjeElement>,
     )
+
+    sealed interface TidslinjeElement {
+        val id: UUID
+        val grupperingsid: String
+        val opprettetTidspunkt: Instant
+        data class Oppgave(
+            override val id: UUID,
+            val tekst: String,
+            override val grupperingsid: String,
+            override val opprettetTidspunkt: Instant,
+            val tilstand: BrukerModel.Oppgave.Tilstand,
+            val paaminnelseTidspunkt: Instant?,
+            val utgaattTidspunkt: Instant?,
+            val utfoertTidspunkt:  Instant?,
+            val frist: LocalDate?,
+        ): TidslinjeElement
+        data class Beskjed(
+            override val id: UUID,
+            val tekst: String,
+            override val grupperingsid: String,
+            override val opprettetTidspunkt: Instant,
+        ): TidslinjeElement
+    }
 
     data class SakStatus(
         val status: HendelseModel.SakStatus,

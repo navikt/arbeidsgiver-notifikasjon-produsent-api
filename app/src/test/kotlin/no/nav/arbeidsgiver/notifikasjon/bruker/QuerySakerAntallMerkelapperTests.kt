@@ -5,12 +5,13 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Sakstype
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -124,8 +125,7 @@ private suspend fun BrukerRepository.opprettSak(
 ): SakOpprettet {
     val sakId = UUID.randomUUID()
     val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
-    val sak = SakOpprettet(
-        hendelseId = sakId,
+    val sak = sakOpprettet(
         sakId = sakId,
         grupperingsid = sakId.toString(),
         virksomhetsnummer = tilgang.virksomhetsnummer,
@@ -138,15 +138,13 @@ private suspend fun BrukerRepository.opprettSak(
         oppgittTidspunkt = oppgittTidspunkt,
         mottattTidspunkt = OffsetDateTime.now(),
         hardDelete = null,
-    ).also {
-        oppdaterModellEtterHendelse(it)
-    }
-    NyStatusSak(
+    )
+    nyStatusSak(
+        sak = sak,
         hendelseId = UUID.randomUUID(),
         virksomhetsnummer = sak.virksomhetsnummer,
         produsentId = sak.produsentId,
         kildeAppNavn = sak.kildeAppNavn,
-        sakId = sak.sakId,
         status = MOTTATT,
         overstyrStatustekstMed = "noe",
         mottattTidspunkt = oppgittTidspunkt,
@@ -154,9 +152,7 @@ private suspend fun BrukerRepository.opprettSak(
         oppgittTidspunkt = null,
         hardDelete = null,
         nyLenkeTilSak = null,
-    ).also { hendelse ->
-        oppdaterModellEtterHendelse(hendelse)
-    }
+    )
     return sak
 }
 
@@ -164,30 +160,10 @@ private fun TestApplicationEngine.hentSakstyper(
     virksomhetsnumre: List<String> = listOf(tilgang1.virksomhetsnummer, tilgang2.virksomhetsnummer),
     sakstyper: List<String>? = null,
     tekstsoek: String? = null,
-    offset: Int? = null,
-    limit: Int? = null,
-    sortering: BrukerAPI.SakSortering = BrukerAPI.SakSortering.OPPDATERT,
-): List<Sakstype> = brukerApi(
-    GraphQLRequest(
-        """
-            query hentSaker(${'$'}virksomhetsnumre: [String!]!, ${'$'}sakstyper: [String!], ${'$'}tekstsoek: String, ${'$'}sortering: SakSortering!, ${'$'}offset: Int, ${'$'}limit: Int){
-                saker(virksomhetsnumre: ${'$'}virksomhetsnumre, sakstyper: ${'$'}sakstyper, tekstsoek: ${'$'}tekstsoek, sortering: ${'$'}sortering, offset: ${'$'}offset, limit: ${'$'}limit) {
-                    sakstyper {
-                        navn
-                        antall
-                    }
-                }
-            }
-    """.trimIndent(),
-        "hentSaker",
-        mapOf(
-            "virksomhetsnumre" to virksomhetsnumre,
-            "sakstyper" to sakstyper,
-            "tekstsoek" to tekstsoek,
-            "sortering" to sortering,
-            "offset" to offset,
-            "limit" to limit,
-        )
+): List<Sakstype> =
+    querySakerJson(
+        virksomhetsnumre = virksomhetsnumre,
+        sakstyper = sakstyper,
+        tekstsoek = tekstsoek,
     )
-)
     .getTypedContent("$.saker.sakstyper")

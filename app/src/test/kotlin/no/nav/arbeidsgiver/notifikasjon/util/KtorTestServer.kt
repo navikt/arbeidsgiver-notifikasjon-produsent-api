@@ -122,7 +122,7 @@ object LocalhostIssuer {
             azp = sub
         )
 
-    fun issueBrukerToken(sub: String = "0".repeat(11)) =
+    fun issueBrukerToken(sub: String = TEST_FNR_1) =
         issueToken(sub, audience = brukerAudience)
 }
 

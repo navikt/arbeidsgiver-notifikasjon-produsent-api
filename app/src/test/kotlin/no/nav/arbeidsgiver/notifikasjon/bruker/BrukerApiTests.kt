@@ -7,17 +7,16 @@ import io.kotest.matchers.shouldNot
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
-import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import java.time.OffsetDateTime
 import java.util.*
 
 class BrukerApiTests : DescribeSpec({
-    val queryModel: BrukerRepositoryImpl = mockk()
+    val brukerRepository: BrukerRepositoryImpl = mockk()
 
     val engine = ktorBrukerTestServer(
-        brukerRepository = queryModel,
+        brukerRepository = brukerRepository,
     )
 
     describe("graphql bruker-api") {
@@ -53,65 +52,14 @@ class BrukerApiTests : DescribeSpec({
             )
 
             coEvery {
-                queryModel.hentNotifikasjoner(any(), any())
+                brukerRepository.hentNotifikasjoner(any(), any())
             } returns listOf(beskjed, oppgave)
 
             coEvery {
-                queryModel.hentSakerForNotifikasjoner(any(), any(), any())
+                brukerRepository.hentSakerForNotifikasjoner(any(), any(), any())
             } returns emptyMap()
 
-            val response = engine.brukerApi(
-                """
-                    {
-                        notifikasjoner{
-                            notifikasjoner {
-                                __typename
-                                ...on Beskjed {
-                                    brukerKlikk { 
-                                        __typename
-                                        id
-                                        klikketPaa 
-                                    }
-                                    lenke
-                                    tekst
-                                    merkelapp
-                                    opprettetTidspunkt
-                                    sorteringTidspunkt
-                                    id
-                                    virksomhet {
-                                        virksomhetsnummer
-                                        navn
-                                    }
-                                    sak {
-                                        tittel
-                                    }
-                                }
-                                ...on Oppgave {
-                                    brukerKlikk { 
-                                        __typename
-                                        id
-                                        klikketPaa 
-                                    }
-                                    lenke
-                                    tilstand
-                                    tekst
-                                    merkelapp
-                                    opprettetTidspunkt
-                                    sorteringTidspunkt
-                                    id
-                                    virksomhet {
-                                        virksomhetsnummer
-                                        navn
-                                    }
-                                    sak {
-                                        tittel
-                                    }
-                                }
-                            }
-                        }
-                    }
-                """.trimIndent()
-            )
+            val response = engine.queryNotifikasjonerJson()
 
             it("response inneholder riktig data") {
                 response.getTypedContent<List<BrukerAPI.Notifikasjon>>("notifikasjoner/notifikasjoner").let {

@@ -11,17 +11,17 @@ import java.util.*
 
 class BrukerRepositorySearchTest : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val repo = BrukerRepositoryImpl(database)
+    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("BrukerRepositoryImpl#hentSaker") {
-        repo.insertSak("1", "Refusjon graviditet - Gerd - 112233")
-        repo.insertSak("2", "Refusjon kronisk syk - Gerd - 112233")
-        repo.insertSak("3", "Refusjon kronisk syk - Gerd - 223344")
-        repo.insertSak("4", "Refusjon kronisk syk - Per - 123456")
-        repo.insertSak("5", "Sykemelding - Per - 123456")
-        repo.insertSak("6", "Sykemelding - Gerd - 123456")
-        repo.insertSak("7", "Sykemelding - Pål - 111222")
-        repo.insertSak("8", "Litt rare symboler // \\x % _")
+        brukerRepository.insertSak("1", "Refusjon graviditet - Gerd - 112233")
+        brukerRepository.insertSak("2", "Refusjon kronisk syk - Gerd - 112233")
+        brukerRepository.insertSak("3", "Refusjon kronisk syk - Gerd - 223344")
+        brukerRepository.insertSak("4", "Refusjon kronisk syk - Per - 123456")
+        brukerRepository.insertSak("5", "Sykemelding - Per - 123456")
+        brukerRepository.insertSak("6", "Sykemelding - Gerd - 123456")
+        brukerRepository.insertSak("7", "Sykemelding - Pål - 111222")
+        brukerRepository.insertSak("8", "Litt rare symboler // \\x % _")
 
         withData(
             null to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
@@ -77,7 +77,7 @@ class BrukerRepositorySearchTest : DescribeSpec({
             // Other test cases?
             // - turkish i where upper-lower round-trip is not identity function
         ) { (query, result) ->
-            repo.search(query) shouldContainExactlyInAnyOrder result.map { uuid(it) }
+            brukerRepository.search(query) shouldContainExactlyInAnyOrder result.map { uuid(it) }
         }
     }
 })
@@ -107,35 +107,21 @@ private suspend fun BrukerRepositoryImpl.search(query: String?): List<UUID> =
         .map { it.sakId }
 
 private suspend fun BrukerRepositoryImpl.insertSak(id: String, tekst: String) {
-    this.oppdaterModellEtterHendelse(
-        HendelseModel.SakOpprettet(
-            hendelseId = uuid(id),
-            virksomhetsnummer = "1",
-            produsentId = "",
-            kildeAppNavn = "",
-            sakId = uuid(id),
-            grupperingsid = uuid(id).toString(),
-            merkelapp = "",
-            mottakere = listOf(HendelseModel.AltinnMottaker("1", "1", "1")),
-            tittel = tekst,
-            lenke = "",
-            oppgittTidspunkt = null,
-            mottattTidspunkt = OffsetDateTime.now(),
-            hardDelete = null
-        )
-    )
-    this.oppdaterModellEtterHendelse(HendelseModel.NyStatusSak(
-        hendelseId = UUID.randomUUID(),
+    val sak = sakOpprettet(
         virksomhetsnummer = "1",
-        produsentId = "",
-        kildeAppNavn = "",
+        merkelapp = "",
         sakId = uuid(id),
+        grupperingsid = uuid(id).toString(),
+        mottakere = listOf(HendelseModel.AltinnMottaker("1", "1", "1")),
+        tittel = tekst,
+        mottattTidspunkt = OffsetDateTime.now(),
+    )
+    nyStatusSak(
+        sak = sak,
+        virksomhetsnummer = "1",
         status = HendelseModel.SakStatus.MOTTATT,
         overstyrStatustekstMed = null,
-        oppgittTidspunkt = null,
         mottattTidspunkt = OffsetDateTime.now(),
         idempotensKey = "x",
-        hardDelete = null,
-        nyLenkeTilSak = null,
-    ))
+    )
 }
