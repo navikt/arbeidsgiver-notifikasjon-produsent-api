@@ -10,12 +10,12 @@ import java.util.*
 
 class BrukerRepositoryNærmesteLederTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val model = BrukerRepositoryImpl(database)
+    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("BrukerRepository NærmesteLeder") {
         context("når mottar slett hendelse uten at det er noe å slette") {
             val narmesteLederFnr = "42"
-            model.oppdaterModellEtterNærmesteLederLeesah(
+            brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
                     narmesteLederId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003"),
                     fnr = "43",
@@ -32,7 +32,7 @@ class BrukerRepositoryNærmesteLederTests : DescribeSpec({
 
         context("når mottar to forskjellige koblinger") {
             val narmesteLederId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
-            model.oppdaterModellEtterNærmesteLederLeesah(
+            brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
                     narmesteLederId = narmesteLederId,
                     fnr = "1",
@@ -41,7 +41,7 @@ class BrukerRepositoryNærmesteLederTests : DescribeSpec({
                     aktivTom = null
                 )
             )
-            model.oppdaterModellEtterNærmesteLederLeesah(
+            brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
                     narmesteLederId = narmesteLederId,
                     fnr = "2",

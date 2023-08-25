@@ -13,7 +13,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 import java.util.*
@@ -167,9 +166,10 @@ object BrukerAPI {
 
     @JsonTypeName("OppgaveTidslinjeElement")
     data class OppgaveTidslinjeElement(
-        val tittel: String,
+        val id: UUID,
+        val tekst: String,
         val opprettetTidspunkt: OffsetDateTime,
-        val status: Notifikasjon.Oppgave.Tilstand,
+        val tilstand: Notifikasjon.Oppgave.Tilstand,
         val paaminnelseTidspunkt: OffsetDateTime?,
         val utgaattTidspunkt: OffsetDateTime?,
         val utfoertTidspunkt: OffsetDateTime?,
@@ -178,7 +178,8 @@ object BrukerAPI {
 
     @JsonTypeName("BeskjedTidslinjeElement")
     data class BeskjedTidslinjeElement(
-        val tittel: String,
+        val id: UUID,
+        val tekst: String,
         val opprettetTidspunkt: OffsetDateTime,
     ) : TidslinjeElement()
 
@@ -385,9 +386,9 @@ object BrukerAPI {
                 limit = env.getArgumentOrDefault("limit", 3) ?: 3,
                 oppgaveTilstand = env.getTypedArgumentOrNull("oppgaveTilstand"),
             )
-            val berikelser = brukerRepository.berikSaker(sakerResultat.saker)
-                .associateBy { it.sakId }
+            val berikelser = brukerRepository.berikSaker(sakerResultat.saker, context.fnr, tilganger)
             val saker = sakerResultat.saker.map {
+                val berikelse = berikelser[it.sakId]
                 Sak(
                     id = it.sakId,
                     tittel = it.tittel,
@@ -396,7 +397,7 @@ object BrukerAPI {
                     virksomhet = Virksomhet(
                         virksomhetsnummer = it.virksomhetsnummer,
                     ),
-                    sisteStatus = when (val sisteStatus = berikelser[it.sakId]?.sisteStatus) {
+                    sisteStatus = when (val sisteStatus = berikelse?.sisteStatus) {
                         null -> SakStatus(
                             type = BrukerAPI.SakStatusType.MOTTATT,
                             tekst = BrukerAPI.SakStatusType.MOTTATT.visningsTekst,
@@ -418,7 +419,25 @@ object BrukerAPI {
                         frist = o.frist,
                         paaminnelseTidspunkt = o.paaminnelseTidspunkt
                     )},
-                    tidslinje = emptyList(), // TODO: implementer tidslinje
+                    tidslinje = berikelse?.tidslinje.orEmpty().map {element ->
+                        when (element) {
+                            is BrukerModel.TidslinjeElement.Oppgave -> OppgaveTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+                                opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                                tilstand = element.tilstand.tilBrukerAPI(),
+                                paaminnelseTidspunkt = element.paaminnelseTidspunkt?.atOffset(UTC),
+                                utgaattTidspunkt = element.utgaattTidspunkt?.atOffset(UTC),
+                                utfoertTidspunkt = element.utfoertTidspunkt?.atOffset(UTC),
+                                frist = element.frist,
+                            )
+                            is BrukerModel.TidslinjeElement.Beskjed -> BeskjedTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+                                opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                            )
+                        }
+                    }
                 )
             }
             sakerHentetCount.increment(saker.size.toDouble())

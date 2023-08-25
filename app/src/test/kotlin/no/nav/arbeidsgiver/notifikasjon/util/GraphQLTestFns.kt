@@ -27,7 +27,7 @@ inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T 
     val errors = getGraphqlErrors()
     if (errors.isEmpty()) {
         val tree = laxObjectMapper.readTree(this.content!!)
-        logger().info("content: $tree")
+        logger().error("content: $tree")
         val dataNode = tree.get("data")
 
         return if (name.startsWith("$")) {

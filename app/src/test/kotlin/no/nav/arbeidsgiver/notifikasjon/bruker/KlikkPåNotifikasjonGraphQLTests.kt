@@ -27,11 +27,11 @@ import java.time.Instant
 import java.util.*
 
 class KlikkPåNotifikasjonGraphQLTests : DescribeSpec({
-    val queryModel = mockk<BrukerRepositoryImpl>(relaxed = true)
+    val brukerRepository = mockk<BrukerRepositoryImpl>(relaxed = true)
     val kafkaProducer = mockk<HendelseProdusent>()
 
     val engine = ktorBrukerTestServer(
-        brukerRepository = queryModel,
+        brukerRepository = brukerRepository,
         kafkaProducer = kafkaProducer,
     )
 
@@ -44,7 +44,7 @@ class KlikkPåNotifikasjonGraphQLTests : DescribeSpec({
     describe("bruker-api: rapporterer om at notifikasjon er klikket på") {
         context("uklikket-notifikasjon eksisterer for bruker") {
             val id = UUID.fromString("09d5a598-b31a-11eb-8529-0242ac130003")
-            coEvery { queryModel.virksomhetsnummerForNotifikasjon(id) } returns "1234"
+            coEvery { brukerRepository.virksomhetsnummerForNotifikasjon(id) } returns "1234"
 
             val httpResponse = engine.post(
                 "/api/graphql",
@@ -100,7 +100,7 @@ class KlikkPåNotifikasjonGraphQLTests : DescribeSpec({
 
             it("Database oppdaters") {
                 coVerify {
-                    queryModel.oppdaterModellEtterHendelse(
+                    brukerRepository.oppdaterModellEtterHendelse(
                         withArg(brukerKlikketMatcher), any()
                     )
                 }

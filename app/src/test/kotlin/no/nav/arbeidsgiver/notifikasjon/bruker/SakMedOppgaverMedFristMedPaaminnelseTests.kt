@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.FRIST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
@@ -12,14 +12,14 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val queryModel = BrukerRepositoryImpl(database)
+    val brukerRepository = BrukerRepositoryImpl(database)
 
     val engine = ktorBrukerTestServer(
-        brukerRepository = queryModel,
+        brukerRepository = brukerRepository,
         altinn = AltinnStub { _, _ ->
             BrukerModel.Tilganger(
                 listOf(
@@ -40,8 +40,7 @@ class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
     ) {
         val oppgaveId = UUID.randomUUID()
 
-        HendelseModel.OppgaveOpprettet(
-            hendelseId = oppgaveId,
+        val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(
             notifikasjonId = oppgaveId,
             virksomhetsnummer = "1",
             produsentId = "1",
@@ -63,43 +62,21 @@ class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
             hardDelete = null,
             frist = frist,
             påminnelse = paaminnelse,
-        ).also { queryModel.oppdaterModellEtterHendelse(it) }
+        )
 
-        HendelseModel.PåminnelseOpprettet(
-            virksomhetsnummer = "1",
-            hendelseId = UUID.randomUUID(),
-            produsentId = "1",
-            kildeAppNavn = "1",
-            notifikasjonId = oppgaveId,
+        brukerRepository.påminnelseOpprettet(
+            oppgave = oppgaveOpprettet,
             opprettetTidpunkt = Instant.now(),
-            oppgaveOpprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00").toInstant(),
             frist = frist,
             tidspunkt = paaminnelse.tidspunkt,
-            eksterneVarsler = listOf(),
-        ).also { queryModel.oppdaterModellEtterHendelse(it) }
+        )
     }
-
-    fun opprettStatus(id: UUID) = HendelseModel.NyStatusSak(
-        hendelseId = UUID.randomUUID(),
-        virksomhetsnummer = "1",
-        produsentId = "1",
-        kildeAppNavn = "1",
-        sakId = id,
-        status = HendelseModel.SakStatus.MOTTATT,
-        overstyrStatustekstMed = null,
-        oppgittTidspunkt = null,
-        mottattTidspunkt = OffsetDateTime.now(),
-        idempotensKey = IdempotenceKey.initial(),
-        hardDelete = null,
-        nyLenkeTilSak = null,
-    )
 
     suspend fun opprettSak(
         id: String,
     ): String {
         val uuid = uuid(id)
-        val sakOpprettet = HendelseModel.SakOpprettet(
-            hendelseId = uuid,
+        val sakOpprettet = brukerRepository.sakOpprettet(
             virksomhetsnummer = "1",
             produsentId = "1",
             kildeAppNavn = "1",
@@ -120,8 +97,20 @@ class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
             hardDelete = null,
         )
 
-        queryModel.oppdaterModellEtterHendelse(sakOpprettet)
-        queryModel.oppdaterModellEtterHendelse(opprettStatus(uuid))
+        brukerRepository.nyStatusSak(
+            sakOpprettet,
+            hendelseId = UUID.randomUUID(),
+            virksomhetsnummer = "1",
+            produsentId = "1",
+            kildeAppNavn = "1",
+            status = HendelseModel.SakStatus.MOTTATT,
+            overstyrStatustekstMed = null,
+            oppgittTidspunkt = null,
+            mottattTidspunkt = OffsetDateTime.now(),
+            idempotensKey = IdempotenceKey.initial(),
+            hardDelete = null,
+            nyLenkeTilSak = null,
+        )
 
         return uuid.toString()
     }
@@ -142,28 +131,11 @@ class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
         )
 
         val res =
-            engine.hentSaker().getTypedContent<List<OffsetDateTime>>("$.saker.saker.*.oppgaver.*.paaminnelseTidspunkt")
+            engine.querySakerJson(virksomhetsnummer = "1", limit = 10, sortering = FRIST)
+                .getTypedContent<List<OffsetDateTime>>("$.saker.saker.*.oppgaver.*.paaminnelseTidspunkt")
 
         res.first().inOsloLocalDateTime() shouldBe påminnelsestidspunktLocalDateTime
     }
 }
 )
-
-private fun TestApplicationEngine.hentSaker(): TestApplicationResponse =
-    brukerApi(
-        """
-            {
-                saker (virksomhetsnummer: "1", limit: 10 , sortering: FRIST ){
-                    saker {
-                        id
-                        oppgaver {
-                            paaminnelseTidspunkt   
-                            frist
-                            tilstand
-                        }
-                    }
-                }
-            }
-        """.trimIndent()
-    )
 

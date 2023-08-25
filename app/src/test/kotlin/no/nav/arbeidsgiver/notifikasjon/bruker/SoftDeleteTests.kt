@@ -3,24 +3,19 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
-import java.time.ZoneOffset.UTC
-import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
 class SoftDeleteTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val queryModel = BrukerRepositoryImpl(database)
+    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("SoftDelete av notifikasjon") {
-        val uuid1 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
-        val uuid2 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130004")
 
         val mottaker = NærmesteLederMottaker(
             naermesteLederFnr = "314",
@@ -28,37 +23,18 @@ class SoftDeleteTests : DescribeSpec({
             virksomhetsnummer = "1337"
         )
 
-        val opprettEvent = fun (id: UUID) = BeskjedOpprettet(
-            merkelapp = "foo",
-            eksternId = id.toString(),
+
+        val beskjed1 = brukerRepository.beskjedOpprettet(
             mottakere = listOf(mottaker),
-            hendelseId = id,
-            notifikasjonId = id,
-            tekst = "teste",
-            grupperingsid = "gr1",
-            lenke = "foo.no/bar",
-            opprettetTidspunkt = OffsetDateTime.now(UTC).truncatedTo(MILLIS),
             virksomhetsnummer = mottaker.virksomhetsnummer,
-            kildeAppNavn = "",
-            produsentId = "",
-            eksterneVarsler = listOf(),
-            hardDelete = null,
         )
-
-        val softDeleteEvent = SoftDelete(
-            hendelseId = UUID.randomUUID(),
-            aggregateId = uuid1,
+        val beskjed2 = brukerRepository.beskjedOpprettet(
+            mottakere = listOf(mottaker),
             virksomhetsnummer = mottaker.virksomhetsnummer,
-            deletedAt = OffsetDateTime.MAX,
-            kildeAppNavn = "",
-            produsentId = "",
         )
-
 
         it("oppretter to beskjeder i databasen") {
-            queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid1))
-            queryModel.oppdaterModellEtterHendelse(opprettEvent(uuid2))
-            queryModel.oppdaterModellEtterNærmesteLederLeesah(
+            brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
                     narmesteLederId = uuid("432"),
                     fnr = mottaker.ansattFnr,
@@ -69,25 +45,34 @@ class SoftDeleteTests : DescribeSpec({
             )
 
             val notifikasjoner =
-                queryModel.hentNotifikasjoner(
+                brukerRepository.hentNotifikasjoner(
                     mottaker.naermesteLederFnr,
                     Tilganger.EMPTY,
                 )
                     .map { it.id }
                     .sorted()
 
-            notifikasjoner shouldContainExactly listOf(uuid1, uuid2).sorted()
+            notifikasjoner shouldContainExactly listOf(beskjed1.notifikasjonId, beskjed2.notifikasjonId).sorted()
         }
 
         it("sletter kun ønsket beskjed") {
-            queryModel.oppdaterModellEtterHendelse(softDeleteEvent)
-            val notifikasjonerEtterSletting = queryModel.hentNotifikasjoner(
+            brukerRepository.oppdaterModellEtterHendelse(
+                SoftDelete(
+                    hendelseId = UUID.randomUUID(),
+                    aggregateId = beskjed1.notifikasjonId,
+                    virksomhetsnummer = mottaker.virksomhetsnummer,
+                    deletedAt = OffsetDateTime.MAX,
+                    kildeAppNavn = "",
+                    produsentId = "",
+                )
+            )
+            val notifikasjonerEtterSletting = brukerRepository.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
                 Tilganger.EMPTY,
             )
                 .map { it.id }
 
-            notifikasjonerEtterSletting shouldContainExactly listOf(uuid2)
+            notifikasjonerEtterSletting shouldContainExactly listOf(beskjed2.notifikasjonId)
         }
     }
 })

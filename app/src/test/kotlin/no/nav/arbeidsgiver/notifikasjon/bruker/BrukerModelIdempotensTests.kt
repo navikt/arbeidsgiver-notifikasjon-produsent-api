@@ -9,16 +9,16 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
 class BrukerModelIdempotensTests : DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
-    val queryModel = BrukerRepositoryImpl(database)
+    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("BrukerModel Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
-            queryModel.oppdaterModellEtterHendelse(hendelse)
-            queryModel.oppdaterModellEtterHendelse(hendelse)
+            brukerRepository.oppdaterModellEtterHendelse(hendelse)
+            brukerRepository.oppdaterModellEtterHendelse(hendelse)
         }
         context("NyBeskjed to ganger") {
-            queryModel.oppdaterModellEtterHendelse(EksempelHendelse.BeskjedOpprettet)
-            queryModel.oppdaterModellEtterHendelse(EksempelHendelse.BeskjedOpprettet)
+            brukerRepository.oppdaterModellEtterHendelse(EksempelHendelse.BeskjedOpprettet)
+            brukerRepository.oppdaterModellEtterHendelse(EksempelHendelse.BeskjedOpprettet)
 
             it("ingen duplikat mottaker") {
                 val antallMottakere = database.nonTransactionalExecuteQuery("""
@@ -36,11 +36,11 @@ class BrukerModelIdempotensTests : DescribeSpec({
     describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {
-                queryModel.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
+                brukerRepository.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
                     virksomhetsnummer = hendelse.virksomhetsnummer,
                     aggregateId = hendelse.aggregateId,
                 ))
-                queryModel.oppdaterModellEtterHendelse(hendelse)
+                brukerRepository.oppdaterModellEtterHendelse(hendelse)
             }
         }
     }
