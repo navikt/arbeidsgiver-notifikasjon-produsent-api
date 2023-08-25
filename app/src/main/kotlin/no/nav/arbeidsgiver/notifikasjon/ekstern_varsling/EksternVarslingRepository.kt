@@ -615,11 +615,14 @@ class EksternVarslingRepository(
         }.first()
     }
 
-    suspend fun waitQueueCount(): Int {
+    suspend fun waitQueueCount(): Pair<Int, Int> {
         return database.nonTransactionalExecuteQuery("""
-            select count(*) as count from wait_queue 
+            select
+                count(case when resume_job_at <= now() then 1 end) as past,
+                count(case when resume_job_at > now() then 1 end) as future
+            from wait_queue
         """) {
-            this.getInt("count")
+            this.getInt("past") to this.getInt("future")
         }.first()
     }
 

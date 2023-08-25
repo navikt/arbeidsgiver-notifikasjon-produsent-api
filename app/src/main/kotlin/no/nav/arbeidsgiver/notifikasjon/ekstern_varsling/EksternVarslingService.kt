@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -105,7 +106,8 @@ class EksternVarslingService(
     private val log = logger()
     private val emergencyBreakGauge = Metrics.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
     private val jobQueueSizeGauge = Metrics.meterRegistry.gauge("jobqueue.size", AtomicInteger(0))!!
-    private val waitQueueSizeGauge = Metrics.meterRegistry.gauge("waitqueue.size", AtomicInteger(0))!!
+    private val waitQueuePastSizeGauge = Metrics.meterRegistry.gauge("waitqueue.size", Tags.of("resume_job_at", "past"), AtomicInteger(0))!!
+    private val waitQueueFutureSizeGauge = Metrics.meterRegistry.gauge("waitqueue.size", Tags.of("resume_job_at", "future"), AtomicInteger(0))!!
 
     fun start(coroutineScope: CoroutineScope): Job {
         return coroutineScope.launch {
@@ -153,7 +155,10 @@ class EksternVarslingService(
                 pauseAfterEach = Duration.ofMinutes(1)
             ) {
                 jobQueueSizeGauge.set(eksternVarslingRepository.jobQueueCount())
-                waitQueueSizeGauge.set(eksternVarslingRepository.waitQueueCount())
+                eksternVarslingRepository.waitQueueCount().let { (past, future) ->
+                    waitQueuePastSizeGauge.set(past)
+                    waitQueueFutureSizeGauge.set(future)
+                }
                 log.info("gauge-oppdatering vellykket")
             }
 
