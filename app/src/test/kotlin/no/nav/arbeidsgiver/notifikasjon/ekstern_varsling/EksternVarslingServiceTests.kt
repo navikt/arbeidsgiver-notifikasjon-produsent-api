@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
+import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -21,9 +22,8 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalTime::class)
 class EksternVarslingServiceTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
     val repository = EksternVarslingRepository(database)
@@ -94,13 +94,13 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
-                eventually(kotlin.time.Duration.seconds(5)) {
+                eventually(5.seconds) {
                     meldingSendt.get() shouldBe true
                 }
             }
 
             it("message received from kafka") {
-                eventually(kotlin.time.Duration.seconds(5)) {
+                eventually(5.seconds) {
                     val vellykedeVarsler = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
                     vellykedeVarsler shouldNot beEmpty()
                 }
@@ -148,7 +148,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
-                eventually(kotlin.time.Duration.seconds(5)) {
+                eventually(5.seconds) {
                     meldingSendt.get() shouldBe true
                 }
             }
@@ -195,8 +195,8 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("reschedules") {
-                eventually(kotlin.time.Duration.seconds(5)) {
-                    repository.waitQueueCount() shouldBe 1
+                eventually(5.seconds) {
+                    repository.waitQueueCount() shouldNotBe (0 to 0)
                 }
             }
 
@@ -242,7 +242,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
-                eventually(kotlin.time.Duration.seconds(5)) {
+                eventually(5.seconds) {
                     meldingSendt.get() shouldBe true
                 }
             }
@@ -289,8 +289,8 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("reskjedduleres") {
-                eventually(kotlin.time.Duration.seconds(5)) {
-                    repository.waitQueueCount() shouldBe 1
+                eventually(5.seconds) {
+                    repository.waitQueueCount() shouldNotBe (0 to 0)
                 }
             }
 
@@ -335,7 +335,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
-                eventually(kotlin.time.Duration.seconds(5)) {
+                eventually(5.seconds) {
                     meldingSendt.get() shouldBe true
                 }
             }
@@ -381,8 +381,8 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("reschedules") {
-                eventually(kotlin.time.Duration.seconds(5)) {
-                    repository.waitQueueCount() shouldBe 1
+                eventually(5.seconds) {
+                    repository.waitQueueCount() shouldNotBe (0 to 0)
                 }
             }
 
