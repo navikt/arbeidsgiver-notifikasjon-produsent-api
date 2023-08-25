@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ifNotBlank
 import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
 
 /** Denne filen inneholder implementasjoner av graphql-endepunktene, med alle variabler, og som
@@ -84,8 +85,8 @@ private data class Parameter(
 )
 
 fun TestApplicationEngine.querySakerJson(
-    virksomhetsnumre: List<String>? = null,
     virksomhetsnummer: String? = null,
+    virksomhetsnumre: List<String>? = if (virksomhetsnummer == null) listOf(TEST_VIRKSOMHET_1) else null,
     offset: Int? = null,
     limit: Int? = null,
     tekstsoek: String? = null,
@@ -104,11 +105,13 @@ fun TestApplicationEngine.querySakerJson(
         Parameter("sortering", "SakSortering", sortering),
     ).filter { (_, _, value) -> value != null }
     val queryParameters = parameters.joinToString(", ") { (navn, sort) -> "\$$navn: $sort" }
+        .ifNotBlank { "($it)" }
     val sakerArguments = parameters.joinToString(", ") { (navn) -> "$navn: \$$navn" }
+        .ifNotBlank { "($it)" }
     return brukerApi(GraphQLRequest(
         """
-    query hentSaker($queryParameters ) {
-        saker($sakerArguments) {
+    query hentSaker$queryParameters {
+        saker$sakerArguments {
             saker {
                 id
                 tittel
@@ -130,16 +133,20 @@ fun TestApplicationEngine.querySakerJson(
                     paaminnelseTidspunkt
                 }
                 tidslinje {
+                    __typename
                     ...on OppgaveTidslinjeElement {
-                        tittel
-                        status
+                        id
+                        tekst
+                        tilstand
+                        opprettetTidspunkt
                         paaminnelseTidspunkt
                         utgaattTidspunkt
                         utfoertTidspunkt
                         frist
                     }
                     ...on BeskjedTidslinjeElement {
-                        tittel
+                        id
+                        tekst
                         opprettetTidspunkt
                     }
                 }

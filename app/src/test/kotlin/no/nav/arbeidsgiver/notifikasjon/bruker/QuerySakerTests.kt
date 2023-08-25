@@ -384,10 +384,10 @@ private fun TestApplicationEngine.hentSaker(
     limit: Int? = null,
     sortering: BrukerAPI.SakSortering = BrukerAPI.SakSortering.OPPDATERT,
 ) = querySakerJson(
-        virksomhetsnumre = virksomhetsnumre,
-        sakstyper = sakstyper,
-        tekstsoek = tekstsoek,
-        offset = offset,
-        limit = limit,
-        sortering = sortering,
-    )
+    virksomhetsnumre = virksomhetsnumre,
+    sakstyper = sakstyper,
+    tekstsoek = tekstsoek,
+    offset = offset,
+    limit = limit,
+    sortering = sortering,
+)
