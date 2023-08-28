@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
@@ -19,6 +20,7 @@ import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import java.sql.ResultSet
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
@@ -197,8 +199,17 @@ class EksternVarslingServiceTests : DescribeSpec({
             it("reschedules") {
                 eventually(5.seconds) {
                     repository.waitQueueCount() shouldNotBe (0 to 0)
+                    database.nonTransactionalExecuteQuery("""
+                        select * from wait_queue where varsel_id = '${uuid("2")}'
+                    """) { asMap() } shouldNot beEmpty()
+                    database.nonTransactionalExecuteQuery(
+                        """
+                        select * from job_queue where varsel_id = '${uuid("2")}'
+                    """
+                    ) { asMap() } should beEmpty()
                 }
             }
+
 
             serviceJob.cancel()
         }
@@ -390,3 +401,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
     }
 })
+
+private fun ResultSet.asMap() = (1..this.metaData.columnCount).associate {
+    this.metaData.getColumnName(it) to this.getObject(it)
+}

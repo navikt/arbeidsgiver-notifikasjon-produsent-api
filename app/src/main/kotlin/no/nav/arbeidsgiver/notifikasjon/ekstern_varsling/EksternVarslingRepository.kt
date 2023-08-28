@@ -581,12 +581,23 @@ class EksternVarslingRepository(
     }
 
     suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime) {
-        database.nonTransactionalExecuteUpdate("""
-            insert into wait_queue (varsel_id, resume_job_at) 
-            values (?, ?)
-        """) {
-            uuid(varselId)
-            timestamp_without_timezone(resumeAt)
+        database.transaction {
+            executeUpdate(
+                """
+                insert into wait_queue (varsel_id, resume_job_at) 
+                values (?, ?)
+                """
+            ) {
+                uuid(varselId)
+                timestamp_without_timezone(resumeAt)
+            }
+            executeUpdate(
+                """
+                delete from job_queue where varsel_id = ?
+                """
+            ) {
+                uuid(varselId)
+            }
         }
     }
 
