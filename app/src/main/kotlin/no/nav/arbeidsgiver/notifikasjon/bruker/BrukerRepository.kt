@@ -451,6 +451,10 @@ class BrukerRepositoryImpl(
         fnr: String,
         tilganger: Tilganger,
     ): Map<UUID, BrukerModel.Sakberikelse> {
+        if (saker.isEmpty()) {
+            return mapOf()
+        }
+
         val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
             AltinnMottaker(
                 serviceCode = it.servicecode,
