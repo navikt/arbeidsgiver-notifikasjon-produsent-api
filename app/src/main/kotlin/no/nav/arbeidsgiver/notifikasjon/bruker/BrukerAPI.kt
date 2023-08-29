@@ -389,6 +389,15 @@ object BrukerAPI {
             val berikelser = brukerRepository.berikSaker(sakerResultat.saker, context.fnr, tilganger)
             val saker = sakerResultat.saker.map {
                 val berikelse = berikelser[it.sakId]
+                val oppgaver = berikelse?.tidslinje.orEmpty()
+                    .filterIsInstance<BrukerModel.TidslinjeElement.Oppgave>()
+                    .sortedWith { left, right ->
+                        when {
+                            left.frist == null -> 1
+                            right.frist == null -> -1
+                            else -> left.frist.compareTo(right.frist)
+                        }
+                    }
                 Sak(
                     id = it.sakId,
                     tittel = it.tittel,
@@ -411,13 +420,14 @@ object BrukerAPI {
                                 tidspunkt = sisteStatus.tidspunkt
                             )
                         }
-
                     },
-                    frister = it.oppgaver.filter { o -> o.tilstand == BrukerModel.Oppgave.Tilstand.NY } .map { o -> o.frist },
-                    oppgaver = it.oppgaver.map { o -> OppgaveMetadata(
+                    frister = oppgaver
+                        .filter { it.tilstand == BrukerModel.Oppgave.Tilstand.NY }
+                        .map { it.frist },
+                    oppgaver = oppgaver.map { o -> OppgaveMetadata(
                         tilstand = o.tilstand.tilBrukerAPI(),
                         frist = o.frist,
-                        paaminnelseTidspunkt = o.paaminnelseTidspunkt
+                        paaminnelseTidspunkt = o.paaminnelseTidspunkt?.atOffset(UTC),
                     )},
                     tidslinje = berikelse?.tidslinje.orEmpty().map {element ->
                         when (element) {

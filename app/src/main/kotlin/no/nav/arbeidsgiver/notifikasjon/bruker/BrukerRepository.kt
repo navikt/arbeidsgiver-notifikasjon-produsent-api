@@ -356,16 +356,7 @@ class BrukerRepositoryImpl(
                                 sist_endret_tidspunkt,
                                 opprettet_tidspunkt,
                                 count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
-                                min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist,
-                                case
-                                    when count(*) filter (where oppgave_tilstand is not null) = 0 then '[]'::jsonb
-                                    else jsonb_agg(
-                                        jsonb_build_object(
-                                            'tilstand', oppgave_tilstand,
-                                            'frist', oppgave_frist,
-                                            'paaminnelseTidspunkt', oppgave_paaminnelse_tidspunkt
-                                    ) order by oppgave_frist nulls last    
-                                ) end as oppgaver
+                                min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist
                             from mine_saker_filtrert
                             group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt, opprettet_tidspunkt
                         ),
@@ -376,7 +367,6 @@ class BrukerRepositoryImpl(
                                 sak.tittel,
                                 sak.lenke,
                                 sak.merkelapp,
-                                sak.oppgaver,
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
@@ -413,7 +403,6 @@ class BrukerRepositoryImpl(
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'merkelapp', merkelapp,
-                                'oppgaver', oppgaver,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
                             )), '[]'::jsonb) 
