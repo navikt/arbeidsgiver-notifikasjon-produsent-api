@@ -6,7 +6,10 @@ import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
@@ -45,6 +48,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
         ).also {
             brukerRepository.sakOpprettet(
                 grupperingsid = it.grupperingsid!!,
+                merkelapp = it.merkelapp,
                 mottakere = it.mottakere,
                 tittel = "Sakstittel for oppgave",
                 mottattTidspunkt = OffsetDateTime.now(),
@@ -58,41 +62,13 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
         ).also {
             brukerRepository.sakOpprettet(
                 grupperingsid = it.grupperingsid!!,
+                merkelapp = it.merkelapp,
                 mottakere = it.mottakere,
                 tittel = "Sakstittel for beskjed",
                 mottattTidspunkt = OffsetDateTime.now(),
             )
         }
         
-        val oppgaveMedSakFeilMottakerOpprettet = brukerRepository.oppgaveOpprettet(
-            grupperingsid = "4",
-            opprettetTidspunkt = opprettetTidspunkt.minusHours(4),
-            tekst = "oppgave med sak feil mottaker",
-            frist = LocalDate.parse("2007-12-03"),
-        ).also {
-            brukerRepository.sakOpprettet(
-                grupperingsid = it.grupperingsid!!,
-                virksomhetsnummer = TEST_VIRKSOMHET_2,
-                mottakere = listOf(TEST_MOTTAKER_2),
-                tittel = "Sakstittel for oppgave feil mottaker",
-                mottattTidspunkt = OffsetDateTime.now(),
-            )
-        }
-        
-        val beskjedMedSakMedFeilMottakerOpprettet = brukerRepository.beskjedOpprettet(
-            grupperingsid = "5",
-            opprettetTidspunkt = opprettetTidspunkt.minusHours(5),
-            tekst = "beskjed med sak feil mottaker",
-        ).also {
-            brukerRepository.sakOpprettet(
-                grupperingsid = it.grupperingsid!!,
-                virksomhetsnummer = TEST_VIRKSOMHET_2,
-                mottakere = listOf(TEST_MOTTAKER_2),
-                tittel = "Sakstittel for beskjed feil mottaker",
-                mottattTidspunkt = OffsetDateTime.now(),
-            )
-        }
-
         val response = engine.queryNotifikasjonerJson()
 
         it("response inneholder riktig data") {
@@ -115,15 +91,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
                     it.sak shouldNot beNull()
                     it.sak!!.tittel shouldBe "Sakstittel for beskjed"
                 }
-                (notifikasjoner[4] as BrukerAPI.Notifikasjon.Oppgave).let {
-                    it.id shouldBe oppgaveMedSakFeilMottakerOpprettet.aggregateId
-                    it.sak should beNull()
-                }
-                (notifikasjoner[5] as BrukerAPI.Notifikasjon.Beskjed).let {
-                    it.id shouldBe beskjedMedSakMedFeilMottakerOpprettet.aggregateId
-                    it.sak should beNull()
-                }
-                notifikasjoner shouldHaveSize 6
+                notifikasjoner shouldHaveSize 4
             }
         }
     }

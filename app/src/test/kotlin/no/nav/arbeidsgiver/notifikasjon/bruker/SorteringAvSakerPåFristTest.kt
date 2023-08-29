@@ -4,7 +4,10 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.FRIST
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
@@ -37,6 +40,7 @@ class SorteringAvSakerPåFristTest : DescribeSpec({
         for (frist in frister) {
             brukerRepository.oppgaveOpprettet(
                 grupperingsid = sak.grupperingsid,
+                merkelapp = sak.merkelapp,
                 frist = frist?.let { LocalDate.parse(it) },
                 opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
             )

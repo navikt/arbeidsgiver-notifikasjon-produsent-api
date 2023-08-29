@@ -21,15 +21,8 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getUuid
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ifNotBlank
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.LocalDate
@@ -78,8 +71,6 @@ interface BrukerRepository {
      */
     suspend fun berikSaker(
         saker: List<BrukerModel.Sak>,
-        fnr: String,
-        tilganger: Tilganger,
     ): Map<UUID, BrukerModel.Sakberikelse>
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
@@ -87,9 +78,7 @@ interface BrukerRepository {
     suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
     suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String>
     suspend fun hentSakerForNotifikasjoner(
-        grupperingsid: List<String>,
-        fnr: String,
-        tilganger: Tilganger
+        grupperinger: List<BrukerModel.Gruppering>
     ): Map<String, String>
 }
 
@@ -249,22 +238,10 @@ class BrukerRepositoryImpl(
                             join mine_altinntilganger using (virksomhet, service_code, service_edition)
                             where er.sak_id is not null
                         ),
-                        mine_altinn_notifikasjoner as (
-                            select er.notifikasjon_id
-                            from mottaker_altinn_enkeltrettighet er
-                            join mine_altinntilganger using (virksomhet, service_code, service_edition) 
-                            where 
-                                er.notifikasjon_id is not null
-                        ),
                         mine_digisyfo_saker as (
                             select sak_id
                             from mottaker_digisyfo_for_fnr
                             where fnr_leder = ? and virksomhet = any(?) and sak_id is not null
-                        ),
-                        mine_digisyfo_notifikasjoner as (
-                            select notifikasjon_id 
-                            from mottaker_digisyfo_for_fnr
-                            where fnr_leder = ? and notifikasjon_id is not null
                         ),
                         mine_sak_ider as (
                             (select * from mine_digisyfo_saker)
@@ -273,24 +250,10 @@ class BrukerRepositoryImpl(
                         ),
                         mine_saker as (
                             select s.*
-                                from mine_sak_ider as ms
-                                join sak as s on s.id = ms.sak_id
-                        ),
-                        mine_oppgaver as (
-                            select
-                                id,
-                                tilstand, 
-                                frist, 
-                                paaminnelse_tidspunkt,
-                                grupperingsid
-                            from notifikasjon
-                            where 
-                                type = 'OPPGAVE' and
-                                id in (
-                                        select * from mine_digisyfo_notifikasjoner
-                                            union
-                                        select * from mine_altinn_notifikasjoner
-                                )
+                            from mine_sak_ider as ms
+                            join sak_search as search on ms.sak_id = search.id
+                            join sak as s on s.id = ms.sak_id
+                            $tekstsoekSql
                         ),
                         mine_saker_med_oppgaver as (
                             select 
@@ -300,20 +263,17 @@ class BrukerRepositoryImpl(
                             o.frist as oppgave_frist, 
                             o.paaminnelse_tidspunkt as oppgave_paaminnelse_tidspunkt
                             from mine_saker s
-                            left join mine_oppgaver as o
-                                on o.grupperingsid = s.grupperingsid
-                        ),
-                        mine_saker_med_tekstsøk as (
-                            select s.*
-                            from mine_saker_med_oppgaver as s
-                            join sak_search as search on s.id = search.id
-                            $tekstsoekSql
+                            left join notifikasjon as o
+                                on 
+                                    o.merkelapp = s.merkelapp 
+                                    and o.grupperingsid = s.grupperingsid
+                                    and o.type = 'OPPGAVE'
                         ),
                         
                         -- Beregn antall saker pr. merkelap
                         mine_saker_oppgave_tilstandfiltrert as (
                             select * 
-                            from mine_saker_med_tekstsøk
+                            from mine_saker_med_oppgaver
                             where coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
                         ),
                         mine_merkelapper as (
@@ -327,7 +287,7 @@ class BrukerRepositoryImpl(
                         -- Beregn antall saker pr. oppgave-tilstand
                         mine_saker_sakstypefiltrert as (
                             select * 
-                            from mine_saker_med_tekstsøk
+                            from mine_saker_med_oppgaver
                             where coalesce(merkelapp = any(?), true)
                         ),
                         mine_oppgavetilstander as (
@@ -341,7 +301,7 @@ class BrukerRepositoryImpl(
                         
                         mine_saker_filtrert as (
                             select * 
-                            from mine_saker_med_tekstsøk
+                            from mine_saker_med_oppgaver
                             where coalesce(merkelapp = any(?), true)
                             and coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
                         ),
@@ -356,16 +316,7 @@ class BrukerRepositoryImpl(
                                 sist_endret_tidspunkt,
                                 opprettet_tidspunkt,
                                 count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
-                                min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist,
-                                case
-                                    when count(*) filter (where oppgave_tilstand is not null) = 0 then '[]'::jsonb
-                                    else jsonb_agg(
-                                        jsonb_build_object(
-                                            'tilstand', oppgave_tilstand,
-                                            'frist', oppgave_frist,
-                                            'paaminnelseTidspunkt', oppgave_paaminnelse_tidspunkt
-                                    ) order by oppgave_frist nulls last    
-                                ) end as oppgaver
+                                min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist
                             from mine_saker_filtrert
                             group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt, opprettet_tidspunkt
                         ),
@@ -376,7 +327,6 @@ class BrukerRepositoryImpl(
                                 sak.tittel,
                                 sak.lenke,
                                 sak.merkelapp,
-                                sak.oppgaver,
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
@@ -413,7 +363,6 @@ class BrukerRepositoryImpl(
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'merkelapp', merkelapp,
-                                'oppgaver', oppgaver,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
                             )), '[]'::jsonb) 
@@ -425,7 +374,6 @@ class BrukerRepositoryImpl(
                     jsonb(tilgangerAltinnMottaker)
                     text(fnr)
                     textArray(virksomhetsnummer)
-                    text(fnr)
                     tekstsoekElementer.forEach { text(it) }
                     nullableEnumAsTextList(oppgaveTilstand)
                     nullableTextArray(sakstyper)
@@ -448,57 +396,24 @@ class BrukerRepositoryImpl(
 
     override suspend fun berikSaker(
         saker: List<BrukerModel.Sak>,
-        fnr: String,
-        tilganger: Tilganger,
     ): Map<UUID, BrukerModel.Sakberikelse> {
         if (saker.isEmpty()) {
             return mapOf()
         }
 
-        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
-            AltinnMottaker(
-                serviceCode = it.servicecode,
-                serviceEdition = it.serviceedition,
-                virksomhetsnummer = it.virksomhet
-            )
-        }
         val tidslinjer = database.nonTransactionalExecuteQuery(
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
-            with 
-                mine_altinntilganger as (
-                    select * from json_to_recordset(?::json) 
-                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
-                ),
-                mine_altinn_notifikasjoner as (
-                    select er.notifikasjon_id
-                    from mottaker_altinn_enkeltrettighet er
-                    join mine_altinntilganger at on 
-                        er.virksomhet = at.virksomhetsnummer and
-                        er.service_code = at."serviceCode" and
-                        er.service_edition = at."serviceEdition"
-                    where
-                        er.notifikasjon_id is not null
-                ),
-                mine_digisyfo_notifikasjoner as (
-                    select notifikasjon_id 
-                    from mottaker_digisyfo_for_fnr
-                    where fnr_leder = ? and notifikasjon_id is not null
-                )
-            select * 
-            from notifikasjon
-            where
-                grupperingsid = any(?)
-                and id in (
-                    (select * from mine_digisyfo_notifikasjoner)
-                    union 
-                    (select * from mine_altinn_notifikasjoner)
-                )
+            with saker as (
+                select grupperingsid, merkelapp
+                from json_to_recordset(?::json) as (grupperingsid text, merkelapp text)
+            )
+            select n.* 
+            from notifikasjon n
+            join saker s on s.grupperingsid = n.grupperingsid and s.merkelapp = n.merkelapp
             """,
             {
-                jsonb(tilgangerAltinnMottaker)
-                text(fnr)
-                textArray(saker.mapNotNull { it.grupperingsid})
+                jsonb(saker.map { it.gruppering })
             }
         ) {
             when (val type = getString("type")) {
@@ -603,55 +518,21 @@ class BrukerRepositoryImpl(
     }
 
     override suspend fun hentSakerForNotifikasjoner(
-        grupperingsid: List<String>,
-        fnr: String,
-        tilganger: Tilganger
+        grupperinger: List<BrukerModel.Gruppering>,
     ): Map<String, String> = timer.coRecord {
-        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
-            AltinnMottaker(
-                serviceCode = it.servicecode,
-                serviceEdition = it.serviceedition,
-                virksomhetsnummer = it.virksomhet
-            )
-        }
-
         val rows = database.nonTransactionalExecuteQuery(
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
-                with 
-                    mine_altinntilganger as (
-                        select
-                            virksomhetsnummer as virksomhet,
-                            "serviceCode" as service_code,
-                            "serviceEdition" as service_edition from json_to_recordset(?::json) 
-                        as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
-                    ),
-                    mine_altinn_saker as (
-                        select er.sak_id
-                        from mottaker_altinn_enkeltrettighet er
-                        join mine_altinntilganger using (virksomhet, service_code, service_edition)
-                        where er.sak_id is not null
-                    ),
-                    mine_digisyfo_saker as (
-                        select sak_id
-                        from mottaker_digisyfo_for_fnr
-                        where fnr_leder = ? and sak_id is not null
-                    ),
-                    mine_sak_ider as (
-                        (select * from mine_digisyfo_saker)
-                        union 
-                        (select * from mine_altinn_saker)
-                    )
-                    
+                with gruppering as (
+                    select grupperingsid, merkelapp
+                    from json_to_recordset(?::json) as (grupperingsid text, merkelapp text)
+                )
                 select s.*
-                    from mine_sak_ider as ms
-                    join sak as s on s.id = ms.sak_id
-                    where s.grupperingsid = any(?)
+                    from sak s
+                    join gruppering g on g.grupperingsid = s.grupperingsid and g.merkelapp = s.merkelapp
                 """,
             {
-                jsonb(tilgangerAltinnMottaker)
-                text(fnr)
-                textArray(grupperingsid)
+                jsonb(grupperinger)
             }
         ) {
             getString("grupperingsid") to getString("tittel")

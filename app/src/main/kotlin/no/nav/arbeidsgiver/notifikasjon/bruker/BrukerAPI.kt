@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
@@ -301,9 +301,7 @@ object BrukerAPI {
 
             val notifikasjonerDb = brukerRepository.hentNotifikasjoner(context.fnr, tilganger)
             val sakstitler = brukerRepository.hentSakerForNotifikasjoner(
-                notifikasjonerDb.mapNotNull { it.grupperingsid },
-                context.fnr,
-                tilganger
+                notifikasjonerDb.mapNotNull { it.gruppering },
             )
             val notifikasjoner = notifikasjonerDb
                 .map { notifikasjon ->
@@ -386,9 +384,18 @@ object BrukerAPI {
                 limit = env.getArgumentOrDefault("limit", 3) ?: 3,
                 oppgaveTilstand = env.getTypedArgumentOrNull("oppgaveTilstand"),
             )
-            val berikelser = brukerRepository.berikSaker(sakerResultat.saker, context.fnr, tilganger)
+            val berikelser = brukerRepository.berikSaker(sakerResultat.saker)
             val saker = sakerResultat.saker.map {
                 val berikelse = berikelser[it.sakId]
+                val oppgaver = berikelse?.tidslinje.orEmpty()
+                    .filterIsInstance<BrukerModel.TidslinjeElement.Oppgave>()
+                    .sortedWith { left, right ->
+                        when {
+                            left.frist == null -> 1
+                            right.frist == null -> -1
+                            else -> left.frist.compareTo(right.frist)
+                        }
+                    }
                 Sak(
                     id = it.sakId,
                     tittel = it.tittel,
@@ -411,13 +418,14 @@ object BrukerAPI {
                                 tidspunkt = sisteStatus.tidspunkt
                             )
                         }
-
                     },
-                    frister = it.oppgaver.filter { o -> o.tilstand == BrukerModel.Oppgave.Tilstand.NY } .map { o -> o.frist },
-                    oppgaver = it.oppgaver.map { o -> OppgaveMetadata(
+                    frister = oppgaver
+                        .filter { it.tilstand == BrukerModel.Oppgave.Tilstand.NY }
+                        .map { it.frist },
+                    oppgaver = oppgaver.map { o -> OppgaveMetadata(
                         tilstand = o.tilstand.tilBrukerAPI(),
                         frist = o.frist,
-                        paaminnelseTidspunkt = o.paaminnelseTidspunkt
+                        paaminnelseTidspunkt = o.paaminnelseTidspunkt?.atOffset(UTC),
                     )},
                     tidslinje = berikelse?.tidslinje.orEmpty().map {element ->
                         when (element) {
