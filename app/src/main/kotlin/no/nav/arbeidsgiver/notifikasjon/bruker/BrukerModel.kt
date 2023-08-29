@@ -19,11 +19,20 @@ object BrukerModel {
         val id: UUID
         val virksomhetsnummer: String
         val sorteringTidspunkt: OffsetDateTime
+        val merkelapp: String
         val grupperingsid: String?
+
+        val gruppering: Gruppering?
+            get() = grupperingsid?.let {
+                Gruppering(
+                    grupperingsid = it,
+                    merkelapp = merkelapp,
+                )
+            }
     }
 
     data class Beskjed(
-        val merkelapp: String,
+        override val merkelapp: String,
         val tekst: String,
         override val grupperingsid: String? = null,
         val lenke: String,
@@ -38,7 +47,7 @@ object BrukerModel {
     }
 
     data class Oppgave(
-        val merkelapp: String,
+        override val merkelapp: String,
         val tekst: String,
         override val grupperingsid: String? = null,
         val lenke: String,
@@ -70,7 +79,18 @@ object BrukerModel {
         val lenke: String,
         val merkelapp: String,
         val opprettetTidspunkt: Instant,
-        val grupperingsid: String?,
+        val grupperingsid: String,
+    ) {
+        val gruppering: Gruppering
+            get() = Gruppering(
+                grupperingsid = grupperingsid,
+                merkelapp = merkelapp,
+            )
+    }
+
+    data class Gruppering(
+        val grupperingsid: String,
+        val merkelapp: String,
     )
 
     data class Sakberikelse(

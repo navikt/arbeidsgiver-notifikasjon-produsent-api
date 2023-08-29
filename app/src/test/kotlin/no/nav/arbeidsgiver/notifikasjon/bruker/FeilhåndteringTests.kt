@@ -33,7 +33,7 @@ class FeilhåndteringTests : DescribeSpec({
                 brukerRepository.hentNotifikasjoner(any(), any())
             } returns listOf()
             coEvery {
-                brukerRepository.hentSakerForNotifikasjoner(any(), any(), any())
+                brukerRepository.hentSakerForNotifikasjoner(any())
             } returns emptyMap()
 
             val response = engine.queryNotifikasjonerJson()

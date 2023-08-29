@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
@@ -301,9 +301,7 @@ object BrukerAPI {
 
             val notifikasjonerDb = brukerRepository.hentNotifikasjoner(context.fnr, tilganger)
             val sakstitler = brukerRepository.hentSakerForNotifikasjoner(
-                notifikasjonerDb.mapNotNull { it.grupperingsid },
-                context.fnr,
-                tilganger
+                notifikasjonerDb.mapNotNull { it.gruppering },
             )
             val notifikasjoner = notifikasjonerDb
                 .map { notifikasjon ->
@@ -386,7 +384,7 @@ object BrukerAPI {
                 limit = env.getArgumentOrDefault("limit", 3) ?: 3,
                 oppgaveTilstand = env.getTypedArgumentOrNull("oppgaveTilstand"),
             )
-            val berikelser = brukerRepository.berikSaker(sakerResultat.saker, context.fnr, tilganger)
+            val berikelser = brukerRepository.berikSaker(sakerResultat.saker)
             val saker = sakerResultat.saker.map {
                 val berikelse = berikelser[it.sakId]
                 val oppgaver = berikelse?.tidslinje.orEmpty()
