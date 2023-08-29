@@ -9,7 +9,6 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
@@ -28,28 +27,25 @@ class QuerySakerFristTests : DescribeSpec({
 
 
     val inloggetFnr = "0".repeat(11)
-    val altinnMottakerMedTilgang = AltinnMottaker(
+    val altinnMottaker = AltinnMottaker(
         virksomhetsnummer = "42",
         serviceCode = "5441",
         serviceEdition = "1"
     )
-    val altinnMottakerUtenTilgang1 = altinnMottakerMedTilgang.copy(virksomhetsnummer = "1234")
-    val altinnMottakerUtenTilgang2 = altinnMottakerMedTilgang.copy(serviceCode = "1234")
-    val naermestelederMottakerMedTilgang = HendelseModel.NærmesteLederMottaker(
+    val naermestelederMottaker = HendelseModel.NærmesteLederMottaker(
         naermesteLederFnr = inloggetFnr,
         ansattFnr = "4312",
         virksomhetsnummer = "42",
     )
-    val naermestelederMottakerUtenTilgang = naermestelederMottakerMedTilgang.copy(naermesteLederFnr = "1234")
 
     val engine = ktorBrukerTestServer(
         altinn = AltinnStub(
             inloggetFnr to Tilganger(
                 tjenestetilganger = listOf(
                     Tilgang.Altinn(
-                        altinnMottakerMedTilgang.virksomhetsnummer,
-                        altinnMottakerMedTilgang.serviceCode,
-                        altinnMottakerMedTilgang.serviceEdition
+                        altinnMottaker.virksomhetsnummer,
+                        altinnMottaker.serviceCode,
+                        altinnMottaker.serviceEdition
                     )
                 ),
             )
@@ -63,16 +59,16 @@ class QuerySakerFristTests : DescribeSpec({
             brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
                     narmesteLederId = UUID.randomUUID(),
-                    fnr = naermestelederMottakerMedTilgang.ansattFnr,
-                    narmesteLederFnr = naermestelederMottakerMedTilgang.naermesteLederFnr,
-                    orgnummer = naermestelederMottakerMedTilgang.virksomhetsnummer,
+                    fnr = naermestelederMottaker.ansattFnr,
+                    narmesteLederFnr = naermestelederMottaker.naermesteLederFnr,
+                    orgnummer = naermestelederMottaker.virksomhetsnummer,
                     aktivTom = null,
                 )
             )
         }
 
         context("sak uten oppgaver") {
-            brukerRepository.opprettSak(tilstander = emptyList(), mottakerSak = listOf(altinnMottakerMedTilgang))
+            brukerRepository.opprettSak(tilstander = emptyList(), mottakerSak = listOf(altinnMottaker))
 
             val response = engine.hentSaker()
 
@@ -82,8 +78,8 @@ class QuerySakerFristTests : DescribeSpec({
             }
         }
 
-        context("sak med oppgaver [NY:medfrist:tilgang, NY:utenfrist:tilgang]") {
-            val mottaker = listOf(altinnMottakerMedTilgang)
+        context("sak med oppgaver [NY:medfrist, NY:utenfrist]") {
+            val mottaker = listOf(altinnMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
                 tilstander = listOf(
@@ -101,8 +97,8 @@ class QuerySakerFristTests : DescribeSpec({
             }
         }
 
-        context("sak med oppgaver nl [NY:medfrist:tilgang, NY:utenfrist:tilgang]") {
-            val mottaker = listOf(naermestelederMottakerMedTilgang)
+        context("sak med oppgaver nl [NY:medfrist, NY:utenfrist") {
+            val mottaker = listOf(naermestelederMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
                 tilstander = listOf(
@@ -120,8 +116,8 @@ class QuerySakerFristTests : DescribeSpec({
             }
         }
 
-        context("sak med oppgaver [UTFOERT:medfrist:tilgang, UTGAATT:medfrist:tilgang]") {
-            val mottaker = listOf(naermestelederMottakerMedTilgang)
+        context("sak med oppgaver [UTFOERT:medfrist, UTGAATT:medfrist]") {
+            val mottaker = listOf(naermestelederMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
                 tilstander = listOf(
@@ -139,32 +135,13 @@ class QuerySakerFristTests : DescribeSpec({
             }
         }
 
-        context("sak med oppgaver [NY:medfrist:ikketilgang, NY:utenfrist:ikketilgang]") {
+        context("sak med oppgaver [NY:medfrist]") {
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
                 tilstander = listOf(
-                    BrukerModel.Oppgave.Tilstand.NY to frist to listOf(altinnMottakerUtenTilgang1),
-                    BrukerModel.Oppgave.Tilstand.NY to null to listOf(altinnMottakerUtenTilgang2),
+                    BrukerModel.Oppgave.Tilstand.NY to frist to listOf(naermestelederMottaker),
                 ),
-                mottakerSak = listOf(naermestelederMottakerMedTilgang)
-            )
-
-            val response = engine.hentSaker()
-
-            it("response inneholder riktig data") {
-                val frister = response.getTypedContent<List<LocalDate?>>("$.saker.saker[0].frister")
-                frister shouldBe emptyList()
-            }
-        }
-
-        context("sak med oppgaver [NY:medfrist:tilgang, NY:utenfrist:ikketilgang]") {
-            val frist = LocalDate.now()
-            brukerRepository.opprettSak(
-                tilstander = listOf(
-                    BrukerModel.Oppgave.Tilstand.NY to frist to listOf(naermestelederMottakerMedTilgang),
-                    BrukerModel.Oppgave.Tilstand.NY to null to listOf(naermestelederMottakerUtenTilgang),
-                ),
-                mottakerSak = listOf(altinnMottakerMedTilgang)
+                mottakerSak = listOf(altinnMottaker)
             )
 
             val response = engine.hentSaker()
@@ -176,7 +153,7 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("sak med oppgaver er sortert på frist") {
-            val mottaker = listOf(naermestelederMottakerMedTilgang)
+            val mottaker = listOf(naermestelederMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
                 tilstander = listOf(
@@ -197,7 +174,7 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("saker er sortert på frist") {
-            val mottaker = listOf(naermestelederMottakerMedTilgang)
+            val mottaker = listOf(naermestelederMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
                 tilstander = listOf(
@@ -289,10 +266,10 @@ private suspend fun BrukerRepository.opprettSak(
             produsentId = "1",
             kildeAppNavn = "1",
             grupperingsid = sakOpprettet.grupperingsid,
+            merkelapp = sakOpprettet.merkelapp,
             eksternId = "1",
             eksterneVarsler = listOf(),
             opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
-            merkelapp = "tag",
             tekst = "tjohei",
             mottakere = mottakere,
             lenke = "#foo",

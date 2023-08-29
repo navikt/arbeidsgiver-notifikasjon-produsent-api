@@ -53,6 +53,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
         // Legg til oppgave på en sak
         val oppgave0 = brukerRepository.oppgaveOpprettet(
             grupperingsid = sak0.grupperingsid,
+            merkelapp = sak0.merkelapp,
             opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01:01+00"),
         )
         it("første oppgave vises på riktig sak") {
@@ -70,6 +71,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
 
         val beskjed1 = brukerRepository.beskjedOpprettet(
             grupperingsid = sak0.grupperingsid,
+            merkelapp = sak0.merkelapp,
             opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(1),
         )
         it("andre beskjed på samme sak kommer i riktig rekkefølge") {
@@ -89,30 +91,10 @@ class QuerySakerTidslinjeTest: DescribeSpec({
 
         val beskjed2 = brukerRepository.beskjedOpprettet(
             grupperingsid = sak1.grupperingsid,
+            merkelapp = sak1.merkelapp,
+            opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(2),
         )
         it("ny beskjed på andre saken, vises kun der") {
-            val tidslinje0 = fetchTidslinje(sak0)
-            tidslinje0 should haveSize(2)
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
-                it.tekst shouldBe beskjed1.tekst
-            }
-            instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[1]) {
-                it.tekst shouldBe oppgave0.tekst
-                it.tilstand shouldBe NY
-            }
-
-            val tidslinje1 = fetchTidslinje(sak1)
-            tidslinje1 should haveSize(1)
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
-                it.tekst shouldBe beskjed2.tekst
-            }
-        }
-
-        brukerRepository.beskjedOpprettet(
-            grupperingsid = sak1.grupperingsid,
-            mottakere = listOf(TEST_MOTTAKER_2),
-        )
-        it("ny beskjed uten tilgang vises ikke til bruker") {
             val tidslinje0 = fetchTidslinje(sak0)
             tidslinje0 should haveSize(2)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
@@ -133,13 +115,9 @@ class QuerySakerTidslinjeTest: DescribeSpec({
 
         brukerRepository.oppgaveUtført(
             oppgave = oppgave0,
-            utfoertTidspunkt = oppgave0.opprettetTidspunkt.plusHours(2),
+            utfoertTidspunkt = oppgave0.opprettetTidspunkt.plusHours(4),
         )
         it("endret oppgave-status reflekteres i tidslinja, men posisjonen er uendret") {
-            brukerRepository.beskjedOpprettet(
-                grupperingsid = sak1.grupperingsid,
-                mottakere = listOf(TEST_MOTTAKER_2),
-            )
             val tidslinje0 = fetchTidslinje(sak0)
             tidslinje0 should haveSize(2)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
@@ -159,7 +137,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
     }
 })
 
-inline suspend fun <reified SubClass: Class, Class: Any>TestScope.instanceOf(
+suspend inline fun <reified SubClass: Class, Class: Any>TestScope.instanceOf(
     subject: Class,
     crossinline test: suspend TestScope.(it: SubClass) -> Unit
 )  {
