@@ -29,8 +29,6 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: notifikasjon-test-produsent
-
         - application: tiltaksgjennomforing-api
           namespace: arbeidsgiver
           cluster: prod-fss
