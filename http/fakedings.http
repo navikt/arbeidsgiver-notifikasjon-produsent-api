@@ -1,5 +1,5 @@
 ###
-POST https://fakedings.dev-gcp.nais.io/fake/custom
+POST https://fakedings.intern.dev.nav.no/fake/custom
 Content-Type: application/x-www-form-urlencoded
 
 sub=someproducer&aud=produsent-api&azp=someazp
