@@ -36,7 +36,7 @@ spec:
   accessPolicy:
     outbound:
       external:
-        - host: fakedings.dev-gcp.nais.io
+        - host: fakedings.intern.dev.nav.no
         - host: tt02.altinn.no
     inbound:
       rules:

@@ -103,7 +103,7 @@ object HttpAuthProviders {
             config = {
                 verifier(
                     audience = "bruker-api",
-                    discoveryUrl = "https://fakedings.dev-gcp.nais.io/fake/.well-known/openid-configuration"
+                    discoveryUrl = "https://fakedings.intern.dev.nav.no/fake/.well-known/openid-configuration"
                 ) {
                     `with id-porten login level 4`()
                 }
@@ -123,7 +123,7 @@ object HttpAuthProviders {
             config = {
                 verifier(
                     audience = "produsent-api",
-                    discoveryUrl = "https://fakedings.dev-gcp.nais.io/fake/.well-known/openid-configuration",
+                    discoveryUrl = "https://fakedings.intern.dev.nav.no/fake/.well-known/openid-configuration",
                 )
 
                 validate {

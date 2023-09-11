@@ -58,7 +58,7 @@ spec:
         - application: narmesteleder
           namespace: teamsykmelding
       external:
-        - host: fakedings.dev-gcp.nais.io # fakedings login
+        - host: fakedings.intern.dev.nav.no # fakedings login
         - host: api-gw-q1.oera.no # fallback for altinn-rettigheter-proxy-client
         - host: ereg-services-q1.dev-fss-pub.nais.io # ereg brukes i bruker-api
   envFrom:
