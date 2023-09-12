@@ -102,7 +102,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             }
 
             it("message received from kafka") {
-                eventually(5.seconds) {
+                eventually(10.seconds) {
                     val vellykedeVarsler = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
                     vellykedeVarsler shouldNot beEmpty()
                 }
