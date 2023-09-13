@@ -398,6 +398,65 @@ class EksternVarslingRepository(
         """)
     }
 
+    suspend fun findFreshJob(lockTimeout: Duration): UUID? {
+        return database.nonTransactionalExecuteQuery("""
+                UPDATE job_queue
+                SET locked = true,
+                    locked_by = ?,
+                    locked_at = CURRENT_TIMESTAMP,
+                    locked_until = CURRENT_TIMESTAMP + ?::interval
+                WHERE 
+                    id = (
+                        SELECT id FROM job_queue 
+                        WHERE 
+                            locked = false and locked_by is null
+                        LIMIT 1
+                        FOR UPDATE
+                        SKIP LOCKED
+                    )
+                RETURNING varsel_id
+                    """,
+            setup = {
+                text(podName)
+                text(lockTimeout.toString())
+
+            },
+            transform = {
+                getObject("varsel_id") as UUID
+            }
+        )
+            .firstOrNull()
+    }
+
+    suspend fun findRetryJob(lockTimeout: Duration): UUID? {
+        return database.nonTransactionalExecuteQuery("""
+                UPDATE job_queue
+                SET locked = true,
+                    locked_by = ?,
+                    locked_at = CURRENT_TIMESTAMP,
+                    locked_until = CURRENT_TIMESTAMP + ?::interval
+                WHERE 
+                    id = (
+                        SELECT id FROM job_queue 
+                        WHERE 
+                            locked = false and locked_by is not null
+                        LIMIT 1
+                        FOR UPDATE
+                        SKIP LOCKED
+                    )
+                RETURNING varsel_id
+                    """,
+            setup = {
+                text(podName)
+                text(lockTimeout.toString())
+
+            },
+            transform = {
+                getObject("varsel_id") as UUID
+            }
+        )
+            .firstOrNull()
+    }
 
     suspend fun findJob(lockTimeout: Duration): UUID? {
         return database.nonTransactionalExecuteQuery("""

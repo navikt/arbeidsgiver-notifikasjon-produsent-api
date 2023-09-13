@@ -168,6 +168,80 @@ class EksternVarslingService(
             ) {
                 workOnEksternVarsel()
             }
+
+            launchProcessingLoop(
+                "ekstern-varsel-retries",
+                init = { eksternVarslingRepository.detectEmptyDatabase() }
+            ) {
+                workOnEksternVarselRetrys()
+            }
+        }
+    }
+
+    private suspend fun workOnEksternVarselRetrys() {
+        val emergencyBreakOn = eksternVarslingRepository.emergencyBreakOn()
+            .also {
+                emergencyBreakGauge.set(if (it) 1 else 0)
+            }
+        if (emergencyBreakOn) {
+            log.info("processing is disabled. will check again later.")
+            delay(Duration.ofMinutes(1).toMillis())
+            return
+        }
+
+        val varselId = eksternVarslingRepository.findRetryJob(
+            lockTimeout = Duration.ofMinutes(5)
+        )
+
+        if (varselId == null) {
+            log.info("ingen retry-varsler å prossessere.")
+            delay(Duration.ofSeconds(10).toMillis())
+            return
+        }
+
+        val varsel = eksternVarslingRepository.findVarsel(varselId)
+            ?: run {
+                log.info("ingen varsel")
+                eksternVarslingRepository.deleteFromJobQueue(varselId)
+                return
+            }
+
+        when (varsel) {
+            is EksternVarselTilstand.Ny -> {
+                val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
+                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid()
+                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag()
+                    EksterntVarselSendingsvindu.LØPENDE -> OsloTid.localDateTimeNow()
+                    EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
+                }
+                if (kalkulertSendeTidspunkt <= OsloTid.localDateTimeNow()) {
+                    altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
+                        onSuccess = { response ->
+                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                        },
+                        onFailure = {
+                            eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                            throw it
+                        },
+                    )
+                } else {
+                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
+                }
+            }
+
+            is EksternVarselTilstand.Sendt -> {
+                try {
+                    hendelseProdusent.send(varsel.toHendelse())
+                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                } catch (e: RuntimeException) {
+                    log.error("Exception producing kafka-kvittering", e)
+                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                }
+            }
+
+            is EksternVarselTilstand.Kvittert -> {
+                eksternVarslingRepository.deleteFromJobQueue(varselId)
+            }
         }
     }
 
@@ -182,7 +256,7 @@ class EksternVarslingService(
             return
         }
 
-        val varselId = eksternVarslingRepository.findJob(
+        val varselId = eksternVarslingRepository.findFreshJob(
             lockTimeout = Duration.ofMinutes(5)
         )
 
