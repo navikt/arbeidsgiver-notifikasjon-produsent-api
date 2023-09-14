@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingRepository.FindJobOfKind.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -398,28 +399,42 @@ class EksternVarslingRepository(
         """)
     }
 
-    suspend fun findFreshJob(lockTimeout: Duration): UUID? {
+    private enum class FindJobOfKind {
+        ANY, FRESH, RETRIES
+    }
+
+    private suspend fun findJobHelper(
+        findJobOfKind: FindJobOfKind,
+        lockTimeout: Duration,
+    ): UUID? {
         return database.nonTransactionalExecuteQuery("""
-                UPDATE job_queue
-                SET locked = true,
-                    locked_by = ?,
-                    locked_at = CURRENT_TIMESTAMP,
-                    locked_until = CURRENT_TIMESTAMP + ?::interval
-                WHERE 
-                    id = (
-                        SELECT id FROM job_queue 
-                        WHERE 
-                            locked = false and locked_by is null
-                        LIMIT 1
-                        FOR UPDATE
-                        SKIP LOCKED
-                    )
-                RETURNING varsel_id
-                    """,
+            UPDATE job_queue
+            SET locked = true,
+                locked_by = ?,
+                locked_at = CURRENT_TIMESTAMP,
+                locked_until = CURRENT_TIMESTAMP + ?::interval
+            WHERE 
+                id = (
+                    SELECT id FROM job_queue 
+                    WHERE 
+                        locked = false and
+                        ${
+                            when (findJobOfKind) {
+                                ANY -> " true"
+                                FRESH -> " locked_by is null"
+                                RETRIES -> " locked_by is not null"
+                            }
+                        }
+                    ORDER BY id
+                    LIMIT 1
+                    FOR UPDATE
+                    SKIP LOCKED
+                )
+            RETURNING varsel_id
+                """,
             setup = {
                 text(podName)
                 text(lockTimeout.toString())
-
             },
             transform = {
                 getObject("varsel_id") as UUID
@@ -428,65 +443,14 @@ class EksternVarslingRepository(
             .firstOrNull()
     }
 
-    suspend fun findRetryJob(lockTimeout: Duration): UUID? {
-        return database.nonTransactionalExecuteQuery("""
-                UPDATE job_queue
-                SET locked = true,
-                    locked_by = ?,
-                    locked_at = CURRENT_TIMESTAMP,
-                    locked_until = CURRENT_TIMESTAMP + ?::interval
-                WHERE 
-                    id = (
-                        SELECT id FROM job_queue 
-                        WHERE 
-                            locked = false and locked_by is not null
-                        LIMIT 1
-                        FOR UPDATE
-                        SKIP LOCKED
-                    )
-                RETURNING varsel_id
-                    """,
-            setup = {
-                text(podName)
-                text(lockTimeout.toString())
+    suspend fun findFreshJob(lockTimeout: Duration): UUID? =
+        findJobHelper(FRESH, lockTimeout)
 
-            },
-            transform = {
-                getObject("varsel_id") as UUID
-            }
-        )
-            .firstOrNull()
-    }
+    suspend fun findRetryJob(lockTimeout: Duration): UUID? =
+        findJobHelper(RETRIES, lockTimeout)
 
-    suspend fun findJob(lockTimeout: Duration): UUID? {
-        return database.nonTransactionalExecuteQuery("""
-                UPDATE job_queue
-                SET locked = true,
-                    locked_by = ?,
-                    locked_at = CURRENT_TIMESTAMP,
-                    locked_until = CURRENT_TIMESTAMP + ?::interval
-                WHERE 
-                    id = (
-                        SELECT id FROM job_queue 
-                        WHERE 
-                            locked = false
-                        LIMIT 1
-                        FOR UPDATE
-                        SKIP LOCKED
-                    )
-                RETURNING varsel_id
-                    """,
-            setup = {
-                text(podName)
-                text(lockTimeout.toString())
-
-            },
-            transform = {
-                getObject("varsel_id") as UUID
-            }
-        )
-            .firstOrNull()
-    }
+    suspend fun findJob(lockTimeout: Duration): UUID? =
+        findJobHelper(ANY, lockTimeout)
 
     suspend fun findVarsel(varselId: UUID): EksternVarselTilstand? {
         return database.nonTransactionalExecuteQuery(
@@ -568,13 +532,8 @@ class EksternVarslingRepository(
     }
 
     private fun Transaction.returnToJobQueue(varselId: UUID) {
-        executeUpdate("""
-            UPDATE job_queue
-            SET locked = false
-            WHERE varsel_id = ?
-        """) {
-            uuid(varselId)
-        }
+        deleteFromJobQueue(varselId)
+        putOnJobQueue(varselId)
     }
 
     suspend fun deleteFromJobQueue(varselId: UUID) {

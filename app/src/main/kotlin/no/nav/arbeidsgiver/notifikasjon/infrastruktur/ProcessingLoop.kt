@@ -28,7 +28,7 @@ fun CoroutineScope.launchProcessingLoop(
                 errors = 0
             } catch (e: Exception) {
                 errors += 1
-                log.error("exception in processing loop for $debugDescription", e)
+                log.error("exception {} in processing loop {}", e.javaClass.canonicalName, debugDescription, e)
             }
 
             when {
@@ -38,7 +38,7 @@ fun CoroutineScope.launchProcessingLoop(
                 errors > 0 -> {
                     val backoff = (pauseAfterEach ?: Duration.ofSeconds(1))
                         .multipliedBy(2.toThePowerOf(errors))
-                        .coerceAtMost(Duration.ofHours(1))
+                        .coerceAtMost(Duration.ofMinutes(10))
                     log.info("backoff $debugDescription: $backoff")
                     delay(backoff.toMillis())
                 }
