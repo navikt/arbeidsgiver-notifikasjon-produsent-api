@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import java.time.Duration
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 /*
@@ -166,19 +167,26 @@ class EksternVarslingService(
                 "ekstern-varsel",
                 init = { eksternVarslingRepository.detectEmptyDatabase() }
             ) {
-                workOnEksternVarsel()
+                workOnEksternVarsel("vanlige varsler") { lockTimeout ->
+                    findFreshJob(lockTimeout = lockTimeout)
+                }
             }
 
             launchProcessingLoop(
                 "ekstern-varsel-retries",
                 init = { eksternVarslingRepository.detectEmptyDatabase() }
             ) {
-                workOnEksternVarselRetrys()
+                workOnEksternVarsel("retry-varsler") { lockTimeout ->
+                    findRetryJob(lockTimeout = lockTimeout)
+                }
             }
         }
     }
 
-    private suspend fun workOnEksternVarselRetrys() {
+    private suspend fun workOnEksternVarsel(
+        processingName: String,
+        fetchJobStrategy: suspend EksternVarslingRepository.(lockTimeout: Duration) -> UUID?
+    ) {
         val emergencyBreakOn = eksternVarslingRepository.emergencyBreakOn()
             .also {
                 emergencyBreakGauge.set(if (it) 1 else 0)
@@ -189,86 +197,19 @@ class EksternVarslingService(
             return
         }
 
-        val varselId = eksternVarslingRepository.findRetryJob(
-            lockTimeout = Duration.ofMinutes(5)
+        val varselId = eksternVarslingRepository.fetchJobStrategy(
+            Duration.ofMinutes(5)
         )
 
         if (varselId == null) {
-            log.info("ingen retry-varsler å prossessere.")
+            log.info("ingen $processingName å prossessere.")
             delay(Duration.ofSeconds(10).toMillis())
             return
         }
 
         val varsel = eksternVarslingRepository.findVarsel(varselId)
             ?: run {
-                log.info("ingen varsel")
-                eksternVarslingRepository.deleteFromJobQueue(varselId)
-                return
-            }
-
-        when (varsel) {
-            is EksternVarselTilstand.Ny -> {
-                val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
-                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid()
-                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag()
-                    EksterntVarselSendingsvindu.LØPENDE -> OsloTid.localDateTimeNow()
-                    EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
-                }
-                if (kalkulertSendeTidspunkt <= OsloTid.localDateTimeNow()) {
-                    altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
-                        onSuccess = { response ->
-                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                        },
-                        onFailure = {
-                            eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                            throw it
-                        },
-                    )
-                } else {
-                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
-                }
-            }
-
-            is EksternVarselTilstand.Sendt -> {
-                try {
-                    hendelseProdusent.send(varsel.toHendelse())
-                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
-                } catch (e: RuntimeException) {
-                    log.error("Exception producing kafka-kvittering", e)
-                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                }
-            }
-
-            is EksternVarselTilstand.Kvittert -> {
-                eksternVarslingRepository.deleteFromJobQueue(varselId)
-            }
-        }
-    }
-
-    private suspend fun workOnEksternVarsel() {
-        val emergencyBreakOn = eksternVarslingRepository.emergencyBreakOn()
-            .also {
-                emergencyBreakGauge.set(if (it) 1 else 0)
-            }
-        if (emergencyBreakOn) {
-            log.info("processing is disabled. will check again later.")
-            delay(Duration.ofMinutes(1).toMillis())
-            return
-        }
-
-        val varselId = eksternVarslingRepository.findFreshJob(
-            lockTimeout = Duration.ofMinutes(5)
-        )
-
-        if (varselId == null) {
-            log.info("ingen varsler å prossessere.")
-            delay(Duration.ofSeconds(10).toMillis())
-            return
-        }
-
-        val varsel = eksternVarslingRepository.findVarsel(varselId)
-            ?: run {
-                log.info("ingen varsel")
+                log.info("ingen varsel $varselId knyttet til jobb")
                 eksternVarslingRepository.deleteFromJobQueue(varselId)
                 return
             }
