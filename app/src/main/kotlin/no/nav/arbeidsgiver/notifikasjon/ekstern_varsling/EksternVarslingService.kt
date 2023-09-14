@@ -97,10 +97,13 @@ import java.util.concurrent.atomic.AtomicInteger
  *      sjekke kafka-offsets fra gammel consumer group hvis man bytter consumer-group
  */
 
+
 class EksternVarslingService(
     private val eksternVarslingRepository: EksternVarslingRepository,
     private val altinnVarselKlient: AltinnVarselKlient,
     private val hendelseProdusent: HendelseProdusent,
+    private val recheckEmergencyBrakeDelay: Duration = Duration.ofMinutes(1),
+    private val idleSleepDelay: Duration = Duration.ofSeconds(10),
 ) {
     private val log = logger()
     private val emergencyBreakGauge = Metrics.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
@@ -191,7 +194,7 @@ class EksternVarslingService(
             }
         if (emergencyBreakOn) {
             log.info("processing is disabled. will check again later.")
-            delay(Duration.ofMinutes(1).toMillis())
+            delay(recheckEmergencyBrakeDelay.toMillis())
             return
         }
 
@@ -201,7 +204,7 @@ class EksternVarslingService(
 
         if (varselId == null) {
             log.info("ingen $processingName å prossessere.")
-            delay(Duration.ofSeconds(10).toMillis())
+            delay(idleSleepDelay.toMillis())
             return
         }
 

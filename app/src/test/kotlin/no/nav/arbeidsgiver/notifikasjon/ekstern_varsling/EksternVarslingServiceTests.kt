@@ -21,6 +21,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.sql.ResultSet
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
@@ -43,6 +44,8 @@ class EksternVarslingServiceTests : DescribeSpec({
             }
         },
         hendelseProdusent = hendelseProdusent,
+        idleSleepDelay = Duration.ZERO,
+        recheckEmergencyBrakeDelay = Duration.ZERO,
     )
 
     val nå = LocalDateTime.parse("2020-01-01T01:01")
