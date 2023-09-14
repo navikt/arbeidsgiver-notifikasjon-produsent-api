@@ -208,6 +208,7 @@ class EksternVarslingService(
                                 eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                             }
                             is AltinnVarselKlientResponse.Feil -> {
+                                eksternVarslingRepository.recordAltinnVarselKlientError(varselId, response)
                                 if (response.isRetryable()) {
                                     log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
                                     eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
@@ -217,6 +218,7 @@ class EksternVarslingService(
                                 }
                             }
                             is UkjentException -> {
+                                eksternVarslingRepository.recordAltinnVarselKlientError(varselId, response)
                                 eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                                 throw response.exception
                             }

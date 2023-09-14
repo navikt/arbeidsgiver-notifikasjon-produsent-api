@@ -24,10 +24,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.sql.ResultSet
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.*
 import java.util.*
 
 class EksternVarslingRepository(
@@ -654,6 +651,33 @@ class EksternVarslingRepository(
         """) {
             boolean(newState)
             boolean(newState)
+        }
+    }
+
+    suspend fun recordAltinnVarselKlientError(varselId: UUID, altinnVarselKlientResponse: AltinnVarselKlientResponseOrException) {
+        when (altinnVarselKlientResponse) {
+            is AltinnVarselKlientResponse.Ok -> {}
+            is AltinnVarselKlientResponse.Feil -> {
+                database.nonTransactionalExecuteUpdate("""
+                    insert into altinn_response_log (varsel_id, timestamp, altinn_feil, altinn_response)
+                    values (?, ?, ?, ?::jsonb)
+                """) {
+                    uuid(varselId)
+                    instantAsText(Instant.now())
+                    text(altinnVarselKlientResponse.feilkode)
+                    jsonb(altinnVarselKlientResponse.rå)
+                }
+            }
+            is UkjentException -> {
+                database.nonTransactionalExecuteUpdate("""
+                    insert into altinn_response_log (varsel_id, timestamp, exception)
+                    values (?, ?, ?)
+                """) {
+                    uuid(varselId)
+                    instantAsText(Instant.now())
+                    text(altinnVarselKlientResponse.exception.stackTraceToString())
+                }
+            }
         }
     }
 }
