@@ -1,10 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.micrometer.core.instrument.Tags
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.slf4j.MDCContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
@@ -214,41 +212,47 @@ class EksternVarslingService(
                 return
             }
 
-        when (varsel) {
-            is EksternVarselTilstand.Ny -> {
-                val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
-                    EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid()
-                    EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag()
-                    EksterntVarselSendingsvindu.LØPENDE -> OsloTid.localDateTimeNow()
-                    EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
+        withContext(MDCContext(mapOf(
+            "varselId" to varsel.data.varselId.toString(),
+            "aggregateId" to varsel.data.notifikasjonId.toString(),
+            "produsentId" to varsel.data.produsentId,
+        ))) {
+            when (varsel) {
+                is EksternVarselTilstand.Ny -> {
+                    val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
+                        EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid()
+                        EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag()
+                        EksterntVarselSendingsvindu.LØPENDE -> OsloTid.localDateTimeNow()
+                        EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
+                    }
+                    if (kalkulertSendeTidspunkt <= OsloTid.localDateTimeNow()) {
+                        altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
+                            onSuccess = { response ->
+                                eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                            },
+                            onFailure = {
+                                eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                                throw it
+                            },
+                        )
+                    } else {
+                        eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
+                    }
                 }
-                if (kalkulertSendeTidspunkt <= OsloTid.localDateTimeNow()) {
-                    altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
-                        onSuccess = { response ->
-                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                        },
-                        onFailure = {
-                            eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                            throw it
-                        },
-                    )
-                } else {
-                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
-                }
-            }
 
-            is EksternVarselTilstand.Sendt -> {
-                try {
-                    hendelseProdusent.send(varsel.toHendelse())
-                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
-                } catch (e: RuntimeException) {
-                    log.error("Exception producing kafka-kvittering", e)
-                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                is EksternVarselTilstand.Sendt -> {
+                    try {
+                        hendelseProdusent.send(varsel.toHendelse())
+                        eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                    } catch (e: RuntimeException) {
+                        log.error("Exception producing kafka-kvittering", e)
+                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                    }
                 }
-            }
 
-            is EksternVarselTilstand.Kvittert -> {
-                eksternVarslingRepository.deleteFromJobQueue(varselId)
+                is EksternVarselTilstand.Kvittert -> {
+                    eksternVarslingRepository.deleteFromJobQueue(varselId)
+                }
             }
         }
     }
