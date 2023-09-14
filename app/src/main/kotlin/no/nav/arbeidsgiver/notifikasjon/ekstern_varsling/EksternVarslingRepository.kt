@@ -654,16 +654,16 @@ class EksternVarslingRepository(
         }
     }
 
-    suspend fun recordAltinnVarselKlientError(varselId: UUID, altinnVarselKlientResponse: AltinnVarselKlientResponseOrException) {
+    suspend fun recordAltinnVarselKlientError(varselId: UUID, altinnVarselKlientResponse: AltinnVarselKlientResponseOrException, now: Instant = Instant.now()) {
         when (altinnVarselKlientResponse) {
             is AltinnVarselKlientResponse.Ok -> {}
             is AltinnVarselKlientResponse.Feil -> {
                 database.nonTransactionalExecuteUpdate("""
-                    insert into altinn_response_log (varsel_id, timestamp, altinn_feil, altinn_response)
+                    insert into altinn_response_log (varsel_id, timestamp, altinn_feilkode, altinn_response)
                     values (?, ?, ?, ?::jsonb)
                 """) {
                     uuid(varselId)
-                    instantAsText(Instant.now())
+                    instantAsText(now)
                     text(altinnVarselKlientResponse.feilkode)
                     jsonb(altinnVarselKlientResponse.rå)
                 }
@@ -674,10 +674,19 @@ class EksternVarslingRepository(
                     values (?, ?, ?)
                 """) {
                     uuid(varselId)
-                    instantAsText(Instant.now())
+                    instantAsText(now)
                     text(altinnVarselKlientResponse.exception.stackTraceToString())
                 }
             }
+        }
+    }
+
+    suspend fun deleteOldResponseLog(maxAge: Duration, now: Instant = Instant.now()) {
+        database.nonTransactionalExecuteUpdate("""
+            delete from altinn_response_log
+            where timestamp < ?
+        """) {
+            instantAsText(now - maxAge)
         }
     }
 }

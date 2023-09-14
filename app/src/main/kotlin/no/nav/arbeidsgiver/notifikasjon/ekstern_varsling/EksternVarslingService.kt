@@ -167,6 +167,13 @@ class EksternVarslingService(
             ) {
                 workOnEksternVarsel()
             }
+
+            launchProcessingLoop(
+                "delete-old-logs",
+                pauseAfterEach = Duration.ofHours(1),
+            ) {
+                eksternVarslingRepository.deleteOldResponseLog(Duration.ofDays(31))
+            }
         }
     }
 
