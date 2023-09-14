@@ -262,13 +262,13 @@ class AltinnVarselKlientImpl(
                     )
                 )
             } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
-                log.error(
-                    "Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}",
-                    e
-                )
                 if (e.isRetryable()) {
-                    Result.failure(e)
+                    Result.failure(RuntimeException("Ikke-retryable feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}", e))
                 } else {
+                    log.error(
+                        "Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}",
+                        e
+                    )
                     Result.success(
                         AltinnVarselKlient.AltinnResponse.Feil(
                             feilkode = e.faultInfo.errorID.toString(),
