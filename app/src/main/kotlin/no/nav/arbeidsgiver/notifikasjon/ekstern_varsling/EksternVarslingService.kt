@@ -2,15 +2,12 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
-import kotlinx.coroutines.slf4j.MDCContext
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import java.time.Duration
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 /*
@@ -168,26 +165,12 @@ class EksternVarslingService(
                 "ekstern-varsel",
                 init = { eksternVarslingRepository.detectEmptyDatabase() }
             ) {
-                workOnEksternVarsel("vanlige varsler") { lockTimeout ->
-                    findFreshJob(lockTimeout = lockTimeout)
-                }
-            }
-
-            launchProcessingLoop(
-                "ekstern-varsel-retries",
-                init = { eksternVarslingRepository.detectEmptyDatabase() }
-            ) {
-                workOnEksternVarsel("retry-varsler") { lockTimeout ->
-                    findRetryJob(lockTimeout = lockTimeout)
-                }
+                workOnEksternVarsel()
             }
         }
     }
 
-    private suspend fun workOnEksternVarsel(
-        processingName: String,
-        fetchJobStrategy: suspend EksternVarslingRepository.(lockTimeout: Duration) -> UUID?
-    ) {
+    private suspend fun workOnEksternVarsel() {
         val emergencyBreakOn = eksternVarslingRepository.emergencyBreakOn()
             .also {
                 emergencyBreakGauge.set(if (it) 1 else 0)
@@ -198,12 +181,12 @@ class EksternVarslingService(
             return
         }
 
-        val varselId = eksternVarslingRepository.fetchJobStrategy(
-            Duration.ofMinutes(5)
+        val varselId = eksternVarslingRepository.findJob(
+            lockTimeout = Duration.ofMinutes(5)
         )
 
         if (varselId == null) {
-            log.info("ingen $processingName å prossessere.")
+            log.info("ingen varsler å prossessere.")
             delay(idleSleepDelay.toMillis())
             return
         }
@@ -215,29 +198,29 @@ class EksternVarslingService(
                 return
             }
 
-        withContext(MDCContext(mapOf(
-            "varselId" to varsel.data.varselId.toString(),
-            "aggregateId" to varsel.data.notifikasjonId.toString(),
-            "produsentId" to varsel.data.produsentId,
-        ))) {
+        withContext(varsel.asMDCContext()) {
             when (varsel) {
                 is EksternVarselTilstand.Ny -> {
-                    val kalkulertSendeTidspunkt = when (varsel.data.eksternVarsel.sendeVindu) {
-                        EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid()
-                        EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag()
-                        EksterntVarselSendingsvindu.LØPENDE -> OsloTid.localDateTimeNow()
-                        EksterntVarselSendingsvindu.SPESIFISERT -> varsel.data.eksternVarsel.sendeTidspunkt!!
-                    }
+                    val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt()
                     if (kalkulertSendeTidspunkt <= OsloTid.localDateTimeNow()) {
-                        altinnVarselKlient.send(varsel.data.eksternVarsel).fold(
-                            onSuccess = { response ->
+                        when (val response = altinnVarselKlient.send(varsel.data.eksternVarsel)) {
+                            is AltinnVarselKlientResponse.Ok -> {
                                 eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                            },
-                            onFailure = {
+                            }
+                            is AltinnVarselKlientResponse.Feil -> {
+                                if (response.isRetryable()) {
+                                    log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
+                                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                                } else {
+                                    log.error("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
+                                    eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                                }
+                            }
+                            is UkjentException -> {
                                 eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                                throw it
-                            },
-                        )
+                                throw response.exception
+                            }
+                        }
                     } else {
                         eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
                     }

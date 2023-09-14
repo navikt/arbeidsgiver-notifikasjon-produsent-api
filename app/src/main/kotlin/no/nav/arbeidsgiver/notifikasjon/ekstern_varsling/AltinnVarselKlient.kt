@@ -10,7 +10,6 @@ import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2015._06.Service
-import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
@@ -30,33 +29,16 @@ import javax.xml.namespace.QName
 
 
 interface AltinnVarselKlient {
-
-    sealed interface AltinnResponse {
-        val rå: JsonNode
-
-        data class Ok(
-            override val rå: JsonNode
-        ) : AltinnResponse
-
-        data class Feil(
-            override val rå: JsonNode,
-            val feilkode: String,
-            val feilmelding: String,
-        ) : AltinnResponse
-    }
-
-    suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnResponse>
+    suspend fun send(eksternVarsel: EksternVarsel): AltinnVarselKlientResponseOrException
 }
 
 class AltinnVarselKlientLogging : AltinnVarselKlient {
     private val log = logger()
 
-    override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
+    override suspend fun send(eksternVarsel: EksternVarsel): AltinnVarselKlientResponseOrException {
         log.info("send($eksternVarsel)")
-        return Result.success(
-            AltinnVarselKlient.AltinnResponse.Ok(
-                rå = NullNode.instance
-            )
+        return AltinnVarselKlientResponse.Ok(
+            rå = NullNode.instance
         )
     }
 }
@@ -67,7 +49,7 @@ class AltinnVarselKlientMedFilter(
     private val loggingKlient: AltinnVarselKlientLogging,
 ) : AltinnVarselKlient {
 
-    override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
+    override suspend fun send(eksternVarsel: EksternVarsel): AltinnVarselKlientResponseOrException {
         val mottaker = when (eksternVarsel) {
             is EksternVarsel.Sms -> eksternVarsel.mobilnummer
             is EksternVarsel.Epost -> eksternVarsel.epostadresse
@@ -107,143 +89,135 @@ class AltinnVarselKlientImpl(
         azureService.getAccessToken(azureTargetApp)
     }
 
-    override suspend fun send(eksternVarsel: EksternVarsel): Result<AltinnVarselKlient.AltinnResponse> {
-        return when (eksternVarsel) {
-            is EksternVarsel.Epost -> sendEpost(
-                reporteeNumber = eksternVarsel.fnrEllerOrgnr,
-                epostadresse = eksternVarsel.epostadresse,
-                tittel = eksternVarsel.tittel,
-                tekst = eksternVarsel.body,
-            )
+    override suspend fun send(eksternVarsel: EksternVarsel) = when (eksternVarsel) {
+        is EksternVarsel.Epost -> sendEpost(
+            reporteeNumber = eksternVarsel.fnrEllerOrgnr,
+            epostadresse = eksternVarsel.epostadresse,
+            tittel = eksternVarsel.tittel,
+            tekst = eksternVarsel.body,
+        )
 
-            is EksternVarsel.Sms -> sendSms(
-                reporteeNumber = eksternVarsel.fnrEllerOrgnr,
-                mobilnummer = eksternVarsel.mobilnummer,
-                tekst = eksternVarsel.tekst,
-            )
+        is EksternVarsel.Sms -> sendSms(
+            reporteeNumber = eksternVarsel.fnrEllerOrgnr,
+            mobilnummer = eksternVarsel.mobilnummer,
+            tekst = eksternVarsel.tekst,
+        )
 
-            is EksternVarsel.Altinntjeneste -> sendAltinntjeneste(
-                virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
-                serviceCode = eksternVarsel.serviceCode,
-                serviceEdition = eksternVarsel.serviceEdition,
-                tittel = eksternVarsel.tittel,
-                innhold = eksternVarsel.innhold,
-            )
-        }
+        is EksternVarsel.Altinntjeneste -> sendAltinntjeneste(
+            virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
+            serviceCode = eksternVarsel.serviceCode,
+            serviceEdition = eksternVarsel.serviceEdition,
+            tittel = eksternVarsel.tittel,
+            innhold = eksternVarsel.innhold,
+        )
     }
 
     suspend fun sendSms(
         mobilnummer: String,
         reporteeNumber: String,
         tekst: String,
-    ): Result<AltinnVarselKlient.AltinnResponse> {
-        return send(StandaloneNotificationBEList().withStandaloneNotification(
-            StandaloneNotification().apply {
-                languageID = 1044
-                notificationType = ns("NotificationType", "TokenTextOnly")
+    ) = send(StandaloneNotificationBEList().withStandaloneNotification(
+        StandaloneNotification().apply {
+            languageID = 1044
+            notificationType = ns("NotificationType", "TokenTextOnly")
 
-                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
-                receiverEndPoints = ns("ReceiverEndPoints",
-                    ReceiverEndPointBEList().withReceiverEndPoint(
-                        ReceiverEndPoint().apply {
-                            transportType = ns("TransportType", TransportType.SMS)
-                            receiverAddress = ns("ReceiverAddress", mobilnummer)
-                        }
-                    )
+            this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
+            receiverEndPoints = ns("ReceiverEndPoints",
+                ReceiverEndPointBEList().withReceiverEndPoint(
+                    ReceiverEndPoint().apply {
+                        transportType = ns("TransportType", TransportType.SMS)
+                        receiverAddress = ns("ReceiverAddress", mobilnummer)
+                    }
                 )
+            )
 
-                textTokens = ns("TextTokens",
-                    TextTokenSubstitutionBEList().withTextToken(
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", tekst)
-                        },
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", "")
-                        }
-                    )
+            textTokens = ns("TextTokens",
+                TextTokenSubstitutionBEList().withTextToken(
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", tekst)
+                    },
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", "")
+                    }
                 )
-                useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
-            }
-        ))
-    }
+            )
+            useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
+        }
+    ))
 
     suspend fun sendEpost(
         reporteeNumber: String,
         epostadresse: String,
         tittel: String,
         tekst: String,
-    ): Result<AltinnVarselKlient.AltinnResponse> {
-        return send(StandaloneNotificationBEList().withStandaloneNotification(
-            StandaloneNotification().apply {
-                languageID = 1044
-                notificationType = ns("NotificationType", "TokenTextOnly")
+    ) = send(StandaloneNotificationBEList().withStandaloneNotification(
+        StandaloneNotification().apply {
+            languageID = 1044
+            notificationType = ns("NotificationType", "TokenTextOnly")
 
-                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
-                receiverEndPoints = ns("ReceiverEndPoints",
-                    ReceiverEndPointBEList().withReceiverEndPoint(
-                        ReceiverEndPoint().apply {
-                            transportType = ns("TransportType", TransportType.EMAIL)
-                            receiverAddress = ns("ReceiverAddress", epostadresse)
-                        }
-                    )
+            this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
+            receiverEndPoints = ns("ReceiverEndPoints",
+                ReceiverEndPointBEList().withReceiverEndPoint(
+                    ReceiverEndPoint().apply {
+                        transportType = ns("TransportType", TransportType.EMAIL)
+                        receiverAddress = ns("ReceiverAddress", epostadresse)
+                    }
                 )
+            )
 
-                textTokens = ns("TextTokens",
-                    TextTokenSubstitutionBEList().withTextToken(
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", tittel)
-                        },
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", tekst)
-                        }
-                    )
+            textTokens = ns("TextTokens",
+                TextTokenSubstitutionBEList().withTextToken(
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", tittel)
+                    },
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", tekst)
+                    }
                 )
-                fromAddress = ns("FromAddress", "ikke-svar@nav.no")
-            }
-        ))
-    }
+            )
+            fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+        }
+    ))
 
-    suspend fun sendAltinntjeneste(
+    private suspend fun sendAltinntjeneste(
         serviceCode: String,
         serviceEdition: String,
         virksomhetsnummer: String,
         tittel: String,
         innhold: String,
-    ): Result<AltinnVarselKlient.AltinnResponse> {
-        return send(StandaloneNotificationBEList().withStandaloneNotification(
-            StandaloneNotification().apply {
-                languageID = 1044
-                notificationType = ns("NotificationType", "TokenTextOnly")
-                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
-                service = ns("Service", Service().apply {
-                    this.serviceCode = serviceCode
-                    this.serviceEdition = serviceEdition.toInt()
-                })
+    ) = send(StandaloneNotificationBEList().withStandaloneNotification(
+        StandaloneNotification().apply {
+            languageID = 1044
+            notificationType = ns("NotificationType", "TokenTextOnly")
+            reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
+            service = ns("Service", Service().apply {
+                this.serviceCode = serviceCode
+                this.serviceEdition = serviceEdition.toInt()
+            })
 
-                receiverEndPoints = ns("ReceiverEndPoints",
-                    ReceiverEndPointBEList().withReceiverEndPoint(
-                        ReceiverEndPoint().apply {
-                            transportType = ns("TransportType", TransportType.EMAIL_PREFERRED)
-                        }
-                    )
+            receiverEndPoints = ns("ReceiverEndPoints",
+                ReceiverEndPointBEList().withReceiverEndPoint(
+                    ReceiverEndPoint().apply {
+                        transportType = ns("TransportType", TransportType.EMAIL_PREFERRED)
+                    }
                 )
+            )
 
-                textTokens = ns("TextTokens",
-                    TextTokenSubstitutionBEList().withTextToken(
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", tittel)
-                        },
-                        TextToken().apply {
-                            tokenValue = ns("TokenValue", innhold)
-                        }
-                    )
+            textTokens = ns("TextTokens",
+                TextTokenSubstitutionBEList().withTextToken(
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", tittel)
+                    },
+                    TextToken().apply {
+                        tokenValue = ns("TokenValue", innhold)
+                    }
                 )
-                fromAddress = ns("FromAddress", "ikke-svar@nav.no")
-            }
-        ))
-    }
+            )
+            fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+        }
+    ))
 
-    private suspend fun send(payload: StandaloneNotificationBEList): Result<AltinnVarselKlient.AltinnResponse> {
+    private suspend fun send(payload: StandaloneNotificationBEList): AltinnVarselKlientResponseOrException {
         return blockingIO {
             try {
                 val response = wsclient.sendStandaloneNotificationBasicV3(
@@ -251,50 +225,26 @@ class AltinnVarselKlientImpl(
                     altinnPassord,
                     payload
                 )
-                Result.success(
-                    AltinnVarselKlient.AltinnResponse.Ok(
-                        rå = try {
-                            laxObjectMapper.valueToTree<JsonNode>(response)
-                        } catch (e: RuntimeException) {
-                            log.error(e)
-                            TextNode(e.message)
-                        },
-                    )
+                AltinnVarselKlientResponse.Ok(
+                    rå = try {
+                        laxObjectMapper.valueToTree<JsonNode>(response)
+                    } catch (e: RuntimeException) {
+                        log.error(e)
+                        TextNode(e.message)
+                    },
                 )
             } catch (e: INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage) {
-                if (e.isRetryable()) {
-                    Result.failure(RuntimeException("Ikke-retryable feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}", e))
-                } else {
-                    log.error(
-                        "Feil fra altinn ved sending av notifikasjon: ${e.message}, ${e.faultInfo.toLoggableString()}",
-                        e
-                    )
-                    Result.success(
-                        AltinnVarselKlient.AltinnResponse.Feil(
-                            feilkode = e.faultInfo.errorID.toString(),
-                            feilmelding = e.faultInfo.altinnErrorMessage.value,
-                            rå = laxObjectMapper.valueToTree(e),
-                        )
-                    )
-                }
+                AltinnVarselKlientResponse.Feil(
+                    rå = laxObjectMapper.valueToTree(e),
+                    altinnFault = e.faultInfo,
+                )
             } catch (e: RuntimeException) {
-                Result.failure(e)
+                UkjentException(e)
             }
         }
     }
 }
 
-fun AltinnFault.toLoggableString(): String {
-    return """
-        altinnErrorMessage=${altinnErrorMessage.value}
-        altinnExtendedErrorMessage=${altinnExtendedErrorMessage.value}
-        altinnLocalizedErrorMessage=${altinnLocalizedErrorMessage.value}
-        errorGuid=${errorGuid.value}
-        errorID=${errorID}
-        userGuid=${userGuid.value}
-        userId=${userId.value}
-    """.trimIndent()
-}
 
 @Suppress("HttpUrlsUsage")
 inline fun <reified T> ns(localpart: String, value: T): JAXBElement<T> {
@@ -341,14 +291,3 @@ fun <PORT_TYPE> createServicePort(
         }
     })
 }.create(clazz)
-
-/**
- * TAG-2054
- * https://altinn.github.io/docs/api/tjenesteeiere/soap/feilkoder/
- */
-private val retryableErrorIds = listOf(
-    0, // intern generell feil i altinn.
-    44, // intern teknisk feil i altinn. ikke dokumentert
-)
-private fun INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
-    .isRetryable() = retryableErrorIds.contains(this.faultInfo.errorID)

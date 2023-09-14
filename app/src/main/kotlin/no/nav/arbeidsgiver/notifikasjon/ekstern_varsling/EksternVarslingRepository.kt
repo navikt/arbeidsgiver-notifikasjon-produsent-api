@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingRepository.FindJobOfKind.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -399,15 +398,8 @@ class EksternVarslingRepository(
         """)
     }
 
-    private enum class FindJobOfKind {
-        ANY, FRESH, RETRIES
-    }
-
-    private suspend fun findJobHelper(
-        findJobOfKind: FindJobOfKind,
-        lockTimeout: Duration,
-    ): UUID? {
-        return database.nonTransactionalExecuteQuery("""
+    suspend fun findJob(lockTimeout: Duration): UUID? =
+        database.nonTransactionalExecuteQuery("""
             UPDATE job_queue
             SET locked = true,
                 locked_by = ?,
@@ -417,14 +409,7 @@ class EksternVarslingRepository(
                 id = (
                     SELECT id FROM job_queue 
                     WHERE 
-                        locked = false and
-                        ${
-                            when (findJobOfKind) {
-                                ANY -> " true"
-                                FRESH -> " locked_by is null"
-                                RETRIES -> " locked_by is not null"
-                            }
-                        }
+                        locked = false
                     ORDER BY id
                     LIMIT 1
                     FOR UPDATE
@@ -441,16 +426,6 @@ class EksternVarslingRepository(
             }
         )
             .firstOrNull()
-    }
-
-    suspend fun findFreshJob(lockTimeout: Duration): UUID? =
-        findJobHelper(FRESH, lockTimeout)
-
-    suspend fun findRetryJob(lockTimeout: Duration): UUID? =
-        findJobHelper(RETRIES, lockTimeout)
-
-    suspend fun findJob(lockTimeout: Duration): UUID? =
-        findJobHelper(ANY, lockTimeout)
 
     suspend fun findVarsel(varselId: UUID): EksternVarselTilstand? {
         return database.nonTransactionalExecuteQuery(
@@ -511,11 +486,11 @@ class EksternVarslingRepository(
     }
 
     private fun ResultSet.altinnResponse() = when (val sendeStatus = getString("sende_status")) {
-        "OK" -> AltinnVarselKlient.AltinnResponse.Ok(
+        "OK" -> AltinnResponse.Ok(
             rå = laxObjectMapper.readTree(getString("altinn_response")),
         )
 
-        "FEIL" -> AltinnVarselKlient.AltinnResponse.Feil(
+        "FEIL" -> AltinnResponse.Feil(
             rå = laxObjectMapper.readTree(getString("altinn_response")),
             feilkode = getString("altinn_feilkode"),
             feilmelding = getString("feilmelding"),
@@ -566,7 +541,7 @@ class EksternVarslingRepository(
         }
     }
 
-    suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlient.AltinnResponse) {
+    suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlientResponse) {
         database.transaction {
             executeUpdate(""" 
                 update ekstern_varsel_kontaktinfo
@@ -580,12 +555,13 @@ class EksternVarslingRepository(
             """) {
                 jsonb(response.rå)
                 when (response) {
-                    is AltinnVarselKlient.AltinnResponse.Ok -> {
+                    is AltinnVarselKlientResponse.Ok -> {
                         text("OK")
                         nullableText(null)
                         nullableText(null)
                     }
-                    is AltinnVarselKlient.AltinnResponse.Feil -> {
+
+                    is AltinnVarselKlientResponse.Feil -> {
                         text("FEIL")
                         nullableText(response.feilmelding)
                         nullableText(response.feilkode)

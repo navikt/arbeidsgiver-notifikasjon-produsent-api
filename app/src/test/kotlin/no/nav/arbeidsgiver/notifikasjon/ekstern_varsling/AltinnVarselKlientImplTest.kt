@@ -81,9 +81,9 @@ class AltinnVarselKlientImplTest : DescribeSpec({
             )
         )
 
-        response.isSuccess shouldBe true
-        response.getOrNull() shouldBe instanceOf<AltinnVarselKlient.AltinnResponse.Ok>()
-        response.getOrNull()!!.rå shouldBe laxObjectMapper.valueToTree(withNotificationResult)
+        response shouldBe instanceOf<AltinnVarselKlientResponse.Ok>()
+        response as AltinnVarselKlientResponse.Ok
+        response.rå shouldBe laxObjectMapper.valueToTree(withNotificationResult)
     }
 
     describe("returnerer ok for kall med AltinnFault") {
@@ -112,9 +112,9 @@ class AltinnVarselKlientImplTest : DescribeSpec({
             )
         )
 
-        response.isSuccess shouldBe true
-        response.getOrNull() shouldBe instanceOf<AltinnVarselKlient.AltinnResponse.Feil>()
-        (response.getOrNull() as AltinnVarselKlient.AltinnResponse.Feil).let {
+        response shouldBe instanceOf<AltinnVarselKlientResponse.Feil>()
+        response as AltinnVarselKlientResponse.Feil
+        response.let {
             it.feilkode shouldBe altinnFault.errorID.toString()
             it.feilmelding shouldBe altinnFault.altinnErrorMessage.value
             it.rå shouldNotBe null
@@ -134,7 +134,7 @@ class AltinnVarselKlientImplTest : DescribeSpec({
             )
         )
 
-        response.isFailure shouldBe true
+        response shouldBe instanceOf<UkjentException>()
     }
 
     /**
@@ -167,6 +167,8 @@ class AltinnVarselKlientImplTest : DescribeSpec({
             )
         )
 
-        response.isFailure shouldBe true
+        response shouldBe instanceOf<AltinnVarselKlientResponse.Feil>()
+        response as AltinnVarselKlientResponse.Feil
+        response.isRetryable() shouldBe true
     }
 })

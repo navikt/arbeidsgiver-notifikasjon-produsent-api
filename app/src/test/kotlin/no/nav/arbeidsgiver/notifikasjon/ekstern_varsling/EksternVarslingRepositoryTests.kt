@@ -12,6 +12,7 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
 import kotlinx.coroutines.delay
+import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
@@ -26,6 +27,8 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
+import javax.xml.bind.JAXBElement
+import javax.xml.namespace.QName
 
 class EksternVarslingRepositoryTests: DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
@@ -231,7 +234,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
 
         repository.markerSomSendtAndReleaseJob(
             id1,
-            AltinnVarselKlient.AltinnResponse.Ok(
+            AltinnVarselKlientResponse.Ok(
                 rå = NullNode.instance
             )
         )
@@ -255,7 +258,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         it("should be completed") {
             varsel3 shouldBe instanceOf(EksternVarselTilstand.Kvittert::class)
             varsel3 as EksternVarselTilstand.Kvittert
-            varsel3.response shouldBe instanceOf(AltinnVarselKlient.AltinnResponse.Ok::class)
+            varsel3.response shouldBe instanceOf(AltinnResponse.Ok::class)
         }
     }
 
@@ -275,10 +278,11 @@ class EksternVarslingRepositoryTests: DescribeSpec({
 
         repository.markerSomSendtAndReleaseJob(
             id1,
-            AltinnVarselKlient.AltinnResponse.Feil(
+            AltinnVarselKlientResponse.Feil(
                 rå = NullNode.instance,
-                feilmelding = "hallo",
-                feilkode = "1",
+                altinnFault = AltinnFault()
+                    .withErrorID(1)
+                    .withAltinnErrorMessage(JAXBElement(QName(""), String::class.java, "hallo"))
             )
         )
 
@@ -302,8 +306,8 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             varsel3 shouldBe instanceOf(EksternVarselTilstand.Kvittert::class)
             varsel3 as EksternVarselTilstand.Kvittert
             val response = varsel3.response
-            response shouldBe instanceOf(AltinnVarselKlient.AltinnResponse.Feil::class)
-            response as AltinnVarselKlient.AltinnResponse.Feil
+            response shouldBe instanceOf(AltinnResponse.Feil::class)
+            response as AltinnResponse.Feil
             response.feilkode shouldBe "1"
             response.feilmelding shouldBe "hallo"
         }
