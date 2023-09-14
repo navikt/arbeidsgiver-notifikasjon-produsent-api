@@ -425,6 +425,7 @@ class EksternVarslingRepository(
                                 RETRIES -> " locked_by is not null"
                             }
                         }
+                    ORDER BY id
                     LIMIT 1
                     FOR UPDATE
                     SKIP LOCKED
@@ -531,13 +532,8 @@ class EksternVarslingRepository(
     }
 
     private fun Transaction.returnToJobQueue(varselId: UUID) {
-        executeUpdate("""
-            UPDATE job_queue
-            SET locked = false
-            WHERE varsel_id = ?
-        """) {
-            uuid(varselId)
-        }
+        deleteFromJobQueue(varselId)
+        putOnJobQueue(varselId)
     }
 
     suspend fun deleteFromJobQueue(varselId: UUID) {
