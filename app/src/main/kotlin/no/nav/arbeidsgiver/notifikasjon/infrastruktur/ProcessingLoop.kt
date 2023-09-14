@@ -28,7 +28,7 @@ fun CoroutineScope.launchProcessingLoop(
                 errors = 0
             } catch (e: Exception) {
                 errors += 1
-                log.error("exception in processing loop for $debugDescription", e)
+                log.error("exception {} in processing loop {}", e.javaClass.canonicalName, debugDescription, e)
             }
 
             when {
