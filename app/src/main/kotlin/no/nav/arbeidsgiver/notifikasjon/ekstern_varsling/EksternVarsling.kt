@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
@@ -127,32 +126,27 @@ suspend fun PipelineContext<Unit, ApplicationCall>.testEpost(altinnVarselKlient:
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.testSend(
     client: AltinnVarselKlient,
-    action: suspend AltinnVarselKlientImpl.() -> Result<AltinnVarselKlient.AltinnResponse>
+    action: suspend AltinnVarselKlientImpl.() -> AltinnVarselKlientResponseOrException
 ) {
     if (client is AltinnVarselKlientImpl) {
-        client.action()
-            .fold(
-                onSuccess = {
-                    when (it) {
-                        is AltinnVarselKlient.AltinnResponse.Ok ->
-                            call.respond(HttpStatusCode.OK, laxObjectMapper.writeValueAsString(it.rå))
+        when (val response = client.action()) {
+            is AltinnVarselKlientResponse.Ok ->
+                call.respond(HttpStatusCode.OK, laxObjectMapper.writeValueAsString(response.rå))
 
-                        is AltinnVarselKlient.AltinnResponse.Feil ->
-                            call.respond(HttpStatusCode.BadRequest, laxObjectMapper.writeValueAsString(it.rå))
-                    }
-                },
-                onFailure = {
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        laxObjectMapper.writeValueAsString(
-                            mapOf(
-                                "type" to it.javaClass.canonicalName,
-                                "msg" to it.message,
-                            )
+            is AltinnVarselKlientResponse.Feil ->
+                call.respond(HttpStatusCode.BadRequest, laxObjectMapper.writeValueAsString(response.rå))
+
+            is UkjentException ->
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    laxObjectMapper.writeValueAsString(
+                        mapOf(
+                            "type" to response.exception.javaClass.canonicalName,
+                            "msg" to response.exception.message,
                         )
                     )
-                }
-            )
+                )
+        }
     }
 }
 

@@ -38,9 +38,9 @@ class EksternVarslingServiceTests : DescribeSpec({
         altinnVarselKlient = object: AltinnVarselKlient {
             override suspend fun send(
                 eksternVarsel: EksternVarsel
-            ): Result<AltinnVarselKlient.AltinnResponse> {
+            ): AltinnVarselKlientResponseOrException {
                 meldingSendt.set(true)
-                return Result.success(AltinnVarselKlient.AltinnResponse.Ok(rå = NullNode.instance))
+                return AltinnVarselKlientResponse.Ok(rå = NullNode.instance)
             }
         },
         hendelseProdusent = hendelseProdusent,
