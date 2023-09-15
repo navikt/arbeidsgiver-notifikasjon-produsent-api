@@ -9,8 +9,10 @@ import ch.qos.logback.classic.spi.Configurator.ExecutionStatus
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.ConsoleAppender
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder
+import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.core.spi.ContextAware
 import ch.qos.logback.core.spi.ContextAwareBase
+import ch.qos.logback.core.spi.FilterReply
 import ch.qos.logback.core.spi.LifeCycle
 import net.logstash.logback.encoder.LogstashEncoder
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
@@ -22,6 +24,13 @@ class LogConfig : ContextAwareBase(), Configurator {
 
         val rootAppender = MaskingAppender().setup(lc) {
             appender = ConsoleAppender<ILoggingEvent>().setup(lc) {
+                /* logs too much pii for shared log */
+                addFilter(object : Filter<ILoggingEvent>() {
+                    override fun decide(event: ILoggingEvent) = when {
+                        event.loggerName.startsWith("org.apache.cxf") -> FilterReply.DENY
+                        else -> FilterReply.NEUTRAL
+                    }
+                })
                 if (naisCluster != null) {
                     encoder = LogstashEncoder().setup(lc)
                 } else {
@@ -45,10 +54,6 @@ class LogConfig : ContextAwareBase(), Configurator {
 
         lc.getLogger("org.apache.kafka").level = Level.INFO
         lc.getLogger("io.netty").level = Level.INFO
-
-        if (naisCluster == "prod-gcp") {
-            lc.getLogger("org.apache.cxf.services.INotificationAgencyExternalBasic").level = Level.WARN
-        }
 
         if (naisCluster == null || naisCluster == "dev-gcp") {
             lc.getLogger("io.ktor.auth.jwt").level = Level.INFO
