@@ -8,7 +8,6 @@ import ch.qos.logback.classic.spi.Configurator
 import ch.qos.logback.classic.spi.Configurator.ExecutionStatus
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.ConsoleAppender
-import ch.qos.logback.core.FileAppender
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder
 import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.core.spi.ContextAware
@@ -52,15 +51,6 @@ class LogConfig : ContextAwareBase(), Configurator {
             )
             addAppender(rootAppender)
         }
-
-        lc.getLogger("org.apache.cxf").addAppender(FileAppender<ILoggingEvent>().setup(lc) {
-            file = "/tmp/soap.log"
-            encoder = LayoutWrappingEncoder<ILoggingEvent>().setup(lc).apply {
-                layout = PatternLayout().also {
-                    it.pattern = "%d %-5level [%thread] %logger: %msg %mdc%n"
-                }.setup(lc)
-            }
-        })
 
         lc.getLogger("org.apache.kafka").level = Level.INFO
         lc.getLogger("io.netty").level = Level.INFO
