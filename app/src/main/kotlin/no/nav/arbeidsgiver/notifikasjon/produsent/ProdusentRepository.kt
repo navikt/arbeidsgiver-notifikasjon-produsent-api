@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
@@ -233,6 +234,7 @@ class ProdusentRepositoryImpl(
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
+            is FristUtsatt -> TODO()
         }
     }
 

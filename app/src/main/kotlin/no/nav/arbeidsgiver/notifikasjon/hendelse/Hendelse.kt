@@ -376,6 +376,22 @@ object HendelseModel {
         }
     }
 
+
+    @JsonTypeName("FristUtsatt")
+    data class FristUtsatt(
+        override val virksomhetsnummer: String,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val notifikasjonId: UUID,
+        val fristEndretTidspunkt: Instant,
+        val frist: LocalDate,
+        val påminnelse: Påminnelse?,
+    ) : Hendelse() {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
+
     @JsonTypeName("OppgaveUtgaatt")
     data class OppgaveUtgått(
         override val virksomhetsnummer: String,

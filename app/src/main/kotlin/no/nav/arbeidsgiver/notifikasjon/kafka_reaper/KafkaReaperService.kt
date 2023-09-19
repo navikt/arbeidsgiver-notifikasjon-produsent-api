@@ -5,6 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
@@ -49,6 +50,7 @@ class KafkaReaperServiceImpl(
             is OppgaveUtgått,
             is PåminnelseOpprettet,
             is EksterntVarselFeilet,
+            is FristUtsatt,
             is EksterntVarselVellykket -> {
                 if (kafkaReaperModel.erSlettet(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(

@@ -50,6 +50,7 @@ class SkedulertPåminnelseService(
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket -> Unit
+            is HendelseModel.FristUtsatt -> TODO()
         }
     }
 
