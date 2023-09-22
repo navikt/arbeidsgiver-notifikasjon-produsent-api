@@ -1,0 +1,4584 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+    <title>API-dokumentasjon | Notifikasjoner for arbeidsgivere</title>
+    <meta name="generator" content="Jekyll v3.9.3" />
+    <meta property="og:title" content="API-dokumentasjon" />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      name="description"
+      content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+    />
+    <meta
+      property="og:description"
+      content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+    />
+    <link
+      rel="canonical"
+      href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/"
+    />
+    <meta
+      property="og:url"
+      content="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/"
+    />
+    <meta property="og:site_name" content="Notifikasjoner for arbeidsgivere" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta property="twitter:title" content="API-dokumentasjon" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "description": "Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.",
+        "headline": "API-dokumentasjon",
+        "url": "https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/"
+      }
+    </script>
+    <!-- End Jekyll SEO tag -->
+    <link rel="stylesheet" href="main.css" />
+    <link
+      type="application/atom+xml"
+      rel="alternate"
+      href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/feed.xml"
+      title="Notifikasjoner for arbeidsgivere"
+    />
+  </head>
+  <body>
+    <header class="site-header" role="banner">
+      <div class="wrapper">
+        <a
+          class="site-title"
+          rel="author"
+          href="/arbeidsgiver-notifikasjon-produsent-api/"
+          >Notifikasjoner for arbeidsgivere</a
+        >
+        <nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewBox="0 0 18 15" width="18px" height="15px">
+                <path
+                  d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"
+                />
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+            <a class="page-link" href="guide.html">Guide</a>
+            <a class="page-link" href="api.html">API-dokumentasjon</a>
+            <a class="page-link" href="vilkaar.html">Bruksvilkår</a>
+            <a class="page-link" href="faq.html">FAQ</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post">
+          <header class="post-header">
+            <h1 class="post-title">API-dokumentasjon</h1>
+          </header>
+
+          <div class="post-content">
+            <p>
+              Interaktiv demo av API
+              <a
+                href="https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/"
+                >er tilgjengelig på ekstern.dev.nav.no</a
+              >. Hvis du kjører en spørring i den interaktive demoen, så sendes
+              et ekte nettverkskall. Du kan derfor bruke developer-tools for å
+              se hvordan JSON-et til forespørselen og svaret ser ut.
+            </p>
+            <h1 id="autentisering">Autentisering</h1>
+            <p>
+              Tjenesten deres må autentisere seg med Azure AD, type
+              server–server, som
+              <a href="https://doc.nais.io/security/auth/azure-ad/"
+                >beskrevet i nais-dokumentasjonen</a
+              >.
+            </p>
+            <h1 id="endepunkter-for-miljer">Endepunkter for miljøer</h1>
+            <table>
+              <thead>
+                <tr>
+                  <th>miljø</th>
+                  <th>url</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>mock</td>
+                  <td>
+                    <code
+                      >https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/api/graphql</code
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>dev</td>
+                  <td>
+                    fra gcp:
+                    <code
+                      >https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql</code
+                    >, <br />
+                    fra fss:
+                    <code
+                      >https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql</code
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>prod</td>
+                  <td>
+                    <code
+                      >https://ag-notifikasjon-produsent-api.intern.nav.no/api/graphql</code
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h1 id="graphql-over-http">GraphQL over HTTP</h1>
+            <p>
+              Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON,
+              basert på de offisielle anbefalingene:
+              <a href="https://graphql.org/learn/serving-over-http/"
+                >https://graphql.org/learn/serving-over-http/</a
+              >.
+            </p>
+            <blockquote>
+              <p>
+                ⚠️ GraphQL returnerer alltid en
+                <a href="https://spec.graphql.org/October2021/#sec-Response"
+                  >&quot;well-formed&quot; HTTP 200 OK</a
+                >. Dersom det er en eller flere valideringsfeil eller noe annet
+                ugyldig vil det returneres informasjon om dette i
+                <a href="https://spec.graphql.org/October2021/#sec-Errors"
+                  >errors feltet</a
+                >
+                i response body fra server.
+              </p>
+            </blockquote>
+            <p>
+              Vi anbefaler at dere angir correlationId i kall dere gjør mot
+              APIet. Dette vil lette arbeidet med feilsøking og oppfølging. Vi
+              plukker verdien ut fra en av følgende headere:
+            </p>
+            <ul>
+              <li><code>X-Request-ID</code></li>
+              <li><code>X-Correlation-ID</code></li>
+              <li><code>call-id</code></li>
+              <li><code>callId</code></li>
+              <li><code>call_id</code></li>
+            </ul>
+            <p>
+              Med dette angitt kan dere søke i kibana etter
+              <code>x_correlation_id</code>.
+            </p>
+            <h2 id="graphql-schema-types">GraphQL Schema Types</h2>
+            <!-- START graphql-markdown -->
+            <details>
+              <summary><strong>Table of Contents</strong></summary>
+              <ul>
+                <li><a href="#query">Query</a></li>
+                <li><a href="#mutation">Mutation</a></li>
+                <li>
+                  <a href="#objects">Objects</a>
+                  <ul>
+                    <li><a href="#altinnmottaker">AltinnMottaker</a></li>
+                    <li><a href="#beskjed">Beskjed</a></li>
+                    <li><a href="#beskjeddata">BeskjedData</a></li>
+                    <li>
+                      <a href="#duplikateksternidogmerkelapp"
+                        >DuplikatEksternIdOgMerkelapp</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#duplikatgrupperingsid">DuplikatGrupperingsid</a>
+                    </li>
+                    <li><a href="#eksterntvarsel">EksterntVarsel</a></li>
+                    <li>
+                      <a href="#harddeletenotifikasjonvellykket"
+                        >HardDeleteNotifikasjonVellykket</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#harddeletesakvellykket"
+                        >HardDeleteSakVellykket</a
+                      >
+                    </li>
+                    <li><a href="#konflikt">Konflikt</a></li>
+                    <li><a href="#metadata">Metadata</a></li>
+                    <li>
+                      <a href="#naermesteledermottaker"
+                        >NaermesteLederMottaker</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#notifikasjonconnection"
+                        >NotifikasjonConnection</a
+                      >
+                    </li>
+                    <li><a href="#notifikasjonedge">NotifikasjonEdge</a></li>
+                    <li>
+                      <a href="#notifikasjonfinnesikke"
+                        >NotifikasjonFinnesIkke</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#nybeskjedvellykket">NyBeskjedVellykket</a>
+                    </li>
+                    <li>
+                      <a href="#nyeksterntvarselresultat"
+                        >NyEksterntVarselResultat</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#nyoppgavevellykket">NyOppgaveVellykket</a>
+                    </li>
+                    <li><a href="#nysakvellykket">NySakVellykket</a></li>
+                    <li>
+                      <a href="#nystatussakvellykket">NyStatusSakVellykket</a>
+                    </li>
+                    <li><a href="#oppgave">Oppgave</a></li>
+                    <li><a href="#oppgavedata">OppgaveData</a></li>
+                    <li>
+                      <a href="#oppgaveutfoertvellykket"
+                        >OppgaveUtfoertVellykket</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#oppgaveutgaattvellykket"
+                        >OppgaveUtgaattVellykket</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#oppgaveneralleredeutfoert"
+                        >OppgavenErAlleredeUtfoert</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#paaminnelseresultat">PaaminnelseResultat</a>
+                    </li>
+                    <li><a href="#pageinfo">PageInfo</a></li>
+                    <li><a href="#sakfinnesikke">SakFinnesIkke</a></li>
+                    <li>
+                      <a href="#softdeletenotifikasjonvellykket"
+                        >SoftDeleteNotifikasjonVellykket</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#softdeletesakvellykket"
+                        >SoftDeleteSakVellykket</a
+                      >
+                    </li>
+                    <li><a href="#statusoppdatering">StatusOppdatering</a></li>
+                    <li><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></li>
+                    <li><a href="#ugyldigmottaker">UgyldigMottaker</a></li>
+                    <li>
+                      <a href="#ugyldigpaaminnelsetidspunkt"
+                        >UgyldigPaaminnelseTidspunkt</a
+                      >
+                    </li>
+                    <li><a href="#ukjentprodusent">UkjentProdusent</a></li>
+                    <li><a href="#ukjentrolle">UkjentRolle</a></li>
+                  </ul>
+                </li>
+                <li>
+                  <a href="#inputs">Inputs</a>
+                  <ul>
+                    <li>
+                      <a href="#altinnmottakerinput">AltinnMottakerInput</a>
+                    </li>
+                    <li>
+                      <a href="#altinntjenestemottakerinput"
+                        >AltinntjenesteMottakerInput</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#eksterntvarselaltinntjenesteinput"
+                        >EksterntVarselAltinntjenesteInput</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#eksterntvarselepostinput"
+                        >EksterntVarselEpostInput</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#eksterntvarselinput">EksterntVarselInput</a>
+                    </li>
+                    <li>
+                      <a href="#eksterntvarselsmsinput"
+                        >EksterntVarselSmsInput</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#epostkontaktinfoinput">EpostKontaktInfoInput</a>
+                    </li>
+                    <li>
+                      <a href="#epostmottakerinput">EpostMottakerInput</a>
+                    </li>
+                    <li>
+                      <a href="#futuretemporalinput">FutureTemporalInput</a>
+                    </li>
+                    <li>
+                      <a href="#harddeleteupdateinput">HardDeleteUpdateInput</a>
+                    </li>
+                    <li><a href="#metadatainput">MetadataInput</a></li>
+                    <li><a href="#mottakerinput">MottakerInput</a></li>
+                    <li>
+                      <a href="#naermesteledermottakerinput"
+                        >NaermesteLederMottakerInput</a
+                      >
+                    </li>
+                    <li><a href="#notifikasjoninput">NotifikasjonInput</a></li>
+                    <li><a href="#nybeskjedinput">NyBeskjedInput</a></li>
+                    <li><a href="#nyoppgaveinput">NyOppgaveInput</a></li>
+                    <li>
+                      <a href="#paaminnelseeksterntvarselaltinntjenesteinput"
+                        >PaaminnelseEksterntVarselAltinntjenesteInput</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#paaminnelseeksterntvarselepostinput"
+                        >PaaminnelseEksterntVarselEpostInput</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#paaminnelseeksterntvarselinput"
+                        >PaaminnelseEksterntVarselInput</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#paaminnelseeksterntvarselsmsinput"
+                        >PaaminnelseEksterntVarselSmsInput</a
+                      >
+                    </li>
+                    <li><a href="#paaminnelseinput">PaaminnelseInput</a></li>
+                    <li>
+                      <a href="#paaminnelsetidspunktinput"
+                        >PaaminnelseTidspunktInput</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#sendetidspunktinput">SendetidspunktInput</a>
+                    </li>
+                    <li>
+                      <a href="#smskontaktinfoinput">SmsKontaktInfoInput</a>
+                    </li>
+                    <li><a href="#smsmottakerinput">SmsMottakerInput</a></li>
+                  </ul>
+                </li>
+                <li>
+                  <a href="#enums">Enums</a>
+                  <ul>
+                    <li>
+                      <a href="#eksterntvarselstatus">EksterntVarselStatus</a>
+                    </li>
+                    <li><a href="#nytidstrategi">NyTidStrategi</a></li>
+                    <li><a href="#oppgavetilstand">OppgaveTilstand</a></li>
+                    <li><a href="#saksstatus">SaksStatus</a></li>
+                    <li><a href="#sendevindu">Sendevindu</a></li>
+                  </ul>
+                </li>
+                <li>
+                  <a href="#scalars">Scalars</a>
+                  <ul>
+                    <li><a href="#boolean">Boolean</a></li>
+                    <li><a href="#id">ID</a></li>
+                    <li><a href="#iso8601date">ISO8601Date</a></li>
+                    <li><a href="#iso8601datetime">ISO8601DateTime</a></li>
+                    <li><a href="#iso8601duration">ISO8601Duration</a></li>
+                    <li>
+                      <a href="#iso8601localdatetime">ISO8601LocalDateTime</a>
+                    </li>
+                    <li><a href="#int">Int</a></li>
+                    <li><a href="#string">String</a></li>
+                  </ul>
+                </li>
+                <li>
+                  <a href="#interfaces">Interfaces</a>
+                  <ul>
+                    <li><a href="#error">Error</a></li>
+                  </ul>
+                </li>
+                <li>
+                  <a href="#unions">Unions</a>
+                  <ul>
+                    <li>
+                      <a href="#harddeletenotifikasjonresultat"
+                        >HardDeleteNotifikasjonResultat</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#harddeletesakresultat">HardDeleteSakResultat</a>
+                    </li>
+                    <li>
+                      <a href="#minenotifikasjonerresultat"
+                        >MineNotifikasjonerResultat</a
+                      >
+                    </li>
+                    <li><a href="#mottaker">Mottaker</a></li>
+                    <li><a href="#notifikasjon">Notifikasjon</a></li>
+                    <li><a href="#nybeskjedresultat">NyBeskjedResultat</a></li>
+                    <li><a href="#nyoppgaveresultat">NyOppgaveResultat</a></li>
+                    <li><a href="#nysakresultat">NySakResultat</a></li>
+                    <li>
+                      <a href="#nystatussakresultat">NyStatusSakResultat</a>
+                    </li>
+                    <li>
+                      <a href="#oppgaveutfoertresultat"
+                        >OppgaveUtfoertResultat</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#oppgaveutgaattresultat"
+                        >OppgaveUtgaattResultat</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#softdeletenotifikasjonresultat"
+                        >SoftDeleteNotifikasjonResultat</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#softdeletesakresultat">SoftDeleteSakResultat</a>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </details>
+            <h3 id="query">Query</h3>
+            <p>Dette er roten som alle forespørsler starter fra.</p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>whoami</strong></td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Egnet for feilsøking. Forteller hvem du er autentisert
+                      som.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>mineNotifikasjoner</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#minenotifikasjonerresultat"
+                      >MineNotifikasjonerResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Vi bruker det Connections-patternet for paginering. Se
+                      <a href="https://relay.dev/graphql/connections.htm"
+                        >Connection-standaren</a
+                      >
+                      for mer informasjon.
+                    </p>
+                    <p>
+                      Dere må gjenta paremetere når dere blar gjennom alle
+                      notifikasjonen.
+                    </p>
+                    <p>
+                      Hvis verken <code>merkelapp</code> eller
+                      <code>merkelapper</code> er gitt, vil notifikasjoner med
+                      alle dine merkelapper være med.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">first</td>
+                  <td valign="top"><a href="#int">Int</a></td>
+                  <td>
+                    <p>antall notifikasjoner du ønsker å hente</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">after</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Cursor til notifikasjonen du henter fra. Cursor får du fra
+                      <a href="#notifikasjonedge">NotifikasjonEdge</a>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Filtrer på merkelapp. Kan ikke brukes sammen med
+                      <code>merkelapper</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapper</td>
+                  <td valign="top">[<a href="#string">String</a>!]</td>
+                  <td>
+                    <p>
+                      Filtrer på merkelapper. Kan ikke brukes sammen med
+                      <code>merkelapp</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">grupperingsid</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 id="mutation">Mutation</h3>
+            <p>
+              Dette er roten som alle endringer (&quot;mutations&quot;) starter
+              fra. Endringer inkluderer også å opprette nye ting.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>nySak</strong></td>
+                  <td valign="top">
+                    <a href="#nysakresultat">NySakResultat</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">grupperingsid</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Grupperings-id-en knytter en sak og notifikasjoner sammen.
+                      Den skal være unik for saker innenfor merkelappen. Et
+                      naturlig valg av grupperingsid er f.eks. et saksnummer.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Merkelapp som saken skal assossieres med.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">
+                    virksomhetsnummer
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Virksomhetsnummeret til virksomheten som saken omhandler.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">mottakere</td>
+                  <td valign="top">
+                    [<a href="#mottakerinput">MottakerInput</a>!]!
+                  </td>
+                  <td>
+                    <p>Hvem som skal få se saken.</p>
+                    <p>
+                      NB. At en bruker har tilgang til en sak påvirker ikke om
+                      de har tilgang til en notifikasjon. De tilgangsstyres hver
+                      for seg.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">tittel</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>En tittel på saken, som vises til brukeren.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">lenke</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Her oppgir dere en lenke som brukeren kan klikke på for å
+                      komme rett til saken.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">initiellStatus</td>
+                  <td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">tidspunkt</td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td>
+                    <p>
+                      Når endringen skjedde. Det kan godt være i fortiden. Dette
+                      feltet er frivillig. Hvis feltet ikke er oppgitt, bruker
+                      vi tidspunktet dere gjør kallet på.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">
+                    overstyrStatustekstMed
+                  </td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Dette feltet er frivillig. Det lar deg overstyre hvilken
+                      tekst vi viser til brukeren. Se
+                      <code>SaksStatus</code> for default tekster.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">hardDelete</td>
+                  <td valign="top">
+                    <a href="#futuretemporalinput">FutureTemporalInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Oppgi dersom dere ønsker at hard delete skal skeduleres.
+                      Vi tolker relative datoer basert på
+                      <code>opprettetTidspunkt</code> (eller når vi mottok
+                      kallet hvis dere ikke har oppgitt
+                      <code>opprettetTidspunkt</code>).
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>nyStatusSak</strong></td>
+                  <td valign="top">
+                    <a href="#nystatussakresultat">NyStatusSakResultat</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">idempotencyKey</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">id</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyStatus</td>
+                  <td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">tidspunkt</td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td>
+                    <p>
+                      Når endringen skjedde. Det kan godt være i fortiden. Dette
+                      feltet er frivillig. Hvis feltet ikke er oppgitt, bruker
+                      vi tidspunktet dere gjør kallet på.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">
+                    overstyrStatustekstMed
+                  </td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Dette feltet er frivillig. Det lar deg overstyre hvilken
+                      tekst vi viser til brukeren. Se
+                      <code>SaksStatus</code> for default tekster.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">hardDelete</td>
+                  <td valign="top">
+                    <a href="#harddeleteupdateinput">HardDeleteUpdateInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Se:
+                      <a href="#harddeleteupdateinput"
+                        >HardDeleteUpdateInput typen</a
+                      >
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyLenkeTilSak</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Her kan dere endre lenken til saken. F.eks hvis saken har
+                      gått fra å være en søknad til en kvittering, så kan det
+                      være dere har behov for å endre url som brukeren sendes
+                      til. Dette feltet er frivillig; er det ikke oppgitt (eller
+                      er null), så forblir lenken knyttet til saken uendret.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>nyStatusSakByGrupperingsid</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#nystatussakresultat">NyStatusSakResultat</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">idempotencyKey</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">grupperingsid</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyStatus</td>
+                  <td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">tidspunkt</td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td>
+                    <p>
+                      Når endringen skjedde. Det kan godt være i fortiden. Dette
+                      feltet er frivillig. Hvis feltet ikke er oppgitt, bruker
+                      vi tidspunktet dere gjør kallet på.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">
+                    overstyrStatustekstMed
+                  </td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Dette feltet er frivillig. Det lar deg overstyre hvilken
+                      tekst vi viser til brukeren. Se
+                      <code>SaksStatus</code> for default tekster.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">hardDelete</td>
+                  <td valign="top">
+                    <a href="#harddeleteupdateinput">HardDeleteUpdateInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Se:
+                      <a href="#harddeleteupdateinput"
+                        >HardDeleteUpdateInput typen</a
+                      >
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyLenkeTilSak</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Her kan dere endre lenken til saken. F.eks hvis saken har
+                      gått fra å være en søknad til en kvittering, så kan det
+                      være dere har behov for å endre url som brukeren sendes
+                      til. Dette feltet er frivillig; er det ikke oppgitt (eller
+                      er null), så forblir lenken knyttet til saken uendret.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>nyBeskjed</strong></td>
+                  <td valign="top">
+                    <a href="#nybeskjedresultat">NyBeskjedResultat</a>!
+                  </td>
+                  <td>
+                    <p>Opprett en ny beskjed.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyBeskjed</td>
+                  <td valign="top">
+                    <a href="#nybeskjedinput">NyBeskjedInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>nyOppgave</strong></td>
+                  <td valign="top">
+                    <a href="#nyoppgaveresultat">NyOppgaveResultat</a>!
+                  </td>
+                  <td>
+                    <p>Opprett en ny oppgave.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyOppgave</td>
+                  <td valign="top">
+                    <a href="#nyoppgaveinput">NyOppgaveInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>oppgaveUtfoert</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#oppgaveutfoertresultat">OppgaveUtfoertResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>Marker en oppgave (identifisert ved id) som utført.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">id</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som oppgaven har. Den du fikk da du opprettet
+                      oppgaven med <code>nyOppgave</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">hardDelete</td>
+                  <td valign="top">
+                    <a href="#harddeleteupdateinput">HardDeleteUpdateInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Se:
+                      <a href="#harddeleteupdateinput"
+                        >HardDeleteUpdateInput typen</a
+                      >
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyLenke</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Ny lenke som oppgaven peker på: overskriver lenken som ble
+                      gitt ved opprettelse av oppgave. F.eks. for å peke på en
+                      kvitterings-side.
+                    </p>
+                    <p>
+                      Optional: hvis ikke oppgitt/null, så beholdes forrige
+                      lenke.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">
+                    utfoertTidspunkt
+                  </td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td>
+                    <p>Tidspunkt for når oppgaven ble utført.</p>
+                    <p>
+                      Optional: hvis ikke oppgitt/null, så blir den satt til
+                      now().
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>oppgaveUtfoertByEksternId</strong> ⚠️
+                  </td>
+                  <td valign="top">
+                    <a href="#oppgaveutfoertresultat">OppgaveUtfoertResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Marker en oppgave (identifisert ved ekstern id) som
+                      utført.
+                    </p>
+                    <p>⚠️ <strong>DEPRECATED</strong></p>
+                    <blockquote>
+                      <p>
+                        Using the type ID for <code>eksternId</code> can lead to
+                        unexpected behaviour. Use oppgaveUtfoertByEksternId_V2
+                        instead.
+                      </p>
+                    </blockquote>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Merkelapp som oppgaven er registrert med.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">eksternId</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som <em>dere ga oss</em> da dere opprettet oppgaven
+                      med <code>nyOppgave</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">hardDelete</td>
+                  <td valign="top">
+                    <a href="#harddeleteupdateinput">HardDeleteUpdateInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Se:
+                      <a href="#harddeleteupdateinput"
+                        >HardDeleteUpdateInput typen</a
+                      >
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>oppgaveUtfoertByEksternId_V2</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#oppgaveutfoertresultat">OppgaveUtfoertResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Marker en oppgave (identifisert ved ekstern id) som
+                      utført.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Merkelapp som oppgaven er registrert med.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">eksternId</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som <em>dere ga oss</em> da dere opprettet oppgaven
+                      med <code>nyOppgave</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">hardDelete</td>
+                  <td valign="top">
+                    <a href="#harddeleteupdateinput">HardDeleteUpdateInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Se:
+                      <a href="#harddeleteupdateinput"
+                        >HardDeleteUpdateInput typen</a
+                      >
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyLenke</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Ny lenke som oppgaven peker på: overskriver lenken som ble
+                      gitt ved opprettelse av oppgave. F.eks. for å peke på en
+                      kvitterings-side.
+                    </p>
+                    <p>
+                      Optional: hvis ikke oppgitt/null, så beholdes forrige
+                      lenke.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">
+                    utfoertTidspunkt
+                  </td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td>
+                    <p>Tidspunkt for når oppgaven ble utført.</p>
+                    <p>
+                      Optional: hvis ikke oppgitt/null, så blir den satt til
+                      now().
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>oppgaveUtgaatt</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#oppgaveutgaattresultat">OppgaveUtgaattResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>Marker en oppgave (identifisert ved id) som utgått.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">id</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som oppgaven har. Den du fikk da du opprettet
+                      oppgaven med <code>nyOppgave</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">hardDelete</td>
+                  <td valign="top">
+                    <a href="#harddeleteupdateinput">HardDeleteUpdateInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Se:
+                      <a href="#harddeleteupdateinput"
+                        >HardDeleteUpdateInput typen</a
+                      >
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyLenke</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Ny lenke som oppgaven peker på: overskriver lenken som ble
+                      gitt ved opprettelse av oppgave. F.eks. for å peke på en
+                      kvitterings-side.
+                    </p>
+                    <p>
+                      Optional: hvis ikke oppgitt/null, så beholdes forrige
+                      lenke.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">
+                    utgaattTidspunkt
+                  </td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td>
+                    <p>Tidspunkt for når oppgaven utgikk.</p>
+                    <p>
+                      Optional: hvis ikke oppgitt/null, så blir den satt til
+                      now().
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>oppgaveUtgaattByEksternId</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#oppgaveutgaattresultat">OppgaveUtgaattResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Marker en oppgave (identifisert ved ekstern id) som
+                      utgått.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Merkelapp som oppgaven er registrert med.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">eksternId</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som <em>dere ga oss</em> da dere opprettet oppgaven
+                      med <code>nyOppgave</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">hardDelete</td>
+                  <td valign="top">
+                    <a href="#harddeleteupdateinput">HardDeleteUpdateInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Se:
+                      <a href="#harddeleteupdateinput"
+                        >HardDeleteUpdateInput typen</a
+                      >
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">nyLenke</td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Ny lenke som oppgaven peker på: overskriver lenken som ble
+                      gitt ved opprettelse av oppgave. F.eks. for å peke på en
+                      kvitterings-side.
+                    </p>
+                    <p>
+                      Optional: hvis ikke oppgitt/null, så beholdes forrige
+                      lenke.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">
+                    utgaattTidspunkt
+                  </td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td>
+                    <p>Tidspunkt for når oppgaven utgikk.</p>
+                    <p>
+                      Optional: hvis ikke oppgitt/null, så blir den satt til
+                      now().
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>softDeleteNotifikasjon</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#softdeletenotifikasjonresultat"
+                      >SoftDeleteNotifikasjonResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>Markerer en notifikasjon som slettet (soft delete).</p>
+                    <p>
+                      Notifikasjonen vil forsvinne helt for mottakeren: de vil
+                      ikke kunne se den på noen som helst måte — som om
+                      notifikasjonen aldri eksisterte.
+                    </p>
+                    <p>
+                      For dere (produsenter), så kan dere fortsatt se
+                      notifikasjonen i listen over deres notifikasjoner.
+                    </p>
+                    <p>
+                      Eventuelle eksterne varsler (SMS, e-post) knyttet til
+                      notifikasjonen vil bli fortsatt bli sendt.
+                    </p>
+                    <p>
+                      Advarsel: det er ikke mulig å angre på denne operasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">id</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>softDeleteNotifikasjonByEksternId</strong> ⚠️
+                  </td>
+                  <td valign="top">
+                    <a href="#softdeletenotifikasjonresultat"
+                      >SoftDeleteNotifikasjonResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Se dokumentasjon for
+                      <code>softDeleteNotifikasjon(id)</code>.
+                    </p>
+                    <p>⚠️ <strong>DEPRECATED</strong></p>
+                    <blockquote>
+                      <p>
+                        Using the type ID for <code>eksternId</code> can lead to
+                        unexpected behaviour. Use
+                        softDeleteNotifikasjonByEksternId_V2 instead.
+                      </p>
+                    </blockquote>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Merkelappen som dere ga oss da dere opprettet
+                      notifikasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">eksternId</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som dere ga oss da dere opprettet notifikasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>softDeleteNotifikasjonByEksternId_V2</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#softdeletenotifikasjonresultat"
+                      >SoftDeleteNotifikasjonResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Se dokumentasjon for
+                      <code>softDeleteNotifikasjon(id)</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Merkelappen som dere ga oss da dere opprettet
+                      notifikasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">eksternId</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som dere ga oss da dere opprettet notifikasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>hardDeleteNotifikasjon</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#harddeletenotifikasjonresultat"
+                      >HardDeleteNotifikasjonResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Sletter en notifikasjon og tilhørende data helt fra
+                      databasen og kafka. Formålet er å støtte juridiske krav om
+                      sletting i henhold til personvern.
+                    </p>
+                    <p>
+                      Eventuelle eksterne varsler (SMS, e-post) knyttet til
+                      notifikasjonen vil bli fortsatt bli sendt.
+                    </p>
+                    <p>
+                      Advarsel: det er ikke mulig å angre på denne operasjonen.
+                      All data blir borte for godt.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">id</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>hardDeleteNotifikasjonByEksternId</strong> ⚠️
+                  </td>
+                  <td valign="top">
+                    <a href="#harddeletenotifikasjonresultat"
+                      >HardDeleteNotifikasjonResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Se dokumentasjon for
+                      <code>hardDeleteNotifikasjon(id)</code>.
+                    </p>
+                    <p>⚠️ <strong>DEPRECATED</strong></p>
+                    <blockquote>
+                      <p>
+                        Using the type ID for <code>eksternId</code> can lead to
+                        unexpected behaviour. Use
+                        hardDeleteNotifikasjonByEksternId_V2 instead.
+                      </p>
+                    </blockquote>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Merkelappen som dere ga oss da dere opprettet
+                      notifikasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">eksternId</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som dere ga oss da dere opprettet notifikasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>hardDeleteNotifikasjonByEksternId_V2</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#harddeletenotifikasjonresultat"
+                      >HardDeleteNotifikasjonResultat</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Se dokumentasjon for
+                      <code>hardDeleteNotifikasjon(id)</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Merkelappen som dere ga oss da dere opprettet
+                      notifikasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">eksternId</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      ID-en som dere ga oss da dere opprettet notifikasjonen.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>softDeleteSak</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#softdeletesakresultat">SoftDeleteSakResultat</a>!
+                  </td>
+                  <td>
+                    <p>Markerer en sak som slettet (soft delete).</p>
+                    <p>
+                      Sak vil forsvinne helt for mottakeren: de vil ikke kunne
+                      se den på noen som helst måte — som om saken aldri
+                      eksisterte.
+                    </p>
+                    <p>
+                      Advarsel: det er ikke mulig å angre på denne operasjonen.
+                      Advarsel: ingen notifikasjoner blir slettet, selv om de
+                      har samme grupperingsid.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">id</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>softDeleteSakByGrupperingsid</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#softdeletesakresultat">SoftDeleteSakResultat</a>!
+                  </td>
+                  <td>
+                    <p>Se dokumentasjon for <code>softDeleteSak(id)</code>.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Merkelappen som dere ga oss da dere opprettet saken.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">grupperingsid</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>ID-en som dere ga oss da dere opprettet saken.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>hardDeleteSak</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#harddeletesakresultat">HardDeleteSakResultat</a>!
+                  </td>
+                  <td>
+                    <p>
+                      Sletter en sak og tilhørende data helt fra databasen og
+                      kafka. Formålet er å støtte juridiske krav om sletting i
+                      henhold til personvern.
+                    </p>
+                    <p>
+                      Advarsel: det er ikke mulig å angre på denne operasjonen.
+                      All data blir borte for godt. Advarsel: ingen
+                      notifikasjoner blir slettet (selv om de har samme
+                      grupperingsid).
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">id</td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>hardDeleteSakByGrupperingsid</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#harddeletesakresultat">HardDeleteSakResultat</a>!
+                  </td>
+                  <td>
+                    <p>Se dokumentasjon for <code>hardDeleteSak(id)</code>.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">merkelapp</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Merkelappen som dere ga oss da dere opprettet saken.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" align="right" valign="top">grupperingsid</td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>ID-en som dere ga oss da dere opprettet saken.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 id="objects">Objects</h3>
+            <h4 id="altinnmottaker">AltinnMottaker</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>serviceCode</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>serviceEdition</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>virksomhetsnummer</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="beskjed">Beskjed</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top"><a href="#mottaker">Mottaker</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottakere</strong></td>
+                  <td valign="top">[<a href="#mottaker">Mottaker</a>!]!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>metadata</strong></td>
+                  <td valign="top"><a href="#metadata">Metadata</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>beskjed</strong></td>
+                  <td valign="top"><a href="#beskjeddata">BeskjedData</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>eksterneVarsler</strong>
+                  </td>
+                  <td valign="top">
+                    [<a href="#eksterntvarsel">EksterntVarsel</a>!]!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="beskjeddata">BeskjedData</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>merkelapp</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Merkelapp for beskjeden. Er typisk navnet på ytelse eller
+                      lignende. Den vises til brukeren.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tekst</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Teksten som vises til brukeren.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>lenke</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Lenken som brukeren føres til hvis de klikker på
+                      beskjeden.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="duplikateksternidogmerkelapp">
+              DuplikatEksternIdOgMerkelapp
+            </h4>
+            <p>
+              Denne feilen returneres dersom du prøver å opprette en
+              notifikasjon med en eksternId og merkelapp som allerede finnes
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="duplikatgrupperingsid">DuplikatGrupperingsid</h4>
+            <p>
+              Denne feilen returneres hvis det allerede eksisterer en sak med
+              denne grupperingsid-en under merkelappen.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="eksterntvarsel">EksterntVarsel</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>status</strong></td>
+                  <td valign="top">
+                    <a href="#eksterntvarselstatus">EksterntVarselStatus</a>!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="harddeletenotifikasjonvellykket">
+              HardDeleteNotifikasjonVellykket
+            </h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>ID-en til oppgaven du &quot;hard-delete&quot;-et.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="harddeletesakvellykket">HardDeleteSakVellykket</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>ID-en til saken du &quot;hard-delete&quot;-et.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="konflikt">Konflikt</h4>
+            <p>
+              Oppgitt informasjon samsvarer ikke med tidligere informasjon som
+              er oppgitt.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="metadata">Metadata</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>eksternId</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>opprettetTidspunkt</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>grupperingsid</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>softDeleted</strong></td>
+                  <td valign="top"><a href="#boolean">Boolean</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>softDeletedAt</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="naermesteledermottaker">NaermesteLederMottaker</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>naermesteLederFnr</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>ansattFnr</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>virksomhetsnummer</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="notifikasjonconnection">NotifikasjonConnection</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>edges</strong></td>
+                  <td valign="top">
+                    [<a href="#notifikasjonedge">NotifikasjonEdge</a>!]!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>pageInfo</strong></td>
+                  <td valign="top"><a href="#pageinfo">PageInfo</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="notifikasjonedge">NotifikasjonEdge</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>node</strong></td>
+                  <td valign="top">
+                    <a href="#notifikasjon">Notifikasjon</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>cursor</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="notifikasjonfinnesikke">NotifikasjonFinnesIkke</h4>
+            <p>
+              Denne feilen returneres dersom du prøver å referere til en
+              notifikasjon som ikke eksisterer.
+            </p>
+            <p>
+              Utover at dere kan ha oppgitt feil informasjon, så kan det
+              potensielt være på grunn av &quot;eventual consistency&quot; i
+              systemet vårt.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nybeskjedvellykket">NyBeskjedVellykket</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>eksterneVarsler</strong>
+                  </td>
+                  <td valign="top">
+                    [<a href="#nyeksterntvarselresultat"
+                      >NyEksterntVarselResultat</a
+                    >!]!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nyeksterntvarselresultat">NyEksterntVarselResultat</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nyoppgavevellykket">NyOppgaveVellykket</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>eksterneVarsler</strong>
+                  </td>
+                  <td valign="top">
+                    [<a href="#nyeksterntvarselresultat"
+                      >NyEksterntVarselResultat</a
+                    >!]!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>paaminnelse</strong></td>
+                  <td valign="top">
+                    <a href="#paaminnelseresultat">PaaminnelseResultat</a>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nysakvellykket">NySakVellykket</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nystatussakvellykket">NyStatusSakVellykket</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>statuser</strong></td>
+                  <td valign="top">
+                    [<a href="#statusoppdatering">StatusOppdatering</a>!]!
+                  </td>
+                  <td>
+                    <p>Nyeste statusoppdatering er først i listen.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="oppgave">Oppgave</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top"><a href="#mottaker">Mottaker</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottakere</strong></td>
+                  <td valign="top">[<a href="#mottaker">Mottaker</a>!]!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>metadata</strong></td>
+                  <td valign="top"><a href="#metadata">Metadata</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>oppgave</strong></td>
+                  <td valign="top"><a href="#oppgavedata">OppgaveData</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>eksterneVarsler</strong>
+                  </td>
+                  <td valign="top">
+                    [<a href="#eksterntvarsel">EksterntVarsel</a>!]!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="oppgavedata">OppgaveData</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tilstand</strong></td>
+                  <td valign="top">
+                    <a href="#oppgavetilstand">OppgaveTilstand</a>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>merkelapp</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Merkelapp for beskjeden. Er typisk navnet på ytelse eller
+                      lignende. Den vises til brukeren.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tekst</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Teksten som vises til brukeren.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>lenke</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Lenken som brukeren føres til hvis de klikker på
+                      beskjeden.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="oppgaveutfoertvellykket">OppgaveUtfoertVellykket</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>ID-en til oppgaven du oppdaterte.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="oppgaveutgaattvellykket">OppgaveUtgaattVellykket</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>ID-en til oppgaven du oppdaterte.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="oppgaveneralleredeutfoert">OppgavenErAlleredeUtfoert</h4>
+            <p>
+              Denne feilen returneres dersom du forsøker å gå fra utført til
+              utgått.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="paaminnelseresultat">PaaminnelseResultat</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>eksterneVarsler</strong>
+                  </td>
+                  <td valign="top">
+                    [<a href="#nyeksterntvarselresultat"
+                      >NyEksterntVarselResultat</a
+                    >!]!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="pageinfo">PageInfo</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>hasNextPage</strong></td>
+                  <td valign="top"><a href="#boolean">Boolean</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>endCursor</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="sakfinnesikke">SakFinnesIkke</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="softdeletenotifikasjonvellykket">
+              SoftDeleteNotifikasjonVellykket
+            </h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>ID-en til oppgaven du &quot;soft-delete&quot;-et.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="softdeletesakvellykket">SoftDeleteSakVellykket</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>id</strong></td>
+                  <td valign="top"><a href="#id">ID</a>!</td>
+                  <td>
+                    <p>ID-en til saken du &quot;soft-delete&quot;-et.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="statusoppdatering">StatusOppdatering</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>status</strong></td>
+                  <td valign="top"><a href="#saksstatus">SaksStatus</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tidspunkt</strong></td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>overstyrStatusTekstMed</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="ugyldigmerkelapp">UgyldigMerkelapp</h4>
+            <p>
+              Denne feilen returneres dersom en produsent forsøker å benytte en
+              merkelapp som den ikke har tilgang til.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="ugyldigmottaker">UgyldigMottaker</h4>
+            <p>
+              Denne feilen returneres dersom en produsent forsøker å benytte en
+              mottaker som den ikke har tilgang til.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="ugyldigpaaminnelsetidspunkt">
+              UgyldigPaaminnelseTidspunkt
+            </h4>
+            <p>
+              Tidpunkt for påminnelse er ugyldig iht grenseverdier. F.eks før
+              opprettelse eller etter frist, eller i fortid.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="ukjentprodusent">UkjentProdusent</h4>
+            <p>
+              Denne feilen returneres dersom vi ikke greier å finne dere i
+              produsent-registeret vårt.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="ukjentrolle">UkjentRolle</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 id="inputs">Inputs</h3>
+            <h4 id="altinnmottakerinput">AltinnMottakerInput</h4>
+            <p>
+              Spesifiser mottaker ved hjelp av tilganger i Altinn. Enhver som
+              har den gitte tilgangen vil kunne se notifikasjone.
+            </p>
+            <p>
+              Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner.
+              Det betyr at hvis en bruker mister en Altinn-tilgang, så vil de
+              hverken se historiske eller nye notifikasjone knyttet til den
+              Altinn-tilgangen. Og motsatt, hvis en bruker får en
+              Altinn-tilgang, vil de se tidligere notifikasjoner for den
+              Altinn-tilgangen.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>serviceCode</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>serviceEdition</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="altinntjenestemottakerinput">
+              AltinntjenesteMottakerInput
+            </h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>serviceCode</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>serviceEdition</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="eksterntvarselaltinntjenesteinput">
+              EksterntVarselAltinntjenesteInput
+            </h4>
+            <p>
+              Med denne typen vil varsel sendes til virksomheten vha tjenesten i
+              Altinn. Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det
+              mest sannsynlig blir sendt som epost, men i enkelte tilfeller vil
+              bli sendt sms.
+            </p>
+            <p>
+              De som har registrert sin kontaktadresse på underenheten (enten
+              uten filter eller hvor filteret stemmer med tjenestekoden som
+              oppgis) vil bli varslet. Den offisielle kontaktinformasjonen til
+              overenheten vil bli varslet.
+            </p>
+            <p>Malen som benyttes er TokenTextOnly og den ser slik ut:</p>
+            <pre>
+type   | subject  | notificationText
+SMS    |          | {tittel}{innhold}
+EMAIL  | {tittel} | {innhold}
+</pre
+            >
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top">
+                    <a href="#altinntjenestemottakerinput"
+                      >AltinntjenesteMottakerInput</a
+                    >!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tittel</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Subject/emne til e-posten, eller tekst i sms OBS: Det er
+                      ikke lov med personopplysninger i teksten.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>innhold</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Kroppen til e-posten. Dersom det sendes SMS blir dette
+                      feltet lagt til i kroppen på sms etter tittel OBS: Det er
+                      ikke lov med personopplysninger i teksten.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>sendetidspunkt</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#sendetidspunktinput">SendetidspunktInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="eksterntvarselepostinput">EksterntVarselEpostInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top">
+                    <a href="#epostmottakerinput">EpostMottakerInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>epostTittel</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Subject/emne til e-posten. OBS: Det er ikke lov med
+                      personopplysninger i teksten. E-post er ikke en sikker
+                      kanal.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>epostHtmlBody</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Kroppen til e-posten. Tolkes som HTML. OBS: Det er ikke
+                      lov med personopplysninger i teksten. E-post er ikke en
+                      sikker kanal.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>sendetidspunkt</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#sendetidspunktinput">SendetidspunktInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="eksterntvarselinput">EksterntVarselInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>sms</strong></td>
+                  <td valign="top">
+                    <a href="#eksterntvarselsmsinput">EksterntVarselSmsInput</a>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>epost</strong></td>
+                  <td valign="top">
+                    <a href="#eksterntvarselepostinput"
+                      >EksterntVarselEpostInput</a
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>altinntjeneste</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#eksterntvarselaltinntjenesteinput"
+                      >EksterntVarselAltinntjenesteInput</a
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="eksterntvarselsmsinput">EksterntVarselSmsInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top">
+                    <a href="#smsmottakerinput">SmsMottakerInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>smsTekst</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Teksten som sendes i SMS-en. OBS: Det er ikke lov med
+                      personopplysninger i teksten. SMS er ikke en sikker kanal.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>sendetidspunkt</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#sendetidspunktinput">SendetidspunktInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="epostkontaktinfoinput">EpostKontaktInfoInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>fnr</strong></td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>deprecated. value is ignored.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>epostadresse</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="epostmottakerinput">EpostMottakerInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>kontaktinfo</strong></td>
+                  <td valign="top">
+                    <a href="#epostkontaktinfoinput">EpostKontaktInfoInput</a>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="futuretemporalinput">FutureTemporalInput</h4>
+            <p>Med denne kan dere spesifiserer et konkret tidspunkt.</p>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>den</strong></td>
+                  <td valign="top">
+                    <a href="#iso8601localdatetime">ISO8601LocalDateTime</a>
+                  </td>
+                  <td>
+                    <p>En konkret dato. I Europe/Oslo-tidssone.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>om</strong></td>
+                  <td valign="top">
+                    <a href="#iso8601duration">ISO8601Duration</a>
+                  </td>
+                  <td>
+                    <p>
+                      Som duration-offset relativt til implisitt dato. Dere må
+                      se på dokumentasjonen til feltet hvor denne datatypen er
+                      brukt for å vite hva vi bruker som implisitt dato.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="harddeleteupdateinput">HardDeleteUpdateInput</h4>
+            <p>
+              Dersom dere vet at saken/notifikasjonen senere skal slettes helt
+              kan det angis her.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>nyTid</strong></td>
+                  <td valign="top">
+                    <a href="#futuretemporalinput">FutureTemporalInput</a>!
+                  </td>
+                  <td>
+                    <p>
+                      Oppgi dersom dere ønsker at hard delete skal skeduleres.
+                      Vi tolker relative datoer basert på tidspunkt angitt i
+                      kallet eller når vi mottok kallet, hvis dere ikke har
+                      oppgitt det eller det ikke er mulig å oppgi.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>strategi</strong></td>
+                  <td valign="top">
+                    <a href="#nytidstrategi">NyTidStrategi</a>!
+                  </td>
+                  <td>
+                    <p>
+                      hvis det finnes fremtidig sletting hvordan skal vi
+                      håndtere dette
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="metadatainput">MetadataInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>virksomhetsnummer</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Hvilken virksomhet som skal motta notifikasjonen.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>eksternId</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Den eksterne id-en brukes for å unikt identifisere en
+                      notifikasjon. Den må være unik for merkelappen.
+                    </p>
+                    <p>
+                      Hvis dere har en enkel, statisk bruk av notifikasjoner, så
+                      kan dere utlede eksternId fra f.eks. et saksnummer, og på
+                      den måten kunne referere til notifikasjoner dere har
+                      opprettet, uten at dere må lagre ID-ene vi genererer og
+                      returnerer til dere.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>opprettetTidspunkt</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#iso8601datetime">ISO8601DateTime</a>
+                  </td>
+                  <td>
+                    <p>
+                      Hvilken dato vi viser til brukeren. Dersom dere ikke
+                      oppgir noen dato, så bruker vi tidspuktet dere gjør kallet
+                      på.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>grupperingsid</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>
+                      Grupperings-id-en gjør det mulig å knytte sammen
+                      forskjellige oppgaver, beskjed og saker. Det vises ikke
+                      til brukere. Saksnummer er en naturlig grupperings-id.
+                    </p>
+                    <p>
+                      Når dere bruker grupperings-id, så er det mulig for oss å
+                      presentere en tidslinje med alle notifikasjonene og
+                      status-oppdateringer knyttet til en sak.
+                    </p>
+                    <p>
+                      Vi kan også vurdere å implemntere API-er for dere, slik at
+                      dere enkelt kan slette all informasjon knyttet til en sak
+                      i et enkelt kall (f.eks. for å ivareta personvern). Ta
+                      kontakt med #arbeidsgiver-notifikasjon på slack for å
+                      melde interesse!
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>hardDelete</strong></td>
+                  <td valign="top">
+                    <a href="#futuretemporalinput">FutureTemporalInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Oppgi dersom dere ønsker at hard delete skal skeduleres.
+                      Vi tolker relative datoer basert på
+                      <code>opprettetTidspunkt</code> (eller når vi mottok
+                      kallet hvis dere ikke har oppgitt
+                      <code>opprettetTidspunkt</code>).
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="mottakerinput">MottakerInput</h4>
+            <p>Hvem som skal se notifikasjonen.</p>
+            <p>
+              Du kan spesifisere mottaker av notifikasjoner på forskjellige
+              måter. Du skal bruke nøyaktig ett av feltene.
+            </p>
+            <p>
+              Vi har implementert det på denne måten fordi GraphQL ikke støtter
+              union-typer som input.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>altinn</strong></td>
+                  <td valign="top">
+                    <a href="#altinnmottakerinput">AltinnMottakerInput</a>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>naermesteLeder</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#naermesteledermottakerinput"
+                      >NaermesteLederMottakerInput</a
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="naermesteledermottakerinput">
+              NaermesteLederMottakerInput
+            </h4>
+            <p>
+              Spesifiser mottaker ved hjelp av fødselsnummer. Fødselsnummeret er
+              det til nærmeste leder. Det er kun denne personen som potensielt
+              kan se notifikasjonen. Det er videre en sjekk for å se om denne
+              personen fortsatt er nærmeste leder for den ansatte notifikasjonen
+              gjelder.
+            </p>
+            <p>
+              Tilgangssjekken utføres hver gang en bruker ønsker se
+              notifikasjonen.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>naermesteLederFnr</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>ansattFnr</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="notifikasjoninput">NotifikasjonInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>merkelapp</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Merkelapp for beskjeden. Er typisk navnet på ytelse eller
+                      lignende. Den vises til brukeren.
+                    </p>
+                    <p>
+                      Hva du kan oppgi som merkelapp er bestemt av
+                      produsent-registeret.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tekst</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>Teksten som vises til brukeren.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>lenke</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Lenken som brukeren føres til hvis de klikker på
+                      beskjeden.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nybeskjedinput">NyBeskjedInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top">
+                    <a href="#mottakerinput">MottakerInput</a>
+                  </td>
+                  <td>
+                    <p>Se dokumentasjonen til <code>mottakere</code>-feltet.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottakere</strong></td>
+                  <td valign="top">
+                    [<a href="#mottakerinput">MottakerInput</a>!]!
+                  </td>
+                  <td>
+                    <p>
+                      Her bestemmer dere hvem som skal få se notifikasjonen.
+                    </p>
+                    <p>
+                      Hvis dere oppgir en mottaker i
+                      <code>mottaker</code>-feltet, så tolker vi det som om det
+                      var et element i denne listen over mottakere.
+                    </p>
+                    <p>Dere må gi oss minst 1 mottaker.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>notifikasjon</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#notifikasjoninput">NotifikasjonInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>metadata</strong></td>
+                  <td valign="top">
+                    <a href="#metadatainput">MetadataInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>eksterneVarsler</strong>
+                  </td>
+                  <td valign="top">
+                    [<a href="#eksterntvarselinput">EksterntVarselInput</a>!]!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nyoppgaveinput">NyOppgaveInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top">
+                    <a href="#mottakerinput">MottakerInput</a>
+                  </td>
+                  <td>
+                    <p>Se dokumentasjonen til <code>mottakere</code>-feltet.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottakere</strong></td>
+                  <td valign="top">
+                    [<a href="#mottakerinput">MottakerInput</a>!]!
+                  </td>
+                  <td>
+                    <p>
+                      Her bestemmer dere hvem som skal få se notifikasjonen.
+                    </p>
+                    <p>
+                      Hvis dere oppgir en mottaker i
+                      <code>mottaker</code>-feltet, så tolker vi det som om det
+                      var et element i denne listen over mottakere.
+                    </p>
+                    <p>Dere må gi oss minst 1 mottaker.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>notifikasjon</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#notifikasjoninput">NotifikasjonInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>frist</strong></td>
+                  <td valign="top"><a href="#iso8601date">ISO8601Date</a></td>
+                  <td>
+                    <p>
+                      Her kan du spesifisere frist for når oppgaven skal utføres
+                      av bruker. Ideen er at etter fristen, så har ikke bruker
+                      lov, eller dere sperret for, å gjøre oppgaven.
+                    </p>
+                    <p>
+                      Fristen vises til bruker i grensesnittet. Oppgaven blir
+                      automatisk markert som <code>UTGAAT</code> når fristen er
+                      forbi. Dere kan kun oppgi frist med dato, og ikke
+                      klokkelsett. Fristen regnes som utløpt når dagen er omme
+                      (midnatt, norsk tidssone).
+                    </p>
+                    <p>
+                      Hvis dere ikke sender med frist, så viser vi ingen frist
+                      for bruker, og oppgaven anses som NY frem til dere
+                      markerer oppgaven som <code>UTFOERT</code> eller
+                      <code>UTGAATT</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>metadata</strong></td>
+                  <td valign="top">
+                    <a href="#metadatainput">MetadataInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>eksterneVarsler</strong>
+                  </td>
+                  <td valign="top">
+                    [<a href="#eksterntvarselinput">EksterntVarselInput</a>!]!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>paaminnelse</strong></td>
+                  <td valign="top">
+                    <a href="#paaminnelseinput">PaaminnelseInput</a>
+                  </td>
+                  <td>
+                    <p>
+                      Her kan du spesifisere en påminnelse for en oppgave.
+                      Brukeren vil bli gjort oppmerksom via bjellen og evt
+                      ekstern varsling dersom du oppgir det.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="paaminnelseeksterntvarselaltinntjenesteinput">
+              PaaminnelseEksterntVarselAltinntjenesteInput
+            </h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top">
+                    <a href="#altinntjenestemottakerinput"
+                      >AltinntjenesteMottakerInput</a
+                    >!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tittel</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Subject/emne til e-posten, eller tekst i sms OBS: Det er
+                      ikke lov med personopplysninger i teksten.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>innhold</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Kroppen til e-posten. Dersom det sendes SMS blir dette
+                      feltet lagt til i kroppen på sms etter tittel OBS: Det er
+                      ikke lov med personopplysninger i teksten.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>sendevindu</strong></td>
+                  <td valign="top"><a href="#sendevindu">Sendevindu</a>!</td>
+                  <td>
+                    <p>
+                      Vi sender eposten med utgangspunkt i
+                      påminnelsestidspunktet, men tar hensyn til
+                      sendingsvinduet. Hvis påminnelsestidspunktet er utenfor
+                      vinduet, sender vi det ved første mulighet.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="paaminnelseeksterntvarselepostinput">
+              PaaminnelseEksterntVarselEpostInput
+            </h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top">
+                    <a href="#epostmottakerinput">EpostMottakerInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>epostTittel</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Subject/emne til e-posten. OBS: Det er ikke lov med
+                      personopplysninger i teksten. E-post er ikke en sikker
+                      kanal.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>epostHtmlBody</strong>
+                  </td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Kroppen til e-posten. Tolkes som HTML. OBS: Det er ikke
+                      lov med personopplysninger i teksten. E-post er ikke en
+                      sikker kanal.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>sendevindu</strong></td>
+                  <td valign="top"><a href="#sendevindu">Sendevindu</a>!</td>
+                  <td>
+                    <p>
+                      Vi sender eposten med utgangspunkt i
+                      påminnelsestidspunktet, men tar hensyn til
+                      sendingsvinduet. Hvis påminnelsestidspunktet er utenfor
+                      vinduet, sender vi det ved første mulighet.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="paaminnelseeksterntvarselinput">
+              PaaminnelseEksterntVarselInput
+            </h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>sms</strong></td>
+                  <td valign="top">
+                    <a href="#paaminnelseeksterntvarselsmsinput"
+                      >PaaminnelseEksterntVarselSmsInput</a
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>epost</strong></td>
+                  <td valign="top">
+                    <a href="#paaminnelseeksterntvarselepostinput"
+                      >PaaminnelseEksterntVarselEpostInput</a
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>altinntjeneste</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#paaminnelseeksterntvarselaltinntjenesteinput"
+                      >PaaminnelseEksterntVarselAltinntjenesteInput</a
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="paaminnelseeksterntvarselsmsinput">
+              PaaminnelseEksterntVarselSmsInput
+            </h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>mottaker</strong></td>
+                  <td valign="top">
+                    <a href="#smsmottakerinput">SmsMottakerInput</a>!
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>smsTekst</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td>
+                    <p>
+                      Teksten som sendes i SMS-en. OBS: Det er ikke lov med
+                      personopplysninger i teksten. SMS er ikke en sikker kanal.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>sendevindu</strong></td>
+                  <td valign="top"><a href="#sendevindu">Sendevindu</a>!</td>
+                  <td>
+                    <p>
+                      Vi sender SMS-en med utgangspunkt i
+                      påminnelsestidspunktet, men tar hensyn til
+                      sendingsvinduet. Hvis påminnelsestidspunktet er utenfor
+                      vinduet, sender vi det ved første mulighet.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="paaminnelseinput">PaaminnelseInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tidspunkt</strong></td>
+                  <td valign="top">
+                    <a href="#paaminnelsetidspunktinput"
+                      >PaaminnelseTidspunktInput</a
+                    >!
+                  </td>
+                  <td>
+                    <p>
+                      Tidspunktet for når påminnelsen skal aktiveres. Dersom det
+                      er angitt frist må påminnelsen være før dette.
+                    </p>
+                    <p>
+                      Hvis du sender <code>eksterneVarsler</code>, så vil vi
+                      sjekke at vi har mulighet for å sende dem før fristen,
+                      ellers får du feil ved opprettelse av oppgaven.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>eksterneVarsler</strong>
+                  </td>
+                  <td valign="top">
+                    [<a href="#paaminnelseeksterntvarselinput"
+                      >PaaminnelseEksterntVarselInput</a
+                    >!]!
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="paaminnelsetidspunktinput">PaaminnelseTidspunktInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>konkret</strong></td>
+                  <td valign="top">
+                    <a href="#iso8601localdatetime">ISO8601LocalDateTime</a>
+                  </td>
+                  <td>
+                    <p>Konkret tidspunkt</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top">
+                    <strong>etterOpprettelse</strong>
+                  </td>
+                  <td valign="top">
+                    <a href="#iso8601duration">ISO8601Duration</a>
+                  </td>
+                  <td>
+                    <p>
+                      Relativ til når oppgaven er angitt som opprettet. Altså X
+                      duration etter opprettelse.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>foerFrist</strong></td>
+                  <td valign="top">
+                    <a href="#iso8601duration">ISO8601Duration</a>
+                  </td>
+                  <td>
+                    <p>
+                      Relativ til oppgavens frist, alts X duration før frist.
+                      Anses som ugyldig dersom oppgaven ikke har frist.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="sendetidspunktinput">SendetidspunktInput</h4>
+            <p>
+              Med denne typen velger du når du ønsker at det eksterne varselet
+              blir sendt. Du skal velge en (og kun en) av feltene, ellers blir
+              forespørselen din avvist med en feil.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tidspunkt</strong></td>
+                  <td valign="top">
+                    <a href="#iso8601localdatetime">ISO8601LocalDateTime</a>
+                  </td>
+                  <td>
+                    <p>
+                      Hvis du spesifiserer et tidspunkt på formen
+                      &quot;YYYY-MM-DDThh:mm&quot;, så sender vi notifikasjonen
+                      på det tidspunktet. Oppgir du et tidspunkt i fortiden, så
+                      sender vi varselet øyeblikkelig.
+                    </p>
+                    <p>
+                      Tidspunktet tolker vi som lokal, norsk tid
+                      (veggklokke-tid).
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>sendevindu</strong></td>
+                  <td valign="top"><a href="#sendevindu">Sendevindu</a></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="smskontaktinfoinput">SmsKontaktInfoInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>fnr</strong></td>
+                  <td valign="top"><a href="#string">String</a></td>
+                  <td>
+                    <p>deprecated. value is ignored.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" valign="top"><strong>tlf</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="smsmottakerinput">SmsMottakerInput</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2" align="left">Field</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>kontaktinfo</strong></td>
+                  <td valign="top">
+                    <a href="#smskontaktinfoinput">SmsKontaktInfoInput</a>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 id="enums">Enums</h3>
+            <h4 id="eksterntvarselstatus">EksterntVarselStatus</h4>
+            <table>
+              <thead>
+                <th align="left">Value</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top"><strong>NY</strong></td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>SENDT</strong></td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>FEILET</strong></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nytidstrategi">NyTidStrategi</h4>
+            <table>
+              <thead>
+                <th align="left">Value</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top"><strong>FORLENG</strong></td>
+                  <td>
+                    <p>Vi bruker den tiden som er lengst i fremtiden.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>OVERSKRIV</strong></td>
+                  <td>
+                    <p>Vi bruker den nye tiden uansett.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="oppgavetilstand">OppgaveTilstand</h4>
+            <p>Tilstanden til en oppgave.</p>
+            <table>
+              <thead>
+                <th align="left">Value</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top"><strong>NY</strong></td>
+                  <td>
+                    <p>En oppgave som kan utføres.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>UTFOERT</strong></td>
+                  <td>
+                    <p>En oppgave som allerede er utført.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>UTGAATT</strong></td>
+                  <td>
+                    <p>En oppgave hvor frist har utgått.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="saksstatus">SaksStatus</h4>
+            <p>
+              Statusen påvirker bl.a. hvilket ikon som vises og brukes bl.a. for
+              å kunne filtrere saksoversikten på min side arbeidsgiver.
+            </p>
+            <table>
+              <thead>
+                <th align="left">Value</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top"><strong>MOTTATT</strong></td>
+                  <td>
+                    <p>Naturlig start-tilstand for en sak.</p>
+                    <p>
+                      Default tekst som vises til bruker: &quot;Mottatt&quot;
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>UNDER_BEHANDLING</strong></td>
+                  <td>
+                    <p>
+                      Default tekst som vises til bruker: &quot;Under
+                      behandling&quot;
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>FERDIG</strong></td>
+                  <td>
+                    <p>
+                      Slutt-tilstand for en sak. Når en sak er
+                      <code>FERDIG</code>, så vil vi nedprioritere visningen av
+                      den på min side arbeidsgivere.
+                    </p>
+                    <p>
+                      Default tekst som vises til bruker: &quot;Ferdig&quot;.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="sendevindu">Sendevindu</h4>
+            <p>
+              For SMS, så vil
+              <a
+                href="https://altinn.github.io/docs/utviklingsguider/varsling/#varslingsvindu-for-sms"
+                >Altinns varslingsvindu</a
+              >
+              også gjelde. Dette burde kun påvirke <code>LOEPENDE</code>.
+            </p>
+            <table>
+              <thead>
+                <th align="left">Value</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top"><strong>NKS_AAPNINGSTID</strong></td>
+                  <td>
+                    <p>
+                      Vi sender varselet slik at mottaker skal ha mulighet for å
+                      kontakte NAVs kontaktsenter (NKS) når de mottar varselet.
+                      Varsler blir sendt litt før NKS åpner, og vi slutter å
+                      sende litt før NKS stenger.
+                    </p>
+                    <p>
+                      Vi tar foreløpig ikke hensyn til røde dager eller
+                      produksjonshendelser som fører til at NKS er
+                      utilgjengelig.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>DAGTID_IKKE_SOENDAG</strong></td>
+                  <td>
+                    <p>
+                      Vi sender varselet på dagtid, mandag til lørdag. Altså
+                      sender vi ikke om kvelden og om natten, og ikke i det hele
+                      tatt på søndager.
+                    </p>
+                    <p>Vi tar ikke hensyn til røde dager.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top"><strong>LOEPENDE</strong></td>
+                  <td>
+                    <p>Vi sender varslet så fort vi kan.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 id="scalars">Scalars</h3>
+            <h4 id="boolean">Boolean</h4>
+            <p>
+              The <code>Boolean</code> scalar type represents
+              <code>true</code> or <code>false</code>.
+            </p>
+            <h4 id="id">ID</h4>
+            <p>
+              The <code>ID</code> scalar type represents a unique identifier,
+              often used to refetch an object or as key for a cache. The ID type
+              appears in a JSON response as a String; however, it is not
+              intended to be human-readable. When expected as an input type, any
+              string (such as <code>&quot;4&quot;</code>) or integer (such as
+              <code>4</code>) input value will be accepted as an ID.
+            </p>
+            <h4 id="iso8601date">ISO8601Date</h4>
+            <p>
+              Dato etter ISO8601-standaren. F.eks. <code>2020-01-02</code>,
+              altså 2. mars 2020.
+            </p>
+            <h4 id="iso8601datetime">ISO8601DateTime</h4>
+            <p>
+              DateTime med offset etter ISO8601-standaren. F.eks.
+              '2011-12-03T10:15:30+01:00'.
+            </p>
+            <p>Er representert som String.</p>
+            <h4 id="iso8601duration">ISO8601Duration</h4>
+            <p>Duration ISO8601-standaren. F.eks. 'P2DT3H4M'.</p>
+            <p>Er representert som String.</p>
+            <h4 id="iso8601localdatetime">ISO8601LocalDateTime</h4>
+            <p>
+              Dato og lokaltid etter ISO8601-standaren. F.eks.
+              '2001-12-24T10:44:01'. Vi tolker tidspunktet som Oslo-tid
+              ('Europe/Oslo').
+            </p>
+            <h4 id="int">Int</h4>
+            <p>
+              The <code>Int</code> scalar type represents non-fractional signed
+              whole numeric values. Int can represent values between -(2^31) and
+              2^31 - 1.
+            </p>
+            <h4 id="string">String</h4>
+            <p>
+              The <code>String</code> scalar type represents textual data,
+              represented as UTF-8 character sequences. The String type is most
+              often used by GraphQL to represent free-form human-readable text.
+            </p>
+            <h3 id="interfaces">Interfaces</h3>
+            <h4 id="error">Error</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th align="left">Field</th>
+                  <th align="right">Argument</th>
+                  <th align="left">Type</th>
+                  <th align="left">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" valign="top"><strong>feilmelding</strong></td>
+                  <td valign="top"><a href="#string">String</a>!</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 id="unions">Unions</h3>
+            <h4 id="harddeletenotifikasjonresultat">
+              HardDeleteNotifikasjonResultat
+            </h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#harddeletenotifikasjonvellykket"
+                        >HardDeleteNotifikasjonVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#notifikasjonfinnesikke"
+                        >NotifikasjonFinnesIkke</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom du prøver å referere til en
+                    notifikasjon som ikke eksisterer.
+                    <p>
+                      Utover at dere kan ha oppgitt feil informasjon, så kan det
+                      potensielt være på grunn av &quot;eventual
+                      consistency&quot; i systemet vårt.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="harddeletesakresultat">HardDeleteSakResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#harddeletesakvellykket"
+                        >HardDeleteSakVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#sakfinnesikke">SakFinnesIkke</a></strong>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="minenotifikasjonerresultat">MineNotifikasjonerResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#notifikasjonconnection"
+                        >NotifikasjonConnection</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="mottaker">Mottaker</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#altinnmottaker">AltinnMottaker</a></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#naermesteledermottaker"
+                        >NaermesteLederMottaker</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="notifikasjon">Notifikasjon</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#beskjed">Beskjed</a></strong>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#oppgave">Oppgave</a></strong>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nybeskjedresultat">NyBeskjedResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#nybeskjedvellykket"
+                        >NyBeskjedVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmottaker">UgyldigMottaker</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en mottaker som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#duplikateksternidogmerkelapp"
+                        >DuplikatEksternIdOgMerkelapp</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom du prøver å opprette en
+                    notifikasjon med en eksternId og merkelapp som allerede
+                    finnes
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#ukjentrolle">UkjentRolle</a></strong>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nyoppgaveresultat">NyOppgaveResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#nyoppgavevellykket"
+                        >NyOppgaveVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmottaker">UgyldigMottaker</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en mottaker som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#duplikateksternidogmerkelapp"
+                        >DuplikatEksternIdOgMerkelapp</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom du prøver å opprette en
+                    notifikasjon med en eksternId og merkelapp som allerede
+                    finnes
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#ukjentrolle">UkjentRolle</a></strong>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigpaaminnelsetidspunkt"
+                        >UgyldigPaaminnelseTidspunkt</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Tidpunkt for påminnelse er ugyldig iht grenseverdier. F.eks
+                    før opprettelse eller etter frist, eller i fortid.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nysakresultat">NySakResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#nysakvellykket">NySakVellykket</a></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmottaker">UgyldigMottaker</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en mottaker som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#duplikatgrupperingsid"
+                        >DuplikatGrupperingsid</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres hvis det allerede eksisterer en sak
+                    med denne grupperingsid-en under merkelappen.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#ukjentrolle">UkjentRolle</a></strong>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="nystatussakresultat">NyStatusSakResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#nystatussakvellykket"
+                        >NyStatusSakVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#sakfinnesikke">SakFinnesIkke</a></strong>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#konflikt">Konflikt</a></strong>
+                  </td>
+                  <td valign="top">
+                    Oppgitt informasjon samsvarer ikke med tidligere informasjon
+                    som er oppgitt.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="oppgaveutfoertresultat">OppgaveUtfoertResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#oppgaveutfoertvellykket"
+                        >OppgaveUtfoertVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#notifikasjonfinnesikke"
+                        >NotifikasjonFinnesIkke</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom du prøver å referere til en
+                    notifikasjon som ikke eksisterer.
+                    <p>
+                      Utover at dere kan ha oppgitt feil informasjon, så kan det
+                      potensielt være på grunn av &quot;eventual
+                      consistency&quot; i systemet vårt.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="oppgaveutgaattresultat">OppgaveUtgaattResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#oppgaveutgaattvellykket"
+                        >OppgaveUtgaattVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#oppgaveneralleredeutfoert"
+                        >OppgavenErAlleredeUtfoert</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom du forsøker å gå fra utført
+                    til utgått.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#notifikasjonfinnesikke"
+                        >NotifikasjonFinnesIkke</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom du prøver å referere til en
+                    notifikasjon som ikke eksisterer.
+                    <p>
+                      Utover at dere kan ha oppgitt feil informasjon, så kan det
+                      potensielt være på grunn av &quot;eventual
+                      consistency&quot; i systemet vårt.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="softdeletenotifikasjonresultat">
+              SoftDeleteNotifikasjonResultat
+            </h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#softdeletenotifikasjonvellykket"
+                        >SoftDeleteNotifikasjonVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#notifikasjonfinnesikke"
+                        >NotifikasjonFinnesIkke</a
+                      ></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom du prøver å referere til en
+                    notifikasjon som ikke eksisterer.
+                    <p>
+                      Utover at dere kan ha oppgitt feil informasjon, så kan det
+                      potensielt være på grunn av &quot;eventual
+                      consistency&quot; i systemet vårt.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 id="softdeletesakresultat">SoftDeleteSakResultat</h4>
+            <table>
+              <thead>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#softdeletesakvellykket"
+                        >SoftDeleteSakVellykket</a
+                      ></strong
+                    >
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ugyldigmerkelapp">UgyldigMerkelapp</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom en produsent forsøker å
+                    benytte en merkelapp som den ikke har tilgang til.
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong><a href="#sakfinnesikke">SakFinnesIkke</a></strong>
+                  </td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td valign="top">
+                    <strong
+                      ><a href="#ukjentprodusent">UkjentProdusent</a></strong
+                    >
+                  </td>
+                  <td valign="top">
+                    Denne feilen returneres dersom vi ikke greier å finne dere i
+                    produsent-registeret vårt.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- END graphql-markdown -->
+          </div>
+        </article>
+      </div>
+    </main>
+    <footer class="site-footer h-card">
+      <data
+        class="u-url"
+        href="/arbeidsgiver-notifikasjon-produsent-api/"
+      ></data>
+
+      <div class="wrapper">
+        <h2 class="footer-heading">Notifikasjoner for arbeidsgivere</h2>
+
+        <div class="footer-col-wrapper">
+          <div class="footer-col footer-col-1">
+            <ul class="contact-list">
+              <li class="p-name">Notifikasjoner for arbeidsgivere</li>
+            </ul>
+          </div>
+
+          <div class="footer-col footer-col-2">
+            <ul class="social-media-list"></ul>
+          </div>
+
+          <div class="footer-col footer-col-3">
+            <p>
+              Dokumentasjon for å produsere notifikasjoner rettet mot
+              arbeidsgivere.
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
