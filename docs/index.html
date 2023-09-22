@@ -1,130 +1,280 @@
-
-<!DOCTYPE html>
-<html lang="en"><head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
     <title>Introduksjon | Notifikasjoner for arbeidsgivere</title>
     <meta name="generator" content="Jekyll v3.9.3" />
     <meta property="og:title" content="Introduksjon" />
     <meta property="og:locale" content="en_US" />
-    <meta name="description" content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere." />
-    <meta property="og:description" content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere." />
-    <link rel="canonical" href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/" />
-    <meta property="og:url" content="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/" />
+    <meta
+      name="description"
+      content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+    />
+    <meta
+      property="og:description"
+      content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+    />
+    <link
+      rel="canonical"
+      href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/"
+    />
+    <meta
+      property="og:url"
+      content="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/"
+    />
     <meta property="og:site_name" content="Notifikasjoner for arbeidsgivere" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
     <meta property="twitter:title" content="Introduksjon" />
     <script type="application/ld+json">
-        {"@context":"https://schema.org","@type":"WebSite","description":"Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.","headline":"Introduksjon","name":"Notifikasjoner for arbeidsgivere","url":"https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/"}</script>
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "description": "Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.",
+        "headline": "Introduksjon",
+        "name": "Notifikasjoner for arbeidsgivere",
+        "url": "https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/"
+      }
+    </script>
     <!-- End Jekyll SEO tag -->
-    <link rel="stylesheet" href="main.css"><link type="application/atom+xml" rel="alternate" href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/feed.xml" title="Notifikasjoner for arbeidsgivere" /></head>
-<body><header class="site-header" role="banner">
+    <link rel="stylesheet" href="main.css" />
+    <link
+      type="application/atom+xml"
+      rel="alternate"
+      href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/feed.xml"
+      title="Notifikasjoner for arbeidsgivere"
+    />
+  </head>
+  <body>
+    <header class="site-header" role="banner">
+      <div class="wrapper">
+        <a
+          class="site-title"
+          rel="author"
+          href="/arbeidsgiver-notifikasjon-produsent-api/"
+          >Notifikasjoner for arbeidsgivere</a
+        >
+        <nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewBox="0 0 18 15" width="18px" height="15px">
+                <path
+                  d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"
+                />
+              </svg>
+            </span>
+          </label>
 
-    <div class="wrapper"><a class="site-title" rel="author" href="/arbeidsgiver-notifikasjon-produsent-api/">Notifikasjoner for arbeidsgivere</a><nav class="site-nav">
-        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
-        <label for="nav-trigger">
-          <span class="menu-icon">
-            <svg viewBox="0 0 18 15" width="18px" height="15px">
-              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
-            </svg>
-          </span>
-        </label>
-
-        <div class="trigger">
+          <div class="trigger">
             <a class="page-link" href="guide.html">Guide</a>
             <a class="page-link" href="api.html">API-dokumentasjon</a>
             <a class="page-link" href="vilkaar.html">Bruksvilkår</a>
-            <a class="page-link" href="faq.html">FAQ</a></div>
-    </nav></div>
-</header>
-<main class="page-content" aria-label="Content">
-    <div class="wrapper">
+            <a class="page-link" href="faq.html">FAQ</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
         <article class="post">
+          <header class="post-header">
+            <h1 class="post-title">Introduksjon</h1>
+          </header>
 
-            <header class="post-header">
-                <h1 class="post-title">Introduksjon</h1>
-            </header>
-
-            <div class="post-content">
-                <p>Notfikasjoner og saker gjør det enkelt for arbeidsgivere å få med seg viktig informasjon og oppgaver som venter. Dere som lager tjenester til arbeidsgivere velger hva dere ønsker å sende notifkasjoner om på notifkasjonsplatformen. Dere kan også velge å vise en søknad eller skjema som en «sak» på Min side – arbeidsgiver så arbeidsgiveren lett kan finne den igjen. Se hvordan det ser ut på <a href="https://arbeidsgiver.ekstern.dev.nav.no/min-side-arbeidsgiver">testversjonen i labs</a>.</p>
-                <h2 id="hvilket-problem-skal-vi-lse">Hvilket problem skal vi løse?</h2>
-                <ul>
-                    <li>
-                        <p><strong>For arbeidsgivere:</strong>
-                            Arbeidsgivere må gå rundt og lete på mange steder for å få kontroll på hva de må gjøre og hva som skjer med saken deres. Arbeidsgiver sliter også med å finne tilbake til skjemaer og søknader de sendt inn til NAV. Dette skaper en usikkerhet og et unødvendig merarbeide for arbeidgsiver som ofte har en travel hverdag.</p>
-                    </li>
-                    <li>
-                        <p><strong>Internt i NAV:</strong>
-                            Tidligere har Min side - arbeidgsiver integrert mot API-er for å kunne vise at noe krever arbeidsgivers oppmerksomhet på en viss tjeneste. Dette har vist seg å være vanskelig å vedlikeholde, da API-er endres og dataen blir upålitilig. De enkelte teamene føler lite eierskap til hva som vises på Min side - arbeidsgiver og teamet vårt blir fort en flaskehals.</p>
-                    </li>
-                </ul>
-                <h2 id="oppgaver-og-beskjeder">Oppgaver og beskjeder</h2>
-                <p>Oppgaver og beskjeder vil være synlig for arbeidsgivere som er logget inn i NAV sine tjenester. Når det finns nye beskjeder eller oppgaver har bjella en rød sirkel med et tall som viser hvor mange.</p>
-                <p><img src="/arbeidsgiver-notifikasjon-produsent-api/images/bjellakollapsed.png" alt="Bjella på Min side -arbeidsgiver viser at nye notifikasjoner kommet med rød cirkel og antall" /></p>
-                <p>Når arbeidsgiver trykker på bjella kan de se oppgaver og beskjeder på tvers av virksomheter.</p>
-                <p><img src="/arbeidsgiver-notifikasjon-produsent-api/images/bjellaekpandert.png" alt="Når man trykker på bjella ekspandere notfikasjonerne ut" /></p>
-                <p><strong>Beskjed</strong></p>
-                <p>Dette er en typisk informasjonsmelding til arbeidsgiver. Denne krever ikke nødvendigvis noe mer handling fra arbeidsgiver. For eksempel, «Vi har mottat en søknad...».</p>
-                <p><img src="/arbeidsgiver-notifikasjon-produsent-api/images/beskjed.svg" alt="" /></p>
-                <p><strong>Oppgave</strong></p>
-                <p>Oppgave brukes når du trenger at arbeidsgiver skal gjøre en konkret handling. For eksempel «Du må godkjenne avtalen innen...» Du som produsent må holde styr på når oppgaven er fullført.
-                    Arbeidsgiver vil da se oppgaven som utført. Du kan velge å sette en frist på oppgaven. Fristen vises til arbeidsgiver.
-                    Blir oppgaven ikke utført innen fristen vil den automatisk få status “utgått”. Blir en oppgave ikke utført kan du sende en påminnelse.</p>
-                <p><img src="/arbeidsgiver-notifikasjon-produsent-api/images/oppgave.svg" alt="" /></p>
-                <p><strong>Varsler på e-post eller SMS</strong></p>
-                <p>Vi støtter ekstern varsling på SMS eller e-post der dere som produsent har kontakinformasjon.</p>
-                <h2 id="sak">Sak</h2>
-                <p>Lag en sak og bruk statusoppdatering-event for at vise en søknad eller skjema som en «sak» på Min side – arbeidsgiver så arbeidsgiveren lett kan finne den igjen.</p>
-                <p>Hvis en sak eller søknad har endret status kan produsenten sende et Statusoppdatering-event. Produsenten må velge én av våre 3 globale statuser: MOTTATT, UNDER_BEHANDLING eller FERDIG. Hvis produsenten ønsker, kan teksten i statusen overstyres med en egen tekst t ex «Venter på dokumentasjon».</p>
-                <p><img src="/arbeidsgiver-notifikasjon-produsent-api/images/saker.png" alt="Siste saker vises på Min side - arbeidsgiver" /></p>
-                <p><strong>Saksprosess:</strong>
-                    Beskjeder, oppgaver og statusoppdatering kan alle grupperes på en sak for å vise hva som skjedd og kommer å skje med saken.<br />
-                    Status: under arbeid</p>
-                <p><img src="/arbeidsgiver-notifikasjon-produsent-api/images/saksprosess.png" alt="Saken kan ekspanderes for å vise tidligere og kommende hendelser i en sak" /></p>
-                <h2 id="hvordan-komme-i-gang">Hvordan komme i gang?</h2>
-                <ul>
-                    <li>
-                        <p>Bruksvilkår: Bli kjent med deres ansvar som produsent og signer <a href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/bruksvilk%C3%A5r/">bruksvilkårene</a> .</p>
-                    </li>
-                    <li>
-                        <p><a href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/">API dokumentasjon</a> for notifikasjoner til arbeidsgivere.</p>
-                    </li>
-                    <li>
-                        <p>Har du spørsmål? Kontakt oss på slack: <a href="https://nav-it.slack.com/archives/C02F7211DQ8">#arbeidsgiver-notifikasjon</a>.</p>
-                    </li>
-                </ul>
-
-            </div>
-
+          <div class="post-content">
+            <p>
+              Notfikasjoner og saker gjør det enkelt for arbeidsgivere å få med
+              seg viktig informasjon og oppgaver som venter. Dere som lager
+              tjenester til arbeidsgivere velger hva dere ønsker å sende
+              notifkasjoner om på notifkasjonsplatformen. Dere kan også velge å
+              vise en søknad eller skjema som en «sak» på Min side –
+              arbeidsgiver så arbeidsgiveren lett kan finne den igjen. Se
+              hvordan det ser ut på
+              <a
+                href="https://arbeidsgiver.ekstern.dev.nav.no/min-side-arbeidsgiver"
+                >testversjonen i labs</a
+              >.
+            </p>
+            <h2 id="hvilket-problem-skal-vi-lse">
+              Hvilket problem skal vi løse?
+            </h2>
+            <ul>
+              <li>
+                <p>
+                  <strong>For arbeidsgivere:</strong> Arbeidsgivere må gå rundt
+                  og lete på mange steder for å få kontroll på hva de må gjøre
+                  og hva som skjer med saken deres. Arbeidsgiver sliter også med
+                  å finne tilbake til skjemaer og søknader de sendt inn til NAV.
+                  Dette skaper en usikkerhet og et unødvendig merarbeide for
+                  arbeidgsiver som ofte har en travel hverdag.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>Internt i NAV:</strong> Tidligere har Min side -
+                  arbeidgsiver integrert mot API-er for å kunne vise at noe
+                  krever arbeidsgivers oppmerksomhet på en viss tjeneste. Dette
+                  har vist seg å være vanskelig å vedlikeholde, da API-er endres
+                  og dataen blir upålitilig. De enkelte teamene føler lite
+                  eierskap til hva som vises på Min side - arbeidsgiver og
+                  teamet vårt blir fort en flaskehals.
+                </p>
+              </li>
+            </ul>
+            <h2 id="oppgaver-og-beskjeder">Oppgaver og beskjeder</h2>
+            <p>
+              Oppgaver og beskjeder vil være synlig for arbeidsgivere som er
+              logget inn i NAV sine tjenester. Når det finns nye beskjeder eller
+              oppgaver har bjella en rød sirkel med et tall som viser hvor
+              mange.
+            </p>
+            <p>
+              <img
+                src="/arbeidsgiver-notifikasjon-produsent-api/images/bjellakollapsed.png"
+                alt="Bjella på Min side -arbeidsgiver viser at nye notifikasjoner kommet med rød cirkel og antall"
+              />
+            </p>
+            <p>
+              Når arbeidsgiver trykker på bjella kan de se oppgaver og beskjeder
+              på tvers av virksomheter.
+            </p>
+            <p>
+              <img
+                src="/arbeidsgiver-notifikasjon-produsent-api/images/bjellaekpandert.png"
+                alt="Når man trykker på bjella ekspandere notfikasjonerne ut"
+              />
+            </p>
+            <p><strong>Beskjed</strong></p>
+            <p>
+              Dette er en typisk informasjonsmelding til arbeidsgiver. Denne
+              krever ikke nødvendigvis noe mer handling fra arbeidsgiver. For
+              eksempel, «Vi har mottat en søknad...».
+            </p>
+            <p>
+              <img
+                src="/arbeidsgiver-notifikasjon-produsent-api/images/beskjed.svg"
+                alt=""
+              />
+            </p>
+            <p><strong>Oppgave</strong></p>
+            <p>
+              Oppgave brukes når du trenger at arbeidsgiver skal gjøre en
+              konkret handling. For eksempel «Du må godkjenne avtalen innen...»
+              Du som produsent må holde styr på når oppgaven er fullført.
+              Arbeidsgiver vil da se oppgaven som utført. Du kan velge å sette
+              en frist på oppgaven. Fristen vises til arbeidsgiver. Blir
+              oppgaven ikke utført innen fristen vil den automatisk få status
+              “utgått”. Blir en oppgave ikke utført kan du sende en påminnelse.
+            </p>
+            <p>
+              <img
+                src="/arbeidsgiver-notifikasjon-produsent-api/images/oppgave.svg"
+                alt=""
+              />
+            </p>
+            <p><strong>Varsler på e-post eller SMS</strong></p>
+            <p>
+              Vi støtter ekstern varsling på SMS eller e-post der dere som
+              produsent har kontakinformasjon.
+            </p>
+            <h2 id="sak">Sak</h2>
+            <p>
+              Lag en sak og bruk statusoppdatering-event for at vise en søknad
+              eller skjema som en «sak» på Min side – arbeidsgiver så
+              arbeidsgiveren lett kan finne den igjen.
+            </p>
+            <p>
+              Hvis en sak eller søknad har endret status kan produsenten sende
+              et Statusoppdatering-event. Produsenten må velge én av våre 3
+              globale statuser: MOTTATT, UNDER_BEHANDLING eller FERDIG. Hvis
+              produsenten ønsker, kan teksten i statusen overstyres med en egen
+              tekst t ex «Venter på dokumentasjon».
+            </p>
+            <p>
+              <img
+                src="/arbeidsgiver-notifikasjon-produsent-api/images/saker.png"
+                alt="Siste saker vises på Min side - arbeidsgiver"
+              />
+            </p>
+            <p>
+              <strong>Saksprosess:</strong> Beskjeder, oppgaver og
+              statusoppdatering kan alle grupperes på en sak for å vise hva som
+              skjedd og kommer å skje med saken.<br />
+              Status: under arbeid
+            </p>
+            <p>
+              <img
+                src="/arbeidsgiver-notifikasjon-produsent-api/images/saksprosess.png"
+                alt="Saken kan ekspanderes for å vise tidligere og kommende hendelser i en sak"
+              />
+            </p>
+            <h2 id="hvordan-komme-i-gang">Hvordan komme i gang?</h2>
+            <ul>
+              <li>
+                <p>
+                  Bruksvilkår: Bli kjent med deres ansvar som produsent og
+                  signer
+                  <a
+                    href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/bruksvilk%C3%A5r/"
+                    >bruksvilkårene</a
+                  >
+                  .
+                </p>
+              </li>
+              <li>
+                <p>
+                  <a
+                    href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/"
+                    >API dokumentasjon</a
+                  >
+                  for notifikasjoner til arbeidsgivere.
+                </p>
+              </li>
+              <li>
+                <p>
+                  Har du spørsmål? Kontakt oss på slack:
+                  <a href="https://nav-it.slack.com/archives/C02F7211DQ8"
+                    >#arbeidsgiver-notifikasjon</a
+                  >.
+                </p>
+              </li>
+            </ul>
+          </div>
         </article>
+      </div>
+    </main>
+    <footer class="site-footer h-card">
+      <data
+        class="u-url"
+        href="/arbeidsgiver-notifikasjon-produsent-api/"
+      ></data>
 
-    </div>
-</main><footer class="site-footer h-card">
-    <data class="u-url" href="/arbeidsgiver-notifikasjon-produsent-api/"></data>
-
-    <div class="wrapper">
-
+      <div class="wrapper">
         <h2 class="footer-heading">Notifikasjoner for arbeidsgivere</h2>
 
         <div class="footer-col-wrapper">
-            <div class="footer-col footer-col-1">
-                <ul class="contact-list">
-                    <li class="p-name">Notifikasjoner for arbeidsgivere</li></ul>
-            </div>
+          <div class="footer-col footer-col-1">
+            <ul class="contact-list">
+              <li class="p-name">Notifikasjoner for arbeidsgivere</li>
+            </ul>
+          </div>
 
-            <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
-            </div>
+          <div class="footer-col footer-col-2">
+            <ul class="social-media-list"></ul>
+          </div>
 
-            <div class="footer-col footer-col-3">
-                <p>Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.</p>
-            </div>
+          <div class="footer-col footer-col-3">
+            <p>
+              Dokumentasjon for å produsere notifikasjoner rettet mot
+              arbeidsgivere.
+            </p>
+          </div>
         </div>
-
-    </div>
-
-</footer>
-</body>
-
+      </div>
+    </footer>
+  </body>
 </html>
