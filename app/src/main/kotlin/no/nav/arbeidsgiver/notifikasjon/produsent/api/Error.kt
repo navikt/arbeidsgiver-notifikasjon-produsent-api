@@ -24,6 +24,7 @@ internal sealed class Error {
         TilgangsstyringError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
@@ -38,6 +39,7 @@ internal sealed class Error {
         TilgangsstyringError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
@@ -80,6 +82,7 @@ internal sealed class Error {
         Error(),
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat
 

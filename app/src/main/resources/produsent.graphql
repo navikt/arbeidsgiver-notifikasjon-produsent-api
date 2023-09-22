@@ -555,6 +555,70 @@ type Mutation {
         utgaattTidspunkt: ISO8601DateTime = null
     ): OppgaveUtgaattResultat!
 
+    """
+    Utsett frist på en oppgave.
+    Dersom oppgaven allerede er utgått så gjenåpnes den og fristen utsettes.
+    Dersom fristen ikke var utgått, og det tidligere var angitt en påminnelse så vil den påminnelsen bli slettet.
+    Dersom dere ønsker at brukeren skal få en påminnelse når fristen nærmer seg må det angis i denne mutasjonen.
+    """
+    oppgaveUtsettFrist(
+        """
+        ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
+        """
+        id: ID!
+
+        """
+        Her angir du den nye fristen for når oppgaven skal utføres av bruker.
+
+        Fristen vises til bruker i grensesnittet.
+        Oppgaven blir automatisk markert som `UTGAAT` når fristen er forbi.
+        Dere kan kun oppgi frist med dato, og ikke klokkelsett.
+        Fristen regnes som utløpt når dagen er omme (midnatt, norsk tidssone).
+        """
+        nyFrist: ISO8601Date!
+
+        """
+        Her kan du spesifisere en påminnelse for oppgaven.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        """
+        paaminnelse: PaaminnelseInput
+    ): OppgaveUtsettFristResultat!
+
+
+    """
+    Utsett frist på en oppgave (identifisert ved ekstern id).
+    Dersom oppgaven allerede er utgått så gjenåpnes den og fristen utsettes.
+    Dersom fristen ikke var utgått, og det tidligere var angitt en påminnelse så vil den påminnelsen bli slettet.
+    Dersom dere ønsker at brukeren skal få en påminnelse når fristen nærmer seg må det angis i denne mutasjonen.
+    """
+    oppgaveUtsettFristByEksternId(
+        """
+        Merkelapp som oppgaven er registrert med.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+        """
+        eksternId: String!
+
+        """
+        Her angir du den nye fristen for når oppgaven skal utføres av bruker.
+
+        Fristen vises til bruker i grensesnittet.
+        Oppgaven blir automatisk markert som `UTGAAT` når fristen er forbi.
+        Dere kan kun oppgi frist med dato, og ikke klokkelsett.
+        Fristen regnes som utløpt når dagen er omme (midnatt, norsk tidssone).
+        """
+        nyFrist: ISO8601Date!
+
+        """
+        Her kan du spesifisere en påminnelse for oppgaven.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        """
+        paaminnelse: PaaminnelseInput
+    ): OppgaveUtsettFristResultat!
+
 
     """
     Markerer en notifikasjon som slettet (soft delete).
@@ -777,6 +841,19 @@ type OppgaveUtfoertVellykket {
     id: ID!
 }
 
+union OppgaveUtsettFristResultat =
+    | OppgaveUtsettFristVellykket
+    | UgyldigMerkelapp
+    | NotifikasjonFinnesIkke
+    | UkjentProdusent
+
+type OppgaveUtsettFristVellykket {
+    """
+    ID-en til oppgaven du oppdaterte.
+    """
+    id: ID!
+}
+
 input NyBeskjedInput {
     """
     Se dokumentasjonen til `mottakere`-feltet.
@@ -860,6 +937,7 @@ input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
     konkret: ISO8601LocalDateTime
     """
     Relativ til når oppgaven er angitt som opprettet. Altså X duration etter opprettelse.
+    Ved utsatt frist er den relativ til tidspunktet fristen ble utsatt.
     """
     etterOpprettelse: ISO8601Duration
     """

@@ -3,12 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.writeValueAsStringSupportingTypeInfoInCollections
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
@@ -20,12 +15,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.*
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -301,6 +291,8 @@ class ParameterSetters(
 
     fun nullableDate(value: LocalDate?) =
         preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) } )
+    fun date(value: LocalDate) =
+        preparedStatement.setDate(index++, value.let { java.sql.Date.valueOf(it) })
 
 
     inline fun <reified T> jsonb(value: T) =

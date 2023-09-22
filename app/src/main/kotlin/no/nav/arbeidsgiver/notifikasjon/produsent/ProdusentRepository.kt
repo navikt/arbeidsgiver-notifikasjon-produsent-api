@@ -234,7 +234,7 @@ class ProdusentRepositoryImpl(
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
-            is FristUtsatt -> TODO()
+            is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
         }
     }
 
@@ -541,6 +541,39 @@ class ProdusentRepositoryImpl(
         ) {
             text(eksterntVarselFeilet.feilmelding)
             uuid(eksterntVarselFeilet.varselId)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterFristUtsatt(fristUtsatt: FristUtsatt) {
+        database.transaction {
+            executeUpdate(
+                """
+                UPDATE notifikasjon
+                SET tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}',
+                utgaatt_tidspunkt = null,
+                frist = ?
+                WHERE id = ?
+                """
+            ) {
+                date(fristUtsatt.frist)
+                uuid(fristUtsatt.notifikasjonId)
+            }
+
+            executeBatch(
+                """
+                insert into paaminnelse_eksternt_varsel(
+                    varsel_id,
+                    notifikasjon_id,
+                    status
+                )
+                values (?, ?, 'NY')
+                on conflict do nothing;
+                """,
+                fristUtsatt.påminnelse?.eksterneVarsler.orEmpty()
+            ) { eksterntVarsel ->
+                uuid(eksterntVarsel.varselId)
+                uuid(fristUtsatt.notifikasjonId)
+            }
         }
     }
 
