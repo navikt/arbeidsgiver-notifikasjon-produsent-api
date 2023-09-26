@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Introduksjon | Notifikasjoner for arbeidsgivere</title>
+    <meta property="og:title" content="Introduksjon" />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      name="description"
+      content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+    />
+    <meta
+      property="og:description"
+      content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+    />
+    <link
+      rel="canonical"
+      href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/"
+    />
+    <meta
+      property="og:url"
+      content="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/"
+    />
+    <meta property="og:site_name" content="Notifikasjoner for arbeidsgivere" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta property="twitter:title" content="Introduksjon" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "description": "Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.",
+        "headline": "Introduksjon",
+        "name": "Notifikasjoner for arbeidsgivere",
+        "url": "https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/"
+      }
+    </script>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+
+    <header class="site-header" role="banner">
+      <div class="wrapper">
+        <a class="site-title" rel="author" href="index.html">
+          Saker med beskjeder og oppgaver for arbeidsgivere
+        </a>
+        <nav>
+          <a href="index.html">Introduksjon</a>
+          <a href="guide.html">Guide</a>
+          <a href="api.html">API-dokumentasjon</a>
+          <a href="vilkaar.html">Bruksvilkår</a>
+          <a href="faq.html">FAQ</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post">
+          <header class="post-header">
+            <h1 id="hvilket-problem-loser-vi"><a href="#hvilket-problem-loser-vi">Hvilket problem løser vi?</a></h1>
+          </header>
+
+          <div class="post-content">
+            <p>
+              <strong>Saker</strong>, <strong>beskjeder</strong> og <strong>oppgaver</strong>
+              gjør det enkelt for arbeidsgivere å få en totaloversikt over deres forhold til NAV.
+            <p>
+            <ul>
+              <li>De blir tryggere på hva NAV forventer av dem (oppgaver) og når det må gjøres (frister)</li>
+              <li>De ser viktig informasjon (beskjeder)</li>
+              <li>De ser alt dette i en kontekst som gir mening for dem (saker)</li>
+              <li>De kan bli varslet på sms eller e-post</li>
+            </ul>
+
+              <p>
+                <strong>For arbeidsgivere:</strong> Arbeidsgivere må gå rundt
+                og lete på mange steder for å få kontroll på hva de må gjøre
+                og hva som skjer med saken deres. Arbeidsgiver sliter også med
+                å finne tilbake til skjemaer og søknader de sendt inn til NAV.
+                Dette skaper en usikkerhet og et unødvendig merarbeide for
+                arbeidgsiver som ofte har en travel hverdag.
+              </p>
+              <p>
+                <strong>Internt i NAV:</strong> Tidligere har Min side -
+                arbeidgsiver integrert mot API-er for å kunne vise at noe
+                krever arbeidsgivers oppmerksomhet på en viss tjeneste. Dette
+                har vist seg å være vanskelig å vedlikeholde, da API-er endres
+                og dataen blir upålitilig. De enkelte teamene føler lite
+                eierskap til hva som vises på Min side - arbeidsgiver og
+                teamet vårt blir fort en flaskehals.
+              </p>
+
+            <h2 id="saker"><a href="#saker">Saker</a></h2>
+            <p>
+              En <strong>sak</strong> er noe en arbeidsgiver har gående med NAV. Eksempler på saker er:
+            </p>
+            <ul>
+              <li>En utlyst stilling gjennom NAV eller arbeidsplassen.no</li>
+              <li>En avtale om lønnstilskudd for en ansatt</li>
+              <li>En søknad for refusjon av lønnstilskudd</li>
+              <li>Dialogmøte med sykmeldt ansatt</li>
+            </ul>
+
+            <p>
+              Etter at dere har opprettet en sak, kan dere sende <strong>beskjeder</strong> og <strong>oppgaver</strong> til arbeidsgiver.
+              For eksempel:
+            </p>
+            <ul>
+              <li>En ny kandidat å vurdere (beskjed)</li>
+              <li>Avtale om lønnstilskudd må godkjennes (oppgave)</li>
+              <li>Avtale om lønnstilskudd er endret (beskjed)</li>
+              <li>Søknad om refusjon må sendes inn (oppgave med frist)</li>
+              <li>Gi beskjed om du ønsker Dialogmøte eller ikke (beskjed/oppgave)</li>
+              <li>Se referat fra Dialogmøte (beskjed)</li>
+            </ul>
+
+            <p>
+              Under ser du et eksmpel på en sak med oppgaver og beskjeder. Saken har en tittel og status,
+              og lenker videre til en sidere dere bestemmer.
+              Dere kan selv bestemme hva statuser er.
+              Beskjeder og oppgaver har en kort tekst og vises i en tidslinje under saken.
+            </p>
+            <figure>
+              <img src="images/sak.png" alt="Eksempel på en sak med tittel, status, oppgave og beskjeder." />
+            </figure>
+
+            <h3 id="beskjeder"><a href="#beskjeder">Beskjeder på sak</a></h3>
+            <p>
+              <img src="images/beskjed.svg" alt="Ikonet vi bruker for beskjeder." style="float: left; margin-right: 1ch;"/>
+              <strong>Beskjeder</strong> er en typisk informasjonsmelding til arbeidsgiver. Denne
+              krever ikke nødvendigvis noe mer handling fra arbeidsgiver. For
+              eksempel, <em>«Vi har mottat en søknad...»</em>.
+              Dere kan bestille <a href="#varsle-epost-sms">e-post eller SMS</a> når dere oppretter beskjeder.
+            </p>
+
+            <h3 id="oppgaver"><a href="#oppgaver">Oppgaver på sak</a></h3>
+            <p>
+              <img src="images/oppgave.svg" alt="Ikonet vi bruker for oppgaver." style="float: left; margin-right: 1ch;"/>
+              Dere bruker <strong>oppgaver</strong> når dere trenger at en arbeidsgiver skal gjøre en
+              konkret handling. For eksempel <em>«Du må godkjenne avtalen ...»</em>.
+              En oppgave starter som <strong>ny</strong>, og kan ende opp som <strong>utført</strong> eller <strong>utgått</strong>.
+              Etter at dere har opprettet oppgaven, er det eneste vi krever fra dere, at dere gjør et kall til
+              oss hvis arbeidsgiver utfører oppgaven.
+            </p>
+
+            <p>
+              Dere kan sette en <strong>frist</strong> for når
+              oppgaven må utføres. Og dere kan klargjøre <strong>påminnelser</strong>, med eller uten
+              <a href="#varsle-epost-sms">e-post/sms-varsling</a>,
+              for å minne arbeidsgiver om oppgaver som ligger uløst.
+              Hvis dere ønsker noe av dette, er det nok å sette det opp når dere oppretter oppgaven.
+              Så lenge dere husker å forteller oss når oppgave blir utført, vil vi håndterer frister og
+              påminnelser for dere.
+            </p>
+
+            <p>
+              Hvis dere bruker oppgaver, frister og påminnelser, så kan
+              <a href="#hvordan-ser-det-ut">arbeidsgiver tydelig se</a>
+              hvilke oppgaver de må gjøre, hvilke de har gjort, og hvilke de har glemt.
+              De kan filtrere og sortere saker basert på oppgave-tilstander og oppgave-frister.
+              De kan få påminnelse i bjella og på e-post eller sms hvis de holder på å gå glipp av frister.
+            </p>
+            <figure>
+              <img alt="Eksempel på en sak med oppgaver og beskjeder, hvor oppgaven er utført." src="images/utført%20oppgave.png" />
+            </figure>
+
+            <h3 id="beskjed-eller-oppgave"><a href="#beskjed-eller-oppgave">Beskjed eller oppgave?</a></h3>
+            <p>
+              Når skal dere bruker beskjeder og når skal dere bruke oppgaver? Det er ikke svart-hvitt, men spør dere:
+            </p>
+            <ul>
+              <li>Ønsker dere å informere om noe som har skjedd? Det tyder på beskjed.</li>
+              <li>Trenger dere at arbeidsgiver sender inn et skjema eller gjør noe på innloggede sider utover å lese noe? Det tyder på oppgave.</li>
+              <li>Vil det være mulig for dere å informere oss om arbeidsgiver faktisk har gjort oppgaven? Hvis dere ikke kan det, så passer ikke oppgave.</li>
+            </ul>
+
+            <h3 id="varsle-epost-sms"><a href="#varsle-epost-sms">Varsel på e-post eller SMS</a></h3>
+            <p>
+              Dere kan bestille varsel på e-post eller SMS for:
+            </p>
+            <ul>
+              <li>nye beskjeder og oppgaver</li>
+              <li>for en påminnelse på en oppgave</li>
+            </ul>
+
+            <p>
+              Dere må enten ha kontaktinformasjon (e-post-adresse eller telefonnummer) eller en tjeneste-kode i Altinn.
+            </p>
+
+            <h3 id="tilgangsstyring"><a href="#tilgangsstyring">Tilgangsstyring</a></h3>
+            <p>
+              Saker, beskjeder og oppgaver skal ha samme tilgangsstyring. Det kan tilgangsstyres på:
+            </p>
+            <ul>
+              <li>Altinn-tilganger</li>
+              <li>Nærmeste leder (digisyfo)</li>
+            </ul>
+
+            <p>
+              Rent teknisk er det i dag mulig å angi forskjellige tilganger på saker, oppgaver og beskjeder. Dette
+              blir <strong>ikke</strong> respektert, så det er viktig at dere oppgir samme tilgang på dem.
+            </p>
+
+
+            <h2 id="hvordan-ser-det-ut"><a href="#hvordan-ser-det-ut">Hvordan ser det ut for arbeidsgiver?</a></h2>
+            <p>
+              Vi samler alle saker, beskjeder og oppgaver som dere og andre produsentene lager, og viser dem på en helheltlig
+              måte for arbeidsgivere.
+              I <a href="#bjella">bjella</a> ser de de nyeste beskjedene og oppgavene.
+              I <a href="#saksoversikten">saksoversikten</a> ser de alt og kan gjøre avanserte filtreringer.
+            </p>
+
+            <h3 id="bjella"><a href="#bjella">Bjella</a></h3>
+            <p>
+              Bjellen er en enkel måte for arbeidsgiver å se de nyeste beskjedene og oppgavene på tvers av
+              virksomhetene.
+              Bjella får en rød sirkel med et tall som viser hvor mange uleste oppgaver og beskjeder de har.
+            </p>
+
+            <figure>
+              <img
+                      src="images/bjellaekpandert.png"
+                      alt="Når man trykker på bjella ekspandere notfikasjonerne ut"
+              />
+            </figure>
+
+            <h3 id="saksoversikten"><a href="#saksoversikten">Saksoversikten</a></h3>
+            <p>
+              I saksoversikten får arbeidsgiver en totaloversikt av sakene sine.
+              Når de åpner siden, vil de se <em>alle</em> saker for <em>alle</em> sine virksomheter.
+              De kan søke og filtrere på:
+            </p>
+            <ul>
+              <li>fritekstsøk som må forekomme i sakstitler</li>
+              <li>kun saker med uløste oppgaver</li>
+              <li>type sak (f.eks. lønnstilskudd, dialogmøte)</li>
+              <li>bestemte virksomheter eller juridiske enheter</li>
+            </ul>
+
+            <p>
+              Slike filter lar dem selvfølgelig finne igjen en bestemt sak som de leter etter.
+              Men vi støtter også regnskapsførere og store virksomheters behov for å lagre et filter for senere bruk.
+              Fra brukerinnsikt vet vi at disse kan ha tilgang til opp mot tusen virksomheter, men
+              bare ha ansvar for å jobbe med noen hundre av dem.
+              De kan da sette opp og lagre et filter èn gang, for så å velge det filteret når de kommer
+              tilbake senere.
+            </p>
+            <figure>
+              <img
+                      src="images/saksoversikt.png"
+                      alt="Saken kan ekspanderes for å vise tidligere og kommende hendelser i en sak"
+              />
+            </figure>
+
+            <h2 id="hvordan-komme-i-gang"><a href="#hvordan-komme-i-gang">Hvordan komme i gang?</a></h2>
+            <ul>
+              <li>
+                <p>
+                  Bruksvilkår: Bli kjent med deres ansvar som produsent og
+                  signer
+                  <a href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/bruksvilk%C3%A5r/">
+                    bruksvilkårene
+                  </a>.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <a href="api.html">API dokumentasjon</a>
+                  for notifikasjoner til arbeidsgivere.
+                </p>
+              </li>
+              <li>
+                <p>
+                  Har du spørsmål? Kontakt oss på slack:
+                  <a href="https://nav-it.slack.com/archives/C02F7211DQ8"
+                    >#arbeidsgiver-notifikasjon</a
+                  >.
+                </p>
+              </li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </main>
+  </body>
+</html>

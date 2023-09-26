@@ -611,7 +611,12 @@ type Mutation {
 
     Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
     """
-    hardDeleteNotifikasjon(id: ID!): HardDeleteNotifikasjonResultat!
+    hardDeleteNotifikasjon(
+        """
+        ID-en som notifikasjolnen har. Den du fikk da du opprettet notifikasjonen.
+        """
+        id: ID!
+    ): HardDeleteNotifikasjonResultat!
 
     """
     Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
@@ -655,7 +660,12 @@ type Mutation {
     Advarsel: det er ikke mulig å angre på denne operasjonen.
     Advarsel: ingen notifikasjoner blir slettet, selv om de har samme grupperingsid.
     """
-    softDeleteSak(id: ID!): SoftDeleteSakResultat!
+    softDeleteSak(
+        """
+        ID-en som notifikasjolnen har. Den du fikk da du opprettet notifikasjonen.
+        """
+        id: ID!
+    ): SoftDeleteSakResultat!
 
     """
     Se dokumentasjon for `softDeleteSak(id)`.
