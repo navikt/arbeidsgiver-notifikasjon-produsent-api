@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: '20'
 
-      - working-directory: ./app
+      - working-directory: ./docs
         run: >-
           npx spectaql config.yml
           mv gql/index.html api.html
