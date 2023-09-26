@@ -1,9 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
@@ -119,4 +121,5 @@ val Hendelse.typeNavn: String get() = when (this) {
     is EksterntVarselVellykket -> "EksterntVarselVellykket"
     is EksterntVarselFeilet -> "EksterntVarselFeilet"
     is PåminnelseOpprettet -> "PåminnelseOpprettet"
+    is FristUtsatt -> "FristUtsatt"
 }
