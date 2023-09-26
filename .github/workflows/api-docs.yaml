@@ -11,7 +11,7 @@ jobs:
   gendoc:
     runs-on: 'ubuntu-latest'
     permissions:
-      contents: "read"
+      contents: "write"
       pull-requests: "write"
     steps:
       - uses: actions/checkout@v3
@@ -23,7 +23,9 @@ jobs:
       - working-directory: ./docs
         run: >-
           npx spectaql config.yml
-          mv gql/index.html api.html
+
+      - working-directory: ./docs
+        run: mv gql/index.html api.html
 
       - run: |
           git config --global user.name 'github-actions'
