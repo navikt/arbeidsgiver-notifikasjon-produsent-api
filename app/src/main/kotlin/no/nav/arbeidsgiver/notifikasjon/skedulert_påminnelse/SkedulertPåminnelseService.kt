@@ -28,7 +28,7 @@ class SkedulertPåminnelseService(
                 repository.add(
                     SkedulertPåminnelseRepository.SkedulertPåminnelse(
                         oppgaveId = hendelse.notifikasjonId,
-                        oppgaveOpprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
+                        fristOpprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
                         frist = hendelse.frist,
                         tidspunkt = hendelse.påminnelse.tidspunkt,
                         eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
@@ -66,7 +66,7 @@ class SkedulertPåminnelseService(
                 produsentId = skedulert.produsentId,
                 kildeAppNavn = NaisEnvironment.clientId,
                 opprettetTidpunkt = Instant.now(),
-                oppgaveOpprettetTidspunkt = skedulert.oppgaveOpprettetTidspunkt,
+                fristOpprettetTidspunkt = skedulert.fristOpprettetTidspunkt,
                 frist = skedulert.frist,
                 tidspunkt = skedulert.tidspunkt,
                 eksterneVarsler = skedulert.eksterneVarsler,
