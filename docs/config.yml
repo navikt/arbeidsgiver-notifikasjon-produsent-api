@@ -9,7 +9,9 @@ spectaql:
   #themeDir: spectaql-theme
 introspection:
   schemaFile: ../app/src/main/resources/produsent.graphql
-  fieldExpansionDepth: 10
+  metadataFile: gql/metadata.js
+  dynamicExamplesProcessingModule: ./gql
+  fieldExpansionDepth: 3
   inputValueDeprecation: true
 
 
