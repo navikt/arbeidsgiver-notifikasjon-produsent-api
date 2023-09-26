@@ -45,6 +45,7 @@ class SkedulertUtgåttService(
             is HendelseModel.NyStatusSak,
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket -> Unit
+            is HendelseModel.FristUtsatt -> TODO()
         }
     }
 

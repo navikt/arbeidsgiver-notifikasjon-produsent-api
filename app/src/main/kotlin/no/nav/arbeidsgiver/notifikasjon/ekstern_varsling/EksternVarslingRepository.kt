@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -9,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFei
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
@@ -56,6 +58,7 @@ class EksternVarslingRepository(
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
+            is FristUtsatt -> TODO()
         }
     }
 
