@@ -403,6 +403,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
                 LocalDateTime.parse("2020-01-01T01:01"),
                 Instant.parse("2020-01-01T01:01:01.00Z")
             ),
+            bestillingHendelseId = notifikasjonId,
         ).also {
             repository.oppdaterModellEtterHendelse(it)
         }

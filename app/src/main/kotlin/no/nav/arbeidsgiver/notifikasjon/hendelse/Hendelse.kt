@@ -1,11 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.hendelse
 
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
@@ -163,12 +158,14 @@ object HendelseModel {
     }
 
     @JsonTypeName("PaaminnelseOpprettet")
-    data class PåminnelseOpprettet(
+    data class PåminnelseOpprettet
+    @JsonIgnore constructor (
         override val virksomhetsnummer: String,
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
         val notifikasjonId: UUID,
+        val bestillingHendelseId: UUID,
         val opprettetTidpunkt: Instant,
         val oppgaveOpprettetTidspunkt: Instant,
         val frist: LocalDate?,
@@ -177,6 +174,46 @@ object HendelseModel {
     ) : Hendelse() {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
+
+        companion object {
+            @JvmStatic
+            @JsonCreator
+            fun jsonConstructor(
+                virksomhetsnummer: String,
+                hendelseId: UUID,
+                produsentId: String,
+                kildeAppNavn: String,
+                notifikasjonId: UUID,
+                bestillingHendelseId: UUID?,
+                opprettetTidpunkt: Instant,
+                oppgaveOpprettetTidspunkt: Instant,
+                frist: LocalDate?,
+                tidspunkt: PåminnelseTidspunkt,
+                eksterneVarsler: List<EksterntVarsel>,
+            ) = PåminnelseOpprettet(
+                virksomhetsnummer = virksomhetsnummer,
+                hendelseId = hendelseId,
+                produsentId = produsentId,
+                kildeAppNavn = kildeAppNavn,
+                notifikasjonId = notifikasjonId,
+
+                /** Historisk sett, så var alle bestillinger knyttet til `OppgaveOpprettet`-hendelsen og
+                 * dette feltet fantest derfor ikke. Nå er det mulig at bestillingen også kommer fra en
+                 * `FristUtsatt`-hendelse.
+                 *
+                 * I dag blir `bestillingsHendelseId` alltid satt når denne hendelsen produseres, men for
+                 * historiske data, blir det riktig å sette bestillingHendelseId til notifikasjonId-en, siden de
+                 * alltid kom fra `OppgaveOpprettet`, hvor hendelseId og notifikasjonId er det samme.
+                 */
+                bestillingHendelseId = bestillingHendelseId ?: notifikasjonId,
+
+                opprettetTidpunkt = opprettetTidpunkt,
+                oppgaveOpprettetTidspunkt = oppgaveOpprettetTidspunkt,
+                frist = frist,
+                tidspunkt = tidspunkt,
+                eksterneVarsler = eksterneVarsler,
+            )
+        }
     }
 
     @JsonTypeName("SakOpprettet")

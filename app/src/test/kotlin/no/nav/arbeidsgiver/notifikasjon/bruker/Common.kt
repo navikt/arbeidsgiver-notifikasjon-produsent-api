@@ -183,6 +183,7 @@ suspend fun BrukerRepository.påminnelseOpprettet(
     frist = frist,
     tidspunkt = tidspunkt,
     eksterneVarsler = eksterneVarsler,
+    bestillingHendelseId = oppgave.notifikasjonId,
 ).also {
     oppdaterModellEtterHendelse(it)
 }
@@ -205,6 +206,7 @@ suspend fun BrukerRepository.påminnelseOpprettet(
         frist = oppgave.frist
     ),
     eksterneVarsler = listOf(),
+    bestillingHendelseId = oppgave.notifikasjonId,
 ).also {
     oppdaterModellEtterHendelse(it)
 }

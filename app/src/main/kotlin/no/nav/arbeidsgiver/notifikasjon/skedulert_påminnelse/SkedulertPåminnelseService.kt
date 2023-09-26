@@ -70,6 +70,7 @@ class SkedulertPåminnelseService(
                 frist = skedulert.frist,
                 tidspunkt = skedulert.tidspunkt,
                 eksterneVarsler = skedulert.eksterneVarsler,
+                bestillingHendelseId = skedulert.oppgaveId,
             ))
         }
     }

@@ -588,6 +588,7 @@ object EksempelHendelse {
             frist = LocalDate.parse("2021-01-14")
         ),
         eksterneVarsler = listOf(),
+        bestillingHendelseId = uuid("1"),
     )
 
     val Alle: List<Hendelse> = listOf(
