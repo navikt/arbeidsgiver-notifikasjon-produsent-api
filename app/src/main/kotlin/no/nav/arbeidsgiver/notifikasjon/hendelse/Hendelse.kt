@@ -167,7 +167,7 @@ object HendelseModel {
         val notifikasjonId: UUID,
         val bestillingHendelseId: UUID,
         val opprettetTidpunkt: Instant,
-        val oppgaveOpprettetTidspunkt: Instant,
+        val fristOpprettetTidspunkt: Instant,
         val frist: LocalDate?,
         val tidspunkt: PåminnelseTidspunkt,
         val eksterneVarsler: List<EksterntVarsel>
@@ -186,7 +186,9 @@ object HendelseModel {
                 notifikasjonId: UUID,
                 bestillingHendelseId: UUID?,
                 opprettetTidpunkt: Instant,
-                oppgaveOpprettetTidspunkt: Instant,
+                /** `oppgaveOpprettetTidspunkt` is the old name, replaced by `fristOpprettetTidspunkt`. */
+                oppgaveOpprettetTidspunkt: Instant?,
+                fristOpprettetTidspunkt: Instant?,
                 frist: LocalDate?,
                 tidspunkt: PåminnelseTidspunkt,
                 eksterneVarsler: List<EksterntVarsel>,
@@ -208,7 +210,9 @@ object HendelseModel {
                 bestillingHendelseId = bestillingHendelseId ?: notifikasjonId,
 
                 opprettetTidpunkt = opprettetTidpunkt,
-                oppgaveOpprettetTidspunkt = oppgaveOpprettetTidspunkt,
+                fristOpprettetTidspunkt = checkNotNull(fristOpprettetTidspunkt ?: oppgaveOpprettetTidspunkt) {
+                    "Missing both fristOpprettetTidspunkt and oppgaveOpprettetTidspunkt for PåminnelseOpprettet(notifikasjonId=$notifikasjonId, hendelseId=$hendelseId)"
+                },
                 frist = frist,
                 tidspunkt = tidspunkt,
                 eksterneVarsler = eksterneVarsler,

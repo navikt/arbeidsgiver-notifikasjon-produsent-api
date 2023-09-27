@@ -387,7 +387,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             produsentId = "fager",
             kildeAppNavn = "local:local:local",
             opprettetTidpunkt = Instant.parse("2020-01-01T01:01:01.00Z"),
-            oppgaveOpprettetTidspunkt = Instant.parse("2020-01-01T01:01:01.00Z"),
+            fristOpprettetTidspunkt = Instant.parse("2020-01-01T01:01:01.00Z"),
             eksterneVarsler = listOf(
                 SmsVarselKontaktinfo(
                     varselId = varselId,

@@ -15,7 +15,7 @@ class SkedulertPåminnelseRepository {
 
     data class SkedulertPåminnelse(
         val oppgaveId: UUID,
-        val oppgaveOpprettetTidspunkt: Instant,
+        val fristOpprettetTidspunkt: Instant,
         val frist: LocalDate?,
         val tidspunkt: HendelseModel.PåminnelseTidspunkt,
         val eksterneVarsler: List<HendelseModel.EksterntVarsel>,
