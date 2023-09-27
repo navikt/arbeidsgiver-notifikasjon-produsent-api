@@ -580,7 +580,7 @@ object EksempelHendelse {
         kildeAppNavn = "1",
         notifikasjonId = uuid("1"),
         opprettetTidpunkt = Instant.now(),
-        oppgaveOpprettetTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z").toInstant(),
+        fristOpprettetTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z").toInstant(),
         frist = LocalDate.parse("2021-01-14"),
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
             konkret = LocalDateTime.parse("2021-01-10T12:00:00"),
@@ -588,6 +588,7 @@ object EksempelHendelse {
             frist = LocalDate.parse("2021-01-14")
         ),
         eksterneVarsler = listOf(),
+        bestillingHendelseId = uuid("1"),
     )
 
     val Alle: List<Hendelse> = listOf(

@@ -179,10 +179,11 @@ suspend fun BrukerRepository.påminnelseOpprettet(
     kildeAppNavn = oppgave.kildeAppNavn,
     notifikasjonId = oppgave.notifikasjonId,
     opprettetTidpunkt = opprettetTidpunkt,
-    oppgaveOpprettetTidspunkt = oppgave.opprettetTidspunkt.toInstant(),
+    fristOpprettetTidspunkt = oppgave.opprettetTidspunkt.toInstant(),
     frist = frist,
     tidspunkt = tidspunkt,
     eksterneVarsler = eksterneVarsler,
+    bestillingHendelseId = oppgave.notifikasjonId,
 ).also {
     oppdaterModellEtterHendelse(it)
 }
@@ -197,7 +198,7 @@ suspend fun BrukerRepository.påminnelseOpprettet(
     kildeAppNavn = oppgave.kildeAppNavn,
     notifikasjonId = oppgave.notifikasjonId,
     opprettetTidpunkt = Instant.now(),
-    oppgaveOpprettetTidspunkt = oppgave.opprettetTidspunkt.toInstant(),
+    fristOpprettetTidspunkt = oppgave.opprettetTidspunkt.toInstant(),
     frist = oppgave.frist,
     tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
         konkret = konkretPåminnelseTidspunkt,
@@ -205,6 +206,7 @@ suspend fun BrukerRepository.påminnelseOpprettet(
         frist = oppgave.frist
     ),
     eksterneVarsler = listOf(),
+    bestillingHendelseId = oppgave.notifikasjonId,
 ).also {
     oppdaterModellEtterHendelse(it)
 }
