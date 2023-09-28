@@ -243,11 +243,17 @@ class SkedulertHardDeleteRepository(
     }
 
     suspend fun hardDelete(aggregateId: UUID) {
-        // registrer sletting i ny tabell. På service nivå loop på tabell og utfør sletting og registrer nye HardDeletes fra
-        database.nonTransactionalExecuteUpdate("""
-           delete from aggregate where aggregate_id = ? 
-        """) {
-            uuid(aggregateId)
+        database.transaction {
+            executeUpdate("""
+                delete from aggregate where aggregate_id = ?  
+            """) {
+                uuid(aggregateId)
+            }
+            executeUpdate("""
+                delete from registrert_hard_delete_event where aggregate_id = ?  
+            """) {
+                uuid(aggregateId)
+            }
         }
     }
 
