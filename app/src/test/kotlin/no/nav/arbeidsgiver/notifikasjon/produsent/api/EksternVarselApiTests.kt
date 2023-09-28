@@ -1,12 +1,15 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyBeskjed
@@ -14,6 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.ny
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import org.intellij.lang.annotations.Language
 import java.util.*
 
 @Suppress("EnumEntryName")
@@ -21,6 +25,58 @@ enum class NyNotifikasjonInputType(val returType: String) {
     nyBeskjed("NyBeskjedVellykket"),
     nyOppgave("NyOppgaveVellykket"),
 }
+
+
+/* Her tester vi også at graphql-biblioteket vårt støtter å sende inn json-strukturerer som input. */
+@Language("json")
+private val jsonVariabler = laxObjectMapper.readValue<Map<String, Any?>>("""
+{
+  "eksterneVarsler": [
+    {
+      "sms": {
+        "mottaker": {
+          "kontaktinfo": {
+            "fnr": "",
+            "tlf": ""
+          }
+        },
+        "smsTekst": "En test SMS",
+        "sendetidspunkt": {
+          "sendevindu": "NKS_AAPNINGSTID"
+        }
+      }
+    },
+    {
+      "epost": {
+        "mottaker": {
+          "kontaktinfo": {
+            "fnr": "0",
+            "epostadresse": "0"
+          }
+        },
+        "epostTittel": "En tittel til din epost",
+        "epostHtmlBody": "<body><h1>hei</h1></body>",
+        "sendetidspunkt": {
+          "sendevindu": "NKS_AAPNINGSTID"
+        }
+      }
+    },
+    {
+      "altinntjeneste": {
+        "mottaker": {
+          "serviceCode": "1337",
+          "serviceEdition": "42"
+        },
+        "tittel": "Følg med, du har nye følgere å følge opp",
+        "innhold": "Gå inn på Nav sine nettsider og følg veiledningen",
+        "sendetidspunkt": {
+          "sendevindu": "NKS_AAPNINGSTID"
+        }
+      }
+    }
+  ]
+}
+""")
 
 class EksternVarselApiTests: DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
@@ -32,7 +88,7 @@ class EksternVarselApiTests: DescribeSpec({
 
     fun nyNotifikasjonMutation(type: NyNotifikasjonInputType) =
         """
-            mutation {
+            mutation LagNotifikasjon(${'$'}eksterneVarsler: [EksterntVarselInput!]!) {
                 nyNotifikasjon: $type(
                     $type: {
                         metadata: {
@@ -50,44 +106,7 @@ class EksternVarselApiTests: DescribeSpec({
                             tekst: "0"
                             lenke: "0"
                         } 
-                        eksterneVarsler: [
-                            {sms: {
-                                mottaker: {
-                                    kontaktinfo: {
-                                        fnr: ""
-                                        tlf: ""
-                                    }
-                                }
-                                smsTekst: "En test SMS"
-                                sendetidspunkt: {
-                                    sendevindu: NKS_AAPNINGSTID
-                                }
-                            }}
-                            {epost: {
-                                mottaker: {
-                                    kontaktinfo: {
-                                        fnr: "0"
-                                        epostadresse: "0"
-                                    }
-                                }
-                                epostTittel: "En tittel til din epost"
-                                epostHtmlBody: "<body><h1>hei</h1></body>"
-                                sendetidspunkt: {
-                                    sendevindu: NKS_AAPNINGSTID
-                                }
-                            }}
-                            {altinntjeneste: {
-                                mottaker: {
-                                    serviceCode: "1337"
-                                    serviceEdition: "42"
-                                }
-                                tittel: "Følg med, du har nye følgere å følge opp"
-                                innhold: "Gå inn på Nav sine nettsider og følg veiledningen"
-                                sendetidspunkt: {
-                                    sendevindu: NKS_AAPNINGSTID
-                                }
-                            }}
-                        ]
+                        eksterneVarsler: ${'$'}eksterneVarsler
                     }
                 ) {
                     __typename
@@ -131,7 +150,12 @@ class EksternVarselApiTests: DescribeSpec({
         """
 
     describe("Oppretter beskjed med eksterne varsler som sendes OK") {
-        val nyNotifikasjonResult = engine.produsentApi(nyNotifikasjonMutation(nyBeskjed))
+        val nyNotifikasjonResult = engine.produsentApi(
+            GraphQLRequest(
+                query = nyNotifikasjonMutation(nyBeskjed),
+                variables = jsonVariabler,
+            )
+        )
         val notId = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/id")
         val id0 = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/eksterneVarsler/0/id")
         val id1 = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/eksterneVarsler/1/id")
@@ -212,7 +236,10 @@ class EksternVarselApiTests: DescribeSpec({
         }
     }
     describe("Oppretter oppgave med eksterne varsler som sendes OK") {
-        val nyNotifikasjonResult = engine.produsentApi(nyNotifikasjonMutation(nyOppgave))
+        val nyNotifikasjonResult = engine.produsentApi(GraphQLRequest(
+            query = nyNotifikasjonMutation(nyOppgave),
+            variables = jsonVariabler,
+        ))
         val notId = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/id")
         val id0 = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/eksterneVarsler/0/id")
         val id1 = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/eksterneVarsler/1/id")
