@@ -43,7 +43,7 @@ object Statistikk {
                 val statistikkService = statistikkServiceAsync.await()
                 launchProcessingLoop(
                     "gauge-oppdatering",
-                    pauseAfterEach = Duration.ofMinutes(1),
+                    pauseAfterEach = Duration.ofMinutes(5),
                 ) {
                     statistikkService.updateGauges()
                     log.info("gauge-oppdatering vellykket ")
