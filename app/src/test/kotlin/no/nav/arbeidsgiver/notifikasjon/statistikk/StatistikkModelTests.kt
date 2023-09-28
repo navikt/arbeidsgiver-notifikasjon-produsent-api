@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
@@ -146,12 +145,6 @@ class StatistikkModelTests : DescribeSpec({
             val gauge = MultiGauge.builder("antall_varsler")
                 .description("Antall varsler")
                 .register(meterRegistry)
-            val antallUtførteGauge = MultiGauge.builder("antall_utforte")
-                .description("Antall utførte (med histogram)")
-                .register(meterRegistry)
-            val antallUnikeVarselTekster = MultiGauge.builder("antall_unike_varseltekster")
-                .description("Antall unike varseltekster")
-                .register(meterRegistry)
 
             model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))
             model.oppdaterModellEtterHendelse(epostFeilet, HendelseMetadata(now()))
@@ -173,23 +166,6 @@ class StatistikkModelTests : DescribeSpec({
                 vellykketSms shouldBe 1
                 vellykketAltinn shouldBe 1
             }
-
-            it("utførthistogram inneholder informasjon om klikket på eller ikke") {
-                antallUtførteGauge.register(model.antallUtførteHistogram(), true)
-                val utførteOgKlikketPaa = meterRegistry.get("antall_utforte").tag("klikket_paa", "t").gauge().value()
-                utførteOgKlikketPaa shouldBe 1
-            }
-
-
-            it("antall unike varsler registreres") {
-                val rows = model.antallUnikeVarselTekster()
-                antallUnikeVarselTekster.register(rows, true)
-
-                val unikeEpostVarseltekster = meterRegistry.get("antall_unike_varseltekster").tag("varsel_type", "epost_kontaktinfo").gauge().value()
-                val unikeSmsVarseltekster = meterRegistry.get("antall_unike_varseltekster").tag("varsel_type", "sms_kontaktinfo").gauge().value()
-                unikeEpostVarseltekster shouldBe 1
-                unikeSmsVarseltekster shouldBe 2
-            }
         }
 
         context("SoftDelete") {
@@ -206,38 +182,6 @@ class StatistikkModelTests : DescribeSpec({
                 shouldNotThrowAny {
                     model.oppdaterModellEtterHendelse(softdelete, HendelseMetadata(now()))
                 }
-            }
-        }
-
-        context("OppgaveUtført nulstiller utgaatt_tidspunkt") {
-            val oppgaveUtgått = HendelseModel.OppgaveUtgått(
-                virksomhetsnummer = bestilling.virksomhetsnummer,
-                notifikasjonId = bestilling.notifikasjonId,
-                hendelseId = UUID.randomUUID(),
-                produsentId = bestilling.produsentId,
-                kildeAppNavn = bestilling.kildeAppNavn,
-                hardDelete = null,
-                utgaattTidspunkt = OffsetDateTime.now(),
-                nyLenke = null,
-            )
-
-            model.oppdaterModellEtterHendelse(bestilling, HendelseMetadata(now()))
-            model.oppdaterModellEtterHendelse(oppgaveUtgått, HendelseMetadata(now()))
-
-            it("utgått oppgave er ikke med i histogram for utførte") {
-               model.antallUtførteHistogram() shouldHaveSize 0
-            }
-            it("utgått oppgave er registrert i databasen") {
-                model.antallUtgåtteOppgaver() shouldHaveSize 1
-            }
-
-            model.oppdaterModellEtterHendelse(oppgaveUtført, HendelseMetadata(now()))
-
-            it("utført oppgave er nå med i histogram for utførte") {
-                model.antallUtførteHistogram() shouldHaveSize 1
-            }
-            it("utgått oppgave er nullstilt i databasen") {
-                model.antallUtgåtteOppgaver() shouldHaveSize 0
             }
         }
     }
