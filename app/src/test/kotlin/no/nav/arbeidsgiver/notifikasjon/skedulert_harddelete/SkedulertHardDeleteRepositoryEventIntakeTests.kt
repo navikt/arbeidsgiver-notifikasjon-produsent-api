@@ -414,6 +414,13 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
                 database.harRegistrertHardDelete(hendelse.aggregateId) shouldBe false
             }
         }
+
+        context("Hard delete utføres for en sak som ikke lenger finnes") {
+            // for eksempel midt i en replay
+            it("skal ikke kaste exception") {
+                repository.hardDelete("1")
+            }
+        }
     }
 })
 
