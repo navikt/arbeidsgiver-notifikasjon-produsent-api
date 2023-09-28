@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.LocalDateTimeOrDuration
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.FORLENG
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.OVERSKRIV
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -89,6 +90,15 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
             }
         }
     }
+
+
+
+    suspend fun Database.harRegistrertHardDelete(aggregateId: UUID) =
+        database.nonTransactionalExecuteQuery("""
+            select * from registrert_hard_delete_event where aggregate_id = ?
+        """, {
+            uuid(aggregateId)
+        }, {}).isNotEmpty()
 
     describe("AutoSlettRepository#oppdaterModellEtterHendelse") {
         context("opprett hendelse uten hard delete") {
@@ -368,8 +378,8 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
 
             repository.hardDelete("1")
 
-            it("should be deleted") {
-                repository.hent(hendelse.aggregateId) shouldBe null
+            it("harddelete should be registered") {
+                 database.harRegistrertHardDelete(hendelse.aggregateId) shouldBe true
             }
         }
 
@@ -382,8 +392,8 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
 
             repository.hardDelete("2")
 
-            it("should be deleted") {
-                repository.hent(hendelse.aggregateId) shouldBe null
+            it("harddelete should be registered") {
+                database.harRegistrertHardDelete(hendelse.aggregateId) shouldBe true
             }
         }
 
@@ -393,15 +403,20 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
                 mottattTidspunkt = "2020-01-01T01:01+00",
                 hardDelete = "2022-10-13T07:20:50.52"
             )
-
+            repository.sakOpprettet(
+                idsuffix = "4",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = "2022-10-13T07:20:50.52"
+            )
             repository.hardDelete("4")
 
             it("should not be deleted") {
-                repository.hent(hendelse.aggregateId) shouldNotBe null
+                database.harRegistrertHardDelete(hendelse.aggregateId) shouldBe false
             }
         }
     }
 })
+
 
 private suspend fun <T : HendelseModel.Hendelse> SkedulertHardDeleteRepository.oppdaterModell(
     hendelse: T,
