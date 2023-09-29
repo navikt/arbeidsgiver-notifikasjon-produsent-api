@@ -51,6 +51,8 @@ spec:
           namespace: teamia
         - application: forebyggingsplan-frontend
           namespace: teamia
+        - application: presenterte-kandidater
+          namespace: toi
     outbound:
       rules:
         - application: altinn-rettigheter-proxy
