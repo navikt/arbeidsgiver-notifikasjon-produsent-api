@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 enum class Subsystem {
     DATABASE,
     AUTOSLETT_SERVICE,
+    HARDDELETE_SERVICE,
     KAFKA,
     KTOR,
 }
@@ -19,6 +20,7 @@ object Health {
         Subsystem.KAFKA to true,
         Subsystem.KTOR to true,
         Subsystem.AUTOSLETT_SERVICE to true,
+        Subsystem.HARDDELETE_SERVICE to true,
     ))
 
     val alive

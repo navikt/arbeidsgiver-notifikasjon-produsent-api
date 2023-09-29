@@ -4,12 +4,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import java.time.Duration
 import java.time.Instant
 
@@ -18,7 +19,7 @@ object SkedulertHardDelete {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "skedulert-harddelete-model-builder",
+            groupId = "skedulert-harddelete-model-builder-1",
             replayPeriodically = true,
         )
     }
@@ -45,6 +46,12 @@ object SkedulertHardDelete {
                 pauseAfterEach = Duration.ofMinutes(10)
             ) {
                 service.await().slettDeSomSkalSlettes(Instant.now())
+            }
+            launchProcessingLoop(
+                "harddelete-service",
+                pauseAfterEach = Duration.ofMinutes(5)
+            ) {
+                service.await().prosesserRegistrerteHardDeletes()
             }
 
             launchHttpServer(httpPort = httpPort)

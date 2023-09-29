@@ -1,0 +1,2 @@
+alter table registrert_hard_delete_event
+    drop constraint registrert_hard_delete_event_aggregate_id_fkey;
