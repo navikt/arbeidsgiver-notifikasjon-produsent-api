@@ -58,7 +58,7 @@ class EksternVarslingRepository(
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
-            is FristUtsatt -> TODO()
+            is FristUtsatt -> Unit
         }
     }
 

@@ -321,7 +321,18 @@ class StatistikkModel(
             is PåminnelseOpprettet -> {
                 // noop
             }
-            is FristUtsatt -> TODO()
+            is FristUtsatt -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                        update notifikasjon
+                        set frist = greatest(?, frist)
+                        where notifikasjon_id = ?
+                    """
+                ) {
+                    date(hendelse.frist)
+                    uuid(hendelse.notifikasjonId)
+                }
+            }
         }
     }
 

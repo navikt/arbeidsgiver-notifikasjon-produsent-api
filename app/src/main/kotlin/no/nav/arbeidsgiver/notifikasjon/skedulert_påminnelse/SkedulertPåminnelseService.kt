@@ -19,12 +19,10 @@ class SkedulertPåminnelseService(
     suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
         @Suppress("UNUSED_VARIABLE")
         val ignored = when (hendelse) {
-            /* må håndtere */
             is HendelseModel.OppgaveOpprettet -> run {
                 if (hendelse.påminnelse == null) {
                     return@run
                 }
-                log.debug("putter inn påminnelse. oppgaveId=${hendelse.notifikasjonId} tidspunkt=${hendelse.påminnelse.tidspunkt}")
                 repository.add(
                     SkedulertPåminnelseRepository.SkedulertPåminnelse(
                         oppgaveId = hendelse.notifikasjonId,
@@ -34,23 +32,42 @@ class SkedulertPåminnelseService(
                         eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
                         virksomhetsnummer = hendelse.virksomhetsnummer,
                         produsentId = hendelse.produsentId,
+                        bestillingHendelseId = hendelse.hendelseId,
                     )
                 )
             }
+            is HendelseModel.FristUtsatt -> run {
+                if (hendelse.påminnelse == null) {
+                    return@run
+                }
+                repository.add(
+                    SkedulertPåminnelseRepository.SkedulertPåminnelse(
+                        oppgaveId = hendelse.notifikasjonId,
+                        fristOpprettetTidspunkt = hendelse.fristEndretTidspunkt,
+                        frist = hendelse.frist,
+                        tidspunkt = hendelse.påminnelse.tidspunkt,
+                        eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
+                        virksomhetsnummer = hendelse.virksomhetsnummer,
+                        produsentId = hendelse.produsentId,
+                        bestillingHendelseId = hendelse.hendelseId,
+                    )
+                )
+            }
+            is HendelseModel.PåminnelseOpprettet ->
+                repository.removeBestillingId(hendelse.bestillingHendelseId)
+
             is HendelseModel.OppgaveUtført,
             is HendelseModel.OppgaveUtgått,
             is HendelseModel.SoftDelete,
             is HendelseModel.HardDelete ->
-                repository.remove(hendelse.aggregateId)
+                repository.removeOppgaveId(hendelse.aggregateId)
 
             is HendelseModel.BeskjedOpprettet,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.SakOpprettet,
             is HendelseModel.NyStatusSak,
-            is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket -> Unit
-            is HendelseModel.FristUtsatt -> TODO()
         }
     }
 
@@ -58,7 +75,6 @@ class SkedulertPåminnelseService(
         val skedulertePåminnelser = repository.hentOgFjernAlleAktuellePåminnelser(now)
         /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
         skedulertePåminnelser.forEach { skedulert ->
-            log.debug("sender skedulert påminnelse for oppgaveId=${skedulert.oppgaveId}")
             hendelseProdusent.send(HendelseModel.PåminnelseOpprettet(
                 virksomhetsnummer = skedulert.virksomhetsnummer,
                 notifikasjonId = skedulert.oppgaveId,
@@ -70,7 +86,7 @@ class SkedulertPåminnelseService(
                 frist = skedulert.frist,
                 tidspunkt = skedulert.tidspunkt,
                 eksterneVarsler = skedulert.eksterneVarsler,
-                bestillingHendelseId = skedulert.oppgaveId,
+                bestillingHendelseId = skedulert.bestillingHendelseId,
             ))
         }
     }

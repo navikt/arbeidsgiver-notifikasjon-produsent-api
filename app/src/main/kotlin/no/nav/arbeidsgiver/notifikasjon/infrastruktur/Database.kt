@@ -301,7 +301,8 @@ class ParameterSetters(
 
     fun nullableDate(value: LocalDate?) =
         preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) } )
-
+    fun date(value: LocalDate) =
+        preparedStatement.setDate(index++, value.let { java.sql.Date.valueOf(it) })
 
     inline fun <reified T> jsonb(value: T) =
         text(
