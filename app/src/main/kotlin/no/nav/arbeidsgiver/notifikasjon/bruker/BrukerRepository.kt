@@ -515,7 +515,7 @@ class BrukerRepositoryImpl(
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
-            is FristUtsatt -> TODO()
+            is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
         }
     }
 
@@ -959,6 +959,21 @@ class BrukerRepositoryImpl(
                 getString("merkelapp")
             }
             return@coRecord rows
+        }
+    }
+
+    private suspend fun oppdaterModellEtterFristUtsatt(hendelse: FristUtsatt) {
+        database.nonTransactionalExecuteUpdate("""
+            update notifikasjon
+            set tilstand = '${BrukerModel.Oppgave.Tilstand.NY}',
+                frist = ?,
+                utgaatt_tidspunkt = null,
+                paaminnelse_tidspunkt = null
+            where
+                id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
+        """) {
+            date(hendelse.frist)
+            uuid(hendelse.notifikasjonId)
         }
     }
 }

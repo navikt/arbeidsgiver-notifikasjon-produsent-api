@@ -154,6 +154,7 @@ private fun HendelseModel.OppgaveOpprettet.medPåminnelse(
     uuid: UUID = notifikasjonId
 ) = copy(
     notifikasjonId = uuid,
+    hendelseId = uuid,
     påminnelse = HendelseModel.Påminnelse(
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
             tidspunkt,

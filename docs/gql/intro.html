@@ -1,0 +1,106 @@
+<h1 class="post-title">API-dokumentasjon</h1>
+<p>
+  Interaktiv demo av API
+  <a
+          href="https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/"
+  >er tilgjengelig på ekstern.dev.nav.no</a
+  >. Hvis du kjører en spørring i den interaktive demoen, så sendes
+  et ekte nettverkskall. Du kan derfor bruke developer-tools for å
+  se hvordan JSON-et til forespørselen og svaret ser ut.
+</p>
+<h1 id="autentisering">Autentisering</h1>
+<p>
+  Tjenesten deres må autentisere seg med Azure AD, type
+  server–server, som
+  <a href="https://doc.nais.io/security/auth/azure-ad/"
+  >beskrevet i nais-dokumentasjonen</a
+  >.
+</p>
+<h1 id="endepunkter-for-miljer">Endepunkter for miljøer</h1>
+<table style="width: auto">
+  <thead>
+  <tr>
+    <th>miljø</th>
+    <th>url</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td>mock</td>
+    <td>
+      <code class="hljs language-text"
+      >https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/api/graphql</code
+      >
+    </td>
+  </tr>
+  <tr>
+    <td>dev</td>
+    <td>
+      fra gcp:
+      <code class="hljs language-text"
+      >https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql</code
+      >
+      fra fss:
+      <code class="hljs language-text"
+      >https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql</code
+      >
+    </td>
+  </tr>
+  <tr>
+    <td>prod</td>
+    <td>
+      <code class="hljs language-text"
+      >https://ag-notifikasjon-produsent-api.intern.nav.no/api/graphql</code
+      >
+    </td>
+  </tr>
+  <tr>
+    <td>service dicovery (gcp)</td>
+    <td>
+      <code class="hljs language-text"
+      >http://notifikasjon-produsent-api.fager/api/graphql</code
+      >
+    </td>
+  </tr>
+  </tbody>
+</table>
+Vi anbefaler bruk av <a href="https://doc.nais.io/clusters/service-discovery/#service-discovery-in-kubernetes">
+  service discovery som beskrevet i nais dokumentasjonen</a
+>.
+<h1 id="graphql-over-http">GraphQL over HTTP</h1>
+<p>
+  Vi implementerer GraphQL over HTTP (kun POST, ikke GET) og JSON,
+  basert på de offisielle anbefalingene:
+  <a href="https://graphql.org/learn/serving-over-http/"
+  >https://graphql.org/learn/serving-over-http/</a
+  >.
+</p>
+<blockquote>
+  <p>
+    ⚠️ GraphQL returnerer alltid en
+    <a href="https://spec.graphql.org/October2021/#sec-Response"
+    >&quot;well-formed&quot; HTTP 200 OK</a
+    >. Dersom det er en eller flere valideringsfeil eller noe annet
+    ugyldig vil det returneres informasjon om dette i
+    <a href="https://spec.graphql.org/October2021/#sec-Errors"
+    >errors feltet</a
+    >
+    i response body fra server.
+  </p>
+</blockquote>
+<p>
+  Vi anbefaler at dere angir correlationId i kall dere gjør mot
+  APIet. Dette vil lette arbeidet med feilsøking og oppfølging. Vi
+  plukker verdien ut fra en av følgende headere:
+</p>
+<ul>
+  <li><code>X-Request-ID</code></li>
+  <li><code>X-Correlation-ID</code></li>
+  <li><code>call-id</code></li>
+  <li><code>callId</code></li>
+  <li><code>call_id</code></li>
+</ul>
+<p>
+  Med dette angitt kan dere søke i kibana etter
+  <code>x_correlation_id</code>.
+</p>

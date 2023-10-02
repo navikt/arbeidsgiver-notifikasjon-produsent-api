@@ -1,0 +1,40 @@
+spectaql:
+  oneFile: true
+  targetDir: gql
+  logoFile: images/logo.png
+  embedLogo: true
+  logoHeightPx: 18
+  faviconFile: images/favicon.svg
+  embedFavicon: true
+  #themeDir: spectaql-theme
+introspection:
+  schemaFile: ../app/src/main/resources/produsent.graphql
+  metadataFile: gql/metadata.js
+  dynamicExamplesProcessingModule: ./gql
+  fieldExpansionDepth: 3
+  inputValueDeprecation: true
+
+
+servers:
+  - url: http://notifikasjon-produsent-api.fager/api/graphql
+    headers:
+      - name: Authorization
+        example: Bearer <YOUR_TOKEN_HERE>
+
+info:
+  title: API-dokumentasjon | Notifikasjoner for arbeidsgivere
+  x-introItems:
+    - title: Introduksjon
+      url: index.html
+    - title: Guide
+      url: guide.html
+    - title: API-dokumentasjon
+      url: api.html
+    - title: Bruksvilkår
+      url: vilkaar.html
+    - title: FAQ
+      url: faq.html
+    - file: gql/intro.html
+  x-url: http://notifikasjon-produsent-api.fager/api/graphql
+  x-hideWelcome: true
+  x-hidePoweredBy: true

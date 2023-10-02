@@ -4,10 +4,13 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem.AUTOSLETT_SERVICE
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType.Oppgave
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType.Sak
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
@@ -60,19 +63,86 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
             }
         }
     }
+
+    describe("HardDeleteService#prosesserRegistrerteHardDeletes") {
+        coEvery { repo.hardDelete(any()) } returns Unit
+
+        context("sletter notifikasjoner som er registrert for sletting") {
+            val harddeletes = listOf(
+                registrertHardDelete(uuid("1"), Oppgave, "tag"),
+                registrertHardDelete(uuid("2"), Oppgave, "tag"),
+            )
+            coEvery { repo.finnRegistrerteHardDeletes(any()) } returns harddeletes
+
+            it("sletter aggregater") {
+                service.prosesserRegistrerteHardDeletes()
+
+                coVerify { repo.hardDelete(uuid("1")) }
+                coVerify { repo.hardDelete(uuid("2")) }
+            }
+        }
+
+        context("lager harddelete events for alle notifikasjoner som er tilkoblet en sak") {
+            kafkaProducer.clear()
+            val harddeletes = listOf(
+                registrertHardDelete(uuid("1"), Sak, "tag", "42"),
+                registrertHardDelete(uuid("1"), Sak, "foo", "44"),
+            )
+            coEvery { repo.finnRegistrerteHardDeletes(any()) } returns harddeletes
+            coEvery { repo.hentNotifikasjonerForSak("tag", "42") } returns listOf(
+                notifikasjonForSak(uuid("11")),
+                notifikasjonForSak(uuid("12")),
+            )
+            coEvery { repo.hentNotifikasjonerForSak("foo", "44") } returns emptyList()
+
+            it("sender hardDelete for aggregater som skal slettes") {
+                service.prosesserRegistrerteHardDeletes()
+                coVerify { repo.hardDelete(uuid("1")) }
+
+                val hardDeletes = kafkaProducer.hendelserOfType<HendelseModel.HardDelete>()
+                val deletedIds = hardDeletes.map(HendelseModel.HardDelete::aggregateId)
+                val expected = listOf(uuid("11"), uuid("12"))
+
+                deletedIds shouldContainExactlyInAnyOrder expected
+            }
+        }
+    }
 })
+
+private fun notifikasjonForSak(aggregateId: UUID) = SkedulertHardDeleteRepository.NotifikasjonForSak(
+    aggregateId = aggregateId,
+    virksomhetsnummer = "21",
+    produsentid = "test",
+    merkelapp = "tag",
+)
 
 private fun skedulertHardDelete(
     aggregateId: UUID,
     beregnetSlettetidspunkt: Instant = Instant.EPOCH
 ) = SkedulertHardDeleteRepository.SkedulertHardDelete(
     aggregateId = aggregateId,
-    aggregateType = "foo",
+    aggregateType = Oppgave,
     virksomhetsnummer = "21",
     produsentid = "test",
     merkelapp = "tag",
     inputBase = OffsetDateTime.now(),
     inputOm = null,
     inputDen = LocalDateTime.now(),
+    grupperingsid = null,
     beregnetSlettetidspunkt = beregnetSlettetidspunkt,
+)
+
+
+private fun registrertHardDelete(
+    aggregateId: UUID,
+    aggregateType: SkedulertHardDeleteRepository.AggregateType,
+    merkelapp: String,
+    grupperingsid: String? = null,
+) = SkedulertHardDeleteRepository.RegistrertHardDelete(
+    aggregateId = aggregateId,
+    aggregateType = aggregateType,
+    virksomhetsnummer = "21",
+    produsentid = "test",
+    merkelapp = merkelapp,
+    grupperingsid = grupperingsid,
 )

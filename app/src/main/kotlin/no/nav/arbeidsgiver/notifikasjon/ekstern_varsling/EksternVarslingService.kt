@@ -7,6 +7,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
+import org.slf4j.event.Level.ERROR
+import org.slf4j.event.Level.WARN
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -212,7 +214,10 @@ class EksternVarslingService(
                                     log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
                                     eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                                 } else {
-                                    log.error("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
+                                    log.atLevel(
+                                        if (response.isSupressable()) WARN
+                                        else ERROR
+                                    ).log("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
                                     eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                                 }
                             }

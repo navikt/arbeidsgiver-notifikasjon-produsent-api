@@ -1,0 +1,13 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: notifikasjon-fake-produsent-api
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{image}}
+  prometheus:
+    enabled: false
+  ingresses:
+  - https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/
