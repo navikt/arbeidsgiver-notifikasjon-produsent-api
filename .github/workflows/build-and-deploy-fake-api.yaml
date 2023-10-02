@@ -1,0 +1,48 @@
+name: build and deploy
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - app/src/main/resources/produsent.graphql
+      - fake-produsent-api/**
+  workflow_dispatch:
+
+jobs:
+  build_and_push:
+    permissions:
+      contents: "read"
+      id-token: "write"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          registry-url: https://npm.pkg.github.com/
+          cache: 'npm'
+          cache-dependency-path: fake-produsent-api/server/package-lock.json
+
+      - run: npm ci
+        working-directory: fake-produsent-api/server
+
+      - run: npm run gql:cp_schema
+        working-directory: fake-produsent-api/server
+
+      - uses: nais/docker-build-push@v0
+        id: docker-push
+        with:
+          team: fager
+          docker_context: fake-produsent-api/
+          tag: ${{ github.sha }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          IMAGE: ${{ steps.docker-push.outputs.image }}
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: dev-gcp
+          RESOURCE: fake-produsent-api/nais-application.yaml
+          PRINT_PAYLOAD: true
