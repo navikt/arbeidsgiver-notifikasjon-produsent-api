@@ -284,6 +284,11 @@ class SkedulertHardDeleteRepository(
         }
     }
 
+    suspend fun deleteOrphanedHardDeletes() = database.nonTransactionalExecuteUpdate("""
+        delete from registrert_hard_delete_event 
+            where aggregate_id not in (select aggregate_id from aggregate);
+    """)
+
     suspend fun hent(aggregateId: UUID): SkedulertHardDelete? {
         return database.nonTransactionalExecuteQuery("""
             select 
