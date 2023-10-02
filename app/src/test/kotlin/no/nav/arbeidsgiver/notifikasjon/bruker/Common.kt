@@ -1,12 +1,14 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDeleteUpdate
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.LocalDateTimeOrDuration
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Påminnelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import java.time.Instant
 import java.time.LocalDate
@@ -108,7 +110,7 @@ suspend fun BrukerRepository.oppgaveOpprettet(
     eksterneVarsler: List<HendelseModel.EksterntVarsel> = listOf(),
     hardDelete: LocalDateTimeOrDuration? = null,
     frist: LocalDate? = null,
-    påminnelse: HendelseModel.Påminnelse? = null,
+    påminnelse: Påminnelse? = null,
 ) = OppgaveOpprettet(
     virksomhetsnummer = virksomhetsnummer,
     notifikasjonId = notifikasjonId,
@@ -162,6 +164,23 @@ suspend fun BrukerRepository.oppgaveUtgått(
     hardDelete = hardDelete,
     utgaattTidspunkt = utgaattTidspunkt,
     nyLenke = nyLenke,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
+suspend fun BrukerRepository.oppgaveFristUtsatt(
+    oppgave: OppgaveOpprettet,
+    frist: LocalDate,
+    påminnelse: Påminnelse? = null,
+) = FristUtsatt(
+    hendelseId = UUID.randomUUID(),
+    notifikasjonId = oppgave.notifikasjonId,
+    virksomhetsnummer = oppgave.virksomhetsnummer,
+    produsentId = oppgave.produsentId,
+    kildeAppNavn = oppgave.kildeAppNavn,
+    fristEndretTidspunkt = Instant.now(),
+    frist = frist,
+    påminnelse = påminnelse,
 ).also {
     oppdaterModellEtterHendelse(it)
 }
