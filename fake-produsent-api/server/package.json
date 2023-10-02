@@ -1,0 +1,19 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "module",
+  "main": "server/server.js",
+  "dependencies": {
+    "apollo-server-express": "^3.6.7",
+    "casual": "^1.6.2",
+    "express": "^4.17.3",
+    "graphql": "^16.8.1",
+    "nodemon": "^3.0.1",
+    "winston": "^3.6.0"
+  },
+  "scripts": {
+    "start": "nodemon server.js",
+    "gql:cp_schema": "cp ../../app/src/main/resources/produsent.graphql produsent.graphql"
+  }
+}
