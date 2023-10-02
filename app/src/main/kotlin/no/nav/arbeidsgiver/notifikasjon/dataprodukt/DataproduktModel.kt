@@ -28,6 +28,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ParameterSetters
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.ScheduledTime
 import java.time.Instant
@@ -163,25 +164,7 @@ class DataproduktModel(
                         nullableText(null)
                         toInstantAsText(opprettetTidspunkt)
                         nullableDate(frist)
-                        when (val tidspunkt = påminnelse?.tidspunkt) {
-                            is PåminnelseTidspunkt.Konkret -> {
-                                text("Konkret")
-                                localDateTimeAsText(tidspunkt.konkret)
-                            }
-                            is PåminnelseTidspunkt.EtterOpprettelse -> {
-                                text("EtterOpprettelse")
-                                periodAsText(tidspunkt.etterOpprettelse)
-                            }
-                            is PåminnelseTidspunkt.FørFrist -> {
-                                text("FørFrist")
-                                periodAsText(tidspunkt.førFrist)
-                            }
-                            null -> {
-                                nullableText(null)
-                                nullableText(null)
-                            }
-                        }
-                        nullableInstantAsText(påminnelse?.tidspunkt?.påminnelseTidspunkt)
+                        setPåminnelseFelter(this.påminnelse)
                     }
                 }
 
@@ -453,8 +436,48 @@ class DataproduktModel(
                     }
                 }
             }
-            is FristUtsatt -> TODO()
+            is FristUtsatt -> {
+                database.nonTransactionalExecuteUpdate("""
+                    update notifikasjon
+                    set frist = ?,
+                        paaminnelse_bestilling_spesifikasjon_type = ?,
+                        paaminnelse_bestilling_spesifikasjon_tid = ?,
+                        paaminnelse_bestilling_utregnet_tid = ?
+                    where notifikasjon_id = ?
+                """) {
+                    date(hendelse.frist)
+                    setPåminnelseFelter(hendelse.påminnelse)
+                    uuid(hendelse.notifikasjonId)
+                }
+            }
         }
+    }
+
+    private fun ParameterSetters.setPåminnelseFelter(
+        påminnelse: HendelseModel.Påminnelse?
+    ) {
+        when (val tidspunkt = påminnelse?.tidspunkt) {
+            is PåminnelseTidspunkt.Konkret -> {
+                text("Konkret")
+                localDateTimeAsText(tidspunkt.konkret)
+            }
+
+            is PåminnelseTidspunkt.EtterOpprettelse -> {
+                text("EtterOpprettelse")
+                periodAsText(tidspunkt.etterOpprettelse)
+            }
+
+            is PåminnelseTidspunkt.FørFrist -> {
+                text("FørFrist")
+                periodAsText(tidspunkt.førFrist)
+            }
+
+            null -> {
+                nullableText(null)
+                nullableText(null)
+            }
+        }
+        nullableInstantAsText(påminnelse?.tidspunkt?.påminnelseTidspunkt)
     }
 
     private suspend fun markerIngenUtsendingPåPåminnelseEksterneVarsler(notifikasjonId: UUID) {

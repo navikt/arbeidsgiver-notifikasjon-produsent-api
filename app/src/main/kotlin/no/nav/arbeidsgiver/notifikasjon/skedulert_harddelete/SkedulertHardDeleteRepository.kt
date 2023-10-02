@@ -191,8 +191,8 @@ class SkedulertHardDeleteRepository(
             is HendelseModel.EksterntVarselVellykket,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.PåminnelseOpprettet,
+            is HendelseModel.FristUtsatt,
             is HendelseModel.SoftDelete -> Unit
-            is HendelseModel.FristUtsatt -> TODO()
         }
     }
 
