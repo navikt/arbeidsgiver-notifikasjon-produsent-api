@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.UTFOERT
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
@@ -47,6 +49,7 @@ class OppgaveMedFristTests : DescribeSpec({
 
         it("har opprinnelig frist") {
             oppgave.frist shouldBe fristUtsatt.frist
+            oppgave.tilstand shouldBe NY
         }
     }
 
@@ -65,6 +68,7 @@ class OppgaveMedFristTests : DescribeSpec({
 
         it("har opprinnelig frist") {
             oppgave.frist shouldBe oppgaveOpprettet.frist
+            oppgave.tilstand shouldBe UTFOERT
         }
     }
 
@@ -83,6 +87,7 @@ class OppgaveMedFristTests : DescribeSpec({
 
         it("har ny frist") {
             oppgave.frist shouldBe fritUtsatt.frist
+            oppgave.tilstand shouldBe NY
         }
     }
 })
