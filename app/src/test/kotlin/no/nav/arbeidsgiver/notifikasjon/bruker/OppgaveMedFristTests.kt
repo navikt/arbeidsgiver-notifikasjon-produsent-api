@@ -87,6 +87,7 @@ class OppgaveMedFristTests : DescribeSpec({
 
         it("har ny frist") {
             oppgave.frist shouldBe fritUtsatt.frist
+            oppgave.utgaattTidspunkt shouldBe null
             oppgave.tilstand shouldBe NY
         }
     }
