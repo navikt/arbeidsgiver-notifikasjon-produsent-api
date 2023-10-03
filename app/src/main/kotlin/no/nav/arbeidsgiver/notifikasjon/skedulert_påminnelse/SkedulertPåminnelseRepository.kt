@@ -32,6 +32,11 @@ class SkedulertPåminnelseRepository {
         val queueKey: Instant = tidspunkt.påminnelseTidspunkt.truncatedTo(ChronoUnit.HOURS)
     }
 
+    suspend fun oppgaveFinnes(oppgaveId: UUID): Boolean =
+        state.withLockApply {
+            oppgaveIdIndex.containsKey(oppgaveId)
+        }
+
     suspend fun hentOgFjernAlleAktuellePåminnelser(now: Instant): Collection<SkedulertPåminnelse> =
         state.withLockApply {
             val alleAktuelle = mutableListOf<SkedulertPåminnelse>()

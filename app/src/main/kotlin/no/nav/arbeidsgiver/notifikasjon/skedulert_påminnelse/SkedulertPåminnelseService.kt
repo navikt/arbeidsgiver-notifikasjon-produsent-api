@@ -40,6 +40,9 @@ class SkedulertPåminnelseService(
                 if (hendelse.påminnelse == null) {
                     return@run
                 }
+                if (!repository.oppgaveFinnes(hendelse.notifikasjonId)) {
+                    return@run
+                }
                 repository.add(
                     SkedulertPåminnelseRepository.SkedulertPåminnelse(
                         oppgaveId = hendelse.notifikasjonId,
