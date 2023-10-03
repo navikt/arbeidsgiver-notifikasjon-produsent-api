@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.MutexProtectedValue
+import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Oppgavetilstand.*
 import java.time.Instant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -10,11 +11,16 @@ import java.util.*
 private typealias OppgaveId = UUID
 private typealias BestillingHendelseId = UUID
 
+enum class Oppgavetilstand {
+    UTFØRT, NY, UTGÅTT
+}
+
 class SkedulertPåminnelseRepository {
     private class State {
         val oppgaveIdIndex = HashMap<OppgaveId, MutableList<SkedulertPåminnelse>>()
         val bestillingsIdIndex = HashMap<BestillingHendelseId, SkedulertPåminnelse>()
         val påminnelseQueue = TreeMap<Instant, MutableList<SkedulertPåminnelse>>()
+        val oppgavetilstand = HashMap<OppgaveId, Oppgavetilstand>()
     }
 
     private val state = MutexProtectedValue { State() }
@@ -32,9 +38,23 @@ class SkedulertPåminnelseRepository {
         val queueKey: Instant = tidspunkt.påminnelseTidspunkt.truncatedTo(ChronoUnit.HOURS)
     }
 
-    suspend fun oppgaveFinnes(oppgaveId: UUID): Boolean =
+    suspend fun setOppgavetilstand(oppgaveId: UUID, tilstand: Oppgavetilstand) {
         state.withLockApply {
-            oppgaveIdIndex.containsKey(oppgaveId)
+            oppgavetilstand[oppgaveId] = tilstand
+        }
+    }
+
+    suspend fun setNyHvisUtgått(oppgaveId: OppgaveId) {
+        state.withLockApply {
+            if (oppgavetilstand[oppgaveId] == UTGÅTT) {
+                oppgavetilstand[oppgaveId] = NY
+            }
+        }
+    }
+
+    suspend fun oppgaveErUtført(oppgaveId: UUID): Boolean =
+        state.withLockApply {
+            oppgavetilstand[oppgaveId] == UTFØRT
         }
 
     suspend fun hentOgFjernAlleAktuellePåminnelser(now: Instant): Collection<SkedulertPåminnelse> =
@@ -62,9 +82,16 @@ class SkedulertPåminnelseRepository {
         påminnelseQueue.computeIfAbsent(t.queueKey) { mutableListOf() }.add(t)
     }
 
-    suspend fun removeOppgaveId(oppgaveId: OppgaveId) = state.withLockApply {
-        oppgaveIdIndex[oppgaveId]?.let {
-            remove(it)
+    suspend fun removeOppgavetilstand(oppgaveId: OppgaveId) {
+        state.withLockApply {
+            oppgavetilstand.remove(oppgaveId)
+        }
+    }
+    suspend fun removeOppgaveId(oppgaveId: OppgaveId) {
+        state.withLockApply {
+            oppgaveIdIndex[oppgaveId]?.let {
+                remove(it)
+            }
         }
     }
 

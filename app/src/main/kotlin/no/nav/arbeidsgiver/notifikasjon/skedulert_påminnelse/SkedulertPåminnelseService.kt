@@ -4,6 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Oppgavetilstand.*
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import java.time.Instant
@@ -14,12 +15,12 @@ class SkedulertPåminnelseService(
     private val hendelseProdusent: HendelseProdusent
 ) {
     private val repository = SkedulertPåminnelseRepository()
-    private val log = logger()
 
     suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
         @Suppress("UNUSED_VARIABLE")
         val ignored = when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> run {
+                repository.setOppgavetilstand(hendelse.notifikasjonId, NY)
                 if (hendelse.påminnelse == null) {
                     return@run
                 }
@@ -37,10 +38,11 @@ class SkedulertPåminnelseService(
                 )
             }
             is HendelseModel.FristUtsatt -> run {
+                repository.setNyHvisUtgått(hendelse.notifikasjonId)
                 if (hendelse.påminnelse == null) {
                     return@run
                 }
-                if (!repository.oppgaveFinnes(hendelse.notifikasjonId)) {
+                if (repository.oppgaveErUtført(hendelse.notifikasjonId)) {
                     return@run
                 }
                 repository.add(
@@ -59,12 +61,19 @@ class SkedulertPåminnelseService(
             is HendelseModel.PåminnelseOpprettet ->
                 repository.removeBestillingId(hendelse.bestillingHendelseId)
 
-            is HendelseModel.OppgaveUtført,
-            is HendelseModel.OppgaveUtgått,
+            is HendelseModel.OppgaveUtført -> {
+                repository.removeOppgaveId(hendelse.notifikasjonId)
+                repository.setOppgavetilstand(hendelse.notifikasjonId, UTFØRT)
+            }
+            is HendelseModel.OppgaveUtgått -> {
+                repository.setOppgavetilstand(hendelse.notifikasjonId, UTGÅTT)
+                repository.removeOppgaveId(hendelse.notifikasjonId)
+            }
             is HendelseModel.SoftDelete,
-            is HendelseModel.HardDelete ->
+            is HendelseModel.HardDelete -> {
                 repository.removeOppgaveId(hendelse.aggregateId)
-
+                repository.removeOppgavetilstand(hendelse.aggregateId)
+            }
             is HendelseModel.BeskjedOpprettet,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.SakOpprettet,
