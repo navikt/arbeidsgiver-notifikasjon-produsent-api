@@ -16,7 +16,7 @@ Tjenesten deres må autentisere seg med Azure AD, type server–server, som [bes
 miljø | url
 -----|------
 mock | `https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/api/graphql`
-dev | fra gcp: `https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql`, <br/> fra fss: `https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql`
+dev | fra gcp: `https://ag-notifikasjon-produsent-api.intern.dev.nav.no/api/graphql`, <br/> fra fss: `https://ag-notifikasjon-produsent-api.dev.intern.nav.no/api/graphql`
 prod | `https://ag-notifikasjon-produsent-api.intern.nav.no/api/graphql`
 
 

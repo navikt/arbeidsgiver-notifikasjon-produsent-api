@@ -5,31 +5,9 @@ projects:
   produsentapi:
     schema: ./src/main/resources/produsent.graphql
     documents: ./src/**/produsent/**/*.kt
-extensions:
-  endpoints:
-    bruker-api:
-      url: http://localhost:8082/api/graphql
-      headers:
-        host: ag-notifikasjon-bruker-api.nav.no
-        user-agent: JS GraphQL
-        authorization: Bearer ${bruker_token}
-      introspect: false
-    produsent-api:
-      url: http://localhost:8081/api/graphql
-      headers:
-        host: ag-notifikasjon-produsent-api.nav.no
-        user-agent: JS GraphQL
-        authorization: Bearer ${fakedings_token}
-      introspect: false
-    produsent-api.dev-gcp:
-      url: https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql
-      headers:
-        user-agent: JS GraphQL
-        authorization: Bearer ${fakedings_token}
-      introspect: false
-    bruker-api.dev-gcp:
-      url: https://ag-notifikasjon-bruker-api.dev.nav.no/api/graphql
-      headers:
-        user-agent: JS GraphQL
-        authorization: Bearer ${bruker_token}
-      introspect: false
+  produsentapidevgcp:
+    schema:
+      - https://ag-notifikasjon-produsent-api.intern.dev.nav.no/api/graphql:
+          headers:
+            user-agent: JS GraphQL
+            authorization: Bearer ${fakedings_token}
