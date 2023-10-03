@@ -99,7 +99,8 @@ internal sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        MutationNyOppgave.NyOppgaveResultat
+        MutationNyOppgave.NyOppgaveResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat
 
     @JsonTypeName("SakFinnesIkke")
     data class SakFinnesIkke(

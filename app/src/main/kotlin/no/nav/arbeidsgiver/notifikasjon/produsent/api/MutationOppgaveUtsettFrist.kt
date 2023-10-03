@@ -75,22 +75,27 @@ internal class MutationOppgaveUtsettFrist(
 
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
-        hendelseDispatcher.send(
-            FristUtsatt(
-                hendelseId = UUID.randomUUID(),
-                notifikasjonId = notifikasjon.id,
-                virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                produsentId = produsent.id,
-                kildeAppNavn = context.appName,
-                frist = nyFrist,
-                fristEndretTidspunkt = Instant.now(),
-                påminnelse = paaminnelse?.tilDomene(
-                    opprettetTidspunkt = OffsetDateTime.now(),
-                    frist = nyFrist,
+        try {
+            hendelseDispatcher.send(
+                FristUtsatt(
+                    hendelseId = UUID.randomUUID(),
+                    notifikasjonId = notifikasjon.id,
                     virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                ),
+                    produsentId = produsent.id,
+                    kildeAppNavn = context.appName,
+                    frist = nyFrist,
+                    fristEndretTidspunkt = Instant.now(),
+                    påminnelse = paaminnelse?.tilDomene(
+                        opprettetTidspunkt = OffsetDateTime.now(),
+                        frist = nyFrist,
+                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                    ),
+                )
             )
-        )
+        } catch (e: UgyldigPåminnelseTidspunktException) {
+            return Error.UgyldigPåminnelseTidspunkt(e.message!!)
+        }
+
         return OppgaveUtsettFristVellykket(notifikasjon.id)
     }
 }

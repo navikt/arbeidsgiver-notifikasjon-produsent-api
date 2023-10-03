@@ -1,0 +1,16 @@
+projects:
+  brukerapi:
+    schema: app/src/main/resources/bruker.graphql
+    documents: app/src/**/bruker/**/*.kt
+  produsentapi:
+    schema: app/src/main/resources/produsent.graphql
+    documents:
+      - app/src/**/produsent/**/*.kt
+      - http/produsent/*.http
+  produsentapidevgcp:
+    schema:
+      - https://ag-notifikasjon-produsent-api.intern.dev.nav.no/api/graphql:
+          introspect: true
+          headers:
+            user-agent: JS GraphQL
+            authorization: Bearer ${auth_token}
