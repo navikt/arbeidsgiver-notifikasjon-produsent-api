@@ -38,4 +38,35 @@ class SkedulertHardDeleteService(
             )
         }
     }
+
+    suspend fun prosesserRegistrerteHardDeletes() {
+        val registrerteHardDeletes = repo.finnRegistrerteHardDeletes(100)
+
+        registrerteHardDeletes.forEach { sak ->
+            if (sak.isSak) {
+                if (sak.grupperingsid == null) {
+                    log.error("Sak uten grupperingsid kan ikke slettes. {}", sak.loggableToString())
+                    Health.subsystemAlive[Subsystem.HARDDELETE_SERVICE] = false
+                    return
+                }
+
+                repo.hentNotifikasjonerForSak(sak.merkelapp, sak.grupperingsid)
+                    .filter { it.aggregateId != sak.aggregateId }
+                    .forEach { notifikasjon ->
+                        hendelseProdusent.send(
+                            HendelseModel.HardDelete(
+                                hendelseId = UUID.randomUUID(),
+                                aggregateId = notifikasjon.aggregateId,
+                                virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                                deletedAt = OffsetDateTime.now(),
+                                produsentId = notifikasjon.produsentid,
+                                kildeAppNavn = NaisEnvironment.clientId,
+                            )
+                        )
+                }
+            }
+
+            repo.hardDelete(sak.aggregateId)
+        }
+    }
 }

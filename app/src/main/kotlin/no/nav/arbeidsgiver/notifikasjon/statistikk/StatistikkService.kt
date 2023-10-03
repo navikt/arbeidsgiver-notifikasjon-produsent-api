@@ -21,24 +21,8 @@ class StatistikkServiceImpl(
         .description("Antall saker")
         .register(Metrics.meterRegistry)
 
-    private val antallUnikeTekster = MultiGauge.builder("antall_unike_tekster")
-        .description("Unike tekster")
-        .register(Metrics.meterRegistry)
-
-//    private val antallUnikeVarselTekster = MultiGauge.builder("antall_unike_varseltekster")
-//        .description("Unike tekster i eksterne varsler")
-//        .register(Metrics.meterRegistry)
-
     private val antallKlikk = MultiGauge.builder("antall_klikk")
         .description("Antall klikk på notifikasjon")
-        .register(Metrics.meterRegistry)
-
-    private val antallKlikketPaa = MultiGauge.builder("antall_klikket_paa")
-        .description("Antall notifikasjoner som er klikket på")
-        .register(Metrics.meterRegistry)
-
-    private val antallUtførte = MultiGauge.builder("antall_utforte")
-        .description("Antall utførte (med histogram)")
         .register(Metrics.meterRegistry)
 
     private val antallVarsler = MultiGauge.builder("antall_varsler")
@@ -52,11 +36,7 @@ class StatistikkServiceImpl(
     suspend fun updateGauges() {
         antallNotifikasjoner.register(statistikkModel.antallNotifikasjoner(), true)
         antallSaker.register(statistikkModel.antallSaker(), true)
-        antallUnikeTekster.register(statistikkModel.antallUnikeTekster(), true)
-//        antallUnikeVarselTekster.register(statistikkModel.antallUnikeVarselTekster(), true)
-        antallKlikk.register(statistikkModel.antallKlikk(), true)
-        antallUtførte.register(statistikkModel.antallUtførteHistogram(), true)
         antallVarsler.register(statistikkModel.antallVarsler(), true)
-        antallKlikketPaa.register(statistikkModel.antallKlikketPaa(), true)
+        antallKlikk.register(statistikkModel.antallKlikk(), true)
     }
 }
