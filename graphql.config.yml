@@ -9,8 +9,8 @@ projects:
       - http/produsent/*.http
   produsentapidevgcp:
     schema:
+      - app/src/main/resources/produsent.graphql
       - https://ag-notifikasjon-produsent-api.intern.dev.nav.no/api/graphql:
-          introspect: true
           headers:
             user-agent: JS GraphQL
             authorization: Bearer ${auth_token}
