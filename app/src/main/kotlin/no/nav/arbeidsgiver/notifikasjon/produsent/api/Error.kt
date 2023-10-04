@@ -60,7 +60,8 @@ internal sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        MutationNyStatusSak.NyStatusSakResultat
+        MutationNyStatusSak.NyStatusSakResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat
 
     @JsonTypeName("DuplikatEksternIdOgMerkelapp")
     data class DuplikatEksternIdOgMerkelapp(

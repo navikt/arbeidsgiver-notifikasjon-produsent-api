@@ -75,6 +75,10 @@ internal class MutationOppgaveUtsettFrist(
 
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
+        if (notifikasjon.frist != null && notifikasjon.frist > nyFrist) {
+            return Error.Konflikt("Ny frist kan ikke være tidligere enn den gamle")
+        }
+
         try {
             hendelseDispatcher.send(
                 FristUtsatt(

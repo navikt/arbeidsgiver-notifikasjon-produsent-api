@@ -221,6 +221,53 @@ class UtsattFristTests : DescribeSpec({
             }
         }
 
+        context("Oppgave med frist som er senere enn ny frist") {
+            OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottakere = listOf(mottaker),
+                hendelseId = uuid,
+                notifikasjonId = uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
+                hardDelete = null,
+                frist = LocalDate.parse("2023-12-24"),
+                påminnelse = null,
+            ).also {
+                produsentModel.oppdaterModellEtterHendelse(it)
+            }
+
+
+            val response = engine.produsentApi(
+                """
+                mutation {
+                    oppgaveUtsettFrist(
+                        id: "$uuid", 
+                        nyFrist: "2023-01-01"
+                    ) {
+                        __typename
+                        ... on OppgaveUtsettFristVellykket {
+                            id
+                        }
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+                """
+            )
+
+            it("Får feilmelding") {
+                response.getTypedContent<Error.Konflikt>("oppgaveUtsettFrist")
+            }
+        }
+
     }
 
 
@@ -460,6 +507,51 @@ class UtsattFristTests : DescribeSpec({
 
             it("returnerer feilmelding") {
                 response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtsettFristByEksternId")
+            }
+        }
+
+        context("Oppgave med frist som er senere enn ny frist") {
+            OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottakere = listOf(mottaker),
+                hendelseId = uuid,
+                notifikasjonId = uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = opprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
+                hardDelete = null,
+                frist = LocalDate.parse("2023-12-24"),
+                påminnelse = null,
+            ).also {
+                produsentModel.oppdaterModellEtterHendelse(it)
+            }
+
+
+            val response = engine.produsentApi(
+                """
+                mutation {
+                    oppgaveUtsettFristByEksternId(
+                        eksternId: "$eksternId", 
+                        merkelapp: "$merkelapp",
+                        nyFrist: "2023-01-05"
+                    ) {
+                        __typename
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+                """
+            )
+
+            it("Får feilmelding") {
+                response.getTypedContent<Error.Konflikt>("oppgaveUtsettFristByEksternId")
             }
         }
     }
