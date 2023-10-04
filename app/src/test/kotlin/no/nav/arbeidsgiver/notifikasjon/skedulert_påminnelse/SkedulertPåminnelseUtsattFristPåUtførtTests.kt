@@ -12,28 +12,6 @@ import java.time.LocalTime.MIDNIGHT
 import java.time.LocalTime.NOON
 import java.time.ZoneOffset.UTC
 
-/**
- * Hvis en påminnelse sendes samtidig som fristen utsettes, så kan vi ikke garantere rekkefølgen på
- * de to eventene. Situasjonen kan beskrives slik (hvor `||` betyr parallelt):
- *
- * 1. OppgaveOpprettet
- * 2. (PåminnelseOpprettet (for OppgaveOpprettet) || FristUtsatt )
- *
- * Som kan serialiseres på to måter. Enten:
- *
- * 1. OppgaveOpprettet
- * 2. PåminnelseOpprettet (for OppgaveOpprettet)
- * 3. FristUtsatt
- *
- * eller:
- * 1. OppgaveOpprettet
- * 2. FristUtsatt
- * 3. PåminnelseOpprettet (for OppgaveOpprettet)
- *
- * I begge tilfeller ønsker vi at det senere kommer en PåminnelseOpprettet for FristUtsatt.
- */
-
-
 private val dayZero = LocalDate.parse("2020-01-01")
 private val førsteFrist = dayZero.plusWeeks(2)
 private val andreFrist = dayZero.plusWeeks(4)
@@ -132,19 +110,3 @@ class SkedulertPåminnelseUtsattFristPåUtførtTests : DescribeSpec({
         }
     }
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
