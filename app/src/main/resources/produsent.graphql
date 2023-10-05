@@ -854,6 +854,7 @@ type OppgaveUtfoertVellykket {
 union OppgaveUtsettFristResultat =
     | OppgaveUtsettFristVellykket
     | UgyldigMerkelapp
+    | Konflikt
     | UgyldigPaaminnelseTidspunkt
     | NotifikasjonFinnesIkke
     | UkjentProdusent
