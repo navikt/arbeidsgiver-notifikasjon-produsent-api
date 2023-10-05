@@ -5,6 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
@@ -49,8 +50,8 @@ class SkedulertUtgåttService(
         }
     }
 
-    suspend fun sendVedUtgåttFrist() {
-        val utgåttFrist = skedulerteUtgått.hentOgFjernAlleMedFrist(OsloTid.localDateNow())
+    suspend fun sendVedUtgåttFrist(now: LocalDate = OsloTid.localDateNow()) {
+        val utgåttFrist = skedulerteUtgått.hentOgFjernAlleMedFrist(now)
         /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
         utgåttFrist.forEach { utgått ->
             val fristLocalDateTime = LocalDateTime.of(utgått.frist, LocalTime.MAX)

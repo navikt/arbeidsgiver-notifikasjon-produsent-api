@@ -1,11 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.tid
 
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.*
 
 private val norwayZoneId: ZoneId = ZoneId.of("Europe/Oslo")
 
@@ -21,8 +16,11 @@ fun LocalDateTime.atOslo():  ZonedDateTime = atZone(norwayZoneId)
 fun Instant.asOsloLocalDateTime(): LocalDateTime =
     this.atZone(norwayZoneId).toLocalDateTime()
 
-fun Instant.asOsloLocalDate(): LocalDate=
+fun Instant.asOsloLocalDate(): LocalDate =
     this.atZone(norwayZoneId).toLocalDate()
+
+fun OffsetDateTime.asOsloLocalDate(): LocalDate =
+    this.toInstant().asOsloLocalDate()
 
 fun String.inOsloAsInstant(): Instant =
     LocalDateTime.parse(this).inOsloAsInstant()
