@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -63,9 +62,6 @@ internal class MutationOppgaveUtsettFrist(
         nyFrist: LocalDate,
         paaminnelse: MutationNyOppgave.PaaminnelseInput?,
     ): OppgaveUtsettFristResultat {
-        requireGraphql(NaisEnvironment.clusterName != "prod-gcp") {
-            "Denne operasjonen er ikke tilgjengelig i prod enda"
-        }
 
         if (notifikasjon !is ProdusentModel.Oppgave) {
             return Error.NotifikasjonFinnesIkke("Notifikasjonen (id ${notifikasjon.id}) er ikke en oppgave")
