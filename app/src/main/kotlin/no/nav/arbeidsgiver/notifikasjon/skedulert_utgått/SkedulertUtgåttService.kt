@@ -14,45 +14,14 @@ import java.util.*
 class SkedulertUtgåttService(
     private val hendelseProdusent: HendelseProdusent
 ) {
-    private val skedulerteUtgått = SkedulertUtgåttRepository()
+    private val skedulerteUtgåttRepository = SkedulertUtgåttRepository()
 
     suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
-        @Suppress("UNUSED_VARIABLE")
-        val ignored = when (hendelse) {
-            /* må håndtere */
-            is HendelseModel.OppgaveOpprettet -> run {
-                if (hendelse.frist == null) {
-                    return@run
-                }
-                skedulerteUtgått.add(
-                    SkedulertUtgåttRepository.SkedulertUtgått(
-                        oppgaveId = hendelse.notifikasjonId,
-                        frist = hendelse.frist,
-                        virksomhetsnummer = hendelse.virksomhetsnummer,
-                        produsentId = hendelse.produsentId,
-                    )
-                )
-            }
-            is HendelseModel.OppgaveUtført,
-            is HendelseModel.OppgaveUtgått,
-            is HendelseModel.HardDelete ->
-                skedulerteUtgått.remove(hendelse.aggregateId)
-
-            is HendelseModel.SoftDelete,
-            is HendelseModel.BeskjedOpprettet,
-            is HendelseModel.BrukerKlikket,
-            is HendelseModel.PåminnelseOpprettet,
-            is HendelseModel.SakOpprettet,
-            is HendelseModel.NyStatusSak,
-            is HendelseModel.EksterntVarselFeilet,
-            is HendelseModel.EksterntVarselVellykket -> Unit
-            is HendelseModel.FristUtsatt -> TODO()
-        }
+        skedulerteUtgåttRepository.processHendelse(hendelse)
     }
 
     suspend fun sendVedUtgåttFrist(now: LocalDate = OsloTid.localDateNow()) {
-        val utgåttFrist = skedulerteUtgått.hentOgFjernAlleMedFrist(now)
-        /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
+        val utgåttFrist = skedulerteUtgåttRepository.hentOgFjernAlleMedFrist(now)
         utgåttFrist.forEach { utgått ->
             val fristLocalDateTime = LocalDateTime.of(utgått.frist, LocalTime.MAX)
             hendelseProdusent.send(HendelseModel.OppgaveUtgått(
