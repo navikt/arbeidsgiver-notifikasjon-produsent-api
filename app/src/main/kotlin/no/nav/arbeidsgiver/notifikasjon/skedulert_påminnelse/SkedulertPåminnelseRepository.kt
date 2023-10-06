@@ -42,34 +42,36 @@ class SkedulertPåminnelseRepository {
         @Suppress("UNUSED_VARIABLE")
         val ignored = when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> state.withLockApply {
-                setOppgavetilstand(hendelse.notifikasjonId, NY)
-                if (hendelse.påminnelse == null) {
-                    return@withLockApply
-                }
-                add(
-                    SkedulertPåminnelse(
-                        oppgaveId = hendelse.notifikasjonId,
-                        fristOpprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
-                        frist = hendelse.frist,
-                        tidspunkt = hendelse.påminnelse.tidspunkt,
-                        eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
-                        virksomhetsnummer = hendelse.virksomhetsnummer,
-                        produsentId = hendelse.produsentId,
-                        bestillingHendelseId = hendelse.hendelseId,
-                    )
+                oppgavetilstand[hendelse.notifikasjonId] = NY
+
+                bestillPåminnelse(
+                    hendelse = hendelse,
+                    påminnelse = hendelse.påminnelse,
+                    fristOpprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
+                    frist = hendelse.frist,
                 )
             }
-            
+
             is HendelseModel.FristUtsatt -> state.withLockApply {
                 kansellerAllePåminnelserForOppgave(oppgaveId = hendelse.notifikasjonId)
 
                 when (oppgavetilstand[hendelse.notifikasjonId]) {
                     NY -> {
-                        registrerPåminnelse(hendelse)
+                        bestillPåminnelse(
+                            hendelse = hendelse,
+                            påminnelse = hendelse.påminnelse,
+                            frist = hendelse.frist,
+                            fristOpprettetTidspunkt = hendelse.fristEndretTidspunkt,
+                        )
                     }
                     UTGÅTT -> {
                         oppgavetilstand[hendelse.notifikasjonId] = NY
-                        registrerPåminnelse(hendelse)
+                        bestillPåminnelse(
+                            hendelse = hendelse,
+                            påminnelse = hendelse.påminnelse,
+                            frist = hendelse.frist,
+                            fristOpprettetTidspunkt = hendelse.fristEndretTidspunkt,
+                        )
                     }
                     UTFØRT,
                     null -> {
@@ -82,10 +84,8 @@ class SkedulertPåminnelseRepository {
                 kansellerBestilltPåminnelse(bestillingId = hendelse.bestillingHendelseId)
 
             is HendelseModel.OppgaveUtført -> state.withLockApply {
-                oppgaveIdIndex[hendelse.notifikasjonId]?.let {
-                    remove(it)
-                }
                 oppgavetilstand[hendelse.notifikasjonId] = UTFØRT
+                kansellerAllePåminnelserForOppgave(hendelse.notifikasjonId)
             }
 
             is HendelseModel.OppgaveUtgått -> state.withLockApply {
@@ -95,9 +95,8 @@ class SkedulertPåminnelseRepository {
 
             is HendelseModel.SoftDelete,
             is HendelseModel.HardDelete -> state.withLockApply {
-                kansellerAllePåminnelserForOppgave(hendelse.aggregateId)
                 oppgavetilstand.remove(hendelse.aggregateId)
-                Unit
+                kansellerAllePåminnelserForOppgave(hendelse.aggregateId)
             }
 
             is HendelseModel.BeskjedOpprettet,
@@ -109,35 +108,36 @@ class SkedulertPåminnelseRepository {
         }
     }
 
-    private fun State.registrerPåminnelse(hendelse: HendelseModel.FristUtsatt) {
-        if (hendelse.påminnelse != null) {
-            add(
-                SkedulertPåminnelse(
-                    oppgaveId = hendelse.notifikasjonId,
-                    fristOpprettetTidspunkt = hendelse.fristEndretTidspunkt,
-                    frist = hendelse.frist,
-                    tidspunkt = hendelse.påminnelse.tidspunkt,
-                    eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
-                    virksomhetsnummer = hendelse.virksomhetsnummer,
-                    produsentId = hendelse.produsentId,
-                    bestillingHendelseId = hendelse.hendelseId,
-                )
-            )
+    private fun State.bestillPåminnelse(
+        hendelse: HendelseModel.Hendelse,
+        påminnelse: HendelseModel.Påminnelse?,
+        fristOpprettetTidspunkt: Instant,
+        frist: LocalDate?,
+    ) {
+        if (påminnelse == null) {
+            return
         }
-    }
 
-    private fun State.setOppgavetilstand(oppgaveId: UUID, tilstand: Oppgavetilstand) {
-        oppgavetilstand[oppgaveId] = tilstand
+        SkedulertPåminnelse(
+            oppgaveId = hendelse.aggregateId,
+            fristOpprettetTidspunkt = fristOpprettetTidspunkt,
+            frist = frist,
+            tidspunkt = påminnelse.tidspunkt,
+            eksterneVarsler = påminnelse.eksterneVarsler,
+            virksomhetsnummer = hendelse.virksomhetsnummer,
+            produsentId = hendelse.produsentId!!,
+            bestillingHendelseId = hendelse.hendelseId,
+        ).let {
+            bestillingsIdIndex[it.bestillingHendelseId] = it
+            oppgaveIdIndex.computeIfAbsent(it.oppgaveId) { mutableListOf() }.add(it)
+            påminnelseQueue.computeIfAbsent(it.queueKey) { mutableListOf() }.add(it)
+        }
     }
 
     private fun State.kansellerAllePåminnelserForOppgave(oppgaveId: OppgaveId) {
         oppgaveIdIndex[oppgaveId]?.let {
-            remove(it)
+            kansellerBestillinger(it)
         }
-    }
-
-    private fun State.oppgavenKanUtsettes(oppgaveId: UUID): Boolean {
-        return oppgavetilstand[oppgaveId] == NY || oppgavetilstand[oppgaveId] == UTGÅTT
     }
 
     suspend fun hentOgFjernAlleAktuellePåminnelser(now: Instant): Collection<SkedulertPåminnelse> =
@@ -153,33 +153,25 @@ class SkedulertPåminnelseRepository {
                 val (_, potensiellePåminnelser) = påminnelseQueue.firstEntry()
                 val aktuellePåminnelser = potensiellePåminnelser.filter(harPassert)
                 alleAktuelle.addAll(aktuellePåminnelser)
-                remove(aktuellePåminnelser)
+                kansellerBestillinger(aktuellePåminnelser)
             }
             return@withLockApply alleAktuelle
         }
 
-
-    private fun State.add(t: SkedulertPåminnelse) {
-        bestillingsIdIndex[t.bestillingHendelseId] = t
-        oppgaveIdIndex.computeIfAbsent(t.oppgaveId) { mutableListOf() }.add(t)
-        påminnelseQueue.computeIfAbsent(t.queueKey) { mutableListOf() }.add(t)
-    }
-
-
     private suspend fun kansellerBestilltPåminnelse(bestillingId: BestillingHendelseId) = state.withLockApply {
         bestillingsIdIndex[bestillingId]?.let {
-            remove(it)
+            kansellerBestilling(it)
         }
     }
 
-    private fun State.remove(skjedulertePåminnelser: Iterable<SkedulertPåminnelse>) {
+    private fun State.kansellerBestillinger(skjedulertePåminnelser: Iterable<SkedulertPåminnelse>) {
         /* Duplicate list, because underlying list is modified by call to `remove`. */
         for (skjedulertPåminnelse in skjedulertePåminnelser.toList()) {
-            remove(skjedulertPåminnelse)
+            kansellerBestilling(skjedulertPåminnelse)
         }
     }
 
-    private fun State.remove(skedulertPåminelse: SkedulertPåminnelse) {
+    private fun State.kansellerBestilling(skedulertPåminelse: SkedulertPåminnelse) {
         bestillingsIdIndex.remove(skedulertPåminelse.bestillingHendelseId)
 
         val oppgaveBestillinger = oppgaveIdIndex[skedulertPåminelse.oppgaveId]
