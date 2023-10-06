@@ -15,12 +15,32 @@ import java.time.LocalTime.MIDNIGHT
 import java.time.LocalTime.NOON
 import java.time.ZoneOffset.UTC
 
+/**
+ * Hvis en påminnelse sendes samtidig som fristen utsettes, så kan vi ikke garantere rekkefølgen på
+ * de to eventene. Situasjonen kan beskrives slik (hvor `||` betyr parallelt):
+ *
+ * 1. OppgaveOpprettet
+ * 2. (PåminnelseOpprettet (for OppgaveOpprettet) || FristUtsatt )
+ *
+ * Som kan serialiseres på to måter. Enten:
+ *
+ * 1. OppgaveOpprettet
+ * 2. PåminnelseOpprettet (for OppgaveOpprettet)
+ * 3. FristUtsatt
+ *
+ * eller:
+ * 1. OppgaveOpprettet
+ * 2. FristUtsatt
+ * 3. PåminnelseOpprettet (for OppgaveOpprettet)
+ *
+ * I begge tilfeller ønsker vi at det senere kommer en PåminnelseOpprettet for FristUtsatt.
+ */
+
 class UtsattFristTests : DescribeSpec({
-    val hendelseProdusent = FakeHendelseProdusent()
-    val service = SkedulertPåminnelseService(hendelseProdusent)
 
     describe("Ingen påminnelse når oppgave er utført") {
-        hendelseProdusent.clear()
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
         service.processHendelse(oppgaveOpprettet)
         service.processHendelse(oppgaveUtført)
         service.processHendelse(fristUtsatt)
@@ -32,7 +52,8 @@ class UtsattFristTests : DescribeSpec({
     }
 
     describe("Ingen påminnelse hvis utført før påminnelse for ny frist") {
-        hendelseProdusent.clear()
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
         service.processHendelse(oppgaveOpprettet)
         service.processHendelse(fristUtsatt)
         service.processHendelse(oppgaveUtført)
@@ -43,8 +64,9 @@ class UtsattFristTests : DescribeSpec({
         }
     }
 
-    describe("Hendelsene kommer i 'riktig' rekkefølge") {
-        hendelseProdusent.clear()
+    describe("Sender påminnelse for utsatt frist, selv om påminnelse for opprinnelig frist er sendt") {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
         service.processHendelse(oppgaveOpprettet)
         service.processHendelse(påminnelseOpprettet)
         service.processHendelse(fristUtsatt)
@@ -59,8 +81,9 @@ class UtsattFristTests : DescribeSpec({
         }
     }
 
-    describe("Hendelsene kommer i 'feil' rekkefølge") {
-        hendelseProdusent.clear()
+    describe("Sender påminnelse for utsatt frist, selv om påminnelse for opprinnelig frist kom etter utsettelsen") {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
         service.processHendelse(oppgaveOpprettet)
         service.processHendelse(fristUtsatt)
         service.processHendelse(påminnelseOpprettet)
@@ -76,7 +99,8 @@ class UtsattFristTests : DescribeSpec({
     }
 
     describe("Når ny frist settes (selv uten påminnelse), fjernes eksisterende skedulert påminnelse") {
-        hendelseProdusent.clear()
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
         service.processHendelse(oppgaveOpprettet)
         service.processHendelse(fristUtsatt.copy(påminnelse = null))
 
@@ -87,7 +111,8 @@ class UtsattFristTests : DescribeSpec({
     }
 
     describe("Når ny frist settes med ny påminnelse, fjernes eksisterende skedulert påminnelse") {
-        hendelseProdusent.clear()
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
         service.processHendelse(oppgaveOpprettet)
         service.processHendelse(fristUtsatt)
 
@@ -98,6 +123,58 @@ class UtsattFristTests : DescribeSpec({
                 it.bestillingHendelseId shouldBe fristUtsatt.hendelseId
                 it.frist shouldBe fristUtsatt.frist
             }
+        }
+    }
+
+    describe("Sender ikke påminnelse hvis oppgave blir soft-deleted") {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
+        service.processHendelse(oppgaveOpprettet)
+        service.processHendelse(fristUtsatt)
+        service.processHendelse(softDelete)
+
+        it("Sender ikke påminnelse") {
+            service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
+            hendelseProdusent.hendelser shouldHaveSize 0
+        }
+    }
+
+    describe("Sender ikke påminnelse hvis oppgave er soft-deleted") {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
+        service.processHendelse(oppgaveOpprettet)
+        service.processHendelse(softDelete)
+        service.processHendelse(fristUtsatt)
+
+        it("Sender ikke påminnelse") {
+            service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
+            hendelseProdusent.hendelser shouldHaveSize 0
+        }
+    }
+
+    describe("Sender ikke påminnelse hvis oppgave blir hard-deleted") {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
+        service.processHendelse(oppgaveOpprettet)
+        service.processHendelse(fristUtsatt)
+        service.processHendelse(hardDelete)
+
+        it("Sender ikke påminnelse") {
+            service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
+            hendelseProdusent.hendelser shouldHaveSize 0
+        }
+    }
+
+    describe("Sender ikke påminnelse hvis oppgave er hard-deleted") {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertPåminnelseService(hendelseProdusent)
+        service.processHendelse(oppgaveOpprettet)
+        service.processHendelse(hardDelete)
+        service.processHendelse(fristUtsatt)
+
+        it("Sender ikke påminnelse") {
+            service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
+            hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 })
@@ -186,4 +263,20 @@ private val påminnelseOpprettet = HendelseModel.PåminnelseOpprettet(
     eksterneVarsler = oppgaveOpprettet.påminnelse!!.eksterneVarsler,
 )
 
+private val softDelete = HendelseModel.SoftDelete(
+    hendelseId = uuid("5"),
+    virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,
+    produsentId = oppgaveOpprettet.produsentId,
+    kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
+    aggregateId = oppgaveOpprettet.notifikasjonId,
+    deletedAt = OffsetDateTime.now(),
+)
 
+private val hardDelete = HendelseModel.HardDelete(
+    hendelseId = uuid("6"),
+    virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,
+    produsentId = oppgaveOpprettet.produsentId,
+    kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
+    aggregateId = oppgaveOpprettet.notifikasjonId,
+    deletedAt = OffsetDateTime.now(),
+)
