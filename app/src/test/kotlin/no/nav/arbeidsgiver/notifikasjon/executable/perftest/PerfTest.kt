@@ -4,7 +4,7 @@ package no.nav.arbeidsgiver.notifikasjon.executable.perftest
 
 
 import io.ktor.client.*
-import io.ktor.client.call.body
+import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -113,8 +113,8 @@ suspend fun concurrentWithStats(
 enum class Api(val url: String) {
     BRUKER_LOCAL("http://localhost:8082/api/graphql"),
     PRODUSENT_LOCAL("http://localhost:8081/api/graphql"),
-    BRUKER_GCP("https://ag-notifikasjon-bruker-api.dev.nav.no/api/graphql"),
-    PRODUSENT_GCP("https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql"),
+    BRUKER_GCP("https://ag-notifikasjon-bruker-api.intern.dev.nav.no/api/graphql"),
+    PRODUSENT_GCP("https://ag-notifikasjon-produsent-api.intern.dev.nav.no/api/graphql"),
 }
 
 

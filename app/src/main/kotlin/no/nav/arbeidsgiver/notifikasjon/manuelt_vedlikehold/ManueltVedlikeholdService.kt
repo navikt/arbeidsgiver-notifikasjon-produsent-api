@@ -52,7 +52,9 @@ class ManueltVedlikeholdService(
             is HendelseModel.OppgaveUtgått,
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.BrukerKlikket,
+            is HendelseModel.FristUtsatt,
             is HendelseModel.SoftDelete -> Unit
+
         }
     }
 

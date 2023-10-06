@@ -1,15 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.MutexProtectedValue
+import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.util.*
 
 class SkedulertUtgåttRepository {
-    private val mutex = Mutex()
-    private val indexedLookup = HashMap<UUID, SkedulertUtgått>()
-    private val fristQueue = TreeMap<LocalDate, MutableList<SkedulertUtgått>>()
-
     class SkedulertUtgått(
         val oppgaveId: UUID,
         val frist: LocalDate,
@@ -17,8 +15,16 @@ class SkedulertUtgåttRepository {
         val produsentId: String,
     )
 
+    private class State {
+        val indexedLookup = HashMap<UUID, SkedulertUtgått>()
+        val fristQueue = TreeMap<LocalDate, MutableList<SkedulertUtgått>>()
+        val deleted = HashSet<UUID>()
+    }
+
+    private val state = MutexProtectedValue { State() }
+
     suspend fun hentOgFjernAlleMedFrist(localDateNow: LocalDate): Collection<SkedulertUtgått> =
-        mutex.withLock {
+        state.withLockApply {
             val alleUtgåtte = mutableListOf<SkedulertUtgått>()
 
             while (fristQueue.isNotEmpty() && fristQueue.firstKey() < localDateNow) {
@@ -32,21 +38,91 @@ class SkedulertUtgåttRepository {
                 alleUtgåtte.addAll(utgåtteOppgaver)
             }
 
-            return@withLock alleUtgåtte
+            return@withLockApply alleUtgåtte
         }
 
-    suspend fun add(t: SkedulertUtgått): Unit = mutex.withLock {
-        indexedLookup[t.oppgaveId] = t
-        val alleMedSammeFrist = fristQueue.computeIfAbsent(t.frist) { mutableListOf() }
-        alleMedSammeFrist.add(t)
+    private fun State.upsert(skedulertUtgått: SkedulertUtgått) {
+        if (skedulertUtgått.oppgaveId in deleted) return
+
+        remove(skedulertUtgått.oppgaveId)
+        indexedLookup[skedulertUtgått.oppgaveId] = skedulertUtgått
+        val alleMedSammeFrist = fristQueue.computeIfAbsent(skedulertUtgått.frist) { mutableListOf() }
+        alleMedSammeFrist.add(skedulertUtgått)
     }
 
-    suspend fun remove(id: UUID) = mutex.withLock {
-        val removed = indexedLookup.remove(id) ?: return@withLock
-        val alleMedSammeFrist = fristQueue[removed.frist] ?: return@withLock
+    private fun State.removeIfOlderThan(aggregateId: UUID, utgaattTidspunkt: OffsetDateTime)  {
+        val skedulertUtgått = indexedLookup[aggregateId] ?: return
+
+        if (skedulertUtgått.frist <= utgaattTidspunkt.asOsloLocalDate()) {
+            remove(aggregateId)
+        }
+    }
+
+    private fun State.remove(id: UUID) {
+        val removed = indexedLookup.remove(id) ?: return
+        val alleMedSammeFrist = fristQueue[removed.frist] ?: return
         alleMedSammeFrist.removeIf { it.oppgaveId == id }
         if (alleMedSammeFrist.isEmpty()) {
             fristQueue.remove(removed.frist)
         }
     }
+
+    suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
+        @Suppress("UNUSED_VARIABLE")
+        val ignored = when (hendelse) {
+            is HendelseModel.OppgaveOpprettet -> run {
+                if (hendelse.frist == null) {
+                    return@run
+                }
+                state.withLockApply {
+                    upsert(
+                        SkedulertUtgått(
+                            oppgaveId = hendelse.notifikasjonId,
+                            frist = hendelse.frist,
+                            virksomhetsnummer = hendelse.virksomhetsnummer,
+                            produsentId = hendelse.produsentId,
+                        )
+                    )
+                }
+            }
+
+            is HendelseModel.FristUtsatt -> {
+                state.withLockApply {
+                    upsert(
+                        SkedulertUtgått(
+                            oppgaveId = hendelse.notifikasjonId,
+                            frist = hendelse.frist,
+                            virksomhetsnummer = hendelse.virksomhetsnummer,
+                            produsentId = hendelse.produsentId,
+                        )
+                    )
+                }
+            }
+
+            is HendelseModel.OppgaveUtgått ->
+                state.withLockApply {
+                    removeIfOlderThan(hendelse.aggregateId, hendelse.utgaattTidspunkt)
+                }
+
+            is HendelseModel.OppgaveUtført ->
+                state.withLockApply {
+                    remove(hendelse.aggregateId)
+                }
+            is HendelseModel.HardDelete,
+            is HendelseModel.SoftDelete ->
+                state.withLockApply {
+                    deleted.add(hendelse.aggregateId)
+                    remove(hendelse.aggregateId)
+                }
+
+            is HendelseModel.BeskjedOpprettet,
+            is HendelseModel.BrukerKlikket,
+            is HendelseModel.PåminnelseOpprettet,
+            is HendelseModel.SakOpprettet,
+            is HendelseModel.NyStatusSak,
+            is HendelseModel.EksterntVarselFeilet,
+            is HendelseModel.EksterntVarselVellykket -> Unit
+        }
+    }
 }
+
