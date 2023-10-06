@@ -24,6 +24,7 @@ internal sealed class Error {
         TilgangsstyringError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
@@ -38,6 +39,7 @@ internal sealed class Error {
         TilgangsstyringError,
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         QueryMineNotifikasjoner.MineNotifikasjonerResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
@@ -58,7 +60,8 @@ internal sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        MutationNyStatusSak.NyStatusSakResultat
+        MutationNyStatusSak.NyStatusSakResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat
 
     @JsonTypeName("DuplikatEksternIdOgMerkelapp")
     data class DuplikatEksternIdOgMerkelapp(
@@ -80,6 +83,7 @@ internal sealed class Error {
         Error(),
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat
 
@@ -96,7 +100,8 @@ internal sealed class Error {
         override val feilmelding: String
     ) :
         Error(),
-        MutationNyOppgave.NyOppgaveResultat
+        MutationNyOppgave.NyOppgaveResultat,
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat
 
     @JsonTypeName("SakFinnesIkke")
     data class SakFinnesIkke(

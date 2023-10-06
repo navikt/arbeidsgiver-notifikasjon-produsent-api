@@ -2,7 +2,7 @@
 POST https://fakedings.intern.dev.nav.no/fake/custom
 Content-Type: application/x-www-form-urlencoded
 
-sub=someproducer&aud=produsent-api&azp=someazp
+azp=dev-gcp:fager:notifikasjon-test-produsent&aud=produsent-api
 
 > {%
     client.global.set("auth_token", response.body);
@@ -19,7 +19,7 @@ Authorization: Bearer {{auth_token}}
 }
 
 ###
-POST https://ag-notifikasjon-produsent-api.dev.nav.no/api/graphql
+POST https://ag-notifikasjon-produsent-api.intern.dev.nav.no/api/graphql
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
@@ -27,11 +27,5 @@ Authorization: Bearer {{auth_token}}
   "query": "query { whoami }"
 }
 
-###
-GET https://ag-notifikasjon-produsent-api.dev.nav.no/api/ide
-Authorization: Bearer {{auth_token}}
-
-###
-GET https://ag-notifikasjon-bruker-api.dev.nav.no/api/ide
 
 

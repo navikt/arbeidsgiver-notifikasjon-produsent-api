@@ -1,0 +1,37 @@
+GRAPHQL https://ag-notifikasjon-produsent-api.intern.dev.nav.no/api/graphql
+Authorization: Bearer {{auth_token}}
+
+mutation opprettOppgave {
+    oppgaveUtsettFrist(
+        id: "ab890463-74c5-4833-8a53-acd7ab0782bd",
+        nyFrist: "2023-10-10",
+        paaminnelse: {
+            tidspunkt: {
+                konkret: "2023-10-03T10:14:00"
+            }
+            eksterneVarsler: {
+                epost: {
+                    mottaker: {
+                        kontaktinfo: {
+                            epostadresse: "ken.gullaksen@nav.no"
+                        }
+                    }
+                    epostHtmlBody: "Hei, du har fått ny frist. Husk å gjøre det du skal."
+                    epostTittel: "Oppgaven din har fått ny frist"
+                    sendevindu: LOEPENDE
+                }
+            }
+        }
+    ) {
+        ... on OppgaveUtsettFristVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+
+{
+  "varName": "varValue"
+}
