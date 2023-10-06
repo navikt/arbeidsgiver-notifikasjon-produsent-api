@@ -80,8 +80,9 @@ class SkedulertPåminnelseRepository {
                 }
             }
 
-            is HendelseModel.PåminnelseOpprettet ->
+            is HendelseModel.PåminnelseOpprettet -> state.withLockApply {
                 kansellerBestilltPåminnelse(bestillingId = hendelse.bestillingHendelseId)
+            }
 
             is HendelseModel.OppgaveUtført -> state.withLockApply {
                 oppgavetilstand[hendelse.notifikasjonId] = UTFØRT
@@ -158,7 +159,7 @@ class SkedulertPåminnelseRepository {
             return@withLockApply alleAktuelle
         }
 
-    private suspend fun kansellerBestilltPåminnelse(bestillingId: BestillingHendelseId) = state.withLockApply {
+    private fun State.kansellerBestilltPåminnelse(bestillingId: BestillingHendelseId) {
         bestillingsIdIndex[bestillingId]?.let {
             kansellerBestilling(it)
         }
