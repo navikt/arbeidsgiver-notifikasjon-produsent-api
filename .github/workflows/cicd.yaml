@@ -62,6 +62,7 @@ jobs:
         working-directory: app
 
       - uses: nais/docker-build-push@v0
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: gar-push
         with:
           team: fager
@@ -77,7 +78,7 @@ jobs:
       id-token: "write"
     needs: [build]
     runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     strategy:
       matrix:
         cluster:
