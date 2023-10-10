@@ -1,0 +1,18 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: ekstern-varsling-status
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  pool: {{{ pool }}}
+  config:
+    retentionHours: 336
+  acl:
+    - application: notifikasjon-ekstern-varsling
+      team: fager
+      access: readwrite
+    - application: min-side-arbeidsgiver-api
+      team: fager
+      access: read

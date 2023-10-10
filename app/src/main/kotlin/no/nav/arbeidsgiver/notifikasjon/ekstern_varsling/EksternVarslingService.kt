@@ -203,7 +203,7 @@ class EksternVarslingService(
         withContext(varsel.asMDCContext()) {
             when (varsel) {
                 is EksternVarselTilstand.Ny -> {
-                    val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt()
+                    val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt(OsloTid.localDateTimeNow())
                     if (kalkulertSendeTidspunkt <= OsloTid.localDateTimeNow()) {
                         when (val response = altinnVarselKlient.send(varsel.data.eksternVarsel)) {
                             is AltinnVarselKlientResponse.Ok -> {
