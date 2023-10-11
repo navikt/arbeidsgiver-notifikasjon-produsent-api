@@ -1,9 +1,6 @@
 name: ci/cd
 on:
   push:
-    paths:
-      - 'app/**'
-      - 'config/**'
   pull_request:
   workflow_dispatch:
   merge_group:
@@ -65,6 +62,7 @@ jobs:
         working-directory: app
 
       - uses: nais/docker-build-push@v0
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: gar-push
         with:
           team: fager
