@@ -16,3 +16,6 @@ spec:
     - application: min-side-arbeidsgiver-api
       team: fager
       access: read
+    - application: notifikasjon-devops
+      team: fager
+      access: readwrite
