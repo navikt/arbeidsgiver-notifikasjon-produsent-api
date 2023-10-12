@@ -59,7 +59,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                         it.virksomhetsnummer shouldBe event.virksomhetsnummer
                         it.varselId shouldBe event.varselId
                         it.varselTimestamp shouldBe varselTilstand.kalkuertSendetidspunkt(hendelseMetadata.timestamp.asOsloLocalDateTime())
-                        it.eventTimestamp shouldBe hendelseMetadata.timestamp.asOsloLocalDateTime()
+                        it.kvittertEventTimestamp shouldBe hendelseMetadata.timestamp
                     }
                 }
             }
@@ -86,7 +86,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                     it.virksomhetsnummer shouldBe event.virksomhetsnummer
                     it.varselId shouldBe event.varselId
                     it.varselTimestamp shouldBe varselTilstand.data.eksternVarsel.sendeTidspunkt
-                    it.eventTimestamp shouldBe hendelseMetadata.timestamp.asOsloLocalDateTime()
+                    it.kvittertEventTimestamp shouldBe hendelseMetadata.timestamp
                 }
             }
         }
@@ -148,7 +148,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                     it.virksomhetsnummer shouldBe event.virksomhetsnummer
                     it.varselId shouldBe event.varselId
                     it.varselTimestamp shouldBe varselTilstand.data.eksternVarsel.sendeTidspunkt
-                    it.eventTimestamp shouldBe hendelseMetadata.timestamp.asOsloLocalDateTime()
+                    it.kvittertEventTimestamp shouldBe hendelseMetadata.timestamp
                 }
             }
         }

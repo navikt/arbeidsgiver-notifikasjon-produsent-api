@@ -10,6 +10,7 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 
@@ -45,7 +46,7 @@ class EksternVarslingStatusEksportService(
                     status = status,
                     virksomhetsnummer = event.virksomhetsnummer,
                     varselId = event.varselId,
-                    hendelseTimestamp = meta.timestamp.asOsloLocalDateTime()
+                    hendelseTimestamp = meta.timestamp
                 ) ?: return
             }
 
@@ -54,7 +55,7 @@ class EksternVarslingStatusEksportService(
                     status = Status.OK,
                     virksomhetsnummer = event.virksomhetsnummer,
                     varselId = event.varselId,
-                    hendelseTimestamp = meta.timestamp.asOsloLocalDateTime()
+                    hendelseTimestamp = meta.timestamp
                 ) ?: return
             }
 
@@ -68,14 +69,14 @@ class EksternVarslingStatusEksportService(
         status: Status,
         virksomhetsnummer: String,
         varselId: UUID,
-        hendelseTimestamp: LocalDateTime
+        hendelseTimestamp: Instant
     ) = repo.findVarsel(varselId)?.let { varsel ->
         VarslingStatusDto(
             virksomhetsnummer = virksomhetsnummer,
             varselId = varselId,
             varselTimestamp = varsel.data.eksternVarsel.sendeTidspunkt
-                ?: varsel.kalkuertSendetidspunkt(hendelseTimestamp),
-            eventTimestamp = hendelseTimestamp,
+                ?: varsel.kalkuertSendetidspunkt(hendelseTimestamp.asOsloLocalDateTime()),
+            kvittertEventTimestamp = hendelseTimestamp,
             status = status
         )
     }
@@ -97,7 +98,7 @@ data class VarslingStatusDto(
     val virksomhetsnummer: String,
     val varselId: UUID,
     val varselTimestamp: LocalDateTime,
-    val eventTimestamp: LocalDateTime,
+    val kvittertEventTimestamp: Instant,
     val status: Status,
     val version: String = "1",
 )
