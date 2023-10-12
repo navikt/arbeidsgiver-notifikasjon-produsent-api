@@ -5,6 +5,8 @@ metadata:
   namespace: fager
   labels:
     team: fager
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
 spec:
   pool: {{{ pool }}}
   config:
