@@ -82,11 +82,11 @@ sealed interface EksternVarselTilstand {
         val response: AltinnResponse
     ) : EksternVarselTilstand
 
-    fun kalkuertSendetidspunkt() =
+    fun kalkuertSendetidspunkt(now: LocalDateTime = OsloTid.localDateTimeNow()) =
         when (data.eksternVarsel.sendeVindu) {
-            EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid()
-            EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag()
-            EksterntVarselSendingsvindu.LØPENDE -> OsloTid.localDateTimeNow()
+            EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid(now)
+            EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag(now)
+            EksterntVarselSendingsvindu.LØPENDE -> now
             EksterntVarselSendingsvindu.SPESIFISERT -> data.eksternVarsel.sendeTidspunkt!!
         }
 

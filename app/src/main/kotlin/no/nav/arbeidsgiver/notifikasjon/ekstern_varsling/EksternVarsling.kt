@@ -65,6 +65,19 @@ object EksternVarsling {
                 service.start(this)
             }
 
+            launch {
+                val eksternVarslingRepository = eksternVarslingModelAsync.await()
+                val service = EksternVarslingStatusEksportService(
+                    eventSource = HendelsesstrømKafkaImpl(
+                        topic = NOTIFIKASJON_TOPIC,
+                        groupId = "ekstern-varsling-status-exporter",
+                        replayPeriodically = false,
+                    ),
+                    repo = eksternVarslingRepository,
+                )
+                service.start(this)
+            }
+
             launchHttpServer(
                 httpPort = httpPort,
                 customRoute = {
