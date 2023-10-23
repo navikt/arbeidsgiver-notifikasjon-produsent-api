@@ -58,7 +58,7 @@ private class HendelseProdusentKafkaImpl(
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-private suspend fun <K : Any?, V : Any?> Producer<K, V>.suspendingSend(record: ProducerRecord<K, V>): RecordMetadata =
+suspend fun <K : Any?, V : Any?> Producer<K, V>.suspendingSend(record: ProducerRecord<K, V>): RecordMetadata =
     suspendCancellableCoroutine { continuation ->
         val result = send(record) { recordMetadata, exception ->
             if (exception != null) {

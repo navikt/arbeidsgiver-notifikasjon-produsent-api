@@ -46,10 +46,7 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: ditt-nav-arbeidsgiver
         - application: min-side-arbeidsgiver
-        - application: notifikasjon-proxy
-        - application: innsyn-aareg
         - application: tiltaksgjennomforing
           namespace: arbeidsgiver
         - application: aareg-innsyn-arbeidsgiver
