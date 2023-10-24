@@ -54,8 +54,6 @@ spec:
       rules:
         - application: altinn-rettigheter-proxy
           namespace: arbeidsgiver
-        - application: narmesteleder
-          namespace: teamsykmelding
       external:
         - host: fakedings.intern.dev.nav.no # fakedings login
         - host: api-gw-q1.oera.no # fallback for altinn-rettigheter-proxy-client
