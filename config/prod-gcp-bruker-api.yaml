@@ -63,8 +63,6 @@ spec:
       rules:
         - application: altinn-rettigheter-proxy
           namespace: arbeidsgiver
-        - application: narmesteleder
-          namespace: teamsykmelding
       external:
         - host: api-gw.oera.no # fallback for altinn-rettigheter-proxy-client
         - host: ereg-services.prod-fss-pub.nais.io # ereg brukes i bruker-api
