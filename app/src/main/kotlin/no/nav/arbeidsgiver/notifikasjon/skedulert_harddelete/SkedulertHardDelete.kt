@@ -45,13 +45,13 @@ object SkedulertHardDelete {
                 "autoslett-service",
                 pauseAfterEach = Duration.ofMinutes(10)
             ) {
-                service.await().slettDeSomSkalSlettes(Instant.now())
+                service.await().sendSkedulerteHardDeletes(Instant.now())
             }
             launchProcessingLoop(
                 "harddelete-service",
                 pauseAfterEach = Duration.ofMinutes(5)
             ) {
-                service.await().prosesserRegistrerteHardDeletes()
+                service.await().cascadeHardDeletes()
             }
             launchProcessingLoop(
                 "cleanup-service",
