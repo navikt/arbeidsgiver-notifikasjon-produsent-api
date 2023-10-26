@@ -43,6 +43,7 @@ private val oppgaveOpprettetMedFrist = HendelseModel.OppgaveOpprettet(
     hardDelete = null,
     frist = opprinneligFrist,
     påminnelse = null,
+    sakId = null,
 )
 private val oppgaveOpprettetUtenFrist = oppgaveOpprettetMedFrist.copy(frist = null)
 
@@ -85,6 +86,7 @@ private val softDelete = HendelseModel.SoftDelete(
     produsentId = oppgaveOpprettetMedFrist.produsentId,
     kildeAppNavn = oppgaveOpprettetMedFrist.kildeAppNavn,
     deletedAt = opprinneligFrist.atTime(MIDNIGHT).atOffset(UTC),
+    grupperingsid = null,
 )
 private val hardDelete = HendelseModel.HardDelete(
     virksomhetsnummer = oppgaveOpprettetMedFrist.virksomhetsnummer,
@@ -93,6 +95,7 @@ private val hardDelete = HendelseModel.HardDelete(
     produsentId = oppgaveOpprettetMedFrist.produsentId,
     kildeAppNavn = oppgaveOpprettetMedFrist.kildeAppNavn,
     deletedAt = opprinneligFrist.atTime(MIDNIGHT).atOffset(UTC),
+    grupperingsid = null,
 )
 
 

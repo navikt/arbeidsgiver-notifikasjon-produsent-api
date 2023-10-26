@@ -37,6 +37,7 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
         hardDelete = null,
         frist = null,
         påminnelse = null,
+        sakId = null,
     )
     val fristSomHarPassert = LocalDate.now().minusDays(1)
     val fristSomIkkeHarPassert = LocalDate.now().plusDays(2)
@@ -78,6 +79,7 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
                 produsentId = oppgaveOpprettet.virksomhetsnummer,
                 kildeAppNavn = oppgaveOpprettet.virksomhetsnummer,
                 deletedAt = OffsetDateTime.now(),
+                grupperingsid = null,
             ),
             HendelseModel.OppgaveUtført(
                 notifikasjonId = oppgaveOpprettet.aggregateId,

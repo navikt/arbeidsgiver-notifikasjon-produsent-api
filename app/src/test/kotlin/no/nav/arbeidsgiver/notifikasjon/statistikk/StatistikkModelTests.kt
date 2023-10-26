@@ -87,6 +87,7 @@ class StatistikkModelTests : DescribeSpec({
             hardDelete = null,
             frist = null,
             påminnelse = null,
+            sakId = null,
         )
         val epostFeilet = EksterntVarselFeilet(
             virksomhetsnummer = bestilling.virksomhetsnummer,
@@ -175,7 +176,8 @@ class StatistikkModelTests : DescribeSpec({
                 hendelseId = UUID.randomUUID(),
                 produsentId = "42",
                 kildeAppNavn = "test:app",
-                deletedAt = OffsetDateTime.now()
+                deletedAt = OffsetDateTime.now(),
+                grupperingsid = null,
             )
 
             it("Feiler ikke dersom det ikke finnes noe tilhørende sak eller notifikasjon") {

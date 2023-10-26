@@ -57,6 +57,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -139,6 +140,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -177,6 +179,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
@@ -217,6 +220,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
             val oppgaveUtført = HendelseModel.OppgaveUtført(
                 virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,
@@ -284,6 +288,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -368,6 +373,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -408,6 +414,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -446,6 +453,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
@@ -486,6 +494,7 @@ class OppgaveUtgåttTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
             val oppgaveUtført = HendelseModel.OppgaveUtført(
                 virksomhetsnummer = oppgaveOpprettet.virksomhetsnummer,

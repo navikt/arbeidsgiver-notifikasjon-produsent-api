@@ -71,6 +71,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         hardDelete = null,
         frist = null,
         påminnelse = null,
+        sakId = null,
     )
     val oppgaveOpprettet2 = oppgaveOpprettet.copy(
         eksternId = eksternId2,

@@ -40,6 +40,7 @@ class HardDeleteTests : DescribeSpec({
             deletedAt = OffsetDateTime.MAX,
             kildeAppNavn = "",
             produsentId = "",
+            grupperingsid = null,
         )
 
 
@@ -124,6 +125,7 @@ class HardDeleteTests : DescribeSpec({
             deletedAt = OffsetDateTime.MAX,
             kildeAppNavn = "",
             produsentId = "",
+            grupperingsid = null,
         )
 
 

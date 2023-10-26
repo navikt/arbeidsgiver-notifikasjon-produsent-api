@@ -170,7 +170,7 @@ object HendelseModel {
         val fristOpprettetTidspunkt: Instant,
         val frist: LocalDate?,
         val tidspunkt: PåminnelseTidspunkt,
-        val eksterneVarsler: List<EksterntVarsel>
+        val eksterneVarsler: List<EksterntVarsel>,
     ) : Hendelse() {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
@@ -294,6 +294,7 @@ object HendelseModel {
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
         val hardDelete: LocalDateTimeOrDuration?,
+        val sakId: UUID?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -327,6 +328,7 @@ object HendelseModel {
                 opprettetTidspunkt: OffsetDateTime,
                 eksterneVarsler: List<EksterntVarsel> = listOf(),
                 hardDelete: LocalDateTimeOrDuration?,
+                sakId: UUID?,
             ) = BeskjedOpprettet(
                 virksomhetsnummer = virksomhetsnummer,
                 notifikasjonId = notifikasjonId,
@@ -342,6 +344,7 @@ object HendelseModel {
                 opprettetTidspunkt = opprettetTidspunkt,
                 eksterneVarsler = eksterneVarsler,
                 hardDelete = hardDelete,
+                sakId = sakId,
             )
         }
     }
@@ -365,6 +368,7 @@ object HendelseModel {
         val hardDelete: LocalDateTimeOrDuration?,
         val frist: LocalDate?,
         val påminnelse: Påminnelse?,
+        val sakId: UUID?,
     ) : Hendelse(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
@@ -396,6 +400,7 @@ object HendelseModel {
                 hardDelete: LocalDateTimeOrDuration?,
                 frist: LocalDate? = null,
                 påminnelse: Påminnelse? = null,
+                sakId: UUID?,
             ) = OppgaveOpprettet(
                 virksomhetsnummer = virksomhetsnummer,
                 notifikasjonId = notifikasjonId,
@@ -413,6 +418,7 @@ object HendelseModel {
                 hardDelete = hardDelete,
                 frist = frist,
                 påminnelse = påminnelse,
+                sakId = sakId,
             )
         }
     }
@@ -472,6 +478,7 @@ object HendelseModel {
         override val kildeAppNavn: String,
         /** Brukes bare for å kunne se i hendelses-loggen når slettingen utført. */
         val deletedAt: OffsetDateTime,
+        val grupperingsid: String?,
     ) : Hendelse()
 
     @JsonTypeName("HardDelete")
@@ -483,6 +490,7 @@ object HendelseModel {
         override val kildeAppNavn: String,
         /** Brukes bare for å kunne se i hendelses-loggen når slettingen utført. */
         val deletedAt: OffsetDateTime,
+        val grupperingsid: String?,
     ) : Hendelse()
 
     @JsonTypeName("BrukerKlikket")

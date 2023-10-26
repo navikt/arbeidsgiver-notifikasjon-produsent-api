@@ -59,6 +59,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -141,6 +142,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -179,6 +181,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
@@ -232,6 +235,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -316,6 +320,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -356,6 +361,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -394,6 +400,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
@@ -447,6 +454,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -531,6 +539,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -571,6 +580,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -609,6 +619,7 @@ class OppgaveUtførtTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)

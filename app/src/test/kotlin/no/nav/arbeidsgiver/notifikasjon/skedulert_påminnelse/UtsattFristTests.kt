@@ -215,6 +215,7 @@ private val oppgaveOpprettet = HendelseModel.OppgaveOpprettet(
         ),
         eksterneVarsler = listOf(),
     ),
+    sakId = null,
 )
 
 
@@ -270,6 +271,7 @@ private val softDelete = HendelseModel.SoftDelete(
     kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
     aggregateId = oppgaveOpprettet.notifikasjonId,
     deletedAt = OffsetDateTime.now(),
+    grupperingsid = null,
 )
 
 private val hardDelete = HendelseModel.HardDelete(
@@ -279,4 +281,5 @@ private val hardDelete = HendelseModel.HardDelete(
     kildeAppNavn = oppgaveOpprettet.kildeAppNavn,
     aggregateId = oppgaveOpprettet.notifikasjonId,
     deletedAt = OffsetDateTime.now(),
+    grupperingsid = null,
 )

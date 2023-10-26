@@ -43,6 +43,7 @@ class IdempotentOppgaveOpprettetTests: DescribeSpec({
         hardDelete = null,
         frist = null,
         påminnelse = null,
+        sakId = null,
     )
 
     describe("mutual exclusive access to ekstern_varsel") {

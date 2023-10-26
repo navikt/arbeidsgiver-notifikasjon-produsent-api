@@ -68,6 +68,7 @@ internal class MutationNyBeskjed(
                     it.tilDomene(metadata.virksomhetsnummer)
                 },
                 hardDelete = metadata.hardDelete?.tilDomene(),
+                sakId = null, // TODO:TAG-2195
             )
         }
     }
