@@ -75,7 +75,8 @@ internal class MutationHardDeleteSak(
             virksomhetsnummer = sak.virksomhetsnummer,
             deletedAt = OffsetDateTime.now(),
             produsentId = produsent.id,
-            kildeAppNavn = context.appName
+            kildeAppNavn = context.appName,
+            grupperingsid = sak.grupperingsid,
         )
 
         hendelseDispatcher.send(hardDelete)

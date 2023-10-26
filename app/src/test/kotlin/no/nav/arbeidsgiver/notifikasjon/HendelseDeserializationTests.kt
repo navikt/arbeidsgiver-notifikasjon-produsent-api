@@ -2,6 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.beNull
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -9,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.kafkaObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.*
@@ -81,6 +84,64 @@ class HendelseDeserializationTests : DescribeSpec({
             mottaker.serviceCode shouldBe "1"
             mottaker.serviceEdition shouldBe "2"
             mottaker.virksomhetsnummer shouldBe "3"
+        }
+    }
+
+    describe("Støtter hard delete uten grupperingsid") {
+        val hardDelete = kafkaObjectMapper.readValue<Hendelse>("""
+            {
+                "@type": "HardDelete",
+                "virksomhetsnummer": "0",
+                "notifikasjonId": "${uuid("1")}",
+                "hendelseId": "${uuid("0")}",
+                "produsentId": "0",
+                "kildeAppNavn": "",
+                "deletedAt": "2020-01-01T01:01+01"
+            }
+        """)
+
+        it("mottaker parsed") {
+            hardDelete as HardDelete
+            hardDelete.grupperingsid should beNull()
+        }
+    }
+
+    describe("Støtter soft delete uten grupperingsid") {
+        val softDelete = kafkaObjectMapper.readValue<Hendelse>("""
+            {
+                "@type": "SoftDelete",
+                "virksomhetsnummer": "0",
+                "notifikasjonId": "${uuid("1")}",
+                "hendelseId": "${uuid("0")}",
+                "produsentId": "0",
+                "kildeAppNavn": "",
+                "deletedAt": "2020-01-01T01:01+01"
+            }
+        """)
+
+        it("mottaker parsed") {
+            softDelete as SoftDelete
+            softDelete.grupperingsid should beNull()
+        }
+    }
+
+    describe("Støtter soft delete med ikke-uuid grupperingsid") {
+        val softDelete = kafkaObjectMapper.readValue<Hendelse>("""
+            {
+                "@type": "SoftDelete",
+                "virksomhetsnummer": "0",
+                "notifikasjonId": "${uuid("1")}",
+                "hendelseId": "${uuid("0")}",
+                "produsentId": "0",
+                "kildeAppNavn": "",
+                "deletedAt": "2020-01-01T01:01+01",
+                "grupperingsid": "1234xx"
+            }
+        """)
+
+        it("mottaker parsed") {
+            softDelete as SoftDelete
+            softDelete.grupperingsid shouldBe "1234xx"
         }
     }
 

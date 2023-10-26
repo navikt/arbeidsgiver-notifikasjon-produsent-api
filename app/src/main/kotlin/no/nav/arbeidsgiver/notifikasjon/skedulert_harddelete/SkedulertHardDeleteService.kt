@@ -34,6 +34,7 @@ class SkedulertHardDeleteService(
                     deletedAt = OffsetDateTime.now(),
                     produsentId = it.produsentid,
                     kildeAppNavn = NaisEnvironment.clientId,
+                    grupperingsid = null, // TODO:TAG-2195
                 )
             )
         }
@@ -61,6 +62,7 @@ class SkedulertHardDeleteService(
                                 deletedAt = OffsetDateTime.now(),
                                 produsentId = notifikasjon.produsentid,
                                 kildeAppNavn = NaisEnvironment.clientId,
+                                grupperingsid = null,
                             )
                         )
                 }

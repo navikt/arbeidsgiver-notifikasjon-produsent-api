@@ -76,6 +76,7 @@ internal class MutationNyOppgave(
                 ),
                 hardDelete = metadata.hardDelete?.tilDomene(),
                 frist = frist,
+                sakId = null // TODO:TAG-2195
             )
         }
     }

@@ -60,6 +60,7 @@ class UtsattFristTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             ).also {
                 produsentModel.oppdaterModellEtterHendelse(it)
                 produsentModel.oppdaterModellEtterHendelse(
@@ -155,6 +156,7 @@ class UtsattFristTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -196,6 +198,7 @@ class UtsattFristTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
@@ -239,6 +242,7 @@ class UtsattFristTests : DescribeSpec({
                 hardDelete = null,
                 frist = LocalDate.parse("2023-12-24"),
                 påminnelse = null,
+                sakId = null,
             ).also {
                 produsentModel.oppdaterModellEtterHendelse(it)
             }
@@ -301,6 +305,7 @@ class UtsattFristTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             ).also {
                 produsentModel.oppdaterModellEtterHendelse(it)
                 produsentModel.oppdaterModellEtterHendelse(
@@ -398,6 +403,7 @@ class UtsattFristTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -442,6 +448,7 @@ class UtsattFristTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -484,6 +491,7 @@ class UtsattFristTests : DescribeSpec({
                 grupperingsid = null,
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
@@ -528,6 +536,7 @@ class UtsattFristTests : DescribeSpec({
                 hardDelete = null,
                 frist = LocalDate.parse("2023-12-24"),
                 påminnelse = null,
+                sakId = null,
             ).also {
                 produsentModel.oppdaterModellEtterHendelse(it)
             }

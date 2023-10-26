@@ -49,6 +49,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
+                sakId = null,
             )
         )
         val uuid2 = UUID.randomUUID()
@@ -68,6 +69,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 produsentId = "",
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
         )
         val uuid3 = UUID.randomUUID()
@@ -87,6 +89,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 kildeAppNavn = "",
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
         )
         val uuid4 = UUID.randomUUID()
@@ -106,6 +109,7 @@ class MineNotifikasjonerTests : DescribeSpec({
                 kildeAppNavn = "",
                 eksterneVarsler = listOf(),
                 hardDelete = null,
+                sakId = null,
             )
         )
     }

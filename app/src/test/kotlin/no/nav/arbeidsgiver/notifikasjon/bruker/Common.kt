@@ -91,6 +91,7 @@ suspend fun BrukerRepository.beskjedOpprettet(
     produsentId = produsentId,
     eksterneVarsler = eksterneVarsler,
     hardDelete = hardDelete,
+    sakId = null,
 ).also {
     oppdaterModellEtterHendelse(it)
 }
@@ -128,6 +129,7 @@ suspend fun BrukerRepository.oppgaveOpprettet(
     hardDelete = hardDelete,
     frist = frist,
     påminnelse = påminnelse,
+    sakId = null,
 ).also {
     oppdaterModellEtterHendelse(it, HendelseModel.HendelseMetadata(opprettetTidspunkt.toInstant()))
 }

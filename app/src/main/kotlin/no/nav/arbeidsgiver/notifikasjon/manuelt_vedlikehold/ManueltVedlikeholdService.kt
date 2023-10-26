@@ -81,6 +81,7 @@ class ManueltVedlikeholdService(
                 produsentId = "fager-manuelt-vedlikehold",
                 kildeAppNavn = kildeAppNavn,
                 deletedAt = OffsetDateTime.now(ZoneOffset.UTC),
+                grupperingsid = null,
             )
             log.info("sending HardDelete for aggregateid {}", aggregateId)
             hendelseProdusent.send(hardDelete)

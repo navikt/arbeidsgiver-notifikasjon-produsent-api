@@ -74,6 +74,7 @@ object EksempelHendelse {
                 )
             ),
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            sakId = null,
         )
     }
     val BeskjedOpprettet_2_Mottakere = withId { id ->
@@ -121,6 +122,7 @@ object EksempelHendelse {
                 )
             ),
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            sakId = null,
         )
     }
     val BeskjedOpprettet_3_Mottakere = withId { id ->
@@ -168,6 +170,7 @@ object EksempelHendelse {
                 )
             ),
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            sakId = null,
         )
     }
     val OppgaveOpprettet = withId { id ->
@@ -212,6 +215,7 @@ object EksempelHendelse {
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             frist = null,
             påminnelse = null,
+            sakId = null,
         )
     }
     val OppgaveOpprettet_2_Mottakere = withId { id ->
@@ -261,6 +265,7 @@ object EksempelHendelse {
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             frist = null,
             påminnelse = null,
+            sakId = null,
         )
     }
     val OppgaveOpprettet_3_Mottakere = withId { id ->
@@ -310,6 +315,7 @@ object EksempelHendelse {
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             frist = null,
             påminnelse = null,
+            sakId = null,
         )
     }
     val OppgaveOpprettet_MedFrist = withId { id ->
@@ -354,6 +360,7 @@ object EksempelHendelse {
             ),
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             påminnelse = null,
+            sakId = null,
         )
     }
     val OppgaveOpprettet_MedPåminnelse = withId { id ->
@@ -403,7 +410,8 @@ object EksempelHendelse {
                     påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
                 ),
                 eksterneVarsler = listOf()
-            )
+            ),
+            sakId = null,
         )
     }
     val OppgaveUtført = HendelseModel.OppgaveUtført(
@@ -438,7 +446,8 @@ object EksempelHendelse {
         hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
-        deletedAt = OffsetDateTime.now()
+        deletedAt = OffsetDateTime.now(),
+        grupperingsid = null,
     )
     val HardDelete = HendelseModel.HardDelete(
         virksomhetsnummer = "1",
@@ -446,7 +455,8 @@ object EksempelHendelse {
         hendelseId = hendelseId.next(),
         produsentId = "1",
         kildeAppNavn = "1",
-        deletedAt = OffsetDateTime.now()
+        deletedAt = OffsetDateTime.now(),
+        grupperingsid = null,
     )
     val BrukerKlikket = HendelseModel.BrukerKlikket(
         virksomhetsnummer = "1",

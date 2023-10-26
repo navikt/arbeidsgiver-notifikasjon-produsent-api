@@ -38,6 +38,7 @@ class BrukerModelTests : DescribeSpec({
         produsentId = "",
         eksterneVarsler = listOf(),
         hardDelete = null,
+        sakId = null,
     )
 
 

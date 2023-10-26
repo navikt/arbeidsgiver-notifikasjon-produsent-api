@@ -83,6 +83,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         hardDelete = null,
         frist = null,
         påminnelse = null,
+        sakId = null,
     )
 
     describe("Getting and deleting jobs") {
@@ -321,7 +322,8 @@ class EksternVarslingRepositoryTests: DescribeSpec({
                 hendelseId = UUID.randomUUID(),
                 produsentId = "42",
                 kildeAppNavn = "test:app",
-                deletedAt = OffsetDateTime.now()
+                deletedAt = OffsetDateTime.now(),
+                grupperingsid = null,
             )
 
         it("oppdater modell etter hendelse feiler ikke") {
@@ -369,6 +371,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
                     )
                 )
             ),
+            sakId = null,
         ).also {
             repository.oppdaterModellEtterHendelse(it)
         }
@@ -442,7 +445,8 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             hendelseId = UUID.randomUUID(),
             produsentId = "42",
             kildeAppNavn = "test:app",
-            deletedAt = OffsetDateTime.now()
+            deletedAt = OffsetDateTime.now(),
+            grupperingsid = null,
         )
 
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -488,6 +492,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             hardDelete = null,
             frist = null,
             påminnelse = null,
+            sakId = null,
         ).also {
             repository.oppdaterModellEtterHendelse(it)
         }

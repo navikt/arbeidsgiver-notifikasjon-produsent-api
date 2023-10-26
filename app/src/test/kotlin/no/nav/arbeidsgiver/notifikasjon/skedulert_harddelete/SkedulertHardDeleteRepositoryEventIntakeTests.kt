@@ -440,6 +440,7 @@ private suspend fun SkedulertHardDeleteRepository.hardDelete(
         produsentId = idsuffix,
         kildeAppNavn = "test-app",
         deletedAt = OffsetDateTime.now(),
+        grupperingsid = null,
 ))
 
 private suspend fun SkedulertHardDeleteRepository.beskjedOpprettet(
@@ -469,6 +470,7 @@ private suspend fun SkedulertHardDeleteRepository.beskjedOpprettet(
         opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
         eksterneVarsler = listOf(),
         hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
+        sakId = null,
     )
 )
 
@@ -502,6 +504,7 @@ private suspend fun SkedulertHardDeleteRepository.oppgaveOpprettet(
         hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
         frist = null,
         påminnelse = null,
+        sakId = null,
     )
 )
 

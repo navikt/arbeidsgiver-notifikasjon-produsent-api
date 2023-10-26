@@ -26,7 +26,8 @@ class HendelseSerializationTests : DescribeSpec({
             hendelseId = uuid("0"),
             produsentId = "",
             kildeAppNavn = "",
-            deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02")
+            deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02"),
+            grupperingsid = null,
         )
 
         it("OffsetDateTime serialiseres med offset") {
@@ -78,6 +79,7 @@ class HendelseSerializationTests : DescribeSpec({
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             frist = null,
             påminnelse = null,
+            sakId = null,
         )
 
 
@@ -99,7 +101,8 @@ class HendelseSerializationTests : DescribeSpec({
             hendelseId = uuid("0"),
             produsentId = "",
             kildeAppNavn = "",
-            deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02")
+            deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02"),
+            grupperingsid = null
         )
 
         it("mottaker parsed") {
@@ -118,7 +121,8 @@ class HendelseSerializationTests : DescribeSpec({
             hendelseId = uuid("0"),
             produsentId = "",
             kildeAppNavn = "",
-            deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02")
+            deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02"),
+            grupperingsid = null,
         )
 
         it("mottaker parsed") {
@@ -150,6 +154,7 @@ class HendelseSerializationTests : DescribeSpec({
             hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
             frist = null,
             påminnelse = null,
+            sakId = null,
         )
 
 

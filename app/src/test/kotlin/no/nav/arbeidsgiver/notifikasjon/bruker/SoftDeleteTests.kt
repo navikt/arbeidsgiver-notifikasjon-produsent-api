@@ -64,6 +64,7 @@ class SoftDeleteTests : DescribeSpec({
                     deletedAt = OffsetDateTime.MAX,
                     kildeAppNavn = "",
                     produsentId = "",
+                    grupperingsid = null,
                 )
             )
             val notifikasjonerEtterSletting = brukerRepository.hentNotifikasjoner(

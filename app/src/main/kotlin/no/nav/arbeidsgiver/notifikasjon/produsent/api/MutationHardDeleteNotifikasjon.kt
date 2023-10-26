@@ -83,7 +83,8 @@ internal class MutationHardDeleteNotifikasjon(
             virksomhetsnummer = notifikasjon.virksomhetsnummer,
             deletedAt = OffsetDateTime.now(),
             produsentId = produsent.id,
-            kildeAppNavn = context.appName
+            kildeAppNavn = context.appName,
+            grupperingsid = null,
         )
         hendelseDispatcher.send(hardDelete)
         return HardDeleteNotifikasjonVellykket(notifikasjon.id)
