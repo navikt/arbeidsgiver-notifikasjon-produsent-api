@@ -28,7 +28,7 @@ class AutoSlettRepositoryFindToDeleteTests : DescribeSpec({
         repository.insert(id = "8", beregnetSlettetid = baseline - Period.ofYears(3))
 
         it("kun den som har passert er klar for slettes") {
-            val skalSlettes = repository.hentDeSomSkalSlettes(baseline.toInstant())
+            val skalSlettes = repository.hentSkedulerteHardDeletes(baseline.toInstant())
             val iderSomSkalSlettes = skalSlettes.map { it.aggregateId }
             iderSomSkalSlettes shouldContainExactlyInAnyOrder listOf("2", "3", "5", "6", "8").map { uuid(it) }
         }

@@ -16,8 +16,8 @@ class SkedulertHardDeleteService(
 ) {
     private val log = logger()
 
-    suspend fun slettDeSomSkalSlettes(tilOgMed: Instant) {
-        val skalSlettes = repo.hentDeSomSkalSlettes(tilOgMed = tilOgMed)
+    suspend fun sendSkedulerteHardDeletes(tilOgMed: Instant) {
+        val skalSlettes = repo.hentSkedulerteHardDeletes(tilOgMed = tilOgMed)
 
         skalSlettes.forEach {
             if (it.beregnetSlettetidspunkt > tilOgMed) {
@@ -34,25 +34,25 @@ class SkedulertHardDeleteService(
                     deletedAt = OffsetDateTime.now(),
                     produsentId = it.produsentid,
                     kildeAppNavn = NaisEnvironment.clientId,
-                    grupperingsid = null, // TODO:TAG-2195
+                    grupperingsid = if (it.isSak) it.grupperingsid else null,
                 )
             )
         }
     }
 
-    suspend fun prosesserRegistrerteHardDeletes() {
+    suspend fun cascadeHardDeletes() {
         val registrerteHardDeletes = repo.finnRegistrerteHardDeletes(100)
 
-        registrerteHardDeletes.forEach { sak ->
-            if (sak.isSak) {
-                if (sak.grupperingsid == null) {
-                    log.error("Sak uten grupperingsid kan ikke slettes. {}", sak.loggableToString())
+        registrerteHardDeletes.forEach { aggregate ->
+            if (aggregate.isSak) {
+                if (aggregate.grupperingsid == null) {
+                    log.error("Sak uten grupperingsid kan ikke slettes. {}", aggregate.loggableToString())
                     Health.subsystemAlive[Subsystem.HARDDELETE_SERVICE] = false
                     return
                 }
 
-                repo.hentNotifikasjonerForSak(sak.merkelapp, sak.grupperingsid)
-                    .filter { it.aggregateId != sak.aggregateId }
+                repo.hentNotifikasjonerForSak(aggregate.merkelapp, aggregate.grupperingsid)
+                    .filter { it.aggregateId != aggregate.aggregateId }
                     .forEach { notifikasjon ->
                         hendelseProdusent.send(
                             HendelseModel.HardDelete(
@@ -68,7 +68,7 @@ class SkedulertHardDeleteService(
                 }
             }
 
-            repo.hardDelete(sak.aggregateId)
+            repo.hardDelete(aggregate.aggregateId)
         }
     }
 }

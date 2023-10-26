@@ -26,6 +26,8 @@ class SkedulertHardDeleteRepository(
         val inputDen: LocalDateTime?,
         val beregnetSlettetidspunkt: Instant,
     ) {
+        val isSak = aggregateType == Sak
+
         fun loggableToString() = mapOf(
             "aggregateId" to aggregateId,
             "aggregateType" to aggregateType,
@@ -67,7 +69,7 @@ class SkedulertHardDeleteRepository(
         val merkelapp: String,
     )
 
-    suspend fun hentDeSomSkalSlettes(
+    suspend fun hentSkedulerteHardDeletes(
         tilOgMed: Instant,
     ): List<SkedulertHardDelete> {
         return database.nonTransactionalExecuteQuery(

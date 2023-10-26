@@ -9,8 +9,7 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem.AUTOSLETT_SERVICE
-import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType.Oppgave
-import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType.Sak
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType.*
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
@@ -36,9 +35,9 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
                 skedulertHardDelete(uuid("1")),
                 skedulertHardDelete(uuid("2")),
             )
-            coEvery { repo.hentDeSomSkalSlettes(any()) } returns skalSlettes
+            coEvery { repo.hentSkedulerteHardDeletes(any()) } returns skalSlettes
 
-            service.slettDeSomSkalSlettes(nåTidspunkt)
+            service.sendSkedulerteHardDeletes(nåTidspunkt)
 
             it("sender hardDelete for aggregater som skal slettes") {
                 val hardDeletes = kafkaProducer.hendelserOfType<HendelseModel.HardDelete>()
@@ -54,10 +53,10 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
                 skedulertHardDelete(uuid("1"), nåTidspunkt - Duration.ofSeconds(1)),
                 skedulertHardDelete(uuid("2"), nåTidspunkt + Duration.ofSeconds(1)),
             )
-            coEvery { repo.hentDeSomSkalSlettes(any()) } returns skalSlettes
+            coEvery { repo.hentSkedulerteHardDeletes(any()) } returns skalSlettes
 
             it("validering feiler og metoden kaster") {
-                service.slettDeSomSkalSlettes(nåTidspunkt)
+                service.sendSkedulerteHardDeletes(nåTidspunkt)
 
                 Health.subsystemAlive[AUTOSLETT_SERVICE] shouldBe false
             }
@@ -75,10 +74,56 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
             coEvery { repo.finnRegistrerteHardDeletes(any()) } returns harddeletes
 
             it("sletter aggregater") {
-                service.prosesserRegistrerteHardDeletes()
+                service.cascadeHardDeletes()
 
                 coVerify { repo.hardDelete(uuid("1")) }
                 coVerify { repo.hardDelete(uuid("2")) }
+            }
+        }
+
+        context("lager harddelete events for alle notifikasjoner som er tilkoblet en sak") {
+            kafkaProducer.clear()
+
+            val timeZero = Instant.parse("2020-01-01T01:01:01Z")
+
+            coEvery { repo.hentSkedulerteHardDeletes(any()) } returns listOf(
+                skedulertHardDelete(
+                    aggregateId = uuid("1"),
+                    beregnetSlettetidspunkt = timeZero - Duration.ofHours(1),
+                    aggregateType = Sak,
+                    grupperingsid = "g1",
+                ),
+                skedulertHardDelete(
+                    aggregateId = uuid("2"),
+                    beregnetSlettetidspunkt = timeZero - Duration.ofHours(1),
+                    aggregateType = Beskjed,
+                    grupperingsid = "g2",
+                ),
+                skedulertHardDelete(
+                    aggregateId = uuid("3"),
+                    beregnetSlettetidspunkt = timeZero - Duration.ofHours(1),
+                    aggregateType = Oppgave,
+                    grupperingsid = "g3",
+                ),
+                skedulertHardDelete(
+                    aggregateId = uuid("4"),
+                    beregnetSlettetidspunkt = timeZero - Duration.ofHours(1),
+                    aggregateType = Sak,
+                ),
+            )
+
+            it("sender hardDelete for aggregater som skal slettes") {
+                service.sendSkedulerteHardDeletes(tilOgMed = timeZero)
+
+                val hardDeletes = kafkaProducer.hendelserOfType<HendelseModel.HardDelete>()
+                    .map { it.aggregateId to it.grupperingsid }
+
+                hardDeletes shouldContainExactlyInAnyOrder listOf(
+                    uuid("1") to "g1",
+                    uuid("2") to null,
+                    uuid("3") to null,
+                    uuid("4") to null,
+                )
             }
         }
 
@@ -96,7 +141,7 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
             coEvery { repo.hentNotifikasjonerForSak("foo", "44") } returns emptyList()
 
             it("sender hardDelete for aggregater som skal slettes") {
-                service.prosesserRegistrerteHardDeletes()
+                service.cascadeHardDeletes()
                 coVerify { repo.hardDelete(uuid("1")) }
 
                 val hardDeletes = kafkaProducer.hendelserOfType<HendelseModel.HardDelete>()
@@ -118,17 +163,19 @@ private fun notifikasjonForSak(aggregateId: UUID) = SkedulertHardDeleteRepositor
 
 private fun skedulertHardDelete(
     aggregateId: UUID,
-    beregnetSlettetidspunkt: Instant = Instant.EPOCH
+    beregnetSlettetidspunkt: Instant = Instant.EPOCH,
+    aggregateType: SkedulertHardDeleteRepository.AggregateType = Oppgave,
+    grupperingsid: String? = null,
 ) = SkedulertHardDeleteRepository.SkedulertHardDelete(
     aggregateId = aggregateId,
-    aggregateType = Oppgave,
+    aggregateType = aggregateType,
     virksomhetsnummer = "21",
     produsentid = "test",
     merkelapp = "tag",
     inputBase = OffsetDateTime.now(),
     inputOm = null,
     inputDen = LocalDateTime.now(),
-    grupperingsid = null,
+    grupperingsid = grupperingsid,
     beregnetSlettetidspunkt = beregnetSlettetidspunkt,
 )
 
