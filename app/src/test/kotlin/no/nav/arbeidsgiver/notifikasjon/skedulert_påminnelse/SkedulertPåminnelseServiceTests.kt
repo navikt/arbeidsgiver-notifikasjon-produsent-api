@@ -88,6 +88,7 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
                 kildeAppNavn = oppgaveOpprettet.virksomhetsnummer,
                 deletedAt = OffsetDateTime.now(),
                 grupperingsid = null,
+                merkelapp = null,
             ),
             HendelseModel.OppgaveUtført(
                 notifikasjonId = oppgaveOpprettet.aggregateId,

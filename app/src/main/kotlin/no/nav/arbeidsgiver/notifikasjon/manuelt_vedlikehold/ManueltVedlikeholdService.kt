@@ -82,6 +82,7 @@ class ManueltVedlikeholdService(
                 kildeAppNavn = kildeAppNavn,
                 deletedAt = OffsetDateTime.now(ZoneOffset.UTC),
                 grupperingsid = null,
+                merkelapp = null,
             )
             log.info("sending HardDelete for aggregateid {}", aggregateId)
             hendelseProdusent.send(hardDelete)

@@ -4,11 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
@@ -77,6 +73,7 @@ internal class MutationSoftDeleteSak(
             produsentId = produsent.id,
             kildeAppNavn = context.appName,
             grupperingsid = sak.grupperingsid,
+            merkelapp = sak.merkelapp,
         )
 
         hendelseDispatcher.send(softDelete)

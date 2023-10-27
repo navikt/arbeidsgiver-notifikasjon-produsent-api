@@ -41,6 +41,7 @@ class HardDeleteTests : DescribeSpec({
             kildeAppNavn = "",
             produsentId = "",
             grupperingsid = null,
+            merkelapp = null,
         )
 
 
@@ -126,6 +127,7 @@ class HardDeleteTests : DescribeSpec({
             kildeAppNavn = "",
             produsentId = "",
             grupperingsid = null,
+            merkelapp = null,
         )
 
 

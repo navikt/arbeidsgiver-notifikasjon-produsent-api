@@ -479,6 +479,7 @@ object HendelseModel {
         /** Brukes bare for å kunne se i hendelses-loggen når slettingen utført. */
         val deletedAt: OffsetDateTime,
         val grupperingsid: String?,
+        val merkelapp: String?,
     ) : Hendelse()
 
     @JsonTypeName("HardDelete")
@@ -491,6 +492,7 @@ object HendelseModel {
         /** Brukes bare for å kunne se i hendelses-loggen når slettingen utført. */
         val deletedAt: OffsetDateTime,
         val grupperingsid: String?,
+        val merkelapp: String?,
     ) : Hendelse()
 
     @JsonTypeName("BrukerKlikket")
