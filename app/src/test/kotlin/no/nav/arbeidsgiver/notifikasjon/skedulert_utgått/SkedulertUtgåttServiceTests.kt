@@ -7,7 +7,8 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
@@ -80,6 +81,7 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
                 kildeAppNavn = oppgaveOpprettet.virksomhetsnummer,
                 deletedAt = OffsetDateTime.now(),
                 grupperingsid = null,
+                merkelapp = oppgaveOpprettet.merkelapp,
             ),
             HendelseModel.OppgaveUtført(
                 notifikasjonId = oppgaveOpprettet.aggregateId,

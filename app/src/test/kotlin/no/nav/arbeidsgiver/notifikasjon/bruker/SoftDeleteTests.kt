@@ -65,6 +65,7 @@ class SoftDeleteTests : DescribeSpec({
                     kildeAppNavn = "",
                     produsentId = "",
                     grupperingsid = null,
+                    merkelapp = null,
                 )
             )
             val notifikasjonerEtterSletting = brukerRepository.hentNotifikasjoner(

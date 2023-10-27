@@ -441,6 +441,7 @@ private suspend fun SkedulertHardDeleteRepository.hardDelete(
         kildeAppNavn = "test-app",
         deletedAt = OffsetDateTime.now(),
         grupperingsid = null,
+        merkelapp = null,
 ))
 
 private suspend fun SkedulertHardDeleteRepository.beskjedOpprettet(

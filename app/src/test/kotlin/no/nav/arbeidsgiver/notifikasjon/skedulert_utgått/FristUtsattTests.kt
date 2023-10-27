@@ -87,6 +87,7 @@ private val softDelete = HendelseModel.SoftDelete(
     kildeAppNavn = oppgaveOpprettetMedFrist.kildeAppNavn,
     deletedAt = opprinneligFrist.atTime(MIDNIGHT).atOffset(UTC),
     grupperingsid = null,
+    merkelapp = oppgaveOpprettetMedFrist.merkelapp,
 )
 private val hardDelete = HendelseModel.HardDelete(
     virksomhetsnummer = oppgaveOpprettetMedFrist.virksomhetsnummer,
@@ -96,6 +97,7 @@ private val hardDelete = HendelseModel.HardDelete(
     kildeAppNavn = oppgaveOpprettetMedFrist.kildeAppNavn,
     deletedAt = opprinneligFrist.atTime(MIDNIGHT).atOffset(UTC),
     grupperingsid = null,
+    merkelapp = oppgaveOpprettetMedFrist.merkelapp,
 )
 
 

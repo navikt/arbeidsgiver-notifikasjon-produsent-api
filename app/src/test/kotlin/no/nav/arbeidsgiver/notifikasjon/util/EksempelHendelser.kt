@@ -448,6 +448,7 @@ object EksempelHendelse {
         kildeAppNavn = "1",
         deletedAt = OffsetDateTime.now(),
         grupperingsid = null,
+        merkelapp = "tag",
     )
     val HardDelete = HendelseModel.HardDelete(
         virksomhetsnummer = "1",
@@ -457,6 +458,7 @@ object EksempelHendelse {
         kildeAppNavn = "1",
         deletedAt = OffsetDateTime.now(),
         grupperingsid = null,
+        merkelapp = "tag",
     )
     val BrukerKlikket = HendelseModel.BrukerKlikket(
         virksomhetsnummer = "1",

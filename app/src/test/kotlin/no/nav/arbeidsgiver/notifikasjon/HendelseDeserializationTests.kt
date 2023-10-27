@@ -135,13 +135,37 @@ class HendelseDeserializationTests : DescribeSpec({
                 "produsentId": "0",
                 "kildeAppNavn": "",
                 "deletedAt": "2020-01-01T01:01+01",
-                "grupperingsid": "1234xx"
+                "grupperingsid": "1234xx",
+                "merkelapp": "merkeliglapp"
             }
         """)
 
-        it("mottaker parsed") {
+        it("softdelete parsed") {
             softDelete as SoftDelete
             softDelete.grupperingsid shouldBe "1234xx"
+            softDelete.merkelapp shouldBe "merkeliglapp"
+        }
+    }
+
+    describe("Støtter hard delete med ikke-uuid grupperingsid") {
+        val hardDelete = kafkaObjectMapper.readValue<Hendelse>("""
+            {
+                "@type": "HardDelete",
+                "virksomhetsnummer": "0",
+                "notifikasjonId": "${uuid("1")}",
+                "hendelseId": "${uuid("0")}",
+                "produsentId": "0",
+                "kildeAppNavn": "",
+                "deletedAt": "2020-01-01T01:01+01",
+                "grupperingsid": "1234xx",
+                "merkelapp": "merkeliglapp"
+            }
+        """)
+
+        it("hardDelete parsed") {
+            hardDelete as HardDelete
+            hardDelete.grupperingsid shouldBe "1234xx"
+            hardDelete.merkelapp shouldBe "merkeliglapp"
         }
     }
 
