@@ -35,6 +35,7 @@ class SkedulertHardDeleteService(
                     produsentId = it.produsentid,
                     kildeAppNavn = NaisEnvironment.clientId,
                     grupperingsid = if (it.isSak) it.grupperingsid else null,
+                    merkelapp = it.merkelapp,
                 )
             )
         }
@@ -63,6 +64,7 @@ class SkedulertHardDeleteService(
                                 produsentId = notifikasjon.produsentid,
                                 kildeAppNavn = NaisEnvironment.clientId,
                                 grupperingsid = null,
+                                merkelapp = notifikasjon.merkelapp,
                             )
                         )
                 }
