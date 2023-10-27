@@ -51,6 +51,7 @@ internal class MutationNyOppgave(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
+            sakId: UUID?,
         ): OppgaveOpprettet {
             val alleMottakere = listOfNotNull(mottaker) + mottakere
             return OppgaveOpprettet(
@@ -76,7 +77,7 @@ internal class MutationNyOppgave(
                 ),
                 hardDelete = metadata.hardDelete?.tilDomene(),
                 frist = frist,
-                sakId = null // TODO:TAG-2195
+                sakId = sakId,
             )
         }
     }
@@ -212,12 +213,20 @@ internal class MutationNyOppgave(
         nyOppgave: NyOppgaveInput,
     ): NyOppgaveResultat {
         val produsent = hentProdusent(context) { error -> return error }
+        val sakId : UUID? = nyOppgave.metadata.grupperingsid?.let { grupperingsid ->
+            runCatching {
+                hentSak(produsentRepository, grupperingsid, nyOppgave.notifikasjon.merkelapp) {
+                    TODO("make sak required by returning this error")
+                }.id
+            }.getOrNull()
+        }
         val id = UUID.randomUUID()
         val domeneNyOppgave = try {
             nyOppgave.tilDomene(
                 id = id,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
+                sakId = sakId,
             )
         } catch (e: UkjentRolleException){
             return Error.UkjentRolle(e.message!!)

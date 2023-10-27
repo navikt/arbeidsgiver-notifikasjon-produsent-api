@@ -49,6 +49,7 @@ internal class MutationNyBeskjed(
             id: UUID,
             produsentId: String,
             kildeAppNavn: String,
+            sakId: UUID?,
         ): BeskjedOpprettet {
             val alleMottakere = listOfNotNull(mottaker) + mottakere
             return BeskjedOpprettet(
@@ -68,7 +69,7 @@ internal class MutationNyBeskjed(
                     it.tilDomene(metadata.virksomhetsnummer)
                 },
                 hardDelete = metadata.hardDelete?.tilDomene(),
-                sakId = null, // TODO:TAG-2195
+                sakId = sakId,
             )
         }
     }
@@ -78,12 +79,20 @@ internal class MutationNyBeskjed(
         nyBeskjed: NyBeskjedInput,
     ): NyBeskjedResultat {
         val produsent = hentProdusent(context) { error -> return error }
+        val sakId : UUID? = nyBeskjed.metadata.grupperingsid?.let { grupperingsid ->
+            runCatching {
+                hentSak(produsentRepository, grupperingsid, nyBeskjed.notifikasjon.merkelapp) {
+                    TODO("make sak required by returning this error")
+                }.id
+            }.getOrNull()
+        }
         val id = UUID.randomUUID()
         val domeneNyBeskjed = try {
             nyBeskjed.tilDomene(
                 id = id,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
+                sakId = sakId,
             )
         } catch (e: UkjentRolleException) {
             return Error.UkjentRolle(e.message!!)
