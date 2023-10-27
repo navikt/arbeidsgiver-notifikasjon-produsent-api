@@ -23,16 +23,15 @@ internal suspend inline fun hentSak(
         )
 }
 
-
 internal suspend inline fun hentSak(
     produsentRepository: ProdusentRepository,
-    eksternId: String,
+    grupperingsid: String,
     merkelapp: String,
     onError: (Error.SakFinnesIkke) -> Nothing
 ): ProdusentModel.Sak {
-    return produsentRepository.hentSak(eksternId, merkelapp)
+    return produsentRepository.hentSak(grupperingsid, merkelapp)
         ?: onError(
-            Error.SakFinnesIkke("Sak med grupperingsid $eksternId og merkelapp $merkelapp finnes ikke")
+            Error.SakFinnesIkke("Sak med grupperingsid $grupperingsid og merkelapp $merkelapp finnes ikke")
         )
 }
 
