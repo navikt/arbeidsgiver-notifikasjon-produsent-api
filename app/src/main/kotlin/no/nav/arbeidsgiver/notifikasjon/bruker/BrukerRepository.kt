@@ -508,8 +508,8 @@ class BrukerRepositoryImpl(
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
-            is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid)
-            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid) { tx ->
+            is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
+            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp) { tx ->
                 registrerHardDelete(tx, hendelse)
             }
             is EksterntVarselFeilet -> Unit
@@ -545,22 +545,17 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterDelete(
         aggregateId: UUID,
         grupperingsid: String?,
+        merkelapp: String?,
         callback: (tx: Transaction) -> Unit = {}
     ) {
         database.transaction({
             throw RuntimeException("Delete", it)
         }) {
-            if (grupperingsid != null) {
-                executeUpdate("""
-                    delete from notifikasjon n where n.grupperingsid = ?
-                        and merkelapp = (
-                            select merkelapp from sak s 
-                            where s.grupperingsid = n.grupperingsid 
-                            and s.id = ?
-                        );
-                """.trimIndent()) {
+            if (grupperingsid != null && merkelapp != null) {
+                // cascade hard delete av sak med grupperingsid og merkelapp
+                executeUpdate("""delete from notifikasjon n where n.grupperingsid = ?and merkelapp = ?;""") {
                     text(grupperingsid)
-                    uuid(aggregateId)
+                    text(merkelapp)
                 }
             }
             executeUpdate("""delete from notifikasjon where id = ?;""") {
