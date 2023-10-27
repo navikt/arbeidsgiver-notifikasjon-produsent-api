@@ -80,14 +80,11 @@ internal class MutationNyBeskjed(
     ): NyBeskjedResultat {
         val produsent = hentProdusent(context) { error -> return error }
         val sakId : UUID? = nyBeskjed.metadata.grupperingsid?.let { grupperingsid ->
-            try {
+            runCatching {
                 hentSak(produsentRepository, grupperingsid, nyBeskjed.notifikasjon.merkelapp) {
                     TODO("make sak required by returning this error")
                 }.id
-            } catch (e: Exception) {
-                // noop, sak not required
-                null
-            }
+            }.getOrNull()
         }
         val id = UUID.randomUUID()
         val domeneNyBeskjed = try {

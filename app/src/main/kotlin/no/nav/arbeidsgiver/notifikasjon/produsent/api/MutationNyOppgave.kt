@@ -214,14 +214,11 @@ internal class MutationNyOppgave(
     ): NyOppgaveResultat {
         val produsent = hentProdusent(context) { error -> return error }
         val sakId : UUID? = nyOppgave.metadata.grupperingsid?.let { grupperingsid ->
-            try {
+            runCatching {
                 hentSak(produsentRepository, grupperingsid, nyOppgave.notifikasjon.merkelapp) {
                     TODO("make sak required by returning this error")
                 }.id
-            } catch (e: Exception) {
-                // noop, sak not required
-                null
-            }
+            }.getOrNull()
         }
         val id = UUID.randomUUID()
         val domeneNyOppgave = try {
