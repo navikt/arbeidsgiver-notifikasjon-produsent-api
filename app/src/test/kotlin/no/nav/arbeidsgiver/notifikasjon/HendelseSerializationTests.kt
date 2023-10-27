@@ -28,6 +28,7 @@ class HendelseSerializationTests : DescribeSpec({
             kildeAppNavn = "",
             deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02"),
             grupperingsid = null,
+            merkelapp = null,
         )
 
         it("OffsetDateTime serialiseres med offset") {
@@ -102,7 +103,8 @@ class HendelseSerializationTests : DescribeSpec({
             produsentId = "",
             kildeAppNavn = "",
             deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02"),
-            grupperingsid = null
+            grupperingsid = null,
+            merkelapp = null,
         )
 
         it("mottaker parsed") {
@@ -123,6 +125,7 @@ class HendelseSerializationTests : DescribeSpec({
             kildeAppNavn = "",
             deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02"),
             grupperingsid = null,
+            merkelapp = null,
         )
 
         it("mottaker parsed") {

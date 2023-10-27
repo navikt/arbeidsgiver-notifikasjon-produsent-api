@@ -178,6 +178,7 @@ class StatistikkModelTests : DescribeSpec({
                 kildeAppNavn = "test:app",
                 deletedAt = OffsetDateTime.now(),
                 grupperingsid = null,
+                merkelapp = null,
             )
 
             it("Feiler ikke dersom det ikke finnes noe tilhørende sak eller notifikasjon") {

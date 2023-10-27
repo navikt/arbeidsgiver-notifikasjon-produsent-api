@@ -37,6 +37,7 @@ private fun hardDelete(idsuffix: String) = HendelseModel.HardDelete(
     kildeAppNavn = "test-app",
     deletedAt = OffsetDateTime.now(),
     grupperingsid = null,
+    merkelapp = null,
 )
 
 private fun beskjedOpprettet(idsuffix: String) =

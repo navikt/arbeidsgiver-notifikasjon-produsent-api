@@ -10,9 +10,11 @@ import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import java.time.*
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime.MIDNIGHT
 import java.time.LocalTime.NOON
+import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 
 /**
@@ -272,6 +274,7 @@ private val softDelete = HendelseModel.SoftDelete(
     aggregateId = oppgaveOpprettet.notifikasjonId,
     deletedAt = OffsetDateTime.now(),
     grupperingsid = null,
+    merkelapp = oppgaveOpprettet.merkelapp,
 )
 
 private val hardDelete = HendelseModel.HardDelete(
@@ -282,4 +285,5 @@ private val hardDelete = HendelseModel.HardDelete(
     aggregateId = oppgaveOpprettet.notifikasjonId,
     deletedAt = OffsetDateTime.now(),
     grupperingsid = null,
+    merkelapp = oppgaveOpprettet.merkelapp,
 )

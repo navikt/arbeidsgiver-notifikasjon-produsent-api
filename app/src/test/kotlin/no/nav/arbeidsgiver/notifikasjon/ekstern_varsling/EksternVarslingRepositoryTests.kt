@@ -324,6 +324,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
                 kildeAppNavn = "test:app",
                 deletedAt = OffsetDateTime.now(),
                 grupperingsid = null,
+                merkelapp = null,
             )
 
         it("oppdater modell etter hendelse feiler ikke") {
@@ -447,6 +448,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             kildeAppNavn = "test:app",
             deletedAt = OffsetDateTime.now(),
             grupperingsid = null,
+            merkelapp = oppgaveOpprettet.merkelapp,
         )
 
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
