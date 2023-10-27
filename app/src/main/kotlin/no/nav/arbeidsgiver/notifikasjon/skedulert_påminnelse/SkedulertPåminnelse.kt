@@ -15,21 +15,9 @@ import java.time.Duration
 
 object SkedulertPåminnelse {
     private val hendelsesstrøm by lazy {
-        PartitionAwareHendelsesstrøm<SkedulertPåminnelseService>(
+        PartitionAwareHendelsesstrøm(
             groupId = "skedulert-paaminnelse-1",
-            initState = { SkedulertPåminnelseService(lagKafkaHendelseProdusent()) },
-            processEvent =
-            { service: SkedulertPåminnelseService, event: HendelseModel.Hendelse ->
-                service.processHendelse(event)
-            },
-            processingLoopAfterCatchup =
-            { service: SkedulertPåminnelseService ->
-                coroutineScope {
-                    launchProcessingLoop("skedulert påminnelse processor", pauseAfterEach = Duration.ofSeconds(1)) {
-                        service.sendAktuellePåminnelser()
-                    }
-                }
-            },
+            newPartitionProcessor = { SkedulertPåminnelseService(lagKafkaHendelseProdusent()) },
         )
     }
 

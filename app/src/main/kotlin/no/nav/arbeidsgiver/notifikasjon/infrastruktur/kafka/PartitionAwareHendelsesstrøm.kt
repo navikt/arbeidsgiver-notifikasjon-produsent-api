@@ -2,35 +2,27 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
 import io.micrometer.core.instrument.LongTaskTimer
 import io.micrometer.core.instrument.LongTaskTimer.Sample
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import java.util.*
 
-class PartitionAwareHendelsesstrøm<PartitionState: Any>(
+interface PartitionProcessor: AutoCloseable {
+    fun processHendelse(hendelse: HendelseModel.Hendelse)
+    fun processingLoopStep()
+}
+
+class PartitionAwareHendelsesstrøm(
     groupId: String,
     replayPeriodically: Boolean = false,
     configure: Properties.() -> Unit = {},
-    private val initState: () -> PartitionState,
-    private val processEvent: suspend (state: PartitionState, event: HendelseModel.Hendelse) -> Unit,
-    private val processingLoopAfterCatchup: suspend (state: PartitionState) -> Unit,
+    private val newPartitionProcessor: () -> PartitionProcessor,
 ) {
-    private val log = logger()
-
-    class PartitionInfo<PartitionState: Any>(
-        val state: PartitionState,
-        val maxOffsetAtAssignment: Long,
-        var catchupTimerSample: Sample?,
-        var processingJob: Job? = null,
-    )
-
     private val catchupTimer = LongTaskTimer
         .builder("kafka.partition.replay.ajour")
         .description("""
@@ -40,9 +32,7 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
         """)
         .register(Metrics.meterRegistry)
 
-    private val partitionInfo: MutableMap<TopicPartition, PartitionInfo<PartitionState>> = HashMap()
-
-    private val processingScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val partitionProcessors: MutableMap<TopicPartition, PartitionProcessorState> = HashMap()
 
     private val kafkaConsumer = CoroutineKafkaConsumer.new(
         topic = NOTIFIKASJON_TOPIC,
@@ -53,39 +43,74 @@ class PartitionAwareHendelsesstrøm<PartitionState: Any>(
         replayPeriodically = replayPeriodically,
         configure = configure,
         onPartitionAssigned = { partition: TopicPartition, maxOffset: Long ->
-            partitionInfo[partition] = PartitionInfo(
-                state = initState(),
+            partitionProcessors[partition] = PartitionProcessorState(
+                partitionProcessor = newPartitionProcessor(),
+                partition = partition,
                 maxOffsetAtAssignment = maxOffset,
                 catchupTimerSample = catchupTimer.start(),
             )
         },
         onPartitionRevoked = { partition: TopicPartition ->
-            val p = partitionInfo.remove(partition)
-            p?.processingJob?.cancel()
-            p?.catchupTimerSample?.stop()
+            partitionProcessors.remove(partition)?.close()
         }
     )
 
     suspend fun start() {
         kafkaConsumer.forEach { consumerRecord ->
             val partition = TopicPartition(consumerRecord.topic(), consumerRecord.partition())
-            val p = partitionInfo[partition]
+            val partitionProcessor = partitionProcessors[partition]
                 ?: error("missing partition information for received record")
-
-            val value = consumerRecord.value()
-            if (value != null) {
-                processEvent(p.state, value)
-            }
-
-            if (p.processingJob == null && p.maxOffsetAtAssignment <= consumerRecord.offset()) {
-                p.catchupTimerSample?.stop()
-                p.catchupTimerSample = null
-                p.processingJob = processingScope.launch {
-                    log.info("launching processingLoopAfterCatchup for $partition")
-                    processingLoopAfterCatchup(p.state)
-                }
-            }
+            partitionProcessor.processRecord(consumerRecord)
         }
     }
 }
 
+private class PartitionProcessorState(
+    private val partitionProcessor: PartitionProcessor,
+    private val maxOffsetAtAssignment: Long,
+    private val partition: TopicPartition,
+    private var catchupTimerSample: Sample?,
+    private var processingThread: Thread? = null,
+) {
+    private val log = logger()
+
+    @Volatile
+    private var partitionAssigned = true
+
+    fun processRecord(consumerRecord: ConsumerRecord<String, HendelseModel.Hendelse>) {
+        val value = consumerRecord.value()
+        if (value != null) {
+            partitionProcessor.processHendelse(value)
+        }
+
+        if (processingThread == null && maxOffsetAtAssignment <= consumerRecord.offset()) {
+            catchupTimerSample?.stop()
+            catchupTimerSample = null
+            startProcessLoop()
+        }
+    }
+
+    private fun startProcessLoop() {
+        processingThread = Thread {
+            log.info("starting processing loop for partition $partition")
+            try {
+                while (partitionAssigned) {
+                    partitionProcessor.processingLoopStep()
+                }
+                log.info("controlled shutdown of processing loop for partition $partition")
+            } catch (e: Exception) {
+                log.error("unexpected exception in processing loop for partition $partition.", e)
+                Health.subsystemAlive[Subsystem.KAFKA] = false
+            }
+        }.also {
+            it.start()
+        }
+    }
+
+    fun close() {
+        partitionAssigned = false
+        catchupTimerSample?.stop()
+        processingThread?.join()
+        partitionProcessor.close()
+    }
+}

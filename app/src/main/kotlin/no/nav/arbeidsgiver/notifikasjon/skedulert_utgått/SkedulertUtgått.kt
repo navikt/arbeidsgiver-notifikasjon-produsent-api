@@ -15,21 +15,9 @@ import java.time.Duration
 
 object SkedulertUtgått {
     private val hendelsesstrøm by lazy {
-        PartitionAwareHendelsesstrøm<SkedulertUtgåttService>(
+        PartitionAwareHendelsesstrøm(
             groupId = "skedulert-utgaatt-1",
-            initState = { SkedulertUtgåttService(lagKafkaHendelseProdusent()) },
-            processEvent =
-            { service: SkedulertUtgåttService, event: HendelseModel.Hendelse ->
-                service.processHendelse(event)
-            },
-            processingLoopAfterCatchup =
-            { service: SkedulertUtgåttService ->
-                coroutineScope {
-                    launchProcessingLoop("skedulert utgått processor", pauseAfterEach = Duration.ofSeconds(1)) {
-                        service.sendVedUtgåttFrist()
-                    }
-                }
-            },
+            newPartitionProcessor = { SkedulertUtgåttService(lagKafkaHendelseProdusent()) },
         )
     }
 

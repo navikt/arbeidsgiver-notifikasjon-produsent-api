@@ -1,9 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.manuelt_vedlikehold
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -13,11 +16,11 @@ import java.util.concurrent.ConcurrentHashMap
 class ManueltVedlikeholdService(
     private val hendelseProdusent: HendelseProdusent,
     private val kildeAppNavn: String,
-) {
+) : PartitionProcessor {
     private val log = logger()
     private val aggregatesSeen = ConcurrentHashMap<UUID, String>()
     private val aggregatesDeleted = ConcurrentHashMap<UUID, Unit>()
-    private var stopProcessing = false
+    @Volatile private var stopProcessing = false
 
     private val aggregatesToDelete = basedOnEnv<List<String>>(
         prod = { listOf(
@@ -35,15 +38,15 @@ class ManueltVedlikeholdService(
         ) },
     ).map { UUID.fromString(it)!!}
 
-    fun processHendelse(event: HendelseModel.Hendelse) {
-        when (event) {
+    override fun processHendelse(hendelse: HendelseModel.Hendelse) {
+        when (hendelse) {
             is HardDelete ->
-                aggregatesDeleted[event.aggregateId] = Unit
+                aggregatesDeleted[hendelse.aggregateId] = Unit
 
             is HendelseModel.SakOpprettet,
             is HendelseModel.OppgaveOpprettet,
             is HendelseModel.BeskjedOpprettet ->
-                aggregatesSeen[event.aggregateId] = event.virksomhetsnummer
+                aggregatesSeen[hendelse.aggregateId] = hendelse.virksomhetsnummer
 
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket,
@@ -54,11 +57,11 @@ class ManueltVedlikeholdService(
             is HendelseModel.BrukerKlikket,
             is HendelseModel.FristUtsatt,
             is HendelseModel.SoftDelete -> Unit
-
         }
     }
 
-    suspend fun performHardDeletes() {
+
+    override fun processingLoopStep() {
         if (stopProcessing) return
 
         for (aggregateId in aggregatesToDelete) {
@@ -85,8 +88,13 @@ class ManueltVedlikeholdService(
                 merkelapp = null,
             )
             log.info("sending HardDelete for aggregateid {}", aggregateId)
-            hendelseProdusent.send(hardDelete)
+            runBlocking(Dispatchers.IO) {
+                hendelseProdusent.send(hardDelete)
+            }
         }
         stopProcessing = true
+    }
+
+    override fun close() {
     }
 }

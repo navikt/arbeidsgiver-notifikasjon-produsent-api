@@ -14,18 +14,10 @@ object ManueltVedlikehold {
     private val hendelsesstrøm by lazy {
         PartitionAwareHendelsesstrøm(
             groupId = "manuelt-vedlikehold-1",
-            initState = { ManueltVedlikeholdService(
+            newPartitionProcessor = { ManueltVedlikeholdService(
                 lagKafkaHendelseProdusent(),
                 System.getenv("NAIS_CLIENT_ID")!!,
             ) },
-            processEvent =
-            { service: ManueltVedlikeholdService, event: HendelseModel.Hendelse ->
-                service.processHendelse(event)
-            },
-            processingLoopAfterCatchup =
-            { service: ManueltVedlikeholdService ->
-                service.performHardDeletes()
-            },
         )
     }
     fun main(httpPort: Int = 8080) {
