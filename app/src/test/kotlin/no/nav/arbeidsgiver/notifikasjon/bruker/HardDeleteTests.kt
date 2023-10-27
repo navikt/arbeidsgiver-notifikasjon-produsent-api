@@ -1,7 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.should
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
@@ -98,24 +100,12 @@ class HardDeleteTests : DescribeSpec({
             grupperingsid = "gr1",
             lenke = "foo.no/bar",
             virksomhetsnummer = mottaker.virksomhetsnummer,
-            kildeAppNavn = "",
-            produsentId = "",
-            mottattTidspunkt = OffsetDateTime.now(),
-            oppgittTidspunkt = null,
-            hardDelete = null,
         )
         suspend fun opprettStatusEvent(sak: HendelseModel.SakOpprettet) = brukerRepository.nyStatusSak(
             sak,
             virksomhetsnummer = mottaker.virksomhetsnummer,
-            kildeAppNavn = "",
-            produsentId = "",
-            mottattTidspunkt = OffsetDateTime.now(),
-            oppgittTidspunkt = null,
-            status = HendelseModel.SakStatus.MOTTATT,
-            overstyrStatustekstMed = null,
             idempotensKey = IdempotenceKey.initial(),
-            hardDelete = null,
-            nyLenkeTilSak = null,
+            status = HendelseModel.SakStatus.MOTTATT,
         )
 
         val hardDeleteEvent = HardDelete(
@@ -125,13 +115,19 @@ class HardDeleteTests : DescribeSpec({
             deletedAt = OffsetDateTime.MAX,
             kildeAppNavn = "",
             produsentId = "",
-            grupperingsid = null,
+            grupperingsid = "gr1",
         )
 
 
         it("oppretter to saker i databasen") {
             val sak1 = opprettEvent(uuid1)
             brukerRepository.oppdaterModellEtterHendelse(opprettStatusEvent(sak1))
+            val beskjed = brukerRepository.beskjedOpprettet(
+                merkelapp = sak1.merkelapp,
+                grupperingsid = sak1.grupperingsid,
+                virksomhetsnummer = sak1.virksomhetsnummer,
+                mottakere = sak1.mottakere,
+            )
             val sak2 = opprettEvent(uuid2)
             brukerRepository.oppdaterModellEtterHendelse(opprettStatusEvent(sak2))
             brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
@@ -144,7 +140,7 @@ class HardDeleteTests : DescribeSpec({
                 )
             )
 
-            val notifikasjoner =
+            val saker =
                 brukerRepository.hentSaker(
                     fnr = mottaker.naermesteLederFnr,
                     virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
@@ -159,10 +155,15 @@ class HardDeleteTests : DescribeSpec({
                     .map { it.sakId }
                     .sorted()
 
-            notifikasjoner shouldContainExactly listOf(uuid1, uuid2).sorted()
+            saker shouldContainExactly listOf(uuid1, uuid2).sorted()
+
+            brukerRepository.hentNotifikasjoner(
+                mottaker.naermesteLederFnr,
+                Tilganger.EMPTY,
+            ).map { it.id } shouldContainExactly listOf(beskjed.aggregateId)
         }
 
-        it("sletter kun ønsket sak") {
+        it("sletter kun ønsket sak og tilhørende notifikasjoner") {
             brukerRepository.oppdaterModellEtterHendelse(hardDeleteEvent)
             val sakerEtterSletting = brukerRepository.hentSaker(
                 fnr = mottaker.naermesteLederFnr,
@@ -178,6 +179,11 @@ class HardDeleteTests : DescribeSpec({
                 .map { it.sakId }
 
             sakerEtterSletting shouldContainExactly listOf(uuid2)
+
+            brukerRepository.hentNotifikasjoner(
+                mottaker.naermesteLederFnr,
+                Tilganger.EMPTY,
+            ) should beEmpty()
         }
     }
 })
