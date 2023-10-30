@@ -508,8 +508,8 @@ class BrukerRepositoryImpl(
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
-            is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId)
-            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId) { tx ->
+            is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
+            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp) { tx ->
                 registrerHardDelete(tx, hendelse)
             }
             is EksterntVarselFeilet -> Unit
@@ -542,19 +542,31 @@ class BrukerRepositoryImpl(
         return@coRecord rows.toMap()
     }
 
-    private suspend fun oppdaterModellEtterDelete(aggregateId: UUID, callback: (tx: Transaction) -> Unit = {}) {
+    private suspend fun oppdaterModellEtterDelete(
+        aggregateId: UUID,
+        grupperingsid: String?,
+        merkelapp: String?,
+        callback: (tx: Transaction) -> Unit = {}
+    ) {
         database.transaction({
             throw RuntimeException("Delete", it)
         }) {
-            executeUpdate(""" DELETE FROM notifikasjon WHERE id = ?;""") {
+            if (grupperingsid != null && merkelapp != null) {
+                // cascade hard delete av sak med grupperingsid og merkelapp
+                executeUpdate("""delete from notifikasjon n where n.grupperingsid = ?and merkelapp = ?;""") {
+                    text(grupperingsid)
+                    text(merkelapp)
+                }
+            }
+            executeUpdate("""delete from notifikasjon where id = ?;""") {
                 uuid(aggregateId)
             }
 
-            executeUpdate("""DELETE FROM brukerklikk WHERE notifikasjonsid = ?;""") {
+            executeUpdate("""delete from brukerklikk where notifikasjonsid = ?;""") {
                 uuid(aggregateId)
             }
 
-            executeUpdate(""" DELETE FROM sak WHERE id = ?;""") {
+            executeUpdate("""delete from sak where id = ?;""") {
                 uuid(aggregateId)
             }
 
