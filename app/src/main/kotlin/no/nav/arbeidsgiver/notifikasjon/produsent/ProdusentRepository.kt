@@ -347,6 +347,13 @@ class ProdusentRepository(
                 }
             }
 
+            if (hardDelete.grupperingsid != null && hardDelete.merkelapp != null) {
+                // cascade hard delete av sak med grupperingsid og merkelapp
+                executeUpdate("""delete from notifikasjon n where n.grupperingsid = ? and merkelapp = ?;""") {
+                    text(hardDelete.grupperingsid)
+                    text(hardDelete.merkelapp)
+                }
+            }
             executeUpdate(
                 """
                 delete from notifikasjon
