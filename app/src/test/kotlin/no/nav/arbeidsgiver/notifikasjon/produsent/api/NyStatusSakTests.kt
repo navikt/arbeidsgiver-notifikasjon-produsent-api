@@ -8,7 +8,7 @@ import io.kotest.matchers.types.beInstanceOf
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDateTime
 import java.util.*
@@ -17,7 +17,7 @@ class NyStatusSakTests : DescribeSpec({
     val stubbedKafkaProducer = FakeHendelseProdusent()
 
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
+    val produsentRepository = ProdusentRepository(database)
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = stubbedKafkaProducer,

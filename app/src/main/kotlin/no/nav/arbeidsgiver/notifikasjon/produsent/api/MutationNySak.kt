@@ -10,15 +10,11 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository.AggregateType
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -92,7 +88,18 @@ internal class MutationNySak(
             merkelapp = sakOpprettetHendelse.merkelapp,
         )
 
+        val erHardDeleted = produsentRepository.erHardDeleted(
+            type = AggregateType.SAK,
+            grupperingsid = sakOpprettetHendelse.grupperingsid,
+            merkelapp = sakOpprettetHendelse.merkelapp,
+        )
+
         return when {
+            eksisterende == null && erHardDeleted -> {
+                Error.DuplikatGrupperingsid( // TODO: erstatt med spesifikk feiltype
+                    "sak med angitt grupperings-id og merkelapp har vært brukt tidligere"
+                )
+            }
             eksisterende == null -> {
                 log.info("oppretter ny sak med id $sakId")
                 hendelseDispatcher.send(sakOpprettetHendelse, statusoppdateringHendelse)
