@@ -29,11 +29,11 @@ class DataproduktIdempotensTests : DescribeSpec({
     val opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00")
 
     val sak = HendelseModel.SakOpprettet(
-        hendelseId = UUID.randomUUID(),
+        hendelseId = uuid("010"),
         virksomhetsnummer = "1",
         produsentId = "1",
         kildeAppNavn = "1",
-        sakId = uuid("1"),
+        sakId = uuid("010"),
         grupperingsid = "1",
         merkelapp = "tag",
         mottakere = mottakere,
@@ -44,8 +44,9 @@ class DataproduktIdempotensTests : DescribeSpec({
         hardDelete = null,
     )
 
-    val oppgaveKnyttetTilSak = HendelseModel.SakOpprettet(
-        hendelseId = UUID.randomUUID(),
+    val oppgaveKnyttetTilSak = HendelseModel.OppgaveOpprettet(
+        notifikasjonId = uuid("001"),
+        hendelseId = uuid("001"),
         virksomhetsnummer = "1",
         produsentId = "1",
         kildeAppNavn = "1",
@@ -53,16 +54,19 @@ class DataproduktIdempotensTests : DescribeSpec({
         grupperingsid = "1",
         merkelapp = "tag",
         mottakere = mottakere,
-        tittel = "tjohei",
         lenke = "#foo",
-        oppgittTidspunkt = null,
-        mottattTidspunkt = opprettetTidspunkt,
         hardDelete = null,
+        eksternId = "1",
+        eksterneVarsler = listOf(),
+        opprettetTidspunkt = opprettetTidspunkt,
+        tekst = "tjohei",
+        frist = null,
+        påminnelse = null,
     )
 
     val oppgaveUtenGrupperingsid = HendelseModel.OppgaveOpprettet(
-        hendelseId = UUID.randomUUID(),
-        notifikasjonId = UUID.randomUUID(),
+        hendelseId = uuid("002"),
+        notifikasjonId = uuid("002"),
         virksomhetsnummer = "1",
         produsentId = "1",
         kildeAppNavn = "1",
@@ -81,8 +85,8 @@ class DataproduktIdempotensTests : DescribeSpec({
     )
 
     val oppgaveMedGrupperingsidMedAnnenTag = HendelseModel.OppgaveOpprettet(
-        hendelseId = UUID.randomUUID(),
-        notifikasjonId = UUID.randomUUID(),
+        hendelseId = uuid("003"),
+        notifikasjonId = uuid("003"),
         virksomhetsnummer = "1",
         produsentId = "1",
         kildeAppNavn = "1",
@@ -121,7 +125,7 @@ class DataproduktIdempotensTests : DescribeSpec({
         }
     }
 
-    describe("Atomisk sletting av Sak sletter kun tilhørende notifikasjoner") {
+    describe("Atomisk hard delete av Sak sletter kun tilhørende notifikasjoner") {
         repository.oppdaterModellEtterHendelse(sak, metadata)
         repository.oppdaterModellEtterHendelse(oppgaveKnyttetTilSak, metadata)
         repository.oppdaterModellEtterHendelse(oppgaveUtenGrupperingsid, metadata)
@@ -141,7 +145,40 @@ class DataproduktIdempotensTests : DescribeSpec({
 
         val notifikasjoner = database.nonTransactionalExecuteQuery(
             """
-                select notifikasjon_id from notifikasjon
+                select notifikasjon_id from "dataprodukt-model".public.notifikasjon
+            """.trimIndent(),
+            transform = { getObject("notifikasjon_id", UUID::class.java) }
+        )
+
+        notifikasjoner shouldContainExactlyInAnyOrder listOf(
+            oppgaveUtenGrupperingsid.aggregateId,
+            oppgaveMedGrupperingsidMedAnnenTag.aggregateId
+        )
+    }
+
+
+    describe("Atomisk soft delete av Sak sletter kun tilhørende notifikasjoner") {
+        repository.oppdaterModellEtterHendelse(sak, metadata)
+        repository.oppdaterModellEtterHendelse(oppgaveKnyttetTilSak, metadata)
+        repository.oppdaterModellEtterHendelse(oppgaveUtenGrupperingsid, metadata)
+        repository.oppdaterModellEtterHendelse(oppgaveMedGrupperingsidMedAnnenTag, metadata)
+        repository.oppdaterModellEtterHendelse(
+            HendelseModel.SoftDelete(
+                virksomhetsnummer = sak.virksomhetsnummer,
+                aggregateId = sak.aggregateId,
+                hendelseId = sak.hendelseId,
+                produsentId = sak.produsentId,
+                kildeAppNavn = sak.kildeAppNavn,
+                deletedAt = OffsetDateTime.now(),
+                grupperingsid = sak.grupperingsid,
+                merkelapp = sak.merkelapp,
+            ), metadata
+        )
+
+        val notifikasjoner = database.nonTransactionalExecuteQuery(
+            """
+                select notifikasjon_id from "dataprodukt-model".public.notifikasjon
+                where soft_deleted_tidspunkt is null
             """.trimIndent(),
             transform = { getObject("notifikasjon_id", UUID::class.java) }
         )

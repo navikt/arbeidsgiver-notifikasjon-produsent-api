@@ -330,10 +330,12 @@ class DataproduktModel(
             is SoftDelete -> {
                 if (hendelse.grupperingsid != null && hendelse.merkelapp != null){
                     database.nonTransactionalExecuteUpdate("""
-                        delete from notifikasjon
+                        update notifikasjon
+                        set soft_deleted_tidspunkt = ?
                         where grupperingsid = ?
                         and merkelapp = ?
                     """) {
+                        instantAsText(metadata.timestamp)
                         text(hendelse.grupperingsid)
                         text(hendelse.merkelapp)
                     }
