@@ -7,7 +7,7 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
-/** Database non-persisted, local database. Each instantiation of `EphemeralDatabase`
+/** Non-persisted, local database. Each instantiation of `EphemeralDatabase`
  * creates a fresh database, independent of all other `EphemeralDatabase`-instances.
  *
  * Remember to close the database to free up resources, if instances are created and
