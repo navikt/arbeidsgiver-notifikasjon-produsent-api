@@ -196,6 +196,38 @@ class HardDeleteSakTests : DescribeSpec({
                 val sak = produsentModel.hentSak(uuid2)
                 sak shouldNotBe null
             }
+
+            it("opprettelse av ny sak med samme merkelapp og grupperingsid feiler") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        nySak(
+                            virksomhetsnummer: "1"
+                            merkelapp: "$merkelapp"
+                            grupperingsid: "$grupperingsid"
+                            mottakere: [{
+                                altinn: {
+                                    serviceCode: "5441"
+                                    serviceEdition: "1"
+                                }
+                            }]
+                            initiellStatus: MOTTATT
+                            tidspunkt: "2020-01-01T01:01Z"
+                            tittel: "ny sak"
+                            lenke: "#foo"
+                        ) {
+                            __typename
+                            ... on NySakVellykket {
+                                id
+                            }
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                    """
+                ).getTypedContent<Error.DuplikatGrupperingsid>("nySak")
+            }
         }
 
         context("Sak mangler") {
