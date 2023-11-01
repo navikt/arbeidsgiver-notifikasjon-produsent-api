@@ -1,7 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.time.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
@@ -28,17 +26,27 @@ class SkedulertUtgåttService(
         @Suppress("UNUSED_VARIABLE")
         val ignored = when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> {
-                if (hendelse.frist == null) {
-                    return
-                }
-                repository.skedulerUtgått(
-                    SkedulertUtgåttRepository.SkedulertUtgått(
-                        oppgaveId = hendelse.notifikasjonId,
-                        frist = hendelse.frist,
-                        virksomhetsnummer = hendelse.virksomhetsnummer,
-                        produsentId = hendelse.produsentId,
+                /* Vi må huske saks-id uavhengig av om det er frist på oppgaven, for
+                 * det kan komme en frist senere. */
+                if (hendelse.sakId != null) {
+                    repository.huskSakOppgaveKobling(
+                        sakId = hendelse.sakId,
+                        oppgaveId = hendelse.aggregateId
                     )
-                )
+                }
+
+                if (hendelse.frist != null) {
+                    repository.skedulerUtgått(
+                        SkedulertUtgåttRepository.SkedulertUtgått(
+                            oppgaveId = hendelse.notifikasjonId,
+                            frist = hendelse.frist,
+                            virksomhetsnummer = hendelse.virksomhetsnummer,
+                            produsentId = hendelse.produsentId,
+                        )
+                    )
+                }
+
+                Unit
             }
 
             is HendelseModel.FristUtsatt -> {
@@ -54,28 +62,27 @@ class SkedulertUtgåttService(
 
             is HendelseModel.OppgaveUtgått ->
                 repository.slettOmEldre(
-                    hendelse.aggregateId,
-                    hendelse.utgaattTidspunkt.asOsloLocalDate()
+                    oppgaveId = hendelse.aggregateId,
+                    utgaattTidspunkt = hendelse.utgaattTidspunkt.asOsloLocalDate()
                 )
 
             is HendelseModel.OppgaveUtført ->
-                repository.slett(hendelse.aggregateId)
+                repository.slettAggregate(aggregateId = hendelse.aggregateId)
 
             is HendelseModel.HardDelete -> {
-                if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
-                    repository.huskSlettetSak(
-                        grupperingsid = hendelse.grupperingsid,
-                        merkelapp = hendelse.merkelapp,
-                        sakId = hendelse.aggregateId,
-                    )
-                }
-                repository.huskSlettetOppgave(hendelse.aggregateId)
-                repository.slett(hendelse.aggregateId)
+                repository.slettOgHuskSlett(
+                    aggregateId = hendelse.aggregateId,
+                    merkelapp = hendelse.merkelapp,
+                    grupperingsid = hendelse.grupperingsid,
+                )
             }
 
             is HendelseModel.SoftDelete -> {
-                repository.huskSlettetOppgave(hendelse.aggregateId)
-                repository.slett(hendelse.aggregateId)
+                repository.slettOgHuskSlett(
+                    aggregateId = hendelse.aggregateId,
+                    merkelapp = hendelse.merkelapp,
+                    grupperingsid = hendelse.grupperingsid,
+                )
             }
 
             is HendelseModel.BeskjedOpprettet,
@@ -93,23 +100,20 @@ class SkedulertUtgåttService(
         delay(Duration.ofSeconds(1))
     }
 
-    fun sendVedUtgåttFrist(now: LocalDate = OsloTid.localDateNow()) {
+    suspend fun sendVedUtgåttFrist(now: LocalDate = OsloTid.localDateNow()) {
         val utgåttFrist = repository.hentOgFjernAlleMedFrist(now)
         utgåttFrist.forEach { utgått ->
             val fristLocalDateTime = LocalDateTime.of(utgått.frist, LocalTime.MAX)
-
-            runBlocking(Dispatchers.IO) {
-                hendelseProdusent.send(HendelseModel.OppgaveUtgått(
-                    virksomhetsnummer = utgått.virksomhetsnummer,
-                    notifikasjonId = utgått.oppgaveId,
-                    hendelseId = UUID.randomUUID(),
-                    produsentId = utgått.produsentId,
-                    kildeAppNavn = NaisEnvironment.clientId,
-                    hardDelete = null,
-                    utgaattTidspunkt = fristLocalDateTime.atOslo().toOffsetDateTime(),
-                    nyLenke = null,
-                ))
-            }
+            hendelseProdusent.send(HendelseModel.OppgaveUtgått(
+                virksomhetsnummer = utgått.virksomhetsnummer,
+                notifikasjonId = utgått.oppgaveId,
+                hendelseId = UUID.randomUUID(),
+                produsentId = utgått.produsentId,
+                kildeAppNavn = NaisEnvironment.clientId,
+                hardDelete = null,
+                utgaattTidspunkt = fristLocalDateTime.atOslo().toOffsetDateTime(),
+                nyLenke = null,
+            ))
         }
     }
 }
