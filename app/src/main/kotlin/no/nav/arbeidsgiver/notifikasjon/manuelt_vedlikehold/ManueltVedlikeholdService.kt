@@ -1,7 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.manuelt_vedlikehold
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
@@ -38,7 +36,7 @@ class ManueltVedlikeholdService(
         ) },
     ).map { UUID.fromString(it)!!}
 
-    override fun processHendelse(hendelse: HendelseModel.Hendelse) {
+    override suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
         when (hendelse) {
             is HardDelete ->
                 aggregatesDeleted[hendelse.aggregateId] = Unit
@@ -60,8 +58,7 @@ class ManueltVedlikeholdService(
         }
     }
 
-
-    override fun processingLoopStep() {
+    override suspend fun processingLoopStep() {
         if (stopProcessing) return
 
         for (aggregateId in aggregatesToDelete) {
@@ -88,9 +85,7 @@ class ManueltVedlikeholdService(
                 merkelapp = null,
             )
             log.info("sending HardDelete for aggregateid {}", aggregateId)
-            runBlocking(Dispatchers.IO) {
-                hendelseProdusent.send(hardDelete)
-            }
+            hendelseProdusent.send(hardDelete)
         }
         stopProcessing = true
     }

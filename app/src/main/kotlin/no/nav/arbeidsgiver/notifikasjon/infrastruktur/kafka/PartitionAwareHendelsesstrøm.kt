@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
 import io.micrometer.core.instrument.LongTaskTimer
 import io.micrometer.core.instrument.LongTaskTimer.Sample
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
@@ -11,10 +12,11 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 interface PartitionProcessor: AutoCloseable {
-    fun processHendelse(hendelse: HendelseModel.Hendelse)
-    fun processingLoopStep()
+    suspend fun processHendelse(hendelse: HendelseModel.Hendelse)
+    suspend fun processingLoopStep()
 }
 
 class PartitionAwareHendelsesstrøm(
@@ -32,7 +34,7 @@ class PartitionAwareHendelsesstrøm(
         """)
         .register(Metrics.meterRegistry)
 
-    private val partitionProcessors: MutableMap<TopicPartition, PartitionProcessorState> = HashMap()
+    private val partitionProcessors: MutableMap<TopicPartition, PartitionProcessorState> = ConcurrentHashMap()
 
     private val kafkaConsumer = CoroutineKafkaConsumer.new(
         topic = NOTIFIKASJON_TOPIC,
@@ -77,7 +79,7 @@ private class PartitionProcessorState(
     @Volatile
     private var partitionAssigned = true
 
-    fun processRecord(consumerRecord: ConsumerRecord<String, HendelseModel.Hendelse>) {
+    suspend fun processRecord(consumerRecord: ConsumerRecord<String, HendelseModel.Hendelse>) {
         val value = consumerRecord.value()
         if (value != null) {
             partitionProcessor.processHendelse(value)
@@ -95,7 +97,9 @@ private class PartitionProcessorState(
             log.info("starting processing loop for partition $partition")
             try {
                 while (partitionAssigned) {
-                    partitionProcessor.processingLoopStep()
+                    runBlocking {
+                        partitionProcessor.processingLoopStep()
+                    }
                 }
                 log.info("controlled shutdown of processing loop for partition $partition")
             } catch (e: Exception) {

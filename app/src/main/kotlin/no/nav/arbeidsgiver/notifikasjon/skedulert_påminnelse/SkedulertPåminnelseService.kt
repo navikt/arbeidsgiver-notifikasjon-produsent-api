@@ -1,12 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.time.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
-import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Oppgavetilstand.*
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import java.time.Duration
@@ -19,18 +17,15 @@ class SkedulertPåminnelseService(
 ) : PartitionProcessor {
     private val repository = SkedulertPåminnelseRepository()
 
-    override fun processHendelse(hendelse: HendelseModel.Hendelse) {
-        runBlocking(Dispatchers.IO) {
-            repository.processHendelse(hendelse)
-        }
+    override suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
+        repository.processHendelse(hendelse)
     }
 
-    override fun processingLoopStep() {
-        runBlocking(Dispatchers.IO) {
-            sendAktuellePåminnelser(now = OsloTid.localDateTimeNow().inOsloAsInstant())
-        }
-        Thread.sleep(Duration.ofSeconds(1))
+    override suspend fun processingLoopStep() {
+        sendAktuellePåminnelser(now = OsloTid.localDateTimeNow().inOsloAsInstant())
+        delay(Duration.ofSeconds(1))
     }
+
     suspend fun sendAktuellePåminnelser(now: Instant = OsloTid.localDateTimeNow().inOsloAsInstant()) {
         val skedulertePåminnelser = repository.hentOgFjernAlleAktuellePåminnelser(now)
         /* NB! Her kan vi vurdere å innføre batching av utsendelse. */

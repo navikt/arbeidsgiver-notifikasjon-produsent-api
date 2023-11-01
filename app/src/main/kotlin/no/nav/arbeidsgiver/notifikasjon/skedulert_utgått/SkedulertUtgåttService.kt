@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.time.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
@@ -23,7 +24,7 @@ class SkedulertUtgåttService(
 
     override fun close() = repository.close()
 
-    override fun processHendelse(hendelse: HendelseModel.Hendelse) {
+    override suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
         @Suppress("UNUSED_VARIABLE")
         val ignored = when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> {
@@ -87,12 +88,12 @@ class SkedulertUtgåttService(
         }
     }
 
-    override fun processingLoopStep() {
-        sendVedUtgåttFrist(OsloTid.localDateNow())
-        Thread.sleep(Duration.ofSeconds(1))
+    override suspend fun processingLoopStep() {
+        sendVedUtgåttFrist()
+        delay(Duration.ofSeconds(1))
     }
 
-    fun sendVedUtgåttFrist(now: LocalDate) {
+    fun sendVedUtgåttFrist(now: LocalDate = OsloTid.localDateNow()) {
         val utgåttFrist = repository.hentOgFjernAlleMedFrist(now)
         utgåttFrist.forEach { utgått ->
             val fristLocalDateTime = LocalDateTime.of(utgått.frist, LocalTime.MAX)
