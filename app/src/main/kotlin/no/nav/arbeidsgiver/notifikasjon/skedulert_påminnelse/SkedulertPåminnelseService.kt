@@ -1,22 +1,29 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
+import kotlinx.coroutines.time.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
-import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Oppgavetilstand.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
+import java.time.Duration
 import java.time.Instant
 import java.util.*
 
 
 class SkedulertPåminnelseService(
     private val hendelseProdusent: HendelseProdusent
-) {
+) : PartitionProcessor {
     private val repository = SkedulertPåminnelseRepository()
 
-    suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
+    override suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
         repository.processHendelse(hendelse)
+    }
+
+    override suspend fun processingLoopStep() {
+        sendAktuellePåminnelser(now = OsloTid.localDateTimeNow().inOsloAsInstant())
+        delay(Duration.ofSeconds(1))
     }
 
     suspend fun sendAktuellePåminnelser(now: Instant = OsloTid.localDateTimeNow().inOsloAsInstant()) {
@@ -37,5 +44,8 @@ class SkedulertPåminnelseService(
                 bestillingHendelseId = skedulert.bestillingHendelseId,
             ))
         }
+    }
+
+    override fun close() {
     }
 }
