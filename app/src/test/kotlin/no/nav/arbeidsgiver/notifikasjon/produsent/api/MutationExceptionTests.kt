@@ -8,7 +8,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -18,7 +18,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class MutationExceptionTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
+    val produsentRepository = ProdusentRepository(database)
     val kafkaProducer = mockk<HendelseProdusent>()
     val engine = ktorProdusentTestServer(
         kafkaProducer = kafkaProducer,

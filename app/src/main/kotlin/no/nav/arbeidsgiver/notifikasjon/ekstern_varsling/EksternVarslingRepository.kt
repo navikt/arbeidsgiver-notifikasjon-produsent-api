@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -68,7 +67,19 @@ class EksternVarslingRepository(
             produsentId = beskjedOpprettet.produsentId,
             notifikasjonsId = beskjedOpprettet.notifikasjonId,
             notifikasjonOpprettet = beskjedOpprettet.opprettetTidspunkt,
-        )
+        ) { tx ->
+            tx.executeUpdate(
+                """
+                insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
+                values (?, ?, ?)
+                on conflict do nothing
+                """
+            ) {
+                text(beskjedOpprettet.merkelapp)
+                nullableText(beskjedOpprettet.grupperingsid)
+                uuid(beskjedOpprettet.notifikasjonId)
+            }
+        }
     }
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
@@ -77,7 +88,19 @@ class EksternVarslingRepository(
             produsentId = oppgaveOpprettet.produsentId,
             notifikasjonsId = oppgaveOpprettet.notifikasjonId,
             notifikasjonOpprettet = oppgaveOpprettet.opprettetTidspunkt,
-        )
+        ) { tx ->
+            tx.executeUpdate(
+                """
+                insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
+                values (?, ?, ?)
+                on conflict do nothing
+                """
+            ) {
+                text(oppgaveOpprettet.merkelapp)
+                nullableText(oppgaveOpprettet.grupperingsid)
+                uuid(oppgaveOpprettet.notifikasjonId)
+            }
+        }
     }
 
     private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
@@ -114,11 +137,49 @@ class EksternVarslingRepository(
     }
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
-        database.nonTransactionalExecuteUpdate("""
-            insert into hard_delete (notifikasjon_id) values (?)
-            on conflict do nothing
-        """) {
-            uuid(hardDelete.aggregateId)
+        database.transaction {
+            if (hardDelete.merkelapp != null && hardDelete.grupperingsid != null) {
+                executeUpdate(
+                    """
+                    insert into hard_delete (notifikasjon_id) 
+                    (
+                        select notifikasjon_id from merkelapp_grupperingsid_notifikasjon 
+                        where merkelapp = ? and grupperingsid = ?
+                    )
+                    on conflict do nothing
+                    """
+                ) {
+                    nullableText(hardDelete.merkelapp)
+                    nullableText(hardDelete.grupperingsid)
+                }
+
+                executeUpdate(
+                    """
+                    delete from merkelapp_grupperingsid_notifikasjon 
+                    where merkelapp = ? and grupperingsid = ?
+                    """
+                ) {
+                    text(hardDelete.merkelapp)
+                    text(hardDelete.grupperingsid)
+                }
+            }
+
+            executeUpdate(
+                """
+                insert into hard_delete (notifikasjon_id) values (?)
+                on conflict do nothing
+                """
+            ) {
+                uuid(hardDelete.aggregateId)
+            }
+
+            executeUpdate(
+                """
+               delete from merkelapp_grupperingsid_notifikasjon where notifikasjon_id = ?  
+                """
+            ) {
+                uuid(hardDelete.aggregateId)
+            }
         }
     }
 
@@ -135,6 +196,7 @@ class EksternVarslingRepository(
         produsentId: String,
         notifikasjonsId: UUID,
         notifikasjonOpprettet: OffsetDateTime,
+        callback: (tx: Transaction) -> Unit = {}
     ) {
         /* Rewrite to batch insert? */
         database.transaction {
@@ -165,6 +227,8 @@ class EksternVarslingRepository(
                     )
                 }
             }
+
+            callback(this)
         }
     }
 

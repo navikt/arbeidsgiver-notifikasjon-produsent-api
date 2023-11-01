@@ -27,7 +27,7 @@ import java.util.*
 class SoftDeleteNotifikasjonTests : DescribeSpec({
 
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
+    val produsentModel = ProdusentRepository(database)
     val kafkaProducer = mockk<HendelseProdusent>()
 
     coEvery { kafkaProducer.sendOgHentMetadata(ofType<SoftDelete>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
