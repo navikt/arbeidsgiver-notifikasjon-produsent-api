@@ -11,6 +11,4 @@ create table hard_deleted_aggregates_metadata
     merkelapp      text
 );
 
-create index on hard_deleted_aggregates_metadata (aggregate_type);
-create index on hard_deleted_aggregates_metadata (grupperingsid);
-create index on hard_deleted_aggregates_metadata (merkelapp);
+create index on hard_deleted_aggregates_metadata (aggregate_type, grupperingsid, merkelapp);

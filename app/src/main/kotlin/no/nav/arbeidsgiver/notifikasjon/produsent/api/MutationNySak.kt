@@ -96,7 +96,7 @@ internal class MutationNySak(
 
         return when {
             eksisterende == null && erHardDeleted -> {
-                Error.DuplikatGrupperingsid( // TODO: erstatt med spesifikk feiltype
+                Error.DuplikatGrupperingsid(
                     "sak med angitt grupperings-id og merkelapp har vært brukt tidligere"
                 )
             }
