@@ -5,6 +5,5 @@ create table merkelapp_grupperingsid_notifikasjon
     grupperingsid text
 );
 
-create index merkelapp_grupperingsid_notifikasjon_merkelapp_idx on merkelapp_grupperingsid_notifikasjon (merkelapp);
-create index merkelapp_grupperingsid_notifikasjon_grupperingsid_idx on merkelapp_grupperingsid_notifikasjon (grupperingsid);
+create index merkelapp_grupperingsid_notifikasjon_mrk_grpid_idx on merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid);
 
