@@ -40,14 +40,13 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
         påminnelse = null,
         sakId = null,
     )
-    val now = LocalDate.parse("2020-01-01")
-    val fristSomHarPassert = now.minusDays(1)
-    val fristSomIkkeHarPassert = now.plusDays(2)
+    val fristSomHarPassert = LocalDate.now().minusDays(1)
+    val fristSomIkkeHarPassert = LocalDate.now().plusDays(2)
 
     describe("Skedulerer utgått når frist har passert") {
         hendelseProdusent.clear()
         service.processHendelse(oppgaveOpprettet.copy(frist = fristSomHarPassert))
-        service.sendVedUtgåttFrist(now = now)
+        service.sendVedUtgåttFrist()
 
         hendelseProdusent.hendelser.first() should beInstanceOf<HendelseModel.OppgaveUtgått>()
     }
@@ -55,7 +54,7 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
         hendelseProdusent.clear()
         service.processHendelse(oppgaveOpprettet.copy(notifikasjonId = uuid("11"), frist = fristSomIkkeHarPassert))
         service.processHendelse(oppgaveOpprettet.copy(notifikasjonId = uuid("22"), frist = fristSomHarPassert))
-        service.sendVedUtgåttFrist(now = now)
+        service.sendVedUtgåttFrist()
 
         hendelseProdusent.hendelser shouldHaveSize 1
         hendelseProdusent.hendelser.first() should beInstanceOf<HendelseModel.OppgaveUtgått>()
@@ -67,7 +66,7 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
         service.processHendelse(
             oppgaveOpprettet.copy(frist = fristSomIkkeHarPassert)
         )
-        service.sendVedUtgåttFrist(now = now)
+        service.sendVedUtgåttFrist()
 
         hendelseProdusent.hendelser shouldBe emptyList()
     }
@@ -110,7 +109,7 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
                 oppgaveOpprettet.copy(frist = fristSomHarPassert)
             )
             service.processHendelse(hendelse)
-            service.sendVedUtgåttFrist(now = now)
+            service.sendVedUtgåttFrist()
 
             hendelseProdusent.hendelser shouldBe emptyList()
         }
