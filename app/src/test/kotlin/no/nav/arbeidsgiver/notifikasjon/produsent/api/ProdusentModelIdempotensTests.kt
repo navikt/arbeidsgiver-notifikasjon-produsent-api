@@ -6,14 +6,14 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.typeNavn
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
 class ProdusentModelIdempotensTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
+    val produsentModel = ProdusentRepository(database)
 
     describe("Produsent Model Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
