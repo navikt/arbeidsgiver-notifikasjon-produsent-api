@@ -3,7 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldBeIn
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
@@ -20,8 +22,10 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSen
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getUuid
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import java.sql.ResultSet
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -40,7 +44,8 @@ class EksternVarslingRepositoryTests: DescribeSpec({
         hendelseId = uuid("2"),
         produsentId = "1",
         kildeAppNavn = "1",
-        merkelapp = "1",
+        merkelapp = "tag",
+        grupperingsid = "42",
         eksternId = "1",
         mottakere = listOf(AltinnMottaker(
             virksomhetsnummer = "1",
@@ -48,7 +53,6 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             serviceEdition = "1"
         )),
         tekst = "1",
-        grupperingsid = null,
         lenke = "",
         opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
         eksterneVarsler = listOf(
@@ -315,22 +319,47 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("Hard delete event for sak") {
+        repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
+        val sakId = uuid("442")
         val hardDelete =
             HendelseModel.HardDelete(
                 virksomhetsnummer = "42",
-                aggregateId = UUID.randomUUID(),
-                hendelseId = UUID.randomUUID(),
+                aggregateId = sakId,
+                hendelseId = sakId,
                 produsentId = "42",
                 kildeAppNavn = "test:app",
                 deletedAt = OffsetDateTime.now(),
-                grupperingsid = null,
-                merkelapp = null,
+                grupperingsid = oppgaveOpprettet.grupperingsid,
+                merkelapp = oppgaveOpprettet.merkelapp,
             )
 
         it("oppdater modell etter hendelse feiler ikke") {
             shouldNotThrowAny {
                 repository.oppdaterModellEtterHendelse(hardDelete)
             }
+        }
+        it("registrerer hard delete for oppgaven tilknyttet saken hard delete gjelder for") {
+            database.nonTransactionalExecuteQuery(
+                """
+                select * from hard_delete where notifikasjon_id = ?
+                """,
+                setup = {
+                    uuid(oppgaveOpprettet.notifikasjonId)
+                },
+                transform = {
+                    getUuid("notifikasjon_id")
+                }
+            ) shouldContainExactly listOf(oppgaveOpprettet.notifikasjonId)
+        }
+        it("fjerner info fra lookup tabell") {
+            database.nonTransactionalExecuteQuery(
+                """
+                select * from merkelapp_grupperingsid_notifikasjon where notifikasjon_id = ?
+                """,
+                {
+                    uuid(oppgaveOpprettet.notifikasjonId)
+                }
+            ) { asMap() } should beEmpty()
         }
     }
 
@@ -511,3 +540,7 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
 })
+
+private fun ResultSet.asMap() = (1..this.metaData.columnCount).associate {
+    this.metaData.getColumnName(it) to this.getObject(it)
+}
