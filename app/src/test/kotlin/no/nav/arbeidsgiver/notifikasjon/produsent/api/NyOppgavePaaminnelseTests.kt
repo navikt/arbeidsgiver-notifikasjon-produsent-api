@@ -6,7 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.fakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
@@ -15,7 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 class NyOppgavePaaminnelseTests : DescribeSpec({
     val stubbedKafkaProducer = fakeHendelseProdusent()
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
+    val produsentRepository = ProdusentRepository(database)
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = stubbedKafkaProducer,

@@ -10,7 +10,7 @@ import io.kotest.matchers.shouldNot
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
@@ -19,7 +19,7 @@ import java.util.*
 
 class NyBeskjedFlereMottakereTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
+    val produsentRepository = ProdusentRepository(database)
 
     val engine = ktorProdusentTestServer(
         produsentRepository = produsentRepository,

@@ -11,9 +11,9 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
-import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.produsent.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -25,7 +25,7 @@ import java.util.*
 
 class HardDeleteSakTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
+    val produsentModel = ProdusentRepository(database)
     val kafkaProducer = mockk<HendelseProdusent>()
 
     coEvery {kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
@@ -195,6 +195,38 @@ class HardDeleteSakTests : DescribeSpec({
             it("sak2 finnes fortsatt i modellen") {
                 val sak = produsentModel.hentSak(uuid2)
                 sak shouldNotBe null
+            }
+
+            it("opprettelse av ny sak med samme merkelapp og grupperingsid feiler") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        nySak(
+                            virksomhetsnummer: "1"
+                            merkelapp: "$merkelapp"
+                            grupperingsid: "$grupperingsid"
+                            mottakere: [{
+                                altinn: {
+                                    serviceCode: "5441"
+                                    serviceEdition: "1"
+                                }
+                            }]
+                            initiellStatus: MOTTATT
+                            tidspunkt: "2020-01-01T01:01Z"
+                            tittel: "ny sak"
+                            lenke: "#foo"
+                        ) {
+                            __typename
+                            ... on NySakVellykket {
+                                id
+                            }
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                    """
+                ).getTypedContent<Error.DuplikatGrupperingsid>("nySak")
             }
         }
 
