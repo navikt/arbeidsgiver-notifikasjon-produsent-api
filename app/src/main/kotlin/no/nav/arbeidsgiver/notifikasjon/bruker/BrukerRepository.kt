@@ -553,7 +553,7 @@ class BrukerRepositoryImpl(
         }) {
             if (grupperingsid != null && merkelapp != null) {
                 // cascade hard delete av sak med grupperingsid og merkelapp
-                executeUpdate("""delete from notifikasjon n where n.grupperingsid = ?and merkelapp = ?;""") {
+                executeUpdate("""delete from notifikasjon n where n.grupperingsid = ? and merkelapp = ?;""") {
                     text(grupperingsid)
                     text(merkelapp)
                 }

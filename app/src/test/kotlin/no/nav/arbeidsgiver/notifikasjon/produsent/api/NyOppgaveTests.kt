@@ -19,7 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMot
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Instant
 import java.time.LocalDate
@@ -29,7 +29,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class NyOppgaveTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
+    val produsentRepository = ProdusentRepository(database)
 
     val kafkaProducer = mockk<HendelseProdusent>()
     coEvery { kafkaProducer.sendOgHentMetadata(any()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
