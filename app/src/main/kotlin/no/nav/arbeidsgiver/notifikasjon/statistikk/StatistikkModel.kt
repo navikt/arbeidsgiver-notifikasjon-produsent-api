@@ -46,13 +46,14 @@ class StatistikkModel(
             """
                 select 
                     notifikasjon.produsent_id,
+                    notifikasjon.gruppering_id,
                     notifikasjon.merkelapp,
                     notifikasjon.mottaker,
                     notifikasjon.notifikasjon_type,
                     count(*) as antall_klikk
                 from notifikasjon
                 inner join notifikasjon_klikk klikk on notifikasjon.notifikasjon_id = klikk.notifikasjon_id
-                group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
+                group by (produsent_id, gruppering_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
@@ -147,13 +148,15 @@ class StatistikkModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon 
-                        (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
-                    values (?, ?, 'beskjed', ?, ?, ?, ?)
+                        (produsent_id, notifikasjon_id, gruppering_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                    values (?, ?, ?, 'beskjed', ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
                     text(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
+                    nullableText(hendelse.grupperingsid)
+                    hendelse.grupperingsid
                     text(hendelse.merkelapp)
                     text(hendelse.mottakere.oppsummering())
                     text(hendelse.tekst.toHash())
@@ -173,6 +176,7 @@ class StatistikkModel(
                     insert into notifikasjon(
                         produsent_id, 
                         notifikasjon_id, 
+                        gruppering_id,
                         notifikasjon_type, 
                         merkelapp, 
                         mottaker, 
@@ -181,12 +185,13 @@ class StatistikkModel(
                         frist
                     )
                     values
-                    (?, ?, 'oppgave', ?, ?, ?, ?, ?)
+                    (?, ?, ?, 'oppgave', ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
                     text(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
+                    nullableText(hendelse.grupperingsid)
                     text(hendelse.merkelapp)
                     text(hendelse.mottakere.oppsummering())
                     text(hendelse.tekst.toHash())
@@ -274,6 +279,19 @@ class StatistikkModel(
                 }
             }
             is SoftDelete -> {
+                if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
+                    database.nonTransactionalExecuteUpdate(
+                        """
+                        update notifikasjon 
+                            set soft_deleted_tidspunkt = ?
+                            where gruppering_id = ? and merkelapp = ?
+                        """
+                    ) {
+                        timestamp_without_timezone_utc(hendelse.deletedAt)
+                        text(hendelse.grupperingsid)
+                        text(hendelse.merkelapp)
+                    }
+                }
                 database.nonTransactionalExecuteUpdate(
                     """
                     update notifikasjon 
@@ -296,20 +314,53 @@ class StatistikkModel(
                 }
             }
             is HardDelete -> {
-                // noop
+                if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
+                    database.nonTransactionalExecuteUpdate(
+                        """
+                        update notifikasjon 
+                            set hard_deleted_tidspunkt = ?
+                            where gruppering_id = ? and merkelapp = ?
+                        """
+                    ) {
+                        timestamp_without_timezone_utc(hendelse.deletedAt)
+                        text(hendelse.grupperingsid)
+                        text(hendelse.merkelapp)
+                    }
+                }
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    update notifikasjon 
+                        set hard_deleted_tidspunkt = ?
+                        where notifikasjon_id = ?
+                    """
+                ) {
+                    timestamp_without_timezone_utc(hendelse.deletedAt)
+                    uuid(hendelse.aggregateId)
+                }
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    update sak 
+                        set hard_deleted_tidspunkt = ?
+                        where sak_id = ?
+                    """
+                ) {
+                    timestamp_without_timezone_utc(hendelse.deletedAt)
+                    uuid(hendelse.aggregateId)
+                }
             }
 
             is SakOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into sak 
-                        (produsent_id, sak_id, merkelapp, mottaker, opprettet_tidspunkt)
-                    values (?, ?, ?, ?, ?)
+                        (produsent_id, sak_id, gruppering_id, merkelapp, mottaker, opprettet_tidspunkt)
+                    values (?, ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
                     text(hendelse.produsentId)
                     uuid(hendelse.sakId)
+                    nullableText(hendelse.grupperingsid)
                     text(hendelse.merkelapp)
                     text(hendelse.mottakere.oppsummering())
                     timestamp_with_timezone(hendelse.opprettetTidspunkt(metadata.timestamp.atOffset(UTC)))
