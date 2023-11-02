@@ -1,11 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.MutexProtectedValue
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.*
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Oppgavetilstand.*
+import java.sql.Connection
 import java.time.Instant
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import java.util.*
 
 private typealias OppgaveId = UUID
@@ -15,16 +15,7 @@ enum class Oppgavetilstand {
     UTFØRT, NY, UTGÅTT
 }
 
-class SkedulertPåminnelseRepository {
-    private class State {
-        val oppgaveIdIndex = HashMap<OppgaveId, MutableList<SkedulertPåminnelse>>()
-        val bestillingsIdIndex = HashMap<BestillingHendelseId, SkedulertPåminnelse>()
-        val påminnelseQueue = TreeMap<Instant, MutableList<SkedulertPåminnelse>>()
-        val oppgavetilstand = HashMap<OppgaveId, Oppgavetilstand>()
-    }
-
-    private val state = MutexProtectedValue { State() }
-
+class SkedulertPåminnelseRepository : AutoCloseable {
     data class SkedulertPåminnelse(
         val oppgaveId: OppgaveId,
         val fristOpprettetTidspunkt: Instant,
@@ -34,15 +25,69 @@ class SkedulertPåminnelseRepository {
         val virksomhetsnummer: String,
         val produsentId: String,
         val bestillingHendelseId: BestillingHendelseId,
-    ) {
-        val queueKey: Instant = tidspunkt.påminnelseTidspunkt.truncatedTo(ChronoUnit.HOURS)
+    )
+
+    private val database = EphemeralDatabase("skedulert_paaminnelse",
+        """
+        create table paaminnelser (
+            oppgave_id text primary key,
+            frist_opprettet_tidspunkt text not null,
+            frist text null,
+            paaminnelsestidspunkt text not null,
+            tidspunkt_json text not null,
+            eksterne_varsler_json text not null,
+            virksomhetsnummer text not null,
+            produsent_id text not null,
+            bestilling_hendelseid text not null
+        );
+        
+        create index paaminnelser_paaminnelsestidspunkt_idx on paaminnelser(paaminnelsestidspunkt);
+        
+        create table oppgavetilstand (
+            oppgave_id text primary key,
+            tilstand text not null
+        );
+        """.trimIndent()
+    )
+
+    override fun close() = database.close()
+
+    fun hentOgFjernAlleAktuellePåminnelser(now: Instant): Collection<SkedulertPåminnelse> {
+        return database.useConnection {
+            executeQuery(
+                """
+                    delete from paaminnelser
+                    where paaminnelsestidspunkt <= ?
+                    returning *
+                """.trimIndent(),
+                setup = {
+                    setInstant(now)
+                },
+                result = {
+                    val resultat = mutableListOf<SkedulertPåminnelse>()
+                    while (next()) {
+                        resultat.add(SkedulertPåminnelse(
+                            oppgaveId = getUUID("oppgave_id"),
+                            fristOpprettetTidspunkt = getInstant("frist_opprettet_tidspunkt"),
+                            frist = getLocalDateOrNull("frist"),
+                            tidspunkt = getJson("tidspunkt_json"),
+                            eksterneVarsler = getJson("eksterne_varsler_json"),
+                            virksomhetsnummer = getString("virksomhetsnummer"),
+                            produsentId = getString("produsent_id"),
+                            bestillingHendelseId = getUUID("bestilling_hendelseid"),
+                        ))
+                    }
+                    resultat
+                }
+            )
+        }
     }
 
-    suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
+    fun processHendelse(hendelse: HendelseModel.Hendelse) {
         @Suppress("UNUSED_VARIABLE")
         val ignored = when (hendelse) {
-            is HendelseModel.OppgaveOpprettet -> state.withLockApply {
-                oppgavetilstand[hendelse.notifikasjonId] = NY
+            is HendelseModel.OppgaveOpprettet -> database.useTransaction {
+                settOppgavetilstand(hendelse.notifikasjonId, NY)
 
                 bestillPåminnelse(
                     hendelse = hendelse,
@@ -52,10 +97,10 @@ class SkedulertPåminnelseRepository {
                 )
             }
 
-            is HendelseModel.FristUtsatt -> state.withLockApply {
+            is HendelseModel.FristUtsatt -> database.useTransaction {
                 kansellerAllePåminnelserForOppgave(oppgaveId = hendelse.notifikasjonId)
-
-                when (oppgavetilstand[hendelse.notifikasjonId]) {
+                val oppgavetilstand = hentOppgavetilstand(hendelse.notifikasjonId)
+                when (oppgavetilstand) {
                     NY -> {
                         bestillPåminnelse(
                             hendelse = hendelse,
@@ -64,8 +109,9 @@ class SkedulertPåminnelseRepository {
                             fristOpprettetTidspunkt = hendelse.fristEndretTidspunkt,
                         )
                     }
+
                     UTGÅTT -> {
-                        oppgavetilstand[hendelse.notifikasjonId] = NY
+                        settOppgavetilstand(hendelse.notifikasjonId, NY)
                         bestillPåminnelse(
                             hendelse = hendelse,
                             påminnelse = hendelse.påminnelse,
@@ -73,6 +119,7 @@ class SkedulertPåminnelseRepository {
                             fristOpprettetTidspunkt = hendelse.fristEndretTidspunkt,
                         )
                     }
+
                     UTFØRT,
                     null -> {
                         /* noop */
@@ -80,23 +127,23 @@ class SkedulertPåminnelseRepository {
                 }
             }
 
-            is HendelseModel.PåminnelseOpprettet -> state.withLockApply {
+            is HendelseModel.PåminnelseOpprettet -> database.useConnection {
                 kansellerBestilltPåminnelse(bestillingId = hendelse.bestillingHendelseId)
             }
 
-            is HendelseModel.OppgaveUtført -> state.withLockApply {
-                oppgavetilstand[hendelse.notifikasjonId] = UTFØRT
+            is HendelseModel.OppgaveUtført -> database.useTransaction {
+                settOppgavetilstand(hendelse.notifikasjonId, UTFØRT)
                 kansellerAllePåminnelserForOppgave(hendelse.notifikasjonId)
             }
 
-            is HendelseModel.OppgaveUtgått -> state.withLockApply {
-                oppgavetilstand[hendelse.notifikasjonId] = UTGÅTT
+            is HendelseModel.OppgaveUtgått -> database.useTransaction {
+                settOppgavetilstand(hendelse.notifikasjonId, UTGÅTT)
                 kansellerAllePåminnelserForOppgave(hendelse.notifikasjonId)
             }
 
             is HendelseModel.SoftDelete,
-            is HendelseModel.HardDelete -> state.withLockApply {
-                oppgavetilstand.remove(hendelse.aggregateId)
+            is HendelseModel.HardDelete -> database.useTransaction {
+                slettOppgavetilstand(hendelse.aggregateId)
                 kansellerAllePåminnelserForOppgave(hendelse.aggregateId)
             }
 
@@ -109,7 +156,44 @@ class SkedulertPåminnelseRepository {
         }
     }
 
-    private fun State.bestillPåminnelse(
+    private fun Connection.settOppgavetilstand(oppgaveId: OppgaveId, tilstand: Oppgavetilstand) {
+        executeUpdate("""
+            insert into oppgavetilstand (oppgave_id, tilstand) values (?, ?)
+            on conflict (oppgave_id) do update 
+            set tilstand = excluded.tilstand
+        """.trimIndent()
+        ) {
+            setUUID(oppgaveId)
+            setEnum(tilstand)
+        }
+    }
+
+    private fun Connection.hentOppgavetilstand(oppgaveId: UUID): Oppgavetilstand? {
+        return executeQuery(
+            """
+            select * from oppgavetilstand where oppgave_id = ?
+            """.trimIndent(),
+            setup = {
+                setUUID(oppgaveId)
+            },
+            result = {
+                if (next()) getEnum<Oppgavetilstand>("tilstand") else null
+            }
+        )
+    }
+
+    private fun Connection.slettOppgavetilstand(oppgaveId: UUID) {
+        executeUpdate(
+            """
+            delete from oppgavetilstand where oppgave_id = ?
+            """.trimIndent()
+        ) {
+            setUUID(oppgaveId)
+        }
+    }
+
+
+    private fun Connection.bestillPåminnelse(
         hendelse: HendelseModel.Hendelse,
         påminnelse: HendelseModel.Påminnelse?,
         fristOpprettetTidspunkt: Instant,
@@ -119,74 +203,52 @@ class SkedulertPåminnelseRepository {
             return
         }
 
-        SkedulertPåminnelse(
-            oppgaveId = hendelse.aggregateId,
-            fristOpprettetTidspunkt = fristOpprettetTidspunkt,
-            frist = frist,
-            tidspunkt = påminnelse.tidspunkt,
-            eksterneVarsler = påminnelse.eksterneVarsler,
-            virksomhetsnummer = hendelse.virksomhetsnummer,
-            produsentId = hendelse.produsentId!!,
-            bestillingHendelseId = hendelse.hendelseId,
-        ).let {
-            bestillingsIdIndex[it.bestillingHendelseId] = it
-            oppgaveIdIndex.computeIfAbsent(it.oppgaveId) { mutableListOf() }.add(it)
-            påminnelseQueue.computeIfAbsent(it.queueKey) { mutableListOf() }.add(it)
+        executeUpdate(
+            """
+            insert into paaminnelser (
+                oppgave_id,
+                frist_opprettet_tidspunkt,
+                frist,
+                tidspunkt_json,
+                eksterne_varsler_json,
+                virksomhetsnummer,
+                produsent_id,
+                bestilling_hendelseid,
+                paaminnelsestidspunkt
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            on conflict (oppgave_id) do nothing
+            """.trimIndent()
+        ) {
+            setUUID(hendelse.aggregateId)
+            setInstant(fristOpprettetTidspunkt)
+            setLocalDateOrNull(frist)
+            setJson(påminnelse.tidspunkt)
+            setJson(påminnelse.eksterneVarsler)
+            setText(hendelse.virksomhetsnummer)
+            setTextOrNull(hendelse.produsentId)
+            setUUID(hendelse.hendelseId)
+            setInstant(påminnelse.tidspunkt.påminnelseTidspunkt)
         }
     }
 
-    private fun State.kansellerAllePåminnelserForOppgave(oppgaveId: OppgaveId) {
-        oppgaveIdIndex[oppgaveId]?.let {
-            kansellerBestillinger(it)
+    private fun Connection.kansellerAllePåminnelserForOppgave(oppgaveId: OppgaveId) {
+        executeUpdate(
+            """
+                delete from paaminnelser where oppgave_id = ?
+            """.trimIndent()
+        ) {
+            setUUID(oppgaveId)
         }
     }
 
-    suspend fun hentOgFjernAlleAktuellePåminnelser(now: Instant): Collection<SkedulertPåminnelse> =
-        state.withLockApply {
-            val alleAktuelle = mutableListOf<SkedulertPåminnelse>()
-            val harPassert = { it: SkedulertPåminnelse -> it.tidspunkt.påminnelseTidspunkt < now }
 
-            while (
-                påminnelseQueue.isNotEmpty()
-                && påminnelseQueue.firstKey() < now
-                && påminnelseQueue.firstEntry().value.any(harPassert)
-            ) {
-                val (_, potensiellePåminnelser) = påminnelseQueue.firstEntry()
-                val aktuellePåminnelser = potensiellePåminnelser.filter(harPassert)
-                alleAktuelle.addAll(aktuellePåminnelser)
-                kansellerBestillinger(aktuellePåminnelser)
-            }
-            return@withLockApply alleAktuelle
-        }
-
-    private fun State.kansellerBestilltPåminnelse(bestillingId: BestillingHendelseId) {
-        bestillingsIdIndex[bestillingId]?.let {
-            kansellerBestilling(it)
-        }
-    }
-
-    private fun State.kansellerBestillinger(skjedulertePåminnelser: Iterable<SkedulertPåminnelse>) {
-        /* Duplicate list, because underlying list is modified by call to `remove`. */
-        for (skjedulertPåminnelse in skjedulertePåminnelser.toList()) {
-            kansellerBestilling(skjedulertPåminnelse)
-        }
-    }
-
-    private fun State.kansellerBestilling(skedulertPåminelse: SkedulertPåminnelse) {
-        bestillingsIdIndex.remove(skedulertPåminelse.bestillingHendelseId)
-
-        val oppgaveBestillinger = oppgaveIdIndex[skedulertPåminelse.oppgaveId]
-        if (oppgaveBestillinger != null) {
-            oppgaveBestillinger.removeIf { it.bestillingHendelseId == skedulertPåminelse.bestillingHendelseId }
-            if (oppgaveBestillinger.isEmpty()) {
-                oppgaveIdIndex.remove(skedulertPåminelse.oppgaveId)
-            }
-        }
-
-        val alleMedSammePåminnelseTidspunkt = påminnelseQueue[skedulertPåminelse.queueKey] ?: return
-        alleMedSammePåminnelseTidspunkt.removeIf { it.bestillingHendelseId == skedulertPåminelse.bestillingHendelseId }
-        if (alleMedSammePåminnelseTidspunkt.isEmpty()) {
-            påminnelseQueue.remove(skedulertPåminelse.queueKey)
+    private fun Connection.kansellerBestilltPåminnelse(bestillingId: BestillingHendelseId) {
+        executeUpdate(
+            """
+                delete from paaminnelser where bestilling_hendelseid = ?
+            """.trimIndent()
+        ) {
+            setUUID(bestillingId)
         }
     }
 }
