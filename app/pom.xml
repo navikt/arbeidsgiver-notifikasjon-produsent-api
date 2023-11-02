@@ -327,7 +327,7 @@
 
                 <configuration>
                     <jvmTarget>${jvm.version}</jvmTarget>
-                    <languageVersion>1.8</languageVersion>
+                    <languageVersion>1.9</languageVersion>
                 </configuration>
                 <executions>
                     <execution>
