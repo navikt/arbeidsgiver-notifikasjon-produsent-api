@@ -30,19 +30,33 @@ class KafkaReaperModelImpl(
     val database: Database
 ) : KafkaReaperModel {
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+        val grupperingsid = when (hendelse) {
+            is SakOpprettet -> hendelse.grupperingsid
+            is OppgaveOpprettet -> hendelse.grupperingsid
+            is BeskjedOpprettet -> hendelse.grupperingsid
+            else -> null
+        }
+        val merkelapp = when (hendelse) {
+            is SakOpprettet -> hendelse.merkelapp
+            is OppgaveOpprettet -> hendelse.merkelapp
+            is BeskjedOpprettet -> hendelse.merkelapp
+            else -> null
+        }
+
         database.transaction({}) {
-            executeUpdate("""
-                INSERT INTO notifikasjon_hendelse_relasjon
+            executeUpdate(
+                """
+                INSERT INTO "kafka-reaper-model".public.notifikasjon_hendelse_relasjon
                 (
                     hendelse_id,
                     notifikasjon_id,
-                    hendelse_type
+                    hendelse_type,
+                    gruppering_id,
+                    merkelapp
                 ) 
                 VALUES 
                 (
-                    ?,
-                    ?,
-                    ?
+                    ?, ?, ?, ?, ?
                 )
                 ON CONFLICT DO NOTHING
             """
@@ -50,17 +64,46 @@ class KafkaReaperModelImpl(
                 uuid(hendelse.hendelseId)
                 uuid(hendelse.aggregateId)
                 text(hendelse.typeNavn)
+                nullableText(grupperingsid)
+                nullableText(merkelapp)
             }
 
             if (hendelse is HardDelete) {
+                if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
+                    val notifikasjoner = executeQuery(
+                        """
+                            SELECT hendelse_id FROM notifikasjon_hendelse_relasjon
+                                WHERE gruppering_id = ? AND merkelapp = ?
+                        """,
+                        setup = {
+                            hendelse.grupperingsid
+                            hendelse.merkelapp
+                        },
+                        transform = { getObject("notifikasjon_id", UUID::class.java) }
+                    )
+                    notifikasjoner.forEach { hendelsesid ->
+                        executeUpdate(
+                            """
+                        INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
+                        VALUES (?, ?)
+                        ON CONFLICT DO NOTHING
+                    """
+                        ) {
+                            uuid(hendelsesid)
+                            timestamp_with_timezone(OffsetDateTime.now())
+                        }
+                    }
+                }
+
                 executeUpdate(
                     """
                         INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
                         VALUES (?, ?)
                         ON CONFLICT DO NOTHING
-                    """) {
-                        uuid(hendelse.aggregateId)
-                        timestamp_with_timezone(OffsetDateTime.now())
+                    """
+                ) {
+                    uuid(hendelse.aggregateId)
+                    timestamp_with_timezone(OffsetDateTime.now())
                 }
             }
         }
@@ -108,18 +151,19 @@ class KafkaReaperModelImpl(
     }
 }
 
-val Hendelse.typeNavn: String get() = when (this) {
-    is SakOpprettet -> "SakOpprettet"
-    is NyStatusSak -> "NyStatusSak"
-    is SoftDelete -> "SoftDelete"
-    is HardDelete -> "HardDelete"
-    is OppgaveUtført -> "OppgaveUtført"
-    is OppgaveUtgått -> "OppgaveUtgått"
-    is BrukerKlikket -> "BrukerKlikket"
-    is BeskjedOpprettet -> "BeskjedOpprettet"
-    is OppgaveOpprettet -> "OppgaveOpprettet"
-    is EksterntVarselVellykket -> "EksterntVarselVellykket"
-    is EksterntVarselFeilet -> "EksterntVarselFeilet"
-    is PåminnelseOpprettet -> "PåminnelseOpprettet"
-    is FristUtsatt -> "FristUtsatt"
-}
+val Hendelse.typeNavn: String
+    get() = when (this) {
+        is SakOpprettet -> "SakOpprettet"
+        is NyStatusSak -> "NyStatusSak"
+        is SoftDelete -> "SoftDelete"
+        is HardDelete -> "HardDelete"
+        is OppgaveUtført -> "OppgaveUtført"
+        is OppgaveUtgått -> "OppgaveUtgått"
+        is BrukerKlikket -> "BrukerKlikket"
+        is BeskjedOpprettet -> "BeskjedOpprettet"
+        is OppgaveOpprettet -> "OppgaveOpprettet"
+        is EksterntVarselVellykket -> "EksterntVarselVellykket"
+        is EksterntVarselFeilet -> "EksterntVarselFeilet"
+        is PåminnelseOpprettet -> "PåminnelseOpprettet"
+        is FristUtsatt -> "FristUtsatt"
+    }
