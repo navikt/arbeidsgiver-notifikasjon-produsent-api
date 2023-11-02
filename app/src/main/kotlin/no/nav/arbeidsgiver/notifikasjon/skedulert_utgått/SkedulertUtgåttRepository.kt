@@ -163,13 +163,13 @@ class SkedulertUtgåttRepository : AutoCloseable {
         }
     }
 
-    fun slettAggregate(aggregateId: UUID) {
+    fun slettOppgave(aggregateId: UUID) {
         database.useConnection {
-            this@useConnection.slettAggregate(aggregateId = aggregateId)
+            this@useConnection.slettOppgave(aggregateId = aggregateId)
         }
     }
 
-    fun Connection.slettAggregate(aggregateId: UUID) {
+    private fun Connection.slettOppgave(aggregateId: UUID) {
         usePrepareStatement(
             """
                 delete from oppgaver
@@ -182,7 +182,7 @@ class SkedulertUtgåttRepository : AutoCloseable {
     }
 
 
-    fun Connection.huskSlettAggregate(aggregateId: UUID) {
+    private fun Connection.huskSlettetOppgave(aggregateId: UUID) {
         usePrepareStatement(
             """
             insert into slettede_oppgaver(oppgave_id)
@@ -215,7 +215,7 @@ class SkedulertUtgåttRepository : AutoCloseable {
 
     }
 
-    fun Connection.slettOppgaverKnyttetTilSak(sakId: UUID) {
+    private fun Connection.slettOppgaverKnyttetTilSak(sakId: UUID) {
         usePrepareStatement("""
                 delete from oppgaver
                 where oppgave_id in (
@@ -259,8 +259,8 @@ class SkedulertUtgåttRepository : AutoCloseable {
                 )
                 slettOppgaverKnyttetTilSak(sakId = aggregateId)
             } else {
-                huskSlettAggregate(aggregateId = aggregateId)
-                slettAggregate(aggregateId = aggregateId)
+                huskSlettetOppgave(aggregateId = aggregateId)
+                slettOppgave(aggregateId = aggregateId)
             }
         }
     }

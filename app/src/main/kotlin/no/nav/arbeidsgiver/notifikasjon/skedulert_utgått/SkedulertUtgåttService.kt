@@ -67,7 +67,7 @@ class SkedulertUtgåttService(
                 )
 
             is HendelseModel.OppgaveUtført ->
-                repository.slettAggregate(aggregateId = hendelse.aggregateId)
+                repository.slettOppgave(aggregateId = hendelse.aggregateId)
 
             is HendelseModel.HardDelete -> {
                 repository.slettOgHuskSlett(
