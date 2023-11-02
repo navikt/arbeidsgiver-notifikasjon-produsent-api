@@ -13,11 +13,14 @@ import java.time.LocalDate
 import java.time.LocalTime.MIDNIGHT
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
+import java.util.*
 
 
 private val dayZero = LocalDate.parse("2020-01-01")
 private val opprinneligFrist = dayZero.plusWeeks(2)
 private val utsattFrist = dayZero.plusWeeks(3)
+
+private val sakId = UUID.randomUUID()
 
 private val oppgaveOpprettetTidspunkt = OffsetDateTime.of(dayZero, MIDNIGHT, UTC)
 private val oppgaveOpprettetMedFrist = HendelseModel.OppgaveOpprettet(
@@ -36,14 +39,14 @@ private val oppgaveOpprettetMedFrist = HendelseModel.OppgaveOpprettet(
         )
     ),
     tekst = "eksemple-tekst",
-    grupperingsid = null,
+    grupperingsid = "en-grupperings-id",
     lenke = "https://nav.no",
     opprettetTidspunkt = oppgaveOpprettetTidspunkt,
     eksterneVarsler = listOf(),
     hardDelete = null,
     frist = opprinneligFrist,
     påminnelse = null,
-    sakId = null,
+    sakId = sakId,
 )
 private val oppgaveOpprettetUtenFrist = oppgaveOpprettetMedFrist.copy(frist = null)
 
@@ -97,6 +100,26 @@ private val hardDelete = HendelseModel.HardDelete(
     kildeAppNavn = oppgaveOpprettetMedFrist.kildeAppNavn,
     deletedAt = opprinneligFrist.atTime(MIDNIGHT).atOffset(UTC),
     grupperingsid = null,
+    merkelapp = oppgaveOpprettetMedFrist.merkelapp,
+)
+private val hardDeleteSak = HendelseModel.HardDelete(
+    virksomhetsnummer = oppgaveOpprettetMedFrist.virksomhetsnummer,
+    aggregateId = sakId,
+    hendelseId = uuid("8"),
+    produsentId = oppgaveOpprettetMedFrist.produsentId,
+    kildeAppNavn = oppgaveOpprettetMedFrist.kildeAppNavn,
+    deletedAt = opprinneligFrist.atTime(MIDNIGHT).atOffset(UTC),
+    grupperingsid = oppgaveOpprettetMedFrist.grupperingsid,
+    merkelapp = oppgaveOpprettetMedFrist.merkelapp,
+)
+private val softDeleteSak = HendelseModel.SoftDelete(
+    virksomhetsnummer = oppgaveOpprettetMedFrist.virksomhetsnummer,
+    aggregateId = sakId,
+    hendelseId = uuid("9"),
+    produsentId = oppgaveOpprettetMedFrist.produsentId,
+    kildeAppNavn = oppgaveOpprettetMedFrist.kildeAppNavn,
+    deletedAt = opprinneligFrist.atTime(MIDNIGHT).atOffset(UTC),
+    grupperingsid = oppgaveOpprettetMedFrist.grupperingsid,
     merkelapp = oppgaveOpprettetMedFrist.merkelapp,
 )
 
@@ -228,6 +251,54 @@ class FristUtsattTests: DescribeSpec({
         service.processHendelse(fristUtsatt)
         service.processHendelse(hardDelete)
         it("Skal ikke sende noen event, siden oppgaven er hard-deleted") {
+            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            hendelseProdusent.hendelser shouldHaveSize 0
+        }
+    }
+
+    describe("Harddelete på grupperingsid")  {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertUtgåttService(hendelseProdusent)
+        service.processHendelse(oppgaveOpprettetMedFrist)
+        service.processHendelse(fristUtsatt)
+        service.processHendelse(hardDeleteSak)
+        it("Skal ikke sende noen event, siden saken er hard-deleted") {
+            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            hendelseProdusent.hendelser shouldHaveSize 0
+        }
+    }
+
+    describe("Harddelete på grupperingsid, mottatt før saken er opprettet")  {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertUtgåttService(hendelseProdusent)
+        service.processHendelse(hardDeleteSak)
+        service.processHendelse(oppgaveOpprettetMedFrist)
+        service.processHendelse(fristUtsatt)
+        it("Skal ikke sende noen event, siden saken er hard-deleted") {
+            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            hendelseProdusent.hendelser shouldHaveSize 0
+        }
+    }
+
+    describe("Softdelete på grupperingsid")  {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertUtgåttService(hendelseProdusent)
+        service.processHendelse(oppgaveOpprettetMedFrist)
+        service.processHendelse(fristUtsatt)
+        service.processHendelse(softDeleteSak)
+        it("Skal ikke sende noen event, siden saken er soft-deleted") {
+            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            hendelseProdusent.hendelser shouldHaveSize 0
+        }
+    }
+
+    describe("Softdelete på grupperingsid, mottatt før saken er opprettet")  {
+        val hendelseProdusent = FakeHendelseProdusent()
+        val service = SkedulertUtgåttService(hendelseProdusent)
+        service.processHendelse(softDeleteSak)
+        service.processHendelse(oppgaveOpprettetMedFrist)
+        service.processHendelse(fristUtsatt)
+        it("Skal ikke sende noen event, siden saken er soft-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }

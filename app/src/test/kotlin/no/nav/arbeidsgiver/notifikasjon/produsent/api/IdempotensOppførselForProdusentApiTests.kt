@@ -4,7 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -12,7 +12,7 @@ import java.util.*
 
 class IdempotensOppførselForProdusentApiTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val queryModel = ProdusentRepositoryImpl(database)
+    val queryModel = ProdusentRepository(database)
 
     val virksomhetsnummer = "1234"
     val mottaker = AltinnMottaker(serviceCode = "5441", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
