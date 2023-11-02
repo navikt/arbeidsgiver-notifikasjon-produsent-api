@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <kotlin.version>1.8.20</kotlin.version>
+        <kotlin.version>1.9.20</kotlin.version>
         <ktor.version>2.3.1</ktor.version>
         <kotest.version>5.5.0</kotest.version>
         <cxf.version>3.5.5</cxf.version>
@@ -41,7 +41,7 @@
             <dependency> <!-- Used by mockk. Automatically resolved version unable to parse class files from java 16/17. -->
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy</artifactId>
-                <version>1.12.18</version>
+                <version>1.14.9</version>
             </dependency>
 
             <!-- transitiv dependency av jackson-datatype-jsr310 !-->
@@ -290,7 +290,7 @@
         <dependency>
             <groupId>io.mockk</groupId>
             <artifactId>mockk</artifactId>
-            <version>1.13.2</version>
+            <version>1.13.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -325,10 +325,7 @@
 
                 <configuration>
                     <jvmTarget>${jvm.version}</jvmTarget>
-                    <languageVersion>1.6</languageVersion>
-                    <args>
-                        <arg>-opt-in=kotlin.RequiresOptIn</arg>
-                    </args>
+                    <languageVersion>1.9</languageVersion>
                 </configuration>
                 <executions>
                     <execution>

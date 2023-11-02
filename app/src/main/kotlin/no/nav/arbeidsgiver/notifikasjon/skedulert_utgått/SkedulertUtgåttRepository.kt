@@ -68,8 +68,7 @@ class SkedulertUtgåttRepository {
     }
 
     suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
-        @Suppress("UNUSED_VARIABLE")
-        val ignored = when (hendelse) {
+        when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> run {
                 if (hendelse.frist == null) {
                     return@run

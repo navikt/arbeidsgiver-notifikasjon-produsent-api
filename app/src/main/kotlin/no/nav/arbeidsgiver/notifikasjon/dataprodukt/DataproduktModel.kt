@@ -67,8 +67,7 @@ class DataproduktModel(
             }
         }
 
-        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        @Suppress("UNUSED_VARIABLE") val ignore : Any = when (hendelse) {
+        when (hendelse) {
             is BeskjedOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -611,7 +610,7 @@ class DataproduktModel(
             """,
             eksterneVarsler
         ) { eksterntVarsel ->
-            @Suppress("UNUSED_VARIABLE") val ignored = when (eksterntVarsel) {
+            when (eksterntVarsel) {
                 is EpostVarselKontaktinfo -> {
                     with(eksterntVarsel) {
                         uuid(varselId)

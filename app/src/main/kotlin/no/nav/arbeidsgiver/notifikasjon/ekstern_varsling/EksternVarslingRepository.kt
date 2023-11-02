@@ -38,8 +38,7 @@ class EksternVarslingRepository(
     private val podName = System.getenv("HOSTNAME") ?: "localhost"
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
-        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        @Suppress("UNUSED_VARIABLE") val ignore: Unit = when (hendelse) {
+        when (hendelse) {
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
@@ -205,7 +204,7 @@ class EksternVarslingRepository(
             }
             for (varsel in varsler) {
                 putOnJobQueue(varsel.varselId)
-                @Suppress("UNUSED_VARIABLE") val ignored = when (varsel) {
+                when (varsel) {
                     is SmsVarselKontaktinfo -> insertSmsVarsel(
                         varsel = varsel,
                         produsentId = produsentId,
