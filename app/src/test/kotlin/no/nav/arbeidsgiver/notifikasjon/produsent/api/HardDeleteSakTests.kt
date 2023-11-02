@@ -9,14 +9,16 @@ import io.mockk.mockk
 import io.mockk.unmockkAll
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
-import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.produsent.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
@@ -25,7 +27,7 @@ import java.util.*
 
 class HardDeleteSakTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
+    val produsentModel = ProdusentRepository(database)
     val kafkaProducer = mockk<HendelseProdusent>()
 
     coEvery {kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
@@ -40,8 +42,8 @@ class HardDeleteSakTests : DescribeSpec({
     )
 
     val virksomhetsnummer = "123"
-    val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
-    val uuid2 = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972ca")
+    val sakId = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
+    val sakId2 = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972ca")
     val merkelapp = "tag"
     val grupperingsid = "123"
     val grupperingsid2 = "234"
@@ -57,8 +59,8 @@ class HardDeleteSakTests : DescribeSpec({
         merkelapp = merkelapp,
         grupperingsid = grupperingsid,
         mottakere = listOf(mottaker),
-        hendelseId = uuid,
-        sakId = uuid,
+        hendelseId = sakId,
+        sakId = sakId,
         tittel = "test",
         lenke = "https://nav.no",
         oppgittTidspunkt = opprettetTidspunkt,
@@ -67,22 +69,48 @@ class HardDeleteSakTests : DescribeSpec({
         produsentId = "",
         hardDelete = null,
     )
+    val beskjedOpprettet = BeskjedOpprettet(
+        virksomhetsnummer = "1",
+        merkelapp = merkelapp,
+        grupperingsid = grupperingsid,
+        mottakere = listOf(mottaker),
+        hendelseId = uuid("11"),
+        notifikasjonId =  uuid("11"),
+        sakId = sakId,
+        tekst = "test",
+        lenke = "https://nav.no",
+        opprettetTidspunkt = opprettetTidspunkt,
+        kildeAppNavn = "",
+        produsentId = "",
+        hardDelete = null,
+        eksternId = "11",
+        eksterneVarsler = emptyList(),
+    )
     val sakOpprettet2 = sakOpprettet.copy(
         grupperingsid = grupperingsid2,
-        hendelseId = uuid2,
-        sakId = uuid2,
+        hendelseId = sakId2,
+        sakId = sakId2,
+    )
+    val beskedOpprettet2 = beskjedOpprettet.copy(
+        grupperingsid = grupperingsid2,
+        hendelseId = uuid("12"),
+        notifikasjonId =  uuid("12"),
+        sakId = sakId2,
+        eksternId = "12",
     )
 
     describe("HardDelete-oppførsel Sak") {
         context("Eksisterende sak blir slettet") {
 
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet)
+            produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet2)
+            produsentModel.oppdaterModellEtterHendelse(beskedOpprettet2)
 
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteSak(id: "$uuid") {
+                    hardDeleteSak(id: "$sakId") {
                         __typename
                         ... on HardDeleteSakVellykket {
                             id
@@ -98,20 +126,28 @@ class HardDeleteSakTests : DescribeSpec({
             it("returnerer tilbake id-en") {
                 val vellykket =
                     response.getTypedContent<MutationHardDeleteSak.HardDeleteSakVellykket>("hardDeleteSak")
-                vellykket.id shouldBe uuid
+                vellykket.id shouldBe sakId
             }
 
             it("har sendt melding til kafka") {
                 coVerify { kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) }
             }
 
-            it("har blitt fjernet fra modellen") {
-                val sak = produsentModel.hentSak(uuid)
+            it("sak1 har blitt fjernet fra modellen") {
+                val sak = produsentModel.hentSak(sakId)
                 sak shouldBe null
             }
+            it("beskjed1 har blitt fjernet fra modellen") {
+                val beskjed1 = produsentModel.hentNotifikasjon(beskjedOpprettet.notifikasjonId)
+                beskjed1 shouldBe null
+            }
             it("sak2 har ikke blitt fjernet fra modellen") {
-                val sak = produsentModel.hentSak(uuid2)
+                val sak = produsentModel.hentSak(sakId2)
                 sak shouldNotBe null
+            }
+            it("beskjed2 har ikke blitt fjernet fra modellen") {
+                val beskjed2 = produsentModel.hentNotifikasjon(beskedOpprettet2.notifikasjonId)
+                beskjed2 shouldNotBe null
             }
         }
 
@@ -119,7 +155,7 @@ class HardDeleteSakTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteSak(id: "$uuid") {
+                    hardDeleteSak(id: "$sakId") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -140,7 +176,7 @@ class HardDeleteSakTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    hardDeleteSak(id: "$uuid") {
+                    hardDeleteSak(id: "$sakId") {
                         __typename
                         ... on Error {
                             feilmelding
@@ -180,7 +216,7 @@ class HardDeleteSakTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket = response.getTypedContent<MutationHardDeleteSak.HardDeleteSakVellykket>("hardDeleteSakByGrupperingsid")
-                vellykket.id shouldBe uuid
+                vellykket.id shouldBe sakId
             }
 
             it("har sendt melding til kafka") {
@@ -188,13 +224,45 @@ class HardDeleteSakTests : DescribeSpec({
             }
 
             it("finnes ikke i modellen") {
-                val sak = produsentModel.hentSak(uuid)
+                val sak = produsentModel.hentSak(sakId)
                 sak shouldBe null
             }
 
             it("sak2 finnes fortsatt i modellen") {
-                val sak = produsentModel.hentSak(uuid2)
+                val sak = produsentModel.hentSak(sakId2)
                 sak shouldNotBe null
+            }
+
+            it("opprettelse av ny sak med samme merkelapp og grupperingsid feiler") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        nySak(
+                            virksomhetsnummer: "1"
+                            merkelapp: "$merkelapp"
+                            grupperingsid: "$grupperingsid"
+                            mottakere: [{
+                                altinn: {
+                                    serviceCode: "5441"
+                                    serviceEdition: "1"
+                                }
+                            }]
+                            initiellStatus: MOTTATT
+                            tidspunkt: "2020-01-01T01:01Z"
+                            tittel: "ny sak"
+                            lenke: "#foo"
+                        ) {
+                            __typename
+                            ... on NySakVellykket {
+                                id
+                            }
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                    """
+                ).getTypedContent<Error.DuplikatGrupperingsid>("nySak")
             }
         }
 

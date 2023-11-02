@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
@@ -28,27 +29,18 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
 
-interface ProdusentRepository {
-    suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon?
-    suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon?
-    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
-    suspend fun finnNotifikasjoner(
-        merkelapper: List<String>,
-        grupperingsid: String?,
-        antall: Int,
-        offset: Int,
-    ): List<ProdusentModel.Notifikasjon>
-
-    suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak?
-    suspend fun hentSak(id: UUID): ProdusentModel.Sak?
-}
-
-class ProdusentRepositoryImpl(
+class ProdusentRepository(
     private val database: Database,
-) : ProdusentRepository {
+) : HardDeletedRepository(database) {
+    enum class AggregateType {
+        SAK,
+        BESKJED,
+        OPPGAVE,
+    }
+
     val log = logger()
 
-    override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
+    suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
             """ 
                 where id = ?
@@ -58,7 +50,7 @@ class ProdusentRepositoryImpl(
         }
             .firstOrNull()
 
-    override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? =
+    suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
             """ 
                 where
@@ -71,7 +63,7 @@ class ProdusentRepositoryImpl(
         }
             .firstOrNull()
 
-    override suspend fun finnNotifikasjoner(
+    suspend fun finnNotifikasjoner(
         merkelapper: List<String>,
         grupperingsid: String?,
         antall: Int,
@@ -92,7 +84,7 @@ class ProdusentRepositoryImpl(
             integer(offset)
         }
 
-    override suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak? {
+    suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak? {
         return hentSaker(
             where = """
                grupperingsid = ? and merkelapp = ?
@@ -105,7 +97,7 @@ class ProdusentRepositoryImpl(
             .firstOrNull()
     }
 
-    override suspend fun hentSak(id: UUID): ProdusentModel.Sak? {
+    suspend fun hentSak(id: UUID): ProdusentModel.Sak? {
         return hentSaker(
             where = """
                 id = ?
@@ -116,6 +108,17 @@ class ProdusentRepositoryImpl(
         )
             .firstOrNull()
     }
+
+    suspend fun erHardDeleted(type: AggregateType, merkelapp: String, grupperingsid: String) =
+        database.nonTransactionalExecuteQuery("""
+            select * from hard_deleted_aggregates_metadata where aggregate_type = ? and merkelapp = ? and grupperingsid = ?
+            """,
+            {
+                text(type.name)
+                text(merkelapp)
+                text(grupperingsid)
+            }
+        ) {}.isNotEmpty()
 
     private suspend fun hentSaker(
         where: String,
@@ -219,7 +222,12 @@ class ProdusentRepositoryImpl(
             }
         }
 
-    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
+        if (erHardDeleted(hendelse.aggregateId)) {
+            log.info("skipping harddeleted event {}", hendelse)
+            return
+        }
+
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         @Suppress("UNUSED_VARIABLE") val ignored: Unit = when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse)
@@ -308,18 +316,56 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
         database.transaction {
+            registrerHardDelete(this, hardDelete)
+            executeQuery("""
+                select aggregate_type from (
+                    select 'SAK' as aggregate_type from sak where id = ?
+                    union
+                    select 'BESKJED' as aggregate_type from notifikasjon where id = ?
+                    union
+                    select 'OPPGAVE' as aggregate_type from notifikasjon where id = ?
+                ) as aggregate_type
+            """, setup = {
+                uuid(hardDelete.aggregateId)
+                uuid(hardDelete.aggregateId)
+                uuid(hardDelete.aggregateId)
+            }, transform = {
+                AggregateType.valueOf(getString("aggregate_type"))
+            }).firstOrNull()?.let {
+                // har ikke grunnlag for å backfille metadata, men for fremtidige events vil vi ha metadata.
+                // derfor er det en null-sjekk rundt dette
+                executeUpdate(
+                    """
+                insert into hard_deleted_aggregates_metadata(aggregate_id, aggregate_type, merkelapp, grupperingsid)
+                values (?, ?, ?, ?);
+                """
+                ) {
+                    uuid(hardDelete.aggregateId)
+                    text(it.name)
+                    nullableText(hardDelete.merkelapp)
+                    nullableText(hardDelete.grupperingsid)
+                }
+            }
+
+            if (hardDelete.grupperingsid != null && hardDelete.merkelapp != null) {
+                // cascade hard delete av sak med grupperingsid og merkelapp
+                executeUpdate("""delete from notifikasjon n where n.grupperingsid = ? and merkelapp = ?;""") {
+                    text(hardDelete.grupperingsid)
+                    text(hardDelete.merkelapp)
+                }
+            }
             executeUpdate(
                 """
-                DELETE FROM notifikasjon
-                WHERE id = ?
+                delete from notifikasjon
+                where id = ?
                 """
             ) {
                 uuid(hardDelete.aggregateId)
             }
             executeUpdate(
                 """
-                DELETE FROM sak
-                WHERE id = ?
+                delete from sak
+                where id = ?
                 """
             ) {
                 uuid(hardDelete.aggregateId)

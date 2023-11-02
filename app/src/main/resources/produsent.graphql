@@ -751,7 +751,8 @@ type Mutation {
     Formålet er å støtte juridiske krav om sletting i henhold til personvern.
 
     Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
-    Advarsel: ingen notifikasjoner blir slettet (selv om de har samme grupperingsid).
+    Advarsel: notifikasjoner med samme merkelapp og grupperingsid blir slettet.
+    Advarsel: Det vil ikke være mulig å lage en ny sak med samme merkelapp og grupperingsid.
     """
     hardDeleteSak(id: ID!): HardDeleteSakResultat!
 
