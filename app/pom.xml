@@ -32,12 +32,6 @@
                 <artifactId>byte-buddy</artifactId>
                 <version>1.14.9</version>
             </dependency>
-            <dependency>
-                <!-- Related artifacts junit-jupiter-* got a different version than junit-jupiter-api -->
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>5.8.2</version>
-            </dependency>
 
             <!-- transitiv dependency av jackson-datatype-jsr310 !-->
             <dependency>
