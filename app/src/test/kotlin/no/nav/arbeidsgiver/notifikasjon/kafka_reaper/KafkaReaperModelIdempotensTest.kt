@@ -14,7 +14,6 @@ import java.util.*
 class KafkaReaperModelIdempotensTest : DescribeSpec({
     val database = testDatabase(KafkaReaper.databaseConfig)
     val model = KafkaReaperModelImpl(database)
-    val metadata = HendelseModel.HendelseMetadata(Instant.now())
 
     val mottakere = listOf(
         HendelseModel.AltinnMottaker(
@@ -25,7 +24,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
     )
     val opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00")
 
-    val sak = HendelseModel.SakOpprettet(
+    val sak = EksempelHendelse.SakOpprettet.copy(
         hendelseId = uuid("010"),
         virksomhetsnummer = "1",
         produsentId = "1",
@@ -41,7 +40,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         hardDelete = null,
     )
 
-    val oppgaveKnyttetTilSak = HendelseModel.OppgaveOpprettet(
+    val oppgaveKnyttetTilSak = EksempelHendelse.OppgaveOpprettet.copy(
         notifikasjonId = uuid("001"),
         hendelseId = uuid("001"),
         virksomhetsnummer = "1",
@@ -61,7 +60,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         påminnelse = null,
     )
 
-    val oppgaveUtenGrupperingsid = HendelseModel.OppgaveOpprettet(
+    val oppgaveUtenGrupperingsid = EksempelHendelse.OppgaveOpprettet.copy(
         hendelseId = uuid("002"),
         notifikasjonId = uuid("002"),
         virksomhetsnummer = "1",
@@ -81,7 +80,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         påminnelse = null,
     )
 
-    val oppgaveMedGrupperingsidMedAnnenTag = HendelseModel.OppgaveOpprettet(
+    val oppgaveMedGrupperingsidMedAnnenTag = EksempelHendelse.OppgaveOpprettet.copy(
         hendelseId = uuid("003"),
         notifikasjonId = uuid("003"),
         virksomhetsnummer = "1",
@@ -126,7 +125,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         model.oppdaterModellEtterHendelse(oppgaveUtenGrupperingsid)
         model.oppdaterModellEtterHendelse(oppgaveMedGrupperingsidMedAnnenTag)
         model.oppdaterModellEtterHendelse(
-            HendelseModel.HardDelete(
+            EksempelHendelse.HardDelete.copy(
                 virksomhetsnummer = sak.virksomhetsnummer,
                 aggregateId = sak.aggregateId,
                 hendelseId = sak.hendelseId,
@@ -140,7 +139,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
 
         val notifikasjoner = database.nonTransactionalExecuteQuery(
             """
-                select notifikasjon_id from "kafka-reaper-model".public.deleted_notifikasjon
+                select notifikasjon_id from deleted_notifikasjon
             """.trimIndent(),
             transform = { getObject("notifikasjon_id", UUID::class.java) }
         )
