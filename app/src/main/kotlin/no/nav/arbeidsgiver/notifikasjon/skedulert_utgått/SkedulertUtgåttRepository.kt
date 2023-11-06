@@ -1,51 +1,40 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.EphemeralDatabase
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.useExecuteQuery
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.usePrepareStatement
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.*
 import java.sql.Connection
 import java.time.LocalDate
 import java.util.*
 
 class SkedulertUtgåttRepository : AutoCloseable {
-    private val database = EphemeralDatabase("skedulert_utgatt")
+    private val database = EphemeralDatabase("skedulert_utgatt",
+        """
+        create table oppgaver (
+            oppgave_id text not null primary key,
+            frist text not null,
+            virksomhetsnummer text not null,
+            produsent_id text not null
+        );
+        
+        create index oppgaver_frist_idx on oppgaver(frist);
+        
+        create table oppgave_sak_kobling (
+            oppgave_id text not null primary key,
+            sak_id text not null
+        );
+        
+        create table slettede_oppgaver (
+            oppgave_id text not null primary key
+        );
+        
+        create table slettede_saker (
+            sak_id text not null,
+            grupperingsid text not null,
+            merkelapp text not null,
+            constraint slettede_saker_pk primary key (sak_id)
+        );
+        """.trimIndent()
+    )
     override fun close() = database.close()
-
-    init {
-        database.useConnection {
-            createStatement().use {
-                it.executeUpdate(
-                    """
-                    create table oppgaver (
-                        oppgave_id text not null primary key,
-                        frist text not null,
-                        virksomhetsnummer text not null,
-                        produsent_id text not null
-                    );
-                    
-                    create index oppgaver_frist_idx on oppgaver(frist);
-                    
-                    create table oppgave_sak_kobling (
-                        oppgave_id text not null primary key,
-                        sak_id text not null
-                    );
-                    
-                    create table slettede_oppgaver (
-                        oppgave_id text not null primary key
-                    );
-                    
-                    create table slettede_saker (
-                        sak_id text not null,
-                        grupperingsid text not null,
-                        merkelapp text not null,
-                        constraint slettede_saker_pk primary key (sak_id)
-                    );
-                    """.trimIndent()
-                )
-            }
-        }
-    }
-
 
     class SkedulertUtgått(
         val oppgaveId: UUID,
@@ -55,69 +44,72 @@ class SkedulertUtgåttRepository : AutoCloseable {
     )
 
     fun hentOgFjernAlleMedFrist(localDateNow: LocalDate): Collection<SkedulertUtgått> {
-        val alleUtgåtte = mutableListOf<SkedulertUtgått>()
-
-        database.useConnection {
-            usePrepareStatement(
+        return database.useTransaction {
+            executeQuery(
                 """
-                delete from oppgaver
-                        where frist < ?
-                        returning *
-                """.trimIndent()
-            ) {
-                setString(1, localDateNow.toString())
-
-                useExecuteQuery {
+                    delete from oppgaver
+                    where frist < ?
+                    returning *
+                """.trimIndent(),
+                setup = {
+                    setLocalDate(localDateNow)
+                },
+                result = {
+                    val alleUtgåtte = mutableListOf<SkedulertUtgått>()
                     while (next()) {
-                        alleUtgåtte.add(SkedulertUtgått(
-                            oppgaveId = UUID.fromString(getString("oppgave_id")),
-                            frist = LocalDate.parse(getString("frist")),
-                            virksomhetsnummer = getString("virksomhetsnummer"),
-                            produsentId = getString("produsent_id"),
-                        ))
+                        alleUtgåtte.add(
+                            SkedulertUtgått(
+                                oppgaveId = getUUID("oppgave_id"),
+                                frist = getLocalDate("frist"),
+                                virksomhetsnummer = getString("virksomhetsnummer"),
+                                produsentId = getString("produsent_id"),
+                            )
+                        )
                     }
+                    alleUtgåtte
                 }
-            }
+            )
         }
-
-        return alleUtgåtte
     }
 
 
     private fun Connection.erOppgaveSlettet(oppgaveId: UUID): Boolean {
-        return usePrepareStatement(
+        return executeQuery(
             """
                 select true as slettet
                 from slettede_oppgaver
                 where oppgave_id = ?
                 limit 1
-            """.trimIndent()
-        ) {
-            setString(1, oppgaveId.toString())
-            useExecuteQuery {
+            """.trimIndent(),
+            setup = {
+                setUUID(oppgaveId)
+            },
+            result = {
                 if (next()) getBoolean("slettet") else false
             }
-        }
+        )
     }
 
     private fun Connection.erSakForOppgaveSlettet(oppgaveId: UUID): Boolean {
-        return usePrepareStatement("""
+        return executeQuery(
+            """
                 select true as slettet
                 from oppgave_sak_kobling
                 join slettede_saker using (sak_id)
                 where oppgave_sak_kobling.oppgave_id = ?
                 limit 1
-        """.trimIndent()
-        ) {
-            setString(1, oppgaveId.toString())
-            useExecuteQuery {
+            """.trimIndent(),
+            setup = {
+                setUUID(oppgaveId)
+            },
+            result = {
                 if (next()) getBoolean("slettet") else false
             }
-        }
+        )
     }
 
     private fun Connection.upsertOppgaveFrist(skedulertUtgått: SkedulertUtgått) {
-        usePrepareStatement(
+        executeUpdate(
             """
                 insert into oppgaver(oppgave_id, frist, virksomhetsnummer, produsent_id)
                 values (?, ?, ?, ?)
@@ -127,11 +119,10 @@ class SkedulertUtgåttRepository : AutoCloseable {
                     produsent_id = excluded.produsent_id
             """.trimIndent()
         ) {
-            setString(1, skedulertUtgått.oppgaveId.toString())
-            setString(2, skedulertUtgått.frist.toString())
-            setString(3, skedulertUtgått.virksomhetsnummer)
-            setString(4, skedulertUtgått.produsentId)
-            execute()
+            setUUID(skedulertUtgått.oppgaveId)
+            setLocalDate(skedulertUtgått.frist)
+            setText(skedulertUtgått.virksomhetsnummer)
+            setText(skedulertUtgått.produsentId)
         }
     }
 
@@ -149,49 +140,45 @@ class SkedulertUtgåttRepository : AutoCloseable {
 
 
     fun slettOmEldre(oppgaveId: UUID, utgaattTidspunkt: LocalDate) {
-        database.useConnection {
-            usePrepareStatement(
+        database.useTransaction {
+            executeUpdate(
                 """
-                delete from oppgaver
-                where oppgave_id = ? and frist <= ?
+                    delete from oppgaver
+                    where oppgave_id = ? and frist <= ?
                 """.trimIndent()
             ) {
-                setString(1, oppgaveId.toString())
-                setString(2, utgaattTidspunkt.toString())
-                execute()
+                setUUID(oppgaveId)
+                setLocalDate(utgaattTidspunkt)
             }
         }
     }
 
     fun slettOppgave(aggregateId: UUID) {
-        database.useConnection {
-            this@useConnection.slettOppgave(aggregateId = aggregateId)
+        database.useTransaction {
+            this@useTransaction.slettOppgave(aggregateId = aggregateId)
         }
     }
 
     private fun Connection.slettOppgave(aggregateId: UUID) {
-        usePrepareStatement(
+        executeUpdate(
             """
                 delete from oppgaver
                 where oppgave_id = ?
-                """.trimIndent()
+            """.trimIndent()
         ) {
-            setString(1, aggregateId.toString())
-            execute()
+            setUUID(aggregateId)
         }
     }
 
-
     private fun Connection.huskSlettetOppgave(aggregateId: UUID) {
-        usePrepareStatement(
+        executeUpdate(
             """
-            insert into slettede_oppgaver(oppgave_id)
-            values (?)
-            on conflict (oppgave_id) do nothing
+                insert into slettede_oppgaver(oppgave_id)
+                values (?)
+                on conflict (oppgave_id) do nothing
             """.trimIndent()
         ) {
-            setString(1, aggregateId.toString())
-            execute()
+            setUUID(aggregateId)
         }
     }
 
@@ -200,23 +187,22 @@ class SkedulertUtgåttRepository : AutoCloseable {
         merkelapp: String,
         sakId: UUID,
     ) {
-        usePrepareStatement(
+        executeUpdate(
             """
                 insert into slettede_saker(grupperingsid, merkelapp, sak_id)
                 values (?, ?, ?)
                 on conflict (sak_id) do nothing
             """.trimIndent()
         ) {
-            setString(1, grupperingsid)
-            setString(2, merkelapp)
-            setString(3, sakId.toString())
-            execute()
+            setText(grupperingsid)
+            setText(merkelapp)
+            setUUID(sakId)
         }
-
     }
 
     private fun Connection.slettOppgaverKnyttetTilSak(sakId: UUID) {
-        usePrepareStatement("""
+        executeUpdate(
+            """
                 delete from oppgaver
                 where oppgave_id in (
                     select oppgave_sak_kobling.oppgave_id
@@ -225,22 +211,21 @@ class SkedulertUtgåttRepository : AutoCloseable {
                 )
             """.trimIndent()
         ) {
-            setString(1, sakId.toString())
-            execute()
+            setUUID(sakId)
         }
     }
 
     fun huskSakOppgaveKobling(sakId: UUID, oppgaveId: UUID) {
-        database.useConnection {
-            usePrepareStatement("""
-                insert into oppgave_sak_kobling (oppgave_id, sak_id) values (?, ?)
-                on conflict (oppgave_id) do update
-                set sak_id = excluded.sak_id
-            """.trimIndent()
+        database.useTransaction {
+            executeUpdate(
+                """
+                    insert into oppgave_sak_kobling (oppgave_id, sak_id) values (?, ?)
+                    on conflict (oppgave_id) do update
+                    set sak_id = excluded.sak_id
+                """.trimIndent()
             ) {
-                setString(1, oppgaveId.toString())
-                setString(2, sakId.toString())
-                execute()
+                setUUID(oppgaveId)
+                setUUID(sakId)
             }
         }
     }
