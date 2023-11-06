@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.string.shouldContainIgnoringCase
 import io.mockk.coEvery
 import io.mockk.mockk
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -122,7 +123,8 @@ class MutationExceptionTests : DescribeSpec({
     describe("robusthet ved intern feil") {
         withData(gyldigeMutations) { query ->
             val ex = RuntimeException("woops!")
-            coEvery { kafkaProducer.sendOgHentMetadata(any()) }.throws(ex)
+            // litt dirty workaround med <HendelseModel.BeskjedOpprettet> da mockk ikke klarer å håndtere sealed class som input
+            coEvery { kafkaProducer.sendOgHentMetadata(any<HendelseModel.BeskjedOpprettet>()) }.throws(ex)
             val response = engine.produsentApi(query)
             response.getGraphqlErrors() shouldHaveSize 1
             response.getGraphqlErrors().first().message shouldContainIgnoringCase ex.message!!

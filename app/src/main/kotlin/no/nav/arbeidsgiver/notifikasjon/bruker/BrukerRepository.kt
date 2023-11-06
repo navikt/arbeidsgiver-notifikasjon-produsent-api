@@ -500,7 +500,7 @@ class BrukerRepositoryImpl(
         }
 
         /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        @Suppress("UNUSED_VARIABLE") val ignored: Unit = when (hendelse) {
+        when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse, metadata)
             is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
@@ -785,8 +785,7 @@ class BrukerRepositoryImpl(
     }
 
     private fun Transaction.storeMottaker(notifikasjonId: UUID?, sakId: UUID?, mottaker: Mottaker) {
-        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        @Suppress("UNUSED_VARIABLE") val ignored = when (mottaker) {
+        when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(
                 notifikasjonId = notifikasjonId,
                 sakId = sakId,
