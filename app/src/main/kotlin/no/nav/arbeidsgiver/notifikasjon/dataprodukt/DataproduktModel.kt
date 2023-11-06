@@ -67,8 +67,7 @@ class DataproduktModel(
             }
         }
 
-        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        @Suppress("UNUSED_VARIABLE") val ignore : Any = when (hendelse) {
+        when (hendelse) {
             is BeskjedOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -328,6 +327,18 @@ class DataproduktModel(
             }
 
             is SoftDelete -> {
+                if (hendelse.grupperingsid != null && hendelse.merkelapp != null){
+                    database.nonTransactionalExecuteUpdate("""
+                        update notifikasjon
+                        set soft_deleted_tidspunkt = ?
+                        where grupperingsid = ?
+                        and merkelapp = ?
+                    """) {
+                        instantAsText(metadata.timestamp)
+                        text(hendelse.grupperingsid)
+                        text(hendelse.merkelapp)
+                    }
+                }
                 database.nonTransactionalExecuteUpdate("""
                     update notifikasjon
                     set soft_deleted_tidspunkt = ?
@@ -348,6 +359,16 @@ class DataproduktModel(
 
             is HardDelete -> {
                 database.transaction {
+                    if (hendelse.grupperingsid != null && hendelse.merkelapp != null){
+                        executeUpdate("""
+                            delete from notifikasjon
+                            where grupperingsid = ?
+                            and merkelapp = ?
+                        """) {
+                            text(hendelse.grupperingsid)
+                            text(hendelse.merkelapp)
+                        }
+                    }
                     executeUpdate("""
                         delete from notifikasjon
                         where notifikasjon_id = ?
@@ -611,7 +632,7 @@ class DataproduktModel(
             """,
             eksterneVarsler
         ) { eksterntVarsel ->
-            @Suppress("UNUSED_VARIABLE") val ignored = when (eksterntVarsel) {
+            when (eksterntVarsel) {
                 is EpostVarselKontaktinfo -> {
                     with(eksterntVarsel) {
                         uuid(varselId)

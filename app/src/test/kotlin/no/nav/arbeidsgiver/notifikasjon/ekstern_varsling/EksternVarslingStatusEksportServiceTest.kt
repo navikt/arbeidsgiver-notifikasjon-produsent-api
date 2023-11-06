@@ -6,17 +6,40 @@ import io.kotest.matchers.shouldBe
 import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.suspendingSend
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDateTime
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 
 class EksternVarslingStatusEksportServiceTest : DescribeSpec({
-    val repository = mockk<EksternVarslingRepository>()
+    val repository = object : EksternVarslingRepository {
+        val varselTilstander = mutableMapOf<UUID, EksternVarselTilstand>()
+
+        override suspend fun findVarsel(varselId: UUID) = varselTilstander[varselId]
+        override suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse) = TODO("Not yet implemented")
+        override suspend fun deleteScheduledHardDeletes() = TODO("Not yet implemented")
+        override suspend fun releaseTimedOutJobLocks() = TODO("Not yet implemented")
+        override suspend fun detectEmptyDatabase() = TODO("Not yet implemented")
+        override suspend fun emergencyBreakOn() = TODO("Not yet implemented")
+        override suspend fun createJobsForAbandonedVarsler() = TODO("Not yet implemented")
+        override suspend fun findJob(lockTimeout: Duration) = TODO("Not yet implemented")
+        override suspend fun returnToJobQueue(varselId: UUID) = TODO("Not yet implemented")
+        override suspend fun deleteFromJobQueue(varselId: UUID) = TODO("Not yet implemented")
+        override suspend fun markerSomKvittertAndDeleteJob(varselId: UUID) = TODO("Not yet implemented")
+        override suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlientResponse) = TODO("Not yet implemented")
+        override suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime) = TODO("Not yet implemented")
+        override suspend fun rescheduleWaitingJobs(scheduledAt: LocalDateTime) = TODO("Not yet implemented")
+        override suspend fun jobQueueCount() = TODO("Not yet implemented")
+        override suspend fun waitQueueCount() = TODO("Not yet implemented")
+        override suspend fun mottakerErPåAllowList(mottaker: String) = TODO("Not yet implemented")
+        override suspend fun updateEmergencyBrakeTo(newState: Boolean) = TODO("Not yet implemented")
+    }
     val kafka = mockk<KafkaProducer<String, VarslingStatusDto>>()
     val service = EksternVarslingStatusEksportService(
         eventSource = mockk(),
@@ -45,9 +68,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         ).forEach { feilkode ->
             context("når hendelse er EksterntVarselFeilet med feilkode = $feilkode") {
                 val varselTilstand = varselTilstand(uuid("314"), LØPENDE)
-                coEvery {
-                    repository.findVarsel(uuid("314"))
-                } returns varselTilstand
+                repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
 
                 val event = eksterntVarselFeilet(feilkode, uuid("314"))
                 service.testProsesserHendelse(event, hendelseMetadata)
@@ -72,9 +93,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                 SPESIFISERT,
                 LocalDateTime.parse("2021-01-01T01:01:01")
             )
-            coEvery {
-                repository.findVarsel(uuid("314"))
-            } returns varselTilstand
+            repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
 
             val event = eksterntVarselFeilet("42", uuid("314"))
             service.testProsesserHendelse(event, hendelseMetadata)
@@ -92,9 +111,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         }
 
         context("når hendelse er EksterntVarselFeilet men varsel er harddeleted") {
-            coEvery {
-                repository.findVarsel(uuid("314"))
-            } returns null // finnes ikke pga hard delete
+            repository.varselTilstander.clear()
 
             service.testProsesserHendelse(
                 eksterntVarselFeilet("30308", uuid("314")),
@@ -109,9 +126,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         }
 
         context("når hendelse er EksterntVarselVellykket men varsel er harddeleted") {
-            coEvery {
-                repository.findVarsel(uuid("314"))
-            } returns null // finnes ikke pga hard delete
+            repository.varselTilstander.clear()
 
             service.testProsesserHendelse(
                 eksterntVarselVellykket(uuid("314")),
@@ -131,9 +146,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                 SPESIFISERT,
                 LocalDateTime.parse("2021-01-01T01:01:01")
             )
-            coEvery {
-                repository.findVarsel(uuid("314"))
-            } returns varselTilstand
+            repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
 
             val event = eksterntVarselVellykket(uuid("314"))
             service.prosesserHendelse(
@@ -207,3 +220,68 @@ private fun eksterntVarselVellykket(varselId: UUID) = HendelseModel.EksterntVars
     varselId = varselId,
     råRespons = NullNode.instance
 )
+
+suspend fun Database.insertVarselTilstand(varselTilstand: EksternVarselTilstand.Sendt) {
+    nonTransactionalExecuteUpdate(
+        """
+                insert into ekstern_varsel_kontaktinfo
+                (
+                    varsel_id,
+                    notifikasjon_id,
+                    notifikasjon_opprettet,
+                    produsent_id,
+                    varsel_type,
+                    tlfnr,
+                    fnr_eller_orgnr,
+                    sms_tekst,
+                    sendevindu,
+                    sendetidspunkt,
+                    state
+                )
+                values (?, ?, ?, ?, 'SMS', ?, ?, ?, ?, ?, 'NY');
+                """
+    ) {
+        uuid(varselTilstand.data.varselId)
+        uuid(varselTilstand.data.notifikasjonId)
+        timestamp_without_timezone_utc(Instant.now())
+        text(varselTilstand.data.produsentId)
+        text("")
+        text("")
+        text("")
+        text(varselTilstand.data.eksternVarsel.sendeVindu.toString())
+        nullableText(varselTilstand.data.eksternVarsel.sendeTidspunkt?.toString())
+    }
+
+    nonTransactionalExecuteUpdate(
+        """ 
+                update ekstern_varsel_kontaktinfo
+                set 
+                    state = '${EksterntVarselTilstand.SENDT}',
+                    altinn_response = ?::jsonb,
+                    sende_status = ?::status,
+                    feilmelding = ?,
+                    altinn_feilkode = ?
+                where varsel_id = ?
+            """
+    ) {
+        jsonb(varselTilstand.response.rå)
+        when (val r = varselTilstand.response) {
+            is AltinnResponse.Feil -> {
+                text("FEIL")
+                nullableText(r.feilmelding)
+                nullableText(r.feilkode)
+            }
+
+            is AltinnResponse.Ok -> {
+                text("OK")
+                nullableText(null)
+                nullableText(null)
+            }
+
+            else -> {
+                TODO("why does kotlin not know that this is exhaustive?")
+            }
+        }
+        uuid(varselTilstand.data.varselId)
+    }
+}

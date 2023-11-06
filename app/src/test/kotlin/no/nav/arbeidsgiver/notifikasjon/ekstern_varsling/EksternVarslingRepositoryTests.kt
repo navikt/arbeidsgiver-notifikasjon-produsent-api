@@ -36,7 +36,7 @@ import javax.xml.namespace.QName
 
 class EksternVarslingRepositoryTests: DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
+    val repository = EksternVarslingRepositoryImpl(database)
 
     val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "1",

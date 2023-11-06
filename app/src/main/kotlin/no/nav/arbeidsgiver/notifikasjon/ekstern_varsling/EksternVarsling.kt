@@ -35,7 +35,7 @@ object EksternVarsling {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val eksternVarslingModelAsync = async {
-                EksternVarslingRepository(database.await())
+                EksternVarslingRepositoryImpl(database.await())
             }
 
             launch {
@@ -168,7 +168,7 @@ data class UpdateEmergencyBrakeRequestBody(
 )
 
 suspend fun PipelineContext<Unit, ApplicationCall>.updateEmergencyBrake(
-    eksternVarslingRepository: EksternVarslingRepository
+    eksternVarslingRepository: EksternVarslingRepositoryImpl
 ) {
     val newState = call.receive<UpdateEmergencyBrakeRequestBody>().newState
     eksternVarslingRepository.updateEmergencyBrakeTo(newState)

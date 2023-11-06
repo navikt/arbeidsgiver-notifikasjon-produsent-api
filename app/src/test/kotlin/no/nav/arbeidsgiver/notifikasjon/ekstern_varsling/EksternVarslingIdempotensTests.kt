@@ -8,7 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
 class EksternVarslingIdempotensTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
+    val repository = EksternVarslingRepositoryImpl(database)
 
     describe("Ekstern Varlsing Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
