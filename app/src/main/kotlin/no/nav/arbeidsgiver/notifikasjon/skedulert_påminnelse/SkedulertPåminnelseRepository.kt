@@ -111,8 +111,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
     }
 
     fun processHendelse(hendelse: HendelseModel.Hendelse) {
-        @Suppress("UNUSED_VARIABLE")
-        val ignored = when (hendelse) {
+        when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> database.useTransaction {
                 oppgaveOpprettet(hendelse)
 

@@ -15,7 +15,7 @@ import java.util.*
 
 class IdempotentOppgaveOpprettetTests: DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
+    val repository = EksternVarslingRepositoryImpl(database)
 
     val smsVarsel = SmsVarselKontaktinfo(
         varselId = uuid("1"),
