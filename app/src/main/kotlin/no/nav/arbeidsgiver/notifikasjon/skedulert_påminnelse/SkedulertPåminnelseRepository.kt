@@ -2,8 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.*
-import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Bestillingstilstand.BESTILLING_AKTIV
-import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Bestillingstilstand.BESTILLING_LUKKET
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Oppgavetilstand.*
 import java.sql.Connection
 import java.time.Instant
@@ -15,10 +13,6 @@ private typealias BestillingHendelseId = UUID
 
 enum class Oppgavetilstand {
     OPPGAVE_AKTIV, OPPGAVE_UTFØRT, OPPGAVE_SLETTET
-}
-
-enum class Bestillingstilstand {
-    BESTILLING_AKTIV, BESTILLING_LUKKET
 }
 
 class SkedulertPåminnelseRepository : AutoCloseable {
@@ -50,9 +44,13 @@ class SkedulertPåminnelseRepository : AutoCloseable {
             primary key (merkelapp, grupperingsid)
         );
         
+        -- utførte (inkludert avbrutte) bestillinger
+        create table utforte_bestillinger(
+            bestilling_id text not null primary key
+        );
+        
         create table bestillinger(
-            bestilling_hendelseid text not null primary key,
-            tilstand text not null,
+            bestilling_id text not null primary key,
             paaminnelsestidspunkt text not null,
             oppgave_id text references oppgaver(oppgave_id),
             frist_opprettet_tidspunkt text not null,
@@ -63,7 +61,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
             produsent_id text not null
         );
         
-        create index bestillinger_utsendelse_idx on bestillinger(tilstand, paaminnelsestidspunkt);
+        create index bestillinger_utsendelse_idx on bestillinger(paaminnelsestidspunkt);
         create index bestillinger_oppgave_id_idx on bestillinger(oppgave_id); 
         """.trimIndent()
     )
@@ -72,14 +70,11 @@ class SkedulertPåminnelseRepository : AutoCloseable {
 
     fun hentOgFjernAlleAktuellePåminnelser(now: Instant): Collection<SkedulertPåminnelse> {
         return database.useTransaction {
-            executeQuery(
+            val bestillinger = executeQuery(
                 """
-                    update bestillinger
-                    set
-                        tilstand = '$BESTILLING_LUKKET' -- optimistisk, men ved feil restartes container
+                    delete from bestillinger
                     where 
-                        tilstand = '$BESTILLING_AKTIV'
-                        and paaminnelsestidspunkt <= ?
+                        paaminnelsestidspunkt <= ?
                         and oppgave_id in (
                             select oppgave_id from oppgaver where tilstand = '$OPPGAVE_AKTIV' 
                         )
@@ -100,13 +95,24 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                                 eksterneVarsler = getJson("eksterne_varsler_json"),
                                 virksomhetsnummer = getString("virksomhetsnummer"),
                                 produsentId = getString("produsent_id"),
-                                bestillingHendelseId = getUUID("bestilling_hendelseid"),
+                                bestillingHendelseId = getUUID("bestilling_id"),
                             )
                         )
                     }
                     resultat
                 }
             )
+
+            executeBatch(
+                """
+                    insert into utforte_bestillinger(bestilling_id) values (?) on conflict do nothing
+                """.trimIndent(),
+                bestillinger,
+            ) {
+                setUUID(it.bestillingHendelseId)
+            }
+
+            return@useTransaction bestillinger
         }
     }
 
@@ -193,24 +199,46 @@ class SkedulertPåminnelseRepository : AutoCloseable {
     }
 
     private fun Connection.markerPåminnelserLukket(oppgaveId: UUID) {
-        executeUpdate(
+        val slettedeBestillingsIder = executeQuery(
             """
-                update bestillinger
-                set tilstand = '$BESTILLING_LUKKET'
+                delete from bestillinger
                 where oppgave_id = ?
-            """.trimIndent()
+                returning bestilling_id
+            """.trimIndent(),
+            setup = {
+                setUUID(oppgaveId)
+            },
+            result = {
+                resultAsList {
+                    getUUID("bestilling_id")
+                }
+            }
+        )
+
+        executeBatch(
+            """
+                insert into utforte_bestillinger(bestilling_id) values (?) on conflict do nothing
+            """.trimIndent(),
+            slettedeBestillingsIder,
         ) {
-            setUUID(oppgaveId)
+            setUUID(it)
         }
     }
 
     private fun Connection.markerBestillingLukket(bestillingId: UUID) {
         executeUpdate(
             """
-                update bestillinger
-                set tilstand = '$BESTILLING_LUKKET'
-                where bestilling_hendelseid = ?
+                delete from bestillinger
+                where bestilling_id = ?
             """.trimIndent()
+        ) {
+            setUUID(bestillingId)
+        }
+
+        executeUpdate(
+            """
+                insert into utforte_bestillinger(bestilling_id) values (?) on conflict do nothing
+            """.trimIndent(),
         ) {
             setUUID(bestillingId)
         }
@@ -304,11 +332,10 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                 eksterne_varsler_json,
                 virksomhetsnummer,
                 produsent_id,
-                bestilling_hendelseid,
-                paaminnelsestidspunkt,
-                tilstand
-            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, '$BESTILLING_AKTIV')
-            on conflict (bestilling_hendelseid) do nothing
+                bestilling_id,
+                paaminnelsestidspunkt
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            on conflict (bestilling_id) do nothing
             """.trimIndent()
         ) {
             setUUID(hendelse.aggregateId)
