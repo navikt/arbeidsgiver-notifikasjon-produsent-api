@@ -79,7 +79,7 @@ class KafkaReaperModelImpl(
                             hendelse.grupperingsid
                             hendelse.merkelapp
                         },
-                        transform = { getObject("notifikasjon_id", UUID::class.java) }
+                        transform = { getObject("hendelse_id", UUID::class.java) }
                     )
                     notifikasjoner.forEach { hendelsesid ->
                         executeUpdate(
