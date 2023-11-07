@@ -46,7 +46,7 @@ class KafkaReaperModelImpl(
         database.transaction({}) {
             executeUpdate(
                 """
-                INSERT INTO "kafka-reaper-model".public.notifikasjon_hendelse_relasjon
+                INSERT INTO notifikasjon_hendelse_relasjon
                 (
                     hendelse_id,
                     notifikasjon_id,
