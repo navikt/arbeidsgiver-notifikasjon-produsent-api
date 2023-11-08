@@ -30,7 +30,7 @@ class NyBeskjedTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepository(database)
     val kafkaProducer = mockk<HendelseProdusent>()
-    coEvery { kafkaProducer.sendOgHentMetadata(any<BeskjedOpprettet>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
+    coEvery { kafkaProducer.sendOgHentMetadata(any()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = kafkaProducer,
