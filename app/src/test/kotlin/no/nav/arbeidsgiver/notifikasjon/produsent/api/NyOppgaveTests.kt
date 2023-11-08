@@ -24,9 +24,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class NyOppgaveTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepository(database)

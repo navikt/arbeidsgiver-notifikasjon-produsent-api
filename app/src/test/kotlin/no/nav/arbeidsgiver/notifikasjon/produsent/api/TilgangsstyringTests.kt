@@ -8,9 +8,7 @@ import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class TilgangsstyringTests : DescribeSpec({
     val engine = ktorProdusentTestServer(
         produsentRepository = mockk()

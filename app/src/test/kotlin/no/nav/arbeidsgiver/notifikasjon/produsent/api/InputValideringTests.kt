@@ -6,9 +6,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldContainIgnoringCase
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class InputValideringTests : DescribeSpec({
     val engine = ktorProdusentTestServer()
 

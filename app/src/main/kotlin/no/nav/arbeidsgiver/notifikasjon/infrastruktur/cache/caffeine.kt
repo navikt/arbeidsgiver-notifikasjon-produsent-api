@@ -208,19 +208,12 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
 import com.github.benmanes.caffeine.cache.RemovalCause
 import com.github.benmanes.caffeine.cache.stats.StatsCounter
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.launch
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlin.time.toJavaDuration
 
 /* Hentet fra https://github.com/sksamuel/aedile 30 september 2022 */
-@OptIn(ExperimentalTime::class)
 data class Configuration<K : Any, V : Any>(
 
     /**
@@ -277,7 +270,6 @@ data class Configuration<K : Any, V : Any>(
 /**
  * Creates a [Builder] which by default uses [Dispatchers.IO] to execute computation functions.
  */
-@OptIn(ExperimentalTime::class)
 fun <K : Any, V : Any> caffeineBuilder(configure: Configuration<K, V>.() -> Unit = {}): Builder<K, V> {
 
     val c = Configuration<K, V>()
