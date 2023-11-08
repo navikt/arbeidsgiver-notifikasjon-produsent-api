@@ -4,82 +4,67 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import io.mockk.coEvery
-import io.mockk.mockk
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
+import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
-import java.time.OffsetDateTime
-import java.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
 
 class BrukerApiTests : DescribeSpec({
-    val brukerRepository: BrukerRepositoryImpl = mockk()
+    val database = testDatabase(Bruker.databaseConfig)
+    val brukerRepository = BrukerRepositoryImpl(database)
+
+    val fnr = "00000000000"
+    val ansattFnr = "12344321"
+    val virksomhetsnummer = "1234"
+    val mottaker = HendelseModel.NærmesteLederMottaker(fnr, ansattFnr, virksomhetsnummer)
 
     val engine = ktorBrukerTestServer(
         brukerRepository = brukerRepository,
     )
 
-    describe("graphql bruker-api") {
-        context("Query.notifikasjoner") {
+    describe("graphql bruker-api Query.notifikasjoner") {
+        val beskjed = brukerRepository.beskjedOpprettet(
+            virksomhetsnummer = virksomhetsnummer,
+            mottakere = listOf(mottaker),
+        )
+        val oppgave = brukerRepository.oppgaveOpprettet(
+            virksomhetsnummer = virksomhetsnummer,
+            mottakere = listOf(mottaker),
+        )
 
-            val beskjed = BrukerModel.Beskjed(
-                merkelapp = "foo",
-                tekst = "",
-                grupperingsid = null,
-                lenke = "",
-                eksternId = "",
-                virksomhetsnummer = "43",
-                opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-                id = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130003"),
-                klikketPaa = false
+        brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
+            NarmesteLederLeesah(
+                narmesteLederId = uuid("123"),
+                fnr = mottaker.ansattFnr,
+                narmesteLederFnr = mottaker.naermesteLederFnr,
+                orgnummer = mottaker.virksomhetsnummer,
+                aktivTom = null
             )
+        )
 
-            val oppgave = BrukerModel.Oppgave(
-                tilstand = BrukerModel.Oppgave.Tilstand.NY,
-                merkelapp = "foo",
-                tekst = "",
-                grupperingsid = "",
-                lenke = "",
-                eksternId = "",
-                virksomhetsnummer = "43",
-                opprettetTidspunkt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00"),
-                utgaattTidspunkt = null,
-                id = UUID.fromString("c39986f2-b31a-11eb-8529-0242ac130005"),
-                klikketPaa = false,
-                frist = null,
-                paaminnelseTidspunkt = null,
-                utfoertTidspunkt = null,
-            )
+        val response = engine.queryNotifikasjonerJson()
 
-            coEvery {
-                brukerRepository.hentNotifikasjoner(any(), any())
-            } returns listOf(beskjed, oppgave)
+        it("response inneholder riktig data") {
+            response.getTypedContent<List<BrukerAPI.Notifikasjon>>("notifikasjoner/notifikasjoner").let {
+                it shouldNot beEmpty()
+                val returnedBeskjed = it[0] as BrukerAPI.Notifikasjon.Beskjed
+                returnedBeskjed.merkelapp shouldBe beskjed.merkelapp
+                returnedBeskjed.id shouldBe beskjed.notifikasjonId
+                returnedBeskjed.brukerKlikk.klikketPaa shouldBe false
 
-            coEvery {
-                brukerRepository.hentSakerForNotifikasjoner(any())
-            } returns emptyMap()
-
-            val response = engine.queryNotifikasjonerJson()
-
-            it("response inneholder riktig data") {
-                response.getTypedContent<List<BrukerAPI.Notifikasjon>>("notifikasjoner/notifikasjoner").let {
-                    it shouldNot beEmpty()
-                    val returnedBeskjed = it[0] as BrukerAPI.Notifikasjon.Beskjed
-                    returnedBeskjed.merkelapp shouldBe beskjed.merkelapp
-                    returnedBeskjed.id shouldBe beskjed.id
-                    returnedBeskjed.brukerKlikk.klikketPaa shouldBe false
-
-                    val returnedOppgave = it[1] as BrukerAPI.Notifikasjon.Oppgave
-                    returnedOppgave.merkelapp shouldBe oppgave.merkelapp
-                    returnedOppgave.id shouldBe oppgave.id
-                    returnedOppgave.brukerKlikk.klikketPaa shouldBe false
-                }
+                val returnedOppgave = it[1] as BrukerAPI.Notifikasjon.Oppgave
+                returnedOppgave.merkelapp shouldBe oppgave.merkelapp
+                returnedOppgave.id shouldBe oppgave.notifikasjonId
+                returnedOppgave.brukerKlikk.klikketPaa shouldBe false
             }
+        }
 
-            it("notifikasjoner hentet counter økt") {
-                val vellykket = meterRegistry.get("notifikasjoner_hentet").counter().count()
-                vellykket shouldBe 2
-            }
+        it("notifikasjoner hentet counter økt") {
+            val vellykket = meterRegistry.get("notifikasjoner_hentet").counter().count()
+            vellykket shouldBe 2
         }
     }
 })
