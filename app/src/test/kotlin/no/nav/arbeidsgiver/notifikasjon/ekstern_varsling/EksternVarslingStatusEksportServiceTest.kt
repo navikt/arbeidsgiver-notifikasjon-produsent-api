@@ -3,19 +3,20 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu.LØPENDE
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu.SPESIFISERT
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.suspendingSend
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDateTime
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.MockProducer
+import org.apache.kafka.common.serialization.StringSerializer
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 class EksternVarslingStatusEksportServiceTest : DescribeSpec({
     val repository = object : EksternVarslingRepository {
@@ -40,25 +41,18 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         override suspend fun mottakerErPåAllowList(mottaker: String) = TODO("Not yet implemented")
         override suspend fun updateEmergencyBrakeTo(newState: Boolean) = TODO("Not yet implemented")
     }
-    val kafka = mockk<KafkaProducer<String, VarslingStatusDto>>()
+    val kafka = MockProducer(true, StringSerializer(), VarslingStatusDtoSerializer())
     val service = EksternVarslingStatusEksportService(
-        eventSource = mockk(),
+        eventSource = object : Hendelsesstrøm {
+            override suspend fun forEach(
+                stop: AtomicBoolean,
+                body: suspend (HendelseModel.Hendelse, HendelseModel.HendelseMetadata) -> Unit
+            ): Unit = TODO("Not yet implemented")
+        },
         repo = repository,
         kafka = kafka,
     )
     val hendelseMetadata = HendelseModel.HendelseMetadata(Instant.parse("2020-01-01T01:01:01.00Z"))
-    val recordSlot = slot<ProducerRecord<String, VarslingStatusDto>>()
-
-    beforeContainer {
-        mockkStatic(KafkaProducer<String, VarslingStatusDto>::suspendingSend)
-        coEvery {
-            kafka.suspendingSend(capture(recordSlot))
-        } returns mockk()
-    }
-
-    afterContainer {
-        unmockkAll()
-    }
 
     describe("EksternVarslingStatusEksportService#prosesserHendelse") {
         listOf(
@@ -67,14 +61,17 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             "30308",
         ).forEach { feilkode ->
             context("når hendelse er EksterntVarselFeilet med feilkode = $feilkode") {
+
                 val varselTilstand = varselTilstand(uuid("314"), LØPENDE)
                 repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
 
+                kafka.clear()
                 val event = eksterntVarselFeilet(feilkode, uuid("314"))
                 service.testProsesserHendelse(event, hendelseMetadata)
 
                 it("sender en VarslingStatusDto med status MANGLER_KOFUVI") {
-                    recordSlot.captured.value().let {
+                    kafka.history().size shouldBe 1
+                    kafka.history().first().value().let {
                         it.status shouldBe Status.MANGLER_KOFUVI
 
                         it.virksomhetsnummer shouldBe event.virksomhetsnummer
@@ -95,11 +92,13 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             )
             repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
 
+            kafka.clear()
             val event = eksterntVarselFeilet("42", uuid("314"))
             service.testProsesserHendelse(event, hendelseMetadata)
 
             it("sender en VarslingStatusDto med status MANGLER_KOFUVI") {
-                recordSlot.captured.value().let {
+                kafka.history().size shouldBe 1
+                kafka.history().first().value().let {
                     it.status shouldBe Status.ANNEN_FEIL
 
                     it.virksomhetsnummer shouldBe event.virksomhetsnummer
@@ -112,6 +111,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
 
         context("når hendelse er EksterntVarselFeilet men varsel er harddeleted") {
             repository.varselTilstander.clear()
+            kafka.clear()
 
             service.testProsesserHendelse(
                 eksterntVarselFeilet("30308", uuid("314")),
@@ -119,14 +119,13 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             )
 
             it("sender ikke VarslingStatusDto") {
-                coVerify {
-                    kafka.suspendingSend(any()) wasNot Called
-                }
+                kafka.history().size shouldBe 0
             }
         }
 
         context("når hendelse er EksterntVarselVellykket men varsel er harddeleted") {
             repository.varselTilstander.clear()
+            kafka.clear()
 
             service.testProsesserHendelse(
                 eksterntVarselVellykket(uuid("314")),
@@ -134,9 +133,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             )
 
             it("sender ikke VarslingStatusDto") {
-                coVerify {
-                    kafka.suspendingSend(any()) wasNot Called
-                }
+                kafka.history().size shouldBe 0
             }
         }
 
@@ -148,6 +145,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             )
             repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
 
+            kafka.clear()
             val event = eksterntVarselVellykket(uuid("314"))
             service.prosesserHendelse(
                 event = event,
@@ -155,7 +153,8 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             )
 
             it("sender en VarslingStatusDto med status OK") {
-                recordSlot.captured.value().let {
+                kafka.history().size shouldBe 1
+                kafka.history().first().value().let {
                     it.status shouldBe Status.OK
 
                     it.virksomhetsnummer shouldBe event.virksomhetsnummer

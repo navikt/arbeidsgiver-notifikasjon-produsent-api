@@ -4,9 +4,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.COMMON_PROPERTIES
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.JsonSerializer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.SSL_PROPERTIES
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.suspendingSend
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDateTime
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
@@ -16,9 +21,9 @@ import java.util.*
 
 class EksternVarslingStatusEksportService(
     private val åpningstider: Åpningstider = ÅpningstiderImpl,
-    val eventSource: HendelsesstrømKafkaImpl,
+    val eventSource: Hendelsesstrøm,
     val repo: EksternVarslingRepository,
-    val kafka: KafkaProducer<String, VarslingStatusDto> = createKafkaProducer(),
+    val kafka: Producer<String, VarslingStatusDto> = createKafkaProducer(),
 ) {
 
     fun start(coroutineScope: CoroutineScope): Job {
