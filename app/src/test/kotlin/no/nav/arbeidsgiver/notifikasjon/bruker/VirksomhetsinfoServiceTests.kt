@@ -2,15 +2,9 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.coEvery
-import io.mockk.mockk
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
+import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.BlockingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
 
@@ -25,24 +19,28 @@ class VirksomhetsinfoServiceTests: DescribeSpec({
         enhetsregisteret = enhetsregisteret,
     )
 
-    val altinnrettigheteterProxyKlient = mockk<AltinnrettigheterProxyKlient>()
-
-    coEvery {
-        altinnrettigheteterProxyKlient.hentOrganisasjoner(any(), any(), any(), any(), any())
-    } returns listOf(
-        baseAltinnReportee.copy(
-            name = "altinn 1",
-            organizationNumber = "1"
-        ),
-        baseAltinnReportee.copy(
-            name = "altinn 2",
-            organizationNumber = "2",
-        ),
-        baseAltinnReportee.copy(
-            name = "altinn 3",
-            organizationNumber = "3",
+    val altinnrettigheteterProxyKlient = object : BlockingAltinnClient {
+        override fun hentOrganisasjoner(
+            accessToken: TokenXToken,
+            subject: Subject,
+            serviceCode: ServiceCode,
+            serviceEdition: ServiceEdition,
+            filtrerPåAktiveOrganisasjoner: Boolean
+        ): List<AltinnReportee> = listOf(
+            baseAltinnReportee.copy(
+                name = "altinn 1",
+                organizationNumber = "1"
+            ),
+            baseAltinnReportee.copy(
+                name = "altinn 2",
+                organizationNumber = "2",
+            ),
+            baseAltinnReportee.copy(
+                name = "altinn 3",
+                organizationNumber = "3",
+            )
         )
-    )
+    }
 
     val altinn = SuspendingAltinnClient(
         blockingClient = altinnrettigheteterProxyKlient,
