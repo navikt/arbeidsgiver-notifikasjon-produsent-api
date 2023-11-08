@@ -5,21 +5,16 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import io.mockk.unmockkAll
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import io.kotest.matchers.types.instanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.produsent.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -28,13 +23,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepository(database)
-    val kafkaProducer = mockk<HendelseProdusent>()
-
-    coEvery { kafkaProducer.sendOgHentMetadata(ofType<SoftDelete>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
-
-    afterSpec {
-        unmockkAll()
-    }
+    val kafkaProducer = FakeHendelseProdusent()
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = kafkaProducer,
@@ -111,7 +100,9 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify { kafkaProducer.sendOgHentMetadata(ofType<SoftDelete>()) }
+                kafkaProducer.hendelser.removeLast().also {
+                    it shouldBe instanceOf<SoftDelete>()
+                }
             }
 
             it("har slettet-status i modellen") {
@@ -320,7 +311,9 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify { kafkaProducer.sendOgHentMetadata(ofType<SoftDelete>()) }
+                kafkaProducer.hendelser.removeLast().also {
+                    it shouldBe instanceOf<SoftDelete>()
+                }
             }
 
             it("har fått slettet tidspunkt") {
