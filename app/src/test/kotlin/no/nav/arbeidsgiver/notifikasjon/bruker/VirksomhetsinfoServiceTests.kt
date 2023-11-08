@@ -21,7 +21,7 @@ class VirksomhetsinfoServiceTests: DescribeSpec({
 
     val altinnrettigheteterProxyKlient = object : BlockingAltinnClient {
         override fun hentOrganisasjoner(
-            accessToken: TokenXToken,
+            accessToken: Token,
             subject: Subject,
             serviceCode: ServiceCode,
             serviceEdition: ServiceEdition,

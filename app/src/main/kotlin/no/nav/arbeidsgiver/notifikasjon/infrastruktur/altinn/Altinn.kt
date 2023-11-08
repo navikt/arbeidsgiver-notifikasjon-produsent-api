@@ -29,7 +29,7 @@ interface Altinn {
 }
 
 class AltinnImpl(
-    private val klient: SuspendingAltinnClient,
+    private val klient: BlockingAltinnClient,
 ) : Altinn {
     private val log = logger()
     private val timer = Metrics.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
@@ -88,7 +88,7 @@ class AltinnImpl(
 }
 
 class AltinnCachedImpl(
-    klient: SuspendingAltinnClient,
+    klient: BlockingAltinnClient,
     maxCacheSize: Long = 10_000,
     cacheExpiry: Duration = Duration.ofMinutes(10)
 ) : Altinn {
