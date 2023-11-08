@@ -6,18 +6,16 @@ import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.*
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import io.kotest.matchers.types.instanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.produsent.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -26,13 +24,8 @@ import java.util.*
 class HardDeleteNotifikasjonTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val produsentModel = ProdusentRepository(database)
-    val kafkaProducer = mockk<HendelseProdusent>()
+    val kafkaProducer = FakeHendelseProdusent()
 
-    coEvery { kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
-
-    afterSpec {
-        unmockkAll()
-    }
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = kafkaProducer,
@@ -107,7 +100,9 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify { kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) }
+                kafkaProducer.hendelser.removeLast().also {
+                    it shouldBe instanceOf<HardDelete>()
+                }
             }
 
             it("har blitt fjernet fra modellen") {
@@ -263,7 +258,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
 
 
         context("Eksisterende oppgave blir slettet") {
-
+            kafkaProducer.clear()
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet2)
 
@@ -290,7 +285,9 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
             }
 
             it("har sendt melding til kafka") {
-                coVerify { kafkaProducer.sendOgHentMetadata(ofType<HardDelete>()) }
+                kafkaProducer.hendelser.removeLast().also {
+                    it shouldBe instanceOf<HardDelete>()
+                }
             }
 
             it("finnes ikke i modellen") {
