@@ -12,7 +12,7 @@ import java.util.*
 
 class SkedulertHardDeleteRepositoryTests : DescribeSpec({
     val database = testDatabase(SkedulertHardDelete.databaseConfig)
-    val repository = SkedulertHardDeleteRepository(database)
+    val repository = SkedulertHardDeleteRepositoryImpl(database)
 
     describe("SkedulertHardDeleteRepository#cleanupOrphanedHardDeletes") {
         repository.oppdaterModellEtterHendelse(beskjedOpprettet("42"), now())

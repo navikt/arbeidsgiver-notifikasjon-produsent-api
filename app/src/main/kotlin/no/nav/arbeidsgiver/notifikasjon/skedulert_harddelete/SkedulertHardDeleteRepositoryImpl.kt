@@ -4,6 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.FORLENG
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.*
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType.*
 import java.sql.ResultSet
 import java.time.Instant
@@ -11,9 +12,7 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
-class SkedulertHardDeleteRepository(
-    private val database: Database
-) {
+interface SkedulertHardDeleteRepository {
     data class SkedulertHardDelete(
         val aggregateId: UUID,
         val aggregateType: AggregateType,
@@ -71,7 +70,31 @@ class SkedulertHardDeleteRepository(
 
     suspend fun hentSkedulerteHardDeletes(
         tilOgMed: Instant,
-    ): List<SkedulertHardDelete> {
+    ): List<SkedulertHardDelete>
+
+    suspend fun hentNotifikasjonerForSak(
+        merkelapp: String,
+        grupperingsid: String,
+    ): List<NotifikasjonForSak>
+
+    suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant)
+
+    suspend fun hardDelete(aggregateId: UUID)
+
+    suspend fun finnRegistrerteHardDeletes(limit: Int): List<RegistrertHardDelete>
+
+    suspend fun deleteOrphanedHardDeletes(): Int
+
+    suspend fun hent(aggregateId: UUID): SkedulertHardDelete?
+}
+
+class SkedulertHardDeleteRepositoryImpl(
+    private val database: Database
+) : SkedulertHardDeleteRepository {
+
+    override suspend fun hentSkedulerteHardDeletes(
+        tilOgMed: Instant,
+    ): List<SkedulertHardDeleteRepository.SkedulertHardDelete> {
         return database.nonTransactionalExecuteQuery(
             sql = """
             select 
@@ -100,7 +123,7 @@ class SkedulertHardDeleteRepository(
         )
     }
 
-    suspend fun hentNotifikasjonerForSak(
+    override suspend fun hentNotifikasjonerForSak(
         merkelapp: String,
         grupperingsid: String,
     ): List<NotifikasjonForSak> {
@@ -131,7 +154,7 @@ class SkedulertHardDeleteRepository(
         )
     }
 
-    suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
+    override suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
         when (hendelse) {
             is HendelseModel.BeskjedOpprettet -> {
                 saveAggregate(hendelse, Beskjed, hendelse.merkelapp, hendelse.grupperingsid)
@@ -243,7 +266,7 @@ class SkedulertHardDeleteRepository(
         }
     }
 
-    suspend fun hardDelete(aggregateId: UUID) {
+    override suspend fun hardDelete(aggregateId: UUID) {
         database.transaction {
             executeUpdate("""
                 delete from aggregate where aggregate_id = ?  
@@ -258,7 +281,7 @@ class SkedulertHardDeleteRepository(
         }
     }
 
-    suspend fun finnRegistrerteHardDeletes(limit: Int): List<RegistrertHardDelete> {
+    override suspend fun finnRegistrerteHardDeletes(limit: Int): List<RegistrertHardDelete> {
         return database.nonTransactionalExecuteQuery("""
             select 
                 aggregate.aggregate_id,
@@ -285,12 +308,12 @@ class SkedulertHardDeleteRepository(
         }
     }
 
-    suspend fun deleteOrphanedHardDeletes() = database.nonTransactionalExecuteUpdate("""
+    override suspend fun deleteOrphanedHardDeletes() = database.nonTransactionalExecuteUpdate("""
         delete from registrert_hard_delete_event 
             where aggregate_id not in (select aggregate_id from aggregate);
     """)
 
-    suspend fun hent(aggregateId: UUID): SkedulertHardDelete? {
+    override suspend fun hent(aggregateId: UUID): SkedulertHardDeleteRepository.SkedulertHardDelete? {
         return database.nonTransactionalExecuteQuery("""
             select 
                 aggregate.aggregate_id,
@@ -313,25 +336,27 @@ class SkedulertHardDeleteRepository(
         }.firstOrNull()
     }
 
-    private fun ResultSet.toSkedulertHardDelete() =
-        SkedulertHardDelete(
-            aggregateId = getObject("aggregate_id", java.util.UUID::class.java),
+    private fun ResultSet.toSkedulertHardDelete(): SkedulertHardDeleteRepository.SkedulertHardDelete {
+        val skedulertHardDelete = SkedulertHardDeleteRepository.SkedulertHardDelete(
+            aggregateId = getObject("aggregate_id", UUID::class.java),
             aggregateType = valueOf(getString("aggregate_type")),
             virksomhetsnummer = getString("virksomhetsnummer"),
             produsentid = getString("produsentid"),
             merkelapp = getString("merkelapp"),
             grupperingsid = getString("grupperingsid"),
-            inputBase = getObject("input_base", java.time.OffsetDateTime::class.java),
-            inputOm = getString("input_om")?.let { no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period.parse(it) },
-            inputDen = getString("input_den")?.let { java.time.LocalDateTime.parse(it) },
-            beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", java.time.OffsetDateTime::class.java).toInstant(),
+            inputBase = getObject("input_base", OffsetDateTime::class.java),
+            inputOm = getString("input_om")?.let { ISO8601Period.parse(it) },
+            inputDen = getString("input_den")?.let { LocalDateTime.parse(it) },
+            beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", OffsetDateTime::class.java).toInstant(),
         )
+        return skedulertHardDelete
+    }
 
     private suspend fun upsert(
         aggregateId: UUID,
         hardDelete: HendelseModel.HardDeleteUpdate?,
         opprettetTidspunkt: Instant,
-        eksisterende: SkedulertHardDelete?,
+        eksisterende: SkedulertHardDeleteRepository.SkedulertHardDelete?,
     ) {
         if (hardDelete == null) return
         val scheduledTime = ScheduledTime(hardDelete.nyTid, opprettetTidspunkt)
