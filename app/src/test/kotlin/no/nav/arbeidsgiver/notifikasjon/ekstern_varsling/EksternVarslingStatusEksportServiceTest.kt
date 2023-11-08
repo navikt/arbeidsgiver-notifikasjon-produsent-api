@@ -79,7 +79,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
 
                         it.virksomhetsnummer shouldBe event.virksomhetsnummer
                         it.varselId shouldBe event.varselId
-                        it.varselTimestamp shouldBe varselTilstand.kalkuertSendetidspunkt(hendelseMetadata.timestamp.asOsloLocalDateTime())
+                        it.varselTimestamp shouldBe varselTilstand.kalkuertSendetidspunkt(ÅpningstiderImpl, hendelseMetadata.timestamp.asOsloLocalDateTime())
                         it.kvittertEventTimestamp shouldBe hendelseMetadata.timestamp
                     }
                 }

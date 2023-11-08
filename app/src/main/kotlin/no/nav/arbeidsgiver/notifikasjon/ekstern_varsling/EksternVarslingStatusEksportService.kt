@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 class EksternVarslingStatusEksportService(
+    private val åpningstider: Åpningstider = ÅpningstiderImpl,
     val eventSource: HendelsesstrømKafkaImpl,
     val repo: EksternVarslingRepository,
     val kafka: KafkaProducer<String, VarslingStatusDto> = createKafkaProducer(),
@@ -75,7 +76,7 @@ class EksternVarslingStatusEksportService(
             virksomhetsnummer = virksomhetsnummer,
             varselId = varselId,
             varselTimestamp = varsel.data.eksternVarsel.sendeTidspunkt
-                ?: varsel.kalkuertSendetidspunkt(hendelseTimestamp.asOsloLocalDateTime()),
+                ?: varsel.kalkuertSendetidspunkt(åpningstider, hendelseTimestamp.asOsloLocalDateTime()),
             kvittertEventTimestamp = hendelseTimestamp,
             status = status
         )
