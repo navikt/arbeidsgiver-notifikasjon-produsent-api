@@ -15,7 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
 class KlikkPåNotifikasjonGraphQLTests : DescribeSpec({
-    val brukerRepository = object : BrukerRepositoryStub {
+    val brukerRepository = object : BrukerRepositoryStub() {
         val hendelser = mutableListOf<HendelseModel.Hendelse>()
         override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String {
             return "1234"

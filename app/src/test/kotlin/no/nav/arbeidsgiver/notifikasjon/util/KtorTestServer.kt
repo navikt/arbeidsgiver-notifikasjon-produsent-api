@@ -4,23 +4,17 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
-import io.ktor.server.application.*
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
-import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import no.nav.arbeidsgiver.notifikasjon.bruker.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.BrukerPrincipal
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.ProdusentPrincipal
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.graphqlSetup
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -30,7 +24,7 @@ import org.intellij.lang.annotations.Language
 
 fun Spec.ktorBrukerTestServer(
     enhetsregisteret: Enhetsregisteret = EnhetsregisteretStub(),
-    brukerRepository: BrukerRepository = mockk(relaxed = true),
+    brukerRepository: BrukerRepository = BrukerRepositoryStub(),
     kafkaProducer: HendelseProdusent = NoopHendelseProdusent,
     altinn: Altinn = AltinnStub(),
     tilgangerService: TilgangerService = TilgangerServiceImpl(altinn),
@@ -58,7 +52,7 @@ fun Spec.ktorBrukerTestServer(
 fun Spec.ktorProdusentTestServer(
     produsentRegister: ProdusentRegister = stubProdusentRegister,
     kafkaProducer: HendelseProdusent = NoopHendelseProdusent,
-    produsentRepository: ProdusentRepository = mockk(relaxed = true),
+    produsentRepository: ProdusentRepository = ProdusentRepositoryStub(),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
     val engine = TestApplicationEngine(

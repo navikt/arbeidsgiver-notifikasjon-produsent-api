@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import java.util.*
 
-interface BrukerRepositoryStub : BrukerRepository {
+open class BrukerRepositoryStub : BrukerRepository {
     override suspend fun hentNotifikasjoner(
         fnr: String,
         tilganger: BrukerModel.Tilganger

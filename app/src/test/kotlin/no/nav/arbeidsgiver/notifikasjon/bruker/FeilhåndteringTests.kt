@@ -13,7 +13,7 @@ class FeilhåndteringTests : DescribeSpec({
     val engine = ktorBrukerTestServer(
         altinn = AltinnStub { _, _ -> Tilganger.FAILURE },
 
-        brukerRepository = object : BrukerRepositoryStub {
+        brukerRepository = object : BrukerRepositoryStub() {
             override suspend fun hentNotifikasjoner(
                 fnr: String, tilganger: Tilganger
             ) = emptyList<BrukerModel.Notifikasjon>()
