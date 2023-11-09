@@ -45,7 +45,6 @@ class SkedulertHardDeleteService(
             registeredHardDeleteEvents.increment(it.size.toDouble())
         }
 
-
         registrerteHardDeletes.forEach { aggregate ->
             if (aggregate.isSak) {
                 if (aggregate.grupperingsid == null) {
