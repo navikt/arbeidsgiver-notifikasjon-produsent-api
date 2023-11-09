@@ -53,6 +53,12 @@ object SkedulertHardDelete {
             ) {
                 service.await().cascadeHardDeletes()
             }
+            launchProcessingLoop(
+                "cleanup-service",
+                pauseAfterEach = Duration.ofMinutes(60)
+            ) {
+                repoAsync.await().deleteOrphanedHardDeletes()
+            }
 
             launchHttpServer(httpPort = httpPort)
         }

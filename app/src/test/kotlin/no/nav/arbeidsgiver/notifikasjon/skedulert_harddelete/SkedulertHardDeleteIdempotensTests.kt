@@ -10,7 +10,7 @@ class SkedulertHardDeleteIdempotensTests : DescribeSpec({
     val database = testDatabase(SkedulertHardDelete.databaseConfig)
     val repository = SkedulertHardDeleteRepository(database)
 
-    describe("SkedulertHardDelete Idempotent oppførsel") {
+    describe("AutoSlett Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
             repository.oppdaterModellEtterHendelse(hendelse, Instant.EPOCH)
             repository.oppdaterModellEtterHendelse(hendelse, Instant.EPOCH)
