@@ -71,7 +71,7 @@ class SkedulertHardDeleteService(
                 }
             }
 
-            repo.hardDeleteCleanup(aggregate.aggregateId)
+            repo.hardDelete(aggregate.aggregateId)
         }
     }
 }
