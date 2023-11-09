@@ -12,7 +12,7 @@ import java.util.*
 
 class ResumeScheduledJobsTests: DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepositoryImpl(database)
+    val repository = EksternVarslingRepository(database)
 
     fun dateTime(hour: String) =
         LocalDateTime.parse("2020-01-01T$hour:00")
