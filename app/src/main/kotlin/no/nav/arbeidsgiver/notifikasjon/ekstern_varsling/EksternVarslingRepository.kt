@@ -31,34 +31,13 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
 
-interface EksternVarslingRepository {
-    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse)
-    suspend fun deleteScheduledHardDeletes()
-    suspend fun releaseTimedOutJobLocks(): List<EksternVarslingRepositoryImpl.ReleasedResource>
-    suspend fun detectEmptyDatabase()
-    suspend fun emergencyBreakOn(): Boolean
-    suspend fun createJobsForAbandonedVarsler()
-    suspend fun findJob(lockTimeout: Duration): UUID?
-    suspend fun findVarsel(varselId: UUID): EksternVarselTilstand?
-    suspend fun returnToJobQueue(varselId: UUID)
-    suspend fun deleteFromJobQueue(varselId: UUID)
-    suspend fun markerSomKvittertAndDeleteJob(varselId: UUID)
-    suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlientResponse)
-    suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime)
-    suspend fun rescheduleWaitingJobs(scheduledAt: LocalDateTime): Int
-    suspend fun jobQueueCount(): Int
-    suspend fun waitQueueCount(): Pair<Int, Int>
-    suspend fun mottakerErPåAllowList(mottaker: String): Boolean
-    suspend fun updateEmergencyBrakeTo(newState: Boolean)
-}
-
-class EksternVarslingRepositoryImpl(
+class EksternVarslingRepository(
     private val database: Database,
-) : EksternVarslingRepository {
+) {
     private val log = logger()
     private val podName = System.getenv("HOSTNAME") ?: "localhost"
 
-    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
         when (hendelse) {
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
@@ -203,7 +182,7 @@ class EksternVarslingRepositoryImpl(
         }
     }
 
-    override suspend fun deleteScheduledHardDeletes() {
+    suspend fun deleteScheduledHardDeletes() {
         database.nonTransactionalExecuteUpdate("""
             delete from ekstern_varsel_kontaktinfo
             where state = '${EksterntVarselTilstand.KVITTERT}'
@@ -425,7 +404,7 @@ class EksternVarslingRepositoryImpl(
         val lockedBy: String,
     )
 
-    override suspend fun releaseTimedOutJobLocks(): List<ReleasedResource> {
+    suspend fun releaseTimedOutJobLocks(): List<ReleasedResource> {
         return database.nonTransactionalExecuteQuery("""
             UPDATE job_queue
             SET locked = false
@@ -441,7 +420,7 @@ class EksternVarslingRepositoryImpl(
     }
 
 
-    override suspend fun detectEmptyDatabase() {
+    suspend fun detectEmptyDatabase() {
         database.transaction {
             val databaseIsEmpty = executeQuery(
                 """select 1 from emergency_break limit 1""", transform = {}
@@ -463,7 +442,7 @@ class EksternVarslingRepositoryImpl(
         }
     }
 
-    override suspend fun emergencyBreakOn(): Boolean {
+    suspend fun emergencyBreakOn(): Boolean {
         return database.nonTransactionalExecuteQuery(
             """ select stop_processing from emergency_break where id = 0 """,
             transform = { getBoolean("stop_processing") }
@@ -473,7 +452,7 @@ class EksternVarslingRepositoryImpl(
     }
 
 
-    override suspend fun createJobsForAbandonedVarsler() {
+    suspend fun createJobsForAbandonedVarsler() {
         database.nonTransactionalExecuteUpdate("""
             insert into job_queue (varsel_id, locked)
             (
@@ -485,7 +464,7 @@ class EksternVarslingRepositoryImpl(
         """)
     }
 
-    override suspend fun findJob(lockTimeout: Duration): UUID? =
+    suspend fun findJob(lockTimeout: Duration): UUID? =
         database.nonTransactionalExecuteQuery("""
             UPDATE job_queue
             SET locked = true,
@@ -514,7 +493,7 @@ class EksternVarslingRepositoryImpl(
         )
             .firstOrNull()
 
-    override suspend fun findVarsel(varselId: UUID): EksternVarselTilstand? {
+    suspend fun findVarsel(varselId: UUID): EksternVarselTilstand? {
         return database.nonTransactionalExecuteQuery(
             """
             select * from ekstern_varsel_kontaktinfo where varsel_id = ?
@@ -587,7 +566,7 @@ class EksternVarslingRepositoryImpl(
     }
 
 
-    override suspend fun returnToJobQueue(varselId: UUID) {
+    suspend fun returnToJobQueue(varselId: UUID) {
         database.transaction {
             returnToJobQueue(varselId)
         }
@@ -598,7 +577,7 @@ class EksternVarslingRepositoryImpl(
         putOnJobQueue(varselId)
     }
 
-    override suspend fun deleteFromJobQueue(varselId: UUID) {
+    suspend fun deleteFromJobQueue(varselId: UUID) {
         database.transaction {
             deleteFromJobQueue(varselId)
         }
@@ -612,7 +591,7 @@ class EksternVarslingRepositoryImpl(
         }
     }
 
-    override suspend fun markerSomKvittertAndDeleteJob(varselId: UUID) {
+    suspend fun markerSomKvittertAndDeleteJob(varselId: UUID) {
         database.transaction {
             executeUpdate(
                 """
@@ -628,7 +607,7 @@ class EksternVarslingRepositoryImpl(
         }
     }
 
-    override suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlientResponse) {
+    suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlientResponse) {
         database.transaction {
             executeUpdate(""" 
                 update ekstern_varsel_kontaktinfo
@@ -661,7 +640,7 @@ class EksternVarslingRepositoryImpl(
         }
     }
 
-    override suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime) {
+    suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime) {
         database.transaction {
             executeUpdate(
                 """
@@ -682,7 +661,7 @@ class EksternVarslingRepositoryImpl(
         }
     }
 
-    override suspend fun rescheduleWaitingJobs(scheduledAt: LocalDateTime): Int {
+    suspend fun rescheduleWaitingJobs(scheduledAt: LocalDateTime): Int {
         return database.nonTransactionalExecuteUpdate(
             """
                 with selected as (
@@ -699,7 +678,7 @@ class EksternVarslingRepositoryImpl(
         }
     }
 
-    override suspend fun jobQueueCount(): Int {
+    suspend fun jobQueueCount(): Int {
         return database.nonTransactionalExecuteQuery("""
             select count(*) as count from job_queue 
         """) {
@@ -707,7 +686,7 @@ class EksternVarslingRepositoryImpl(
         }.first()
     }
 
-    override suspend fun waitQueueCount(): Pair<Int, Int> {
+    suspend fun waitQueueCount(): Pair<Int, Int> {
         return database.nonTransactionalExecuteQuery("""
             select
                 count(case when resume_job_at <= now() then 1 end) as past,
@@ -718,7 +697,7 @@ class EksternVarslingRepositoryImpl(
         }.first()
     }
 
-    override suspend fun mottakerErPåAllowList(mottaker: String): Boolean {
+    suspend fun mottakerErPåAllowList(mottaker: String): Boolean {
         return database.nonTransactionalExecuteQuery("""
             select mottaker from allow_list 
             where mottaker = ?
@@ -730,7 +709,7 @@ class EksternVarslingRepositoryImpl(
         }.isNotEmpty()
     }
 
-    override suspend fun updateEmergencyBrakeTo(newState: Boolean) {
+    suspend fun updateEmergencyBrakeTo(newState: Boolean) {
         database.nonTransactionalExecuteUpdate("""
             insert into emergency_break (id, stop_processing, detected_at)
             values (0, ?, CURRENT_TIMESTAMP)
