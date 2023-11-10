@@ -54,7 +54,7 @@ object Bruker {
         suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
             observer = virksomhetsinfoService::altinnObserver
         ),
-        altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient.blockingClient),
+        altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
         DebugProbes.enableCreationStackTraces = false

@@ -15,7 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 
 interface BlockingAltinnClient {
     fun hentOrganisasjoner(
-        accessToken: Token,
+        accessToken: TokenXToken,
         subject: Subject,
         serviceCode: ServiceCode,
         serviceEdition: ServiceEdition,
@@ -25,10 +25,10 @@ interface BlockingAltinnClient {
 
 class SuspendingAltinnClient(
     private val proxyKlient: AltinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(AltinnConfig.config),
-    internal val blockingClient: BlockingAltinnClient = object : BlockingAltinnClient {
+    private val blockingClient: BlockingAltinnClient = object : BlockingAltinnClient {
         // workaround for at AltinnrettigheterProxyKlient ikke er test vennlig
         override fun hentOrganisasjoner(
-            accessToken: Token,
+            accessToken: TokenXToken,
             subject: Subject,
             serviceCode: ServiceCode,
             serviceEdition: ServiceEdition,
