@@ -13,34 +13,9 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 
-interface BlockingAltinnClient {
-    fun hentOrganisasjoner(
-        accessToken: TokenXToken,
-        subject: Subject,
-        serviceCode: ServiceCode,
-        serviceEdition: ServiceEdition,
-        filtrerPåAktiveOrganisasjoner: Boolean
-    ): List<AltinnReportee>
-}
 
 class SuspendingAltinnClient(
-    private val proxyKlient: AltinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(AltinnConfig.config),
-    private val blockingClient: BlockingAltinnClient = object : BlockingAltinnClient {
-        // workaround for at AltinnrettigheterProxyKlient ikke er test vennlig
-        override fun hentOrganisasjoner(
-            accessToken: TokenXToken,
-            subject: Subject,
-            serviceCode: ServiceCode,
-            serviceEdition: ServiceEdition,
-            filtrerPåAktiveOrganisasjoner: Boolean
-        ) = proxyKlient.hentOrganisasjoner(
-            accessToken,
-            subject,
-            serviceCode,
-            serviceEdition,
-            filtrerPåAktiveOrganisasjoner
-        )
-    },
+    private val blockingClient: AltinnrettigheterProxyKlient = AltinnrettigheterProxyKlient(AltinnConfig.config),
     private val observer: (AltinnReportee) -> Unit,
     private val tokenXClient: TokenXClient = TokenXClientImpl(),
 ) {
