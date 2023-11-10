@@ -9,38 +9,18 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSen
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDateTime
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import org.apache.kafka.clients.producer.MockProducer
 import org.apache.kafka.common.serialization.StringSerializer
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class EksternVarslingStatusEksportServiceTest : DescribeSpec({
-    val repository = object : EksternVarslingRepository {
-        val varselTilstander = mutableMapOf<UUID, EksternVarselTilstand>()
-
-        override suspend fun findVarsel(varselId: UUID) = varselTilstander[varselId]
-        override suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse) = TODO("Not yet implemented")
-        override suspend fun deleteScheduledHardDeletes() = TODO("Not yet implemented")
-        override suspend fun releaseTimedOutJobLocks() = TODO("Not yet implemented")
-        override suspend fun detectEmptyDatabase() = TODO("Not yet implemented")
-        override suspend fun emergencyBreakOn() = TODO("Not yet implemented")
-        override suspend fun createJobsForAbandonedVarsler() = TODO("Not yet implemented")
-        override suspend fun findJob(lockTimeout: Duration) = TODO("Not yet implemented")
-        override suspend fun returnToJobQueue(varselId: UUID) = TODO("Not yet implemented")
-        override suspend fun deleteFromJobQueue(varselId: UUID) = TODO("Not yet implemented")
-        override suspend fun markerSomKvittertAndDeleteJob(varselId: UUID) = TODO("Not yet implemented")
-        override suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlientResponse) = TODO("Not yet implemented")
-        override suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime) = TODO("Not yet implemented")
-        override suspend fun rescheduleWaitingJobs(scheduledAt: LocalDateTime) = TODO("Not yet implemented")
-        override suspend fun jobQueueCount() = TODO("Not yet implemented")
-        override suspend fun waitQueueCount() = TODO("Not yet implemented")
-        override suspend fun mottakerErPåAllowList(mottaker: String) = TODO("Not yet implemented")
-        override suspend fun updateEmergencyBrakeTo(newState: Boolean) = TODO("Not yet implemented")
-    }
+    val database = testDatabase(EksternVarsling.databaseConfig)
+    val repository = EksternVarslingRepository(database)
     val kafka = MockProducer(true, StringSerializer(), VarslingStatusDtoSerializer())
     val service = EksternVarslingStatusEksportService(
         eventSource = object : Hendelsesstrøm {
@@ -61,9 +41,8 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             "30308",
         ).forEach { feilkode ->
             context("når hendelse er EksterntVarselFeilet med feilkode = $feilkode") {
-
                 val varselTilstand = varselTilstand(uuid("314"), LØPENDE)
-                repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
+                database.insertVarselTilstand(varselTilstand)
 
                 kafka.clear()
                 val event = eksterntVarselFeilet(feilkode, uuid("314"))
@@ -90,7 +69,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                 SPESIFISERT,
                 LocalDateTime.parse("2021-01-01T01:01:01")
             )
-            repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
+            database.insertVarselTilstand(varselTilstand)
 
             kafka.clear()
             val event = eksterntVarselFeilet("42", uuid("314"))
@@ -110,7 +89,6 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         }
 
         context("når hendelse er EksterntVarselFeilet men varsel er harddeleted") {
-            repository.varselTilstander.clear()
             kafka.clear()
 
             service.testProsesserHendelse(
@@ -124,7 +102,6 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         }
 
         context("når hendelse er EksterntVarselVellykket men varsel er harddeleted") {
-            repository.varselTilstander.clear()
             kafka.clear()
 
             service.testProsesserHendelse(
@@ -143,7 +120,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                 SPESIFISERT,
                 LocalDateTime.parse("2021-01-01T01:01:01")
             )
-            repository.varselTilstander[varselTilstand.data.varselId] = varselTilstand
+            database.insertVarselTilstand(varselTilstand)
 
             kafka.clear()
             val event = eksterntVarselVellykket(uuid("314"))

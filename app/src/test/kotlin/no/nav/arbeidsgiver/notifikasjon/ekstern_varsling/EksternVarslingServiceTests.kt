@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class EksternVarslingServiceTests : DescribeSpec({
     val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepositoryImpl(database)
+    val repository = EksternVarslingRepository(database)
     val hendelseProdusent = FakeHendelseProdusent()
     val meldingSendt = AtomicBoolean(false)
     val nå = LocalDateTime.parse("2020-01-01T01:01")
