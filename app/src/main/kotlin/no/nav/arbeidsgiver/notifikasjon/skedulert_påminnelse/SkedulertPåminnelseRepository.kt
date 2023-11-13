@@ -39,8 +39,7 @@ class SkedulertPåminnelseRepository {
     }
 
     suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
-        @Suppress("UNUSED_VARIABLE")
-        val ignored = when (hendelse) {
+        when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> state.withLockApply {
                 oppgavetilstand[hendelse.notifikasjonId] = NY
 
