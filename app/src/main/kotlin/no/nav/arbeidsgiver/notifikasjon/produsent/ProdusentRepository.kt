@@ -134,10 +134,11 @@ class ProdusentRepository(
                 )
             select 
                 valgt_sak.*, 
-                coalesce(statusoppdateringer_json.statusoppdateringer::jsonb, '[]'::jsonb) as statusoppdateringer
+                coalesce(
+                    (select statusoppdateringer::jsonb from statusoppdateringer_json where sak_id = valgt_sak.id),
+                    '[]'::jsonb
+                ) as statusoppdateringer
             from valgt_sak
-            left join statusoppdateringer_json
-                on statusoppdateringer_json.sak_id = valgt_sak.id
             """,
             variables
         ) {
