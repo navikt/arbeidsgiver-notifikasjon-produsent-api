@@ -129,11 +129,13 @@ class StatistikkModelTests : DescribeSpec({
         val bestilling = OppgaveOpprettet(
             merkelapp = "foo",
             eksternId = "42",
-            mottakere = listOf(NærmesteLederMottaker(
-                naermesteLederFnr = "314",
-                ansattFnr = "33314",
-                virksomhetsnummer = "1337"
-            )),
+            mottakere = listOf(
+                NærmesteLederMottaker(
+                    naermesteLederFnr = "314",
+                    ansattFnr = "33314",
+                    virksomhetsnummer = "1337"
+                )
+            ),
             hendelseId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac000000"),
             notifikasjonId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac000000"),
             tekst = "teste",
@@ -220,8 +222,11 @@ class StatistikkModelTests : DescribeSpec({
 
                 val bestilt = meterRegistry.get("antall_varsler").tag("status", "bestilt").gauge().value()
                 val feilet = meterRegistry.get("antall_varsler").tag("status", "feilet").gauge().value()
-                val vellykketSms = meterRegistry.get("antall_varsler").tag("status", "vellykket").tag("varsel_type", "sms_kontaktinfo").gauge().value()
-                val vellykketAltinn = meterRegistry.get("antall_varsler").tag("status", "vellykket").tag("varsel_type", "altinntjeneste_kontaktinfo").gauge().value()
+                val vellykketSms =
+                    meterRegistry.get("antall_varsler").tag("status", "vellykket").tag("varsel_type", "sms_kontaktinfo")
+                        .gauge().value()
+                val vellykketAltinn = meterRegistry.get("antall_varsler").tag("status", "vellykket")
+                    .tag("varsel_type", "altinntjeneste_kontaktinfo").gauge().value()
                 bestilt shouldBe 1
                 feilet shouldBe 1
                 vellykketSms shouldBe 1
@@ -257,55 +262,59 @@ class StatistikkModelTests : DescribeSpec({
         }
     }
 
-    describe("atomisk sletting for SoftDelete"){
+    describe("SoftDelete på sak sletter også relaterte notifikasjoner") {
         model.oppdaterModellEtterHendelse(opprettSak("1"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("01", "tag", "1"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("02", "tag", "2"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("03", "tag2", "1"), HendelseMetadata(now()))
-        model.oppdaterModellEtterHendelse(HendelseModel.SoftDelete(
-            virksomhetsnummer = "1",
-            aggregateId = uuid("1"),
-            hendelseId = uuid("1"),
-            produsentId = "1",
-            kildeAppNavn = "1",
-            deletedAt = OffsetDateTime.now(),
-            grupperingsid = "1",
-            merkelapp = "tag",
-        ), HendelseMetadata(now()))
-
-        val notifikasjoner = database.nonTransactionalExecuteQuery(
-            """
-            SELECT notifikasjon_id FROM "statistikk-model".public.notifikasjon where soft_deleted_tidspunkt is null;
-            """.trimIndent()
-            ,
-            transform = {  getObject("notifikasjon_id", UUID::class.java) }
+        model.oppdaterModellEtterHendelse(
+            HendelseModel.SoftDelete(
+                virksomhetsnummer = "1",
+                aggregateId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "1",
+                kildeAppNavn = "1",
+                deletedAt = OffsetDateTime.now(),
+                grupperingsid = "1",
+                merkelapp = "tag",
+            ), HendelseMetadata(now())
         )
-        notifikasjoner shouldContainExactlyInAnyOrder listOf(uuid("2"), uuid("3"))
+        it("Notifikasjoner som kun har samme grupperingsid og merkelapp blir merket som SoftDeleted") {
+            val notifikasjoner = database.nonTransactionalExecuteQuery(
+                """
+            SELECT notifikasjon_id FROM "statistikk-model".public.notifikasjon where soft_deleted_tidspunkt is null;
+            """.trimIndent(),
+                transform = { getObject("notifikasjon_id", UUID::class.java) }
+            )
+            notifikasjoner shouldContainExactlyInAnyOrder listOf(uuid("2"), uuid("3"))
+        }
     }
 
-    describe("atomisk sletting for HardDelete"){
+    describe("HardDelete av sak sletter også relaterte notifikasjoner") {
         model.oppdaterModellEtterHendelse(opprettSak("1"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("01", "tag", "1"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("02", "tag", "2"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("03", "tag2", "1"), HendelseMetadata(now()))
-        model.oppdaterModellEtterHendelse(HendelseModel.HardDelete(
-            virksomhetsnummer = "1",
-            aggregateId = uuid("1"),
-            hendelseId = uuid("1"),
-            produsentId = "1",
-            kildeAppNavn = "1",
-            deletedAt = OffsetDateTime.now(),
-            grupperingsid = "1",
-            merkelapp = "tag",
-        ), HendelseMetadata(now()))
-
-        val notifikasjoner = database.nonTransactionalExecuteQuery(
-            """
-            SELECT notifikasjon_id FROM "statistikk-model".public.notifikasjon where hard_deleted_tidspunkt is null;
-            """.trimIndent()
-            ,
-            transform = {  getObject("notifikasjon_id", UUID::class.java) }
+        model.oppdaterModellEtterHendelse(
+            HendelseModel.HardDelete(
+                virksomhetsnummer = "1",
+                aggregateId = uuid("1"),
+                hendelseId = uuid("1"),
+                produsentId = "1",
+                kildeAppNavn = "1",
+                deletedAt = OffsetDateTime.now(),
+                grupperingsid = "1",
+                merkelapp = "tag",
+            ), HendelseMetadata(now())
         )
-        notifikasjoner shouldContainExactlyInAnyOrder listOf(uuid("2"), uuid("3"))
+        it("Notifikasjoner som kun har samme grupperingsid og merkelapp blir merket som SoftDeleted") {
+            val notifikasjoner = database.nonTransactionalExecuteQuery(
+                """
+            SELECT notifikasjon_id FROM "statistikk-model".public.notifikasjon where hard_deleted_tidspunkt is null;
+            """.trimIndent(),
+                transform = { getObject("notifikasjon_id", UUID::class.java) }
+            )
+            notifikasjoner shouldContainExactlyInAnyOrder listOf(uuid("2"), uuid("3"))
+        }
     }
 })
