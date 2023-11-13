@@ -46,14 +46,13 @@ class StatistikkModel(
             """
                 select 
                     notifikasjon.produsent_id,
-                    notifikasjon.gruppering_id,
                     notifikasjon.merkelapp,
                     notifikasjon.mottaker,
                     notifikasjon.notifikasjon_type,
                     count(*) as antall_klikk
                 from notifikasjon
                 inner join notifikasjon_klikk klikk on notifikasjon.notifikasjon_id = klikk.notifikasjon_id
-                group by (produsent_id, gruppering_id, merkelapp, mottaker, notifikasjon_type)
+                group by (produsent_id, merkelapp, mottaker, notifikasjon_type)
             """,
             transform = {
                 MultiGauge.Row.of(
