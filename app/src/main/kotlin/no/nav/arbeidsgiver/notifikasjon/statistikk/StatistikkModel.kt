@@ -141,8 +141,7 @@ class StatistikkModel(
 
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
-        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        @Suppress("UNUSED_VARIABLE") val ignore : Any = when (hendelse) {
+        when (hendelse) {
             is BeskjedOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """

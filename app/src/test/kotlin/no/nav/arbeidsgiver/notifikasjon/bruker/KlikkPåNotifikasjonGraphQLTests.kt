@@ -8,21 +8,12 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.types.beOfType
 import io.ktor.http.*
-import io.mockk.MockKAssertScope
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import io.mockk.unmockkAll
+import io.mockk.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.util.BRUKER_HOST
-import no.nav.arbeidsgiver.notifikasjon.util.SELVBETJENING_TOKEN
-import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.post
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Instant
 import java.util.*
 
@@ -35,7 +26,7 @@ class KlikkPåNotifikasjonGraphQLTests : DescribeSpec({
         kafkaProducer = kafkaProducer,
     )
 
-    coEvery { kafkaProducer.sendOgHentMetadata(any<BrukerKlikket>()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
+    coEvery { kafkaProducer.sendOgHentMetadata(any()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
 
     afterSpec {
         unmockkAll()
