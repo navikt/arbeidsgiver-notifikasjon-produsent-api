@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
@@ -29,8 +28,7 @@ class KafkaReaperServiceImpl(
     override suspend fun håndterHendelse(hendelse: Hendelse) {
         kafkaReaperModel.oppdaterModellEtterHendelse(hendelse)
 
-        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        @Suppress("UNUSED_VARIABLE") val ignored : Unit = when (hendelse) {
+        when (hendelse) {
             is HardDelete -> {
                 for (relatertHendelseId in kafkaReaperModel.alleRelaterteHendelser(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(

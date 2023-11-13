@@ -132,8 +132,7 @@ class SkedulertHardDeleteRepository(
     }
 
     suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
-        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
-        @Suppress("UNUSED_VARIABLE") val ignored = when (hendelse) {
+        when (hendelse) {
             is HendelseModel.BeskjedOpprettet -> {
                 saveAggregate(hendelse, Beskjed, hendelse.merkelapp, hendelse.grupperingsid)
                 upsert(
