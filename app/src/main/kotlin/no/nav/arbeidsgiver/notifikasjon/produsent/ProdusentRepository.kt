@@ -127,7 +127,7 @@ class ProdusentRepository(
         return database.nonTransactionalExecuteQuery(
             """ 
             with 
-                valgt_sak as (
+                valgt_sak as materialized (
                     select sak.* 
                     from sak
                     where $where
