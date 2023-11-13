@@ -128,7 +128,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
             EksempelHendelse.HardDelete.copy(
                 virksomhetsnummer = sak.virksomhetsnummer,
                 aggregateId = sak.aggregateId,
-                hendelseId = sak.hendelseId,
+                hendelseId = uuid("999"),
                 produsentId = sak.produsentId,
                 kildeAppNavn = sak.kildeAppNavn,
                 deletedAt = OffsetDateTime.now(),
@@ -136,7 +136,6 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
                 merkelapp = sak.merkelapp,
             )
         )
-        println("Testen kjører")
         val notifikasjoner = database.nonTransactionalExecuteQuery(
             """
                 select notifikasjon_id from deleted_notifikasjon

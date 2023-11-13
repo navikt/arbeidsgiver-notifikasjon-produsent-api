@@ -31,7 +31,6 @@ class KafkaReaperModelImpl(
     val database: Database
 ) : KafkaReaperModel {
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
-        println("Oppdaterer modell etter hendelse")
         val grupperingsid = when (hendelse) {
             is SakOpprettet -> hendelse.grupperingsid
             is OppgaveOpprettet -> hendelse.grupperingsid
@@ -69,7 +68,6 @@ class KafkaReaperModelImpl(
                 nullableText(grupperingsid)
                 nullableText(merkelapp)
             }
-            println("Execute update har kjørt")
             if (hendelse is HardDelete) {
                 if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
                     executeUpdate(
