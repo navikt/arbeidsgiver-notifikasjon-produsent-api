@@ -48,7 +48,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         virksomhetsnummer = "1",
         produsentId = "1",
         kildeAppNavn = "1",
-        sakId = uuid("1"),
+        sakId = uuid("010"),
         grupperingsid = "1",
         merkelapp = "tag",
         mottakere = mottakere,
