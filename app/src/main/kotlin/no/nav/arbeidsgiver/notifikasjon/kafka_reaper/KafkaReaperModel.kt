@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
+import com.typesafe.config.ConfigException.Null
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -30,6 +31,7 @@ class KafkaReaperModelImpl(
     val database: Database
 ) : KafkaReaperModel {
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse) {
+        println("Oppdaterer modell etter hendelse")
         val grupperingsid = when (hendelse) {
             is SakOpprettet -> hendelse.grupperingsid
             is OppgaveOpprettet -> hendelse.grupperingsid
@@ -43,10 +45,10 @@ class KafkaReaperModelImpl(
             else -> null
         }
 
-        database.transaction({}) {
+        database.transaction {
             executeUpdate(
                 """
-                INSERT INTO notifikasjon_hendelse_relasjon
+                insert into notifikasjon_hendelse_relasjon
                 (
                     hendelse_id,
                     notifikasjon_id,
@@ -54,11 +56,11 @@ class KafkaReaperModelImpl(
                     gruppering_id,
                     merkelapp
                 ) 
-                VALUES 
+                values 
                 (
                     ?, ?, ?, ?, ?
                 )
-                ON CONFLICT DO NOTHING
+                on conflict do nothing
             """
             ) {
                 uuid(hendelse.hendelseId)
@@ -67,39 +69,29 @@ class KafkaReaperModelImpl(
                 nullableText(grupperingsid)
                 nullableText(merkelapp)
             }
-
+            println("Execute update har kjørt")
             if (hendelse is HardDelete) {
                 if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
-                    val notifikasjoner = executeQuery(
+                    executeUpdate(
                         """
-                            SELECT hendelse_id FROM notifikasjon_hendelse_relasjon
-                                WHERE gruppering_id = ? AND merkelapp = ?
-                        """,
-                        setup = {
-                            hendelse.grupperingsid
-                            hendelse.merkelapp
-                        },
-                        transform = { getObject("hendelse_id", UUID::class.java) }
-                    )
-                    notifikasjoner.forEach { hendelsesid ->
-                        executeUpdate(
-                            """
-                        INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
-                        VALUES (?, ?)
-                        ON CONFLICT DO NOTHING
+                        insert into deleted_notifikasjon (notifikasjon_id, deleted_at) 
+                            (select hendelse_id as notifikasjon_id, ? as deleted_at from notifikasjon_hendelse_relasjon
+                                    where gruppering_id = ? and merkelapp = ?)
+                        on conflict do nothing
                     """
-                        ) {
-                            uuid(hendelsesid)
-                            timestamp_with_timezone(OffsetDateTime.now())
-                        }
+                    ) {
+                        timestamp_with_timezone(OffsetDateTime.now())
+                        text(hendelse.grupperingsid)
+                        text(hendelse.merkelapp)
                     }
+
                 }
 
                 executeUpdate(
                     """
-                        INSERT INTO deleted_notifikasjon (notifikasjon_id, deleted_at) 
-                        VALUES (?, ?)
-                        ON CONFLICT DO NOTHING
+                        insert into deleted_notifikasjon (notifikasjon_id, deleted_at) 
+                        values (?, ?)
+                        on conflict do nothing
                     """
                 ) {
                     uuid(hendelse.aggregateId)
@@ -112,8 +104,8 @@ class KafkaReaperModelImpl(
     override suspend fun alleRelaterteHendelser(notifikasjonId: UUID): List<UUID> {
         return database.nonTransactionalExecuteQuery(
             """
-                SELECT hendelse_id FROM notifikasjon_hendelse_relasjon
-                WHERE notifikasjon_id = ?
+                select hendelse_id from notifikasjon_hendelse_relasjon
+                where notifikasjon_id = ?
             """,
             {
                 uuid(notifikasjonId)
@@ -126,9 +118,9 @@ class KafkaReaperModelImpl(
     override suspend fun erSlettet(notifikasjonId: UUID): Boolean {
         return database.nonTransactionalExecuteQuery(
             """
-                SELECT *
-                FROM deleted_notifikasjon
-                WHERE notifikasjon_id = ?
+                select *
+                from deleted_notifikasjon
+                where notifikasjon_id = ?
             """,
             {
                 uuid(notifikasjonId)

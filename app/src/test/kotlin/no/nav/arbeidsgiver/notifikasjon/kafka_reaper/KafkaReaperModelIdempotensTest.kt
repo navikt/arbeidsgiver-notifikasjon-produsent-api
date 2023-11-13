@@ -136,7 +136,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
                 merkelapp = sak.merkelapp,
             )
         )
-
+        println("Testen kjører")
         val notifikasjoner = database.nonTransactionalExecuteQuery(
             """
                 select notifikasjon_id from deleted_notifikasjon
@@ -145,8 +145,8 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         )
 
         notifikasjoner shouldContainExactlyInAnyOrder listOf(
-            oppgaveUtenGrupperingsid.aggregateId,
-            oppgaveMedGrupperingsidMedAnnenTag.aggregateId
+            sak.aggregateId,
+            oppgaveKnyttetTilSak.aggregateId
         )
     }
 })
