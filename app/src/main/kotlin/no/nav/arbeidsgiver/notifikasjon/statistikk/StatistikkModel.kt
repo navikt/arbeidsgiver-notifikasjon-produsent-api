@@ -146,13 +146,15 @@ class StatistikkModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon 
-                        (produsent_id, notifikasjon_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
-                    values (?, ?, 'beskjed', ?, ?, ?, ?)
+                        (produsent_id, notifikasjon_id, gruppering_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                    values (?, ?, ?, 'beskjed', ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
                     text(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
+                    nullableText(hendelse.grupperingsid)
+                    hendelse.grupperingsid
                     text(hendelse.merkelapp)
                     text(hendelse.mottakere.oppsummering())
                     text(hendelse.tekst.toHash())
@@ -166,12 +168,14 @@ class StatistikkModel(
                     iterable = hendelse.eksterneVarsler
                 )
             }
+
             is OppgaveOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into notifikasjon(
                         produsent_id, 
                         notifikasjon_id, 
+                        gruppering_id,
                         notifikasjon_type, 
                         merkelapp, 
                         mottaker, 
@@ -180,12 +184,13 @@ class StatistikkModel(
                         frist
                     )
                     values
-                    (?, ?, 'oppgave', ?, ?, ?, ?, ?)
+                    (?, ?, ?, 'oppgave', ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
                     text(hendelse.produsentId)
                     uuid(hendelse.notifikasjonId)
+                    nullableText(hendelse.grupperingsid)
                     text(hendelse.merkelapp)
                     text(hendelse.mottakere.oppsummering())
                     text(hendelse.tekst.toHash())
@@ -200,6 +205,7 @@ class StatistikkModel(
                     iterable = hendelse.eksterneVarsler
                 )
             }
+
             is OppgaveUtført -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -213,6 +219,7 @@ class StatistikkModel(
                     uuid(hendelse.notifikasjonId)
                 }
             }
+
             is OppgaveUtgått -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -225,6 +232,7 @@ class StatistikkModel(
                     uuid(hendelse.notifikasjonId)
                 }
             }
+
             is BrukerKlikket -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -239,6 +247,7 @@ class StatistikkModel(
                     timestamp_without_timezone_utc(metadata.timestamp)
                 }
             }
+
             is EksterntVarselVellykket -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -255,6 +264,7 @@ class StatistikkModel(
                     text(hendelse.produsentId)
                 }
             }
+
             is EksterntVarselFeilet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -272,54 +282,109 @@ class StatistikkModel(
                     text(hendelse.altinnFeilkode)
                 }
             }
+
             is SoftDelete -> {
-                database.nonTransactionalExecuteUpdate(
-                    """
+                database.transaction {
+                    if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
+                        executeUpdate(
+                            """
+                        update notifikasjon 
+                            set soft_deleted_tidspunkt = ?
+                            where gruppering_id = ? and merkelapp = ?
+                        """
+                        ) {
+                            timestamp_without_timezone_utc(hendelse.deletedAt)
+                            text(hendelse.grupperingsid)
+                            text(hendelse.merkelapp)
+                        }
+                    }
+                    executeUpdate(
+                        """
                     update notifikasjon 
                         set soft_deleted_tidspunkt = ?
                         where notifikasjon_id = ?
                     """
-                ) {
-                    timestamp_without_timezone_utc(hendelse.deletedAt)
-                    uuid(hendelse.aggregateId)
-                }
-                database.nonTransactionalExecuteUpdate(
-                    """
+                    ) {
+                        timestamp_without_timezone_utc(hendelse.deletedAt)
+                        uuid(hendelse.aggregateId)
+                    }
+                    executeUpdate(
+                        """
                     update sak 
                         set soft_deleted_tidspunkt = ?
                         where sak_id = ?
                     """
-                ) {
-                    timestamp_without_timezone_utc(hendelse.deletedAt)
-                    uuid(hendelse.aggregateId)
+                    ) {
+                        timestamp_without_timezone_utc(hendelse.deletedAt)
+                        uuid(hendelse.aggregateId)
+                    }
                 }
             }
+
             is HardDelete -> {
-                // noop
+                database.transaction {
+                    if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
+                        executeUpdate(
+                            """
+                        update notifikasjon 
+                            set hard_deleted_tidspunkt = ?
+                            where gruppering_id = ? and merkelapp = ?
+                        """
+                        ) {
+                            timestamp_without_timezone_utc(hendelse.deletedAt)
+                            text(hendelse.grupperingsid)
+                            text(hendelse.merkelapp)
+                        }
+                    }
+                    executeUpdate(
+                        """
+                    update notifikasjon 
+                        set hard_deleted_tidspunkt = ?
+                        where notifikasjon_id = ?
+                    """
+                    ) {
+                        timestamp_without_timezone_utc(hendelse.deletedAt)
+                        uuid(hendelse.aggregateId)
+                    }
+                    executeUpdate(
+                        """
+                    update sak 
+                        set hard_deleted_tidspunkt = ?
+                        where sak_id = ?
+                    """
+                    ) {
+                        timestamp_without_timezone_utc(hendelse.deletedAt)
+                        uuid(hendelse.aggregateId)
+                    }
+                }
             }
 
             is SakOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
                     insert into sak 
-                        (produsent_id, sak_id, merkelapp, mottaker, opprettet_tidspunkt)
-                    values (?, ?, ?, ?, ?)
+                        (produsent_id, sak_id, gruppering_id, merkelapp, mottaker, opprettet_tidspunkt)
+                    values (?, ?, ?, ?, ?, ?)
                     on conflict do nothing;
                     """
                 ) {
                     text(hendelse.produsentId)
                     uuid(hendelse.sakId)
+                    nullableText(hendelse.grupperingsid)
                     text(hendelse.merkelapp)
                     text(hendelse.mottakere.oppsummering())
                     timestamp_with_timezone(hendelse.opprettetTidspunkt(metadata.timestamp.atOffset(UTC)))
                 }
             }
+
             is NyStatusSak -> {
                 // noop
             }
+
             is PåminnelseOpprettet -> {
                 // noop
             }
+
             is FristUtsatt -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -361,6 +426,7 @@ class StatistikkModel(
                     text(eksterntVarsel.epostAddr)
                     text((eksterntVarsel.tittel + eksterntVarsel.htmlBody).toHash())
                 }
+
                 is SmsVarselKontaktinfo -> {
                     uuid(eksterntVarsel.varselId)
                     text("sms_kontaktinfo")
@@ -370,6 +436,7 @@ class StatistikkModel(
                     text(eksterntVarsel.tlfnr)
                     text(eksterntVarsel.smsTekst.toHash())
                 }
+
                 is AltinntjenesteVarselKontaktinfo -> {
                     uuid(eksterntVarsel.varselId)
                     text("altinntjeneste_kontaktinfo")
@@ -393,6 +460,7 @@ fun List<Mottaker>.oppsummering(): String =
                 prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
                 other = { "AltinnRolleMottaker" },
             )
+
             is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
                 prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
                 other = { "AltinnReporteeMottaker" },

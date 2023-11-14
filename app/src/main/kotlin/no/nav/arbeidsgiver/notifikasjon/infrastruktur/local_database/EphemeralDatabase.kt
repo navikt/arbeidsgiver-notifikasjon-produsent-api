@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.zaxxer.hikari.HikariDataSource
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.measureSql
 import org.intellij.lang.annotations.Language
 import java.io.File
 import java.sql.Connection
@@ -72,7 +73,23 @@ fun Connection.executeUpdate(
     setup: Setup.() -> Unit
 ): Int = usePrepareStatement(sql) {
     Setup(this).setup()
-    executeUpdate()
+    measureSql(sql) {
+        executeUpdate()
+    }
+}
+
+fun <T> Connection.executeBatch(
+    @Language("sqlite") sql: String,
+    batches: Iterable<T>,
+    setup: Setup.(it: T) -> Unit,
+): IntArray = usePrepareStatement(sql) {
+    batches.forEach { batch ->
+        Setup(this).setup(batch)
+        addBatch()
+    }
+    measureSql(sql) {
+        executeBatch()
+    }
 }
 
 fun <T> Connection.executeQuery(
@@ -81,8 +98,10 @@ fun <T> Connection.executeQuery(
     result: ResultSet.() -> T,
 ): T = usePrepareStatement(sql) {
     Setup(this).setup()
-    executeQuery().use {
-        result(it)
+    measureSql(sql) {
+        executeQuery().use {
+            result(it)
+        }
     }
 }
 
@@ -109,6 +128,14 @@ fun ResultSet.getLocalDateOrNull(columnLabel: String) = getString(columnLabel)?.
 inline fun <reified E: Enum<E>> ResultSet.getEnum(columnLabel: String): E = enumValueOf(getString(columnLabel))
 inline fun <reified A>ResultSet.getJson(columnLabel: String): A =
     ephemeralDatabaseObjectMapper.readValue(getString(columnLabel), A::class.java)
+
+fun <T> ResultSet.resultAsList(extractRow: ResultSet.() -> T): List<T> {
+    val result = mutableListOf<T>()
+    while (next()) {
+        result.add(extractRow())
+    }
+    return result
+}
 
 /* can't be private because it's inlined in `getJson` */
 val ephemeralDatabaseObjectMapper = jacksonObjectMapper().apply {

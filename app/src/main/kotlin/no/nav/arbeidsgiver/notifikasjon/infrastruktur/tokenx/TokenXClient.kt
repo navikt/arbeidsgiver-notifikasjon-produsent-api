@@ -14,6 +14,7 @@ import com.nimbusds.jwt.SignedJWT
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
+import io.ktor.client.network.sockets.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -41,7 +42,8 @@ fun defaultHttpClient() = HttpClient(Apache) {
     install(HttpRequestRetry) {
         maxRetries = 3
         retryOnExceptionIf { _, cause ->
-            cause is ConnectionClosedException
+            cause is ConnectionClosedException ||
+            cause is SocketTimeoutException
         }
         delayMillis { 250L }
     }
