@@ -127,17 +127,18 @@ class ProdusentRepository(
         return database.nonTransactionalExecuteQuery(
             """ 
             with 
-                valgt_sak as (
+                valgt_sak as materialized (
                     select sak.* 
                     from sak
                     where $where
                 )
             select 
                 valgt_sak.*, 
-                coalesce(statusoppdateringer_json.statusoppdateringer::jsonb, '[]'::jsonb) as statusoppdateringer
+                coalesce(
+                    (select statusoppdateringer::jsonb from statusoppdateringer_json where sak_id = valgt_sak.id),
+                    '[]'::jsonb
+                ) as statusoppdateringer
             from valgt_sak
-            left join statusoppdateringer_json
-                on statusoppdateringer_json.sak_id = valgt_sak.id
             """,
             variables
         ) {
@@ -170,18 +171,38 @@ class ProdusentRepository(
                 )
             select 
                 valgt_notifikasjon.*, 
-                coalesce(ev.eksterne_varsler_json, '[]'::json) as eksterne_varsler,
-                coalesce(pev.paaminnelse_eksterne_varsler_json, '[]'::json) as paaminnelse_eksterne_varsler,
-                (coalesce(ma.mottakere::jsonb, '[]'::jsonb)  || coalesce(md.mottakere::jsonb, '[]'::jsonb)) as mottakere
+                coalesce(
+                    (
+                        select ev.eksterne_varsler_json
+                        from eksterne_varsler_json ev
+                        where ev.notifikasjon_id = valgt_notifikasjon.id
+                    ),
+                    '[]'::json
+                ) as eksterne_varsler,
+                coalesce(
+                    (
+                        select pev.paaminnelse_eksterne_varsler_json
+                        from paaminnelse_eksterne_varsler_json pev
+                        where pev.notifikasjon_id = valgt_notifikasjon.id
+                    ),
+                    '[]'::json
+                ) as paaminnelse_eksterne_varsler,
+                (coalesce(
+                    (
+                        select ma.mottakere::jsonb
+                        from mottakere_altinn_enkeltrettighet_json ma
+                        where ma.notifikasjon_id = valgt_notifikasjon.id
+                    ),
+                    '[]'::jsonb)
+                || coalesce(
+                    (
+                        select md.mottakere::jsonb
+                        from mottakere_digisyfo_json md
+                        where md.notifikasjon_id = valgt_notifikasjon.id
+                    ),
+                    '[]'::jsonb)
+                ) as mottakere
             from valgt_notifikasjon
-            left join eksterne_varsler_json ev 
-                on ev.notifikasjon_id = valgt_notifikasjon.id
-            left join paaminnelse_eksterne_varsler_json pev 
-                on pev.notifikasjon_id = valgt_notifikasjon.id
-            left join mottakere_altinn_enkeltrettighet_json ma
-                on ma.notifikasjon_id = valgt_notifikasjon.id
-            left join mottakere_digisyfo_json md
-                on md.notifikasjon_id = valgt_notifikasjon.id
             """,
             setup
         ) {
