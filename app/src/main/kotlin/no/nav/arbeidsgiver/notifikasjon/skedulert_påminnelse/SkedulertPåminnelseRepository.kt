@@ -76,7 +76,13 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                     where 
                         paaminnelsestidspunkt <= ?
                         and oppgave_id in (
-                            select oppgave_id from oppgaver where tilstand = '$OPPGAVE_AKTIV' 
+                            select oppgave_id
+                            from oppgaver
+                            left join slettede_saker on (
+                                oppgaver.merkelapp = slettede_saker.merkelapp
+                                and oppgaver.grupperingsid = slettede_saker.grupperingsid
+                            )
+                            where slettede_saker.grupperingsid is null and tilstand = '$OPPGAVE_AKTIV' 
                         )
                     returning *
                 """.trimIndent(),
