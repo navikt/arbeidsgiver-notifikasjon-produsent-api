@@ -31,7 +31,7 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
         Health.subsystemAlive[AUTOSLETT_SERVICE] = true
     }
 
-    describe("AutoSlettService#slettDeSomSkalSlettes") {
+    describe("SkedulertHardDeleteService#slettDeSomSkalSlettes") {
         context("når de som skal slettes er gyldig") {
             val skalSlettes = listOf(
                 skedulertHardDelete(uuid("1")),
@@ -64,14 +64,8 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
             }
         }
     }
-})
 
-private fun notifikasjonForSak(aggregateId: UUID) = SkedulertHardDeleteRepository.NotifikasjonForSak(
-    aggregateId = aggregateId,
-    virksomhetsnummer = "21",
-    produsentid = "test",
-    merkelapp = "tag",
-)
+})
 
 private fun skedulertHardDelete(
     aggregateId: UUID,
@@ -89,19 +83,4 @@ private fun skedulertHardDelete(
     inputDen = LocalDateTime.now(),
     grupperingsid = grupperingsid,
     beregnetSlettetidspunkt = beregnetSlettetidspunkt,
-)
-
-
-private fun registrertHardDelete(
-    aggregateId: UUID,
-    aggregateType: AggregateType,
-    merkelapp: String,
-    grupperingsid: String? = null,
-) = SkedulertHardDeleteRepository.RegistrertHardDelete(
-    aggregateId = aggregateId,
-    aggregateType = aggregateType,
-    virksomhetsnummer = "21",
-    produsentid = "test",
-    merkelapp = merkelapp,
-    grupperingsid = grupperingsid,
 )

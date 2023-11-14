@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.LocalDateTimeOrDu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.FORLENG
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.OVERSKRIV
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getUuid
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -91,14 +92,6 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
         }
     }
 
-
-
-    suspend fun Database.harRegistrertHardDelete(aggregateId: UUID) =
-        database.nonTransactionalExecuteQuery("""
-            select * from registrert_hard_delete_event where aggregate_id = ?
-        """, {
-            uuid(aggregateId)
-        }, {}).isNotEmpty()
 
     describe("AutoSlettRepository#oppdaterModellEtterHendelse") {
         context("opprett hendelse uten hard delete") {
@@ -378,8 +371,8 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
 
             repository.hardDelete("1")
 
-            it("harddelete should be registered") {
-                 database.harRegistrertHardDelete(hendelse.aggregateId) shouldBe true
+            it("should be deleted") {
+                repository.hent(hendelse.aggregateId) shouldBe null
             }
         }
 
@@ -392,8 +385,51 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
 
             repository.hardDelete("2")
 
-            it("harddelete should be registered") {
-                database.harRegistrertHardDelete(hendelse.aggregateId) shouldBe true
+            it("should be deleted") {
+                repository.hent(hendelse.aggregateId) shouldBe null
+            }
+        }
+
+        context("slette sak med tilhørende beskjed og oppgave") {
+            val sak = repository.sakOpprettet(
+                idsuffix = "1",
+                merkelapp = "angela",
+                grupperingsid = "s42",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = "2022-10-13T07:20:50.52"
+            )
+            val oppgaveMedSak = repository.oppgaveOpprettet(
+                idsuffix = "2",
+                opprettetTidspunkt = "2020-01-01T01:01+00",
+                sakId = sak.sakId,
+                merkelapp = sak.merkelapp,
+                grupperingsid = sak.grupperingsid,
+            )
+            val oppgaveUtenSak = repository.oppgaveOpprettet(
+                idsuffix = "3",
+                opprettetTidspunkt = "2020-01-01T01:01+00"
+            )
+            val beskjedMedSak = repository.beskjedOpprettet(
+                idsuffix = "4",
+                opprettetTidspunkt = "2020-01-01T01:01+00",
+                sakId = sak.sakId,
+                merkelapp = sak.merkelapp,
+                grupperingsid = sak.grupperingsid,
+            )
+            val beskjedUtenSak = repository.beskjedOpprettet(
+                idsuffix = "5",
+                opprettetTidspunkt = "2020-01-01T01:01+00",
+            )
+            repository.hardDelete("1", merkelapp = sak.merkelapp, grupperingsid = sak.grupperingsid)
+
+            it("sak er slettet med tilhørende beskjed og oppgave") {
+                database.hentAggregate(sak.aggregateId) shouldBe null
+                database.hentAggregate(oppgaveMedSak.aggregateId) shouldBe null
+                database.hentAggregate(beskjedMedSak.aggregateId) shouldBe null
+            }
+            it("beskjed og oppgave som ikke hører til sak er ikke slettet") {
+                database.hentAggregate(oppgaveUtenSak.aggregateId) shouldNotBe null
+                database.hentAggregate(beskjedUtenSak.aggregateId) shouldNotBe null
             }
         }
 
@@ -411,7 +447,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
             repository.hardDelete("4")
 
             it("should not be deleted") {
-                database.harRegistrertHardDelete(hendelse.aggregateId) shouldBe false
+                repository.hent(hendelse.aggregateId) shouldNotBe null
             }
         }
 
@@ -433,6 +469,8 @@ private suspend fun <T : HendelseModel.Hendelse> SkedulertHardDeleteRepositoryIm
 
 private suspend fun SkedulertHardDeleteRepositoryImpl.hardDelete(
     idsuffix: String,
+    merkelapp: String? = null,
+    grupperingsid: String? = null,
 ) = oppdaterModell(HendelseModel.HardDelete(
         virksomhetsnummer = idsuffix,
         aggregateId = uuid(idsuffix),
@@ -440,8 +478,8 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.hardDelete(
         produsentId = idsuffix,
         kildeAppNavn = "test-app",
         deletedAt = OffsetDateTime.now(),
-        grupperingsid = null,
-        merkelapp = null,
+        merkelapp = merkelapp,
+        grupperingsid = grupperingsid,
 ))
 
 private suspend fun SkedulertHardDeleteRepositoryImpl.beskjedOpprettet(
@@ -449,11 +487,13 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.beskjedOpprettet(
     opprettetTidspunkt: String,
     hardDelete: String? = null,
     merkelapp: String = "merkelapp",
+    grupperingsid: String? = null,
+    sakId: UUID? = null,
 ): HendelseModel.BeskjedOpprettet = oppdaterModell(
     HendelseModel.BeskjedOpprettet(
         virksomhetsnummer = idsuffix,
         notifikasjonId = uuid(idsuffix),
-        hendelseId = UUID.randomUUID(),
+        hendelseId = uuid(idsuffix),
         produsentId = idsuffix,
         kildeAppNavn = idsuffix,
         merkelapp = merkelapp,
@@ -466,12 +506,12 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.beskjedOpprettet(
             )
         ),
         tekst = idsuffix,
-        grupperingsid = null,
+        grupperingsid = grupperingsid,
         lenke = "",
         opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
         eksterneVarsler = listOf(),
         hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
-        sakId = null,
+        sakId = sakId,
     )
 )
 
@@ -481,11 +521,13 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.oppgaveOpprettet(
     opprettetTidspunkt: String,
     merkelapp: String = "merkelapp",
     hardDelete: String? = null,
+    grupperingsid: String? = null,
+    sakId: UUID? = null,
 ): HendelseModel.OppgaveOpprettet = oppdaterModell(
     HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = idsuffix,
         notifikasjonId = uuid(idsuffix),
-        hendelseId = UUID.randomUUID(),
+        hendelseId = uuid(idsuffix),
         produsentId = idsuffix,
         kildeAppNavn = idsuffix,
         merkelapp = merkelapp,
@@ -498,14 +540,14 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.oppgaveOpprettet(
             )
         ),
         tekst = idsuffix,
-        grupperingsid = null,
+        grupperingsid = grupperingsid,
         lenke = "",
         opprettetTidspunkt = OffsetDateTime.parse(opprettetTidspunkt),
         eksterneVarsler = listOf(),
         hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
         frist = null,
         påminnelse = null,
-        sakId = null,
+        sakId = sakId,
     )
 )
 
@@ -516,6 +558,7 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.sakOpprettet(
     oppgittTidspunkt: String? = null,
     merkelapp: String = "merkelapp",
     hardDelete: String?,
+    grupperingsid: String = idsuffix,
 ): HendelseModel.SakOpprettet = oppdaterModell(
     HendelseModel.SakOpprettet(
         virksomhetsnummer = idsuffix,
@@ -531,7 +574,7 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.sakOpprettet(
                 serviceEdition = idsuffix
             )
         ),
-        grupperingsid = idsuffix,
+        grupperingsid = grupperingsid,
         lenke = "",
         mottattTidspunkt = OffsetDateTime.parse(mottattTidspunkt),
         oppgittTidspunkt = oppgittTidspunkt?.let { OffsetDateTime.parse(it) },
@@ -579,4 +622,17 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.nyStatusSak(
         nyLenkeTilSak = null,
     )
 )
+
+suspend fun Database.hentAggregate(aggregateId: UUID): UUID? {
+    return nonTransactionalExecuteQuery("""
+            select 
+                aggregate_id 
+            from aggregate
+            where aggregate_id = ?
+        """, {
+        uuid(aggregateId)
+    }) {
+        getUuid("aggregate_id")
+    }.firstOrNull()
+}
 

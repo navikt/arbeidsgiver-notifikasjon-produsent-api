@@ -49,5 +49,6 @@ class SkedulertPåminnelseService(
     }
 
     override fun close() {
+        repository.close()
     }
 }

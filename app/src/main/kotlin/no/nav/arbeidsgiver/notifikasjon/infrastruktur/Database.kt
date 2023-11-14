@@ -195,7 +195,7 @@ value class Transaction(
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T,
     ): List<T> {
-        return measure(sql) {
+        return measureSql(sql) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -215,7 +215,7 @@ value class Transaction(
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int {
-        return measure(sql) {
+        return measureSql(sql) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -233,7 +233,7 @@ value class Transaction(
         if (iterable.none()) {
             return intArrayOf()
         }
-        return measure(sql) {
+        return measureSql(sql) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -246,13 +246,6 @@ value class Transaction(
         }
     }
 
-    private fun <T> measure(sql: String, action: () -> T): T {
-        return getTimer(
-            name = "database.execution",
-            tags = setOf("sql" to sql),
-            description = "Execution time for sql query or update"
-        ).record(action)
-    }
 }
 
 class ParameterSetters(
@@ -332,3 +325,13 @@ class ParameterSetters(
 
 fun ResultSet.getUuid(column: String): UUID =
     getObject(column, UUID::class.java)
+
+fun <T> measureSql(sql: String, action: () -> T): T {
+    val timer = getTimer(
+        name = "database.execution",
+        tags = setOf("sql" to sql),
+        description = "Execution time for sql query or update"
+    )
+    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+    return timer.record(action)
+}

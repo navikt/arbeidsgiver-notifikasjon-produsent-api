@@ -8,3 +8,5 @@ app/target/
 .kafka-cli/
 .DS_Store
 *.icloud
+
+*.sqlite

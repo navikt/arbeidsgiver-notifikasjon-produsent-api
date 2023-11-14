@@ -1,0 +1,1 @@
+drop table registrert_hard_delete_event;

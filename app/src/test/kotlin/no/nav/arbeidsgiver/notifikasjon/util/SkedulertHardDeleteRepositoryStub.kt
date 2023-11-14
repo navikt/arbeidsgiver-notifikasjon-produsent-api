@@ -10,26 +10,11 @@ open class SkedulertHardDeleteRepositoryStub : SkedulertHardDeleteRepository {
         TODO("Not yet implemented")
     }
 
-    override suspend fun hentNotifikasjonerForSak(
-        merkelapp: String,
-        grupperingsid: String
-    ): List<SkedulertHardDeleteRepository.NotifikasjonForSak> {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
         TODO("Not yet implemented")
     }
 
-    override suspend fun hardDelete(aggregateId: UUID) {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun finnRegistrerteHardDeletes(limit: Int): List<SkedulertHardDeleteRepository.RegistrertHardDelete> {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun deleteOrphanedHardDeletes(): Int {
+    override suspend fun hardDelete(hardDelete: HendelseModel.HardDelete) {
         TODO("Not yet implemented")
     }
 
