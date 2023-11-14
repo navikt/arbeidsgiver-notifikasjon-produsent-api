@@ -75,6 +75,18 @@ fun Connection.executeUpdate(
     executeUpdate()
 }
 
+fun <T> Connection.executeBatch(
+    @Language("sqlite") sql: String,
+    batches: Iterable<T>,
+    setup: Setup.(it: T) -> Unit,
+): IntArray = usePrepareStatement(sql) {
+    batches.forEach { batch ->
+        Setup(this).setup(batch)
+        addBatch()
+    }
+    executeBatch()
+}
+
 fun <T> Connection.executeQuery(
     @Language("sqlite") sql: String,
     setup: Setup.() -> Unit,
@@ -109,6 +121,14 @@ fun ResultSet.getLocalDateOrNull(columnLabel: String) = getString(columnLabel)?.
 inline fun <reified E: Enum<E>> ResultSet.getEnum(columnLabel: String): E = enumValueOf(getString(columnLabel))
 inline fun <reified A>ResultSet.getJson(columnLabel: String): A =
     ephemeralDatabaseObjectMapper.readValue(getString(columnLabel), A::class.java)
+
+fun <T> ResultSet.resultAsList(extractRow: ResultSet.() -> T): List<T> {
+    val result = mutableListOf<T>()
+    while (next()) {
+        result.add(extractRow())
+    }
+    return result
+}
 
 /* can't be private because it's inlined in `getJson` */
 val ephemeralDatabaseObjectMapper = jacksonObjectMapper().apply {
