@@ -39,35 +39,11 @@ class SkedulertHardDeleteRepository(
         ).toString()
     }
 
-    data class RegistrertHardDelete(
-        val aggregateId: UUID,
-        val aggregateType: AggregateType,
-        val virksomhetsnummer: String,
-        val produsentid: String,
-        val merkelapp: String,
-        val grupperingsid: String?,
-    ) {
-        val isSak = aggregateType == Sak
-
-        fun loggableToString() = mapOf(
-            "aggregateId" to aggregateId,
-            "aggregateType" to aggregateType,
-            "produsentid" to produsentid,
-        ).toString()
-    }
-
     enum class AggregateType {
         Beskjed,
         Oppgave,
         Sak,
     }
-
-    data class NotifikasjonForSak(
-        val aggregateId: UUID,
-        val virksomhetsnummer: String,
-        val produsentid: String,
-        val merkelapp: String,
-    )
 
     suspend fun hentSkedulerteHardDeletes(
         tilOgMed: Instant,
@@ -96,37 +72,6 @@ class SkedulertHardDeleteRepository(
             },
             transform = {
                 this.toSkedulertHardDelete()
-            }
-        )
-    }
-
-    suspend fun hentNotifikasjonerForSak(
-        merkelapp: String,
-        grupperingsid: String,
-    ): List<NotifikasjonForSak> {
-        return database.nonTransactionalExecuteQuery(
-            sql = """
-            select 
-                aggregate.aggregate_id,
-                aggregate.aggregate_type,
-                aggregate.virksomhetsnummer,
-                aggregate.produsentid,
-                aggregate.merkelapp,
-                aggregate.grupperingsid
-            from aggregate 
-            where merkelapp = ? and grupperingsid = ?
-        """,
-            setup = {
-                text(merkelapp)
-                text(grupperingsid)
-            },
-            transform = {
-                NotifikasjonForSak(
-                    aggregateId = getObject("aggregate_id", UUID::class.java),
-                    virksomhetsnummer = getString("virksomhetsnummer"),
-                    produsentid = getString("produsentid"),
-                    merkelapp = getString("merkelapp")
-                )
             }
         )
     }
@@ -250,49 +195,6 @@ class SkedulertHardDeleteRepository(
             }
         }
     }
-
-    suspend fun hardDeleteCleanup(aggregateId: UUID) {
-        database.transaction {
-            executeUpdate("""
-                delete from aggregate where aggregate_id = ?  
-            """) {
-                uuid(aggregateId)
-            }
-            executeUpdate("""
-                delete from registrert_hard_delete_event where aggregate_id = ?  
-            """) {
-                uuid(aggregateId)
-            }
-        }
-    }
-
-    suspend fun finnRegistrerteHardDeletes(limit: Int): List<RegistrertHardDelete> {
-        return database.nonTransactionalExecuteQuery("""
-            select 
-                aggregate.aggregate_id,
-                aggregate.aggregate_type,
-                aggregate.virksomhetsnummer,
-                aggregate.produsentid,
-                aggregate.merkelapp,
-                aggregate.grupperingsid 
-            from registrert_hard_delete_event
-            join aggregate on aggregate.aggregate_id = registrert_hard_delete_event.aggregate_id
-            order by deleted_at
-            limit ?
-        """, {
-            integer(limit)
-        }) {
-            RegistrertHardDelete(
-                aggregateId = getObject("aggregate_id", UUID::class.java),
-                aggregateType = valueOf(getString("aggregate_type")),
-                virksomhetsnummer = getString("virksomhetsnummer"),
-                produsentid = getString("produsentid"),
-                merkelapp = getString("merkelapp"),
-                grupperingsid = getString("grupperingsid"),
-            )
-        }
-    }
-
     suspend fun hent(aggregateId: UUID): SkedulertHardDelete? {
         return database.nonTransactionalExecuteQuery("""
             select 
@@ -325,8 +227,8 @@ class SkedulertHardDeleteRepository(
             merkelapp = getString("merkelapp"),
             grupperingsid = getString("grupperingsid"),
             inputBase = getObject("input_base", java.time.OffsetDateTime::class.java),
-            inputOm = getString("input_om")?.let { no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period.parse(it) },
-            inputDen = getString("input_den")?.let { java.time.LocalDateTime.parse(it) },
+            inputOm = getString("input_om")?.let { ISO8601Period.parse(it) },
+            inputDen = getString("input_den")?.let { LocalDateTime.parse(it) },
             beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", java.time.OffsetDateTime::class.java).toInstant(),
         )
 
