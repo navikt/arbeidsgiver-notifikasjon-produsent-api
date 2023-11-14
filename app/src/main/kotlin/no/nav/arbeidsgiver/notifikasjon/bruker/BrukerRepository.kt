@@ -499,7 +499,6 @@ class BrukerRepositoryImpl(
             return
         }
 
-        /* when-expressions gives error when not exhaustive, as opposed to when-statement. */
         when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse, metadata)
             is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
