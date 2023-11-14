@@ -187,7 +187,8 @@ class SkedulertHardDeleteRepository(
                 )
             }
 
-            is HendelseModel.HardDelete -> registrerHardDelete(hendelse)
+            is HendelseModel.HardDelete -> hardDelete(hendelse)
+
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket,
             is HendelseModel.BrukerKlikket,
@@ -231,19 +232,26 @@ class SkedulertHardDeleteRepository(
         }
     }
 
-    private suspend fun registrerHardDelete(hardDelete: HendelseModel.HardDelete) {
-        database.nonTransactionalExecuteUpdate("""
-           insert into registrert_hard_delete_event (
-                aggregate_id, hendelse_id, deleted_at 
-           ) values (?, ?, ?) on conflict do nothing 
-        """) {
-            uuid(hardDelete.aggregateId)
-            uuid(hardDelete.hendelseId)
-            offsetDateTimeAsText(hardDelete.deletedAt)
+    private suspend fun hardDelete(hardDelete: HendelseModel.HardDelete) {
+        database.transaction {
+            if (hardDelete.merkelapp != null && hardDelete.grupperingsid != null) {
+                executeUpdate("""
+                    delete from aggregate where merkelapp = ? and grupperingsid = ?  
+                """) {
+                    text(hardDelete.merkelapp)
+                    text(hardDelete.grupperingsid)
+                }
+            }
+
+            executeUpdate("""
+                delete from aggregate where aggregate_id = ?  
+            """) {
+                uuid(hardDelete.aggregateId)
+            }
         }
     }
 
-    suspend fun hardDelete(aggregateId: UUID) {
+    suspend fun hardDeleteCleanup(aggregateId: UUID) {
         database.transaction {
             executeUpdate("""
                 delete from aggregate where aggregate_id = ?  
@@ -284,11 +292,6 @@ class SkedulertHardDeleteRepository(
             )
         }
     }
-
-    suspend fun deleteOrphanedHardDeletes() = database.nonTransactionalExecuteUpdate("""
-        delete from registrert_hard_delete_event 
-            where aggregate_id not in (select aggregate_id from aggregate);
-    """)
 
     suspend fun hent(aggregateId: UUID): SkedulertHardDelete? {
         return database.nonTransactionalExecuteQuery("""
