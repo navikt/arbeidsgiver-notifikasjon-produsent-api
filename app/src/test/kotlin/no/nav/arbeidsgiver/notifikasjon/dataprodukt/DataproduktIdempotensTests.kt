@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.dataprodukt
 
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -187,6 +188,15 @@ class DataproduktIdempotensTests : DescribeSpec({
             oppgaveUtenGrupperingsid.aggregateId,
             oppgaveMedGrupperingsidMedAnnenTag.aggregateId
         )
+    }
+
+    describe("Pseudonymisering av tegn som kan tolkes som escape characters ") {
+        val hendelse = EksempelHendelse.SakOpprettet.copy(tittel = """Billakkerer\Hjelpearbeider""")
+        it("Skal ikke feile fordi det blir tolket") {
+            shouldNotThrowAny {
+                repository.oppdaterModellEtterHendelse(hendelse, metadata)
+            }
+        }
     }
 })
 
