@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.zaxxer.hikari.HikariDataSource
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.measureSql
 import org.intellij.lang.annotations.Language
 import java.io.File
 import java.sql.Connection
@@ -72,7 +73,9 @@ fun Connection.executeUpdate(
     setup: Setup.() -> Unit
 ): Int = usePrepareStatement(sql) {
     Setup(this).setup()
-    executeUpdate()
+    measureSql(sql) {
+        executeUpdate()
+    }
 }
 
 fun <T> Connection.executeBatch(
@@ -84,7 +87,9 @@ fun <T> Connection.executeBatch(
         Setup(this).setup(batch)
         addBatch()
     }
-    executeBatch()
+    measureSql(sql) {
+        executeBatch()
+    }
 }
 
 fun <T> Connection.executeQuery(
@@ -93,8 +98,10 @@ fun <T> Connection.executeQuery(
     result: ResultSet.() -> T,
 ): T = usePrepareStatement(sql) {
     Setup(this).setup()
-    executeQuery().use {
-        result(it)
+    measureSql(sql) {
+        executeQuery().use {
+            result(it)
+        }
     }
 }
 
