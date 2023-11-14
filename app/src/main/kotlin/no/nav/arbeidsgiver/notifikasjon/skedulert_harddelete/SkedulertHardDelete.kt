@@ -47,12 +47,6 @@ object SkedulertHardDelete {
             ) {
                 service.await().sendSkedulerteHardDeletes(Instant.now())
             }
-            launchProcessingLoop(
-                "harddelete-service",
-                pauseAfterEach = Duration.ofMinutes(5)
-            ) {
-                service.await().cascadeHardDeletes()
-            }
 
             launchHttpServer(httpPort = httpPort)
         }
