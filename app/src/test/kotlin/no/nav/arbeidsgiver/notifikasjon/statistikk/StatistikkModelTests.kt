@@ -310,7 +310,7 @@ class StatistikkModelTests : DescribeSpec({
         it("Notifikasjoner som kun har samme grupperingsid og merkelapp blir merket som SoftDeleted") {
             val notifikasjoner = database.nonTransactionalExecuteQuery(
                 """
-            SELECT notifikasjon_id FROM "statistikk-model".public.notifikasjon where hard_deleted_tidspunkt is null;
+            SELECT notifikasjon_id FROM notifikasjon where hard_deleted_tidspunkt is null;
             """.trimIndent(),
                 transform = { getObject("notifikasjon_id", UUID::class.java) }
             )
