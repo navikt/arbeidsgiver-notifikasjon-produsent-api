@@ -1,7 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -171,6 +173,36 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
             }
             it("andre kall er feilmelding") {
                 resultat2 shouldBe Error.DuplikatEksternIdOgMerkelapp::class.simpleName
+            }
+        }
+
+        context("ny oppgave er idempotent også når varsler er sendt") {
+            val resultat1 = engine.produsentApi(nyOppgaveGql("foo"))
+
+            it("første kall er opprettet") {
+                resultat1.getTypedContent<String>("/nyOppgave/__typename") shouldBe MutationNyOppgave.NyOppgaveVellykket::class.simpleName
+            }
+
+            val idNyOppgave1 = resultat1.getTypedContent<UUID>("/nyOppgave/id")
+
+            it ("og varsler blir markert som sendt") {
+                val notifikasjon = queryModel.hentNotifikasjon(idNyOppgave1)!!
+                notifikasjon.eksterneVarsler.forEach {
+                    queryModel.oppdaterModellEtterHendelse(HendelseModel.EksterntVarselVellykket(
+                        notifikasjonId = idNyOppgave1,
+                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                        hendelseId = UUID.randomUUID(),
+                        produsentId = "fager",
+                        kildeAppNavn = "test",
+                        varselId = it.varselId,
+                        råRespons = NullNode.instance,
+                    ))
+                }
+            }
+
+            it("andre kall er idempotent") {
+                val idNyOppgave2 = engine.produsentApi(nyOppgaveGql("foo")).getTypedContent<UUID>("/nyOppgave/id")
+                idNyOppgave2 shouldBe idNyOppgave1
             }
         }
     }

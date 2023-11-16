@@ -59,10 +59,7 @@ object ProdusentModel {
                     this == other.copy(
                         opprettetTidspunkt = this.opprettetTidspunkt,
                         id = this.id,
-                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, varsel ->
-                            val varselId = this.eksterneVarsler.getOrNull(i)?.varselId ?: varsel.varselId
-                            varsel.copy(varselId = varselId)
-                        }
+                        eksterneVarsler = if (other.eksterneVarsler.size == this.eksterneVarsler.size) this.eksterneVarsler else other.eksterneVarsler
                     )
                 }
                 else -> false
@@ -99,10 +96,7 @@ object ProdusentModel {
                     this == other.copy(
                         opprettetTidspunkt = this.opprettetTidspunkt,
                         id = this.id,
-                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, varsel ->
-                            val varselId = this.eksterneVarsler.getOrNull(i)?.varselId ?: varsel.varselId
-                            varsel.copy(varselId = varselId)
-                        }
+                        eksterneVarsler = if (other.eksterneVarsler.size == this.eksterneVarsler.size) this.eksterneVarsler else other.eksterneVarsler
                     )
                 }
                 else -> false
