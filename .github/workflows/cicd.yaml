@@ -2,11 +2,16 @@ name: ci/cd
 on:
   push:
   pull_request:
+    types:
+      - closed
   workflow_dispatch:
-  merge_group:
+
+env: # it is a push to main if it is not a merge commit. the merge commit check could be smarter than commit message check, like author or committer is not github
+  push_to_main: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'Merge pull request') }}
 
 jobs:
   build:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: "read"
       id-token: "write"
@@ -62,7 +67,6 @@ jobs:
         working-directory: app
 
       - uses: nais/docker-build-push@v0
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: gar-push
         with:
           team: fager
@@ -73,12 +77,12 @@ jobs:
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
 
   deploy:
+    if: ${{ always() }}
+    needs: [build]
+    runs-on: ubuntu-20.04
     permissions:
       contents: "read"
       id-token: "write"
-    needs: [build]
-    runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     strategy:
       matrix:
         cluster:
@@ -100,13 +104,22 @@ jobs:
           #- manuelt-vedlikehold
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 5
+      - name: fix deploy sha for merge commit
+        # if the current sha is a merge commit we want the sha that was on the PR head before merge (the sha of the second parent)
+        run: |
+          echo "DEPLOY_SHA=$(git show ${{ github.sha }}^2 --pretty=format:'%H' --no-patch || git rev-parse ${{ github.sha }})" >> $GITHUB_ENV
       - uses: nais/login@v0
         id: login
         with:
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           team: fager
-      - uses: nais/deploy/actions/deploy@v1
+
+      # only deploy if push to main, or if PR is merged, or if workflow_dispatch
+      - if: env.push_to_main == 'true' || github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+        uses: nais/deploy/actions/deploy@v1
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
           IMAGE: ${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
