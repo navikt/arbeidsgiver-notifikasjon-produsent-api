@@ -11,26 +11,18 @@ import io.kotest.matchers.types.beOfType
 import io.kotest.matchers.types.instanceOf
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
-import java.time.Instant
 import java.time.OffsetDateTime
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class NyBeskjedTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepository(database)
-    val kafkaProducer = mockk<HendelseProdusent>()
-    coEvery { kafkaProducer.sendOgHentMetadata(any()) } returns HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val kafkaProducer = FakeHendelseProdusent()
 
     val engine = ktorProdusentTestServer(
         kafkaProducer = kafkaProducer,
@@ -41,20 +33,20 @@ class NyBeskjedTests : DescribeSpec({
         val nyBeskjed = opprettOgTestNyBeskjed(engine)
 
         it("sends message to kafka") {
-            coVerify {
-                kafkaProducer.sendOgHentMetadata(withArg { beskjedOpprettet: BeskjedOpprettet ->
-                    beskjedOpprettet.notifikasjonId shouldBe nyBeskjed.id
-                    beskjedOpprettet.lenke shouldBe "https://foo.bar"
-                    beskjedOpprettet.tekst shouldBe "hello world"
-                    beskjedOpprettet.merkelapp shouldBe "tag"
-                    beskjedOpprettet.mottakere.single() shouldBe NærmesteLederMottaker(
-                        naermesteLederFnr = "12345678910",
-                        ansattFnr = "321",
-                        virksomhetsnummer = "42"
-                    )
-                    beskjedOpprettet.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
-                    beskjedOpprettet.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
-                })
+            kafkaProducer.hendelser.removeLast().also {
+                it shouldBe instanceOf<BeskjedOpprettet>()
+                it as BeskjedOpprettet
+                it.notifikasjonId shouldBe nyBeskjed.id
+                it.lenke shouldBe "https://foo.bar"
+                it.tekst shouldBe "hello world"
+                it.merkelapp shouldBe "tag"
+                it.mottakere.single() shouldBe NærmesteLederMottaker(
+                    naermesteLederFnr = "12345678910",
+                    ansattFnr = "321",
+                    virksomhetsnummer = "42"
+                )
+                it.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
+                it.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
             }
         }
 
@@ -91,22 +83,22 @@ class NyBeskjedTests : DescribeSpec({
         val nyBeskjed = opprettOgTestNyBeskjed(engine, """ grupperingsid: "g42" """)
 
         it("sends message to kafka") {
-            coVerify {
-                kafkaProducer.sendOgHentMetadata(withArg { beskjedOpprettet: BeskjedOpprettet ->
-                    beskjedOpprettet.notifikasjonId shouldBe nyBeskjed.id
-                    beskjedOpprettet.sakId shouldBe sakOpprettet.sakId
-                    beskjedOpprettet.grupperingsid shouldBe sakOpprettet.grupperingsid
-                    beskjedOpprettet.lenke shouldBe "https://foo.bar"
-                    beskjedOpprettet.tekst shouldBe "hello world"
-                    beskjedOpprettet.merkelapp shouldBe "tag"
-                    beskjedOpprettet.mottakere.single() shouldBe NærmesteLederMottaker(
+            kafkaProducer.hendelser.removeLast().also {
+                it shouldBe instanceOf<BeskjedOpprettet>()
+                it as BeskjedOpprettet
+                it.notifikasjonId shouldBe nyBeskjed.id
+                it.sakId shouldBe sakOpprettet.sakId
+                it.grupperingsid shouldBe sakOpprettet.grupperingsid
+                it.lenke shouldBe "https://foo.bar"
+                it.tekst shouldBe "hello world"
+                it.merkelapp shouldBe "tag"
+                it.mottakere.single() shouldBe NærmesteLederMottaker(
                         naermesteLederFnr = "12345678910",
                         ansattFnr = "321",
                         virksomhetsnummer = "42"
                     )
-                    beskjedOpprettet.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
-                    beskjedOpprettet.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
-                })
+                it.opprettetTidspunkt shouldBe OffsetDateTime.parse("2019-10-12T07:20:50.52Z")
+                it.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
             }
         }
 

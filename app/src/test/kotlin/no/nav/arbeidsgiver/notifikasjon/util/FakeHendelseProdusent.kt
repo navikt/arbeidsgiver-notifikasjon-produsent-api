@@ -20,7 +20,7 @@ fun TestConfiguration.fakeHendelseProdusent(): FakeHendelseProdusent {
     }
 
 }
-class FakeHendelseProdusent: HendelseProdusent {
+open class FakeHendelseProdusent: HendelseProdusent {
     val hendelser = mutableListOf<HendelseModel.Hendelse>()
 
     inline fun <reified T> hendelserOfType() = hendelser.filterIsInstance<T>()

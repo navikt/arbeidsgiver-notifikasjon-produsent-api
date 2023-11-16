@@ -55,7 +55,7 @@ object Produsent {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val produsentRepositoryAsync = async {
-                ProdusentRepository(database.await())
+                ProdusentRepositoryImpl(database.await())
             }
 
             launch {

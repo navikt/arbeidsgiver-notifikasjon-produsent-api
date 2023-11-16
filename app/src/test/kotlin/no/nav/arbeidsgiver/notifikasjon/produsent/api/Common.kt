@@ -41,7 +41,7 @@ val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
     }
 }
 
-suspend fun ProdusentRepository.oppdaterModellEtterHendelse( hendelse: HendelseModel.Hendelse){
+suspend fun ProdusentRepository.oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse){
     oppdaterModellEtterHendelse(hendelse, HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z")))
 }
 

@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -12,7 +13,7 @@ import java.util.*
 
 class IdempotensOppførselForProdusentApiTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val queryModel = ProdusentRepository(database)
+    val queryModel = ProdusentRepositoryImpl(database)
 
     val virksomhetsnummer = "1234"
     val mottaker = AltinnMottaker(serviceCode = "5441", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
@@ -40,6 +41,33 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                         serviceCode: "${mottaker.serviceCode}"
                         serviceEdition: "${mottaker.serviceEdition}"
                     }}
+                    eksterneVarsler: [
+                        { sms: {
+                            mottaker: {
+                                kontaktinfo: {
+                                    fnr: ""
+                                    tlf: ""
+                                }
+                            },
+                            smsTekst: "En test SMS",
+                            sendetidspunkt: {
+                                sendevindu: NKS_AAPNINGSTID
+                            }
+                        }},
+                        { epost: {
+                            mottaker: {
+                                kontaktinfo: {
+                                    fnr: "0",
+                                    epostadresse: "0"
+                                }
+                            }
+                            epostTittel: "En tittel til din epost"
+                            epostHtmlBody: "<body><h1>hei</h1></body>"
+                            sendetidspunkt: {
+                                sendevindu: LOEPENDE
+                            }
+                        }}
+                    ]
                 }) {
                     __typename
                     ... on Error { feilmelding }
@@ -67,6 +95,33 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                         serviceCode: "${mottaker.serviceCode}"
                         serviceEdition: "${mottaker.serviceEdition}"
                     }}
+                    eksterneVarsler: [
+                        { sms: {
+                            mottaker: {
+                                kontaktinfo: {
+                                    fnr: ""
+                                    tlf: ""
+                                }
+                            },
+                            smsTekst: "En test SMS",
+                            sendetidspunkt: {
+                                sendevindu: NKS_AAPNINGSTID
+                            }
+                        }},
+                        { epost: {
+                            mottaker: {
+                                kontaktinfo: {
+                                    fnr: "0",
+                                    epostadresse: "0"
+                                }
+                            }
+                            epostTittel: "En tittel til din epost"
+                            epostHtmlBody: "<body><h1>hei</h1></body>"
+                            sendetidspunkt: {
+                                sendevindu: LOEPENDE
+                            }
+                        }}
+                    ]
                 }) {
                     __typename
                     ... on Error { feilmelding }
