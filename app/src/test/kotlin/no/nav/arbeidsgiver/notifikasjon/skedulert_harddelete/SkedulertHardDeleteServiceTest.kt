@@ -3,13 +3,13 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import io.mockk.coEvery
-import io.mockk.mockk
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem.AUTOSLETT_SERVICE
-import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType.Oppgave
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.SkedulertHardDelete
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.util.SkedulertHardDeleteRepositoryStub
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Duration
 import java.time.Instant
@@ -20,7 +20,10 @@ import java.util.*
 class SkedulertHardDeleteServiceTest : DescribeSpec({
 
     val kafkaProducer = FakeHendelseProdusent()
-    val repo = mockk<SkedulertHardDeleteRepository>()
+    val repo = object : SkedulertHardDeleteRepositoryStub() {
+        val hentSkedulerteHardDeletes = mutableListOf<List<SkedulertHardDelete>>()
+        override suspend fun hentSkedulerteHardDeletes(tilOgMed: Instant) = hentSkedulerteHardDeletes.removeLast()
+    }
     val service = SkedulertHardDeleteService(repo, kafkaProducer)
     val nåTidspunkt = Instant.parse("2020-01-01T20:20:01.01Z")
 
@@ -34,7 +37,7 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
                 skedulertHardDelete(uuid("1")),
                 skedulertHardDelete(uuid("2")),
             )
-            coEvery { repo.hentSkedulerteHardDeletes(any()) } returns skalSlettes
+            repo.hentSkedulerteHardDeletes.add(skalSlettes)
 
             service.sendSkedulerteHardDeletes(nåTidspunkt)
 
@@ -52,7 +55,7 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
                 skedulertHardDelete(uuid("1"), nåTidspunkt - Duration.ofSeconds(1)),
                 skedulertHardDelete(uuid("2"), nåTidspunkt + Duration.ofSeconds(1)),
             )
-            coEvery { repo.hentSkedulerteHardDeletes(any()) } returns skalSlettes
+            repo.hentSkedulerteHardDeletes.add(skalSlettes)
 
             it("validering feiler og metoden kaster") {
                 service.sendSkedulerteHardDeletes(nåTidspunkt)
@@ -67,9 +70,9 @@ class SkedulertHardDeleteServiceTest : DescribeSpec({
 private fun skedulertHardDelete(
     aggregateId: UUID,
     beregnetSlettetidspunkt: Instant = Instant.EPOCH,
-    aggregateType: SkedulertHardDeleteRepository.AggregateType = Oppgave,
+    aggregateType: AggregateType = AggregateType.Oppgave,
     grupperingsid: String? = null,
-) = SkedulertHardDeleteRepository.SkedulertHardDelete(
+) = SkedulertHardDelete(
     aggregateId = aggregateId,
     aggregateType = aggregateType,
     virksomhetsnummer = "21",

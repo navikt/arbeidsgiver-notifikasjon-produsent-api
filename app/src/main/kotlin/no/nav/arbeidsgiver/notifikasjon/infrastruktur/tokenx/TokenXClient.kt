@@ -30,7 +30,6 @@ import org.apache.http.ConnectionClosedException
 import java.time.Instant
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 
 fun defaultHttpClient() = HttpClient(Apache) {
     install(ContentNegotiation) {
@@ -73,7 +72,6 @@ class TokenXClientImpl(
         private val subjectToken: String,
     )
 
-    @OptIn(ExperimentalTime::class)
     private val exchangeCache = Caffeine.newBuilder()
         .maximumSize(10_000L)
         .expireAfter(object : Expiry<CacheKey, AccessToken> {

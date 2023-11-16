@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
+import no.nav.arbeidsgiver.notifikasjon.tid.OsloTidImpl
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import java.time.Duration
 import java.time.Instant
@@ -13,7 +14,8 @@ import java.util.*
 
 
 class SkedulertPåminnelseService(
-    private val hendelseProdusent: HendelseProdusent
+    private val hendelseProdusent: HendelseProdusent,
+    private val osloTid: OsloTid = OsloTidImpl,
 ) : PartitionProcessor {
     private val repository = SkedulertPåminnelseRepository()
 
@@ -22,11 +24,11 @@ class SkedulertPåminnelseService(
     }
 
     override suspend fun processingLoopStep() {
-        sendAktuellePåminnelser(now = OsloTid.localDateTimeNow().inOsloAsInstant())
+        sendAktuellePåminnelser(now = osloTid.localDateTimeNow().inOsloAsInstant())
         delay(Duration.ofSeconds(1))
     }
 
-    suspend fun sendAktuellePåminnelser(now: Instant = OsloTid.localDateTimeNow().inOsloAsInstant()) {
+    suspend fun sendAktuellePåminnelser(now: Instant = osloTid.localDateTimeNow().inOsloAsInstant()) {
         val skedulertePåminnelser = repository.hentOgFjernAlleAktuellePåminnelser(now)
         /* NB! Her kan vi vurdere å innføre batching av utsendelse. */
         skedulertePåminnelser.forEach { skedulert ->

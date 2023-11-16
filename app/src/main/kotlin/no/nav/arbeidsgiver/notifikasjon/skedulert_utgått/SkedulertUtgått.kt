@@ -13,7 +13,7 @@ object SkedulertUtgått {
     private val hendelsesstrøm by lazy {
         PartitionAwareHendelsesstrøm(
             groupId = "skedulert-utgaatt-1",
-            newPartitionProcessor = { SkedulertUtgåttService(lagKafkaHendelseProdusent()) },
+            newPartitionProcessor = { SkedulertUtgåttService(hendelseProdusent = lagKafkaHendelseProdusent()) },
         )
     }
 

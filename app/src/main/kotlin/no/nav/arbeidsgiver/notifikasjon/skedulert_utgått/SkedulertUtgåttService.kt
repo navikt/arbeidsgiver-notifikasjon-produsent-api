@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
+import no.nav.arbeidsgiver.notifikasjon.tid.OsloTidImpl
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import java.time.Duration
@@ -16,7 +17,8 @@ import java.util.*
 
 
 class SkedulertUtgåttService(
-    private val hendelseProdusent: HendelseProdusent
+    private val hendelseProdusent: HendelseProdusent,
+    private val osloTid: OsloTid = OsloTidImpl
 ): PartitionProcessor {
     private val repository = SkedulertUtgåttRepository()
 
@@ -100,7 +102,7 @@ class SkedulertUtgåttService(
         delay(Duration.ofSeconds(1))
     }
 
-    suspend fun sendVedUtgåttFrist(now: LocalDate = OsloTid.localDateNow()) {
+    suspend fun sendVedUtgåttFrist(now: LocalDate = osloTid.localDateNow()) {
         val utgåttFrist = repository.hentOgFjernAlleMedFrist(now)
         utgåttFrist.forEach { utgått ->
             val fristLocalDateTime = LocalDateTime.of(utgått.frist, LocalTime.MAX)

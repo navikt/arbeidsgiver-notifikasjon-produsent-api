@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
+import no.nav.arbeidsgiver.notifikasjon.tid.OsloTidImpl
 import org.slf4j.event.Level.ERROR
 import org.slf4j.event.Level.WARN
 import java.time.Duration
@@ -98,6 +99,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 
 class EksternVarslingService(
+    private val åpningstider: Åpningstider = ÅpningstiderImpl,
+    private val osloTid: OsloTid = OsloTidImpl,
     private val eksternVarslingRepository: EksternVarslingRepository,
     private val altinnVarselKlient: AltinnVarselKlient,
     private val hendelseProdusent: HendelseProdusent,
@@ -145,7 +148,7 @@ class EksternVarslingService(
                 "resume-scheduled-work",
                 pauseAfterEach = Duration.ofMinutes(5)
             ) {
-                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(OsloTid.localDateTimeNow())
+                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(osloTid.localDateTimeNow())
                 if (rescheduledCount > 0) {
                     log.info("resumed $rescheduledCount jobs from wait queue")
                 }
@@ -203,8 +206,8 @@ class EksternVarslingService(
         withContext(varsel.asMDCContext()) {
             when (varsel) {
                 is EksternVarselTilstand.Ny -> {
-                    val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt()
-                    if (kalkulertSendeTidspunkt <= OsloTid.localDateTimeNow()) {
+                    val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
+                    if (kalkulertSendeTidspunkt <= osloTid.localDateTimeNow()) {
                         when (val response = altinnVarselKlient.send(varsel.data.eksternVarsel)) {
                             is AltinnVarselKlientResponse.Ok -> {
                                 eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)

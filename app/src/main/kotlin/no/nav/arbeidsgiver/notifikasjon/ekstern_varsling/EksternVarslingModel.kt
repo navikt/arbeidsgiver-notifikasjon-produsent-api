@@ -6,7 +6,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFei
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
-import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import java.time.LocalDateTime
 import java.util.*
 
@@ -82,10 +81,13 @@ sealed interface EksternVarselTilstand {
         val response: AltinnResponse
     ) : EksternVarselTilstand
 
-    fun kalkuertSendetidspunkt(now: LocalDateTime = OsloTid.localDateTimeNow()) =
+    fun kalkuertSendetidspunkt(
+        åpningstider: Åpningstider,
+        now: LocalDateTime,
+    ) =
         when (data.eksternVarsel.sendeVindu) {
-            EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> Åpningstider.nesteNksÅpningstid(now)
-            EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> Åpningstider.nesteDagtidIkkeSøndag(now)
+            EksterntVarselSendingsvindu.NKS_ÅPNINGSTID -> åpningstider.nesteNksÅpningstid(now)
+            EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG -> åpningstider.nesteDagtidIkkeSøndag(now)
             EksterntVarselSendingsvindu.LØPENDE -> now
             EksterntVarselSendingsvindu.SPESIFISERT -> data.eksternVarsel.sendeTidspunkt!!
         }

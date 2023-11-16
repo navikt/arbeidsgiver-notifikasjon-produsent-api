@@ -11,7 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyBeskjed
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyOppgave
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
@@ -80,7 +80,7 @@ private val jsonVariabler = laxObjectMapper.readValue<Map<String, Any?>>("""
 
 class EksternVarselApiTests: DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepository(database)
+    val produsentModel = ProdusentRepositoryImpl(database)
 
     val engine = ktorProdusentTestServer(
         produsentRepository = produsentModel

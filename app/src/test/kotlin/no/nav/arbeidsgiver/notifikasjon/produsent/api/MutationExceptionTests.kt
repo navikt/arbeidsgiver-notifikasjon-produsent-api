@@ -4,25 +4,25 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.string.shouldContainIgnoringCase
-import io.mockk.coEvery
-import io.mockk.mockk
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 class MutationExceptionTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepository(database)
-    val kafkaProducer = mockk<HendelseProdusent>()
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val ex = RuntimeException("woops!")
+
     val engine = ktorProdusentTestServer(
-        kafkaProducer = kafkaProducer,
         produsentRepository = produsentRepository,
+        kafkaProducer = object : FakeHendelseProdusent() {
+            override suspend fun sendOgHentMetadata(hendelse: HendelseModel.Hendelse) = throw ex
+        },
     )
 
     //language=GraphQL
@@ -121,8 +121,6 @@ class MutationExceptionTests : DescribeSpec({
 
     describe("robusthet ved intern feil") {
         withData(gyldigeMutations) { query ->
-            val ex = RuntimeException("woops!")
-            coEvery { kafkaProducer.sendOgHentMetadata(any()) }.throws(ex)
             val response = engine.produsentApi(query)
             response.getGraphqlErrors() shouldHaveSize 1
             response.getGraphqlErrors().first().message shouldContainIgnoringCase ex.message!!

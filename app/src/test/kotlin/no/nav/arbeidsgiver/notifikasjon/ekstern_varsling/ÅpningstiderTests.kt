@@ -3,8 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Åpningstider.nesteDagtidIkkeSøndag
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Åpningstider.nesteNksÅpningstid
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.ÅpningstiderImpl.nesteDagtidIkkeSøndag
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.ÅpningstiderImpl.nesteNksÅpningstid
 import java.time.DayOfWeek
 import java.time.DayOfWeek.*
 import java.time.LocalDate

@@ -4,11 +4,14 @@ import java.time.*
 
 private val norwayZoneId: ZoneId = ZoneId.of("Europe/Oslo")
 
-object OsloTid {
-    fun localDateTimeNow(): LocalDateTime = LocalDateTime.now(norwayZoneId)
+interface OsloTid {
+    fun localDateTimeNow(): LocalDateTime
+    fun localDateNow(): LocalDate
+}
 
-    fun localDateNow(): LocalDate =
-        LocalDate.now(norwayZoneId)
+object OsloTidImpl : OsloTid {
+    override fun localDateTimeNow(): LocalDateTime = LocalDateTime.now(norwayZoneId)
+    override fun localDateNow(): LocalDate = LocalDate.now(norwayZoneId)
 }
 
 fun LocalDateTime.atOslo():  ZonedDateTime = atZone(norwayZoneId)
