@@ -109,7 +109,7 @@ jobs:
       - name: fix deploy sha for merge commit
         # if the current sha is a merge commit we want the sha that was on the PR head before merge (the sha of the second parent)
         run: |
-          echo "DEPLOY_SHA=$(git show ${{ github.sha }}^2 --pretty=format:'%H' --no-patch || git rev-parse ${{ github.sha }})" >> $GITHUB_ENV
+          echo "DEPLOY_SHA=$(git show ${{ github.sha }}^2 --pretty=format:'%H' --no-patch || echo ${{ github.sha }})" >> $GITHUB_ENV
       - uses: nais/login@v0
         id: login
         with:
