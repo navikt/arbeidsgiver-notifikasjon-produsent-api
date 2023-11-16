@@ -13,7 +13,7 @@ object SkedulertPåminnelse {
     private val hendelsesstrøm by lazy {
         PartitionAwareHendelsesstrøm(
             groupId = "skedulert-paaminnelse-1",
-            newPartitionProcessor = { SkedulertPåminnelseService(lagKafkaHendelseProdusent()) },
+            newPartitionProcessor = { SkedulertPåminnelseService(hendelseProdusent = lagKafkaHendelseProdusent()) },
         )
     }
 

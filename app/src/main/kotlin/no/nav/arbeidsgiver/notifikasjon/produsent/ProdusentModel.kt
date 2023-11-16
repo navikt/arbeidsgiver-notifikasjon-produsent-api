@@ -58,7 +58,11 @@ object ProdusentModel {
                 is Beskjed -> {
                     this == other.copy(
                         opprettetTidspunkt = this.opprettetTidspunkt,
-                        id = this.id
+                        id = this.id,
+                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, varsel ->
+                            val varselId = this.eksterneVarsler.getOrNull(i)?.varselId ?: varsel.varselId
+                            varsel.copy(varselId = varselId)
+                        }
                     )
                 }
                 else -> false
@@ -94,7 +98,11 @@ object ProdusentModel {
                 is Oppgave -> {
                     this == other.copy(
                         opprettetTidspunkt = this.opprettetTidspunkt,
-                        id = this.id
+                        id = this.id,
+                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, varsel ->
+                            val varselId = this.eksterneVarsler.getOrNull(i)?.varselId ?: varsel.varselId
+                            varsel.copy(varselId = varselId)
+                        }
                     )
                 }
                 else -> false

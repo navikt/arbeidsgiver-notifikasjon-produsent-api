@@ -23,24 +23,47 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository.AggregateType
 import java.lang.RuntimeException
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
 
-class ProdusentRepository(
-    private val database: Database,
-) : HardDeletedRepository(database) {
+interface ProdusentRepository {
     enum class AggregateType {
         SAK,
         BESKJED,
         OPPGAVE,
     }
 
+    suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon?
+
+    suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon?
+
+    suspend fun finnNotifikasjoner(
+        merkelapper: List<String>,
+        grupperingsid: String?,
+        antall: Int,
+        offset: Int,
+    ): List<ProdusentModel.Notifikasjon>
+
+    suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak?
+
+    suspend fun hentSak(id: UUID): ProdusentModel.Sak?
+
+    suspend fun erHardDeleted(type: AggregateType, merkelapp: String, grupperingsid: String): Boolean
+
+    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
+}
+
+class ProdusentRepositoryImpl(
+    private val database: Database,
+) : HardDeletedRepository(database), ProdusentRepository {
+
     val log = logger()
 
-    suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
+    override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
             """ 
                 where id = ?
@@ -50,7 +73,7 @@ class ProdusentRepository(
         }
             .firstOrNull()
 
-    suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? =
+    override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? =
         hentNotifikasjonerMedVarsler(
             """ 
                 where
@@ -63,7 +86,7 @@ class ProdusentRepository(
         }
             .firstOrNull()
 
-    suspend fun finnNotifikasjoner(
+    override suspend fun finnNotifikasjoner(
         merkelapper: List<String>,
         grupperingsid: String?,
         antall: Int,
@@ -84,7 +107,7 @@ class ProdusentRepository(
             integer(offset)
         }
 
-    suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak? {
+    override suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak? {
         return hentSaker(
             where = """
                grupperingsid = ? and merkelapp = ?
@@ -97,7 +120,7 @@ class ProdusentRepository(
             .firstOrNull()
     }
 
-    suspend fun hentSak(id: UUID): ProdusentModel.Sak? {
+    override suspend fun hentSak(id: UUID): ProdusentModel.Sak? {
         return hentSaker(
             where = """
                 id = ?
@@ -109,7 +132,7 @@ class ProdusentRepository(
             .firstOrNull()
     }
 
-    suspend fun erHardDeleted(type: AggregateType, merkelapp: String, grupperingsid: String) =
+    override suspend fun erHardDeleted(type: AggregateType, merkelapp: String, grupperingsid: String) =
         database.nonTransactionalExecuteQuery("""
             select * from hard_deleted_aggregates_metadata where aggregate_type = ? and merkelapp = ? and grupperingsid = ?
             """,
@@ -243,7 +266,7 @@ class ProdusentRepository(
             }
         }
 
-    suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
+    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         if (erHardDeleted(hendelse.aggregateId)) {
             log.info("skipping harddeleted event {}", hendelse)
             return

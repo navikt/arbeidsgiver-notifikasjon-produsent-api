@@ -8,9 +8,6 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
-import io.mockk.every
-import io.mockk.mockkObject
-import io.mockk.unmockkAll
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
@@ -32,8 +29,20 @@ class EksternVarslingServiceTests : DescribeSpec({
     val repository = EksternVarslingRepository(database)
     val hendelseProdusent = FakeHendelseProdusent()
     val meldingSendt = AtomicBoolean(false)
+    val nå = LocalDateTime.parse("2020-01-01T01:01")
+    val åpningstider = object : Åpningstider {
+        val nesteNksÅpningstid = mutableListOf<LocalDateTime>()
+        val nesteDagtidIkkeSøndag = mutableListOf<LocalDateTime>()
+        override fun nesteNksÅpningstid(start: LocalDateTime) = nesteNksÅpningstid.removeLast()
+        override fun nesteDagtidIkkeSøndag(start: LocalDateTime) = nesteDagtidIkkeSøndag.removeLast()
 
+    }
     val service = EksternVarslingService(
+        åpningstider = åpningstider,
+        osloTid = object : OsloTid {
+            override fun localDateTimeNow() = nå
+            override fun localDateNow() = TODO("Not yet implemented")
+        },
         eksternVarslingRepository = repository,
         altinnVarselKlient = object: AltinnVarselKlient {
             override suspend fun send(
@@ -47,18 +56,6 @@ class EksternVarslingServiceTests : DescribeSpec({
         idleSleepDelay = Duration.ZERO,
         recheckEmergencyBrakeDelay = Duration.ZERO,
     )
-
-    val nå = LocalDateTime.parse("2020-01-01T01:01")
-    beforeEach {
-        /**
-         * uten before each mister vi mockObject oppførsel i påfølgende av testene. litt usikker på hvorfor
-         */
-        mockkObject(OsloTid)
-        every { OsloTid.localDateTimeNow() } returns nå
-    }
-    afterEach {
-        unmockkAll()
-    }
 
     describe("EksternVarslingService#start()") {
         context("LØPENDE sendingsvindu") {
@@ -150,8 +147,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             database.nonTransactionalExecuteUpdate("""
                 update emergency_break set stop_processing = false where id = 0
             """)
-            mockkObject(Åpningstider)
-            every { Åpningstider.nesteNksÅpningstid() } returns nå.minusMinutes(5)
+            åpningstider.nesteNksÅpningstid.add(nå.minusMinutes(5))
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
@@ -198,8 +194,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             database.nonTransactionalExecuteUpdate("""
                 update emergency_break set stop_processing = false where id = 0
             """)
-            mockkObject(Åpningstider)
-            every { Åpningstider.nesteNksÅpningstid() } returns nå.plusMinutes(5)
+            åpningstider.nesteNksÅpningstid.add(nå.plusMinutes(5))
             val serviceJob = service.start(this)
 
             it("reschedules") {
@@ -255,8 +250,8 @@ class EksternVarslingServiceTests : DescribeSpec({
             database.nonTransactionalExecuteUpdate("""
                 update emergency_break set stop_processing = false where id = 0
             """)
-            mockkObject(Åpningstider)
-            every { Åpningstider.nesteDagtidIkkeSøndag() } returns nå.minusMinutes(5)
+
+            åpningstider.nesteDagtidIkkeSøndag.add(nå.minusMinutes(5))
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
@@ -303,8 +298,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             database.nonTransactionalExecuteUpdate("""
                 update emergency_break set stop_processing = false where id = 0
             """)
-            mockkObject(Åpningstider)
-            every { Åpningstider.nesteDagtidIkkeSøndag() } returns nå.plusMinutes(5)
+            åpningstider.nesteDagtidIkkeSøndag.add(nå.plusMinutes(5))
             val serviceJob = service.start(this)
 
             it("reskjedduleres") {

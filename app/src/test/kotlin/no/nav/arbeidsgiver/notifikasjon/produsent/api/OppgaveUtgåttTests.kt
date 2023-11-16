@@ -10,15 +10,18 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
 
 class OppgaveUtgåttTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepository(database)
+    val produsentModel = ProdusentRepositoryImpl(database)
     val stubbedKafkaProducer = FakeHendelseProdusent()
 
     val engine = ktorProdusentTestServer(

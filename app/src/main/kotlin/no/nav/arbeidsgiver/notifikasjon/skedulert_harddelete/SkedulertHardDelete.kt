@@ -29,7 +29,7 @@ object SkedulertHardDelete {
             val database = openDatabaseAsync(databaseConfig)
 
             val repoAsync = async {
-                SkedulertHardDeleteRepository(database.await())
+                SkedulertHardDeleteRepositoryImpl(database.await())
             }
             launch {
                 val repo = repoAsync.await()
