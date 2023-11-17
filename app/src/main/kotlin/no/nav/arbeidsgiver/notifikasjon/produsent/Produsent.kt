@@ -4,7 +4,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
@@ -27,14 +26,6 @@ object Produsent {
             topic = NOTIFIKASJON_TOPIC,
             groupId = "produsent-model-builder",
             replayPeriodically = true
-        )
-    }
-
-    private val rebuildQueryModel by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "produsent-model-builder-rebuild-nov-2023",
-            replayPeriodically = false,
         )
     }
 
@@ -71,15 +62,6 @@ object Produsent {
                 val produsentRepository = produsentRepositoryAsync.await()
                 hendelsesstrøm.forEach { event, metadata ->
                     produsentRepository.oppdaterModellEtterHendelse(event, metadata)
-                }
-            }
-
-            launch {
-                val produsentRepository = produsentRepositoryAsync.await()
-                rebuildQueryModel.forEach { event, metadata ->
-                    if (event is HendelseModel.OppgaveOpprettet || event is HendelseModel.BeskjedOpprettet) {
-                        produsentRepository.oppdaterModellEtterHendelse(event, metadata)
-                    }
                 }
             }
 
