@@ -4,14 +4,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 
 object BrukerWriter {
     val databaseConfig = Database.config(
@@ -31,14 +29,6 @@ object BrukerWriter {
         )
     }
 
-    private val rebuildQueryModel by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "bruker-model-builder-2-rebuild-august-2023-3",
-            replayPeriodically = false,
-        )
-    }
-
     fun main(
         httpPort: Int = 8080
     ) {
@@ -52,15 +42,6 @@ object BrukerWriter {
                 val brukerRepository = brukerRepositoryAsync.await()
                 hendelsesstrøm.forEach { event, metadata ->
                     brukerRepository.oppdaterModellEtterHendelse(event, metadata)
-                }
-            }
-
-            launch {
-                val brukerRepository = brukerRepositoryAsync.await()
-                rebuildQueryModel.forEach { event, metadata ->
-                    if (event is HendelseModel.SakOpprettet || event is HendelseModel.NyStatusSak) {
-                        brukerRepository.oppdaterModellEtterHendelse(event, metadata)
-                    }
                 }
             }
 
