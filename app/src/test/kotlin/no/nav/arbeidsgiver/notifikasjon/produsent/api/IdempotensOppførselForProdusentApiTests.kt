@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import org.intellij.lang.annotations.Language
+import java.time.LocalDateTime
 import java.util.*
 
 class IdempotensOppførselForProdusentApiTests : DescribeSpec({
@@ -208,9 +209,51 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                 resultat2.getTypedContent<String>("/nyOppgave/__typename") shouldBe Error.DuplikatEksternIdOgMerkelapp::class.simpleName
             }
         }
+
+        context("Oppgave med påminnelse med varsel") {
+            // language=GraphQL
+            val oppgaveMedPåminnelse = """
+            mutation NyOppgave(${'$'}eksterneVarsler: [PaaminnelseEksterntVarselInput!]! = []) {
+                nyOppgave(nyOppgave: {
+                    metadata: {
+                        eksternId: "$eksternId"
+                        virksomhetsnummer: "${mottaker.virksomhetsnummer}"
+                    }
+                    notifikasjon: {
+                        tekst: "foo"
+                        merkelapp: "tag"
+                        lenke: "#bar"
+                    }
+                    mottaker: {altinn: {
+                        serviceCode: "${mottaker.serviceCode}"
+                        serviceEdition: "${mottaker.serviceEdition}"
+                    }}
+                    paaminnelse: {
+                        tidspunkt: {
+                            konkret: "${LocalDateTime.now().plusDays(1)}"
+                        }
+                        eksterneVarsler: ${'$'}eksterneVarsler
+                    }
+                }) {
+                    __typename
+                    ... on Error { feilmelding }
+                    ... on NyOppgaveVellykket { id }
+                }
+            }
+            """
+            val nyOppgaveReq = GraphQLRequest(
+                query = oppgaveMedPåminnelse,
+                variables = laxObjectMapper.readValue<Map<String, Any?>>(påminnelseVarsler),
+            )
+            val idNyOppgave1 = engine.produsentApi(nyOppgaveReq).getTypedContent<UUID>("/nyOppgave/id")
+            val idNyOppgave2 = engine.produsentApi(nyOppgaveReq).getTypedContent<UUID>("/nyOppgave/id")
+
+            it("er opprettet med samme id") {
+                idNyOppgave1 shouldBe idNyOppgave2
+            }
+        }
     }
 
-    // TODO: test påminnelse med ekstern varsel
 })
 
 @Language("json")
@@ -312,3 +355,47 @@ private val varlser2 = """
   ]
 }
 """
+@Language("json")
+private val påminnelseVarsler = """
+{
+  "eksterneVarsler": [
+    {
+      "sms": {
+        "mottaker": {
+          "kontaktinfo": {
+            "fnr": "1337",
+            "tlf": "470000"
+          }
+        },
+        "smsTekst": "En test SMS",
+        "sendevindu": "NKS_AAPNINGSTID"
+      }
+    },
+    {
+      "epost": {
+        "mottaker": {
+          "kontaktinfo": {
+            "fnr": "0",
+            "epostadresse": "foo@bar.baz"
+          }
+        },
+        "epostTittel": "En tittel til din epost",
+        "epostHtmlBody": "<body><h1>hei</h1></body>",
+        "sendevindu": "DAGTID_IKKE_SOENDAG"
+      }
+    },
+    {
+      "altinntjeneste": {
+        "mottaker": {
+          "serviceCode": "1337",
+          "serviceEdition": "42"
+        },
+        "tittel": "Følg med, du har nye følgere å følge opp",
+        "innhold": "Gå inn på Nav sine nettsider og følg veiledningen",
+        "sendevindu": "LOEPENDE"
+      }
+    }
+  ]
+}
+"""
+

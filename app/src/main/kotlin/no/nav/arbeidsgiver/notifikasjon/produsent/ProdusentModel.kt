@@ -131,6 +131,24 @@ object ProdusentModel {
                                     },
                                 )
                             }
+                        },
+                        påminnelseEksterneVarsler = other.påminnelseEksterneVarsler.mapIndexed { i, otherVarsel ->
+                            val thisVarsel = this.påminnelseEksterneVarsler.getOrNull(i) // simpler with getOrDefault?
+                            if (thisVarsel == null) {
+                                otherVarsel
+                            } else {
+                                otherVarsel.copy(
+                                    varselId = thisVarsel.varselId,
+                                    status = thisVarsel.status,
+                                    feilmelding = thisVarsel.feilmelding,
+                                    kildeHendelse = when (otherVarsel.kildeHendelse) {
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        null -> null // TODO: remove when no longer nullable
+                                    },
+                                )
+                            }
                         }
                     )
                 }
