@@ -5,9 +5,7 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.common.serialization.StringDeserializer
-import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -18,7 +16,6 @@ class HendelsesstrømKafkaImpl(
     replayPeriodically: Boolean = false,
     configure: Properties.() -> Unit = {},
 ): Hendelsesstrøm {
-    private val log = logger()
 
     private val consumer = CoroutineKafkaConsumer.new(
         topic = topic,
@@ -42,12 +39,13 @@ class HendelsesstrømKafkaImpl(
 
     override suspend fun forEach(
         stop: AtomicBoolean,
+        onTombstone: suspend (String) -> Unit,
         body: suspend (Hendelse, HendelseMetadata) -> Unit
     ) {
         consumer.forEach(stop) { record ->
             val recordValue = record.value()
             if (recordValue == null) {
-                log.info("skipping tombstoned event key=${record.key()}")
+                onTombstone(record.key())
             } else if (recordValue.hendelseId in brokenHendelseId) {
                 /* do nothing */
             } else {

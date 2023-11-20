@@ -76,7 +76,10 @@ object Produsent {
 
             launch {
                 val produsentRepository = produsentRepositoryAsync.await()
-                rebuildQueryModel.forEach { event, metadata ->
+                rebuildQueryModel.forEach(onTombstone = { key ->
+                    log.info("skipping tombstoned event key=${key}")
+                    produsentRepository.deleteVarslerForTombstone(key)
+                }) { event, metadata ->
                     if (event is HendelseModel.OppgaveOpprettet || event is HendelseModel.BeskjedOpprettet) {
                         produsentRepository.oppdaterModellEtterHendelse(event, metadata)
                     }
