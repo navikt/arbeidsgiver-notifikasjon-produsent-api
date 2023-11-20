@@ -662,15 +662,18 @@ class ProdusentRepositoryImpl(
                 insert into paaminnelse_eksternt_varsel(
                     varsel_id,
                     notifikasjon_id,
-                    status
+                    status,
+                    kilde_hendelse
                 )
-                values (?, ?, 'NY')
-                on conflict do nothing;
+                values (?, ?, 'NY', ?)
+                on conflict(varsel_id) do update
+                set kilde_hendelse = excluded.kilde_hendelse;;
                 """,
                 fristUtsatt.påminnelse?.eksterneVarsler.orEmpty()
             ) { eksterntVarsel ->
                 uuid(eksterntVarsel.varselId)
                 uuid(fristUtsatt.notifikasjonId)
+                jsonb(eksterntVarsel)
             }
         }
     }
