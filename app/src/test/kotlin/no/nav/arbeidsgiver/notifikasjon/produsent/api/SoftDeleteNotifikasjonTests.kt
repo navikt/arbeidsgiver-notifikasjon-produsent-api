@@ -230,7 +230,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                     """
                 )
                 val slettetNotifikasjon =
-                    response.getTypedContent<QueryMineNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
+                    response.getTypedContent<QueryNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
                         .edges
                         .map { it.node }
                         .find { it.id == uuid }!!

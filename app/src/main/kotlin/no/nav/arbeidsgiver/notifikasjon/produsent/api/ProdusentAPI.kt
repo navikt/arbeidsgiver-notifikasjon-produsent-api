@@ -42,7 +42,7 @@ object ProdusentAPI {
                     dataFetcher("whoami", ::queryWhoami)
                 }
 
-                QueryMineNotifikasjoner(produsentRepository).wire(this)
+                QueryNotifikasjoner(produsentRepository).wire(this)
                 MutationHardDeleteSak(hendelseDispatcher, produsentRepository).wire(this)
                 MutationHardDeleteNotifikasjon(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNyBeskjed(hendelseDispatcher, produsentRepository).wire(this)

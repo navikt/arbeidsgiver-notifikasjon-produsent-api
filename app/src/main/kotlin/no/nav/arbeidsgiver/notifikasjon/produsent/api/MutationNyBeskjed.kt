@@ -41,7 +41,7 @@ internal class MutationNyBeskjed(
     data class NyBeskjedInput(
         val mottakere: List<MottakerInput>,
         val mottaker: MottakerInput?,
-        val notifikasjon: QueryMineNotifikasjoner.NotifikasjonData,
+        val notifikasjon: QueryNotifikasjoner.NotifikasjonData,
         val metadata: MetadataInput,
         val eksterneVarsler: List<EksterntVarselInput>
     ) {
@@ -133,7 +133,8 @@ internal class MutationNyBeskjed(
             }
             else -> {
                 Error.DuplikatEksternIdOgMerkelapp(
-                    "notifikasjon med angitt eksternId og merkelapp finnes fra før"
+                    "notifikasjon med angitt eksternId og merkelapp finnes fra før",
+                    eksisterende.id
                 )
             }
         }

@@ -193,6 +193,10 @@ private suspend inline fun <reified T: MutationNyOppgave.NyOppgaveResultat> Desc
                         id
                     }
                 }
+                ... on DuplikatEksternIdOgMerkelapp {
+                    feilmelding
+                    idTilEksisterende
+                }
                 ... on Error {
                     feilmelding
                 }

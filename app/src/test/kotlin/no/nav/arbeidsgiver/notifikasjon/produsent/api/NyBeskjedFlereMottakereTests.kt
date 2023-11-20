@@ -63,7 +63,7 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
             val id = response.getTypedContent<UUID>("/nyBeskjed/id")
             val mottakere = engine.hentMottakere(id)
             mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnMottaker(
+                QueryNotifikasjoner.AltinnMottaker(
                     serviceCode = "5441",
                     serviceEdition = "1",
                     virksomhetsnummer = "0"
@@ -98,7 +98,7 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
             val id = response.getTypedContent<UUID>("/nyBeskjed/id")
             val mottakere = engine.hentMottakere(id)
             mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnMottaker(
+                QueryNotifikasjoner.AltinnMottaker(
                     serviceCode = "5441",
                     serviceEdition = "1",
                     virksomhetsnummer = "0"
@@ -138,12 +138,12 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
             val id = response.getTypedContent<UUID>("/nyBeskjed/id")
             val mottakere = engine.hentMottakere(id)
             mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnMottaker(
+                QueryNotifikasjoner.AltinnMottaker(
                     serviceCode = "5441",
                     serviceEdition = "1",
                     virksomhetsnummer = "0"
                 ),
-                QueryMineNotifikasjoner.NærmesteLederMottaker(
+                QueryNotifikasjoner.NærmesteLederMottaker(
                     ansattFnr = "3",
                     naermesteLederFnr = "2",
                     virksomhetsnummer = "0"
@@ -184,12 +184,12 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
             val id = response.getTypedContent<UUID>("/nyBeskjed/id")
             val mottakere = engine.hentMottakere(id)
             mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnMottaker(
+                QueryNotifikasjoner.AltinnMottaker(
                     serviceCode = "5441",
                     serviceEdition = "1",
                     virksomhetsnummer = "0"
                 ),
-                QueryMineNotifikasjoner.NærmesteLederMottaker(
+                QueryNotifikasjoner.NærmesteLederMottaker(
                     ansattFnr = "3",
                     naermesteLederFnr = "2",
                     virksomhetsnummer = "0"
@@ -225,7 +225,7 @@ fun nyBeskjed(fragment: String) = """
             }
         """
 
-internal fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifikasjoner.Mottaker> {
+internal fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryNotifikasjoner.Mottaker> {
     return this.produsentApi(
         """
         query {
@@ -280,7 +280,7 @@ internal fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryMineNotifi
         .getTypedContent<List<JsonNode>>("$.mineNotifikasjoner.edges[*].node")
         .flatMap {
             if (it["metadata"]["id"].asText() == id.toString())
-                laxObjectMapper.convertValue<List<QueryMineNotifikasjoner.Mottaker>>(it["mottakere"])
+                laxObjectMapper.convertValue<List<QueryNotifikasjoner.Mottaker>>(it["mottakere"])
             else
                 listOf()
         }
