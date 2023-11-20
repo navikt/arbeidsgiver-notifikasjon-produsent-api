@@ -61,7 +61,7 @@ object ProdusentModel {
                         opprettetTidspunkt = this.opprettetTidspunkt,
                         id = this.id,
                         eksterneVarsler = other.eksterneVarsler.mapIndexed { i, otherVarsel ->
-                            val thisVarsel = this.eksterneVarsler.getOrNull(i) // simpler with getOrDefault?
+                            val thisVarsel = this.eksterneVarsler.getOrNull(i)
                             if (thisVarsel == null) {
                                 otherVarsel
                             } else {
@@ -115,7 +115,7 @@ object ProdusentModel {
                         opprettetTidspunkt = this.opprettetTidspunkt,
                         id = this.id,
                         eksterneVarsler = other.eksterneVarsler.mapIndexed { i, otherVarsel ->
-                            val thisVarsel = this.eksterneVarsler.getOrNull(i) // simpler with getOrDefault?
+                            val thisVarsel = this.eksterneVarsler.getOrNull(i)
                             if (thisVarsel == null) {
                                 otherVarsel
                             } else {
