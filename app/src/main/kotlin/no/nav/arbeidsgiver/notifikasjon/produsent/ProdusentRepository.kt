@@ -508,15 +508,18 @@ class ProdusentRepositoryImpl(
                 insert into eksternt_varsel(
                     varsel_id,
                     notifikasjon_id,
-                    status
+                    status,
+                    kilde_hendelse
                 )
-                values (?, ?, 'NY')
-                on conflict do nothing;
+                values (?, ?, 'NY', ?::jsonb)
+                on conflict(varsel_id) do update
+                set kilde_hendelse = excluded.kilde_hendelse;
                 """,
                 beskjedOpprettet.eksterneVarsler
             ) { eksterntVarsel ->
                 uuid(eksterntVarsel.varselId)
                 uuid(beskjedOpprettet.notifikasjonId)
+                jsonb(eksterntVarsel)
             }
         }
     }
@@ -562,15 +565,18 @@ class ProdusentRepositoryImpl(
                 insert into eksternt_varsel(
                     varsel_id,
                     notifikasjon_id,
-                    status
+                    status,
+                    kilde_hendelse
                 )
-                values (?, ?, 'NY')
-                on conflict do nothing;
+                values (?, ?, 'NY', ?::jsonb)
+                on conflict(varsel_id) do update
+                set kilde_hendelse = excluded.kilde_hendelse;
                 """,
                 oppgaveOpprettet.eksterneVarsler
             ) { eksterntVarsel ->
                 uuid(eksterntVarsel.varselId)
                 uuid(oppgaveOpprettet.notifikasjonId)
+                jsonb(eksterntVarsel)
             }
 
             executeBatch(
@@ -578,15 +584,18 @@ class ProdusentRepositoryImpl(
                 insert into paaminnelse_eksternt_varsel(
                     varsel_id,
                     notifikasjon_id,
-                    status
+                    status,
+                    kilde_hendelse
                 )
-                values (?, ?, 'NY')
-                on conflict do nothing;
+                values (?, ?, 'NY', ?::jsonb)
+                on conflict(varsel_id) do update 
+                set kilde_hendelse = excluded.kilde_hendelse;
                 """,
                 oppgaveOpprettet.påminnelse?.eksterneVarsler.orEmpty()
             ) { eksterntVarsel ->
                 uuid(eksterntVarsel.varselId)
                 uuid(oppgaveOpprettet.notifikasjonId)
+                jsonb(eksterntVarsel)
             }
         }
     }
