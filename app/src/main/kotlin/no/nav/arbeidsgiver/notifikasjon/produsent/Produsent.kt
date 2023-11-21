@@ -33,7 +33,7 @@ object Produsent {
     private val rebuildQueryModel by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "produsent-model-builder-rebuild-nov-2023-1",
+            groupId = "produsent-model-builder-rebuild-nov-2023-2",
             replayPeriodically = false,
         )
     }
