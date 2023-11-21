@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
@@ -59,9 +60,22 @@ object ProdusentModel {
                     this == other.copy(
                         opprettetTidspunkt = this.opprettetTidspunkt,
                         id = this.id,
-                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, varsel ->
-                            val varselId = this.eksterneVarsler.getOrNull(i)?.varselId ?: varsel.varselId
-                            varsel.copy(varselId = varselId)
+                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, otherVarsel ->
+                            val thisVarsel = this.eksterneVarsler.getOrNull(i)
+                            if (thisVarsel == null) {
+                                otherVarsel
+                            } else {
+                                otherVarsel.copy(
+                                    varselId = thisVarsel.varselId,
+                                    status = thisVarsel.status,
+                                    feilmelding = thisVarsel.feilmelding,
+                                    kildeHendelse = when (otherVarsel.kildeHendelse) {
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                    },
+                                )
+                            }
                         }
                     )
                 }
@@ -99,9 +113,39 @@ object ProdusentModel {
                     this == other.copy(
                         opprettetTidspunkt = this.opprettetTidspunkt,
                         id = this.id,
-                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, varsel ->
-                            val varselId = this.eksterneVarsler.getOrNull(i)?.varselId ?: varsel.varselId
-                            varsel.copy(varselId = varselId)
+                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, otherVarsel ->
+                            val thisVarsel = this.eksterneVarsler.getOrNull(i)
+                            if (thisVarsel == null) {
+                                otherVarsel
+                            } else {
+                                otherVarsel.copy(
+                                    varselId = thisVarsel.varselId,
+                                    status = thisVarsel.status,
+                                    feilmelding = thisVarsel.feilmelding,
+                                    kildeHendelse = when (otherVarsel.kildeHendelse) {
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                    },
+                                )
+                            }
+                        },
+                        påminnelseEksterneVarsler = other.påminnelseEksterneVarsler.mapIndexed { i, otherVarsel ->
+                            val thisVarsel = this.påminnelseEksterneVarsler.getOrNull(i) // simpler with getOrDefault?
+                            if (thisVarsel == null) {
+                                otherVarsel
+                            } else {
+                                otherVarsel.copy(
+                                    varselId = thisVarsel.varselId,
+                                    status = thisVarsel.status,
+                                    feilmelding = thisVarsel.feilmelding,
+                                    kildeHendelse = when (otherVarsel.kildeHendelse) {
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                    },
+                                )
+                            }
                         }
                     )
                 }
@@ -114,6 +158,7 @@ object ProdusentModel {
         val varselId: UUID,
         val status: Status,
         val feilmelding: String?,
+        val kildeHendelse: HendelseModel.EksterntVarsel
     ) {
         enum class Status {
             NY,
@@ -174,18 +219,21 @@ fun EksterntVarsel.tilProdusentModel(): ProdusentModel.EksterntVarsel {
                 varselId = this.varselId,
                 status = ProdusentModel.EksterntVarsel.Status.NY,
                 feilmelding = null,
+                kildeHendelse = this,
             )
         is EpostVarselKontaktinfo ->
             ProdusentModel.EksterntVarsel(
                 varselId = this.varselId,
                 status = ProdusentModel.EksterntVarsel.Status.NY,
                 feilmelding = null,
+                kildeHendelse = this,
             )
         is AltinntjenesteVarselKontaktinfo ->
             ProdusentModel.EksterntVarsel(
                 varselId = this.varselId,
                 status = ProdusentModel.EksterntVarsel.Status.NY,
                 feilmelding = null,
+                kildeHendelse = this,
             )
     }
 }
