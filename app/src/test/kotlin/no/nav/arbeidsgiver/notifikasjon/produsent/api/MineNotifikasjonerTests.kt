@@ -245,7 +245,7 @@ class MineNotifikasjonerTests : DescribeSpec({
             )
 
             it("respons inneholder forventet data") {
-                response.getTypedContent<QueryMineNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
+                response.getTypedContent<QueryNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
             }
         }
 
@@ -364,7 +364,7 @@ class MineNotifikasjonerTests : DescribeSpec({
             )
 
             it("respons inneholder forventet data") {
-                val connection = response.getTypedContent<QueryMineNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
+                val connection = response.getTypedContent<QueryNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
                 connection.edges.size shouldBe 1
                 connection.pageInfo.hasNextPage shouldBe true
             }

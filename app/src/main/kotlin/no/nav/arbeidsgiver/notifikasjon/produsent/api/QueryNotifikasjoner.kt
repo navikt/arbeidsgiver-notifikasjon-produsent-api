@@ -12,11 +12,12 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-internal class QueryMineNotifikasjoner(
+internal class QueryNotifikasjoner(
     private val produsentRepository: ProdusentRepository,
 ) {
     fun wire(runtime: RuntimeWiring.Builder) {
         runtime.resolveSubtypes<MineNotifikasjonerResultat>()
+        runtime.resolveSubtypes<HentNotifikasjonResultat>()
         runtime.resolveSubtypes<Notifikasjon>()
         runtime.resolveSubtypes<Mottaker>()
 
@@ -30,6 +31,12 @@ internal class QueryMineNotifikasjoner(
                     first = env.getArgumentOrDefault("first", 1000),
                     after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value)),
                     env,
+                )
+            }
+            coDataFetcher("hentNotifikasjon") { env ->
+                hentNotifikasjon(
+                    context = env.notifikasjonContext(),
+                    id = env.getTypedArgument("id"),
                 )
             }
         }
@@ -281,14 +288,36 @@ internal class QueryMineNotifikasjoner(
                 )
             }
     }
+
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed interface HentNotifikasjonResultat
+
+    @JsonTypeName("HentetNotifikasjon")
+    data class HentetNotifikasjon(
+        val notifikasjon: Notifikasjon,
+    ) : HentNotifikasjonResultat
+
+    private suspend fun hentNotifikasjon(
+        context: ProdusentAPI.Context,
+        id: UUID,
+    ): HentNotifikasjonResultat {
+        val produsent = hentProdusent(context) { error -> return error }
+        val notifikasjon = produsentRepository.hentNotifikasjon(id)
+            ?: return Error.NotifikasjonFinnesIkke("notifikasjon med id=$id finnes ikke")
+
+        tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+
+        return HentetNotifikasjon(Notifikasjon.fraDomene(notifikasjon))
+    }
 }
 
-internal val QueryMineNotifikasjoner.Notifikasjon.metadata: QueryMineNotifikasjoner.Metadata
+internal val QueryNotifikasjoner.Notifikasjon.metadata: QueryNotifikasjoner.Metadata
     get() = when (this) {
-        is QueryMineNotifikasjoner.Notifikasjon.Beskjed -> this.metadata
-        is QueryMineNotifikasjoner.Notifikasjon.Oppgave -> this.metadata
+        is QueryNotifikasjoner.Notifikasjon.Beskjed -> this.metadata
+        is QueryNotifikasjoner.Notifikasjon.Oppgave -> this.metadata
     }
 
-internal val QueryMineNotifikasjoner.Notifikasjon.id: UUID
+internal val QueryNotifikasjoner.Notifikasjon.id: UUID
     get() = this.metadata.id
 

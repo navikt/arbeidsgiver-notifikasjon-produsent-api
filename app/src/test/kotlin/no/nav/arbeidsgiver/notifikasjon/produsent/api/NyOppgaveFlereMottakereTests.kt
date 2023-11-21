@@ -59,7 +59,7 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
             val id = response.getTypedContent<UUID>("/nyOppgave/id")
             val mottakere = engine.hentMottakere(id)
             mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnMottaker(
+                QueryNotifikasjoner.AltinnMottaker(
                     serviceCode = "5441",
                     serviceEdition = "1",
                     virksomhetsnummer = "0"
@@ -94,7 +94,7 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
             val id = response.getTypedContent<UUID>("/nyOppgave/id")
             val mottakere = engine.hentMottakere(id)
             mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnMottaker(
+                QueryNotifikasjoner.AltinnMottaker(
                     serviceCode = "5441",
                     serviceEdition = "1",
                     virksomhetsnummer = "0"
@@ -134,12 +134,12 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
             val id = response.getTypedContent<UUID>("/nyOppgave/id")
             val mottakere = engine.hentMottakere(id)
             mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnMottaker(
+                QueryNotifikasjoner.AltinnMottaker(
                     serviceCode = "5441",
                     serviceEdition = "1",
                     virksomhetsnummer = "0"
                 ),
-                QueryMineNotifikasjoner.NærmesteLederMottaker(
+                QueryNotifikasjoner.NærmesteLederMottaker(
                     ansattFnr = "3",
                     naermesteLederFnr = "2",
                     virksomhetsnummer = "0"
@@ -180,12 +180,12 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
             val id = response.getTypedContent<UUID>("/nyOppgave/id")
             val mottakere = engine.hentMottakere(id)
             mottakere.toSet() shouldBe setOf(
-                QueryMineNotifikasjoner.AltinnMottaker(
+                QueryNotifikasjoner.AltinnMottaker(
                     serviceCode = "5441",
                     serviceEdition = "1",
                     virksomhetsnummer = "0"
                 ),
-                QueryMineNotifikasjoner.NærmesteLederMottaker(
+                QueryNotifikasjoner.NærmesteLederMottaker(
                     ansattFnr = "3",
                     naermesteLederFnr = "2",
                     virksomhetsnummer = "0"

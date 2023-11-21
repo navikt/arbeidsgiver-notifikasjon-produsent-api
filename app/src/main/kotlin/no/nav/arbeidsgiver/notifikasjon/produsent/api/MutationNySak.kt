@@ -96,7 +96,7 @@ internal class MutationNySak(
 
         return when {
             eksisterende == null && erHardDeleted -> {
-                Error.DuplikatGrupperingsid(
+                Error.DuplikatGrupperingsidEtterDelete(
                     "sak med angitt grupperings-id og merkelapp har vært brukt tidligere"
                 )
             }
@@ -128,7 +128,8 @@ internal class MutationNySak(
             }
             else -> {
                 Error.DuplikatGrupperingsid(
-                    "sak med angitt grupperings-id og merkelapp finnes fra før"
+                    "sak med angitt grupperings-id og merkelapp finnes fra før",
+                    eksisterende.id
                 )
             }
         }

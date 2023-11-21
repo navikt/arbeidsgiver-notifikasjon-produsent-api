@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import java.util.*
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
 internal sealed class Error {
@@ -25,7 +26,8 @@ internal sealed class Error {
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
-        QueryMineNotifikasjoner.MineNotifikasjonerResultat,
+        QueryNotifikasjoner.MineNotifikasjonerResultat,
+        QueryNotifikasjoner.HentNotifikasjonResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
@@ -40,7 +42,8 @@ internal sealed class Error {
         MutationOppgaveUtfoert.OppgaveUtfoertResultat,
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
-        QueryMineNotifikasjoner.MineNotifikasjonerResultat,
+        QueryNotifikasjoner.MineNotifikasjonerResultat,
+        QueryNotifikasjoner.HentNotifikasjonResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
@@ -65,13 +68,21 @@ internal sealed class Error {
 
     @JsonTypeName("DuplikatEksternIdOgMerkelapp")
     data class DuplikatEksternIdOgMerkelapp(
-        override val feilmelding: String
+        override val feilmelding: String,
+        val idTilEksisterende: UUID
     ) : Error(),
         MutationNyBeskjed.NyBeskjedResultat,
         MutationNyOppgave.NyOppgaveResultat
 
     @JsonTypeName("DuplikatGrupperingsid")
     data class DuplikatGrupperingsid(
+        override val feilmelding: String,
+        val idTilEksisterende: UUID
+    ) : Error(),
+        MutationNySak.NySakResultat
+
+    @JsonTypeName("DuplikatGrupperingsidEtterDelete")
+    data class DuplikatGrupperingsidEtterDelete(
         override val feilmelding: String
     ) : Error(),
         MutationNySak.NySakResultat
@@ -85,7 +96,8 @@ internal sealed class Error {
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
-        MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat
+        MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
+        QueryNotifikasjoner.HentNotifikasjonResultat
 
     @JsonTypeName("UkjentRolle")
     data class UkjentRolle(

@@ -87,12 +87,24 @@ type Query {
 
         grupperingsid: String
     ): MineNotifikasjonerResultat!
+
+    hentNotifikasjon(id: ID!): HentNotifikasjonResultat!
 }
 
 union MineNotifikasjonerResultat =
     | NotifikasjonConnection
     | UgyldigMerkelapp
     | UkjentProdusent
+
+union HentNotifikasjonResultat =
+    | HentetNotifikasjon
+    | UkjentProdusent
+    | UgyldigMerkelapp
+    | NotifikasjonFinnesIkke
+
+type HentetNotifikasjon {
+    notifikasjon: Notifikasjon!
+}
 
 type NotifikasjonConnection {
     edges: [NotifikasjonEdge!]!
@@ -215,6 +227,7 @@ union NySakResultat =
     | UgyldigMerkelapp
     | UgyldigMottaker
     | DuplikatGrupperingsid
+    | DuplikatGrupperingsidEtterDelete
     | UkjentProdusent
     | UkjentRolle
 
@@ -1393,6 +1406,7 @@ Denne feilen returneres dersom du prøver å opprette en notifikasjon med en eks
 """
 type DuplikatEksternIdOgMerkelapp implements Error {
     feilmelding: String!
+    idTilEksisterende: ID!
 }
 
 """
@@ -1400,6 +1414,15 @@ Denne feilen returneres hvis det allerede eksisterer en sak med denne gruppering
 merkelappen.
 """
 type DuplikatGrupperingsid implements Error {
+    feilmelding: String!
+    idTilEksisterende: ID!
+}
+
+"""
+Denne feilen returneres hvis det tidligere eksisterte en sak med denne grupperingsid-en under
+merkelappen, som har blitt slettet.
+"""
+type DuplikatGrupperingsidEtterDelete implements Error {
     feilmelding: String!
 }
 

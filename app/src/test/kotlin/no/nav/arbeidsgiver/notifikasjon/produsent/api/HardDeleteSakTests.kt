@@ -250,7 +250,7 @@ class HardDeleteSakTests : DescribeSpec({
                         }
                     }
                     """
-                ).getTypedContent<Error.DuplikatGrupperingsid>("nySak")
+                ).getTypedContent<Error.DuplikatGrupperingsidEtterDelete>("nySak")
             }
         }
 

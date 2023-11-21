@@ -41,7 +41,7 @@ internal class MutationNyOppgave(
     data class NyOppgaveInput(
         val mottaker: MottakerInput?,
         val mottakere: List<MottakerInput>,
-        val notifikasjon: QueryMineNotifikasjoner.NotifikasjonData,
+        val notifikasjon: QueryNotifikasjoner.NotifikasjonData,
         val frist: LocalDate?,
         val paaminnelse: PaaminnelseInput?,
         val metadata: MetadataInput,
@@ -287,7 +287,8 @@ internal class MutationNyOppgave(
                     domeneNyOppgave.merkelapp
                 )
                 Error.DuplikatEksternIdOgMerkelapp(
-                    "notifikasjon med angitt eksternId og merkelapp finnes fra før"
+                    "notifikasjon med angitt eksternId og merkelapp finnes fra før",
+                    eksisterende.id
                 )
             }
         }
