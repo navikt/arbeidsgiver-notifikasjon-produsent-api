@@ -39,13 +39,13 @@ class HendelsesstrømKafkaImpl(
 
     override suspend fun forEach(
         stop: AtomicBoolean,
-        onTombstone: suspend (String) -> Unit,
+        onTombstone: suspend (UUID) -> Unit,
         body: suspend (Hendelse, HendelseMetadata) -> Unit
     ) {
         consumer.forEach(stop) { record ->
             val recordValue = record.value()
             if (recordValue == null) {
-                onTombstone(record.key())
+                onTombstone(UUID.fromString(record.key()))
             } else if (recordValue.hendelseId in brokenHendelseId) {
                 /* do nothing */
             } else {

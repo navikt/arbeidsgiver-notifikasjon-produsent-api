@@ -744,16 +744,16 @@ class ProdusentRepositoryImpl(
     /**
      * temporary method to delete all varsler for a given tombstone
      */
-    suspend fun deleteVarslerForTombstone(key: String) {
+    suspend fun deleteVarslerForTombstone(key: UUID) {
         database.nonTransactionalExecuteUpdate("""
             delete from eksternt_varsel where notifikasjon_id ? 
         """) {
-            uuid(UUID.fromString(key))
+            uuid(key)
         }
         database.nonTransactionalExecuteUpdate("""
             delete from paaminnelse_eksternt_varsel where notifikasjon_id ? 
         """) {
-            uuid(UUID.fromString(key))
+            uuid(key)
         }
     }
 }
