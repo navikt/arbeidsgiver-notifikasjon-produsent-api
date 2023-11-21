@@ -26,6 +26,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         eventSource = object : Hendelsesstrøm {
             override suspend fun forEach(
                 stop: AtomicBoolean,
+                onTombstone: suspend (UUID) -> Unit,
                 body: suspend (HendelseModel.Hendelse, HendelseModel.HendelseMetadata) -> Unit
             ): Unit = TODO("Not yet implemented")
         },
