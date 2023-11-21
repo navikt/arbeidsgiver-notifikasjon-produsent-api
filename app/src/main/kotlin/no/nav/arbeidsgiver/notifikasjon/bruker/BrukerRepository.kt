@@ -450,8 +450,8 @@ class BrukerRepositoryImpl(
                     sak_id,
                     status,
                     overstyrt_statustekst,
-                    tidspunkt,
-                    rank() over (partition by sak_id order by tidspunkt desc) dest_rank
+                    coalesce(oppgitt_tidspunkt, mottatt_tidspunkt) as tidspunkt,
+                    rank() over (partition by sak_id order by mottatt_tidspunkt desc) dest_rank
                 from sak_status
                 where sak_id = any(?)
             )
@@ -728,17 +728,23 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak_status(
-                    id, sak_id, status, overstyrt_statustekst, tidspunkt 
+                    id, sak_id, status, overstyrt_statustekst, mottatt_tidspunkt, oppgitt_tidspunkt 
                 )
-                values (?, ?, ?, ?, ?)
-                on conflict do nothing;
+                values (?, ?, ?, ?, ?, ?)
+                on conflict (id) do update 
+                set 
+                    status = excluded.status,
+                    overstyrt_statustekst = excluded.overstyrt_statustekst,
+                    mottatt_tidspunkt = excluded.mottatt_tidspunkt,
+                    oppgitt_tidspunkt = excluded.oppgitt_tidspunkt
             """
             ) {
                 uuid(nyStatusSak.hendelseId)
                 uuid(nyStatusSak.sakId)
                 text(nyStatusSak.status.name)
                 nullableText(nyStatusSak.overstyrStatustekstMed)
-                timestamp_with_timezone(nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
+                timestamp_with_timezone(nyStatusSak.mottattTidspunkt)
+                nullableTimestamptz(nyStatusSak.oppgittTidspunkt)
             }
 
             executeUpdate("""

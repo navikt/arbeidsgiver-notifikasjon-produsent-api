@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
@@ -29,6 +30,14 @@ object BrukerWriter {
         )
     }
 
+    private val rebuildQueryModel by lazy {
+        HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "bruker-model-builder-2-rebuild-nov-2023",
+            replayPeriodically = false,
+        )
+    }
+
     fun main(
         httpPort: Int = 8080
     ) {
@@ -42,6 +51,16 @@ object BrukerWriter {
                 val brukerRepository = brukerRepositoryAsync.await()
                 hendelsesstrøm.forEach { event, metadata ->
                     brukerRepository.oppdaterModellEtterHendelse(event, metadata)
+                }
+            }
+
+
+            launch {
+                val brukerRepository = brukerRepositoryAsync.await()
+                rebuildQueryModel.forEach { event, metadata ->
+                    if (event is HendelseModel.NyStatusSak) {
+                        brukerRepository.oppdaterModellEtterHendelse(event, metadata)
+                    }
                 }
             }
 
