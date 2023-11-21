@@ -746,12 +746,12 @@ class ProdusentRepositoryImpl(
      */
     suspend fun deleteVarslerForTombstone(key: UUID) {
         database.nonTransactionalExecuteUpdate("""
-            delete from eksternt_varsel where notifikasjon_id ? 
+            delete from eksternt_varsel where notifikasjon_id = ? 
         """) {
             uuid(key)
         }
         database.nonTransactionalExecuteUpdate("""
-            delete from paaminnelse_eksternt_varsel where notifikasjon_id ? 
+            delete from paaminnelse_eksternt_varsel where notifikasjon_id = ? 
         """) {
             uuid(key)
         }
