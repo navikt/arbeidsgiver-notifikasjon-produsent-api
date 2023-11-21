@@ -413,6 +413,22 @@ class ProdusentRepositoryImpl(
             ) {
                 uuid(hardDelete.aggregateId)
             }
+            executeUpdate(
+                """
+                delete from eksternt_varsel
+                where notifikasjon_id = ?
+                """
+            ) {
+                uuid(hardDelete.aggregateId)
+            }
+            executeUpdate(
+                """
+                delete from paaminnelse_eksternt_varsel
+                where notifikasjon_id = ?
+                """
+            ) {
+                uuid(hardDelete.aggregateId)
+            }
         }
     }
 
@@ -722,6 +738,22 @@ class ProdusentRepositoryImpl(
             text(mottaker.virksomhetsnummer)
             text(mottaker.serviceCode)
             text(mottaker.serviceEdition)
+        }
+    }
+
+    /**
+     * temporary method to delete all varsler for a given tombstone
+     */
+    suspend fun deleteVarslerForTombstone(key: UUID) {
+        database.nonTransactionalExecuteUpdate("""
+            delete from eksternt_varsel where notifikasjon_id = ? 
+        """) {
+            uuid(key)
+        }
+        database.nonTransactionalExecuteUpdate("""
+            delete from paaminnelse_eksternt_varsel where notifikasjon_id = ? 
+        """) {
+            uuid(key)
         }
     }
 }
