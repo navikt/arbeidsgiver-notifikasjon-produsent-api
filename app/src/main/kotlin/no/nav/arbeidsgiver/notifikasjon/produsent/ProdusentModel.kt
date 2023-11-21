@@ -73,7 +73,6 @@ object ProdusentModel {
                                         is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
                                         is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
                                         is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        null -> null // TODO: remove when no longer nullable
                                     },
                                 )
                             }
@@ -127,7 +126,6 @@ object ProdusentModel {
                                         is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
                                         is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
                                         is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        null -> null // TODO: remove when no longer nullable
                                     },
                                 )
                             }
@@ -145,7 +143,6 @@ object ProdusentModel {
                                         is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
                                         is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
                                         is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        null -> null // TODO: remove when no longer nullable
                                     },
                                 )
                             }
@@ -161,7 +158,7 @@ object ProdusentModel {
         val varselId: UUID,
         val status: Status,
         val feilmelding: String?,
-        val kildeHendelse: HendelseModel.EksterntVarsel? // TODO: gjør påkrevd etter rebuild i prod
+        val kildeHendelse: HendelseModel.EksterntVarsel
     ) {
         enum class Status {
             NY,

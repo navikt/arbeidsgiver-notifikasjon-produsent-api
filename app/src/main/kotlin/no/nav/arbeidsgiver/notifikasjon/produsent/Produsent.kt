@@ -29,14 +29,6 @@ object Produsent {
         )
     }
 
-    private val rebuildQueryModel by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "produsent-model-builder-rebuild-nov-2023-2",
-            replayPeriodically = false,
-        )
-    }
-
     private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
         "prod-gcp" -> listOf(
             HttpAuthProviders.AZURE_AD,
@@ -70,15 +62,6 @@ object Produsent {
                 val produsentRepository = produsentRepositoryAsync.await()
                 hendelsesstrøm.forEach { event, metadata ->
                     produsentRepository.oppdaterModellEtterHendelse(event, metadata)
-                }
-            }
-
-            launch {
-                val produsentRepository = produsentRepositoryAsync.await()
-                rebuildQueryModel.forEach(onTombstone = { key ->
-                    produsentRepository.deleteVarslerForTombstone(key)
-                }) { _, _ ->
-
                 }
             }
 
