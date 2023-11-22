@@ -1,9 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDelete
 import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
-import no.nav.arbeidsgiver.notifikasjon.dataprodukt.Dataprodukt
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerWriter
+import no.nav.arbeidsgiver.notifikasjon.dataprodukt.Dataprodukt
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -11,9 +10,9 @@ import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaper
 import no.nav.arbeidsgiver.notifikasjon.manuelt_vedlikehold.ManueltVedlikehold
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDelete
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.SkedulertPåminnelse
 import no.nav.arbeidsgiver.notifikasjon.skedulert_utgått.SkedulertUtgått
-import no.nav.arbeidsgiver.notifikasjon.statistikk.Statistikk
 import kotlin.system.exitProcess
 
 private object Main {
@@ -27,7 +26,6 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-bruker-api" -> Bruker.main()
             "notifikasjon-bruker-api-writer" -> BrukerWriter.main()
             "notifikasjon-kafka-reaper" -> KafkaReaper.main()
-            "notifikasjon-statistikk" -> Statistikk.main()
             "notifikasjon-ekstern-varsling" -> EksternVarsling.main()
             "notifikasjon-replay-validator" -> ReplayValidator.main()
             "notifikasjon-kafka-backup" -> KafkaBackup.main()

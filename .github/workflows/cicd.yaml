@@ -93,7 +93,6 @@ jobs:
           - bruker-api-writer
           - produsent-api
           - kafka-reaper
-          - statistikk
           - ekstern-varsling
           - replay-validator
           - kafka-backup

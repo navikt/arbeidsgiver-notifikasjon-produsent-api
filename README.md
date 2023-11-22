@@ -22,10 +22,10 @@ Du kan f.eks. sette opp mod-header plugin i chrome eller firefox.
 Bruk LocalhostIssuer til å lage tokens du kan bruke i header.
 
 ## Deploy med reset og rebuild 
-obs: kun for ikke kritiske apps som f.eks statistikk.
+obs: kun for ikke kritiske apps som f.eks dataprodukt.
 Scale ned replicaset: 
 `kubectl get replicaset`
-`kubectl scale --replicas=0 deployment/notifikasjon-statistikk`
+`kubectl scale --replicas=0 deployment/notifikasjon-dataprodukt`
 deploy ny app:
 - med migrering som nullstiller database til ønsket tidspunkt eller helt.
 - med ny consumer-group-id postfix eller set offset vha [nais aiven cli](#koble-direkte-til-en-topic-på-aiven) 

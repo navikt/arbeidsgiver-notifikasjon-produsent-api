@@ -4,7 +4,7 @@
 set -e
 
 PROJECTS="fager-dev-24f2 fager-prod-dd77"
-INSTANCES="bruker-api produsent-api ekstern-varsling kafka-reaper statistikk"
+INSTANCES="bruker-api produsent-api ekstern-varsling kafka-reaper"
 USERS="peter.brottveit.bock ken.gullaksen bendik.segrov.ibenholt"
 
 # Kommandoen under er idempotent, så vidt jeg kan se. 
@@ -43,7 +43,7 @@ done
 
 # Grant all accesses
 ALWAYS_ACCESS_PROJECTS="fager-dev-24f2"
-INSTANCES="bruker-api produsent-api ekstern-varsling kafka-reaper statistikk"
+INSTANCES="bruker-api produsent-api ekstern-varsling kafka-reaper"
 USERS="peter.brottveit.bock ken.gullaksen bendik.segrov.ibenholt"
 
 echo GRANTING PERMANENT ACCESS
