@@ -42,11 +42,7 @@ spec:
           namespace: arbeidsgiver
         - application: aareg-innsyn-arbeidsgiver
           namespace: arbeidsforhold
-        - application: sykefravarsstatistikk
-          namespace: arbeidsgiver
         - application: min-ia
-          namespace: teamia
-        - application: forebyggingsplan-frontend
           namespace: teamia
         - application: presenterte-kandidater
           namespace: toi
