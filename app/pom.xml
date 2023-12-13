@@ -10,7 +10,7 @@
 
     <properties>
         <kotlin.version>1.9.21</kotlin.version>
-        <ktor.version>2.3.6</ktor.version>
+        <ktor.version>2.3.7</ktor.version>
         <kotest.version>5.7.2</kotest.version>
         <cxf.version>3.5.7</cxf.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
