@@ -14,8 +14,12 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+data class PartitionHendelseMetadata(
+    val partition: Int,
+    val offset: Long,
+)
 interface PartitionProcessor: AutoCloseable {
-    suspend fun processHendelse(hendelse: HendelseModel.Hendelse)
+    suspend fun processHendelse(hendelse: HendelseModel.Hendelse, metadata: PartitionHendelseMetadata)
     suspend fun processingLoopStep()
 }
 
@@ -81,8 +85,12 @@ private class PartitionProcessorState(
 
     suspend fun processRecord(consumerRecord: ConsumerRecord<String, HendelseModel.Hendelse>) {
         val value = consumerRecord.value()
+        val metadata = PartitionHendelseMetadata(
+            partition = consumerRecord.partition(),
+            offset = consumerRecord.offset(),
+        )
         if (value != null) {
-            partitionProcessor.processHendelse(value)
+            partitionProcessor.processHendelse(value, metadata)
         }
 
         if (processingThread == null && maxOffsetAtAssignment <= consumerRecord.offset()) {

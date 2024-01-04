@@ -4,6 +4,7 @@ import kotlinx.coroutines.time.delay
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTidImpl
@@ -19,7 +20,7 @@ class SkedulertPåminnelseService(
 ) : PartitionProcessor {
     private val repository = SkedulertPåminnelseRepository()
 
-    override suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
+    override suspend fun processHendelse(hendelse: HendelseModel.Hendelse, metadata: PartitionHendelseMetadata) {
         repository.processHendelse(hendelse)
     }
 

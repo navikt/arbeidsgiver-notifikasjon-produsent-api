@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaper
 import no.nav.arbeidsgiver.notifikasjon.manuelt_vedlikehold.ManueltVedlikehold
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
+import no.nav.arbeidsgiver.notifikasjon.replay_validator.ReplayValidator
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.SkedulertPåminnelse
 import no.nav.arbeidsgiver.notifikasjon.skedulert_utgått.SkedulertUtgått
 import no.nav.arbeidsgiver.notifikasjon.statistikk.Statistikk

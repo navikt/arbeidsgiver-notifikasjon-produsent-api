@@ -493,7 +493,10 @@ object HendelseModel {
         val deletedAt: OffsetDateTime,
         val grupperingsid: String?,
         val merkelapp: String?,
-    ) : Hendelse()
+    ) : Hendelse() {
+        @JsonIgnore
+        val erSak = grupperingsid != null
+    }
 
     @JsonTypeName("BrukerKlikket")
     data class BrukerKlikket(

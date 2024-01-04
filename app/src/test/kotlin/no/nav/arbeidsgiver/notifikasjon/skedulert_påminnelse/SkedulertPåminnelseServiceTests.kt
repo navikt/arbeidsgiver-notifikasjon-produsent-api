@@ -9,6 +9,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -47,20 +48,21 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
         påminnelse = null,
         sakId = null,
     )
+    val metadata = PartitionHendelseMetadata(0, 0)
     val tidspunktSomHarPassert = LocalDate.now().minusDays(1).atTime(LocalTime.MAX)
     val tidspunktSomIkkeHarPassert = LocalDate.now().plusDays(2).atTime(LocalTime.MAX)
 
     describe("Skedulerer påminnelse når påminnelsestidspunkt har passert") {
         hendelseProdusent.clear()
-        service.processHendelse(oppgaveOpprettet.medPåminnelse(tidspunktSomHarPassert))
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(tidspunktSomHarPassert), metadata)
         service.sendAktuellePåminnelser()
 
         hendelseProdusent.hendelser.first() should beInstanceOf<HendelseModel.PåminnelseOpprettet>()
     }
     describe("Skedulerer utgått når påminnelsestidspunkt har passert og det finnes en på kø som ikke har passert") {
         hendelseProdusent.clear()
-        service.processHendelse(oppgaveOpprettet.medPåminnelse(tidspunktSomIkkeHarPassert, uuid("11")))
-        service.processHendelse(oppgaveOpprettet.medPåminnelse(tidspunktSomHarPassert, uuid("22")))
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(tidspunktSomIkkeHarPassert, uuid("11")), metadata)
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(tidspunktSomHarPassert, uuid("22")), metadata)
         service.sendAktuellePåminnelser()
 
         hendelseProdusent.hendelser shouldHaveSize 1
@@ -71,7 +73,8 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
     describe("noop når påminnelsestidspunkt ikke har passert enda") {
         hendelseProdusent.clear()
         service.processHendelse(
-            oppgaveOpprettet.medPåminnelse(tidspunktSomIkkeHarPassert)
+            oppgaveOpprettet.medPåminnelse(tidspunktSomIkkeHarPassert),
+            metadata
         )
         service.sendAktuellePåminnelser()
 
@@ -113,9 +116,10 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
         )) { hendelse ->
             hendelseProdusent.clear()
             service.processHendelse(
-                oppgaveOpprettet.medPåminnelse(tidspunktSomHarPassert)
+                oppgaveOpprettet.medPåminnelse(tidspunktSomHarPassert),
+                metadata
             )
-            service.processHendelse(hendelse)
+            service.processHendelse(hendelse, metadata)
             service.sendAktuellePåminnelser()
 
             hendelseProdusent.hendelser shouldBe emptyList()
@@ -130,10 +134,10 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
         val passert3 = now.minus(1, ChronoUnit.MINUTES) // key: 12:00
         val ikkePassert1 = now.plus(10, ChronoUnit.MINUTES) // key: 12:00
 
-        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert1, uuid("1")))
-        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert2, uuid("2")))
-        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert3, uuid("3")))
-        service.processHendelse(oppgaveOpprettet.medPåminnelse(ikkePassert1, uuid("4")))
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert1, uuid("1")), metadata)
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert2, uuid("2")), metadata)
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(passert3, uuid("3")), metadata)
+        service.processHendelse(oppgaveOpprettet.medPåminnelse(ikkePassert1, uuid("4")), metadata)
 
         hendelseProdusent.clear()
         service.sendAktuellePåminnelser(now.inOsloAsInstant())

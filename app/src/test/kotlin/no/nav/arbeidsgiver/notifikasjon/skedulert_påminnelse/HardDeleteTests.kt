@@ -5,25 +5,30 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.should
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.*
 
+
 class HardDeleteTests: DescribeSpec({
+    val metadata = PartitionHendelseMetadata(0, 0)
 
     describe("Hvis oppgave blir hard deleted") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
 
         val oppgave = oppgaveMedPåminnelse()
-        service.processHendelse(oppgave)
-        service.processHendelse(hardDelete(
-            aggregateId = oppgave.aggregateId,
-            grupperingsId = null,
-            merkelapp = null,
-        ))
+        service.processHendelse(oppgave, metadata)
+        service.processHendelse(
+            hardDelete(
+                aggregateId = oppgave.aggregateId,
+                grupperingsId = null,
+                merkelapp = null,
+            ), metadata
+        )
 
         it("Sendes ingen påminnelse") {
             service.sendAktuellePåminnelser()
@@ -38,31 +43,33 @@ class HardDeleteTests: DescribeSpec({
         oppgaveMedPåminnelse(
             merkelapp = "m1",
             grupperingsId = "g1",
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenGruppe = oppgaveMedPåminnelse(
             merkelapp = "m1",
             grupperingsId = "g2"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenMerkelapp = oppgaveMedPåminnelse(
             merkelapp = "m2",
             grupperingsId = "g1"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
             merkelapp = "m2",
             grupperingsId = "g2"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
-            .also { service.processHendelse(it) }
+            .also { service.processHendelse(it, metadata) }
 
-        service.processHendelse(hardDelete(
-            aggregateId = sak1.aggregateId,
-            merkelapp = "m1",
-            grupperingsId = "g1"
-        ))
+        service.processHendelse(
+            hardDelete(
+                aggregateId = sak1.aggregateId,
+                merkelapp = "m1",
+                grupperingsId = "g1"
+            ), metadata
+        )
 
         it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
             service.sendAktuellePåminnelser()
@@ -85,33 +92,35 @@ class HardDeleteTests: DescribeSpec({
         val service = SkedulertPåminnelseService(hendelseProdusent)
 
         val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
-            .also { service.processHendelse(it) }
+            .also { service.processHendelse(it, metadata) }
 
         oppgaveMedPåminnelse(
             merkelapp = "m1",
             grupperingsId = "g1",
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenGruppe = oppgaveMedPåminnelse(
             merkelapp = "m1",
             grupperingsId = "g2"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenMerkelapp = oppgaveMedPåminnelse(
             merkelapp = "m2",
             grupperingsId = "g1"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
             merkelapp = "m2",
             grupperingsId = "g2"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
-        service.processHendelse(hardDelete(
-            aggregateId = sak1.aggregateId,
-            merkelapp = "m1",
-            grupperingsId = "g1"
-        ))
+        service.processHendelse(
+            hardDelete(
+                aggregateId = sak1.aggregateId,
+                merkelapp = "m1",
+                grupperingsId = "g1"
+            ), metadata
+        )
 
         it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
             service.sendAktuellePåminnelser()
@@ -134,33 +143,35 @@ class HardDeleteTests: DescribeSpec({
         val service = SkedulertPåminnelseService(hendelseProdusent)
 
         val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
-            .also { service.processHendelse(it) }
+            .also { service.processHendelse(it, metadata) }
 
-        service.processHendelse(hardDelete(
-            aggregateId = sak1.aggregateId,
-            merkelapp = "m1",
-            grupperingsId = "g1"
-        ))
+        service.processHendelse(
+            hardDelete(
+                aggregateId = sak1.aggregateId,
+                merkelapp = "m1",
+                grupperingsId = "g1"
+            ), metadata
+        )
 
         oppgaveMedPåminnelse(
             merkelapp = "m1",
             grupperingsId = "g1",
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenGruppe = oppgaveMedPåminnelse(
             merkelapp = "m1",
             grupperingsId = "g2"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenMerkelapp = oppgaveMedPåminnelse(
             merkelapp = "m2",
             grupperingsId = "g1"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
             merkelapp = "m2",
             grupperingsId = "g2"
-        ).also { service.processHendelse(it) }
+        ).also { service.processHendelse(it, metadata) }
 
         it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
             service.sendAktuellePåminnelser()
