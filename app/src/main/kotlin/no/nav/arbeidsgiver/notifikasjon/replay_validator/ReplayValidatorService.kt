@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.EphemeralDa
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.executeQuery
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.executeUpdate
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_LIST
 import java.sql.ResultSet
 
 
@@ -74,21 +75,38 @@ class ReplayValidatorService : PartitionProcessor {
     }
 
     override suspend fun processingLoopStep() {
-        repository.findNotifikasjonCreatesAfterHardDeleteSak().forEach {
-            log.warn("NotifikasjonCreateAfterHardDeleteSak: partition={} offset={}", it.createdPartition, it.createdOffset)
-        }
+        val createsAfterHardDeleteSak = repository.findNotifikasjonCreatesAfterHardDeleteSak()
 
-        antallOpprettelserEtterHardDelete.register(
-            repository.findNotifikasjonCreatesAfterHardDeleteSak()
-                .groupBy { it.produsentId }
-                .map { (key, value) ->
+        if (createsAfterHardDeleteSak.isNotEmpty()) {
+            createsAfterHardDeleteSak.forEach {
+                log.warn(
+                    "NotifikasjonCreateAfterHardDeleteSak: partition={} offset={}",
+                    it.createdPartition,
+                    it.createdOffset
+                )
+            }
+            antallOpprettelserEtterHardDelete.register(
+                createsAfterHardDeleteSak
+                    .groupBy { it.produsentId }
+                    .map { (key, value) ->
+                        MultiGauge.Row.of(
+                            Tags.of("produsent_id", key),
+                            value.size.toDouble()
+                        )
+                    },
+                true
+            )
+        } else {
+            antallOpprettelserEtterHardDelete.register(
+                PRODUSENT_LIST.map { produsent ->
                     MultiGauge.Row.of(
-                        Tags.of("produsent_id", key),
-                        value.size.toDouble()
+                        Tags.of("produsent_id", produsent.id),
+                        0
                     )
                 },
-            true
-        )
+                true
+            )
+        }
     }
 }
 
