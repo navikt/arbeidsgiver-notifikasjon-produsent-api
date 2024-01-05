@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -125,11 +126,12 @@ private val softDeleteSak = HendelseModel.SoftDelete(
 
 
 class FristUtsattTests: DescribeSpec({
+    val metadata = PartitionHendelseMetadata(0, 0)
     describe("Frist utsatt på oppgave uten frist") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetUtenFrist)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettetUtenFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
 
         it("Sender ett oppgaveUtgått-event basert på utsatt frist") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
@@ -143,8 +145,8 @@ class FristUtsattTests: DescribeSpec({
     describe("Frist utsatt på oppgave med eksisterende frist") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
 
         it("Sender ett oppgaveUtgått-event basert på utsatt frist") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
@@ -158,9 +160,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Frist utsatt parallelt med oppgaveUtgått, hvor utsettelse kommer først") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(oppgaveUtgått)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(oppgaveUtgått, metadata)
         it("Sender ett oppgaveUtgått-event for utsatt frist") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 1
@@ -173,9 +175,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Frist utsatt parallelt med oppgaveUtgått, hvor utgått kommer først") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(oppgaveUtgått)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(oppgaveUtgått, metadata)
+        service.processHendelse(fristUtsatt, metadata)
         it("Sender ett oppgaveUtgått-event for utsatt frist") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 1
@@ -188,9 +190,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Frist utsatt parallelt med oppgave utført, hvor utsettelse kommer først") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(oppgaveUtført)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(oppgaveUtført, metadata)
         it("Skal ikke sende noen event, siden oppgaven er utført") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -200,9 +202,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Frist utsatt parallelt med oppgave utført, hvor utført kommer først") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(oppgaveUtført)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(oppgaveUtført, metadata)
         it("Skal ikke sende noen event, siden oppgaven er utført") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -212,9 +214,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Softdelete på en oppgave med utsatt frist, soft-delete først") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(softDelete)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(softDelete, metadata)
+        service.processHendelse(fristUtsatt, metadata)
         it("Skal ikke sende noen event, siden oppgaven er soft-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -223,9 +225,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Softdelete på en oppgave med utsatt frist, soft-delete sist") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(softDelete)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(softDelete, metadata)
         it("Skal ikke sende noen event, siden oppgaven er soft-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -235,9 +237,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Harddelete på en oppgave med utsatt frist, hard-delete først") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(hardDelete)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(hardDelete, metadata)
+        service.processHendelse(fristUtsatt, metadata)
         it("Skal ikke sende noen event, siden oppgaven er hard-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -247,9 +249,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Harddelete på en oppgave med utsatt frist, hard-delete sist") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(hardDelete)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(hardDelete, metadata)
         it("Skal ikke sende noen event, siden oppgaven er hard-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -259,9 +261,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Harddelete på grupperingsid")  {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(hardDeleteSak)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(hardDeleteSak, metadata)
         it("Skal ikke sende noen event, siden saken er hard-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -271,9 +273,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Harddelete på grupperingsid, mottatt før saken er opprettet")  {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(hardDeleteSak)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(hardDeleteSak, metadata)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
         it("Skal ikke sende noen event, siden saken er hard-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -283,9 +285,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Softdelete på grupperingsid")  {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(softDeleteSak)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(softDeleteSak, metadata)
         it("Skal ikke sende noen event, siden saken er soft-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
@@ -295,9 +297,9 @@ class FristUtsattTests: DescribeSpec({
     describe("Softdelete på grupperingsid, mottatt før saken er opprettet")  {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(softDeleteSak)
-        service.processHendelse(oppgaveOpprettetMedFrist)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(softDeleteSak, metadata)
+        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
+        service.processHendelse(fristUtsatt, metadata)
         it("Skal ikke sende noen event, siden saken er soft-deleted") {
             service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0

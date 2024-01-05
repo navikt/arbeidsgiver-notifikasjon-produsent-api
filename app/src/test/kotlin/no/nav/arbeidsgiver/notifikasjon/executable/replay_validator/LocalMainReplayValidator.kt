@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.executable.replay_validator
 
-import no.nav.arbeidsgiver.notifikasjon.ReplayValidator
+import no.nav.arbeidsgiver.notifikasjon.replay_validator.ReplayValidator
 import no.nav.arbeidsgiver.notifikasjon.executable.Port
 
 /* Bruker API */

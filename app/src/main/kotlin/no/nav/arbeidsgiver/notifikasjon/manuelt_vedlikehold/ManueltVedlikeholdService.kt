@@ -4,6 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.time.OffsetDateTime
@@ -36,7 +37,7 @@ class ManueltVedlikeholdService(
         ) },
     ).map { UUID.fromString(it)!!}
 
-    override suspend fun processHendelse(hendelse: HendelseModel.Hendelse) {
+    override suspend fun processHendelse(hendelse: HendelseModel.Hendelse, metadata: PartitionHendelseMetadata) {
         when (hendelse) {
             is HardDelete ->
                 aggregatesDeleted[hendelse.aggregateId] = Unit

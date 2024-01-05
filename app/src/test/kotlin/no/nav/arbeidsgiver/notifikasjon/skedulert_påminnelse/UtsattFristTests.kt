@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
@@ -39,13 +40,13 @@ import java.time.ZoneOffset.UTC
  */
 
 class UtsattFristTests : DescribeSpec({
-
+    val metadata = PartitionHendelseMetadata(0, 0)
     describe("Ingen påminnelse når oppgave er utført") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(oppgaveUtført)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(oppgaveUtført, metadata)
+        service.processHendelse(fristUtsatt, metadata)
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
@@ -56,9 +57,9 @@ class UtsattFristTests : DescribeSpec({
     describe("Ingen påminnelse hvis utført før påminnelse for ny frist") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(oppgaveUtført)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(oppgaveUtført, metadata)
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
@@ -69,9 +70,9 @@ class UtsattFristTests : DescribeSpec({
     describe("Sender påminnelse for utsatt frist, selv om påminnelse for opprinnelig frist er sendt") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(påminnelseOpprettet)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(påminnelseOpprettet, metadata)
+        service.processHendelse(fristUtsatt, metadata)
 
         it("Sender skjedulert påminnelse") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(2), NOON).inOsloAsInstant())
@@ -86,9 +87,9 @@ class UtsattFristTests : DescribeSpec({
     describe("Sender påminnelse for utsatt frist, selv om påminnelse for opprinnelig frist kom etter utsettelsen") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(påminnelseOpprettet)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(påminnelseOpprettet, metadata)
         service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(2), NOON).inOsloAsInstant())
 
         it("Sender skjedulert påminnelse") {
@@ -103,8 +104,8 @@ class UtsattFristTests : DescribeSpec({
     describe("Når ny frist settes (selv uten påminnelse), fjernes eksisterende skedulert påminnelse") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(fristUtsatt.copy(påminnelse = null))
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(fristUtsatt.copy(påminnelse = null), metadata)
 
         it("Sender kun påminnelse for utsatt frist") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
@@ -115,8 +116,8 @@ class UtsattFristTests : DescribeSpec({
     describe("Når ny frist settes med ny påminnelse, fjernes eksisterende skedulert påminnelse") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(fristUtsatt, metadata)
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
@@ -131,9 +132,9 @@ class UtsattFristTests : DescribeSpec({
     describe("Sender ikke påminnelse hvis oppgave blir soft-deleted") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(softDelete)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(softDelete, metadata)
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
@@ -144,9 +145,9 @@ class UtsattFristTests : DescribeSpec({
     describe("Sender ikke påminnelse hvis oppgave er soft-deleted") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(softDelete)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(softDelete, metadata)
+        service.processHendelse(fristUtsatt, metadata)
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
@@ -157,9 +158,9 @@ class UtsattFristTests : DescribeSpec({
     describe("Sender ikke påminnelse hvis oppgave blir hard-deleted") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(fristUtsatt)
-        service.processHendelse(hardDelete)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(fristUtsatt, metadata)
+        service.processHendelse(hardDelete, metadata)
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())
@@ -170,9 +171,9 @@ class UtsattFristTests : DescribeSpec({
     describe("Sender ikke påminnelse hvis oppgave er hard-deleted") {
         val hendelseProdusent = FakeHendelseProdusent()
         val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettet)
-        service.processHendelse(hardDelete)
-        service.processHendelse(fristUtsatt)
+        service.processHendelse(oppgaveOpprettet, metadata)
+        service.processHendelse(hardDelete, metadata)
+        service.processHendelse(fristUtsatt, metadata)
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = LocalDateTime.of(dayZero.plusWeeks(5), NOON).inOsloAsInstant())

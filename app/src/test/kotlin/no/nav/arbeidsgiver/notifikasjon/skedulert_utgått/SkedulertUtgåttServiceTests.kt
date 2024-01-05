@@ -7,6 +7,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDate
@@ -42,18 +43,25 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
     )
     val fristSomHarPassert = LocalDate.now().minusDays(1)
     val fristSomIkkeHarPassert = LocalDate.now().plusDays(2)
+    val metadata = PartitionHendelseMetadata(0, 0)
 
     describe("Skedulerer utgått når frist har passert") {
         hendelseProdusent.clear()
-        service.processHendelse(oppgaveOpprettet.copy(frist = fristSomHarPassert))
+        service.processHendelse(oppgaveOpprettet.copy(frist = fristSomHarPassert), metadata)
         service.sendVedUtgåttFrist()
 
         hendelseProdusent.hendelser.first() should beInstanceOf<HendelseModel.OppgaveUtgått>()
     }
     describe("Skedulerer utgått når frist har passert og det finnes en frist på kø som ikke har passert") {
         hendelseProdusent.clear()
-        service.processHendelse(oppgaveOpprettet.copy(notifikasjonId = uuid("11"), frist = fristSomIkkeHarPassert))
-        service.processHendelse(oppgaveOpprettet.copy(notifikasjonId = uuid("22"), frist = fristSomHarPassert))
+        service.processHendelse(
+            oppgaveOpprettet.copy(notifikasjonId = uuid("11"), frist = fristSomIkkeHarPassert),
+            metadata
+        )
+        service.processHendelse(
+            oppgaveOpprettet.copy(notifikasjonId = uuid("22"), frist = fristSomHarPassert),
+            metadata
+        )
         service.sendVedUtgåttFrist()
 
         hendelseProdusent.hendelser shouldHaveSize 1
@@ -64,7 +72,8 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
     describe("noop når frist ikke har passert enda") {
         hendelseProdusent.clear()
         service.processHendelse(
-            oppgaveOpprettet.copy(frist = fristSomIkkeHarPassert)
+            oppgaveOpprettet.copy(frist = fristSomIkkeHarPassert),
+            metadata
         )
         service.sendVedUtgåttFrist()
 
@@ -106,9 +115,10 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
         )) { hendelse ->
             hendelseProdusent.clear()
             service.processHendelse(
-                oppgaveOpprettet.copy(frist = fristSomHarPassert)
+                oppgaveOpprettet.copy(frist = fristSomHarPassert),
+                metadata
             )
-            service.processHendelse(hendelse)
+            service.processHendelse(hendelse, metadata)
             service.sendVedUtgåttFrist()
 
             hendelseProdusent.hendelser shouldBe emptyList()
