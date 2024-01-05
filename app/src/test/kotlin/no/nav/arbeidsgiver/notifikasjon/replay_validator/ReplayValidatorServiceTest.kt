@@ -9,7 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 class ReplayValidatorServiceTest : DescribeSpec({
 
     describe("ReplayValidatorService opprett notifikasjon etter hard delete av sak") {
-        val service = ReplayValidatorService()
+        val service = ReplayValidatorService(mutableListOf())
 
         val hendelser = listOf(
             EksempelHendelse.SakOpprettet.copy(
@@ -46,7 +46,7 @@ class ReplayValidatorServiceTest : DescribeSpec({
     }
 
     describe("ReplayValidatorService opprett notifikasjon før hard delete av sak") {
-        val service = ReplayValidatorService()
+        val service = ReplayValidatorService(mutableListOf())
 
         val hendelser = listOf(
             EksempelHendelse.SakOpprettet.copy(

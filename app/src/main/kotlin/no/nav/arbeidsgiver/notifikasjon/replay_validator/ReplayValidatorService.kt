@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.replay_validator
 
-import io.micrometer.core.instrument.MultiGauge
-import io.micrometer.core.instrument.Tags
+import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
@@ -14,15 +13,22 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_LIST
 import java.sql.ResultSet
 
 
-class ReplayValidatorService : PartitionProcessor {
+class ReplayValidatorService(
+    private val processors: MutableList<ReplayValidatorService>
+) : PartitionProcessor {
+
+    init {
+        processors.add(this)
+    }
+
     private val log = logger()
-    private val antallOpprettelserEtterHardDelete = MultiGauge.builder("antall_notifikasjoner_opprettet_etter_delete")
-        .description("Antall notifikasjoner opprettet etter hard delete av sak")
-        .register(Metrics.meterRegistry)
 
     internal val repository = ReplayValidatorRepository()
 
-    override fun close() = repository.close()
+    override fun close() {
+        processors.remove(this)
+        repository.close()
+    }
 
     override suspend fun processHendelse(hendelse: HendelseModel.Hendelse, metadata: PartitionHendelseMetadata) {
         when (hendelse) {
@@ -74,7 +80,9 @@ class ReplayValidatorService : PartitionProcessor {
 
     }
 
-    override suspend fun processingLoopStep() {
+    override suspend fun processingLoopStep() {}
+
+    fun updateMetrics() {
         val createsAfterHardDeleteSak = repository.findNotifikasjonCreatesAfterHardDeleteSak()
 
         if (createsAfterHardDeleteSak.isNotEmpty()) {
@@ -85,27 +93,21 @@ class ReplayValidatorService : PartitionProcessor {
                     it.createdOffset
                 )
             }
-            antallOpprettelserEtterHardDelete.register(
-                createsAfterHardDeleteSak
-                    .groupBy { it.produsentId }
-                    .map { (key, value) ->
-                        MultiGauge.Row.of(
-                            Tags.of("produsent_id", key),
-                            value.size.toDouble()
-                        )
-                    },
-                true
-            )
+            createsAfterHardDeleteSak
+                .groupBy { it.produsentId }
+                .forEach { (key, value) ->
+                    Counter.builder("antall_notifikasjoner_opprettet_etter_delete")
+                        .tags("produsent_id", key)
+                        .register(Metrics.meterRegistry)
+                        .increment(value.size.toDouble())
+                }
         } else {
-            antallOpprettelserEtterHardDelete.register(
-                PRODUSENT_LIST.map { produsent ->
-                    MultiGauge.Row.of(
-                        Tags.of("produsent_id", produsent.id),
-                        0
-                    )
-                },
-                true
-            )
+            PRODUSENT_LIST.forEach { produsent ->
+                Counter.builder("antall_notifikasjoner_opprettet_etter_delete")
+                    .tags("produsent_id", produsent.id)
+                    .register(Metrics.meterRegistry)
+                    .increment(0.0)
+            }
         }
     }
 }
