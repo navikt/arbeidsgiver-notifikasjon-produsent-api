@@ -1,0 +1,1 @@
+create index notifikasjon_hendelse_relasjon_notifikasjon_id_idx on notifikasjon_hendelse_relasjon (notifikasjon_id);
