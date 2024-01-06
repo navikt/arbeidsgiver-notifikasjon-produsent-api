@@ -124,7 +124,7 @@ class ReplayValidatorRepository : AutoCloseable {
             created_offset bigint,
             created_partition int
         );
-        
+        create index notifikasjon_creates_mrk_grp_idx on notifikasjon_creates (merkelapp, grupperingsid);
         create table sak_hard_deletes (
             id text not null primary key,
             produsent_id text not null,
@@ -133,6 +133,7 @@ class ReplayValidatorRepository : AutoCloseable {
             deleted_offset bigint,
             deleted_partition int
         );
+        create index sak_hard_deletes_mrk_grp_idx on sak_hard_deletes (merkelapp, grupperingsid);
         """.trimIndent()
     )
 
