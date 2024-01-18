@@ -40,6 +40,11 @@ fun defaultHttpClient() = HttpClient(Apache) {
     }
     install(HttpRequestRetry) {
         maxRetries = 3
+        retryIf { _, res ->
+            res.status == HttpStatusCode.ServiceUnavailable ||
+            res.status == HttpStatusCode.GatewayTimeout ||
+            res.status == HttpStatusCode.BadGateway
+        }
         retryOnExceptionIf { _, cause ->
             cause is ConnectionClosedException ||
             cause is SocketTimeoutException
