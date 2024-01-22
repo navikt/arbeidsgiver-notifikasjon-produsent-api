@@ -102,6 +102,109 @@
               navigere mellom oppgaver og beskjeder i forskjellige applikasjoner
               uten å alltid må inom Min side - arbeidgsiver.
             </p>
+
+              <h2 id="hvordan-opprette-ny-sak"><a href="#hvordan-opprette-ny-sak">Hvordan opprette ny sak</a></h2>
+              <div class="language-graphql highlighter-rouge">
+                  <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="w">
+  </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$tittel</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">nySak</span><span class="p">(</span><span class="w">
+    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
+    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tiltak"</span><span class="w">
+    </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
+    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
+      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"4321"</span><span class="w">
+        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">}]</span><span class="w">
+    </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="nv">$tittel</span><span class="w">
+    </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
+    </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
+    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T17:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
+    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
+  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">__typename</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NySakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">id</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">feilmelding</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                  </div>
+              </div>
+              <p>
+                  Merk at vi sender tittel som variabel, siden innholdet er dynamisk
+                  (etternavn satt inn).
+              </p>
+              <p>
+                  For å koble notifikasjoner til en sak benytter dere samme merkelapp og grupperingsid som på saken.
+              </p>
+              <h2 id="hvordan-oppdatere-status-i-sak"><a href="#hvordan-oppdatere-status-i-sak">
+                  Hvordan oppdatere status i sak
+              </a></h2>
+              <p>
+                  Du kan oppdatere status i sak ved å referer til vår ID (id) eller
+                  deres id (grupperingsid + merkelapp).
+              </p>
+              <p>Vår ID:</p>
+              <div class="language-graphql highlighter-rouge">
+                  <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="nv">$id</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">nyStatusSak</span><span class="p">(</span><span class="w">
+    </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$id</span><span class="w">
+    </span><span class="n">nyStatus</span><span class="p">:</span><span class="w"> </span><span class="n">UNDER_BEHANDLING</span><span class="w">
+    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T18:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
+    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
+  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">__typename</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyStatusSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">id</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">feilmelding</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                  </div>
+              </div>
+              <p>Deres ID:</p>
+              <div class="language-graphql highlighter-rouge">
+                  <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">nyStatusSakByGrupperingsid</span><span class="p">(</span><span class="w">
+    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
+    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tiltak"</span><span class="w">
+    </span><span class="n">nyStatus</span><span class="p">:</span><span class="w"> </span><span class="n">UNDER_BEHANDLING</span><span class="w">
+    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T18:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
+    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
+  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">__typename</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyStatusSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">id</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">feilmelding</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                  </div>
+              </div>
             <h2 id="hvordan-opprette-en-beskjed"><a href="#hvordan-opprette-en-beskjed">
               Hvordan opprette en beskjed
             </a></h2>
@@ -307,105 +410,6 @@
                 ><code><span class="k">mutation</span><span class="w"> </span><span class="n">MarkerOppgaveSomUtgaatt</span><span class="p">(</span><span class="nv">$merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!,</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
   </span><span class="n">oppgaveUtgaattByEksternId</span><span class="p">(</span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nv">$merkelapp</span><span class="p">,</span><span class="w"> </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
     </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <h2 id="hvordan-opprette-ny-sak"><a href="#hvordan-opprette-ny-sak">Hvordan opprette ny sak</a></h2>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$tittel</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nySak</span><span class="p">(</span><span class="w">
-    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
-    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tiltak"</span><span class="w">
-    </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
-    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"4321"</span><span class="w">
-        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">}]</span><span class="w">
-    </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="nv">$tittel</span><span class="w">
-    </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-    </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
-    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T17:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NySakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>
-              Merk at vi sender tittel som variabel, siden innholdet er dynamisk
-              (etternavn satt inn).
-            </p>
-            <h2 id="hvordan-oppdatere-status-i-sak"><a href="#hvordan-oppdatere-status-i-sak">
-              Hvordan oppdatere status i sak
-            </a></h2>
-            <p>
-              Du kan oppdatere status i sak ved å referer til vår ID (id) eller
-              deres id (grupperingsid + merkelapp).
-            </p>
-            <p>Vår ID:</p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="nv">$id</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyStatusSak</span><span class="p">(</span><span class="w">
-    </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$id</span><span class="w">
-    </span><span class="n">nyStatus</span><span class="p">:</span><span class="w"> </span><span class="n">UNDER_BEHANDLING</span><span class="w">
-    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T18:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyStatusSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>Deres ID:</p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyStatusSakByGrupperingsid</span><span class="p">(</span><span class="w">
-    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
-    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tiltak"</span><span class="w">
-    </span><span class="n">nyStatus</span><span class="p">:</span><span class="w"> </span><span class="n">UNDER_BEHANDLING</span><span class="w">
-    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T18:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyStatusSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
     </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
       </span><span class="n">feilmelding</span><span class="w">
     </span><span class="p">}</span><span class="w">
