@@ -23,6 +23,17 @@ open class BrukerRepositoryStub : BrukerRepository {
         sortering: BrukerAPI.SakSortering,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?
     ): BrukerRepository.HentSakerResultat = TODO("Not yet implemented")
+
+    override suspend fun hentSakById(fnr: String, tilganger: BrukerModel.Tilganger, id: UUID): BrukerModel.Sak? =
+        TODO("Not yet implemented")
+
+    override suspend fun hentSakByGrupperngsid(
+        fnr: String,
+        tilganger: BrukerModel.Tilganger,
+        grupperingsid: String,
+        merkelapp: String
+    ): BrukerModel.Sak? = TODO("Not yet implemented")
+
     override suspend fun hentSakstyper(fnr: String, tilganger: BrukerModel.Tilganger): List<String> = TODO("Not yet implemented")
     override suspend fun hentSakerForNotifikasjoner(grupperinger: List<BrukerModel.Gruppering>): Map<String, String> = TODO("Not yet implemented")
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? = TODO("Not yet implemented")
