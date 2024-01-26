@@ -311,8 +311,11 @@ type Mutation {
         """En tittel på saken, som vises til brukeren."""
         tittel: String!
 
-        """Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken."""
-        lenke: String!
+        """
+        Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken.
+        Dersom lenken ikke oppgis vil saken lenke til en enkel visning av saken i Min side - Arbeidsgiver.
+        """
+        lenke: String
 
         """
         """

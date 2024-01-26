@@ -76,7 +76,7 @@ object BrukerModel {
         val sakId: UUID,
         val virksomhetsnummer: String,
         val tittel: String,
-        val lenke: String,
+        val lenke: String?,
         val merkelapp: String,
         val opprettetTidspunkt: Instant,
         val grupperingsid: String,

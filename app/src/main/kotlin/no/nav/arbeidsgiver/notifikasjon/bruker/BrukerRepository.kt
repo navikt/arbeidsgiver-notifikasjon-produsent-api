@@ -676,7 +676,7 @@ class BrukerRepositoryImpl(
                 uuid(sakOpprettet.sakId)
                 text(sakOpprettet.virksomhetsnummer)
                 text(sakOpprettet.tittel)
-                text(sakOpprettet.lenke)
+                nullableText(sakOpprettet.lenke)
                 text(sakOpprettet.merkelapp)
                 text(sakOpprettet.grupperingsid)
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))

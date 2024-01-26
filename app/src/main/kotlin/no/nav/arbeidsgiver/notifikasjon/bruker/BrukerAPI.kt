@@ -120,7 +120,7 @@ object BrukerAPI {
     data class Sak(
         val id: UUID,
         val tittel: String,
-        val lenke: String,
+        val lenke: String?,
         val merkelapp: String,
         override val virksomhet: Virksomhet,
         val sisteStatus: SakStatus,

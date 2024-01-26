@@ -40,7 +40,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
 
     describe("tidslinje") {
         val sak0 = brukerRepository.sakOpprettet()
-        val sak1 = brukerRepository.sakOpprettet()
+        val sak1 = brukerRepository.sakOpprettet(lenke = null)
 
         it("tidslinje er tom til å starte med") {
             val tidslinje0 = fetchTidslinje(sak0)

@@ -550,6 +550,34 @@ object EksempelHendelse {
             hardDelete = null,
         )
     }
+    val SakOpprettetNullOppgittLenke = withId { id ->
+        HendelseModel.SakOpprettet(
+            hendelseId = id,
+            virksomhetsnummer = "1",
+            produsentId = "1",
+            kildeAppNavn = "1",
+            sakId = id,
+            grupperingsid = id.toString(),
+            merkelapp = "tag",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+                NærmesteLederMottaker(
+                    virksomhetsnummer = "1",
+                    ansattFnr = "1",
+                    naermesteLederFnr = "2"
+                ),
+            ),
+            tittel = "foo",
+            lenke = null,
+            oppgittTidspunkt = null,
+            mottattTidspunkt = OffsetDateTime.now(),
+            hardDelete = null,
+        )
+    }
     val NyStatusSak = HendelseModel.NyStatusSak(
         hendelseId = hendelseId.next(),
         virksomhetsnummer = "1",
@@ -624,6 +652,7 @@ object EksempelHendelse {
         SakOpprettetNullOppgittTs,
         NyStatusSak,
         NyStatusSak_NullOppgittTs,
+        SakOpprettetNullOppgittLenke,
         PåminnelseOpprettet,
     )
 }

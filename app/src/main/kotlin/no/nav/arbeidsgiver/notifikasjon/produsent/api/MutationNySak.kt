@@ -37,7 +37,7 @@ internal class MutationNySak(
                         virksomhetsnummer = env.getTypedArgument("virksomhetsnummer"),
                         mottakere = env.getTypedArgument("mottakere"),
                         tittel = env.getTypedArgument("tittel"),
-                        lenke = env.getTypedArgument("lenke"),
+                        lenke = env.getTypedArgumentOrNull("lenke"),
                         status = SaksStatusInput(
                             status = env.getTypedArgument("initiellStatus"),
                             tidspunkt = env.getTypedArgumentOrNull("tidspunkt"),
@@ -141,7 +141,7 @@ internal class MutationNySak(
         val virksomhetsnummer: String,
         val mottakere: List<MottakerInput>,
         val tittel: String,
-        val lenke: String,
+        val lenke: String?,
         val status: SaksStatusInput,
         val hardDelete: FutureTemporalInput?,
     ) {

@@ -65,7 +65,7 @@ type Sak {
     id: ID!
     virksomhet: Virksomhet!
     tittel: String!
-    lenke: String!
+    lenke: String
     merkelapp: String!
     sisteStatus: SakStatus!
     """

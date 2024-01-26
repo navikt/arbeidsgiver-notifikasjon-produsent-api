@@ -64,6 +64,7 @@ class QuerySakerTests : DescribeSpec({
                 virksomhetsnummer = "42",
                 grupperingsid = "42",
                 merkelapp = "tag",
+                lenke = null,
                 mottakere = listOf(AltinnMottaker("5441", "1", "42")),
                 oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
                 mottattTidspunkt = OffsetDateTime.now(),
