@@ -565,7 +565,7 @@ object BrukerAPI {
 
             val tilganger = tilgangerService.hentTilganger(context)
 
-            val sak = brukerRepository.hentSakByGrupperngsid(
+            val sak = brukerRepository.hentSakByGrupperingsid(
                 fnr = context.fnr,
                 tilganger = tilganger,
                 grupperingsid = env.getArgument("grupperingsid"),

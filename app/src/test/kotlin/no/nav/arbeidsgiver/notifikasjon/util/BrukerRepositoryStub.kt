@@ -27,7 +27,7 @@ open class BrukerRepositoryStub : BrukerRepository {
     override suspend fun hentSakById(fnr: String, tilganger: BrukerModel.Tilganger, id: UUID): BrukerModel.Sak? =
         TODO("Not yet implemented")
 
-    override suspend fun hentSakByGrupperngsid(
+    override suspend fun hentSakByGrupperingsid(
         fnr: String,
         tilganger: BrukerModel.Tilganger,
         grupperingsid: String,

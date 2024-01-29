@@ -72,7 +72,7 @@ interface BrukerRepository {
         id: UUID,
     ): BrukerModel.Sak?
 
-    suspend fun hentSakByGrupperngsid(
+    suspend fun hentSakByGrupperingsid(
         fnr: String,
         tilganger: Tilganger,
         grupperingsid: String,
@@ -479,7 +479,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    override suspend fun hentSakByGrupperngsid(
+    override suspend fun hentSakByGrupperingsid(
         fnr: String,
         tilganger: Tilganger,
         grupperingsid: String,
