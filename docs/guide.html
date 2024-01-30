@@ -982,6 +982,140 @@ EMAIL  | {tittel} | {innhold}
               mottakeren og hvor lenge loggene skal lagres.
             </p>
           </div>
+
+            <h2 id="hvordan-opprette-ny-sak"><a href="#hvordan-opprette-ny-sak">Hvordan opprette en sak uten lenke</a></h2>
+            <p>
+                Dersom dere ikke har egen frontend løsning eller nettside, men likevel ønsker å nå ut til arbeidsgivere, kan dere benytte saker uten lenke.
+                Dersom en sak opprettes uten lenke, så vil lenken på saken i saksoversikten automatisk lenke til en detaljvisning av saken i Min side - Arbeidsgiver.
+            </p>
+            <figure>
+                <img
+                        src="images/saksdetaljer.png"
+                        alt="Enkel side som viser alel detaljer på en sak"
+                />
+            </figure>
+            <p>
+                URL til siden i de forskjellige miljøene er:
+            </p>
+            <table style="width: auto">
+                <thead>
+                <tr>
+                    <th>miljø</th>
+                    <th>url</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>dev</td>
+                    <td>
+                        <code class="hljs language-text">https://arbeidsgiver.intern.dev.nav.no/min-side-arbeidsgiver/sak</code>
+                    </td>
+                </tr>
+                <tr>
+                    <td>prod</td>
+                    <td>
+                        <code class="hljs language-text">https://arbeidsgiver.nav.no/min-side-arbeidsgiver/sak</code>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="language-graphql highlighter-rouge">
+                <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="w">
+  </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$tittel</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">nySak</span><span class="p">(</span><span class="w">
+    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
+    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Skademelding"</span><span class="w">
+    </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
+    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
+      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
+        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">}]</span><span class="w">
+    </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="nv">$tittel</span><span class="w">
+    </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
+    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">__typename</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NySakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">id</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">feilmelding</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                </div>
+            </div>
+            <p>
+                Når dere har opprettet saken kan dere så lage beskjeder og oppgaver på saken, og angi lenke på disse som lenke til saken i Min side - Arbeidsgiver.
+                Siden for saksdetaljer i Min side - Arbeidsgiver støtter parameterne <code class="hljs language-text">saksid</code> eller kombinasjonen <code class="hljs language-text">merkelapp</code> og <code class="hljs language-text">grupperingsid</code>.
+
+                Ved bruk av merkelapp og grupperingsid i lenken slipper dere å ta vare på id til saken fra oppret sak kallet. Dersom dere allerede tar vare på id til saken kan dere bruke denne i lenken.
+            </p>
+            <p>
+                Eksempel på opprett beskjed med lenke til saken vha merkelapp og grupperingsid.
+            </p>
+            <div class="language-graphql highlighter-rouge">
+                <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNyBeskjed</span><span class="p">(</span><span class="w">
+  </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$grupperingsId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">nyBeskjed</span><span class="p">(</span><span class="n">nyBeskjed</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="w">
+      </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
+      </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
+      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
+        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">}]</span><span class="w">
+    </span><span class="n">notifikasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Skademelding"</span><span class="w">
+      </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har fått svar på din søknad"</span><span class="w">
+      </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">})</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">__typename</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyBeskjedVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">id</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">feilmelding</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                </div>
+            </div>
+            <p>Med variabler:</p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"eksternId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234-oppdatering"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"virksomhetsnummer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"012345678"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"grupperingsid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sak-123"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"lenke"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://arbeidsgiver.intern.dev.nav.no/min-side-arbeidsgiver/sak?merkelapp=fager&grupperingsid=42"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                </div>
+            </div>
         </article>
       </div>
     </main>
