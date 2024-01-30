@@ -139,6 +139,14 @@ class NySakTests : DescribeSpec({
             duration.get(ChronoUnit.YEARS) shouldBe 2
             duration.get(ChronoUnit.SECONDS) shouldBe 0
         }
+
+        val response11 = engine.nySak(
+            grupperingsid = "6",
+            lenke = null,
+        )
+        it("should be successful") {
+            response11.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
+        }
     }
 })
 
@@ -147,7 +155,7 @@ private fun TestApplicationEngine.nySak(
     merkelapp: String = "tag",
     status: SaksStatus = SaksStatus.MOTTATT,
     tittel: String = "tittel",
-    lenke: String = "lenke",
+    lenke: String? = "lenke",
     hardDeleteDen: String? = null,
     hardDeleteOm: String? = null,
 ) =
@@ -167,7 +175,7 @@ private fun TestApplicationEngine.nySak(
                     initiellStatus: $status
                     tidspunkt: "2020-01-01T01:01Z"
                     tittel: "$tittel"
-                    lenke: "$lenke"
+                    ${lenke?.let { """ lenke: "$it" """ } ?: ""}
                     ${
             hardDeleteDen?.let {
                 """

@@ -103,6 +103,12 @@ object BrukerAPI {
         val oppgaveTilstandInfo: List<OppgaveTilstandInfo>
     )
 
+    @JsonTypeName("SakResultat")
+    data class SakResultat(
+        val sak: Sak?,
+        val feilAltinn: Boolean,
+    )
+
     @JsonTypeName("OppgaveTilstandInfo")
     data class OppgaveTilstandInfo (
         val tilstand: Notifikasjon.Oppgave.Tilstand,
@@ -120,7 +126,7 @@ object BrukerAPI {
     data class Sak(
         val id: UUID,
         val tittel: String,
-        val lenke: String,
+        val lenke: String?,
         val merkelapp: String,
         override val virksomhet: Virksomhet,
         val sisteStatus: SakStatus,
@@ -234,6 +240,11 @@ object BrukerAPI {
                 )
 
                 querySaker(
+                    brukerRepository = brukerRepository,
+                    tilgangerService = tilgangerService,
+                )
+
+                querySak(
                     brukerRepository = brukerRepository,
                     tilgangerService = tilgangerService,
                 )
@@ -456,6 +467,182 @@ object BrukerAPI {
                 feilAltinn = tilganger.harFeil,
                 totaltAntallSaker = sakerResultat.totaltAntallSaker,
                 oppgaveTilstandInfo = sakerResultat.oppgaveTilstanderMedAntall.map{ tilstand -> OppgaveTilstandInfo(tilstand.navn.tilBrukerAPI(), tilstand.antall)}
+            )
+        }
+    }
+
+    private fun TypeRuntimeWiring.Builder.querySak(
+        brukerRepository: BrukerRepository,
+        tilgangerService: TilgangerService,
+    ) {
+        coDataFetcher("sakById") { env ->
+            val context = env.notifikasjonContext<Context>()
+
+            val tilganger = tilgangerService.hentTilganger(context)
+
+            val sak = brukerRepository.hentSakById(
+                fnr = context.fnr,
+                tilganger = tilganger,
+                id = env.getTypedArgument("id"),
+            ) ?: return@coDataFetcher SakResultat(
+                sak = null,
+                feilAltinn = tilganger.harFeil,
+            )
+
+            val berikelse = brukerRepository.berikSaker(listOf(sak))[sak.sakId]
+            val oppgaver = berikelse?.tidslinje.orEmpty()
+                .filterIsInstance<BrukerModel.TidslinjeElement.Oppgave>()
+                .sortedWith { left, right ->
+                    when {
+                        left.frist == null -> 1
+                        right.frist == null -> -1
+                        else -> left.frist.compareTo(right.frist)
+                    }
+                }
+
+            SakResultat(
+                sak = Sak(
+                    id = sak.sakId,
+                    tittel = sak.tittel,
+                    lenke = sak.lenke,
+                    merkelapp = sak.merkelapp,
+                    virksomhet = Virksomhet(
+                        virksomhetsnummer = sak.virksomhetsnummer,
+                    ),
+                    sisteStatus = when (val sisteStatus = berikelse?.sisteStatus) {
+                        null -> SakStatus(
+                            type = BrukerAPI.SakStatusType.MOTTATT,
+                            tekst = BrukerAPI.SakStatusType.MOTTATT.visningsTekst,
+                            tidspunkt = sak.opprettetTidspunkt.atOffset(UTC),
+                        )
+
+                        else -> {
+                            val type = SakStatusType.fraModel(sisteStatus.status)
+                            SakStatus(
+                                type = type,
+                                tekst = sisteStatus.overstyrtStatustekst ?: type.visningsTekst,
+                                tidspunkt = sisteStatus.tidspunkt
+                            )
+                        }
+                    },
+                    frister = oppgaver
+                        .filter { it.tilstand == BrukerModel.Oppgave.Tilstand.NY }
+                        .map { it.frist },
+                    oppgaver = oppgaver.map { o ->
+                        OppgaveMetadata(
+                            tilstand = o.tilstand.tilBrukerAPI(),
+                            frist = o.frist,
+                            paaminnelseTidspunkt = o.paaminnelseTidspunkt?.atOffset(UTC),
+                        )
+                    },
+                    tidslinje = berikelse?.tidslinje.orEmpty().map { element ->
+                        when (element) {
+                            is BrukerModel.TidslinjeElement.Oppgave -> OppgaveTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+                                opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                                tilstand = element.tilstand.tilBrukerAPI(),
+                                paaminnelseTidspunkt = element.paaminnelseTidspunkt?.atOffset(UTC),
+                                utgaattTidspunkt = element.utgaattTidspunkt?.atOffset(UTC),
+                                utfoertTidspunkt = element.utfoertTidspunkt?.atOffset(UTC),
+                                frist = element.frist,
+                            )
+
+                            is BrukerModel.TidslinjeElement.Beskjed -> BeskjedTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+                                opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                            )
+                        }
+                    }
+                ),
+                feilAltinn = tilganger.harFeil,
+            )
+        }
+
+        coDataFetcher("sakByGrupperingsid") { env ->
+            val context = env.notifikasjonContext<Context>()
+
+            val tilganger = tilgangerService.hentTilganger(context)
+
+            val sak = brukerRepository.hentSakByGrupperingsid(
+                fnr = context.fnr,
+                tilganger = tilganger,
+                grupperingsid = env.getArgument("grupperingsid"),
+                merkelapp = env.getArgument("merkelapp"),
+            ) ?: return@coDataFetcher SakResultat(
+                sak = null,
+                feilAltinn = tilganger.harFeil,
+            )
+
+            val berikelse = brukerRepository.berikSaker(listOf(sak))[sak.sakId]
+            val oppgaver = berikelse?.tidslinje.orEmpty()
+                .filterIsInstance<BrukerModel.TidslinjeElement.Oppgave>()
+                .sortedWith { left, right ->
+                    when {
+                        left.frist == null -> 1
+                        right.frist == null -> -1
+                        else -> left.frist.compareTo(right.frist)
+                    }
+                }
+
+            SakResultat(
+                sak = Sak(
+                    id = sak.sakId,
+                    tittel = sak.tittel,
+                    lenke = sak.lenke,
+                    merkelapp = sak.merkelapp,
+                    virksomhet = Virksomhet(
+                        virksomhetsnummer = sak.virksomhetsnummer,
+                    ),
+                    sisteStatus = when (val sisteStatus = berikelse?.sisteStatus) {
+                        null -> SakStatus(
+                            type = BrukerAPI.SakStatusType.MOTTATT,
+                            tekst = BrukerAPI.SakStatusType.MOTTATT.visningsTekst,
+                            tidspunkt = sak.opprettetTidspunkt.atOffset(UTC),
+                        )
+
+                        else -> {
+                            val type = SakStatusType.fraModel(sisteStatus.status)
+                            SakStatus(
+                                type = type,
+                                tekst = sisteStatus.overstyrtStatustekst ?: type.visningsTekst,
+                                tidspunkt = sisteStatus.tidspunkt
+                            )
+                        }
+                    },
+                    frister = oppgaver
+                        .filter { it.tilstand == BrukerModel.Oppgave.Tilstand.NY }
+                        .map { it.frist },
+                    oppgaver = oppgaver.map { o ->
+                        OppgaveMetadata(
+                            tilstand = o.tilstand.tilBrukerAPI(),
+                            frist = o.frist,
+                            paaminnelseTidspunkt = o.paaminnelseTidspunkt?.atOffset(UTC),
+                        )
+                    },
+                    tidslinje = berikelse?.tidslinje.orEmpty().map { element ->
+                        when (element) {
+                            is BrukerModel.TidslinjeElement.Oppgave -> OppgaveTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+                                opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                                tilstand = element.tilstand.tilBrukerAPI(),
+                                paaminnelseTidspunkt = element.paaminnelseTidspunkt?.atOffset(UTC),
+                                utgaattTidspunkt = element.utgaattTidspunkt?.atOffset(UTC),
+                                utfoertTidspunkt = element.utfoertTidspunkt?.atOffset(UTC),
+                                frist = element.frist,
+                            )
+
+                            is BrukerModel.TidslinjeElement.Beskjed -> BeskjedTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+                                opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                            )
+                        }
+                    }
+                ),
+                feilAltinn = tilganger.harFeil,
             )
         }
     }

@@ -304,7 +304,7 @@ class ProdusentRepositoryImpl(
                 text(sakOpprettet.virksomhetsnummer)
                 jsonb(sakOpprettet.mottakere)
                 text(sakOpprettet.tittel)
-                text(sakOpprettet.lenke)
+                nullableText(sakOpprettet.lenke)
             }.also {
                 if (it == 0) {
                     // noop. saken finnes allerede

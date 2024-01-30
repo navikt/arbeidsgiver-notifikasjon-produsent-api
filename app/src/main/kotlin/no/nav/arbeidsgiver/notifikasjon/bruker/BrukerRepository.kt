@@ -66,6 +66,19 @@ interface BrukerRepository {
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): HentSakerResultat
 
+    suspend fun hentSakById(
+        fnr: String,
+        tilganger: Tilganger,
+        id: UUID,
+    ): BrukerModel.Sak?
+
+    suspend fun hentSakByGrupperingsid(
+        fnr: String,
+        tilganger: Tilganger,
+        grupperingsid: String,
+        merkelapp: String,
+    ): BrukerModel.Sak?
+
     /** Denne funksjonaliteten var tidligere en del av [hentSaker], men vi greide ikke
      * å overbevise postgres til å ikke gjøre en full merge-join med [sak_status]-tabellen,
      * og dette virker som en akse
@@ -395,6 +408,150 @@ class BrukerRepositoryImpl(
         }
     }
 
+    override suspend fun hentSakById(
+        fnr: String,
+        tilganger: Tilganger,
+        id: UUID
+    ): BrukerModel.Sak? {
+        return timer.coRecord {
+            val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
+                AltinnMottaker(
+                    serviceCode = it.servicecode,
+                    serviceEdition = it.serviceedition,
+                    virksomhetsnummer = it.virksomhet
+                )
+            }
+
+            val rows = database.nonTransactionalExecuteQuery(
+                /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+                """
+                    with 
+                        mine_altinntilganger as (
+                            select
+                                virksomhetsnummer as virksomhet,
+                                "serviceCode" as service_code,
+                                "serviceEdition" as service_edition from json_to_recordset(?::json) 
+                            as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                        ),
+                        mine_altinn_saker as (
+                            select er.sak_id
+                            from mottaker_altinn_enkeltrettighet er
+                            join mine_altinntilganger using (virksomhet, service_code, service_edition)
+                            where er.sak_id is not null
+                        ),
+                        mine_digisyfo_saker as (
+                            select sak_id
+                            from mottaker_digisyfo_for_fnr
+                            where fnr_leder = ? and sak_id is not null
+                        ),
+                        mine_sak_ider as (
+                            (select * from mine_digisyfo_saker)
+                            union 
+                            (select * from mine_altinn_saker)
+                        ),
+                        min_sak as (
+                            select s.*
+                            from mine_sak_ider as ms
+                            join sak_search as search on ms.sak_id = search.id
+                            join sak as s on s.id = ms.sak_id
+                            where s.id = ?
+                        )
+                        
+                        select coalesce(jsonb_build_object(
+                                'sakId', id,
+                                'virksomhetsnummer', virksomhetsnummer,
+                                'tittel', tittel,
+                                'lenke', lenke,
+                                'merkelapp', merkelapp,
+                                'opprettetTidspunkt', opprettet_tidspunkt,
+                                'grupperingsid', grupperingsid
+                            ), '[]'::jsonb) as sak from min_sak
+                    """,
+                {
+                    jsonb(tilgangerAltinnMottaker)
+                    text(fnr)
+                    uuid(id)
+                }
+            ) {
+                laxObjectMapper.readValue<BrukerModel.Sak?>(getString("sak"))
+            }
+            return@coRecord rows.firstOrNull()
+        }
+    }
+
+    override suspend fun hentSakByGrupperingsid(
+        fnr: String,
+        tilganger: Tilganger,
+        grupperingsid: String,
+        merkelapp: String
+    ): BrukerModel.Sak? {
+        return timer.coRecord {
+            val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
+                AltinnMottaker(
+                    serviceCode = it.servicecode,
+                    serviceEdition = it.serviceedition,
+                    virksomhetsnummer = it.virksomhet
+                )
+            }
+
+            val rows = database.nonTransactionalExecuteQuery(
+                /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+                """
+                    with 
+                        mine_altinntilganger as (
+                            select
+                                virksomhetsnummer as virksomhet,
+                                "serviceCode" as service_code,
+                                "serviceEdition" as service_edition from json_to_recordset(?::json) 
+                            as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                        ),
+                        mine_altinn_saker as (
+                            select er.sak_id
+                            from mottaker_altinn_enkeltrettighet er
+                            join mine_altinntilganger using (virksomhet, service_code, service_edition)
+                            where er.sak_id is not null
+                        ),
+                        mine_digisyfo_saker as (
+                            select sak_id
+                            from mottaker_digisyfo_for_fnr
+                            where fnr_leder = ? and sak_id is not null
+                        ),
+                        mine_sak_ider as (
+                            (select * from mine_digisyfo_saker)
+                            union 
+                            (select * from mine_altinn_saker)
+                        ),
+                        min_sak as (
+                            select s.*
+                            from mine_sak_ider as ms
+                            join sak_search as search on ms.sak_id = search.id
+                            join sak as s on s.id = ms.sak_id
+                            where s.grupperingsid = ? and s.merkelapp = ?
+                        )
+                        
+                        select coalesce(jsonb_build_object(
+                                'sakId', id,
+                                'virksomhetsnummer', virksomhetsnummer,
+                                'tittel', tittel,
+                                'lenke', lenke,
+                                'merkelapp', merkelapp,
+                                'opprettetTidspunkt', opprettet_tidspunkt,
+                                'grupperingsid', grupperingsid
+                            ), '[]'::jsonb) as sak from min_sak
+                    """,
+                {
+                    jsonb(tilgangerAltinnMottaker)
+                    text(fnr)
+                    text(grupperingsid)
+                    text(merkelapp)
+                }
+            ) {
+                laxObjectMapper.readValue<BrukerModel.Sak?>(getString("sak"))
+            }
+            return@coRecord rows.firstOrNull()
+        }
+    }
+
     override suspend fun berikSaker(
         saker: List<BrukerModel.Sak>,
     ): Map<UUID, BrukerModel.Sakberikelse> {
@@ -676,7 +833,7 @@ class BrukerRepositoryImpl(
                 uuid(sakOpprettet.sakId)
                 text(sakOpprettet.virksomhetsnummer)
                 text(sakOpprettet.tittel)
-                text(sakOpprettet.lenke)
+                nullableText(sakOpprettet.lenke)
                 text(sakOpprettet.merkelapp)
                 text(sakOpprettet.grupperingsid)
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))

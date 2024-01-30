@@ -1,0 +1,1 @@
+alter table sak alter column lenke drop not null;

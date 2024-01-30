@@ -14,6 +14,8 @@ type Query {
         oppgaveTilstand: [OppgaveTilstand!]
         sortering: SakSortering! = OPPDATERT
     ): SakerResultat!
+    sakById(id: ID!): SakResultat!
+    sakByGrupperingsid(merkelapp: String!, grupperingsid: String!): SakResultat!
     whoami: String
 }
 
@@ -61,11 +63,16 @@ type OppgaveMetadata {
     paaminnelseTidspunkt: ISO8601DateTime
 }
 
+type SakResultat {
+    sak: Sak
+    feilAltinn: Boolean!
+}
+
 type Sak {
     id: ID!
     virksomhet: Virksomhet!
     tittel: String!
-    lenke: String!
+    lenke: String
     merkelapp: String!
     sisteStatus: SakStatus!
     """

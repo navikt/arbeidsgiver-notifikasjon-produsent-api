@@ -252,7 +252,7 @@ suspend fun BrukerRepository.sakOpprettet(
     produsentId: String = randomProdusentId(),
     kildeAppNavn: String = randomKildeAppNavn(),
     merkelapp: String = randomMerkelapp(),
-    lenke: String = randomLenke("sak"),
+    lenke: String? = randomLenke("sak"),
     tittel: String = randomTekst("Sak-tittel"),
     mottakere: List<HendelseModel.Mottaker> = listOf(TEST_MOTTAKER_1),
     grupperingsid: String = UUID.randomUUID().toString(),

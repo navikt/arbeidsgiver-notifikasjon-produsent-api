@@ -406,7 +406,7 @@ class DataproduktModel(
                     text(hendelse.produsentId)
                     text(hendelse.merkelapp)
                     text(hendelse.tittel)
-                    text(hendelse.lenke)
+                    nullableText(hendelse.lenke)
                     nullableInstantAsText(hendelse.oppgittTidspunkt?.toInstant())
                     instantAsText(hendelse.mottattTidspunkt?.toInstant() ?: metadata.timestamp)
                     nullableInstantAsText(null)

@@ -232,7 +232,7 @@ object HendelseModel {
         val merkelapp: String,
         val mottakere: List<Mottaker>,
         val tittel: String,
-        val lenke: String,
+        val lenke: String?,
         val oppgittTidspunkt: OffsetDateTime?,
         val mottattTidspunkt: OffsetDateTime?,
         val hardDelete: LocalDateTimeOrDuration?,

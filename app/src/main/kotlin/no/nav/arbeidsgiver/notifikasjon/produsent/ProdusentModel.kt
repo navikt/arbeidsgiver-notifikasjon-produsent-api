@@ -22,7 +22,7 @@ object ProdusentModel {
         val virksomhetsnummer: String,
         val deletedAt: OffsetDateTime?,
         val tittel: String,
-        val lenke: String,
+        val lenke: String?,
         val statusoppdateringer: List<SakStatusOppdatering>,
         val mottakere: List<Mottaker>,
         val opprettetTidspunkt: OffsetDateTime,
