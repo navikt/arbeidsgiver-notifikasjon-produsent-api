@@ -53,6 +53,8 @@ spec:
           namespace: arbeidsforhold
         - application: min-ia
           namespace: teamia
+        - application: min-ia
+          namespace: pia
         - application: presenterte-kandidater
           namespace: toi
     outbound:
