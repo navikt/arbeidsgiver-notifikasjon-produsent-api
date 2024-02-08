@@ -5,10 +5,13 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVar
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Kalenderavtale.Tilstand.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -70,9 +73,9 @@ object ProdusentModel {
                                     status = thisVarsel.status,
                                     feilmelding = thisVarsel.feilmelding,
                                     kildeHendelse = when (otherVarsel.kildeHendelse) {
-                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                     },
                                 )
                             }
@@ -123,9 +126,9 @@ object ProdusentModel {
                                     status = thisVarsel.status,
                                     feilmelding = thisVarsel.feilmelding,
                                     kildeHendelse = when (otherVarsel.kildeHendelse) {
-                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                     },
                                 )
                             }
@@ -140,9 +143,92 @@ object ProdusentModel {
                                     status = thisVarsel.status,
                                     feilmelding = thisVarsel.feilmelding,
                                     kildeHendelse = when (otherVarsel.kildeHendelse) {
-                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
-                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse?.varselId ?: otherVarsel.kildeHendelse.varselId)
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                    },
+                                )
+                            }
+                        }
+                    )
+                }
+                else -> false
+            }
+        }
+    }
+
+    data class Kalenderavtale(
+        override val id: UUID,
+        override val merkelapp: String,
+        override val deletedAt: OffsetDateTime?,
+        override val virksomhetsnummer: String,
+        val tekst: String,
+        val grupperingsid: String? = null,
+        val lenke: String,
+        val eksternId: String,
+        val mottakere: List<Mottaker>,
+        val opprettetTidspunkt: OffsetDateTime,
+        val tilstand: Tilstand,
+        val startTidspunkt: OffsetDateTime,
+        val sluttTidspunkt: OffsetDateTime?,
+        val lokasjon: Lokasjon?,
+        val digitalt: Boolean,
+
+        override val eksterneVarsler: List<EksterntVarsel> = listOf(),
+        val påminnelseEksterneVarsler: List<EksterntVarsel> = listOf(),
+    ) : Notifikasjon {
+
+
+        data class Lokasjon(
+            val adresse: String,
+            val postnummer: String,
+            val poststed: String,
+        )
+
+        enum class Tilstand {
+            VENTER_SVAR_FRA_ARBEIDSGIVER,
+            ARBEIDSGIVER_VIL_AVLYSE,
+            ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
+            ARBEIDSGIVER_HAR_GODTATT,
+            AVLYST,
+        }
+
+        override fun erDuplikatAv(other: Notifikasjon): Boolean {
+            return when (other) {
+                is Kalenderavtale -> {
+                    this == other.copy(
+                        opprettetTidspunkt = this.opprettetTidspunkt,
+                        id = this.id,
+                        eksterneVarsler = other.eksterneVarsler.mapIndexed { i, otherVarsel ->
+                            val thisVarsel = this.eksterneVarsler.getOrNull(i)
+                            if (thisVarsel == null) {
+                                otherVarsel
+                            } else {
+                                otherVarsel.copy(
+                                    varselId = thisVarsel.varselId,
+                                    status = thisVarsel.status,
+                                    feilmelding = thisVarsel.feilmelding,
+                                    kildeHendelse = when (otherVarsel.kildeHendelse) {
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                    },
+                                )
+                            }
+                        },
+                        påminnelseEksterneVarsler = other.påminnelseEksterneVarsler.mapIndexed { i, otherVarsel ->
+                            val thisVarsel = this.påminnelseEksterneVarsler.getOrNull(i) // simpler with getOrDefault?
+                            if (thisVarsel == null) {
+                                otherVarsel
+                            } else {
+                                otherVarsel.copy(
+                                    varselId = thisVarsel.varselId,
+                                    status = thisVarsel.status,
+                                    feilmelding = thisVarsel.feilmelding,
+                                    kildeHendelse = when (otherVarsel.kildeHendelse) {
+                                        is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                     },
                                 )
                             }
@@ -210,6 +296,38 @@ fun OppgaveOpprettet.tilProdusentModel(): ProdusentModel.Oppgave =
         påminnelseEksterneVarsler = this.påminnelse?.eksterneVarsler
             .orEmpty()
             .map(EksterntVarsel::tilProdusentModel),
+    )
+
+fun KalenderavtaleOpprettet.tilProdusentModel() =
+    ProdusentModel.Kalenderavtale(
+        id = this.notifikasjonId,
+        merkelapp = this.merkelapp,
+        tekst = this.tekst,
+        grupperingsid = this.grupperingsid,
+        lenke = this.lenke,
+        eksternId = this.eksternId,
+        mottakere = this.mottakere,
+        opprettetTidspunkt = this.opprettetTidspunkt,
+        tilstand = when (this.tilstand) {
+            KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER -> VENTER_SVAR_FRA_ARBEIDSGIVER
+            KalenderavtaleTilstand.ARBEIDSGIVER_VIL_AVLYSE -> ARBEIDSGIVER_VIL_AVLYSE
+            KalenderavtaleTilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED -> ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
+            KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT -> ARBEIDSGIVER_HAR_GODTATT
+            KalenderavtaleTilstand.AVLYST -> AVLYST
+        },
+        deletedAt = null,
+        eksterneVarsler = listOf(),
+        virksomhetsnummer = this.virksomhetsnummer,
+        startTidspunkt = this.startTidspunkt,
+        sluttTidspunkt = this.sluttTidspunkt,
+        lokasjon = this.lokasjon?.let {
+            ProdusentModel.Kalenderavtale.Lokasjon(
+                adresse = it.adresse,
+                postnummer = it.postnummer,
+                poststed = it.poststed,
+            )
+        },
+        digitalt = this.erDigitalt,
     )
 
 fun EksterntVarsel.tilProdusentModel(): ProdusentModel.EksterntVarsel {

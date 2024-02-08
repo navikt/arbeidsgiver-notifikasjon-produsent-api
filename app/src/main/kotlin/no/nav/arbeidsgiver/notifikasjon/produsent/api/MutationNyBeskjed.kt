@@ -60,7 +60,7 @@ internal class MutationNyBeskjed(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = alleMottakere.map { it.tilDomene(metadata.virksomhetsnummer) },
+                mottakere = alleMottakere.map { it.tilHendelseModel(metadata.virksomhetsnummer) },
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = metadata.virksomhetsnummer,
                 produsentId = produsentId,
@@ -68,7 +68,7 @@ internal class MutationNyBeskjed(
                 eksterneVarsler = eksterneVarsler.map {
                     it.tilDomene(metadata.virksomhetsnummer)
                 },
-                hardDelete = metadata.hardDelete?.tilDomene(),
+                hardDelete = metadata.hardDelete?.tilHendelseModel(),
                 sakId = sakId,
             )
         }

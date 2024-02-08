@@ -33,7 +33,7 @@ object ReplayValidator {
                 "replay-validator-update-gauge",
                 pauseAfterEach = Duration.ofMinutes(1),
             ) {
-                services.forEach(ReplayValidatorService::updateMetrics)
+                services.toList().forEach(ReplayValidatorService::updateMetrics)
             }
 
             launchHttpServer(httpPort = httpPort)

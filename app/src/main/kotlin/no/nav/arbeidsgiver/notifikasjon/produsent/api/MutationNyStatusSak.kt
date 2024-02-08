@@ -5,12 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
@@ -129,7 +124,7 @@ internal class MutationNyStatusSak(
                     oppgittTidspunkt = status.status.tidspunkt,
                     mottattTidspunkt = OffsetDateTime.now(),
                     idempotensKey = idempotencyKey,
-                    hardDelete = status.hardDelete?.tilDomene(),
+                    hardDelete = status.hardDelete?.tilHendelseModel(),
                     nyLenkeTilSak = status.nyLenkeTilSak,
                 )
 

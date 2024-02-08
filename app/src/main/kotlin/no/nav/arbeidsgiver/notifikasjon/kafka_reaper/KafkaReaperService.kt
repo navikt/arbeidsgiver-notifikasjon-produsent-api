@@ -7,6 +7,8 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
@@ -43,6 +45,8 @@ class KafkaReaperServiceImpl(
             is SoftDelete,
             is BeskjedOpprettet,
             is OppgaveOpprettet,
+            is KalenderavtaleOpprettet,
+            is KalenderavtaleOppdatert,
             is BrukerKlikket,
             is OppgaveUtført,
             is OppgaveUtgått,

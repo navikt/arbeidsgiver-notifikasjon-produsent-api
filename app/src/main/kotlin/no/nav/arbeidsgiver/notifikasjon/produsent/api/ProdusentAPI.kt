@@ -54,6 +54,7 @@ object ProdusentAPI {
                 MutationSoftDeleteNotifikasjon(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNySak(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNyStatusSak(hendelseDispatcher, produsentRepository).wire(this)
+                MutationKalenderavtale(hendelseDispatcher, produsentRepository).wire(this)
             }
         )
     }

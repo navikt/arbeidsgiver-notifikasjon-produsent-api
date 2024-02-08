@@ -15,7 +15,8 @@ internal sealed class Error {
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
-        MutationSoftDeleteSak.SoftDeleteSakResultat
+        MutationSoftDeleteSak.SoftDeleteSakResultat,
+        MutationKalenderavtale.NyKalenderavtaleResultat
 
     @JsonTypeName("UgyldigMerkelapp")
     data class UgyldigMerkelapp(
@@ -32,7 +33,8 @@ internal sealed class Error {
         MutationHardDeleteSak.HardDeleteSakResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
-        MutationNyStatusSak.NyStatusSakResultat
+        MutationNyStatusSak.NyStatusSakResultat,
+        MutationKalenderavtale.KalenderavtaleOppdaterResultat
 
     @JsonTypeName("UkjentProdusent")
     data class UkjentProdusent(
@@ -49,7 +51,8 @@ internal sealed class Error {
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationNySak.NySakResultat,
-        MutationNyStatusSak.NyStatusSakResultat
+        MutationNyStatusSak.NyStatusSakResultat,
+        MutationKalenderavtale.KalenderavtaleOppdaterResultat
 
     @JsonTypeName("UgyldigMottaker")
     data class UgyldigMottaker(
@@ -72,7 +75,8 @@ internal sealed class Error {
         val idTilEksisterende: UUID
     ) : Error(),
         MutationNyBeskjed.NyBeskjedResultat,
-        MutationNyOppgave.NyOppgaveResultat
+        MutationNyOppgave.NyOppgaveResultat,
+        MutationKalenderavtale.NyKalenderavtaleResultat
 
     @JsonTypeName("DuplikatGrupperingsid")
     data class DuplikatGrupperingsid(
@@ -97,7 +101,8 @@ internal sealed class Error {
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
-        QueryNotifikasjoner.HentNotifikasjonResultat
+        QueryNotifikasjoner.HentNotifikasjonResultat,
+        MutationKalenderavtale.KalenderavtaleOppdaterResultat
 
     @JsonTypeName("UkjentRolle")
     data class UkjentRolle(
@@ -121,13 +126,21 @@ internal sealed class Error {
     ):  Error(),
         MutationNyStatusSak.NyStatusSakResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
-        MutationHardDeleteSak.HardDeleteSakResultat
+        MutationHardDeleteSak.HardDeleteSakResultat,
+        MutationKalenderavtale.NyKalenderavtaleResultat
 
     @JsonTypeName("OppgavenErAlleredeUtfoert")
     data class OppgavenErAlleredeUtfoert(
         override val feilmelding: String,
     ):  Error(),
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat
+
+    @JsonTypeName("UgyldigKalenderavtale")
+    data class UgyldigKalenderavtale(
+        override val feilmelding: String,
+    ) : Error(),
+        MutationKalenderavtale.NyKalenderavtaleResultat,
+        MutationKalenderavtale.KalenderavtaleOppdaterResultat
 
 }
 

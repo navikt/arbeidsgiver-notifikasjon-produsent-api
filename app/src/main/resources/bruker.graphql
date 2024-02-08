@@ -16,7 +16,7 @@ type Query {
     ): SakerResultat!
     sakById(id: ID!): SakResultat!
     sakByGrupperingsid(merkelapp: String!, grupperingsid: String!): SakResultat!
-    kommendeKalenderAvtaler(virksomhetsnumre: [String!]): KalenderAvtalerResultat!
+    kommendeKalenderavtaler(virksomhetsnumre: [String!]): KalenderavtalerResultat!
     whoami: String
 }
 
@@ -128,13 +128,13 @@ type NotifikasjonerResultat {
     feilDigiSyfo: Boolean!
 }
 
-type KalenderAvtalerResultat {
-    avtaler: [KalenderAvtale!]!
+type KalenderavtalerResultat {
+    avtaler: [Kalenderavtale!]!
     feilAltinn: Boolean!
     feilDigiSyfo: Boolean!
 }
 
-union Notifikasjon = Beskjed | Oppgave | KalenderAvtale
+union Notifikasjon = Beskjed | Oppgave | Kalenderavtale
 
 scalar ISO8601DateTime
 scalar ISO8601Date
@@ -174,9 +174,9 @@ type Beskjed {
     sak: SakMetadata
 }
 
-type KalenderAvtale {
+type Kalenderavtale {
     brukerKlikk: BrukerKlikk!
-    tilstand: KalenderAvtaleTilstand!
+    tilstand: KalenderavtaleTilstand!
     merkelapp: String!
     tekst: String!
     lenke: String!
@@ -196,7 +196,7 @@ type Adresse {
     poststed: String!
 }
 
-enum KalenderAvtaleTilstand {
+enum KalenderavtaleTilstand {
     VENTER_SVAR_FRA_ARBEIDSGIVER
     ARBEIDSGIVER_VIL_AVLYSE
     ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED

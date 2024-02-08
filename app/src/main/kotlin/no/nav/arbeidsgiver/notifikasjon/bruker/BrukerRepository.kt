@@ -672,6 +672,8 @@ class BrukerRepositoryImpl(
             is EksterntVarselVellykket -> Unit
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
+            is HendelseModel.KalenderavtaleOpprettet -> TODO()
+            is HendelseModel.KalenderavtaleOppdatert -> TODO()
         }
     }
 

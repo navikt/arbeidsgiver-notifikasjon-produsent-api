@@ -32,6 +32,7 @@ class ReplayValidatorService(
 
     override suspend fun processHendelse(hendelse: HendelseModel.Hendelse, metadata: PartitionHendelseMetadata) {
         when (hendelse) {
+            is HendelseModel.KalenderavtaleOpprettet,
             is HendelseModel.OppgaveOpprettet,
             is HendelseModel.BeskjedOpprettet,
             -> {
@@ -41,11 +42,13 @@ class ReplayValidatorService(
                     merkelapp = when (hendelse) {
                         is HendelseModel.OppgaveOpprettet -> hendelse.merkelapp
                         is HendelseModel.BeskjedOpprettet -> hendelse.merkelapp
+                        is HendelseModel.KalenderavtaleOpprettet -> hendelse.merkelapp
                         else -> throw IllegalStateException("Uventet hendelse $hendelse")
                     },
                     grupperingsid = when (hendelse) {
                         is HendelseModel.OppgaveOpprettet -> hendelse.grupperingsid
                         is HendelseModel.BeskjedOpprettet -> hendelse.grupperingsid
+                        is HendelseModel.KalenderavtaleOpprettet -> hendelse.grupperingsid
                         else -> throw IllegalStateException("Uventet hendelse $hendelse")
                     },
                     createdOffset = metadata.offset.toString(),
@@ -69,6 +72,7 @@ class ReplayValidatorService(
             is HendelseModel.SakOpprettet,
             is HendelseModel.OppgaveUtført,
             is HendelseModel.OppgaveUtgått,
+            is HendelseModel.KalenderavtaleOppdatert ,
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.FristUtsatt,

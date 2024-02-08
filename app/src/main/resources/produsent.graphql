@@ -121,7 +121,7 @@ type PageInfo {
     endCursor: String!
 }
 
-union Notifikasjon = Beskjed | Oppgave
+union Notifikasjon = Beskjed | Oppgave | Kalenderavtale
 
 type Oppgave {
     mottaker: Mottaker!
@@ -137,6 +137,12 @@ type Beskjed {
     metadata: Metadata!
     beskjed: BeskjedData!
     eksterneVarsler: [EksterntVarsel!]!
+}
+
+type Kalenderavtale {
+    mottakere: [Mottaker!]!
+    metadata: Metadata!
+    kalenderavtale: KalenderavtaleData!
 }
 
 union Mottaker =
@@ -189,6 +195,51 @@ type BeskjedData {
     Lenken som brukeren føres til hvis de klikker på beskjeden.
     """
     lenke: String!
+}
+
+type KalenderavtaleData {
+    """
+    Merkelapp for kalenderavtalen. Er typisk navnet på ytelse eller lignende.
+    """
+    merkelapp: String!
+
+    """
+    Teksten som vises til brukeren.
+    """
+    tekst: String!
+
+    """
+    Lenken som brukeren føres til hvis de klikker på kalenderavtalen.
+    """
+    lenke: String!
+
+    """
+    Når avtalen starter.
+    """
+    startTidspunkt: ISO8601DateTime!
+
+    """
+    Når avtalen slutter.
+    """
+    sluttTidspunkt: ISO8601DateTime
+
+    """
+    Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
+    Denne vil vises til brukeren hvis den er angitt.
+    """
+    lokasjon: Adresse
+
+    """
+    Ved å sette dette flagget kan dere vise brukeren at det er mulig å møte digitalt.
+    Det vil vises til brukeren hvis det er satt til true.
+    """
+    digitalt: Boolean!
+
+    """
+    Tilstanden til avtalen. Default er `VENTER_SVAR_FRA_ARBEIDSGIVER`.
+    Denne vises til brukeren.
+    """
+    tilstand: KalenderavtaleTilstand
 }
 
 type Metadata {
@@ -286,6 +337,89 @@ Dette er roten som alle endringer ("mutations") starter fra. Endringer inkludere
 å opprette nye ting.
 """
 type Mutation {
+    nyKalenderavtale(
+        """
+        Hvilken virksomhet som skal motta kalenderavtalen.
+        """
+        virksomhetsnummer: String!
+
+        """
+        Grupperings-id-en knytter denne kalenderavtalen til en sak med samme grupperings-id og merkelapp.
+        Det vises ikke til brukere.
+        Saksnummer er en naturlig grupperings-id.
+
+        Når dere bruker grupperings-id, så er det mulig for oss å presentere en tidslinje
+        med alle notifikasjonene og status-oppdateringer knyttet til en sak.
+        """
+        grupperingsid: String!
+
+        """
+        Merkelapp for kalenderavtalen. Er typisk navnet på ytelse eller lignende. Den vises ikke til brukeren,
+        men brukes i kombinasjon med grupperingsid for å koble kalenderavtalen til sak.
+
+        Hva du kan oppgi som merkelapp er bestemt av produsent-registeret.
+        """
+        merkelapp: String!
+
+        """
+        Den eksterne id-en brukes for å unikt identifisere en notifikasjon. Den må være unik for merkelappen.
+
+        Hvis dere har en enkel, statisk bruk av notifikasjoner, så kan dere utlede eksternId
+        fra f.eks. et saksnummer, og på den måten kunne referere til notifikasjoner dere har opprettet,
+        uten at dere må lagre ID-ene vi genererer og returnerer til dere.
+        """
+        eksternId: String!
+
+        """
+        Teksten som vises til brukeren.
+        """
+        tekst: String!
+
+        """
+        Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
+        """
+        lenke: String!
+
+        """
+        Her bestemmer dere hvem som skal få se kalenderavtalen.
+        """
+        mottakere: [MottakerInput!]! @Validate
+
+        """
+        Når avtalen starter.
+        """
+        startTidspunkt: ISO8601DateTime!
+
+        """
+        Når avtalen slutter.
+        """
+        sluttTidspunkt: ISO8601DateTime
+
+        """
+        Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
+        Denne vil vises til brukeren hvis den er angitt.
+        """
+        lokasjon: AdresseInput
+
+        """
+        Ved å sette dette flagget kan dere vise brukeren at det er mulig å møte digitalt.
+        Det vil vises til brukeren hvis det er satt til true.
+        """
+        erDigitalt: Boolean
+
+        """
+        Tilstanden til avtalen. Default er `VENTER_SVAR_FRA_ARBEIDSGIVER`.
+        Denne vises til brukeren.
+        """
+        tilstand: KalenderavtaleTilstand
+
+        """
+        Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
+        tolker relative datoer basert på når vi mottok kallet.
+        """
+        hardDelete: FutureTemporalInput @Validate
+    ): NyKalenderavtaleResultat!
+
     nySak(
         """
         Grupperings-id-en knytter en sak og notifikasjoner sammen.
@@ -637,6 +771,136 @@ type Mutation {
 
 
     """
+    Oppdater tilstand på en kalenderavtale.
+    Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
+    Den nye tilstanden vises til brukeren.
+    Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
+    Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
+
+    P.T. har det ikke vist seg for å være behov for å endre på data i en kalenderavtale underveis (feks tidspunkt eller sted).
+    Dersom arbeidgiver foreslår endring er flyten i dagens løsninger at kalenderavtalen blir stående eller avlyses og det opprettes en ny.
+
+    Dersom dere har behov for å endre på data i en kalenderavtale underveis, så ta kontakt med oss, så kan vi prioritere å legge til støtte for det.
+    """
+    kalenderavtaleOppdater(
+        """
+        ID-en som kalenderavtalen har. Den du fikk da du opprettet kalenderavtalen med `nyKalenderavtale`.
+        """
+        id: ID!
+
+        """
+        Ny tilstand for kalenderavtalen.
+        Denne er optional da det vil komme støtte for å oppdatere flere felt etterhvert.
+        """
+        nyTilstand: KalenderavtaleTilstand
+
+        """
+        Teksten som vises til brukeren.
+        """
+        nyTekst: String
+
+        """
+        Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
+        """
+        nyLenke: String
+
+        """
+        Når avtalen starter.
+        """
+        nyttStartTidspunkt: ISO8601DateTime
+
+        """
+        Når avtalen slutter.
+        """
+        nyttSluttTidspunkt: ISO8601DateTime
+
+        """
+        Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
+        Denne vil vises til brukeren hvis den er angitt.
+        """
+        nyLokasjon: AdresseInput
+
+        """
+        Ved å sette dette flagget kan dere vise brukeren at det er mulig å møte digitalt.
+        Det vil vises til brukeren hvis det er satt til true.
+        """
+        nyErDigitalt: Boolean
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
+    ): KalenderavtaleOppdaterResultat!
+
+
+    """
+    Oppdater tilstand på en kalenderavtale (identifisert ved ekstern id).
+    Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
+    Den nye tilstanden vises til brukeren.
+    Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
+    Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
+
+    P.T. har det ikke vist seg for å være behov for å endre på data i en kalenderavtale underveis (feks tidspunkt eller sted).
+    Dersom arbeidgiver foreslår endring er flyten i dagens løsninger at kalenderavtalen blir stående eller avlyses og det opprettes en ny.
+
+    Dersom dere har behov for å endre på data i en kalenderavtale underveis, så ta kontakt med oss, så kan vi prioritere å legge til støtte for det.
+    """
+    kalenderavtaleOppdaterByEksternId(
+        """
+        Merkelapp som kalenderavtalen er registrert med.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som *dere ga oss* da dere opprettet kalenderavtalen med `nyKalenderavtale`.
+        """
+        eksternId: String!
+
+        """
+        Ny tilstand for kalenderavtalen.
+        Denne er optional da det vil komme støtte for å oppdatere flere felt etterhvert.
+        """
+        nyTilstand: KalenderavtaleTilstand
+
+        """
+        Teksten som vises til brukeren.
+        """
+        nyTekst: String
+
+        """
+        Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
+        """
+        nyLenke: String
+
+        """
+        Når avtalen starter.
+        """
+        nyttStartTidspunkt: ISO8601DateTime
+
+        """
+        Når avtalen slutter.
+        """
+        nyttSluttTidspunkt: ISO8601DateTime
+
+        """
+        Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
+        Denne vil vises til brukeren hvis den er angitt.
+        """
+        nyLokasjon: AdresseInput
+
+        """
+        Ved å sette dette flagget kan dere vise brukeren at det er mulig å møte digitalt.
+        Det vil vises til brukeren hvis det er satt til true.
+        """
+        nyErDigitalt: Boolean
+
+        """
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput
+    ): KalenderavtaleOppdaterResultat!
+
+    """
     Markerer en notifikasjon som slettet (soft delete).
 
     Notifikasjonen vil forsvinne helt for mottakeren: de vil ikke kunne se den på
@@ -879,6 +1143,21 @@ union OppgaveUtsettFristResultat =
 type OppgaveUtsettFristVellykket {
     """
     ID-en til oppgaven du oppdaterte.
+    """
+    id: ID!
+}
+
+union KalenderavtaleOppdaterResultat =
+    | KalenderavtaleOppdaterVellykket
+    | UgyldigKalenderavtale
+    | UgyldigMerkelapp
+    | Konflikt
+    | NotifikasjonFinnesIkke
+    | UkjentProdusent
+
+type KalenderavtaleOppdaterVellykket {
+    """
+    ID-en til kalenderavtalen du oppdaterte.
     """
     id: ID!
 }
@@ -1263,10 +1542,6 @@ input MetadataInput {
 
     Når dere bruker grupperings-id, så er det mulig for oss å presentere en tidslinje
     med alle notifikasjonene og status-oppdateringer knyttet til en sak.
-
-    Vi kan også vurdere å implemntere API-er for dere, slik at dere enkelt kan slette
-    all informasjon knyttet til en sak i et enkelt kall (f.eks. for å ivareta personvern).
-    Ta kontakt med #arbeidsgiver-notifikasjon på slack for å melde interesse!
     """
     grupperingsid: String
 
@@ -1325,6 +1600,38 @@ enum NyTidStrategi {
     OVERSKRIV
 }
 
+input AdresseInput {
+    adresse: String!
+    postnummer: String!
+    poststed: String!
+}
+
+"""
+Tilstanden til en kalenderavtale.
+"""
+enum KalenderavtaleTilstand {
+    """
+    Avtalen venter på at brukeren skal svare. Dette er standardtilstanden.
+    """
+    VENTER_SVAR_FRA_ARBEIDSGIVER
+    """
+    Arbeidsgiver har svart at de ønsker å avlyse
+    """
+    ARBEIDSGIVER_VIL_AVLYSE
+    """
+    Arbeidsgiver har svart at de ønsker å endre tid eller sted
+    """
+    ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
+    """
+    Arbeidsgiver har godtatt avtalen
+    """
+    ARBEIDSGIVER_HAR_GODTATT
+    """
+    Avtalen er avlyst
+    """
+    AVLYST
+}
+
 union NyOppgaveResultat =
     | NyOppgaveVellykket
     | UgyldigMerkelapp
@@ -1342,6 +1649,15 @@ union NyBeskjedResultat =
     | UkjentProdusent
     | UkjentRolle
 
+union NyKalenderavtaleResultat =
+    | NyKalenderavtaleVellykket
+    | UgyldigKalenderavtale
+    | UgyldigMerkelapp
+    | UgyldigMottaker
+    | DuplikatEksternIdOgMerkelapp
+    | UkjentProdusent
+    | SakFinnesIkke
+
 type NyBeskjedVellykket {
     id: ID!
     eksterneVarsler: [NyEksterntVarselResultat!]!
@@ -1357,8 +1673,18 @@ type NyOppgaveVellykket {
     paaminnelse: PaaminnelseResultat
 }
 
+type NyKalenderavtaleVellykket {
+    id: ID!
+}
+
 type PaaminnelseResultat {
     eksterneVarsler: [NyEksterntVarselResultat!]!
+}
+
+type Adresse {
+    adresse: String!
+    postnummer: String!
+    poststed: String!
 }
 
 """
@@ -1444,6 +1770,13 @@ type UgyldigPaaminnelseTidspunkt implements Error {
 Oppgitt informasjon samsvarer ikke med tidligere informasjon som er oppgitt.
 """
 type Konflikt implements Error {
+    feilmelding: String!
+}
+
+"""
+Kalenderavtalen er ugyldig. Det kan f.eks være at startTidspunkt er etter sluttTidspunkt. Detaljer kommer i feilmelding.
+"""
+type UgyldigKalenderavtale implements Error {
     feilmelding: String!
 }
 

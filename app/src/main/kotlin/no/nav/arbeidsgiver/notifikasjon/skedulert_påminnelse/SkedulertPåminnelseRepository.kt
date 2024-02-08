@@ -184,6 +184,8 @@ class SkedulertPåminnelseRepository : AutoCloseable {
             }
 
             is HendelseModel.BeskjedOpprettet,
+            is HendelseModel.KalenderavtaleOpprettet,
+            is HendelseModel.KalenderavtaleOppdatert,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.SakOpprettet,
             is HendelseModel.NyStatusSak,

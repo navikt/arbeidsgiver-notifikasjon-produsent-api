@@ -42,6 +42,7 @@ interface SkedulertHardDeleteRepository {
     enum class AggregateType {
         Beskjed,
         Oppgave,
+        Kalenderavtale,
         Sak,
     }
 
@@ -111,6 +112,15 @@ class SkedulertHardDeleteRepositoryImpl(
                 )
             }
 
+            is HendelseModel.KalenderavtaleOpprettet -> {
+                saveAggregate(hendelse, Kalenderavtale, hendelse.merkelapp, hendelse.grupperingsid)
+                upsert(
+                    aggregateId = hendelse.aggregateId,
+                    hardDelete = hendelse.hardDelete,
+                    opprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
+                )
+            }
+
             is HendelseModel.SakOpprettet -> {
                 saveAggregate(hendelse, Sak, hendelse.merkelapp, hendelse.grupperingsid)
                 upsert(
@@ -142,6 +152,15 @@ class SkedulertHardDeleteRepositoryImpl(
                 upsert(
                     aggregateId = hendelse.aggregateId,
                     opprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
+                    hardDelete = hendelse.hardDelete,
+                    eksisterende = hent(hendelse.aggregateId),
+                )
+            }
+
+            is HendelseModel.KalenderavtaleOppdatert -> {
+                upsert(
+                    aggregateId = hendelse.aggregateId,
+                    opprettetTidspunkt = kafkaTimestamp,
                     hardDelete = hendelse.hardDelete,
                     eksisterende = hent(hendelse.aggregateId),
                 )

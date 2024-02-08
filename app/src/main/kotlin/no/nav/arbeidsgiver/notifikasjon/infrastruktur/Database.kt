@@ -11,10 +11,7 @@ import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.Closeable
-import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.PreparedStatement
-import java.sql.ResultSet
+import java.sql.*
 import java.time.*
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -261,6 +258,7 @@ class ParameterSetters(
     fun integer(value: Int) = preparedStatement.setInt(index++, value)
     fun long(value: Long) = preparedStatement.setLong(index++, value)
     fun boolean(newState: Boolean) = preparedStatement.setBoolean(index++, newState)
+    fun nullableBoolean(value: Boolean?) = if (value == null) preparedStatement.setNull(index++, Types.BOOLEAN) else boolean(value)
     fun uuid(value: UUID) = preparedStatement.setObject(index++, value)
     fun nullableUuid(value: UUID?) = preparedStatement.setObject(index++, value)
     /**
@@ -288,6 +286,10 @@ class ParameterSetters(
         preparedStatement.setDate(index++, value.let { java.sql.Date.valueOf(it) })
 
 
+    inline fun <reified T> nullableJsonb(value: T?) =
+        nullableText(
+            value?.let { laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value) }
+        )
     inline fun <reified T> jsonb(value: T) =
         text(
             laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)

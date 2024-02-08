@@ -62,7 +62,7 @@ internal class MutationNyOppgave(
                 grupperingsid = metadata.grupperingsid,
                 lenke = notifikasjon.lenke,
                 eksternId = metadata.eksternId,
-                mottakere = alleMottakere.map { it.tilDomene(metadata.virksomhetsnummer) },
+                mottakere = alleMottakere.map { it.tilHendelseModel(metadata.virksomhetsnummer) },
                 opprettetTidspunkt = metadata.opprettetTidspunkt,
                 virksomhetsnummer = metadata.virksomhetsnummer,
                 produsentId = produsentId,
@@ -75,7 +75,7 @@ internal class MutationNyOppgave(
                     frist = frist,
                     virksomhetsnummer = metadata.virksomhetsnummer,
                 ),
-                hardDelete = metadata.hardDelete?.tilDomene(),
+                hardDelete = metadata.hardDelete?.tilHendelseModel(),
                 frist = frist,
                 sakId = sakId,
             )

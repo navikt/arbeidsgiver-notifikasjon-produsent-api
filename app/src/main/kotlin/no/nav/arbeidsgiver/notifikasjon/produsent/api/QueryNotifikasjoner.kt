@@ -120,11 +120,60 @@ internal class QueryNotifikasjoner(
             }
         }
 
+        @JsonTypeName("Kalenderavtale")
+        data class Kalenderavtale(
+            val mottaker: Mottaker,
+            val mottakere: List<Mottaker>,
+            val metadata: Metadata,
+            val kalenderavtale: KalenderavtaleData,
+        ) : Notifikasjon() {
+            enum class Tilstand {
+                VENTER_SVAR_FRA_ARBEIDSGIVER,
+                ARBEIDSGIVER_VIL_AVLYSE,
+                ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
+                ARBEIDSGIVER_HAR_GODTATT,
+                AVLYST;
+            }
+
+            companion object {
+                fun fraDomene(kalenderavtale: ProdusentModel.Kalenderavtale): Kalenderavtale {
+                    return Kalenderavtale(
+                        metadata = Metadata(
+                            id = kalenderavtale.id,
+                            grupperingsid = kalenderavtale.grupperingsid,
+                            eksternId = kalenderavtale.eksternId,
+                            opprettetTidspunkt = kalenderavtale.opprettetTidspunkt,
+                            softDeletedAt = kalenderavtale.deletedAt
+                        ),
+                        mottaker = Mottaker.fraDomene(kalenderavtale.mottakere.first()),
+                        mottakere = kalenderavtale.mottakere.map { Mottaker.fraDomene(it) },
+                        kalenderavtale = KalenderavtaleData(
+                            merkelapp = kalenderavtale.merkelapp,
+                            tekst = kalenderavtale.tekst,
+                            lenke = kalenderavtale.lenke,
+                            startTidspunkt = kalenderavtale.startTidspunkt,
+                            sluttTidspunkt = kalenderavtale.sluttTidspunkt,
+                            lokasjon = kalenderavtale.lokasjon?.let {
+                                Lokasjon(
+                                    adresse = it.adresse,
+                                    postnummer = it.postnummer,
+                                    poststed = it.poststed,
+                                )
+                            },
+                            digitalt = kalenderavtale.digitalt,
+                            tilstand = enumValueOf(kalenderavtale.tilstand.name),
+                        ),
+                    )
+                }
+            }
+        }
+
         companion object {
             fun fraDomene(notifikasjon: ProdusentModel.Notifikasjon): Notifikasjon {
                 return when (notifikasjon) {
                     is ProdusentModel.Beskjed -> Beskjed.fraDomene(notifikasjon)
                     is ProdusentModel.Oppgave -> Oppgave.fraDomene(notifikasjon)
+                    is ProdusentModel.Kalenderavtale -> Kalenderavtale.fraDomene(notifikasjon)
                 }
             }
         }
@@ -185,6 +234,25 @@ internal class QueryNotifikasjoner(
         val merkelapp: String,
         val tekst: String,
         val lenke: String,
+    )
+
+    @JsonTypeName("KalenderavtaleData")
+    data class KalenderavtaleData(
+        val merkelapp: String,
+        val tekst: String,
+        val lenke: String,
+        val startTidspunkt: OffsetDateTime,
+        val sluttTidspunkt: OffsetDateTime?,
+        val lokasjon: Lokasjon?,
+        val digitalt: Boolean,
+        val tilstand: Notifikasjon.Kalenderavtale.Tilstand,
+    )
+
+    @JsonTypeName("Lokasjon")
+    data class Lokasjon(
+        val adresse: String,
+        val postnummer: String,
+        val poststed: String,
     )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -316,6 +384,7 @@ internal val QueryNotifikasjoner.Notifikasjon.metadata: QueryNotifikasjoner.Meta
     get() = when (this) {
         is QueryNotifikasjoner.Notifikasjon.Beskjed -> this.metadata
         is QueryNotifikasjoner.Notifikasjon.Oppgave -> this.metadata
+        is QueryNotifikasjoner.Notifikasjon.Kalenderavtale -> this.metadata
     }
 
 internal val QueryNotifikasjoner.Notifikasjon.id: UUID

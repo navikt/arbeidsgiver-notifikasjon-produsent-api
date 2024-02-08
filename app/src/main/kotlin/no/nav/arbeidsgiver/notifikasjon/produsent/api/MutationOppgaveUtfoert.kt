@@ -107,7 +107,7 @@ internal class MutationOppgaveUtfoert(
             virksomhetsnummer = notifikasjon.virksomhetsnummer,
             produsentId = produsent.id,
             kildeAppNavn = context.appName,
-            hardDelete = hardDelete?.tilDomene(),
+            hardDelete = hardDelete?.tilHendelseModel(),
             nyLenke = nyLenke,
             utfoertTidspunkt = utfoertTidspunkt ?: OffsetDateTime.now(),
         )

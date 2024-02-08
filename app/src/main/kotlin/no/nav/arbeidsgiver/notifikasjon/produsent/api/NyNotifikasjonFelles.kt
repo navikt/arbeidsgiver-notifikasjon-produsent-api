@@ -167,7 +167,7 @@ internal data class MottakerInput(
     val naermesteLeder: NaermesteLederMottakerInput?,
 ) {
 
-    fun tilDomene(
+    fun tilHendelseModel(
         virksomhetsnummer: String,
     ): Mottaker {
         check(listOfNotNull(altinn, naermesteLeder).size == 1) {
