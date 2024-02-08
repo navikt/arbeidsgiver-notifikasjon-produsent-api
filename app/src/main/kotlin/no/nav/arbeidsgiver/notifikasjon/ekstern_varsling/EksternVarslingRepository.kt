@@ -60,7 +60,7 @@ class EksternVarslingRepository(
             is NyStatusSak -> Unit
             is FristUtsatt -> Unit
             is KalenderavtaleOpprettet -> Unit
-            is HendelseModel.KalenderavtaleOppdatert -> Unit
+            is HendelseModel.KalenderavtaleOppdatert -> Unit //TODO: vurder om eksterne varsler på påminnelse skal kanselleres dersom kalenderavtalen er avlyst
         }
     }
 
