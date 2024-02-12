@@ -260,6 +260,13 @@ object BrukerAPI {
         val feilDigiSyfo: Boolean
     )
 
+    @JsonTypeName("KalenderavtalerResultat")
+    data class KalenderavtalerResultat(
+        val avtaler: List<Notifikasjon.Kalenderavtale>,
+        val feilAltinn: Boolean,
+        val feilDigiSyfo: Boolean
+    )
+
     @JsonTypeName("UgyldigId")
     data class UgyldigId(
         val feilmelding: String
@@ -305,6 +312,11 @@ object BrukerAPI {
                 )
 
                 querySakstyper(
+                    brukerRepository = brukerRepository,
+                    tilgangerService = tilgangerService,
+                )
+
+                queryKommendeKalenderavtaler(
                     brukerRepository = brukerRepository,
                     tilgangerService = tilgangerService,
                 )
@@ -451,6 +463,59 @@ object BrukerAPI {
 
             return@coDataFetcher NotifikasjonerResultat(
                 notifikasjoner = notifikasjoner,
+                feilAltinn = tilganger.harFeil,
+                feilDigiSyfo = false,
+            )
+        }
+    }
+
+    private fun TypeRuntimeWiring.Builder.queryKommendeKalenderavtaler(
+        brukerRepository: BrukerRepository,
+        tilgangerService: TilgangerService,
+    ) {
+        coDataFetcher("kommendeKalenderavtaler") { env ->
+
+            val context = env.notifikasjonContext<Context>()
+            val virksomhetsnumre = env.getArgument<List<String>>("virksomhetsnumre")
+
+            val tilganger = tilgangerService.hentTilganger(context)
+
+            val kalenderAvtalerDb: List<BrukerModel.Kalenderavtale> = brukerRepository.hentKommendeKalenderavaler(context.fnr, virksomhetsnumre, tilganger)
+            val sakstitler = brukerRepository.hentSakerForNotifikasjoner(
+                kalenderAvtalerDb.mapNotNull { it.gruppering },
+            )
+            val kalenderavtaler = kalenderAvtalerDb
+                .map { notifikasjon ->
+                    Notifikasjon.Kalenderavtale(
+                        merkelapp = notifikasjon.merkelapp,
+                        tekst = notifikasjon.tekst,
+                        lenke = notifikasjon.lenke,
+                        avtaletilstand = notifikasjon.tilstand.tilBrukerAPI(),
+                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                        sorteringTidspunkt = notifikasjon.sorteringTidspunkt,
+                        startTidspunkt = notifikasjon.startTidspunkt,
+                        sluttTidspunkt = notifikasjon.sluttTidspunkt,
+                        lokasjon = notifikasjon.lokasjon?.let { Lokasjon(
+                            adresse = it.adresse,
+                            postnummer = it.postnummer,
+                            poststed = it.poststed,
+                        )},
+                        erDigitalt = notifikasjon.erDigitalt,
+                        id = notifikasjon.id,
+                        virksomhet = Virksomhet(
+                            virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                        ),
+                        brukerKlikk = BrukerKlikk(
+                            id = "${context.fnr}-${notifikasjon.id}",
+                            klikketPaa = notifikasjon.klikketPaa
+                        ),
+                        sak = sakstitler[notifikasjon.grupperingsid]?.let { SakMetadata(tittel = it) },
+                    )
+                }
+            (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
+
+            return@coDataFetcher KalenderavtalerResultat(
+                avtaler = kalenderavtaler,
                 feilAltinn = tilganger.harFeil,
                 feilDigiSyfo = false,
             )

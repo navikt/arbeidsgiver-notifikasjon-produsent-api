@@ -94,6 +94,12 @@ interface BrukerRepository {
     suspend fun hentSakerForNotifikasjoner(
         grupperinger: List<BrukerModel.Gruppering>
     ): Map<String, String>
+
+    suspend fun hentKommendeKalenderavaler(
+        fnr: String,
+        virksomhetsnumre: List<String>,
+        tilganger: Tilganger
+    ): List<BrukerModel.Kalenderavtale>
 }
 
 class BrukerRepositoryImpl(
@@ -733,6 +739,90 @@ class BrukerRepositoryImpl(
             getString("grupperingsid") to getString("tittel")
         }
         return@coRecord rows.toMap()
+    }
+
+    override suspend fun hentKommendeKalenderavaler(
+        fnr: String,
+        virksomhetsnumre: List<String>,
+        tilganger: Tilganger
+    ): List<BrukerModel.Kalenderavtale> {
+        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
+            AltinnMottaker(
+                serviceCode = it.servicecode,
+                serviceEdition = it.serviceedition,
+                virksomhetsnummer = it.virksomhet
+            )
+        }.filter {  virksomhetsnumre.contains(it.virksomhetsnummer) }
+
+        return database.nonTransactionalExecuteQuery(
+            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+            """
+            with 
+                mine_altinntilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                ),
+                mine_altinn_notifikasjoner as (
+                    select er.notifikasjon_id
+                    from mottaker_altinn_enkeltrettighet er
+                    join mine_altinntilganger at on 
+                        er.virksomhet = at.virksomhetsnummer and
+                        er.service_code = at."serviceCode" and
+                        er.service_edition = at."serviceEdition"
+                    where
+                        er.notifikasjon_id is not null
+                ),
+                mine_digisyfo_notifikasjoner as (
+                    select notifikasjon_id 
+                    from mottaker_digisyfo_for_fnr
+                    where fnr_leder = ? and virksomhet = any(?) and notifikasjon_id is not null
+                ),
+                mine_notifikasjoner as (
+                    (select * from mine_digisyfo_notifikasjoner)
+                    union 
+                    (select * from mine_altinn_notifikasjoner)
+                )
+            select 
+                n.*
+            from mine_notifikasjoner as mn
+            join notifikasjon as n on n.id = mn.notifikasjon_id
+            where 
+                n.type = 'KALENDERAVTALE' and
+                n.start_tidspunkt > now() and
+                n.virksomhetsnummer = any(?)
+            order by 
+                start_tidspunkt
+            limit 50
+            """,
+            {
+                jsonb(tilgangerAltinnMottaker)
+                text(fnr)
+                textArray(virksomhetsnumre)
+                textArray(virksomhetsnumre)
+            }
+        ) {
+            when (val type = getString("type")) {
+                "KALENDERAVTALE" -> BrukerModel.Kalenderavtale(
+                    merkelapp = getString("merkelapp"),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getUuid("id"),
+                    klikketPaa = false, // trenger ikke klikket på i denne sammenheng
+                    startTidspunkt = getObject("start_tidspunkt", OffsetDateTime::class.java),
+                    sluttTidspunkt = getObject("slutt_tidspunkt", OffsetDateTime::class.java),
+                    lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
+                    erDigitalt = getBoolean("digitalt"),
+                    tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
+                )
+
+                else ->
+                    throw Exception("Uforventet notifikasjonstype '$type' for søk på kalenderavtale")
+            }
+        }
     }
 
     private suspend fun oppdaterModellEtterDelete(

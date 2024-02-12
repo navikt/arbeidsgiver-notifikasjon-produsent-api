@@ -144,6 +144,41 @@ suspend fun BrukerRepository.kalenderavtaleOpprettet(
     oppdaterModellEtterHendelse(it)
 }
 
+suspend fun BrukerRepository.kalenderavtaleOppdatert(
+    notifikasjonId: UUID,
+    virksomhetsnummer: String = TEST_VIRKSOMHET_1,
+    produsentId: String = randomProdusentId(),
+    kildeAppNavn: String = randomKildeAppNavn(),
+    tekst: String? = null,
+    lenke: String? = null,
+    tilstand: KalenderavtaleTilstand? = null,
+    startTidspunkt: OffsetDateTime? = null,
+    sluttTidspunkt: OffsetDateTime? = null,
+    lokasjon: HendelseModel.Lokasjon? = null,
+    erDigitalt: Boolean = true,
+    eksterneVarsler: List<HendelseModel.EksterntVarsel> = listOf(),
+    påminnelse: Påminnelse? = null,
+    hardDelete: HardDeleteUpdate? = null,
+) = HendelseModel.KalenderavtaleOppdatert(
+    hendelseId = notifikasjonId,
+    notifikasjonId = notifikasjonId,
+    tekst = tekst,
+    lenke = lenke,
+    virksomhetsnummer = virksomhetsnummer,
+    kildeAppNavn = kildeAppNavn,
+    produsentId = produsentId,
+    eksterneVarsler = eksterneVarsler,
+    hardDelete = hardDelete,
+    tilstand = tilstand,
+    startTidspunkt = startTidspunkt,
+    sluttTidspunkt = sluttTidspunkt,
+    lokasjon = lokasjon,
+    erDigitalt = erDigitalt,
+    påminnelse = påminnelse,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
 suspend fun BrukerRepository.oppgaveOpprettet(
     notifikasjonId: UUID = UUID.randomUUID(),
     virksomhetsnummer: String = TEST_VIRKSOMHET_1,
