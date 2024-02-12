@@ -134,6 +134,42 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.tekst shouldBe beskjed2.tekst
             }
         }
+
+        val kalenderavtale = brukerRepository.kalenderavtaleOpprettet(
+            grupperingsid = sak1.grupperingsid,
+            merkelapp = sak1.merkelapp,
+            opprettetTidspunkt = beskjed2.opprettetTidspunkt.minusHours(1),
+            startTidspunkt = beskjed2.opprettetTidspunkt.plusHours(3),
+            sluttTidspunkt = beskjed2.opprettetTidspunkt.plusHours(4),
+            sakId = sak1.sakId,
+        )
+        it("kalenderavtale på andre saken, vises kun der") {
+            val tidslinje0 = fetchTidslinje(sak0)
+            tidslinje0 should haveSize(2)
+            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
+                it.tekst shouldBe beskjed1.tekst
+            }
+            instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[1]) {
+                it.tekst shouldBe oppgave0.tekst
+            }
+
+            val tidslinje1 = fetchTidslinje(sak1)
+            tidslinje1 should haveSize(2)
+            instanceOf<BrukerAPI.KalenderavtaleTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
+                it.tekst shouldBe kalenderavtale.tekst
+                it.avtaletilstand shouldBe BrukerAPI.Notifikasjon.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
+                it.startTidspunkt shouldBe kalenderavtale.startTidspunkt
+                it.sluttTidspunkt shouldBe kalenderavtale.sluttTidspunkt
+                it.lokasjon shouldNot beNull()
+                it.lokasjon!!.adresse shouldBe kalenderavtale.lokasjon!!.adresse
+                it.lokasjon!!.poststed shouldBe kalenderavtale.lokasjon!!.poststed
+                it.lokasjon!!.postnummer shouldBe kalenderavtale.lokasjon!!.postnummer
+                it.digitalt shouldBe kalenderavtale.erDigitalt
+            }
+            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[1]) {
+                it.tekst shouldBe beskjed2.tekst
+            }
+        }
     }
 })
 

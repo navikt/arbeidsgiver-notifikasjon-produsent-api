@@ -424,15 +424,14 @@ object HendelseModel {
     }
 
     @JsonTypeName("KalenderavtaleOpprettet")
-    data class KalenderavtaleOpprettet
-    @JsonIgnore constructor(
+    data class KalenderavtaleOpprettet(
         override val virksomhetsnummer: String,
         override val notifikasjonId: UUID,
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
         val merkelapp: String,
-        val grupperingsid: String?,
+        val grupperingsid: String,
         val eksternId: String,
         val mottakere: List<Mottaker>,
         val hardDelete: LocalDateTimeOrDuration?,
@@ -458,9 +457,8 @@ object HendelseModel {
         override val aggregateId: UUID = notifikasjonId
     }
 
-    @JsonTypeName("KalenderavtaleOpprettet")
-    data class KalenderavtaleOppdatert
-    @JsonIgnore constructor(
+    @JsonTypeName("KalenderavtaleOppdatert")
+    data class KalenderavtaleOppdatert(
         override val virksomhetsnummer: String,
         override val hendelseId: UUID,
         override val produsentId: String,

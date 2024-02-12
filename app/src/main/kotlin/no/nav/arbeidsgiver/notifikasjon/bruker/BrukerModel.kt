@@ -72,6 +72,42 @@ object BrukerModel {
             get() = paaminnelseTidspunkt ?: opprettetTidspunkt
     }
 
+    data class Kalenderavtale(
+        override val id: UUID,
+        override val virksomhetsnummer: String,
+        override val grupperingsid: String,
+        override val merkelapp: String,
+
+        val klikketPaa: Boolean,
+
+        val tekst: String,
+        val lenke: String,
+        val eksternId: String,
+        val tilstand: Tilstand,
+        val opprettetTidspunkt: OffsetDateTime,
+        val startTidspunkt: OffsetDateTime,
+        val sluttTidspunkt: OffsetDateTime?,
+        val lokasjon: Lokasjon?,
+        val erDigitalt: Boolean?,
+    ) : Notifikasjon {
+        data class Lokasjon(
+            val adresse: String,
+            val postnummer: String,
+            val poststed: String,
+        )
+
+        override val sorteringTidspunkt: OffsetDateTime
+            get() = startTidspunkt
+
+        enum class Tilstand {
+            VENTER_SVAR_FRA_ARBEIDSGIVER,
+            ARBEIDSGIVER_VIL_AVLYSE,
+            ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
+            ARBEIDSGIVER_HAR_GODTATT,
+            AVLYST,
+        }
+    }
+
     data class Sak(
         val sakId: UUID,
         val virksomhetsnummer: String,
@@ -118,6 +154,17 @@ object BrukerModel {
             val tekst: String,
             override val grupperingsid: String,
             override val opprettetTidspunkt: Instant,
+        ): TidslinjeElement
+        data class Kalenderavtale(
+            override val id: UUID,
+            val tekst: String,
+            override val grupperingsid: String,
+            override val opprettetTidspunkt: Instant,
+            val startTidspunkt: Instant,
+            val sluttTidspunkt: Instant?,
+            val avtaletilstand: BrukerModel.Kalenderavtale.Tilstand,
+            val lokasjon: BrukerModel.Kalenderavtale.Lokasjon?,
+            val digitalt: Boolean?,
         ): TidslinjeElement
     }
 

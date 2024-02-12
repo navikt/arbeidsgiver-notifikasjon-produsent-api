@@ -188,6 +188,23 @@ class BrukerRepositoryImpl(
                     id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa")
                 )
+                "KALENDERAVTALE" -> BrukerModel.Kalenderavtale(
+                    merkelapp = getString("merkelapp"),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getUuid("id"),
+                    klikketPaa = getBoolean("klikketPaa"),
+                    startTidspunkt = getObject("start_tidspunkt", OffsetDateTime::class.java),
+                    sluttTidspunkt = getObject("slutt_tidspunkt", OffsetDateTime::class.java),
+                    lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
+                    erDigitalt = getBoolean("digitalt"),
+                    tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
+                )
+
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
@@ -594,12 +611,30 @@ class BrukerRepositoryImpl(
                     frist = getObject("frist", LocalDate::class.java),
                 )
 
+                "KALENDERAVTALE" -> BrukerModel.TidslinjeElement.Kalenderavtale(
+                    id = getUuid("id"),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant(),
+                    startTidspunkt = getObject("start_tidspunkt", OffsetDateTime::class.java).toInstant(),
+                    sluttTidspunkt = getObject("slutt_tidspunkt", OffsetDateTime::class.java).toInstant(),
+                    avtaletilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
+                    lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
+                    digitalt = getBoolean("digitalt")
+                )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
             .groupBy { it.grupperingsid }
-            .mapValues { it.value.sortedByDescending { it.opprettetTidspunkt } }
+            .mapValues { it.value.sortedByDescending { el ->
+                when(el) {
+                    is BrukerModel.TidslinjeElement.Oppgave,
+                    is BrukerModel.TidslinjeElement.Beskjed -> el.opprettetTidspunkt
+                    is BrukerModel.TidslinjeElement.Kalenderavtale -> el.startTidspunkt
+                }
+
+            } }
 
         val sisteStatuser = database.nonTransactionalExecuteQuery("""
             with sak_status_med_rank as (
@@ -672,8 +707,8 @@ class BrukerRepositoryImpl(
             is EksterntVarselVellykket -> Unit
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
-            is HendelseModel.KalenderavtaleOpprettet -> TODO()
-            is HendelseModel.KalenderavtaleOppdatert -> TODO()
+            is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
+            is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
         }
     }
 
@@ -1149,6 +1184,86 @@ class BrukerRepositoryImpl(
         """) {
             date(hendelse.frist)
             uuid(hendelse.notifikasjonId)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterKalenderavtaleOpprettet(hendelse: HendelseModel.KalenderavtaleOpprettet) {
+        database.transaction {
+            executeUpdate(
+                """
+                insert into notifikasjon(
+                    id,
+                    type,
+                    tilstand,
+                    merkelapp,
+                    tekst,
+                    grupperingsid,
+                    lenke,
+                    ekstern_id,
+                    opprettet_tidspunkt,
+                    virksomhetsnummer,
+                    start_tidspunkt,
+                    slutt_tidspunkt,
+                    lokasjon,
+                    digitalt
+                )
+                values (?, 'KALENDERAVTALE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?)
+                on conflict do nothing;
+            """
+            ) {
+                with(hendelse) {
+                    uuid(notifikasjonId)
+                    text(tilstand.name)
+                    text(merkelapp)
+                    text(tekst)
+                    text(grupperingsid)
+                    text(lenke)
+                    text(eksternId)
+                    timestamp_with_timezone(opprettetTidspunkt)
+                    text(virksomhetsnummer)
+                    timestamp_with_timezone(startTidspunkt)
+                    nullableTimestamptz(sluttTidspunkt)
+                    nullableJsonb(lokasjon)
+                    nullableBoolean(erDigitalt)
+                }
+            }
+
+            for (mottaker in hendelse.mottakere) {
+                storeMottaker(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    sakId = null,
+                    mottaker
+                )
+            }
+        }
+    }
+
+    private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(hendelse: HendelseModel.KalenderavtaleOppdatert) {
+        database.transaction {
+            executeUpdate(
+                """
+                update notifikasjon set
+                    tilstand = coalesce(?, tilstand),
+                    lenke = coalesce(?, lenke),
+                    tekst = coalesce(?, tekst),
+                    start_tidspunkt = coalesce(?, start_tidspunkt),
+                    slutt_tidspunkt = coalesce(?, slutt_tidspunkt),
+                    lokasjon = coalesce(?::jsonb, lokasjon),
+                    digitalt = coalesce(?, digitalt)
+                where id = ?;
+            """
+            ) {
+                with(hendelse) {
+                    nullableText(tilstand?.name)
+                    nullableText(lenke)
+                    nullableText(tekst)
+                    nullableTimestamptz(startTidspunkt)
+                    nullableTimestamptz(sluttTidspunkt)
+                    nullableJsonb(lokasjon)
+                    nullableBoolean(erDigitalt)
+                    uuid(notifikasjonId)
+                }
+            }
         }
     }
 }

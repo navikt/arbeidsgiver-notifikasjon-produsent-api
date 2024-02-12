@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Kalenderavtale.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -81,7 +82,50 @@ object BrukerAPI {
                 }
             }
         }
+
+        @JsonTypeName("Kalenderavtale")
+        data class Kalenderavtale(
+            val merkelapp: String,
+            val tekst: String,
+            val lenke: String,
+            val avtaletilstand: Tilstand,
+            val opprettetTidspunkt: OffsetDateTime,
+            val sorteringTidspunkt: OffsetDateTime,
+            val startTidspunkt: OffsetDateTime,
+            val sluttTidspunkt: OffsetDateTime?,
+            val lokasjon: Lokasjon?,
+            val erDigitalt: Boolean?,
+            val id: UUID,
+            val brukerKlikk: BrukerKlikk,
+            override val virksomhet: Virksomhet,
+            val sak: SakMetadata?,
+        ) : Notifikasjon(), WithVirksomhet {
+            enum class Tilstand {
+                VENTER_SVAR_FRA_ARBEIDSGIVER,
+                ARBEIDSGIVER_VIL_AVLYSE,
+                ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
+                ARBEIDSGIVER_HAR_GODTATT,
+                AVLYST;
+
+                companion object {
+                    fun BrukerModel.Kalenderavtale.Tilstand.tilBrukerAPI(): Tilstand = when (this) {
+                        BrukerModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER -> VENTER_SVAR_FRA_ARBEIDSGIVER
+                        BrukerModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_VIL_AVLYSE -> ARBEIDSGIVER_VIL_AVLYSE
+                        BrukerModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED -> ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
+                        BrukerModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT -> ARBEIDSGIVER_HAR_GODTATT
+                        BrukerModel.Kalenderavtale.Tilstand.AVLYST -> AVLYST
+                    }
+                }
+            }
+        }
     }
+
+    @JsonTypeName("Lokasjon")
+    data class Lokasjon(
+        val adresse: String,
+        val postnummer: String,
+        val poststed: String,
+    )
 
     @JsonTypeName("SakMetadata")
     data class SakMetadata(
@@ -189,6 +233,17 @@ object BrukerAPI {
         val opprettetTidspunkt: OffsetDateTime,
     ) : TidslinjeElement()
 
+    @JsonTypeName("KalenderavtaleTidslinjeElement")
+    data class KalenderavtaleTidslinjeElement(
+        val id: UUID,
+        val tekst: String,
+        val avtaletilstand: Notifikasjon.Kalenderavtale.Tilstand,
+        val startTidspunkt: OffsetDateTime,
+        val sluttTidspunkt: OffsetDateTime?,
+        val lokasjon: Lokasjon?,
+        val digitalt: Boolean?,
+    ) : TidslinjeElement()
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class NotifikasjonKlikketPaaResultat
 
@@ -263,6 +318,12 @@ object BrukerAPI {
                 wire("Beskjed") {
                     coDataFetcher("virksomhet") { env ->
                         fetchVirksomhet<Notifikasjon.Beskjed>(virksomhetsinfoService, env)
+                    }
+                }
+
+                wire("Kalenderavtale") {
+                    coDataFetcher("virksomhet") { env ->
+                        fetchVirksomhet<Notifikasjon.Kalenderavtale>(virksomhetsinfoService, env)
                     }
                 }
 
@@ -346,6 +407,33 @@ object BrukerAPI {
                                 paaminnelseTidspunkt = notifikasjon.paaminnelseTidspunkt,
                                 utfoertTidspunkt = notifikasjon.utfoertTidspunkt,
                                 frist = notifikasjon.frist,
+                                id = notifikasjon.id,
+                                virksomhet = Virksomhet(
+                                    virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                                ),
+                                brukerKlikk = BrukerKlikk(
+                                    id = "${context.fnr}-${notifikasjon.id}",
+                                    klikketPaa = notifikasjon.klikketPaa
+                                ),
+                                sak = sakstitler[notifikasjon.grupperingsid]?.let { SakMetadata(tittel = it) },
+                            )
+
+                        is BrukerModel.Kalenderavtale ->
+                            Notifikasjon.Kalenderavtale(
+                                merkelapp = notifikasjon.merkelapp,
+                                tekst = notifikasjon.tekst,
+                                lenke = notifikasjon.lenke,
+                                avtaletilstand = notifikasjon.tilstand.tilBrukerAPI(),
+                                opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                                sorteringTidspunkt = notifikasjon.sorteringTidspunkt,
+                                startTidspunkt = notifikasjon.startTidspunkt,
+                                sluttTidspunkt = notifikasjon.sluttTidspunkt,
+                                lokasjon = notifikasjon.lokasjon?.let { Lokasjon(
+                                    adresse = it.adresse,
+                                    postnummer = it.postnummer,
+                                    poststed = it.poststed,
+                                )},
+                                erDigitalt = notifikasjon.erDigitalt,
                                 id = notifikasjon.id,
                                 virksomhet = Virksomhet(
                                     virksomhetsnummer = notifikasjon.virksomhetsnummer,
@@ -455,6 +543,20 @@ object BrukerAPI {
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
                             )
+                            is BrukerModel.TidslinjeElement.Kalenderavtale -> KalenderavtaleTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+
+                                avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
+                                startTidspunkt = element.startTidspunkt.atOffset(UTC),
+                                sluttTidspunkt = element.sluttTidspunkt?.atOffset(UTC),
+                                lokasjon = element.lokasjon?.let { Lokasjon(
+                                    adresse = it.adresse,
+                                    postnummer = it.postnummer,
+                                    poststed = it.poststed,
+                                )},
+                                digitalt = element.digitalt,
+                            )
                         }
                     }
                 )
@@ -553,6 +655,20 @@ object BrukerAPI {
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
                             )
+
+                            is BrukerModel.TidslinjeElement.Kalenderavtale -> KalenderavtaleTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+                                avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
+                                startTidspunkt = element.startTidspunkt.atOffset(UTC),
+                                sluttTidspunkt = element.sluttTidspunkt?.atOffset(UTC),
+                                lokasjon = element.lokasjon?.let { Lokasjon(
+                                    adresse = it.adresse,
+                                    postnummer = it.postnummer,
+                                    poststed = it.poststed,
+                                )},
+                                digitalt = element.digitalt,
+                            )
                         }
                     }
                 ),
@@ -638,6 +754,20 @@ object BrukerAPI {
                                 id = element.id,
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                            )
+
+                            is BrukerModel.TidslinjeElement.Kalenderavtale -> KalenderavtaleTidslinjeElement(
+                                id = element.id,
+                                tekst = element.tekst,
+                                avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
+                                startTidspunkt = element.startTidspunkt.atOffset(UTC),
+                                sluttTidspunkt = element.sluttTidspunkt?.atOffset(UTC),
+                                lokasjon = element.lokasjon?.let { Lokasjon(
+                                    adresse = it.adresse,
+                                    postnummer = it.postnummer,
+                                    poststed = it.poststed,
+                                )},
+                                digitalt = element.digitalt,
                             )
                         }
                     }

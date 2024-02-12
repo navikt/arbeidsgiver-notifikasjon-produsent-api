@@ -65,6 +65,35 @@ fun TestApplicationEngine.queryNotifikasjonerJson(): TestApplicationResponse = b
                         tittel
                     }
                 }
+                ...on Kalenderavtale {
+                    brukerKlikk { 
+                        __typename
+                        id
+                        klikketPaa 
+                    }
+                    lenke
+                    avtaletilstand
+                    tekst
+                    merkelapp
+                    opprettetTidspunkt
+                    sorteringTidspunkt
+                    id
+                    startTidspunkt
+                    sluttTidspunkt
+                    lokasjon {
+                        adresse
+                        poststed
+                        postnummer
+                    }
+                    digitalt
+                    virksomhet {
+                        virksomhetsnummer
+                        navn
+                    }
+                    sak {
+                        tittel
+                    }
+                }
             }
         }
     }
@@ -148,6 +177,19 @@ fun TestApplicationEngine.querySakerJson(
                         id
                         tekst
                         opprettetTidspunkt
+                    }
+                    ... on KalenderavtaleTidslinjeElement {
+                        id
+                        tekst
+                        avtaletilstand
+                        startTidspunkt
+                        sluttTidspunkt
+                        lokasjon {
+                            adresse
+                            postnummer
+                            poststed                        
+                        }
+                        digitalt
                     }
                 }
             }
