@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -241,8 +242,8 @@ internal class QueryNotifikasjoner(
         val merkelapp: String,
         val tekst: String,
         val lenke: String,
-        val startTidspunkt: OffsetDateTime,
-        val sluttTidspunkt: OffsetDateTime?,
+        val startTidspunkt: LocalDateTime,
+        val sluttTidspunkt: LocalDateTime?,
         val lokasjon: Lokasjon?,
         val digitalt: Boolean,
         val tilstand: Notifikasjon.Kalenderavtale.Tilstand,

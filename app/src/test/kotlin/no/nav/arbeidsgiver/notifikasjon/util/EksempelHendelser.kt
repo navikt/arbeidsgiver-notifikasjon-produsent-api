@@ -666,8 +666,8 @@ object EksempelHendelse {
             tekst = "foo",
             opprettetTidspunkt = OffsetDateTime.now(),
             tilstand = VENTER_SVAR_FRA_ARBEIDSGIVER,
-            startTidspunkt = OffsetDateTime.now().plusHours(1),
-            sluttTidspunkt = OffsetDateTime.now().plusHours(2),
+            startTidspunkt = LocalDateTime.now().plusHours(1),
+            sluttTidspunkt = LocalDateTime.now().plusHours(2),
             lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz"),
             erDigitalt = true,
             eksterneVarsler = listOf(
@@ -721,8 +721,8 @@ object EksempelHendelse {
         lenke = "https://foo.no",
         tekst = "foo",
         tilstand = VENTER_SVAR_FRA_ARBEIDSGIVER,
-        startTidspunkt = OffsetDateTime.now().plusHours(1),
-        sluttTidspunkt = OffsetDateTime.now().plusHours(2),
+        startTidspunkt = LocalDateTime.now().plusHours(1),
+        sluttTidspunkt = LocalDateTime.now().plusHours(2),
         lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz"),
         erDigitalt = true,
         eksterneVarsler = listOf(

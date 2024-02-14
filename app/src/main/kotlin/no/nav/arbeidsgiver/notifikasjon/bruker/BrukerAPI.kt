@@ -630,10 +630,10 @@ object BrukerAPI {
             (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
             SakerResultat(
                 saker = saker,
-                sakstyper = sakerResultat.sakstyper.map{ sakstype -> Sakstype(sakstype.navn, sakstype.antall)},
+                sakstyper = sakerResultat.sakstyper.map { sakstype -> Sakstype(sakstype.navn, sakstype.antall)},
                 feilAltinn = tilganger.harFeil,
                 totaltAntallSaker = sakerResultat.totaltAntallSaker,
-                oppgaveTilstandInfo = sakerResultat.oppgaveTilstanderMedAntall.map{ tilstand -> OppgaveTilstandInfo(tilstand.navn.tilBrukerAPI(), tilstand.antall)}
+                oppgaveTilstandInfo = sakerResultat.oppgaveTilstanderMedAntall.map { tilstand -> OppgaveTilstandInfo(tilstand.navn.tilBrukerAPI(), tilstand.antall)}
             )
         }
     }

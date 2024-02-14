@@ -27,8 +27,10 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 import java.util.*
 
 interface BrukerRepository {
@@ -204,8 +206,8 @@ class BrukerRepositoryImpl(
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa"),
-                    startTidspunkt = getObject("start_tidspunkt", OffsetDateTime::class.java),
-                    sluttTidspunkt = getObject("slutt_tidspunkt", OffsetDateTime::class.java),
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
+                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     erDigitalt = getBoolean("digitalt"),
                     tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
@@ -622,8 +624,8 @@ class BrukerRepositoryImpl(
                     tekst = getString("tekst"),
                     grupperingsid = getString("grupperingsid"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant(),
-                    startTidspunkt = getObject("start_tidspunkt", OffsetDateTime::class.java).toInstant(),
-                    sluttTidspunkt = getObject("slutt_tidspunkt", OffsetDateTime::class.java).toInstant(),
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
+                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it) },
                     avtaletilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     digitalt = getBoolean("digitalt")
@@ -637,7 +639,7 @@ class BrukerRepositoryImpl(
                 when(el) {
                     is BrukerModel.TidslinjeElement.Oppgave,
                     is BrukerModel.TidslinjeElement.Beskjed -> el.opprettetTidspunkt
-                    is BrukerModel.TidslinjeElement.Kalenderavtale -> el.startTidspunkt
+                    is BrukerModel.TidslinjeElement.Kalenderavtale -> el.startTidspunkt.toInstant(ZoneOffset.UTC)
                 }
 
             } }
@@ -788,7 +790,7 @@ class BrukerRepositoryImpl(
             join notifikasjon as n on n.id = mn.notifikasjon_id
             where 
                 n.type = 'KALENDERAVTALE' and
-                n.start_tidspunkt > now() and
+                n.start_tidspunkt::timestamp > now() and
                 n.virksomhetsnummer = any(?)
             order by 
                 start_tidspunkt
@@ -812,8 +814,8 @@ class BrukerRepositoryImpl(
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getUuid("id"),
                     klikketPaa = false, // trenger ikke klikket på i denne sammenheng
-                    startTidspunkt = getObject("start_tidspunkt", OffsetDateTime::class.java),
-                    sluttTidspunkt = getObject("slutt_tidspunkt", OffsetDateTime::class.java),
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
+                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     erDigitalt = getBoolean("digitalt"),
                     tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
@@ -1311,8 +1313,8 @@ class BrukerRepositoryImpl(
                     text(eksternId)
                     timestamp_with_timezone(opprettetTidspunkt)
                     text(virksomhetsnummer)
-                    timestamp_with_timezone(startTidspunkt)
-                    nullableTimestamptz(sluttTidspunkt)
+                    localDateTimeAsText(startTidspunkt)
+                    nullableLocalDateTimeAsText(sluttTidspunkt)
                     nullableJsonb(lokasjon)
                     nullableBoolean(erDigitalt)
                 }
@@ -1347,8 +1349,8 @@ class BrukerRepositoryImpl(
                     nullableText(tilstand?.name)
                     nullableText(lenke)
                     nullableText(tekst)
-                    nullableTimestamptz(startTidspunkt)
-                    nullableTimestamptz(sluttTidspunkt)
+                    nullableLocalDateTimeAsText(startTidspunkt)
+                    nullableLocalDateTimeAsText(sluttTidspunkt)
                     nullableJsonb(lokasjon)
                     nullableBoolean(erDigitalt)
                     uuid(notifikasjonId)

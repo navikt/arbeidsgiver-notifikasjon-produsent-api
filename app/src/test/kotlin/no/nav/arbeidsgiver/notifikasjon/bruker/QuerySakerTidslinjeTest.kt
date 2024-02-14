@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 class QuerySakerTidslinjeTest: DescribeSpec({
     val database = testDatabase(Bruker.databaseConfig)
@@ -139,8 +140,8 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             grupperingsid = sak1.grupperingsid,
             merkelapp = sak1.merkelapp,
             opprettetTidspunkt = beskjed2.opprettetTidspunkt.minusHours(1),
-            startTidspunkt = beskjed2.opprettetTidspunkt.plusHours(3),
-            sluttTidspunkt = beskjed2.opprettetTidspunkt.plusHours(4),
+            startTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(3),
+            sluttTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(4),
             sakId = sak1.sakId,
         )
         it("kalenderavtale på andre saken, vises kun der") {
@@ -158,8 +159,8 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             instanceOf<BrukerAPI.KalenderavtaleTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
                 it.tekst shouldBe kalenderavtale.tekst
                 it.avtaletilstand shouldBe BrukerAPI.Notifikasjon.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-                it.startTidspunkt shouldBe kalenderavtale.startTidspunkt
-                it.sluttTidspunkt shouldBe kalenderavtale.sluttTidspunkt
+                it.startTidspunkt shouldBe kalenderavtale.startTidspunkt.atOffset(ZoneOffset.UTC)
+                it.sluttTidspunkt shouldBe kalenderavtale.sluttTidspunkt?.atOffset(ZoneOffset.UTC)
                 it.lokasjon shouldNot beNull()
                 it.lokasjon!!.adresse shouldBe kalenderavtale.lokasjon!!.adresse
                 it.lokasjon!!.poststed shouldBe kalenderavtale.lokasjon!!.poststed

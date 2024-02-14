@@ -15,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -89,8 +90,8 @@ class KalenderavtaleTests : DescribeSpec({
                         ansattFnr = "321",
                         virksomhetsnummer = "42"
                     )
-                    hendelse.startTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T07:20:50.52Z")
-                    hendelse.sluttTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T08:20:50.52Z")
+                    hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                    hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                     hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
                         postnummer = "1234",
                         poststed = "Kneika",
@@ -116,8 +117,8 @@ class KalenderavtaleTests : DescribeSpec({
                     it.lenke shouldBe "https://foo.bar"
                     it.eksternId shouldBe eksternId
                     it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-                    it.startTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T07:20:50.52Z")
-                    it.sluttTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T08:20:50.52Z")
+                    it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                    it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                     it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
                         postnummer = "1234",
                         poststed = "Kneika",
@@ -151,8 +152,8 @@ class KalenderavtaleTests : DescribeSpec({
                     hendelse.tilstand shouldBe HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT
                     hendelse.lenke shouldBe "https://foo.bar"
                     hendelse.tekst shouldBe "hello world"
-                    hendelse.startTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T07:20:50.52Z")
-                    hendelse.sluttTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T08:20:50.52Z")
+                    hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                    hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                     hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
                         postnummer = "1234",
                         poststed = "Kneika",
@@ -176,8 +177,8 @@ class KalenderavtaleTests : DescribeSpec({
                     it.lenke shouldBe "https://foo.bar"
                     it.eksternId shouldBe eksternId
                     it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
-                    it.startTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T07:20:50.52Z")
-                    it.sluttTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T08:20:50.52Z")
+                    it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                    it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                     it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
                         postnummer = "1234",
                         poststed = "Kneika",
@@ -228,8 +229,8 @@ class KalenderavtaleTests : DescribeSpec({
                     it.lenke shouldBe "https://foo.bar"
                     it.eksternId shouldBe eksternId
                     it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
-                    it.startTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T07:20:50.52Z")
-                    it.sluttTidspunkt shouldBe OffsetDateTime.parse("2024-10-12T08:20:50.52Z")
+                    it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                    it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                     it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
                         postnummer = "1234",
                         poststed = "Kneika",
@@ -245,8 +246,8 @@ class KalenderavtaleTests : DescribeSpec({
             grupperingsid = grupperingsid,
             merkelapp = merkelapp,
             eksternId = "400",
-            startTidspunkt = "2024-10-12T08:20:50.52Z",
-            sluttTidspunkt = "2024-10-12T07:20:50.52Z"
+            startTidspunkt = "2024-10-12T08:20:50.52",
+            sluttTidspunkt = "2024-10-12T07:20:50.52"
         ).let {
             it("status is 200 OK") {
                 it.status() shouldBe HttpStatusCode.OK
@@ -264,8 +265,8 @@ class KalenderavtaleTests : DescribeSpec({
         // starttidspunkt etter sluttidspunkt ved oppdaterById
         engine.kalenderavtaleOppdater(
             id = nyKalenderavtale.id,
-            startTidspunkt = "2024-10-12T08:20:50.52Z",
-            sluttTidspunkt = "2024-10-12T07:20:50.52Z",
+            startTidspunkt = "2024-10-12T08:20:50.52",
+            sluttTidspunkt = "2024-10-12T07:20:50.52",
         ).let { response ->
             it("status is 200 OK") {
                 response.status() shouldBe HttpStatusCode.OK
@@ -284,8 +285,8 @@ class KalenderavtaleTests : DescribeSpec({
         engine.kalenderavtaleOppdaterByEksternId(
             eksternId = eksternId,
             merkelapp = merkelapp,
-            startTidspunkt = "2024-10-12T08:20:50.52Z",
-            sluttTidspunkt = "2024-10-12T07:20:50.52Z",
+            startTidspunkt = "2024-10-12T08:20:50.52",
+            sluttTidspunkt = "2024-10-12T07:20:50.52",
         ).let { response ->
             it("status is 200 OK") {
                 response.status() shouldBe HttpStatusCode.OK
@@ -307,8 +308,8 @@ private fun TestApplicationEngine.nyKalenderavtale(
     grupperingsid: String,
     merkelapp: String,
     eksternId: String = "heu",
-    startTidspunkt: String = "2024-10-12T07:20:50.52Z",
-    sluttTidspunkt: String = "2024-10-12T08:20:50.52Z",
+    startTidspunkt: String = "2024-10-12T07:20:50.52",
+    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
 ) = produsentApi(
     """
         mutation {
@@ -351,8 +352,8 @@ private fun TestApplicationEngine.nyKalenderavtale(
 
 private fun TestApplicationEngine.kalenderavtaleOppdater(
     id: UUID,
-    startTidspunkt: String = "2024-10-12T07:20:50.52Z",
-    sluttTidspunkt: String = "2024-10-12T08:20:50.52Z",
+    startTidspunkt: String = "2024-10-12T07:20:50.52",
+    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
 ) = produsentApi(
     """
         mutation {
@@ -391,8 +392,8 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
 private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
     merkelapp: String,
     eksternId: String,
-    startTidspunkt: String = "2024-10-12T07:20:50.52Z",
-    sluttTidspunkt: String = "2024-10-12T08:20:50.52Z",
+    startTidspunkt: String = "2024-10-12T07:20:50.52",
+    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
 ) = produsentApi(
     """
         mutation {

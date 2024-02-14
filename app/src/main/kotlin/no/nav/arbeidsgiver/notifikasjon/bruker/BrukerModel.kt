@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -160,8 +161,8 @@ object BrukerModel {
             val tekst: String,
             override val grupperingsid: String,
             override val opprettetTidspunkt: Instant,
-            val startTidspunkt: Instant,
-            val sluttTidspunkt: Instant?,
+            val startTidspunkt: LocalDateTime,
+            val sluttTidspunkt: LocalDateTime?,
             val avtaletilstand: BrukerModel.Kalenderavtale.Tilstand,
             val lokasjon: BrukerModel.Kalenderavtale.Lokasjon?,
             val digitalt: Boolean?,

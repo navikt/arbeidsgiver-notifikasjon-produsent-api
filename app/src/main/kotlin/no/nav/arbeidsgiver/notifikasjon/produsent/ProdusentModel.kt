@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontakti
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Kalenderavtale.Tilstand.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -169,8 +170,8 @@ object ProdusentModel {
         val mottakere: List<Mottaker>,
         val opprettetTidspunkt: OffsetDateTime,
         val tilstand: Tilstand,
-        val startTidspunkt: OffsetDateTime,
-        val sluttTidspunkt: OffsetDateTime?,
+        val startTidspunkt: LocalDateTime,
+        val sluttTidspunkt: LocalDateTime?,
         val lokasjon: Lokasjon?,
         val digitalt: Boolean,
 

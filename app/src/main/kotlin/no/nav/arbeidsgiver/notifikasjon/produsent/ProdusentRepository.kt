@@ -27,6 +27,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository.AggregateType
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -275,8 +276,8 @@ class ProdusentRepositoryImpl(
                     deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                     eksterneVarsler = laxObjectMapper.readValue(getString("eksterne_varsler")),
                     virksomhetsnummer = getString("virksomhetsnummer"),
-                    startTidspunkt = getObject("start_tidspunkt", OffsetDateTime::class.java),
-                    sluttTidspunkt = getObject("slutt_tidspunkt", OffsetDateTime::class.java),
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
+                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it) },
                     lokasjon = getString("lokasjon")?.let {
                         laxObjectMapper.readValue(it)
                     },
@@ -800,8 +801,8 @@ class ProdusentRepositoryImpl(
                     timestamp_with_timezone(opprettetTidspunkt)
                     text(virksomhetsnummer)
 
-                    timestamp_with_timezone(startTidspunkt)
-                    nullableTimestamptz(sluttTidspunkt)
+                    localDateTimeAsText(startTidspunkt)
+                    nullableLocalDateTimeAsText(sluttTidspunkt)
                     nullableJsonb(lokasjon)
                     boolean(erDigitalt)
                 }
@@ -833,8 +834,8 @@ class ProdusentRepositoryImpl(
                     nullableText(tilstand?.name)
                     nullableText(tekst)
                     nullableText(lenke)
-                    nullableTimestamptz(startTidspunkt)
-                    nullableTimestamptz(sluttTidspunkt)
+                    nullableLocalDateTimeAsText(startTidspunkt)
+                    nullableLocalDateTimeAsText(sluttTidspunkt)
                     nullableJsonb(hendelse.lokasjon)
                     nullableBoolean(hendelse.erDigitalt)
 
