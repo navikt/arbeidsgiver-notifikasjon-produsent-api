@@ -216,12 +216,12 @@ type KalenderavtaleData {
     """
     Når avtalen starter.
     """
-    startTidspunkt: ISO8601DateTime!
+    startTidspunkt: ISO8601LocalDateTime!
 
     """
     Når avtalen slutter.
     """
-    sluttTidspunkt: ISO8601DateTime
+    sluttTidspunkt: ISO8601LocalDateTime
 
     """
     Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
