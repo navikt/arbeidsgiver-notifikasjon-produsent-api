@@ -1,0 +1,1 @@
+create index notifikasjon_hendelse_relasjon_gruppering_id_merkelapp_idx on notifikasjon_hendelse_relasjon (gruppering_id, merkelapp);
