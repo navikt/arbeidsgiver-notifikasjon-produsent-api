@@ -790,6 +790,7 @@ class BrukerRepositoryImpl(
             join notifikasjon as n on n.id = mn.notifikasjon_id
             where 
                 n.type = 'KALENDERAVTALE' and
+                n.tilstand != 'AVLYST' and
                 n.start_tidspunkt::timestamp > now() and
                 n.virksomhetsnummer = any(?)
             order by 
