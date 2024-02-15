@@ -207,7 +207,7 @@ class BrukerRepositoryImpl(
                     id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa"),
                     startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
-                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
+                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it).atOffset(UTC) },
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     erDigitalt = getBoolean("digitalt"),
                     tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
@@ -625,7 +625,7 @@ class BrukerRepositoryImpl(
                     grupperingsid = getString("grupperingsid"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant(),
                     startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
-                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it) },
+                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it) },
                     avtaletilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     digitalt = getBoolean("digitalt")
@@ -816,7 +816,7 @@ class BrukerRepositoryImpl(
                     id = getUuid("id"),
                     klikketPaa = false, // trenger ikke klikket på i denne sammenheng
                     startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
-                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
+                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it).atOffset(UTC) },
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     erDigitalt = getBoolean("digitalt"),
                     tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
