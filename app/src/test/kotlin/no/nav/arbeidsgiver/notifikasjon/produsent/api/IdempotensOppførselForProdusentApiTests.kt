@@ -93,7 +93,7 @@ import java.util.*
             mutation NyKalenderavtale(
                 ${'$'}startTidspunkt: ISO8601LocalDateTime! = "2024-10-12T07:00:00.00"
                 ${'$'}sluttTidspunkt: ISO8601LocalDateTime
-                ${'$'}lokasjon: AdresseInput
+                ${'$'}lokasjon: LokasjonInput
                 ${'$'}erDigitalt: Boolean
                 ${'$'}tilstand: KalenderavtaleTilstand
             ) {

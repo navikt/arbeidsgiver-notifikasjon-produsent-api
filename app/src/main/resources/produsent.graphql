@@ -227,7 +227,7 @@ type KalenderavtaleData {
     Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
     Denne vil vises til brukeren hvis den er angitt.
     """
-    lokasjon: Adresse
+    lokasjon: Lokasjon
 
     """
     Ved å sette dette flagget kan dere vise brukeren at det er mulig å møte digitalt.
@@ -399,7 +399,7 @@ type Mutation {
         Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
         Denne vil vises til brukeren hvis den er angitt.
         """
-        lokasjon: AdresseInput
+        lokasjon: LokasjonInput
 
         """
         Ved å sette dette flagget kan dere vise brukeren at det er mulig å møte digitalt.
@@ -818,7 +818,7 @@ type Mutation {
         Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
         Denne vil vises til brukeren hvis den er angitt.
         """
-        nyLokasjon: AdresseInput
+        nyLokasjon: LokasjonInput
 
         """
         Ved å sette dette flagget kan dere vise brukeren at det er mulig å møte digitalt.
@@ -886,7 +886,7 @@ type Mutation {
         Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
         Denne vil vises til brukeren hvis den er angitt.
         """
-        nyLokasjon: AdresseInput
+        nyLokasjon: LokasjonInput
 
         """
         Ved å sette dette flagget kan dere vise brukeren at det er mulig å møte digitalt.
@@ -1600,7 +1600,7 @@ enum NyTidStrategi {
     OVERSKRIV
 }
 
-input AdresseInput {
+input LokasjonInput {
     adresse: String!
     postnummer: String!
     poststed: String!
@@ -1681,7 +1681,7 @@ type PaaminnelseResultat {
     eksterneVarsler: [NyEksterntVarselResultat!]!
 }
 
-type Adresse {
+type Lokasjon {
     adresse: String!
     postnummer: String!
     poststed: String!

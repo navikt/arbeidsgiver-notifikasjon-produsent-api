@@ -41,7 +41,7 @@ internal class MutationKalenderavtale(
                         mottakere = env.getTypedArgument<List<MottakerInput>>("mottakere"),
                         startTidspunkt = env.getTypedArgument<LocalDateTime>("startTidspunkt"),
                         sluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("sluttTidspunkt"),
-                        lokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.AdresseInput?>("lokasjon"),
+                        lokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("lokasjon"),
                         erDigitalt = env.getTypedArgumentOrNull<Boolean>("erDigitalt") ?: false,
                         tilstand = env.getTypedArgumentOrNull<KalenderavtaleTilstand>("tilstand")
                             ?: VENTER_SVAR_FRA_ARBEIDSGIVER,
@@ -60,7 +60,7 @@ internal class MutationKalenderavtale(
                         nyLenke = env.getTypedArgumentOrNull<String>("nyLenke"),
                         nyttStartTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttStartTidspunkt"),
                         nyttSluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttSluttTidspunkt"),
-                        nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.AdresseInput?>("nyLokasjon"),
+                        nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
                         hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
                     ),
@@ -78,7 +78,7 @@ internal class MutationKalenderavtale(
                         nyLenke = env.getTypedArgumentOrNull<String>("nyLenke"),
                         nyttStartTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttStartTidspunkt"),
                         nyttSluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttSluttTidspunkt"),
-                        nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.AdresseInput?>("nyLokasjon"),
+                        nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
                         hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
                     ),
@@ -113,7 +113,7 @@ internal class MutationKalenderavtale(
         val mottakere: List<MottakerInput>,
         val startTidspunkt: LocalDateTime,
         val sluttTidspunkt: LocalDateTime?,
-        val lokasjon: AdresseInput?,
+        val lokasjon: LokasjonInput?,
         val erDigitalt: Boolean,
         val tilstand: KalenderavtaleTilstand,
         val hardDelete: FutureTemporalInput?,
@@ -157,7 +157,7 @@ internal class MutationKalenderavtale(
             )
         }
 
-        data class AdresseInput(
+        data class LokasjonInput(
             val adresse: String,
             val postnummer: String,
             val poststed: String,
@@ -301,7 +301,7 @@ internal class MutationKalenderavtale(
         abstract val nyLenke: String?
         abstract val nyttStartTidspunkt: LocalDateTime?
         abstract val nyttSluttTidspunkt: LocalDateTime?
-        abstract val nyLokasjon: NyKalenderavtaleInput.AdresseInput?
+        abstract val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?
         abstract val nyErDigitalt: Boolean?
         abstract val hardDelete: HardDeleteUpdateInput?
 
@@ -329,7 +329,7 @@ internal class MutationKalenderavtale(
         override val nyLenke: String?,
         override val nyttStartTidspunkt: LocalDateTime?,
         override val nyttSluttTidspunkt: LocalDateTime?,
-        override val nyLokasjon: NyKalenderavtaleInput.AdresseInput?,
+        override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
         override val hardDelete: HardDeleteUpdateInput?,
     ) : KalenderavtaleOppdaterInput()
@@ -342,7 +342,7 @@ internal class MutationKalenderavtale(
         override val nyLenke: String?,
         override val nyttStartTidspunkt: LocalDateTime?,
         override val nyttSluttTidspunkt: LocalDateTime?,
-        override val nyLokasjon: NyKalenderavtaleInput.AdresseInput?,
+        override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
         override val hardDelete: HardDeleteUpdateInput?,
     ) : KalenderavtaleOppdaterInput()
