@@ -158,12 +158,12 @@ internal class MutationNySak(
             sakId = id,
             grupperingsid = grupperingsid,
             merkelapp = merkelapp,
-            mottakere = mottakere.map { it.tilDomene(virksomhetsnummer) },
+            mottakere = mottakere.map { it.tilHendelseModel(virksomhetsnummer) },
             tittel = tittel,
             lenke = lenke,
             oppgittTidspunkt = status.tidspunkt,
             mottattTidspunkt = mottattTidspunkt,
-            hardDelete = hardDelete?.tilDomene(),
+            hardDelete = hardDelete?.tilHendelseModel(),
         )
 
         fun somNyStatusSakHendelse(

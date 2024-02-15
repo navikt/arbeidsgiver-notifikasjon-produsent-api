@@ -15,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
@@ -142,6 +143,39 @@ class StatistikkModel(
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         when (hendelse) {
+            is KalenderavtaleOpprettet -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    insert into notifikasjon 
+                        (produsent_id, notifikasjon_id, gruppering_id, notifikasjon_type, merkelapp, mottaker, checksum, opprettet_tidspunkt)
+                    values (?, ?, ?, 'kalenderavtale', ?, ?, ?, ?)
+                    on conflict do nothing;
+                    """
+                ) {
+                    with(hendelse) {
+                        text(produsentId)
+                        uuid(notifikasjonId)
+                        nullableText(grupperingsid)
+                        text(merkelapp)
+                        text(mottakere.oppsummering())
+                        text(tekst.toHash())
+                        timestamp_with_timezone(opprettetTidspunkt)
+                    }
+                }
+            }
+            is HendelseModel.KalenderavtaleOppdatert -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    update notifikasjon set checksum = coalesce(?, checksum) where notifikasjon_id = ?
+                    """
+                ) {
+                    with(hendelse) {
+                        nullableText(tekst?.toHash())
+                        uuid(notifikasjonId)
+                    }
+                }
+            }
+
             is BeskjedOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """

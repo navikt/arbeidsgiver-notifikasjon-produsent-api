@@ -16,6 +16,7 @@ type Query {
     ): SakerResultat!
     sakById(id: ID!): SakResultat!
     sakByGrupperingsid(merkelapp: String!, grupperingsid: String!): SakResultat!
+    kommendeKalenderavtaler(virksomhetsnumre: [String!]!): KalenderavtalerResultat!
     whoami: String
 }
 
@@ -93,6 +94,7 @@ type SakStatus {
 union TidslinjeElement =
     | OppgaveTidslinjeElement
     | BeskjedTidslinjeElement
+    | KalenderavtaleTidslinjeElement
 
 type OppgaveTidslinjeElement {
     id: ID!
@@ -111,6 +113,17 @@ type BeskjedTidslinjeElement {
     opprettetTidspunkt: ISO8601DateTime!
 }
 
+
+type KalenderavtaleTidslinjeElement {
+    id: ID!
+    tekst: String!
+    avtaletilstand: KalenderavtaleTilstand!
+    startTidspunkt: ISO8601DateTime!
+    sluttTidspunkt: ISO8601DateTime
+    lokasjon: Lokasjon
+    digitalt: Boolean
+}
+
 enum SakStatusType {
     MOTTATT
     UNDER_BEHANDLING
@@ -127,7 +140,13 @@ type NotifikasjonerResultat {
     feilDigiSyfo: Boolean!
 }
 
-union Notifikasjon = Beskjed | Oppgave
+type KalenderavtalerResultat {
+    avtaler: [Kalenderavtale!]!
+    feilAltinn: Boolean!
+    feilDigiSyfo: Boolean!
+}
+
+union Notifikasjon = Beskjed | Oppgave | Kalenderavtale
 
 scalar ISO8601DateTime
 scalar ISO8601Date
@@ -165,6 +184,37 @@ type Beskjed {
     id: ID!
     virksomhet: Virksomhet!
     sak: SakMetadata
+}
+
+type Kalenderavtale {
+    brukerKlikk: BrukerKlikk!
+    avtaletilstand: KalenderavtaleTilstand!
+    merkelapp: String!
+    tekst: String!
+    lenke: String!
+    startTidspunkt: ISO8601DateTime!
+    sluttTidspunkt: ISO8601DateTime
+    lokasjon: Lokasjon
+    digitalt: Boolean
+    opprettetTidspunkt: ISO8601DateTime!
+    sorteringTidspunkt: ISO8601DateTime!
+    id: ID!
+    virksomhet: Virksomhet!
+    sak: SakMetadata
+}
+
+type Lokasjon {
+    adresse: String!
+    postnummer: String!
+    poststed: String!
+}
+
+enum KalenderavtaleTilstand {
+    VENTER_SVAR_FRA_ARBEIDSGIVER
+    ARBEIDSGIVER_VIL_AVLYSE
+    ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
+    ARBEIDSGIVER_HAR_GODTATT
+    AVLYST
 }
 
 type Virksomhet {

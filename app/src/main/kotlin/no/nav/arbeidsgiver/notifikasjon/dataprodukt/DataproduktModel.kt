@@ -471,6 +471,113 @@ class DataproduktModel(
                     uuid(hendelse.notifikasjonId)
                 }
             }
+
+            is HendelseModel.KalenderavtaleOpprettet -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    insert into notifikasjon 
+                    (
+                        notifikasjon_id,
+                        notifikasjon_type,
+                        produsent_id,
+                        merkelapp,
+                        ekstern_id,
+                        tekst,
+                        grupperingsid,
+                        lenke,
+                        ny_lenke,
+                        opprettet_tidspunkt
+                    )
+                    values (?, 'KALENDERAVTALE', ?, ?, ?, ?, ?, ?, ?, ?)
+                    on conflict do nothing;
+                    """
+                ) {
+                    with(hendelse) {
+                        uuid(notifikasjonId)
+                        text(produsentId)
+                        text(merkelapp)
+                        text(eksternId)
+                        text(tekst)
+                        nullableText(grupperingsid)
+                        text(lenke)
+                        nullableText(null)
+                        toInstantAsText(opprettetTidspunkt)
+                    }
+                }
+
+                storeMottakere(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    sakId = null,
+                    mottakere = hendelse.mottakere,
+                )
+
+                if (hendelse.hardDelete != null) {
+                    with(hendelse) {
+                        storeHardDelete(
+                            aggregatId = aggregateId,
+                            bestillingHendelsesid = hendelseId,
+                            bestillingType = "OPPRETTELSE",
+                            spesifikasjon = hendelse.hardDelete,
+                            utregnetTidspunkt = ScheduledTime(hendelse.hardDelete, metadata.timestamp).happensAt(),
+                        )
+                    }
+                }
+
+                if (hendelse.påminnelse != null) {
+                    opprettVarselBestilling(
+                        notifikasjonId = hendelse.notifikasjonId,
+                        produsentId = hendelse.produsentId,
+                        merkelapp = hendelse.merkelapp,
+                        eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
+                        opprinnelse = "KalenderavtaleOpprettet.påminnelse",
+                        statusUtsending = "UTSENDING_IKKE_AVGJORT",
+                    )
+                }
+
+                opprettVarselBestilling(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    produsentId = hendelse.produsentId,
+                    merkelapp = hendelse.merkelapp,
+                    eksterneVarsler = hendelse.eksterneVarsler,
+                    opprinnelse = "KalenderavtaleOpprettet.eksterneVarsler",
+                    statusUtsending = "UTSENDING_BESTILT",
+                )
+            }
+
+            is HendelseModel.KalenderavtaleOppdatert -> {
+                with(hendelse) {
+                    if (hardDelete != null) {
+                        storeHardDelete(
+                            aggregatId = aggregateId,
+                            bestillingHendelsesid = hendelseId,
+                            bestillingType = "OPPDATERING",
+                            strategi = hardDelete.strategi.toString(),
+                            spesifikasjon = hardDelete.nyTid,
+                            utregnetTidspunkt = ScheduledTime(hardDelete.nyTid, metadata.timestamp).happensAt(),
+                        )
+                    }
+                }
+
+                //TODO: vurder om eksterne varsler på påminnelse skal kanselleres dersom kalenderavtalen er avlyst
+                //if (hendelse.tilstand == HendelseModel.KalenderavtaleTilstand.AVLYST) {
+                //    markerIngenUtsendingPåPåminnelseEksterneVarsler(hendelse.notifikasjonId)
+                //}
+
+                database.nonTransactionalExecuteUpdate(
+                    """
+                        update notifikasjon
+                        set ny_lenke = ?,
+                        tekst = coalesce(?, tekst)
+                        where notifikasjon_id = ?
+                    """
+                ) {
+                    with(hendelse) {
+                        nullableText(lenke)
+                        nullableText(tekst)
+                        uuid(notifikasjonId)
+                    }
+                }
+            }
         }
     }
 

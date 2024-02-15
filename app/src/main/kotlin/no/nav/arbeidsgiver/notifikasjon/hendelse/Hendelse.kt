@@ -423,6 +423,76 @@ object HendelseModel {
         }
     }
 
+    @JsonTypeName("KalenderavtaleOpprettet")
+    data class KalenderavtaleOpprettet(
+        override val virksomhetsnummer: String,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val merkelapp: String,
+        val grupperingsid: String,
+        val eksternId: String,
+        val mottakere: List<Mottaker>,
+        val hardDelete: LocalDateTimeOrDuration?,
+        val sakId: UUID,
+        val lenke: String,
+        val tekst: String,
+        val opprettetTidspunkt: OffsetDateTime,
+        val tilstand: KalenderavtaleTilstand,
+        val startTidspunkt: LocalDateTime,
+        val sluttTidspunkt: LocalDateTime?,
+        val lokasjon: Lokasjon?,
+        val erDigitalt: Boolean,
+        val eksterneVarsler: List<EksterntVarsel>,
+        val påminnelse: Påminnelse?,
+    ) : Hendelse(), Notifikasjon {
+        init {
+            requireGraphql(mottakere.isNotEmpty()) {
+                "minst 1 mottaker må gis"
+            }
+        }
+
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
+
+    @JsonTypeName("KalenderavtaleOppdatert")
+    data class KalenderavtaleOppdatert(
+        override val virksomhetsnummer: String,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val notifikasjonId: UUID,
+        val tilstand: KalenderavtaleTilstand?,
+        val lenke: String?,
+        val tekst: String?,
+        val startTidspunkt: LocalDateTime?,
+        val sluttTidspunkt: LocalDateTime?,
+        val lokasjon: Lokasjon?,
+        val erDigitalt: Boolean?,
+        val hardDelete: HardDeleteUpdate?,
+        val eksterneVarsler: List<EksterntVarsel>,
+        val påminnelse: Påminnelse?,
+    ) : Hendelse() {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
+
+    enum class KalenderavtaleTilstand {
+        VENTER_SVAR_FRA_ARBEIDSGIVER,
+        ARBEIDSGIVER_VIL_AVLYSE,
+        ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
+        ARBEIDSGIVER_HAR_GODTATT,
+        AVLYST,
+    }
+
+    @JsonTypeName("Lokasjon")
+    data class Lokasjon(
+        val adresse: String,
+        val postnummer: String,
+        val poststed: String,
+    )
 
     @JsonTypeName("FristUtsatt")
     data class FristUtsatt(

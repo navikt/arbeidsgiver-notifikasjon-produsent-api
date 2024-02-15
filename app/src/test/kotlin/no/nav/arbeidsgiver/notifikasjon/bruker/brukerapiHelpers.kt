@@ -65,6 +65,35 @@ fun TestApplicationEngine.queryNotifikasjonerJson(): TestApplicationResponse = b
                         tittel
                     }
                 }
+                ...on Kalenderavtale {
+                    brukerKlikk { 
+                        __typename
+                        id
+                        klikketPaa 
+                    }
+                    lenke
+                    avtaletilstand
+                    tekst
+                    merkelapp
+                    opprettetTidspunkt
+                    sorteringTidspunkt
+                    id
+                    startTidspunkt
+                    sluttTidspunkt
+                    lokasjon {
+                        adresse
+                        poststed
+                        postnummer
+                    }
+                    digitalt
+                    virksomhet {
+                        virksomhetsnummer
+                        navn
+                    }
+                    sak {
+                        tittel
+                    }
+                }
             }
         }
     }
@@ -149,6 +178,19 @@ fun TestApplicationEngine.querySakerJson(
                         tekst
                         opprettetTidspunkt
                     }
+                    ... on KalenderavtaleTidslinjeElement {
+                        id
+                        tekst
+                        avtaletilstand
+                        startTidspunkt
+                        sluttTidspunkt
+                        lokasjon {
+                            adresse
+                            postnummer
+                            poststed                        
+                        }
+                        digitalt
+                    }
                 }
             }
             sakstyper {
@@ -170,3 +212,51 @@ fun TestApplicationEngine.querySakerJson(
         }
     ))
 }
+
+
+fun TestApplicationEngine.queryKommendeKalenderavtalerJson(
+    virksomhetsnumre: List<String> = listOf(TEST_VIRKSOMHET_1),
+): TestApplicationResponse = brukerApi(
+    GraphQLRequest(
+        """
+        query kommendeKalenderavtaler(${"$"}virksomhetsnumre: [String!]!) {
+            kommendeKalenderavtaler(virksomhetsnumre: ${"$"}virksomhetsnumre) {
+                feilAltinn
+                feilDigiSyfo
+                avtaler {
+                    __typename
+                    brukerKlikk { 
+                        __typename
+                        id
+                        klikketPaa 
+                    }
+                    lenke
+                    avtaletilstand
+                    tekst
+                    merkelapp
+                    opprettetTidspunkt
+                    sorteringTidspunkt
+                    id
+                    startTidspunkt
+                    sluttTidspunkt
+                    lokasjon {
+                        adresse
+                        poststed
+                        postnummer
+                    }
+                    digitalt
+                    virksomhet {
+                        virksomhetsnummer
+                        navn
+                    }
+                    sak {
+                        tittel
+                    }        
+                }
+            }
+        }
+        """,
+        "kommendeKalenderavtaler",
+        mapOf("virksomhetsnumre" to virksomhetsnumre)
+    )
+)

@@ -798,6 +798,142 @@ EMAIL  | {tittel} | {innhold}
 </span></code></pre>
               </div>
             </div>
+
+
+
+              <h2 id="hvordan-opprette-en-kalenderavtale"><a href="#hvordan-opprette-en-kalenderavtale">
+                  Hvordan opprette en kalenderavtale
+              </a></h2>
+              <p>Følgende mutation oppretter en ny kalenderavtale:</p>
+              <div class="language-graphql highlighter-rouge">
+                  <div class="highlight">
+                <pre class="highlight"><code><span class="k">mutation</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">nyKalenderavtale</span><span class="p">(</span><span class="w">
+        </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
+            </span><span class="n">naermesteLeder</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="n">naermesteLederFnr</span><span class="p">:</span><span class="w"> </span><span class="s2">"12345678910"</span><span class="w">
+                </span><span class="n">ansattFnr</span><span class="p">:</span><span class="w"> </span><span class="s2">"321"</span><span class="w">
+            </span><span class="p">}</span><span class="w">
+        </span><span class="p">}]</span><span class="w">
+        </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://foo.bar"</span><span class="w">
+        </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello world"</span><span class="w">
+        </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"$merkelapp"</span><span class="w">
+        </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="s2">"$grupperingsid"</span><span class="w">
+        </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="s2">"$eksternId"</span><span class="w">
+        </span><span class="n">startTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$startTidspunkt"</span><span class="w">
+        </span><span class="n">sluttTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$sluttTidspunkt"</span><span class="w">
+        </span><span class="n">lokasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">postnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
+            </span><span class="n">poststed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Kneika"</span><span class="w">
+            </span><span class="n">adresse</span><span class="p">:</span><span class="w"> </span><span class="s2">"rundt svingen og borti høgget"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="n">erDigitalt</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+        </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"42"</span><span class="w">
+        </span><span class="n">hardDelete</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">den</span><span class="p">:</span><span class="w"> </span><span class="s2">"2019-10-13T07:20:50.52"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="n">__typename</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyKalenderavtaleVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">id</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">feilmelding</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span>
+
+                </code></pre>
+                  </div>
+              </div>
+
+              <h2 id="hvordan-oppdatere-en-kalenderavtale"><a href="#hvordan-oppdatere-en-kalenderavtale">
+                  Hvordan oppdatere en kalenderavtale
+              </a></h2>
+              <p>Følgende mutation oppdaterer en kalenderavtale:</p>
+              <div class="language-graphql highlighter-rouge">
+                  <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">kalenderavtaleOppdater</span><span class="p">(</span><span class="w">
+        </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="s2">"$id"</span><span class="w">
+        </span><span class="n">nyLenke</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://foo.bar"</span><span class="w">
+        </span><span class="n">nyTekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello world"</span><span class="w">
+        </span><span class="n">nyTilstand</span><span class="p">:</span><span class="w"> </span><span class="n">ARBEIDSGIVER_HAR_GODTATT</span><span class="w">
+        </span><span class="n">nyttStartTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$startTidspunkt"</span><span class="w">
+        </span><span class="n">nyttSluttTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$sluttTidspunkt"</span><span class="w">
+        </span><span class="n">nyLokasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">postnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
+            </span><span class="n">poststed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Kneika"</span><span class="w">
+            </span><span class="n">adresse</span><span class="p">:</span><span class="w"> </span><span class="s2">"rundt svingen og borti høgget"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="n">nyErDigitalt</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+        </span><span class="n">hardDelete</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">nyTid</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="n">den</span><span class="p">:</span><span class="w"> </span><span class="s2">"2019-10-13T07:20:50.52"</span><span class="w">
+            </span><span class="p">}</span><span class="w">
+            </span><span class="n">strategi</span><span class="p">:</span><span class="w"> </span><span class="n">OVERSKRIV</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="n">__typename</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">KalenderavtaleOppdaterVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">id</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">feilmelding</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span>
+
+</code></pre>
+                  </div>
+              </div>
+
+              <h2 id="hvordan-oppdatere-en-kalenderavtale-eksternid"><a href="#hvordan-oppdatere-en-kalenderavtale-eksternid">
+                  Hvordan oppdatere en kalenderavtale ved eksternId
+              </a></h2>
+              <p>Følgende mutation oppdaterer en kalenderavtale for en gitt eksternId:</p>
+              <div class="language-graphql highlighter-rouge">
+                  <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">kalenderavtaleOppdaterByEksternId</span><span class="p">(</span><span class="w">
+        </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"$merkelapp"</span><span class="w">
+        </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="s2">"$eksternId"</span><span class="w">
+        </span><span class="n">nyTilstand</span><span class="p">:</span><span class="w"> </span><span class="n">ARBEIDSGIVER_HAR_GODTATT</span><span class="w">
+        </span><span class="n">nyLenke</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://foo.bar"</span><span class="w">
+        </span><span class="n">nyTekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello world"</span><span class="w">
+        </span><span class="n">nyttStartTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$startTidspunkt"</span><span class="w">
+        </span><span class="n">nyttSluttTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$sluttTidspunkt"</span><span class="w">
+        </span><span class="n">nyLokasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">postnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
+            </span><span class="n">poststed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Kneika"</span><span class="w">
+            </span><span class="n">adresse</span><span class="p">:</span><span class="w"> </span><span class="s2">"rundt svingen og borti høgget"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="n">nyErDigitalt</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+        </span><span class="n">hardDelete</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">nyTid</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="n">den</span><span class="p">:</span><span class="w"> </span><span class="s2">"2019-10-13T07:20:50.52"</span><span class="w">
+            </span><span class="p">}</span><span class="w">
+            </span><span class="n">strategi</span><span class="p">:</span><span class="w"> </span><span class="n">OVERSKRIV</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="n">__typename</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">KalenderavtaleOppdaterVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">id</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">feilmelding</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span>
+</code></pre>
+                  </div>
+              </div>
+
+
             <h2 id="hvordan-slette-notifikasjoner-og-saker-automatisk"><a href="#hvordan-slette-notifikasjoner-og-saker-automatisk">
               Hvordan slette notifikasjoner og saker automatisk
             </a></h2>

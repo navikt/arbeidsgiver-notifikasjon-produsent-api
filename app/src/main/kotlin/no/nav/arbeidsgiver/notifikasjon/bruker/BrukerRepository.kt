@@ -27,8 +27,10 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 import java.util.*
 
 interface BrukerRepository {
@@ -94,6 +96,12 @@ interface BrukerRepository {
     suspend fun hentSakerForNotifikasjoner(
         grupperinger: List<BrukerModel.Gruppering>
     ): Map<String, String>
+
+    suspend fun hentKommendeKalenderavaler(
+        fnr: String,
+        virksomhetsnumre: List<String>,
+        tilganger: Tilganger
+    ): List<BrukerModel.Kalenderavtale>
 }
 
 class BrukerRepositoryImpl(
@@ -188,6 +196,23 @@ class BrukerRepositoryImpl(
                     id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa")
                 )
+                "KALENDERAVTALE" -> BrukerModel.Kalenderavtale(
+                    merkelapp = getString("merkelapp"),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getUuid("id"),
+                    klikketPaa = getBoolean("klikketPaa"),
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
+                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
+                    lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
+                    erDigitalt = getBoolean("digitalt"),
+                    tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
+                )
+
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
@@ -594,12 +619,30 @@ class BrukerRepositoryImpl(
                     frist = getObject("frist", LocalDate::class.java),
                 )
 
+                "KALENDERAVTALE" -> BrukerModel.TidslinjeElement.Kalenderavtale(
+                    id = getUuid("id"),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant(),
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
+                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it) },
+                    avtaletilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
+                    lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
+                    digitalt = getBoolean("digitalt")
+                )
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
             .groupBy { it.grupperingsid }
-            .mapValues { it.value.sortedByDescending { it.opprettetTidspunkt } }
+            .mapValues { it.value.sortedByDescending { el ->
+                when(el) {
+                    is BrukerModel.TidslinjeElement.Oppgave,
+                    is BrukerModel.TidslinjeElement.Beskjed -> el.opprettetTidspunkt
+                    is BrukerModel.TidslinjeElement.Kalenderavtale -> el.startTidspunkt.toInstant(ZoneOffset.UTC)
+                }
+
+            } }
 
         val sisteStatuser = database.nonTransactionalExecuteQuery("""
             with sak_status_med_rank as (
@@ -672,6 +715,8 @@ class BrukerRepositoryImpl(
             is EksterntVarselVellykket -> Unit
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
+            is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
+            is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
         }
     }
 
@@ -696,6 +741,91 @@ class BrukerRepositoryImpl(
             getString("grupperingsid") to getString("tittel")
         }
         return@coRecord rows.toMap()
+    }
+
+    override suspend fun hentKommendeKalenderavaler(
+        fnr: String,
+        virksomhetsnumre: List<String>,
+        tilganger: Tilganger
+    ): List<BrukerModel.Kalenderavtale> {
+        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
+            AltinnMottaker(
+                serviceCode = it.servicecode,
+                serviceEdition = it.serviceedition,
+                virksomhetsnummer = it.virksomhet
+            )
+        }.filter {  virksomhetsnumre.contains(it.virksomhetsnummer) }
+
+        return database.nonTransactionalExecuteQuery(
+            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
+            """
+            with 
+                mine_altinntilganger as (
+                    select * from json_to_recordset(?::json) 
+                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                ),
+                mine_altinn_notifikasjoner as (
+                    select er.notifikasjon_id
+                    from mottaker_altinn_enkeltrettighet er
+                    join mine_altinntilganger at on 
+                        er.virksomhet = at.virksomhetsnummer and
+                        er.service_code = at."serviceCode" and
+                        er.service_edition = at."serviceEdition"
+                    where
+                        er.notifikasjon_id is not null
+                ),
+                mine_digisyfo_notifikasjoner as (
+                    select notifikasjon_id 
+                    from mottaker_digisyfo_for_fnr
+                    where fnr_leder = ? and virksomhet = any(?) and notifikasjon_id is not null
+                ),
+                mine_notifikasjoner as (
+                    (select * from mine_digisyfo_notifikasjoner)
+                    union 
+                    (select * from mine_altinn_notifikasjoner)
+                )
+            select 
+                n.*
+            from mine_notifikasjoner as mn
+            join notifikasjon as n on n.id = mn.notifikasjon_id
+            where 
+                n.type = 'KALENDERAVTALE' and
+                n.tilstand != 'AVLYST' and
+                n.start_tidspunkt::timestamp > now() and
+                n.virksomhetsnummer = any(?)
+            order by 
+                start_tidspunkt
+            limit 50
+            """,
+            {
+                jsonb(tilgangerAltinnMottaker)
+                text(fnr)
+                textArray(virksomhetsnumre)
+                textArray(virksomhetsnumre)
+            }
+        ) {
+            when (val type = getString("type")) {
+                "KALENDERAVTALE" -> BrukerModel.Kalenderavtale(
+                    merkelapp = getString("merkelapp"),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getUuid("id"),
+                    klikketPaa = false, // trenger ikke klikket på i denne sammenheng
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
+                    sluttTidspunkt = getString("slutt_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
+                    lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
+                    erDigitalt = getBoolean("digitalt"),
+                    tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
+                )
+
+                else ->
+                    throw Exception("Uforventet notifikasjonstype '$type' for søk på kalenderavtale")
+            }
+        }
     }
 
     private suspend fun oppdaterModellEtterDelete(
@@ -1147,6 +1277,86 @@ class BrukerRepositoryImpl(
         """) {
             date(hendelse.frist)
             uuid(hendelse.notifikasjonId)
+        }
+    }
+
+    private suspend fun oppdaterModellEtterKalenderavtaleOpprettet(hendelse: HendelseModel.KalenderavtaleOpprettet) {
+        database.transaction {
+            executeUpdate(
+                """
+                insert into notifikasjon(
+                    id,
+                    type,
+                    tilstand,
+                    merkelapp,
+                    tekst,
+                    grupperingsid,
+                    lenke,
+                    ekstern_id,
+                    opprettet_tidspunkt,
+                    virksomhetsnummer,
+                    start_tidspunkt,
+                    slutt_tidspunkt,
+                    lokasjon,
+                    digitalt
+                )
+                values (?, 'KALENDERAVTALE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?)
+                on conflict do nothing;
+            """
+            ) {
+                with(hendelse) {
+                    uuid(notifikasjonId)
+                    text(tilstand.name)
+                    text(merkelapp)
+                    text(tekst)
+                    text(grupperingsid)
+                    text(lenke)
+                    text(eksternId)
+                    timestamp_with_timezone(opprettetTidspunkt)
+                    text(virksomhetsnummer)
+                    localDateTimeAsText(startTidspunkt)
+                    nullableLocalDateTimeAsText(sluttTidspunkt)
+                    nullableJsonb(lokasjon)
+                    nullableBoolean(erDigitalt)
+                }
+            }
+
+            for (mottaker in hendelse.mottakere) {
+                storeMottaker(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    sakId = null,
+                    mottaker
+                )
+            }
+        }
+    }
+
+    private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(hendelse: HendelseModel.KalenderavtaleOppdatert) {
+        database.transaction {
+            executeUpdate(
+                """
+                update notifikasjon set
+                    tilstand = coalesce(?, tilstand),
+                    lenke = coalesce(?, lenke),
+                    tekst = coalesce(?, tekst),
+                    start_tidspunkt = coalesce(?, start_tidspunkt),
+                    slutt_tidspunkt = coalesce(?, slutt_tidspunkt),
+                    lokasjon = coalesce(?::jsonb, lokasjon),
+                    digitalt = coalesce(?, digitalt)
+                where id = ?;
+            """
+            ) {
+                with(hendelse) {
+                    nullableText(tilstand?.name)
+                    nullableText(lenke)
+                    nullableText(tekst)
+                    nullableLocalDateTimeAsText(startTidspunkt)
+                    nullableLocalDateTimeAsText(sluttTidspunkt)
+                    nullableJsonb(lokasjon)
+                    nullableBoolean(erDigitalt)
+                    uuid(notifikasjonId)
+                }
+            }
         }
     }
 }

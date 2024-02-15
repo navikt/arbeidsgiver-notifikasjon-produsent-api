@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDeleteUpdate
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.LocalDateTimeOrDuration
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -92,6 +93,88 @@ suspend fun BrukerRepository.beskjedOpprettet(
     eksterneVarsler = eksterneVarsler,
     hardDelete = hardDelete,
     sakId = null,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
+suspend fun BrukerRepository.kalenderavtaleOpprettet(
+    notifikasjonId: UUID = UUID.randomUUID(),
+    sakId: UUID,
+    virksomhetsnummer: String = TEST_VIRKSOMHET_1,
+    produsentId: String = randomProdusentId(),
+    kildeAppNavn: String = randomKildeAppNavn(),
+    merkelapp: String = randomMerkelapp(),
+    eksternId: String = UUID.randomUUID().toString(),
+    mottakere: List<HendelseModel.Mottaker> = listOf(TEST_MOTTAKER_1),
+    tekst: String = randomTekst("kalenderavtale-tekst"),
+    grupperingsid: String = randomTekst("kalenderavtale-grupperingsid"),
+    lenke: String = randomLenke("kalenderavtale"),
+    opprettetTidspunkt: OffsetDateTime = TEST_OPPRETTET_TIDSPUNKT_1,
+    tilstand: KalenderavtaleTilstand = KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER,
+    startTidspunkt: LocalDateTime = LocalDateTime.now().plusHours(1),
+    sluttTidspunkt: LocalDateTime? = LocalDateTime.now().plusHours(2),
+    lokasjon: HendelseModel.Lokasjon? = HendelseModel.Lokasjon("foo", "bar", "baz"),
+    erDigitalt: Boolean = true,
+    eksterneVarsler: List<HendelseModel.EksterntVarsel> = listOf(),
+    påminnelse: Påminnelse? = null,
+    hardDelete: LocalDateTimeOrDuration? = null,
+) = HendelseModel.KalenderavtaleOpprettet(
+    merkelapp = merkelapp,
+    eksternId = eksternId,
+    mottakere = mottakere,
+    hendelseId = notifikasjonId,
+    notifikasjonId = notifikasjonId,
+    tekst = tekst,
+    grupperingsid = grupperingsid,
+    lenke = lenke,
+    opprettetTidspunkt = opprettetTidspunkt,
+    virksomhetsnummer = virksomhetsnummer,
+    kildeAppNavn = kildeAppNavn,
+    produsentId = produsentId,
+    eksterneVarsler = eksterneVarsler,
+    hardDelete = hardDelete,
+    sakId = sakId,
+    tilstand = tilstand,
+    startTidspunkt = startTidspunkt,
+    sluttTidspunkt = sluttTidspunkt,
+    lokasjon = lokasjon,
+    erDigitalt = erDigitalt,
+    påminnelse = påminnelse,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
+suspend fun BrukerRepository.kalenderavtaleOppdatert(
+    notifikasjonId: UUID,
+    virksomhetsnummer: String = TEST_VIRKSOMHET_1,
+    produsentId: String = randomProdusentId(),
+    kildeAppNavn: String = randomKildeAppNavn(),
+    tekst: String? = null,
+    lenke: String? = null,
+    tilstand: KalenderavtaleTilstand? = null,
+    startTidspunkt: LocalDateTime? = null,
+    sluttTidspunkt: LocalDateTime? = null,
+    lokasjon: HendelseModel.Lokasjon? = null,
+    erDigitalt: Boolean = true,
+    eksterneVarsler: List<HendelseModel.EksterntVarsel> = listOf(),
+    påminnelse: Påminnelse? = null,
+    hardDelete: HardDeleteUpdate? = null,
+) = HendelseModel.KalenderavtaleOppdatert(
+    hendelseId = notifikasjonId,
+    notifikasjonId = notifikasjonId,
+    tekst = tekst,
+    lenke = lenke,
+    virksomhetsnummer = virksomhetsnummer,
+    kildeAppNavn = kildeAppNavn,
+    produsentId = produsentId,
+    eksterneVarsler = eksterneVarsler,
+    hardDelete = hardDelete,
+    tilstand = tilstand,
+    startTidspunkt = startTidspunkt,
+    sluttTidspunkt = sluttTidspunkt,
+    lokasjon = lokasjon,
+    erDigitalt = erDigitalt,
+    påminnelse = påminnelse,
 ).also {
     oppdaterModellEtterHendelse(it)
 }

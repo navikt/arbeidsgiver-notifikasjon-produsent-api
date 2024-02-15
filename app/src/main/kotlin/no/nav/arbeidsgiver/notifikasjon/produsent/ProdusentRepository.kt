@@ -12,20 +12,22 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository.AggregateType
-import java.lang.RuntimeException
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -261,6 +263,27 @@ class ProdusentRepositoryImpl(
                     påminnelseEksterneVarsler = laxObjectMapper.readValue(getString("paaminnelse_eksterne_varsler")),
                 )
 
+                "KALENDERAVTALE" -> ProdusentModel.Kalenderavtale(
+                    merkelapp = getString("merkelapp"),
+                    tilstand = ProdusentModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
+                    tekst = getString("tekst"),
+                    grupperingsid = getString("grupperingsid"),
+                    lenke = getString("lenke"),
+                    eksternId = getString("ekstern_id"),
+                    mottakere = laxObjectMapper.readValue(getString("mottakere")),
+                    opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    id = getObject("id", UUID::class.java),
+                    deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
+                    eksterneVarsler = laxObjectMapper.readValue(getString("eksterne_varsler")),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
+                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it) },
+                    lokasjon = getString("lokasjon")?.let {
+                        laxObjectMapper.readValue(it)
+                    },
+                    digitalt = getBoolean("digitalt"),
+                )
+
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
@@ -286,6 +309,8 @@ class ProdusentRepositoryImpl(
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
+            is KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
+            is KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
         }
     }
 
@@ -741,19 +766,82 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    /**
-     * temporary method to delete all varsler for a given tombstone
-     */
-    suspend fun deleteVarslerForTombstone(key: UUID) {
-        database.nonTransactionalExecuteUpdate("""
-            delete from eksternt_varsel where notifikasjon_id = ? 
-        """) {
-            uuid(key)
+    private suspend fun oppdaterModellEtterKalenderavtaleOpprettet(hendelse: KalenderavtaleOpprettet) {
+        database.transaction {
+            executeUpdate(
+                """
+                insert into notifikasjon(
+                    type,
+                    tilstand,
+                    id,
+                    merkelapp,
+                    tekst,
+                    grupperingsid,
+                    lenke,
+                    ekstern_id,
+                    opprettet_tidspunkt,
+                    virksomhetsnummer,
+                    start_tidspunkt,
+                    slutt_tidspunkt,
+                    lokasjon,
+                    digitalt
+                )
+                values ('KALENDERAVTALE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?)
+                on conflict do nothing;
+            """
+            ) {
+                with(hendelse) {
+                    text(tilstand.name)
+                    uuid(notifikasjonId)
+                    text(merkelapp)
+                    text(tekst)
+                    nullableText(grupperingsid)
+                    text(lenke)
+                    text(eksternId)
+                    timestamp_with_timezone(opprettetTidspunkt)
+                    text(virksomhetsnummer)
+
+                    localDateTimeAsText(startTidspunkt)
+                    nullableLocalDateTimeAsText(sluttTidspunkt)
+                    nullableJsonb(lokasjon)
+                    boolean(erDigitalt)
+                }
+            }
+
+            for (mottaker in hendelse.mottakere) {
+                storeMottaker(hendelse.notifikasjonId, mottaker)
+            }
         }
-        database.nonTransactionalExecuteUpdate("""
-            delete from paaminnelse_eksternt_varsel where notifikasjon_id = ? 
-        """) {
-            uuid(key)
+    }
+
+    private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(hendelse: KalenderavtaleOppdatert) {
+        database.transaction {
+            executeUpdate(
+                """
+                update notifikasjon set 
+                    tilstand = coalesce(?, tilstand),
+                    tekst = coalesce(?, tekst),
+                    lenke = coalesce(?, lenke),
+                    start_tidspunkt = coalesce(?, start_tidspunkt),
+                    slutt_tidspunkt = coalesce(?, slutt_tidspunkt),
+                    lokasjon = coalesce(?::jsonb, lokasjon),
+                    digitalt = coalesce(?, digitalt)
+                where id = ?;
+            """
+            ) {
+                with(hendelse) {
+
+                    nullableText(tilstand?.name)
+                    nullableText(tekst)
+                    nullableText(lenke)
+                    nullableLocalDateTimeAsText(startTidspunkt)
+                    nullableLocalDateTimeAsText(sluttTidspunkt)
+                    nullableJsonb(hendelse.lokasjon)
+                    nullableBoolean(hendelse.erDigitalt)
+
+                    uuid(hendelse.notifikasjonId)
+                }
+            }
         }
     }
 }

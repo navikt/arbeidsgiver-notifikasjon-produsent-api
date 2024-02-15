@@ -68,6 +68,21 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
                 mottattTidspunkt = OffsetDateTime.now(),
             )
         }
+
+        val kalenderavtaleMedSak = brukerRepository.sakOpprettet(
+            grupperingsid = "4",
+            tittel = "Sakstittel for kalenderavtale",
+            mottattTidspunkt = OffsetDateTime.now(),
+
+        ).let { sak ->
+            brukerRepository.kalenderavtaleOpprettet(
+                opprettetTidspunkt = opprettetTidspunkt.minusHours(4),
+                grupperingsid = sak.grupperingsid,
+                merkelapp = sak.merkelapp,
+                tekst = "kalenderavtale med sak",
+                sakId = sak.sakId,
+            )
+        }
         
         val response = engine.queryNotifikasjonerJson()
 
@@ -91,7 +106,12 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
                     it.sak shouldNot beNull()
                     it.sak!!.tittel shouldBe "Sakstittel for beskjed"
                 }
-                notifikasjoner shouldHaveSize 4
+                (notifikasjoner[4] as BrukerAPI.Notifikasjon.Kalenderavtale).let {
+                    it.id shouldBe kalenderavtaleMedSak.aggregateId
+                    it.sak shouldNot beNull()
+                    it.sak!!.tittel shouldBe "Sakstittel for kalenderavtale"
+                }
+                notifikasjoner shouldHaveSize 5
             }
         }
     }

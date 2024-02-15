@@ -43,6 +43,7 @@ class ManueltVedlikeholdService(
                 aggregatesDeleted[hendelse.aggregateId] = Unit
 
             is HendelseModel.SakOpprettet,
+            is HendelseModel.KalenderavtaleOpprettet,
             is HendelseModel.OppgaveOpprettet,
             is HendelseModel.BeskjedOpprettet ->
                 aggregatesSeen[hendelse.aggregateId] = hendelse.virksomhetsnummer
@@ -52,6 +53,7 @@ class ManueltVedlikeholdService(
             is HendelseModel.NyStatusSak,
             is HendelseModel.OppgaveUtført,
             is HendelseModel.OppgaveUtgått,
+            is HendelseModel.KalenderavtaleOppdatert,
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.FristUtsatt,

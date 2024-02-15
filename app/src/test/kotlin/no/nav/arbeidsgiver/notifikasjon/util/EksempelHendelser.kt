@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
@@ -630,6 +631,130 @@ object EksempelHendelse {
         eksterneVarsler = listOf(),
         bestillingHendelseId = uuid("1"),
     )
+    val KalenderavtaleOpprettet = withId { id ->
+        HendelseModel.KalenderavtaleOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = id,
+            hendelseId = id,
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "tag",
+            grupperingsid = SakOpprettet.grupperingsid,
+            eksternId = "1",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+                NærmesteLederMottaker(
+                    virksomhetsnummer = "1",
+                    ansattFnr = "1",
+                    naermesteLederFnr = "2"
+                ),
+            ),
+            hardDelete = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            påminnelse = HendelseModel.Påminnelse(
+                tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+                    konkret = LocalDateTime.parse("2020-01-14T01:01"),
+                    påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
+                ),
+                eksterneVarsler = listOf()
+            ),
+            sakId = SakOpprettet.sakId,
+            lenke = "https://foo.no",
+            tekst = "foo",
+            opprettetTidspunkt = OffsetDateTime.now(),
+            tilstand = VENTER_SVAR_FRA_ARBEIDSGIVER,
+            startTidspunkt = LocalDateTime.now().plusHours(1),
+            sluttTidspunkt = LocalDateTime.now().plusHours(2),
+            lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz"),
+            erDigitalt = true,
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                HendelseModel.AltinntjenesteVarselKontaktinfo(
+                    varselId = uuid("5"),
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1",
+                    tittel = "hey",
+                    innhold = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                )
+            ),
+        )
+    }
+    val KalenderavtaleOppdatert = HendelseModel.KalenderavtaleOppdatert(
+        virksomhetsnummer = "1",
+        notifikasjonId = KalenderavtaleOpprettet.notifikasjonId,
+        hendelseId = hendelseId.next(),
+        produsentId = "1",
+        kildeAppNavn = "1",
+        hardDelete = HendelseModel.HardDeleteUpdate(
+            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+        ),
+        påminnelse = HendelseModel.Påminnelse(
+            tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+                konkret = LocalDateTime.parse("2020-01-14T01:01"),
+                påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
+            ),
+            eksterneVarsler = listOf()
+        ),
+        lenke = "https://foo.no",
+        tekst = "foo",
+        tilstand = VENTER_SVAR_FRA_ARBEIDSGIVER,
+        startTidspunkt = LocalDateTime.now().plusHours(1),
+        sluttTidspunkt = LocalDateTime.now().plusHours(2),
+        lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz"),
+        erDigitalt = true,
+        eksterneVarsler = listOf(
+            SmsVarselKontaktinfo(
+                varselId = uuid("3"),
+                fnrEllerOrgnr = "1",
+                tlfnr = "1",
+                smsTekst = "hey",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            ),
+            EpostVarselKontaktinfo(
+                varselId = uuid("4"),
+                fnrEllerOrgnr = "1",
+                epostAddr = "1",
+                tittel = "hey",
+                htmlBody = "body",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            ),
+            HendelseModel.AltinntjenesteVarselKontaktinfo(
+                varselId = uuid("5"),
+                virksomhetsnummer = "1",
+                serviceCode = "1",
+                serviceEdition = "1",
+                tittel = "hey",
+                innhold = "body",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            )
+        ),
+    )
 
     val Alle: List<Hendelse> = listOf(
         BeskjedOpprettet,
@@ -654,5 +779,7 @@ object EksempelHendelse {
         NyStatusSak_NullOppgittTs,
         SakOpprettetNullOppgittLenke,
         PåminnelseOpprettet,
+        KalenderavtaleOpprettet,
+        KalenderavtaleOppdatert,
     )
 }

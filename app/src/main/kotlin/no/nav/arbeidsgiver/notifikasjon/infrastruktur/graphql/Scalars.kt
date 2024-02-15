@@ -42,7 +42,7 @@ inline fun <reified T: Any> toFromStringScalar(
                     try {
                         parser(input.value)
                     } catch (e: RuntimeException) {
-                        throw CoercingParseLiteralException(e)
+                        throw CoercingParseLiteralException(e.message, e)
                     }
                 else
                     throw CoercingParseLiteralException("must be string")
@@ -52,7 +52,7 @@ inline fun <reified T: Any> toFromStringScalar(
                     try {
                         parser(input)
                     } catch (e: RuntimeException) {
-                        throw CoercingParseValueException(e)
+                        throw CoercingParseValueException(e.message, e)
                     }
                 else
                     throw CoercingParseValueException("must be string")

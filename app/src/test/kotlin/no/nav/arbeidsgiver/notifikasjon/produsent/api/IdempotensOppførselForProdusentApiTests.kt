@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -17,13 +18,14 @@ import org.intellij.lang.annotations.Language
 import java.time.LocalDateTime
 import java.util.*
 
-class IdempotensOppførselForProdusentApiTests : DescribeSpec({
+    class IdempotensOppførselForProdusentApiTests : DescribeSpec({
     val database = testDatabase(Produsent.databaseConfig)
     val queryModel = ProdusentRepositoryImpl(database)
 
     val virksomhetsnummer = "1234"
     val mottaker = AltinnMottaker(serviceCode = "5441", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
     val eksternId = "42"
+    val grupperingsid = "42"
 
     val engine = ktorProdusentTestServer(
         produsentRepository = queryModel
@@ -85,6 +87,41 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
             """
     }
 
+    fun nyKalenderavtaleGql(tekst: String) : String {
+        // language=GraphQL
+        return """
+            mutation NyKalenderavtale(
+                ${'$'}startTidspunkt: ISO8601LocalDateTime! = "2024-10-12T07:00:00.00"
+                ${'$'}sluttTidspunkt: ISO8601LocalDateTime
+                ${'$'}lokasjon: LokasjonInput
+                ${'$'}erDigitalt: Boolean
+                ${'$'}tilstand: KalenderavtaleTilstand
+            ) {
+                nyKalenderavtale(
+                    grupperingsid: "$grupperingsid",
+                    eksternId: "$eksternId"
+                    virksomhetsnummer: "${mottaker.virksomhetsnummer}"
+                    tekst: "$tekst"
+                    merkelapp: "tag"
+                    lenke: "#bar"
+                    mottakere: [{altinn: {
+                        serviceCode: "${mottaker.serviceCode}"
+                        serviceEdition: "${mottaker.serviceEdition}"
+                    }}]
+                    startTidspunkt: ${'$'}startTidspunkt
+                    sluttTidspunkt: ${'$'}sluttTidspunkt
+                    lokasjon: ${'$'}lokasjon
+                    erDigitalt: ${'$'}erDigitalt
+                    tilstand: ${'$'}tilstand
+                ) {
+                    __typename
+                    ... on Error { feilmelding }
+                    ... on NyKalenderavtaleVellykket { id }
+                }
+            }
+            """
+    }
+
     describe("Idempotens Oppførsel for Produsent api") {
         context("Beskjed med samme tekst") {
             val idNyBeskjed1 = engine.produsentApi(nyBeskjedGql("foo")).getTypedContent<UUID>("/nyBeskjed/id")
@@ -122,6 +159,35 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
 
             it("første kall er opprettet") {
                 resultat1 shouldBe MutationNyOppgave.NyOppgaveVellykket::class.simpleName
+            }
+            it("andre kall er feilmelding") {
+                resultat2 shouldBe Error.DuplikatEksternIdOgMerkelapp::class.simpleName
+            }
+        }
+
+        context("Kalenderavtale med samme tekst") {
+            queryModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
+                merkelapp = "tag",
+                grupperingsid = grupperingsid,
+            ))
+            val idNyKalenderavtale1 = engine.produsentApi(nyKalenderavtaleGql("foo")).getTypedContent<UUID>("/nyKalenderavtale/id")
+            val idNyKalenderavtale2 = engine.produsentApi(nyKalenderavtaleGql("foo")).getTypedContent<UUID>("/nyKalenderavtale/id")
+
+            it("er opprettet med samme id") {
+                idNyKalenderavtale1 shouldBe idNyKalenderavtale2
+            }
+        }
+
+        context("Oppgave med ulik tekst") {
+            queryModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
+                merkelapp = "tag",
+                grupperingsid = grupperingsid,
+            ))
+            val resultat1 = engine.produsentApi(nyKalenderavtaleGql("foo")).getTypedContent<String>("/nyKalenderavtale/__typename")
+            val resultat2 = engine.produsentApi(nyKalenderavtaleGql("bar")).getTypedContent<String>("/nyKalenderavtale/__typename")
+
+            it("første kall er opprettet") {
+                resultat1 shouldBe MutationKalenderavtale.NyKalenderavtaleVellykket::class.simpleName
             }
             it("andre kall er feilmelding") {
                 resultat2 shouldBe Error.DuplikatEksternIdOgMerkelapp::class.simpleName

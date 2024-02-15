@@ -89,6 +89,8 @@ class SkedulertUtgåttService(
             }
 
             is HendelseModel.BeskjedOpprettet,
+            is HendelseModel.KalenderavtaleOpprettet,
+            is HendelseModel.KalenderavtaleOppdatert,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.SakOpprettet,

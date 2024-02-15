@@ -8,7 +8,7 @@ data class FutureTemporalInput(
     val den: LocalDateTime?,
     val om: ISO8601Period?,
 ) {
-    fun tilDomene(): HendelseModel.LocalDateTimeOrDuration {
+    fun tilHendelseModel(): HendelseModel.LocalDateTimeOrDuration {
         if (den != null) {
             return HendelseModel.LocalDateTimeOrDuration.LocalDateTime(den)
         }
@@ -22,9 +22,9 @@ data class HardDeleteUpdateInput(
     val nyTid: FutureTemporalInput,
     val strategi: NyTidStrategi,
 ) {
-    fun tilDomene(): HendelseModel.HardDeleteUpdate =
+    fun tilHendelseModel(): HendelseModel.HardDeleteUpdate =
         HendelseModel.HardDeleteUpdate(
-            nyTid = nyTid.tilDomene(),
+            nyTid = nyTid.tilHendelseModel(),
             strategi = strategi.hendelseType
         )
 }
