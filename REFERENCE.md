@@ -147,7 +147,7 @@ Utgått hendelsen sendes på kafka topic og vil endre tilstand på oppgaven og v
 [notifikasjon-kafka-reaper](app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/kafka_reaper) konsumerer hendelser fra kafka topicen og gjør hard deletes om til tombstones i kafka.
 Applikasjonen holder styr på alle hendelser tilknyttet et aggregat og tombstoner alle relaterte hendelser når et aggregat blir slettet.
 Dette gjøres for å ivareta juridiske krav om sletting og for å støtte varierende hjemmel for datalagring hos forskjellige produsenter. En produsent kan når som helst slette sin data fra plattformen vha hard delete endepunktet.
-Produsenter kan også ved opprettelse av aggregater bestille hard deletes som skal skje på et senere tidspunkt (se notifikasjon-skedulert-harddelete i neste avsnitt).
+Produsenter kan også ved opprettelse av aggregater bestille hard deletes som skal skje på et senere tidspunkt (se notifikasjon-skedulert-harddelete i eget avsnitt).
 
 ### notifikasjon-replay-validator
 
