@@ -108,6 +108,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
                 }
                 (notifikasjoner[4] as BrukerAPI.Notifikasjon.Kalenderavtale).let {
                     it.id shouldBe kalenderavtaleMedSak.aggregateId
+                    it.sorteringTidspunkt.toInstant() shouldBe kalenderavtaleMedSak.opprettetTidspunkt.toInstant()
                     it.sak shouldNot beNull()
                     it.sak!!.tittel shouldBe "Sakstittel for kalenderavtale"
                 }
