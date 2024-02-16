@@ -437,7 +437,7 @@ object BrukerAPI {
                                 lenke = notifikasjon.lenke,
                                 avtaletilstand = notifikasjon.tilstand.tilBrukerAPI(),
                                 opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                sorteringTidspunkt = notifikasjon.sorteringTidspunkt,
+                                sorteringTidspunkt = notifikasjon.opprettetTidspunkt,
                                 startTidspunkt = notifikasjon.startTidspunkt,
                                 sluttTidspunkt = notifikasjon.sluttTidspunkt,
                                 lokasjon = notifikasjon.lokasjon?.let { Lokasjon(
