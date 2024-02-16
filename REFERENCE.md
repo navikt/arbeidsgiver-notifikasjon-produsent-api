@@ -167,7 +167,7 @@ Replay gjøres kontinuerlig i de fleste applikasjonene via delt `replayPeriodica
 
 [notifikasjon-statistikk](app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/statistikk) konsumerer hendelser fra kafka topicen og produserer near realtime statistikk over bruk av plattformen. 
 Denne statistikken lagres i en database og eksponeres til prometheus for overvåkning.
-Se for eksempel (bruk av notifikasjoner)[https://grafana.nav.cloud.nais.io/d/vk9LN9I7z/bruk-av-notifikasjoner?orgId=1], (bruk av saker)[https://grafana.nav.cloud.nais.io/d/2U4EXBy7z/bruk-av-saker?orgId=1&refresh=30s], og (bruk av ekstern varsling)[https://grafana.nav.cloud.nais.io/d/_CEEMTr7z/bruk-av-ekstern-varsling?orgId=1&refresh=30s].
+Se for eksempel [bruk av notifikasjoner](https://grafana.nav.cloud.nais.io/d/vk9LN9I7z/bruk-av-notifikasjoner?orgId=1), [bruk av saker](https://grafana.nav.cloud.nais.io/d/2U4EXBy7z/bruk-av-saker?orgId=1&refresh=30s) og [bruk av ekstern varsling](https://grafana.nav.cloud.nais.io/d/_CEEMTr7z/bruk-av-ekstern-varsling?orgId=1&refresh=30s).
 
 ### notifikasjon-dataprodukt
 
