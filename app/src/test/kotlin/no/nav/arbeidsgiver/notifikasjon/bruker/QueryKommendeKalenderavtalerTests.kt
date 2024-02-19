@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Kalenderavtale
+import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDateTime
 
@@ -16,6 +17,7 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
         }
     )
+    val now = LocalDateTime.now()
 
     describe("kommendeKalenderavtaler") {
         val grupperingsid = "42"
@@ -33,8 +35,8 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             virksomhetsnummer = TEST_VIRKSOMHET_1,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
-            startTidspunkt = LocalDateTime.now().plusDays(1),
-            sluttTidspunkt = LocalDateTime.now().plusDays(1).plusHours(1),
+            startTidspunkt = now.plusDays(1),
+            sluttTidspunkt = now.plusDays(1).plusHours(1),
             tekst = "2. plass"
         )
         brukerRepository.kalenderavtaleOpprettet(
@@ -43,8 +45,8 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             virksomhetsnummer = TEST_VIRKSOMHET_1,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
-            startTidspunkt = LocalDateTime.now().plusHours(1),
-            sluttTidspunkt = LocalDateTime.now().plusHours(2),
+            startTidspunkt = now.plusHours(1),
+            sluttTidspunkt = now.plusHours(2),
             tekst = "1. plass"
         )
         brukerRepository.kalenderavtaleOpprettet(
@@ -53,8 +55,8 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             virksomhetsnummer = TEST_VIRKSOMHET_1,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
-            startTidspunkt = LocalDateTime.now().minusHours(2),
-            sluttTidspunkt = LocalDateTime.now().minusHours(1),
+            startTidspunkt = now.minusHours(2),
+            sluttTidspunkt = now.minusHours(1),
             tekst = "DNF"
         )
         brukerRepository.kalenderavtaleOpprettet(
@@ -63,15 +65,15 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             virksomhetsnummer = TEST_VIRKSOMHET_1,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
-            startTidspunkt = LocalDateTime.now().minusDays(2),
-            sluttTidspunkt = LocalDateTime.now().minusDays(2).plusHours(1),
+            startTidspunkt = now.minusDays(2),
+            sluttTidspunkt = now.minusDays(2).plusHours(1),
             tekst = "DNF"
         )
         brukerRepository.kalenderavtaleOppdatert(
             notifikasjonId = uuid("5"),
             virksomhetsnummer = TEST_VIRKSOMHET_1,
-            startTidspunkt = LocalDateTime.now().plusDays(2),
-            sluttTidspunkt = LocalDateTime.now().plusDays(2).plusHours(1),
+            startTidspunkt = now.plusDays(2),
+            sluttTidspunkt = now.plusDays(2).plusHours(1),
             tekst = "fra DNF til 3. plass"
         )
 
@@ -81,8 +83,11 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             val kalenderavtaler = response.getTypedContent<List<Kalenderavtale>>("kommendeKalenderavtaler/avtaler")
             kalenderavtaler.size shouldBe 3
             kalenderavtaler[0].tekst shouldBe "1. plass"
+            kalenderavtaler[0].startTidspunkt shouldBe now.plusHours(1).atOsloAsOffsetDateTime()
             kalenderavtaler[1].tekst shouldBe "2. plass"
+            kalenderavtaler[1].startTidspunkt shouldBe now.plusDays(1).atOsloAsOffsetDateTime()
             kalenderavtaler[2].tekst shouldBe "fra DNF til 3. plass"
+            kalenderavtaler[2].startTidspunkt shouldBe now.plusDays(2).atOsloAsOffsetDateTime()
         }
     }
 })

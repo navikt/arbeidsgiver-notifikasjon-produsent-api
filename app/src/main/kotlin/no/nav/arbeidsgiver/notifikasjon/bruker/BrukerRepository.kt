@@ -30,7 +30,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import java.time.ZoneOffset.UTC
 import java.util.*
 
 interface BrukerRepository {
@@ -206,8 +205,8 @@ class BrukerRepositoryImpl(
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa"),
-                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
-                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it).atOffset(UTC) },
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
+                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it) },
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     erDigitalt = getBoolean("digitalt"),
                     tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
@@ -815,8 +814,8 @@ class BrukerRepositoryImpl(
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
                     id = getUuid("id"),
                     klikketPaa = false, // trenger ikke klikket på i denne sammenheng
-                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it).atOffset(UTC) },
-                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it).atOffset(UTC) },
+                    startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
+                    sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it) },
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     erDigitalt = getBoolean("digitalt"),
                     tilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),

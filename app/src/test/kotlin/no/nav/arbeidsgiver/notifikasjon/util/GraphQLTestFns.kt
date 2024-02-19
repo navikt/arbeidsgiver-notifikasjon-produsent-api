@@ -1,12 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jayway.jsonpath.JsonPath
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
 
 data class GraphQLError(
@@ -22,23 +23,33 @@ fun TestApplicationResponse.validateStatusOK() {
     }
 }
 
+/**
+ * fikse slik at deserialiserte datoer beholder tidssone
+ * se: https://github.com/FasterXML/jackson-modules-java8/issues/53
+ *
+ * Vi bør vurdere om dette skal settes i prod koden også, mao direkte på laxObjectMapper
+ */
+val laxObjectMapperForTest = laxObjectMapper.apply {
+    configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
+}
+
 inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T {
     validateStatusOK()
     val errors = getGraphqlErrors()
     if (errors.isEmpty()) {
-        val tree = laxObjectMapper.readTree(this.content!!)
+        val tree = laxObjectMapperForTest.readTree(this.content!!)
         logger().error("content: $tree")
         val dataNode = tree.get("data")
 
         return if (name.startsWith("$")) {
-            val rawJson = laxObjectMapper.writeValueAsString(JsonPath.read(dataNode.toString(), name))
+            val rawJson = laxObjectMapperForTest.writeValueAsString(JsonPath.read(dataNode.toString(), name))
             laxObjectMapper.readValue(rawJson)
         } else {
             val node = dataNode.at(name.ensurePrefix("/"))
             if (node.isNull || node.isMissingNode) {
                 throw Exception("content.data does not contain element '$name' content: $tree")
             }
-            laxObjectMapper.convertValue(node)
+            laxObjectMapperForTest.convertValue(node)
         }
     } else {
         throw Exception("Got errors $errors")
@@ -50,8 +61,8 @@ fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
     if (this.content == null) {
         throw NullPointerException("content is null. status:${status()}")
     }
-    val tree = laxObjectMapper.readTree(this.content!!)
+    val tree = laxObjectMapperForTest.readTree(this.content!!)
     logger().info("content: $tree")
     val errors = tree.get("errors")
-    return if (errors == null) emptyList() else laxObjectMapper.convertValue(errors)
+    return if (errors == null) emptyList() else laxObjectMapperForTest.convertValue(errors)
 }
