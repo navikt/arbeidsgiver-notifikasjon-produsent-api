@@ -16,7 +16,6 @@ val laxObjectMapper = jacksonObjectMapper().apply {
         }
     )
     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
     registerModule(JavaTimeModule())
 }
 
