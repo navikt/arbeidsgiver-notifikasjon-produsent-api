@@ -1,0 +1,1 @@
+create index aggregate_gruppering_id_merkelapp_idx on notifikasjon (gruppering_id, merkelapp);
