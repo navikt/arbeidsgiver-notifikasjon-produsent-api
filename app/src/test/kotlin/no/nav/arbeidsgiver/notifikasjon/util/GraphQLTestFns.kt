@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jayway.jsonpath.JsonPath
@@ -29,7 +30,7 @@ fun TestApplicationResponse.validateStatusOK() {
  *
  * Vi bør vurdere om dette skal settes i prod koden også, mao direkte på laxObjectMapper
  */
-val laxObjectMapperForTest = laxObjectMapper.apply {
+val laxObjectMapperForTest: ObjectMapper = laxObjectMapper.copy().apply {
     configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
 }
 
