@@ -143,6 +143,7 @@ type Kalenderavtale {
     mottakere: [Mottaker!]!
     metadata: Metadata!
     kalenderavtale: KalenderavtaleData!
+    eksterneVarsler: [EksterntVarsel!]!
 }
 
 union Mottaker =
@@ -412,6 +413,9 @@ type Mutation {
         Denne vises til brukeren.
         """
         tilstand: KalenderavtaleTilstand
+
+
+        eksterneVarsler: [EksterntVarselInput!]! = []
 
         """
         Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
@@ -1675,6 +1679,7 @@ type NyOppgaveVellykket {
 
 type NyKalenderavtaleVellykket {
     id: ID!
+    eksterneVarsler: [NyEksterntVarselResultat!]!
 }
 
 type PaaminnelseResultat {
