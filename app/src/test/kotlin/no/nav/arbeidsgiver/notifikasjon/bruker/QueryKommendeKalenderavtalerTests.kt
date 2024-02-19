@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Kalenderavtale
-import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
+import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDateTime
 
@@ -83,11 +83,11 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             val kalenderavtaler = response.getTypedContent<List<Kalenderavtale>>("kommendeKalenderavtaler/avtaler")
             kalenderavtaler.size shouldBe 3
             kalenderavtaler[0].tekst shouldBe "1. plass"
-            kalenderavtaler[0].startTidspunkt shouldBe now.plusHours(1).atOsloAsOffsetDateTime()
+            kalenderavtaler[0].startTidspunkt.toInstant() shouldBe now.plusHours(1).atOslo().toInstant()
             kalenderavtaler[1].tekst shouldBe "2. plass"
-            kalenderavtaler[1].startTidspunkt shouldBe now.plusDays(1).atOsloAsOffsetDateTime()
+            kalenderavtaler[1].startTidspunkt.toInstant() shouldBe now.plusDays(1).atOslo().toInstant()
             kalenderavtaler[2].tekst shouldBe "fra DNF til 3. plass"
-            kalenderavtaler[2].startTidspunkt shouldBe now.plusDays(2).atOsloAsOffsetDateTime()
+            kalenderavtaler[2].startTidspunkt.toInstant() shouldBe now.plusDays(2).atOslo().toInstant()
         }
     }
 })

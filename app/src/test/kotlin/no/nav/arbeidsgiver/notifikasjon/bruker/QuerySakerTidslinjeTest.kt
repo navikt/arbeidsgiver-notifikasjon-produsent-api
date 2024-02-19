@@ -14,7 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Ti
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.OppgaveTidslinjeElement
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.TidslinjeElement
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
+import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
@@ -159,8 +159,8 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             instanceOf<BrukerAPI.KalenderavtaleTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
                 it.tekst shouldBe kalenderavtale.tekst
                 it.avtaletilstand shouldBe BrukerAPI.Notifikasjon.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-                it.startTidspunkt shouldBe kalenderavtale.startTidspunkt.atOsloAsOffsetDateTime()
-                it.sluttTidspunkt shouldBe kalenderavtale.sluttTidspunkt?.atOsloAsOffsetDateTime()
+                it.startTidspunkt.toInstant() shouldBe kalenderavtale.startTidspunkt.atOslo().toInstant()
+                it.sluttTidspunkt?.toInstant() shouldBe kalenderavtale.sluttTidspunkt?.atOslo()?.toInstant()
                 it.lokasjon shouldNot beNull()
                 it.lokasjon!!.adresse shouldBe kalenderavtale.lokasjon!!.adresse
                 it.lokasjon!!.poststed shouldBe kalenderavtale.lokasjon!!.poststed
