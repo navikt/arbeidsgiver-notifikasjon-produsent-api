@@ -15,6 +15,7 @@ object OsloTidImpl : OsloTid {
 }
 
 fun LocalDateTime.atOslo():  ZonedDateTime = atZone(norwayZoneId)
+fun LocalDateTime.atOsloAsOffsetDateTime():  OffsetDateTime = atOslo().toOffsetDateTime()
 
 fun Instant.asOsloLocalDateTime(): LocalDateTime =
     this.atZone(norwayZoneId).toLocalDateTime()

@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
+import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
@@ -438,8 +439,8 @@ object BrukerAPI {
                                 avtaletilstand = notifikasjon.tilstand.tilBrukerAPI(),
                                 opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                 sorteringTidspunkt = notifikasjon.opprettetTidspunkt,
-                                startTidspunkt = notifikasjon.startTidspunkt,
-                                sluttTidspunkt = notifikasjon.sluttTidspunkt,
+                                startTidspunkt = notifikasjon.startTidspunkt.atOsloAsOffsetDateTime(),
+                                sluttTidspunkt = notifikasjon.sluttTidspunkt?.atOsloAsOffsetDateTime(),
                                 lokasjon = notifikasjon.lokasjon?.let { Lokasjon(
                                     adresse = it.adresse,
                                     postnummer = it.postnummer,
@@ -493,8 +494,8 @@ object BrukerAPI {
                         avtaletilstand = notifikasjon.tilstand.tilBrukerAPI(),
                         opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                         sorteringTidspunkt = notifikasjon.sorteringTidspunkt,
-                        startTidspunkt = notifikasjon.startTidspunkt,
-                        sluttTidspunkt = notifikasjon.sluttTidspunkt,
+                        startTidspunkt = notifikasjon.startTidspunkt.atOsloAsOffsetDateTime(),
+                        sluttTidspunkt = notifikasjon.sluttTidspunkt?.atOsloAsOffsetDateTime(),
                         lokasjon = notifikasjon.lokasjon?.let { Lokasjon(
                             adresse = it.adresse,
                             postnummer = it.postnummer,
@@ -613,8 +614,8 @@ object BrukerAPI {
                                 tekst = element.tekst,
 
                                 avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
-                                startTidspunkt = element.startTidspunkt.atOffset(UTC),
-                                sluttTidspunkt = element.sluttTidspunkt?.atOffset(UTC),
+                                startTidspunkt = element.startTidspunkt.atOsloAsOffsetDateTime(),
+                                sluttTidspunkt = element.sluttTidspunkt?.atOsloAsOffsetDateTime(),
                                 lokasjon = element.lokasjon?.let { Lokasjon(
                                     adresse = it.adresse,
                                     postnummer = it.postnummer,
@@ -725,8 +726,8 @@ object BrukerAPI {
                                 id = element.id,
                                 tekst = element.tekst,
                                 avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
-                                startTidspunkt = element.startTidspunkt.atOffset(UTC),
-                                sluttTidspunkt = element.sluttTidspunkt?.atOffset(UTC),
+                                startTidspunkt = element.startTidspunkt.atOsloAsOffsetDateTime(),
+                                sluttTidspunkt = element.sluttTidspunkt?.atOsloAsOffsetDateTime(),
                                 lokasjon = element.lokasjon?.let { Lokasjon(
                                     adresse = it.adresse,
                                     postnummer = it.postnummer,
@@ -825,8 +826,8 @@ object BrukerAPI {
                                 id = element.id,
                                 tekst = element.tekst,
                                 avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
-                                startTidspunkt = element.startTidspunkt.atOffset(UTC),
-                                sluttTidspunkt = element.sluttTidspunkt?.atOffset(UTC),
+                                startTidspunkt = element.startTidspunkt.atOsloAsOffsetDateTime(),
+                                sluttTidspunkt = element.sluttTidspunkt?.atOsloAsOffsetDateTime(),
                                 lokasjon = element.lokasjon?.let { Lokasjon(
                                     adresse = it.adresse,
                                     postnummer = it.postnummer,
