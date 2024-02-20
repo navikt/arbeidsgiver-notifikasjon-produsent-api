@@ -240,7 +240,6 @@ export type HentetNotifikasjon = {
 
 export type Kalenderavtale = {
   __typename?: 'Kalenderavtale';
-  eksterneVarsler: Array<EksterntVarsel>;
   kalenderavtale: KalenderavtaleData;
   metadata: Metadata;
   mottakere: Array<Mottaker>;
@@ -602,7 +601,6 @@ export type MutationNyBeskjedArgs = {
  */
 export type MutationNyKalenderavtaleArgs = {
   eksternId: Scalars['String']['input'];
-  eksterneVarsler?: Array<EksterntVarselInput>;
   erDigitalt?: InputMaybe<Scalars['Boolean']['input']>;
   grupperingsid: Scalars['String']['input'];
   hardDelete?: InputMaybe<FutureTemporalInput>;
@@ -899,7 +897,6 @@ export type NyKalenderavtaleResultat = DuplikatEksternIdOgMerkelapp | NyKalender
 
 export type NyKalenderavtaleVellykket = {
   __typename?: 'NyKalenderavtaleVellykket';
-  eksterneVarsler: Array<NyEksterntVarselResultat>;
   id: Scalars['ID']['output'];
 };
 
