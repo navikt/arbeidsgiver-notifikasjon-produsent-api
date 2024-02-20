@@ -14,7 +14,7 @@ spec:
   readiness:
     path: /ok
   ingresses:
-  - https://notifikasjon-test-produsent.intern.dev.nav.no
+  - https://notifikasjon-test-produsent-v2.intern.dev.nav.no
   accessPolicy:
     outbound:
       rules:
