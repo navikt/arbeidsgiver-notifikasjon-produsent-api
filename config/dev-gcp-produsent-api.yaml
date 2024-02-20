@@ -41,6 +41,7 @@ spec:
     inbound:
       rules:
         - application: notifikasjon-test-produsent
+        - application: notifikasjon-test-produsent-v2
 
         - application: tiltak-refusjon-api
           namespace: arbeidsgiver
