@@ -1,0 +1,15 @@
+{
+    "name": "server",
+    "version": "1.0.0",
+    "license": "MIT",
+    "type": "module",
+    "main": "server.js",
+    "dependencies": {
+        "express": "4.18.2",
+        "http-proxy-middleware": "3.0.0-beta.1",
+        "winston": "3.11.0"
+    },
+    "scripts": {
+        "start": "node server.js"
+    }
+}
