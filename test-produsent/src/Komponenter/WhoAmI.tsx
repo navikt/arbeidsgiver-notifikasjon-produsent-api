@@ -13,5 +13,5 @@ export const WhoAmI: React.FunctionComponent = () => {
     if (loading) return <p> Loading...</p>
     if (error) return <p>Error </p>
     if (data === undefined) return null
-    return <p>{data.whoami}</p>
+    return <pre>{JSON.stringify(data)}</pre>
 }
