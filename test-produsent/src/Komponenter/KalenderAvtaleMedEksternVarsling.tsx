@@ -33,7 +33,7 @@ const NY_KALENDERAVTALE_MED_VARSSLING = gql`
             sluttTidspunkt: $sluttTidspunkt
             lenke: $lenke
             tekst: $tekst
-            merkelapp: "tag"
+            merkelapp: "fager"
             lokasjon: $lokasjon
             erDigitalt: true
             eksterneVarsler: $eksterneVarsler
@@ -65,7 +65,7 @@ export const KalenderAvtaleMedEksternVarsling: React.FunctionComponent = () => {
 
 
     const [variables, setVariables] = useState({
-        grupperingsid: "123",
+        grupperingsid: "8e3ffcd8-d547-4cfb-abc4-f923dd1c56de",
         virksomhetsnummer: "910825526",
         eksternId: "123",
         lenke: "https://foo.bar",
