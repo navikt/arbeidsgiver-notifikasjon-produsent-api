@@ -15,7 +15,7 @@ function App() {
     const [valgtKomponent, setValgtKomponent] = React.useState<ReactNode>(Object.values(komponenter)[0])
     return (
         <ApolloProvider client={client}>
-            <div className="hovedside" style={{display: "flex", flexDirection: "column"}}>
+            <div className="body" style={{display: "flex", flexDirection: "column"}}>
                 <header className="header">
                     <img alt="shipit squirrel" src={shipit} style={{width: "100px"}}/>
                     <Heading size="xlarge" level="1">
