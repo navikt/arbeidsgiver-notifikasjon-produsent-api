@@ -16,28 +16,28 @@ function App() {
     return (
         <ApolloProvider client={client}>
             <div className="hovedside" style={{display: "flex", flexDirection: "column"}}>
-                <header style={{width: "100vw", padding: "2rem", display: "flex", flexDirection: "row", gap: "2rem", alignItems: "baseline"}}>
+                <header className="header">
                     <img alt="shipit squirrel" src={shipit} style={{width: "100px"}}/>
-                    <Heading size="large">
+                    <Heading size="xlarge" level="1">
                         Notifikasjoner for Arbeidsgiver Testprodusent
                     </Heading>
                 </header>
-                <main>
-                    <div style={{display: "flex", flexDirection: "row", gap: "2rem"}}>
-                        <nav className="meny">
-                            <ul style={{listStyle: "none"}}>
-                                {alleKomponenter.map((key) => (
-                                    <li key={key}>
-                                        <Button size="small"
-                                                variant="tertiary"
-                                                onClick={() => setValgtKomponent(komponenter[key])}>{key}</Button>
-                                    </li>))}
-                            </ul>
-                        </nav>
+                <main className="hovedside">
+                    <nav className="meny">
+                        <Heading size={"medium"} level="2">Velg query</Heading>
+                        <ul>
+                            {alleKomponenter.map((key) => (
+                                <li key={key}>
+                                    <Button size="small"
+                                            variant="tertiary"
+                                            onClick={() => setValgtKomponent(komponenter[key])}>{key}</Button>
+                                </li>))}
+                        </ul>
+                    </nav>
+                    <div className="innhold">
                         {valgtKomponent}
                     </div>
                 </main>
-
             </div>
         </ApolloProvider>
     )

@@ -1,8 +1,10 @@
 import {WhoAmI} from "./WhoAmI.tsx";
+import {AdHoc} from "./AdHoc.tsx";
 import {KalenderAvtaleMedEksternVarsling} from "./KalenderAvtaleMedEksternVarsling.tsx";
 
 export const komponenter = {
     "Who am I": <WhoAmI/>,
+    "Ad hoc": <AdHoc/>,
     "Ny Kalenderavtale med varsling": <KalenderAvtaleMedEksternVarsling/>,
 }
 
