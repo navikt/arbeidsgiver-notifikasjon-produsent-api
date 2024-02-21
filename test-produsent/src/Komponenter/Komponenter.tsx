@@ -1,13 +1,11 @@
-import React, {ReactNode} from "react";
 import {WhoAmI} from "./WhoAmI.tsx";
+import {KalenderAvtaleMedEksternVarsling} from "./KalenderAvtaleMedEksternVarsling.tsx";
 
-
-
-
-
-
-//TODO: Constrain tittel til å være en nøkkel i komponenter
-export const komponenter: Record<string, ReactNode> = {
+export const komponenter = {
     "Who am I": <WhoAmI/>,
-    "baz": <div>Baz</div>
+    "Ny Kalenderavtale med varsling": <KalenderAvtaleMedEksternVarsling/>,
 }
+
+export type KomponentNavn = keyof typeof komponenter;
+
+export const alleKomponenter = Object.keys(komponenter) as KomponentNavn[];

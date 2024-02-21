@@ -6,13 +6,14 @@
 
 .meny {
   display: flex;
+  max-width: 10vw;
+}
+
+.meny button {
   width: 100%;
-  max-width: 20rem;
 }
 
 .innhold {
   display: flex;
-  flex-grow: 2;
+  width: 80vw;
 }
-
-.body
