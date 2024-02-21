@@ -72,7 +72,6 @@ export const KalenderAvtaleMedEksternVarsling: React.FunctionComponent = () => {
         tekst: "Dette er en kalenderavtale",
         startTidspunkt: datePlus(1).toISOString().replace('Z', ''),
         sluttTidspunkt: datePlus(1, 1).toISOString().replace('Z', ''),
-        epostadresse: "donald@duck.co",
         lokasjon: {
             postnummer: "1234",
             poststed: "Kneika",
