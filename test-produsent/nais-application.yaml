@@ -1,0 +1,27 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: notifikasjon-test-produsent-v2
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{image}}
+  prometheus:
+    enabled: false
+  liveness:
+    path: /ok
+  readiness:
+    path: /ok
+  ingresses:
+  - https://notifikasjon-test-produsent-v2.intern.dev.nav.no
+  accessPolicy:
+    outbound:
+      rules:
+        - application: notifikasjon-produsent-api
+  azure:
+    application:
+      enabled: true
+  env:
+    - name: GIT_COMMIT
+      value: {{{commit}}}

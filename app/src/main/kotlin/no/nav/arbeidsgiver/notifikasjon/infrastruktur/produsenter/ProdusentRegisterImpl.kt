@@ -6,12 +6,10 @@ val FAGER_TESTPRODUSENT = Produsent(
     id = "fager",
     accessPolicy = basedOnEnv(
         prod = { listOf() },
-        other = {
-            listOf(
-                "dev-gcp:fager:notifikasjon-test-produsent",
-                "dev-gcp:fager:notifikasjon-test-produsent-v2",
-            )
-        },
+        other = { listOf(
+            "dev-gcp:fager:notifikasjon-test-produsent",
+            "dev-gcp:fager:notifikasjon-test-produsent-v2",
+        ) },
     ),
     tillatteMerkelapper = listOf(
         "fager",

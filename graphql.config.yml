@@ -6,6 +6,7 @@ projects:
     schema: app/src/main/resources/produsent.graphql
     documents:
       - app/src/**/produsent/**/*.kt
+      - test-produsent/**/*
       - http/produsent/*.http
   produsentapidevgcp:
     schema:

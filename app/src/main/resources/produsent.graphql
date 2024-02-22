@@ -605,7 +605,7 @@ type Mutation {
         hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
     @deprecated(reason:
-        "Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead."
+    "Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead."
     )
 
     """
@@ -1788,4 +1788,3 @@ type UgyldigKalenderavtale implements Error {
 interface Error {
     feilmelding: String!
 }
-
