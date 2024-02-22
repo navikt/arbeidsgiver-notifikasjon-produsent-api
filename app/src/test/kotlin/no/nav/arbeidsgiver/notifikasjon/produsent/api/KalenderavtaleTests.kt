@@ -341,6 +341,9 @@ private fun TestApplicationEngine.nyKalenderavtale(
                 __typename
                 ... on NyKalenderavtaleVellykket {
                     id
+                    eksterneVarsler {
+                        id
+                    }
                 }
                 ... on Error {
                     feilmelding

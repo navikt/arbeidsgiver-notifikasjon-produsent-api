@@ -43,6 +43,7 @@ class EksternVarslingRepository(
         when (hendelse) {
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
@@ -59,7 +60,6 @@ class EksternVarslingRepository(
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
             is FristUtsatt -> Unit
-            is KalenderavtaleOpprettet -> Unit
             is HendelseModel.KalenderavtaleOppdatert -> Unit //TODO: vurder om eksterne varsler på påminnelse skal kanselleres dersom kalenderavtalen er avlyst
         }
     }
@@ -102,6 +102,27 @@ class EksternVarslingRepository(
                 text(oppgaveOpprettet.merkelapp)
                 nullableText(oppgaveOpprettet.grupperingsid)
                 uuid(oppgaveOpprettet.notifikasjonId)
+            }
+        }
+    }
+
+    private suspend fun oppdaterModellEtterKalenderavtaleOpprettet(kalenderavtaleOpprettet: KalenderavtaleOpprettet) {
+        insertVarsler(
+            varsler = kalenderavtaleOpprettet.eksterneVarsler,
+            produsentId = kalenderavtaleOpprettet.produsentId,
+            notifikasjonsId = kalenderavtaleOpprettet.notifikasjonId,
+            notifikasjonOpprettet = kalenderavtaleOpprettet.opprettetTidspunkt,
+        ) { tx ->
+            tx.executeUpdate(
+                """
+                insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
+                values (?, ?, ?)
+                on conflict do nothing
+                """
+            ) {
+                text(kalenderavtaleOpprettet.merkelapp)
+                nullableText(kalenderavtaleOpprettet.grupperingsid)
+                uuid(kalenderavtaleOpprettet.notifikasjonId)
             }
         }
     }

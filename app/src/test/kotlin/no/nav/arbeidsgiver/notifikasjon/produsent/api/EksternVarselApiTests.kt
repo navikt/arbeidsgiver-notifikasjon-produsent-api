@@ -12,8 +12,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyBeskjed
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.nyOppgave
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.NyNotifikasjonInputType.*
+import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -24,6 +24,7 @@ import java.util.*
 enum class NyNotifikasjonInputType(val returType: String) {
     nyBeskjed("NyBeskjedVellykket"),
     nyOppgave("NyOppgaveVellykket"),
+    nyKalenderavtale("NyKalenderavtaleVellykket"),
 }
 
 
@@ -86,8 +87,9 @@ class EksternVarselApiTests: DescribeSpec({
         produsentRepository = produsentModel
     )
 
-    fun nyNotifikasjonMutation(type: NyNotifikasjonInputType) =
-        """
+    fun nyNotifikasjonMutation(type: NyNotifikasjonInputType) = when(type) {
+        nyBeskjed,
+        nyOppgave -> """
             mutation LagNotifikasjon(${'$'}eksterneVarsler: [EksterntVarselInput!]!) {
                 nyNotifikasjon: $type(
                     $type: {
@@ -122,6 +124,39 @@ class EksternVarselApiTests: DescribeSpec({
                 }
             }
         """
+        nyKalenderavtale -> """
+            mutation LagNotifikasjon(${'$'}eksterneVarsler: [EksterntVarselInput!]!) {
+                nyNotifikasjon: nyKalenderavtale(
+                    mottakere: {
+                        altinn: {
+                            serviceCode: "5441"
+                            serviceEdition: "1"
+                        }
+                    }
+                    lenke: "0"
+                    tekst: "0"
+                    merkelapp: "tag"
+                    grupperingsid: "0"
+                    virksomhetsnummer: "0"
+                    eksternId: "$type-0"
+                    startTidspunkt: "2021-01-01T00:00:00"
+                    eksterneVarsler: ${'$'}eksterneVarsler
+                ) {
+                    __typename
+                    ... on NyKalenderavtaleVellykket{
+                        id
+                        eksterneVarsler {
+                            id
+                        }
+                    }
+                    ... on Error {
+                        feilmelding
+                    }
+                }
+            }
+        """
+    }
+
 
     val mineNotifikasjonerQuery =
         """
@@ -137,6 +172,12 @@ class EksternVarselApiTests: DescribeSpec({
                                     }
                                 }
                                 ... on Oppgave {
+                                    eksterneVarsler {
+                                        id
+                                        status
+                                    }
+                                }
+                                ... on Kalenderavtale {
                                     eksterneVarsler {
                                         id
                                         status
@@ -235,9 +276,100 @@ class EksternVarselApiTests: DescribeSpec({
             oppdatertVarsel2.status shouldBe QueryNotifikasjoner.EksterntVarselStatus.FEILET
         }
     }
+
     describe("Oppretter oppgave med eksterne varsler som sendes OK") {
         val nyNotifikasjonResult = engine.produsentApi(GraphQLRequest(
             query = nyNotifikasjonMutation(nyOppgave),
+            variables = jsonVariabler,
+        ))
+        val notId = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/id")
+        val id0 = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/eksterneVarsler/0/id")
+        val id1 = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/eksterneVarsler/1/id")
+        val id2 = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/eksterneVarsler/2/id")
+
+        // sjekk varsel-status er 'bestillt' via graphql
+        val mineNotifikasjonerResult = engine.produsentApi(mineNotifikasjonerQuery)
+        val varsel0 = mineNotifikasjonerResult.getTypedContent<QueryNotifikasjoner.EksterntVarsel>("mineNotifikasjoner/edges/0/node/eksterneVarsler/0")
+        val varsel1 = mineNotifikasjonerResult.getTypedContent<QueryNotifikasjoner.EksterntVarsel>("mineNotifikasjoner/edges/0/node/eksterneVarsler/1")
+        val varsel2 = mineNotifikasjonerResult.getTypedContent<QueryNotifikasjoner.EksterntVarsel>("mineNotifikasjoner/edges/0/node/eksterneVarsler/2")
+
+        it("bestilling registrert") {
+            varsel0.id shouldBeIn listOf(id0, id1, id2)
+            varsel1.id shouldBeIn listOf(id0, id1, id2)
+            varsel2.id shouldBeIn listOf(id0, id1, id2)
+            setOf(id0, id1, id2) shouldHaveSize 3
+
+            varsel0.status shouldBe QueryNotifikasjoner.EksterntVarselStatus.NY
+            varsel1.status shouldBe QueryNotifikasjoner.EksterntVarselStatus.NY
+            varsel2.status shouldBe QueryNotifikasjoner.EksterntVarselStatus.NY
+        }
+
+
+        produsentModel.oppdaterModellEtterHendelse(
+            EksterntVarselVellykket(
+                virksomhetsnummer = "0",
+                notifikasjonId = notId,
+                hendelseId = UUID.randomUUID(),
+                produsentId = "0",
+                kildeAppNavn = "0",
+                varselId = id0,
+                råRespons = NullNode.instance,
+            )
+        )
+
+        produsentModel.oppdaterModellEtterHendelse(
+            EksterntVarselFeilet(
+                virksomhetsnummer = "0",
+                notifikasjonId = notId,
+                hendelseId = UUID.randomUUID(),
+                produsentId = "0",
+                kildeAppNavn = "0",
+                varselId = id1,
+                råRespons = NullNode.instance,
+                feilmelding = "En feil har skjedd",
+                altinnFeilkode = "12345",
+            )
+        )
+
+        produsentModel.oppdaterModellEtterHendelse(
+            EksterntVarselFeilet(
+                virksomhetsnummer = "0",
+                notifikasjonId = notId,
+                hendelseId = UUID.randomUUID(),
+                produsentId = "0",
+                kildeAppNavn = "0",
+                varselId = id2,
+                råRespons = NullNode.instance,
+                feilmelding = "En feil har skjedd",
+                altinnFeilkode = "12345",
+            )
+        )
+
+        val mineNotifikasjonerResult2 = engine.produsentApi(mineNotifikasjonerQuery)
+        val oppdaterteVarsler = listOf<QueryNotifikasjoner.EksterntVarsel>(
+            mineNotifikasjonerResult2.getTypedContent("mineNotifikasjoner/edges/0/node/eksterneVarsler/0"),
+            mineNotifikasjonerResult2.getTypedContent("mineNotifikasjoner/edges/0/node/eksterneVarsler/1"),
+            mineNotifikasjonerResult2.getTypedContent("mineNotifikasjoner/edges/0/node/eksterneVarsler/2"),
+        )
+        val oppdatertVarsel0 = oppdaterteVarsler.find { it.id == id0 } !!
+        val oppdatertVarsel1 = oppdaterteVarsler.find { it.id == id1 } !!
+        val oppdatertVarsel2 = oppdaterteVarsler.find { it.id == id2 } !!
+
+        it("status-oppdatering reflektert i graphql-endepunkt") {
+            oppdatertVarsel0.status shouldBe QueryNotifikasjoner.EksterntVarselStatus.SENDT
+            oppdatertVarsel1.status shouldBe QueryNotifikasjoner.EksterntVarselStatus.FEILET
+            oppdatertVarsel2.status shouldBe QueryNotifikasjoner.EksterntVarselStatus.FEILET
+        }
+    }
+
+    describe("Oppretter kalenderavtale med eksterne varsler som sendes OK") {
+        produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
+            virksomhetsnummer = "0",
+            merkelapp = "tag",
+            grupperingsid = "0"
+        ))
+        val nyNotifikasjonResult = engine.produsentApi(GraphQLRequest(
+            query = nyNotifikasjonMutation(nyKalenderavtale),
             variables = jsonVariabler,
         ))
         val notId = nyNotifikasjonResult.getTypedContent<UUID>("nyNotifikasjon/id")
