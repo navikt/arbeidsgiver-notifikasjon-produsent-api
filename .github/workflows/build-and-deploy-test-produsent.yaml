@@ -28,6 +28,8 @@ jobs:
 
       - run: npm ci
         working-directory: test-produsent
+      - run: npm run build
+        working-directory: test-produsent
 
       - uses: nais/docker-build-push@v0
         id: docker-push

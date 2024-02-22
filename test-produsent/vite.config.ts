@@ -8,5 +8,11 @@ export default defineConfig({
     outDir: 'build',
     sourcemap: true,
   },
+  server: {
+    port: 3000,
+    proxy: {
+      "/notifikasjon-produsent-api": "http://localhost:8080",
+    },
+  }
 })
 

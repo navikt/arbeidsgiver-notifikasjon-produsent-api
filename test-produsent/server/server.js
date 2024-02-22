@@ -79,7 +79,7 @@ log.info(`Frackend startup: ${JSON.stringify({NAIS_CLUSTER_NAME, GIT_COMMIT})}`)
 let BUILD_PATH = path.join(process.cwd(), '../build');
 let GRAPHQL_ENDPOINT = 'http://notifikasjon-produsent-api/api/graphql'
 if (NAIS_CLUSTER_NAME === 'local') {
-    GRAPHQL_ENDPOINT = 'https://notifikasjon-fake-produsent-api.labs.nais.io/'
+    GRAPHQL_ENDPOINT = 'https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/api/graphql'
 }
 
 const main = async () => {
