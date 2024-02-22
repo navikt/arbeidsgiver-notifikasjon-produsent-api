@@ -37,6 +37,7 @@ jobs:
           team: fager
           docker_context: test-produsent/
           dockerfile: test-produsent/Dockerfile
+          image_suffix: test-produsent
           tag: ${{ github.sha }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
