@@ -43,8 +43,8 @@ internal class MutationKalenderavtale(
                         sluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("sluttTidspunkt"),
                         lokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("lokasjon"),
                         erDigitalt = env.getTypedArgumentOrNull<Boolean>("erDigitalt") ?: false,
-                        tilstand = env.getTypedArgumentOrNull<KalenderavtaleTilstand>("tilstand")
-                            ?: VENTER_SVAR_FRA_ARBEIDSGIVER,
+                        tilstand = env.getTypedArgumentOrDefault<KalenderavtaleTilstand>("tilstand") { VENTER_SVAR_FRA_ARBEIDSGIVER },
+                        eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() },
                         hardDelete = env.getTypedArgumentOrNull<FutureTemporalInput>("hardDelete"),
                     ),
                 )
@@ -93,6 +93,7 @@ internal class MutationKalenderavtale(
     @JsonTypeName("NyKalenderavtaleVellykket")
     data class NyKalenderavtaleVellykket(
         val id: UUID,
+        val eksterneVarsler: List<NyEksterntVarselResultat>
     ) : NyKalenderavtaleResultat
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -116,6 +117,7 @@ internal class MutationKalenderavtale(
         val lokasjon: LokasjonInput?,
         val erDigitalt: Boolean,
         val tilstand: KalenderavtaleTilstand,
+        val eksterneVarsler: List<EksterntVarselInput>,
         val hardDelete: FutureTemporalInput?,
     ) {
         inline fun somKalenderavtaleOpprettetHendelse(
@@ -152,7 +154,7 @@ internal class MutationKalenderavtale(
                 erDigitalt = erDigitalt,
                 hardDelete = hardDelete?.tilHendelseModel(),
                 sakId = sakId,
-                eksterneVarsler = emptyList(),
+                eksterneVarsler = eksterneVarsler.map { it.tilDomene(virksomhetsnummer) },
                 påminnelse = null,
             )
         }
@@ -224,6 +226,9 @@ internal class MutationKalenderavtale(
                 hendelseDispatcher.send(nyKalenderavtaleHendelse)
                 NyKalenderavtaleVellykket(
                     id = id,
+                    eksterneVarsler = nyKalenderavtaleHendelse.eksterneVarsler.map {
+                        NyEksterntVarselResultat(it.varselId)
+                    }
                 )
             }
 
@@ -231,6 +236,9 @@ internal class MutationKalenderavtale(
                 log.info("duplisert opprettelse av kalenderavtale med id ${eksisterende.id}")
                 NyKalenderavtaleVellykket(
                     id = eksisterende.id,
+                    eksterneVarsler = eksisterende.eksterneVarsler.map {
+                        NyEksterntVarselResultat(it.varselId)
+                    }
                 )
             }
 

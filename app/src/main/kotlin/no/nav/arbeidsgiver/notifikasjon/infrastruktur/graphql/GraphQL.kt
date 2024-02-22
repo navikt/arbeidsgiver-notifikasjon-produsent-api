@@ -32,6 +32,8 @@ inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgumentOrNull(name
     val value = this.getArgument<Any>(name) ?: return null
     return laxObjectMapper.convertValue(value)
 }
+inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgumentOrDefault(name: String, default: () -> T) =
+    getTypedArgumentOrNull(name) ?: default()
 
 fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Builder.() -> Unit) {
     this.type(typeName) {

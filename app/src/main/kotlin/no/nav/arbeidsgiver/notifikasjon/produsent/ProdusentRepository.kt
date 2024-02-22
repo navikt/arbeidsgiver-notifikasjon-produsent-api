@@ -811,6 +811,25 @@ class ProdusentRepositoryImpl(
             for (mottaker in hendelse.mottakere) {
                 storeMottaker(hendelse.notifikasjonId, mottaker)
             }
+
+            executeBatch(
+                """
+                insert into eksternt_varsel(
+                    varsel_id,
+                    notifikasjon_id,
+                    status,
+                    kilde_hendelse
+                )
+                values (?, ?, 'NY', ?::jsonb)
+                on conflict(varsel_id) do update
+                set kilde_hendelse = excluded.kilde_hendelse;
+                """,
+                hendelse.eksterneVarsler
+            ) { eksterntVarsel ->
+                uuid(eksterntVarsel.varselId)
+                uuid(hendelse.notifikasjonId)
+                jsonb(eksterntVarsel)
+            }
         }
     }
 

@@ -127,6 +127,7 @@ internal class QueryNotifikasjoner(
             val mottakere: List<Mottaker>,
             val metadata: Metadata,
             val kalenderavtale: KalenderavtaleData,
+            val eksterneVarsler: List<EksterntVarsel>,
         ) : Notifikasjon() {
             enum class Tilstand {
                 VENTER_SVAR_FRA_ARBEIDSGIVER,
@@ -164,6 +165,7 @@ internal class QueryNotifikasjoner(
                             digitalt = kalenderavtale.digitalt,
                             tilstand = enumValueOf(kalenderavtale.tilstand.name),
                         ),
+                        eksterneVarsler = kalenderavtale.eksterneVarsler.map(EksterntVarsel.Companion::fraDomene),
                     )
                 }
             }
