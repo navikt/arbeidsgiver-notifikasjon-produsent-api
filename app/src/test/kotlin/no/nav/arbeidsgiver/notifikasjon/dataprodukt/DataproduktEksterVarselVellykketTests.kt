@@ -12,11 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Instant
 
 class DataproduktEksterVarselVellykketTests : DescribeSpec({
-    val database = testDatabase(Dataprodukt.databaseConfig)
-    val subject = DataproduktModel(database)
-
     val meta = HendelseMetadata(Instant.now())
-
     val altinntjenesteVarselKontaktinfo = HendelseModel.AltinntjenesteVarselKontaktinfo(
         varselId = uuid("1"),
         virksomhetsnummer = "1",
@@ -27,7 +23,10 @@ class DataproduktEksterVarselVellykketTests : DescribeSpec({
         sendevindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
         sendeTidspunkt = null
     )
+
     describe("Dataprodukt ekstern varsel vellykket med flere mottakere i respons") {
+        val database = testDatabase(Dataprodukt.databaseConfig)
+        val subject = DataproduktModel(database)
         subject.oppdaterModellEtterHendelse(
             EksempelHendelse.BeskjedOpprettet.copy(
                 eksterneVarsler = listOf(

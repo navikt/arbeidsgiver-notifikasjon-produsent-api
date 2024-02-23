@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -19,14 +20,6 @@ import java.util.*
 
 
 class OppgaveUtførtTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
-    val stubbedKafkaProducer = FakeHendelseProdusent()
-
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = stubbedKafkaProducer,
-        produsentRepository = produsentModel
-    )
 
 
     describe("OppgaveUtført-oppførsel") {
@@ -42,6 +35,7 @@ class OppgaveUtførtTests : DescribeSpec({
         val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
         context("Eksisterende oppgave blir utført") {
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -106,6 +100,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave mangler") {
+            val (_, _, engine) = setupEngine()
             val response = engine.produsentApi(
                 """
                 mutation {
@@ -125,6 +120,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp") {
+            val (produsentModel, _, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = "feil merkelapp",
@@ -166,6 +162,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Er ikke oppgave, men beskjed") {
+            val (produsentModel, _, engine) = setupEngine()
             val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -218,6 +215,7 @@ class OppgaveUtførtTests : DescribeSpec({
         val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
         context("Eksisterende oppgave blir utført") {
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -284,6 +282,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave mangler") {
+            val (_, _, engine) = setupEngine()
             val response = engine.produsentApi(
                 """
                 mutation {
@@ -303,6 +302,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp men riktig eksternId") {
+            val (produsentModel, _, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -344,6 +344,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave med feil eksternId men riktig merkelapp") {
+            val (produsentModel, _, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -385,6 +386,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Er ikke oppgave, men beskjed") {
+            val (produsentModel, _, engine) = setupEngine()
             val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -437,6 +439,7 @@ class OppgaveUtførtTests : DescribeSpec({
         val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
         context("Eksisterende oppgave blir utført") {
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -503,6 +506,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave mangler") {
+            val (_, _, engine) = setupEngine()
             val response = engine.produsentApi(
                 """
                 mutation {
@@ -522,6 +526,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp men riktig eksternId") {
+            val (produsentModel, _, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -563,6 +568,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Oppgave med feil eksternId men riktig merkelapp") {
+            val (produsentModel, _, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -604,6 +610,7 @@ class OppgaveUtførtTests : DescribeSpec({
         }
 
         context("Er ikke oppgave, men beskjed") {
+            val (produsentModel, _, engine) = setupEngine()
             val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -643,3 +650,14 @@ class OppgaveUtførtTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentModel = ProdusentRepositoryImpl(database)
+    val stubbedKafkaProducer = FakeHendelseProdusent()
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = stubbedKafkaProducer,
+        produsentRepository = produsentModel
+    )
+    return Triple(produsentModel, stubbedKafkaProducer, engine)
+}

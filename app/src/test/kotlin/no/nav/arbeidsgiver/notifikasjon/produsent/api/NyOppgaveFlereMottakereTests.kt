@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
@@ -14,14 +15,9 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
 class NyOppgaveFlereMottakereTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-
-    val engine = ktorProdusentTestServer(
-        produsentRepository = produsentRepository,
-    )
 
     describe("sender ingen mottakere") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 """
@@ -35,6 +31,7 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
     }
 
     describe("sender 1 mottaker i 'mottaker'") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 """
@@ -69,6 +66,7 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
     }
 
     describe("sender 1 mottaker i 'mottakere'") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 """
@@ -103,6 +101,7 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
         }
     }
     describe("sender 2 mottakere i 'mottakere'") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 """
@@ -149,6 +148,7 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
     }
 
     describe("sender 2 mottaker, en i 'mottaker' og en i 'mottakere'") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 """
@@ -194,6 +194,15 @@ class NyOppgaveFlereMottakereTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): TestApplicationEngine {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val engine = ktorProdusentTestServer(
+        produsentRepository = produsentRepository,
+    )
+    return engine
+}
 
 private fun nyOppgave(fragment: String) = """
             mutation {

@@ -15,8 +15,7 @@ import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
 class BrukerModelTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
+
     val uuid = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
     val mottaker = NærmesteLederMottaker(
         naermesteLederFnr = "314",
@@ -44,6 +43,8 @@ class BrukerModelTests : DescribeSpec({
 
     describe("Beskjed opprettet i BrukerModel") {
         context("happy path") {
+            val database = testDatabase(Bruker.databaseConfig)
+            val brukerRepository = BrukerRepositoryImpl(database)
             brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
                     narmesteLederId = uuid("4321"),
@@ -76,6 +77,8 @@ class BrukerModelTests : DescribeSpec({
         }
 
         context("notifikasjon mottas flere ganger (fra kafka f.eks.)") {
+            val database = testDatabase(Bruker.databaseConfig)
+            val brukerRepository = BrukerRepositoryImpl(database)
             brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
                     narmesteLederId = uuid("4321"),

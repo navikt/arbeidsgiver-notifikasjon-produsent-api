@@ -10,10 +10,10 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 
 class AltinnTilgangsstyringTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
     describe("Tilgangsstyring med altinn-tjenester") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+
         for ((id, serviceCode) in listOf(
             "0" to  "HarTilgang0",
             "1" to  "HarTilgang1",

@@ -21,7 +21,7 @@ import java.util.*
  * are running a single command or a transaction.
  */
 class Database private constructor(
-    private val config: Config,
+    val config: Config,
     private val dataSource: NonBlockingDataSource<*>,
 ): Closeable {
     data class Config(

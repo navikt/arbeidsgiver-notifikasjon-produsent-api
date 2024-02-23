@@ -9,19 +9,19 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
 class BrukerKlikkGraphQL_QueryModell_IntegrasjonTests: DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
 
     val fnr = "00000000000"
     val ansattFnr = "12344321"
     val virksomhetsnummer = "1234"
     val mottaker = NærmesteLederMottaker(fnr, ansattFnr, virksomhetsnummer)
 
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-    )
 
     describe("Brukerklikk-oppførsel") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+        )
 
         val beskjedOpprettet = brukerRepository.beskjedOpprettet(
             virksomhetsnummer = virksomhetsnummer,

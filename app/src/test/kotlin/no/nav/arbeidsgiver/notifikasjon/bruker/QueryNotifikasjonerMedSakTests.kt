@@ -14,17 +14,16 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 
 class QueryNotifikasjonerMedSakTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
-        }
-    )
 
     context("Query.notifikasjoner med sak") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00")
 
         val oppgaveUtenSakOpprettet = brukerRepository.oppgaveOpprettet(

@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
@@ -13,9 +14,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class HentNotifikasjonTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
-    val engine = ktorProdusentTestServer(produsentRepository = produsentModel)
+
     val virksomhetsnummer = "123"
     val merkelapp = "tag"
     val mottaker = AltinnMottaker(
@@ -67,6 +66,7 @@ class HentNotifikasjonTests : DescribeSpec({
 
     describe("hentNotifikasjon") {
         context("notifikasjon finnes ikke") {
+            val (_, engine) = setupEngine()
             it("respons inneholder forventet data") {
                 engine.produsentApi(
                     """
@@ -84,6 +84,7 @@ class HentNotifikasjonTests : DescribeSpec({
         }
 
         context("produsent mangler tilgang til merkelapp") {
+            val (produsentModel, engine) = setupEngine()
             produsentModel.oppdaterModellEtterHendelse(oppgave.copy(merkelapp = "fubar"))
 
             it("respons inneholder forventet data") {
@@ -103,6 +104,7 @@ class HentNotifikasjonTests : DescribeSpec({
         }
 
         context("henter notifikasjon på id") {
+            val (produsentModel, engine) = setupEngine()
             produsentModel.oppdaterModellEtterHendelse(oppgave)
             produsentModel.oppdaterModellEtterHendelse(beskjed)
 
@@ -212,4 +214,11 @@ class HentNotifikasjonTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Pair<ProdusentRepositoryImpl, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentModel = ProdusentRepositoryImpl(database)
+    val engine = ktorProdusentTestServer(produsentRepository = produsentModel)
+    return Pair(produsentModel, engine)
+}
 

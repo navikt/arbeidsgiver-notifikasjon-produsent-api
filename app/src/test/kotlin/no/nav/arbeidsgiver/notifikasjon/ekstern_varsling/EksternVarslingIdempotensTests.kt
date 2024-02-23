@@ -7,10 +7,11 @@ import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
 class EksternVarslingIdempotensTests : DescribeSpec({
-    val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
 
     describe("Ekstern Varlsing Idempotent oppførsel") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         withData(EksempelHendelse.Alle) { hendelse ->
             repository.oppdaterModellEtterHendelse(hendelse)
             repository.oppdaterModellEtterHendelse(hendelse)
@@ -20,6 +21,9 @@ class EksternVarslingIdempotensTests : DescribeSpec({
     describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {
+                val database = testDatabase(EksternVarsling.databaseConfig)
+                val repository = EksternVarslingRepository(database)
+
                 repository.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
                     virksomhetsnummer = hendelse.virksomhetsnummer,
                     aggregateId = hendelse.aggregateId,

@@ -20,20 +20,13 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class KalenderavtaleTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-    val kafkaProducer = FakeHendelseProdusent()
-
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = kafkaProducer,
-        produsentRepository = produsentRepository,
-    )
 
     val grupperingsid = "g42"
     val eksternId = "heuheu"
     val merkelapp = "tag"
 
     describe("Kalenderavtale mutations") {
+        val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val sakOpprettet = HendelseModel.SakOpprettet(
             virksomhetsnummer = "1",
             merkelapp = "tag",
@@ -302,6 +295,17 @@ class KalenderavtaleTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val kafkaProducer = FakeHendelseProdusent()
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = kafkaProducer,
+        produsentRepository = produsentRepository,
+    )
+    return Triple(produsentRepository, kafkaProducer, engine)
+}
 
 
 private fun TestApplicationEngine.nyKalenderavtale(

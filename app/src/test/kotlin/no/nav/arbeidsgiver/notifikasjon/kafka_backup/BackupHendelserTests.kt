@@ -7,12 +7,13 @@ import no.nav.arbeidsgiver.notifikasjon.util.localKafka
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.concurrent.atomic.AtomicBoolean
 
+
 class BackupHendelserTests: DescribeSpec({
-    val database = testDatabase(KafkaBackup.databaseConfig)
-    val backupRepository = BackupRepository(database)
-    val kafka = localKafka()
 
     describe("write to and read from database") {
+        val database = testDatabase(KafkaBackup.databaseConfig)
+        val backupRepository = BackupRepository(database)
+        val kafka = localKafka()
         val producer = kafka.newProducer()
         var eventsSent = 0
         var eventsRead = 0

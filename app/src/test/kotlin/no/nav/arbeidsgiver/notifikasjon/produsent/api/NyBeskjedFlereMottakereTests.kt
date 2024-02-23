@@ -18,14 +18,9 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
 class NyBeskjedFlereMottakereTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-
-    val engine = ktorProdusentTestServer(
-        produsentRepository = produsentRepository,
-    )
 
     describe("sender ingen mottakere") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyBeskjed(
                 """
@@ -39,6 +34,7 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
     }
 
     describe("sender 1 mottaker i 'mottaker'") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyBeskjed(
                 """
@@ -73,6 +69,7 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
     }
 
     describe("sender 1 mottaker i 'mottakere'") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyBeskjed(
                 """
@@ -107,6 +104,7 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
         }
     }
     describe("sender 2 mottakere i 'mottakere'") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyBeskjed(
                 """
@@ -153,6 +151,7 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
     }
 
     describe("sender 2 mottaker, en i 'mottaker' og en i 'mottakere'") {
+        val engine = setupEngine()
         val response = engine.produsentApi(
             nyBeskjed(
                 """
@@ -198,6 +197,15 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): TestApplicationEngine {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val engine = ktorProdusentTestServer(
+        produsentRepository = produsentRepository,
+    )
+    return engine
+}
 
 fun nyBeskjed(fragment: String) = """
             mutation {

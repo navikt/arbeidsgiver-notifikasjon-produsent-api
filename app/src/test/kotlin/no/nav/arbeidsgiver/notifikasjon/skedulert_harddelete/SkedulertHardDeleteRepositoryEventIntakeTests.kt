@@ -22,80 +22,11 @@ import java.util.*
 private var idsuffixes = generateSequence(0) { it + 1 }.map { it.toString() }.iterator()
 
 class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
-    val database = testDatabase(SkedulertHardDelete.databaseConfig)
-    val repository = SkedulertHardDeleteRepositoryImpl(database)
-
-    suspend fun DescribeSpecContainerScope.oppgaveUtførtCase(
-        title: String,
-        opprettetTidspunkt: String,
-        opprinneligHardDelete: String,
-        utførtTidspunkt: String,
-        nyHardDelete: String,
-        strategi: HendelseModel.NyTidStrategi,
-        expected: Instant,
-    ) {
-        val nyTid = LocalDateTimeOrDuration.parse(nyHardDelete)
-        val idsuffix = idsuffixes.next()
-        describe("oppgave utført $title") {
-            repository.oppgaveOpprettet(
-                idsuffix = idsuffix,
-                opprettetTidspunkt = opprettetTidspunkt,
-                hardDelete = opprinneligHardDelete
-            )
-            val utførtHendelse = repository.oppgaveUtført(
-                idsuffix = idsuffix,
-                mottattTidspunkt = utførtTidspunkt,
-                hardDelete = HendelseModel.HardDeleteUpdate(
-                    nyTid = nyTid,
-                    strategi = strategi,
-                )
-            )
-            it("hard delete scheduleres") {
-                val skedulert = repository.hent(utførtHendelse.aggregateId)
-                skedulert shouldNotBe null
-                skedulert!!.beregnetSlettetidspunkt shouldBe expected
-            }
-        }
-    }
-
-    suspend fun DescribeSpecContainerScope.sakOppdatertCase(
-        title: String,
-        sakMottattTidspunkt: String,
-        opprinneligHardDelete: String,
-        oppdateringMottattTidspunkt: String,
-        nyHardDelete: String,
-        strategi: HendelseModel.NyTidStrategi,
-        expected: Instant,
-    ) {
-        val nyTid = LocalDateTimeOrDuration.parse(nyHardDelete)
-        val idsuffix = idsuffixes.next()
-        describe("ny status sak $title") {
-            repository.sakOpprettet(
-                idsuffix = idsuffix,
-                mottattTidspunkt = sakMottattTidspunkt,
-                hardDelete = opprinneligHardDelete
-            )
-            val nyStatusHendelse = repository.nyStatusSak(
-                idsuffix = idsuffix,
-                mottattTidspunkt = oppdateringMottattTidspunkt,
-                hardDelete = HendelseModel.HardDeleteUpdate(
-                    nyTid = nyTid,
-                    strategi = strategi,
-                )
-            )
-
-            it("hard delete er $expected") {
-                val skedulertHardDelete = repository.hent(nyStatusHendelse.aggregateId)
-                skedulertHardDelete shouldNotBe null
-                skedulertHardDelete!!.beregnetSlettetidspunkt shouldBe expected
-            }
-        }
-    }
-
 
     describe("AutoSlettRepository#oppdaterModellEtterHendelse") {
         context("opprett hendelse uten hard delete") {
             context("beskjed opprettet") {
+                val (_, repository) = setupEngine()
                 val hendelse = repository.beskjedOpprettet("1", "2020-01-01T01:01+00", null)
 
                 it("hard delete scheduleres ikke") {
@@ -104,6 +35,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
             }
 
             context("oppgave opprettet") {
+                val (_, repository) = setupEngine()
                 val hendelse = repository.oppgaveOpprettet("2", "2020-01-01T01:01+00")
 
                 it("hard delete scheduleres ikke") {
@@ -112,6 +44,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
             }
 
             context("sak opprettet") {
+                val (_, repository) = setupEngine()
                 val hendelse = repository.sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
@@ -126,6 +59,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
 
         context("opprett hendelse med hard delete") {
             context("beskjed opprettet") {
+                val (_, repository) = setupEngine()
                 val hendelse = repository.beskjedOpprettet(
                     idsuffix = "1",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
@@ -138,6 +72,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
             }
 
             context("oppgave opprettet") {
+                val (_, repository) = setupEngine()
                 val hendelse = repository.oppgaveOpprettet(
                     idsuffix = "2",
                     opprettetTidspunkt = "2020-01-01T01:01+00",
@@ -150,6 +85,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
             }
 
             context("sak opprettet") {
+                val (_, repository) = setupEngine()
                 val hendelse = repository.sakOpprettet(
                     idsuffix = "3",
                     mottattTidspunkt = "2020-01-01T01:01+00",
@@ -164,6 +100,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
 
         context("oppdater hendelse uten hard delete") {
             context("oppgave utført") {
+                val (_, repository) = setupEngine()
                 repository.oppgaveOpprettet("1", "2020-01-01T01:01+00")
                 val utførtHendelse = repository.oppgaveUtført(
                     idsuffix = "1",
@@ -176,6 +113,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
                 }
             }
             context("ny status sak") {
+                val (_, repository) = setupEngine()
                 repository.sakOpprettet(
                     idsuffix = "2",
                     mottattTidspunkt = "2020-01-01T01:01+00",
@@ -195,6 +133,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
 
         context("oppdater hendelse med hard delete uten tidligere skedulert delete") {
             context("oppgave utført") {
+                val (_, repository) = setupEngine()
                 repository.oppgaveOpprettet("1", "2020-01-01T01:01+00", merkelapp = "hei")
                 val utførtHendelse = repository.oppgaveUtført(
                     idsuffix = "1",
@@ -212,6 +151,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
                 }
             }
             context("ny status sak") {
+                val (_, repository) = setupEngine()
                 repository.sakOpprettet(
                     idsuffix = "2",
                     mottattTidspunkt = "2020-01-01T01:01+00",
@@ -233,6 +173,73 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
         }
 
         context("oppdater hendelse med hard delete og tidligere skedulert delete") {
+            val (_, repository) = setupEngine()
+            suspend fun DescribeSpecContainerScope.oppgaveUtførtCase(
+                title: String,
+                opprettetTidspunkt: String,
+                opprinneligHardDelete: String,
+                utførtTidspunkt: String,
+                nyHardDelete: String,
+                strategi: HendelseModel.NyTidStrategi,
+                expected: Instant,
+            ) {
+                val nyTid = LocalDateTimeOrDuration.parse(nyHardDelete)
+                val idsuffix = idsuffixes.next()
+                describe("oppgave utført $title") {
+                    repository.oppgaveOpprettet(
+                        idsuffix = idsuffix,
+                        opprettetTidspunkt = opprettetTidspunkt,
+                        hardDelete = opprinneligHardDelete
+                    )
+                    val utførtHendelse = repository.oppgaveUtført(
+                        idsuffix = idsuffix,
+                        mottattTidspunkt = utførtTidspunkt,
+                        hardDelete = HendelseModel.HardDeleteUpdate(
+                            nyTid = nyTid,
+                            strategi = strategi,
+                        )
+                    )
+                    it("hard delete scheduleres") {
+                        val skedulert = repository.hent(utførtHendelse.aggregateId)
+                        skedulert shouldNotBe null
+                        skedulert!!.beregnetSlettetidspunkt shouldBe expected
+                    }
+                }
+            }
+
+            suspend fun DescribeSpecContainerScope.sakOppdatertCase(
+                title: String,
+                sakMottattTidspunkt: String,
+                opprinneligHardDelete: String,
+                oppdateringMottattTidspunkt: String,
+                nyHardDelete: String,
+                strategi: HendelseModel.NyTidStrategi,
+                expected: Instant,
+            ) {
+                val nyTid = LocalDateTimeOrDuration.parse(nyHardDelete)
+                val idsuffix = idsuffixes.next()
+                describe("ny status sak $title") {
+                    repository.sakOpprettet(
+                        idsuffix = idsuffix,
+                        mottattTidspunkt = sakMottattTidspunkt,
+                        hardDelete = opprinneligHardDelete
+                    )
+                    val nyStatusHendelse = repository.nyStatusSak(
+                        idsuffix = idsuffix,
+                        mottattTidspunkt = oppdateringMottattTidspunkt,
+                        hardDelete = HendelseModel.HardDeleteUpdate(
+                            nyTid = nyTid,
+                            strategi = strategi,
+                        )
+                    )
+
+                    it("hard delete er $expected") {
+                        val skedulertHardDelete = repository.hent(nyStatusHendelse.aggregateId)
+                        skedulertHardDelete shouldNotBe null
+                        skedulertHardDelete!!.beregnetSlettetidspunkt shouldBe expected
+                    }
+                }
+            }
             oppgaveUtførtCase(
                 title = "forleng med absolutt dato, og opprinnelig er tidligere",
                 opprettetTidspunkt = "2020-01-01T01:01+00",
@@ -363,6 +370,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
 
     describe("Hard delete") {
         context("slette oppgave") {
+            val (_, repository) = setupEngine()
             val hendelse = repository.oppgaveOpprettet(
                 idsuffix = "1",
                 opprettetTidspunkt = "2020-01-01T01:01+00",
@@ -377,6 +385,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
         }
 
         context("slette sak") {
+            val (_, repository) = setupEngine()
             val hendelse = repository.sakOpprettet(
                 idsuffix = "2",
                 mottattTidspunkt = "2020-01-01T01:01+00",
@@ -391,6 +400,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
         }
 
         context("slette sak med tilhørende beskjed og oppgave") {
+            val (database, repository) = setupEngine()
             val sak = repository.sakOpprettet(
                 idsuffix = "1",
                 merkelapp = "angela",
@@ -434,6 +444,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
         }
 
         context("ikke slette andre saker") {
+            val (_, repository) = setupEngine()
             val hendelse = repository.sakOpprettet(
                 idsuffix = "3",
                 mottattTidspunkt = "2020-01-01T01:01+00",
@@ -452,6 +463,7 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
         }
 
         context("Hard delete utføres for en sak som ikke lenger finnes") {
+            val (_, repository) = setupEngine()
             // for eksempel midt i en replay
             it("skal ikke kaste exception") {
                 repository.hardDelete("1")
@@ -459,6 +471,12 @@ class SkedulertHardDeleteRepositoryEventIntakeTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Pair<Database, SkedulertHardDeleteRepositoryImpl> {
+    val database = testDatabase(SkedulertHardDelete.databaseConfig)
+    val repository = SkedulertHardDeleteRepositoryImpl(database)
+    return Pair(database, repository)
+}
 
 
 private suspend fun <T : HendelseModel.Hendelse> SkedulertHardDeleteRepositoryImpl.oppdaterModell(

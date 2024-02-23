@@ -13,19 +13,19 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 
 class BrukerApiTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
 
     val fnr = "00000000000"
     val ansattFnr = "12344321"
     val virksomhetsnummer = "1234"
     val mottaker = HendelseModel.NærmesteLederMottaker(fnr, ansattFnr, virksomhetsnummer)
 
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-    )
 
     describe("graphql bruker-api Query.notifikasjoner") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+        )
         val beskjed = brukerRepository.beskjedOpprettet(
             virksomhetsnummer = virksomhetsnummer,
             mottakere = listOf(mottaker),

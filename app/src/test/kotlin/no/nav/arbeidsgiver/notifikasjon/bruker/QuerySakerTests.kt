@@ -23,20 +23,9 @@ import java.util.*
 class QuerySakerTests : DescribeSpec({
     val fallbackTimeNotUsed = OffsetDateTime.parse("2020-01-01T01:01:01Z")
 
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        altinn = AltinnStub(
-            "0".repeat(11) to Tilganger(
-                tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1"), Tilgang.Altinn("43", "5441", "1")),
-            )
-        ),
-        brukerRepository = brukerRepository,
-    )
-
     describe("Query.saker") {
         context("med sak opprettet men ingen status") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val sakOpprettet = brukerRepository.sakOpprettet(
                 virksomhetsnummer = "42",
                 merkelapp = "tag",
@@ -60,6 +49,7 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("med sak og status") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val sakOpprettet = brukerRepository.sakOpprettet(
                 virksomhetsnummer = "42",
                 grupperingsid = "42",
@@ -92,6 +82,7 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("paginering med offset og limit angitt sortert på oppdatert") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val forventetRekkefoelge = listOf(
                 uuid("3"),
                 uuid("1"),
@@ -142,6 +133,7 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("paginering med offset og limit angitt sortert på opprettet") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val forventetRekkefoelge = listOf(
                 uuid("3"),
                 uuid("1"),
@@ -186,6 +178,7 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("tekstsøk") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val sak1 = brukerRepository.opprettSakForTekstsøk("pippi langstrømpe er friskmeldt")
             val sak2 = brukerRepository.opprettSakForTekstsøk("donald duck er permittert", FERDIG, "saken er avblåst")
 
@@ -217,6 +210,7 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("søk på tvers av virksomheter") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val sak1 = brukerRepository.opprettSak(uuid("1"), "42")
             val sak2 = brukerRepository.opprettSak(uuid("2"), "43")
 
@@ -248,6 +242,7 @@ class QuerySakerTests : DescribeSpec({
         }
 
         context("søk på type sak") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             brukerRepository.opprettSak(uuid("1"), "42", "merkelapp1") // tilgang til 42
             brukerRepository.opprettSak(uuid("2"), "43", "merkelapp2") // tilgang til 43
             brukerRepository.opprettSak(uuid("3"), "44", "merkelapp3") // ikke tilgang til 44
@@ -301,6 +296,20 @@ class QuerySakerTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApplicationEngine> {
+    val database = testDatabase(Bruker.databaseConfig)
+    val brukerRepository = BrukerRepositoryImpl(database)
+    val engine = ktorBrukerTestServer(
+        altinn = AltinnStub(
+            "0".repeat(11) to Tilganger(
+                tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1"), Tilgang.Altinn("43", "5441", "1")),
+            )
+        ),
+        brukerRepository = brukerRepository,
+    )
+    return Pair(brukerRepository, engine)
+}
 
 private suspend fun BrukerRepository.opprettSakForTekstsøk(
     tittel: String,

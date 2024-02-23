@@ -35,8 +35,6 @@ import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
 class EksternVarslingRepositoryTests: DescribeSpec({
-    val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
 
     val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -91,6 +89,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     )
 
     describe("Getting and deleting jobs") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
         val id1 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
@@ -127,6 +128,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("Can't pick a job while locked") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         repository.oppdaterModellEtterHendelse(
             oppgaveOpprettet.copy(
                 eksterneVarsler = oppgaveOpprettet.eksterneVarsler.subList(0, 1)
@@ -146,6 +150,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("auto-release locks") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         it("release time-out") {
             repository.oppdaterModellEtterHendelse(
                 oppgaveOpprettet.copy(
@@ -167,6 +174,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
 
 
     describe("release and reacquire lock") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         repository.oppdaterModellEtterHendelse(
             oppgaveOpprettet.copy(
                 eksterneVarsler = oppgaveOpprettet.eksterneVarsler.subList(0, 1)
@@ -190,6 +200,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("read and write of notification") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
         val id1 = repository.findJob(lockTimeout = Duration.ofMinutes(1))
@@ -224,6 +237,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("Kan gå gjennom tilstandene ok") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         repository.oppdaterModellEtterHendelse(
             oppgaveOpprettet.copy(
                 eksterneVarsler = oppgaveOpprettet.eksterneVarsler.subList(0, 1)
@@ -268,6 +284,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("Kan gå gjennom tilstandene altinn-feil") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         repository.oppdaterModellEtterHendelse(
             oppgaveOpprettet.copy(
                 eksterneVarsler = oppgaveOpprettet.eksterneVarsler.subList(0, 1)
@@ -319,6 +338,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("Hard delete event for sak") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
         val sakId = uuid("442")
         val hardDelete =
@@ -364,6 +386,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("Oppgave med påminnelse fører ikke til varsel nå") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         val varselId = UUID.randomUUID()
         OppgaveOpprettet(
             virksomhetsnummer = "1",
@@ -410,7 +435,11 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             repository.findVarsel(varselId) shouldBe null
         }
     }
+
     describe("varsler i påminnelse blir registrert") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         val varselId = UUID.randomUUID()
         val notifikasjonId = UUID.randomUUID()
         HendelseModel.PåminnelseOpprettet(
@@ -460,6 +489,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("Hard delete event for oppgave") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         val eksterntVarselVellykket = HendelseModel.EksterntVarselVellykket(
             virksomhetsnummer = "42",
             notifikasjonId = oppgaveOpprettet.aggregateId,
@@ -493,6 +525,9 @@ class EksternVarslingRepositoryTests: DescribeSpec({
     }
 
     describe("sendetidspunkt med localdatetime.min") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         OppgaveOpprettet(
             virksomhetsnummer = "1",
             notifikasjonId = uuid("1"),

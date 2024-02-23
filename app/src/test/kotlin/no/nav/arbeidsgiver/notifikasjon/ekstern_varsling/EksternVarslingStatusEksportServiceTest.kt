@@ -19,21 +19,9 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class EksternVarslingStatusEksportServiceTest : DescribeSpec({
-    val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
     val kafka = MockProducer(true, StringSerializer(), VarslingStatusDtoSerializer())
-    val service = EksternVarslingStatusEksportService(
-        eventSource = object : Hendelsesstrøm {
-            override suspend fun forEach(
-                stop: AtomicBoolean,
-                onTombstone: suspend (UUID) -> Unit,
-                body: suspend (HendelseModel.Hendelse, HendelseModel.HendelseMetadata) -> Unit
-            ): Unit = TODO("Not yet implemented")
-        },
-        repo = repository,
-        kafka = kafka,
-    )
     val hendelseMetadata = HendelseModel.HendelseMetadata(Instant.parse("2020-01-01T01:01:01.00Z"))
+
 
     describe("EksternVarslingStatusEksportService#prosesserHendelse") {
         listOf(
@@ -41,6 +29,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             "30307",
             "30308",
         ).forEach { feilkode ->
+            val (database, service) = setupService(kafka)
             context("når hendelse er EksterntVarselFeilet med feilkode = $feilkode") {
                 val varselTilstand = varselTilstand(uuid("314"), LØPENDE)
                 database.insertVarselTilstand(varselTilstand)
@@ -65,6 +54,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
 
 
         context("når hendelse er EksterntVarselFeilet med feilkode = 42") {
+            val (database, service) = setupService(kafka)
             val varselTilstand = varselTilstand(
                 uuid("314"),
                 SPESIFISERT,
@@ -90,6 +80,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         }
 
         context("når hendelse er EksterntVarselFeilet men varsel er harddeleted") {
+            val (_, service) = setupService(kafka)
             kafka.clear()
 
             service.testProsesserHendelse(
@@ -103,6 +94,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         }
 
         context("når hendelse er EksterntVarselVellykket men varsel er harddeleted") {
+            val (_, service) = setupService(kafka)
             kafka.clear()
 
             service.testProsesserHendelse(
@@ -116,6 +108,7 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         }
 
         context("når hendelse er EksterntVarselVellykket") {
+            val (database, service) = setupService(kafka)
             val varselTilstand = varselTilstand(
                 uuid("314"),
                 SPESIFISERT,
@@ -144,6 +137,23 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupService(kafka: MockProducer<String, VarslingStatusDto>): Pair<Database, EksternVarslingStatusEksportService> {
+    val database = testDatabase(EksternVarsling.databaseConfig)
+    val repository = EksternVarslingRepository(database)
+    val service = EksternVarslingStatusEksportService(
+        eventSource = object : Hendelsesstrøm {
+            override suspend fun forEach(
+                stop: AtomicBoolean,
+                onTombstone: suspend (UUID) -> Unit,
+                body: suspend (HendelseModel.Hendelse, HendelseModel.HendelseMetadata) -> Unit
+            ): Unit = TODO("Not yet implemented")
+        },
+        repo = repository,
+        kafka = kafka,
+    )
+    return Pair(database, service)
+}
 
 private suspend fun EksternVarslingStatusEksportService.testProsesserHendelse(
     event: HendelseModel.Hendelse,

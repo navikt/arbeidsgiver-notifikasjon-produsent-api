@@ -14,8 +14,6 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class KafkaReaperModelIdempotensTest : DescribeSpec({
-    val database = testDatabase(KafkaReaper.databaseConfig)
-    val model = KafkaReaperModelImpl(database)
 
     val mottakere = listOf(
         HendelseModel.AltinnMottaker(
@@ -103,6 +101,8 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
     )
 
     describe("Kafka Reaper Idempotent oppførsel") {
+        val database = testDatabase(KafkaReaper.databaseConfig)
+        val model = KafkaReaperModelImpl(database)
         withData(EksempelHendelse.Alle) { hendelse ->
             model.oppdaterModellEtterHendelse(hendelse)
             model.oppdaterModellEtterHendelse(hendelse)
@@ -112,6 +112,9 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
     describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {
+                val database = testDatabase(KafkaReaper.databaseConfig)
+                val model = KafkaReaperModelImpl(database)
+
                 model.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
                     virksomhetsnummer = hendelse.virksomhetsnummer,
                     aggregateId = hendelse.aggregateId,
@@ -122,6 +125,8 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
     }
 
     describe("Atomisk hard delete av Sak sletter kun tilhørende notifikasjoner") {
+        val database = testDatabase(KafkaReaper.databaseConfig)
+        val model = KafkaReaperModelImpl(database)
         model.oppdaterModellEtterHendelse(sak)
         model.oppdaterModellEtterHendelse(oppgaveKnyttetTilSak)
         model.oppdaterModellEtterHendelse(oppgaveUtenGrupperingsid)

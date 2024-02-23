@@ -13,55 +13,28 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class SorteringAvSakerPåFristTest : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
-        }
-    )
-
-    suspend fun opprettSakMedOppgaver(
-        vararg frister: String?,
-    ): UUID {
-        val sak = brukerRepository.sakOpprettet(
-            oppgittTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
-            mottattTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
-        )
-
-        brukerRepository.nyStatusSak(
-            sak,
-            mottattTidspunkt = OffsetDateTime.now(),
-            idempotensKey = IdempotenceKey.initial(),
-        )
-
-        for (frist in frister) {
-            brukerRepository.oppgaveOpprettet(
-                grupperingsid = sak.grupperingsid,
-                merkelapp = sak.merkelapp,
-                frist = frist?.let { LocalDate.parse(it) },
-                opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
-            )
-        }
-
-        return sak.sakId
-    }
 
     describe("Sak som med oppgave") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val repo = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = repo,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         /**
          * Sakene 2, 3, 4 og så 1 blir sortert etter frist, mens 6 og 8 vil bli sortert før 7 fordi disse har oppgaver.
          * sak 8 kommer før 6 fordi den er oppdatert sist.
          */
-        val sak2 = opprettSakMedOppgaver( "2023-01-15", "2023-01-04")
-        val sak3 = opprettSakMedOppgaver( "2023-01-05", "2023-01-25")
-        val sak4 = opprettSakMedOppgaver( "2023-01-06", "2023-01-06")
-        val sak1 = opprettSakMedOppgaver( "2023-01-10", "2023-01-10")
-        val sak5 = opprettSakMedOppgaver( "2023-01-07", null)
-        val sak6 = opprettSakMedOppgaver( null)
-        val sak7 = opprettSakMedOppgaver()
-        val sak8 = opprettSakMedOppgaver( null)
+        val sak2 = repo.opprettSakMedOppgaver( "2023-01-15", "2023-01-04")
+        val sak3 = repo.opprettSakMedOppgaver( "2023-01-05", "2023-01-25")
+        val sak4 = repo.opprettSakMedOppgaver( "2023-01-06", "2023-01-06")
+        val sak1 = repo.opprettSakMedOppgaver( "2023-01-10", "2023-01-10")
+        val sak5 = repo.opprettSakMedOppgaver( "2023-01-07", null)
+        val sak6 = repo.opprettSakMedOppgaver( null)
+        val sak7 = repo.opprettSakMedOppgaver()
+        val sak8 = repo.opprettSakMedOppgaver( null)
 
         val res = engine.querySakerJson(virksomhetsnummer = TEST_VIRKSOMHET_1, limit = 10, sortering = FRIST)
             .getTypedContent<List<UUID>>("$.saker.saker.*.id")
@@ -70,3 +43,23 @@ class SorteringAvSakerPåFristTest : DescribeSpec({
     }
 })
 
+private suspend fun BrukerRepository.opprettSakMedOppgaver(
+    vararg frister: String?,
+) = sakOpprettet(
+    oppgittTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
+    mottattTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
+).also { sak ->
+    nyStatusSak(
+        sak,
+        mottattTidspunkt = OffsetDateTime.now(),
+        idempotensKey = IdempotenceKey.initial(),
+    )
+    for (frist in frister) {
+        oppgaveOpprettet(
+            grupperingsid = sak.grupperingsid,
+            merkelapp = sak.merkelapp,
+            frist = frist?.let { LocalDate.parse(it) },
+            opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
+        )
+    }
+}.sakId

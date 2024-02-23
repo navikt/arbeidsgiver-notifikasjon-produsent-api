@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
@@ -20,15 +21,6 @@ import java.util.*
 
 
 class UtsattFristTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
-    val stubbedKafkaProducer = FakeHendelseProdusent()
-
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = stubbedKafkaProducer,
-        produsentRepository = produsentModel
-    )
-
 
     describe("oppgaveUtsettFrist-oppførsel") {
         val virksomhetsnummer = "123"
@@ -43,6 +35,7 @@ class UtsattFristTests : DescribeSpec({
         val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
         context("Utgått oppgave får utsatt frist") {
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -117,6 +110,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Oppgave mangler") {
+            val (_, _, engine) = setupEngine()
             val response = engine.produsentApi(
                 """
                 mutation {
@@ -139,6 +133,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp") {
+            val (produsentModel, _, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = "feil merkelapp",
@@ -183,6 +178,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Er ikke oppgave, men beskjed") {
+            val (produsentModel, _, engine) = setupEngine()
             val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -225,6 +221,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Oppgave med frist som er senere enn ny frist") {
+            val (produsentModel, _, engine) = setupEngine()
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -288,6 +285,7 @@ class UtsattFristTests : DescribeSpec({
         val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
         context("Utgått oppgave får utsatt frist") {
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -363,6 +361,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Oppgave mangler") {
+            val (_, _, engine) = setupEngine()
             val response = engine.produsentApi(
                 """
                 mutation {
@@ -386,6 +385,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp men riktig eksternId") {
+            val (produsentModel, _, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = "feil merkelapp",
@@ -431,6 +431,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Oppgave med riktig merkelapp men feil eksternId") {
+            val (produsentModel, _, engine) = setupEngine()
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = "feil merkelapp",
@@ -476,6 +477,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Er ikke oppgave, men beskjed") {
+            val (produsentModel, _, engine) = setupEngine()
             val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -519,6 +521,7 @@ class UtsattFristTests : DescribeSpec({
         }
 
         context("Oppgave med frist som er senere enn ny frist") {
+            val (produsentModel, _, engine) = setupEngine()
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -565,3 +568,14 @@ class UtsattFristTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentModel = ProdusentRepositoryImpl(database)
+    val stubbedKafkaProducer = FakeHendelseProdusent()
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = stubbedKafkaProducer,
+        produsentRepository = produsentModel
+    )
+    return Triple(produsentModel, stubbedKafkaProducer, engine)
+}

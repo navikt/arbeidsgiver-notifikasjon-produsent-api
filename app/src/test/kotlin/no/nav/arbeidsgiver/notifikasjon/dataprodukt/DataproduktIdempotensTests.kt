@@ -15,9 +15,6 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class DataproduktIdempotensTests : DescribeSpec({
-    val database = testDatabase(Dataprodukt.databaseConfig)
-    val repository = DataproduktModel(database)
-
     val metadata = HendelseMetadata(Instant.now())
 
     val mottakere = listOf(
@@ -106,6 +103,9 @@ class DataproduktIdempotensTests : DescribeSpec({
     )
 
     describe("Dataprodukt Idempotent oppførsel") {
+        val database = testDatabase(Dataprodukt.databaseConfig)
+        val repository = DataproduktModel(database)
+
         withData(EksempelHendelse.Alle) { hendelse ->
             repository.oppdaterModellEtterHendelse(hendelse, metadata)
             repository.oppdaterModellEtterHendelse(hendelse, metadata)
@@ -115,6 +115,9 @@ class DataproduktIdempotensTests : DescribeSpec({
     describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {
+                val database = testDatabase(Dataprodukt.databaseConfig)
+                val repository = DataproduktModel(database)
+
                 repository.oppdaterModellEtterHendelse(
                     EksempelHendelse.HardDelete.copy(
                         virksomhetsnummer = hendelse.virksomhetsnummer,
@@ -127,6 +130,9 @@ class DataproduktIdempotensTests : DescribeSpec({
     }
 
     describe("Atomisk hard delete av Sak sletter kun tilhørende notifikasjoner") {
+        val database = testDatabase(Dataprodukt.databaseConfig)
+        val repository = DataproduktModel(database)
+
         repository.oppdaterModellEtterHendelse(sak, metadata)
         repository.oppdaterModellEtterHendelse(oppgaveKnyttetTilSak, metadata)
         repository.oppdaterModellEtterHendelse(oppgaveUtenGrupperingsid, metadata)
@@ -146,7 +152,7 @@ class DataproduktIdempotensTests : DescribeSpec({
 
         val notifikasjoner = database.nonTransactionalExecuteQuery(
             """
-                select notifikasjon_id from "dataprodukt-model".public.notifikasjon
+                select notifikasjon_id from notifikasjon
             """.trimIndent(),
             transform = { getObject("notifikasjon_id", UUID::class.java) }
         )
@@ -159,6 +165,9 @@ class DataproduktIdempotensTests : DescribeSpec({
 
 
     describe("Atomisk soft delete av Sak sletter kun tilhørende notifikasjoner") {
+        val database = testDatabase(Dataprodukt.databaseConfig)
+        val repository = DataproduktModel(database)
+
         repository.oppdaterModellEtterHendelse(sak, metadata)
         repository.oppdaterModellEtterHendelse(oppgaveKnyttetTilSak, metadata)
         repository.oppdaterModellEtterHendelse(oppgaveUtenGrupperingsid, metadata)
@@ -178,7 +187,7 @@ class DataproduktIdempotensTests : DescribeSpec({
 
         val notifikasjoner = database.nonTransactionalExecuteQuery(
             """
-                select notifikasjon_id from "dataprodukt-model".public.notifikasjon
+                select notifikasjon_id from notifikasjon
                 where soft_deleted_tidspunkt is null
             """.trimIndent(),
             transform = { getObject("notifikasjon_id", UUID::class.java) }
@@ -191,6 +200,9 @@ class DataproduktIdempotensTests : DescribeSpec({
     }
 
     describe("Pseudonymisering av tegn som kan tolkes som escape characters ") {
+        val database = testDatabase(Dataprodukt.databaseConfig)
+        val repository = DataproduktModel(database)
+
         val hendelse = EksempelHendelse.SakOpprettet.copy(tittel = """Billakkerer\Hjelpearbeider""")
         it("Skal ikke feile fordi det blir tolket") {
             shouldNotThrowAny {
