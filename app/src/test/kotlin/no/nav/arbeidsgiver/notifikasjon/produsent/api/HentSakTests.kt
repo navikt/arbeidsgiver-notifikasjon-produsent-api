@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
@@ -81,6 +82,7 @@ class HentSakTests : DescribeSpec({
     describe("hentSak") {
         produsentRepository.oppdaterModellEtterHendelse(sakOpprettetHendelse)
         produsentRepository.oppdaterModellEtterHendelse(nyStatusSakHendelse)
+        produsentRepository.oppdaterModellEtterHendelse(sakMedAnnenMerkelappOpprettetHendelse)
 
         it("Sak finnes ikke og respons inneholder error.") {
                 engine.produsentApi(
@@ -96,8 +98,21 @@ class HentSakTests : DescribeSpec({
                     """.trimIndent()
                 ).getTypedContent<Error.SakFinnesIkke>("hentSak")
             }
-        it("Sak finnes og response inneholder saken")
-        {
+        it("Sak med annen merkelapp gir UgyldigMerkelapp") {
+            engine.produsentApi(
+                """
+                    query {
+                        hentSak(id: "${sakMedAnnenMerkelappOpprettetHendelse.sakId}") {
+                            __typename
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                """.trimIndent()
+            ).getTypedContent<Error.UgyldigMerkelapp>("hentSak")
+        }
+        it("Sak finnes og response inneholder saken") {
             engine.produsentApi(
                 """
                     query {
@@ -116,11 +131,10 @@ class HentSakTests : DescribeSpec({
                         }
                     }
                 """.trimIndent()
-            ).getTypedContent<QuerySak.HentSakResultat>("hentSak").also { HentetSak ->
+            ).getTypedContent<QuerySak.HentSakResultat>("hentSak").also { HentetSak  ->
                 val hentetSak = HentetSak as QuerySak.HentetSak
-                assert(hentetSak.sak.id == sakOpprettetHendelse.sakId)
+                hentetSak.sak.id shouldBe sakOpprettetHendelse.sakId
             }
-
         }
     }
 })

@@ -110,6 +110,7 @@ type HentetNotifikasjon {
 union HentSakResultat =
     | HentetSak
     | SakFinnesIkke
+    | UgyldigMerkelapp
     | UkjentProdusent
 
 
