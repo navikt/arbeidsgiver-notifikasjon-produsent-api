@@ -29,6 +29,7 @@ internal sealed class Error {
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         QueryNotifikasjoner.MineNotifikasjonerResultat,
         QueryNotifikasjoner.HentNotifikasjonResultat,
+        QuerySak.HentSakResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
@@ -46,6 +47,7 @@ internal sealed class Error {
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         QueryNotifikasjoner.MineNotifikasjonerResultat,
         QueryNotifikasjoner.HentNotifikasjonResultat,
+        QuerySak.HentSakResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
@@ -127,7 +129,8 @@ internal sealed class Error {
         MutationNyStatusSak.NyStatusSakResultat,
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
-        MutationKalenderavtale.NyKalenderavtaleResultat
+        MutationKalenderavtale.NyKalenderavtaleResultat,
+        QuerySak.HentSakResultat
 
     @JsonTypeName("OppgavenErAlleredeUtfoert")
     data class OppgavenErAlleredeUtfoert(
