@@ -6,10 +6,6 @@ plugins {
 repositories {
     mavenCentral()
     gradlePluginPortal()
-    //maven {
-    //    // trengs for tjenestespesifikasjoner
-    //    url = uri("https://jitpack.io")
-    //}
 }
 
 dependencies {
@@ -104,13 +100,13 @@ tasks.jar {
     manifest {
         attributes["Main-Class"] = mainClass
         attributes["Class-Path"] = configurations.runtimeClasspath.get()
-            .joinToString(separator = " ") { "libs/${it.name}" }
+            .joinToString(separator = " ") { "lib/${it.name}" }
     }
 }
 
 tasks.assemble {
     configurations.runtimeClasspath.get().forEach {
-        val file = File("$buildDir/libs/${it.name}")
+        val file = File("$buildDir/lib/${it.name}")
         if (!file.exists())
             it.copyTo(file)
     }
