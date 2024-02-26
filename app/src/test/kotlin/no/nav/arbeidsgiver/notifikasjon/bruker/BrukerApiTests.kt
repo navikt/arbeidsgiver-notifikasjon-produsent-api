@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
+import io.kotest.core.annotation.Isolate
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.shouldBe
@@ -12,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 
+@Isolate // see todo below
 class BrukerApiTests : DescribeSpec({
 
     val fnr = "00000000000"
@@ -45,6 +47,7 @@ class BrukerApiTests : DescribeSpec({
             )
         )
 
+        val before = meterRegistry.get("notifikasjoner_hentet").counter().count()
         val response = engine.queryNotifikasjonerJson()
 
         it("response inneholder riktig data") {
@@ -63,8 +66,9 @@ class BrukerApiTests : DescribeSpec({
         }
 
         it("notifikasjoner hentet counter økt") {
+            // TODO: this is flaky in parallell.
             val vellykket = meterRegistry.get("notifikasjoner_hentet").counter().count()
-            vellykket shouldBe 2
+            vellykket - before shouldBe 2
         }
     }
 })

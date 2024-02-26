@@ -8,8 +8,9 @@ import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.sql.DriverManager
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
-val templateDbs = mutableMapOf<Database.Config, String>()
+val templateDbs = ConcurrentHashMap<Database.Config, String>()
 val ids = generateSequence() { UUID.randomUUID() }.iterator()
 private suspend fun createDbFromTemplate(config: Database.Config): Database.Config {
     val templateDb = templateDb(config)
@@ -30,7 +31,7 @@ private suspend fun createDbFromTemplate(config: Database.Config): Database.Conf
  */
 @Suppress("SqlSourceToSinkFlow")
 private suspend fun templateDb(config: Database.Config): String {
-    val templateDb = templateDbs.getOrPut(config) {
+    val templateDb = templateDbs.computeIfAbsent(config) {
         "${config.database}_template".also { db ->
             DriverManager.getConnection(config.jdbcUrl, config.username, config.password).use { conn ->
                 conn.createStatement().use { stmt ->
@@ -38,15 +39,17 @@ private suspend fun templateDb(config: Database.Config): String {
                     stmt.executeUpdate("""create database "$db" ; """)
                 }
             }
-            Database.openDatabase(
-                config = config.copy(
-                    port = "1337",
-                    database = db,
-                ),
-                flywayAction = {
-                    migrate()
-                }
-            ).close()
+            runBlocking {
+                Database.openDatabase(
+                    config = config.copy(
+                        port = "1337",
+                        database = db,
+                    ),
+                    flywayAction = {
+                        migrate()
+                    }
+                ).close()
+            }
         }
     }
     return templateDb

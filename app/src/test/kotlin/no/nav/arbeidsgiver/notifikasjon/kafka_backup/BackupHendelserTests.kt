@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_backup
 
+import io.kotest.core.annotation.Isolate
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
@@ -7,7 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.localKafka
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.concurrent.atomic.AtomicBoolean
 
-
+@Isolate
 class BackupHendelserTests: DescribeSpec({
 
     describe("write to and read from database") {
