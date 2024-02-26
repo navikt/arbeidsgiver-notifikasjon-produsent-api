@@ -2,6 +2,10 @@
 target/
 app/target/
 
+#gradle
+app/.gradle
+app/build
+
 # intellij
 .idea/
 **.iml
