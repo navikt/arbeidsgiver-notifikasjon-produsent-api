@@ -67,7 +67,7 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - run: mvn -B package
+      - run: gradle build
         working-directory: app
 
       - uses: nais/docker-build-push@v0
