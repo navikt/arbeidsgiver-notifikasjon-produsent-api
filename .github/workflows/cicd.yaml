@@ -65,9 +65,9 @@ jobs:
         with:
           java-version: '17.x'
           distribution: temurin
-          cache: maven
+          cache: gradle
 
-      - run: gradle build
+      - run: ./gradlew build --no-daemon --info
         working-directory: app
 
       - uses: nais/docker-build-push@v0
