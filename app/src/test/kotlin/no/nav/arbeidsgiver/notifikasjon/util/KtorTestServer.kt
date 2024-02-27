@@ -5,7 +5,6 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.CompletableDeferred
@@ -39,13 +38,15 @@ fun Spec.ktorBrukerTestServer(
         tilgangerService = tilgangerService,
         virksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
     )
-    listener(KtorTestListener(engine) {
+    listener(KtorTestListener(engine))
+    engine.start()
+    engine.application.apply {
         graphqlSetup(
             authProviders = listOf(LOCALHOST_BRUKER_AUTHENTICATION),
             extractContext = extractBrukerContext,
             graphql = CompletableDeferred(brukerGraphQL),
         )
-    })
+    }
     return engine
 }
 
@@ -59,24 +60,23 @@ fun Spec.ktorProdusentTestServer(
         environment = ApplicationEngineEnvironmentBuilder().build(environment)
     )
     val produsentGraphQL = ProdusentAPI.newGraphQL(kafkaProducer, produsentRepository)
-    listener(KtorTestListener(engine) {
+    listener(KtorTestListener(engine))
+    engine.start()
+    engine.application.apply {
         graphqlSetup(
             authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
             extractContext = extractProdusentContext(produsentRegister),
             graphql = CompletableDeferred(produsentGraphQL)
         )
-    })
+    }
     return engine
 }
 
 class KtorTestListener(
-    private val engine: TestApplicationEngine,
-    private val init: Application.() -> Unit
+    private val engine: TestApplicationEngine
 ) : TestListener {
 
     override suspend fun beforeSpec(spec: Spec) {
-        engine.start()
-        engine.application.apply(init)
     }
 
     override suspend fun afterSpec(spec: Spec) {

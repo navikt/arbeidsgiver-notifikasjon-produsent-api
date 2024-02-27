@@ -11,14 +11,14 @@ import java.time.LocalDateTime
 import java.util.*
 
 class ResumeScheduledJobsTests: DescribeSpec({
-    val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
 
     fun dateTime(hour: String) =
         LocalDateTime.parse("2020-01-01T$hour:00")
 
 
     describe("resuming scheduled tasks") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
         repository.scheduleJob(uuid("0"), dateTime("02"))
         repository.scheduleJob(uuid("1"), dateTime("03"))
         repository.scheduleJob(uuid("2"), dateTime("03"))
@@ -62,6 +62,8 @@ class ResumeScheduledJobsTests: DescribeSpec({
     }
 
     describe("id eksisterer både i job_queue og wait_queue") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
         // Jobben er fortsatt i job-queuen. Er ikke viktig om den
         // blir "de-duplisert": kan godt forekomme to ganger, men ikke
         // et krav.
@@ -81,6 +83,8 @@ class ResumeScheduledJobsTests: DescribeSpec({
     }
 
     describe("putter varsel_id flere ganger inn i vente-kø") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
         repository.scheduleJob(uuid("0"), dateTime("00"))
         repository.scheduleJob(uuid("0"), dateTime("01"))
 

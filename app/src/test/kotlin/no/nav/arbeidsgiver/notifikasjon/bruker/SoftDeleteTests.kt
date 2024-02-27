@@ -12,10 +12,10 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class SoftDeleteTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("SoftDelete av notifikasjon") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
 
         val mottaker = NærmesteLederMottaker(
             naermesteLederFnr = "314",

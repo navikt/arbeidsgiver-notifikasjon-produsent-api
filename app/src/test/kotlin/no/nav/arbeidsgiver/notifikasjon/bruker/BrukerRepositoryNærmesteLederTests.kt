@@ -9,11 +9,12 @@ import java.time.LocalDate
 import java.util.*
 
 class BrukerRepositoryNærmesteLederTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
+
 
     describe("BrukerRepository NærmesteLeder") {
         context("når mottar slett hendelse uten at det er noe å slette") {
+            val database = testDatabase(Bruker.databaseConfig)
+            val brukerRepository = BrukerRepositoryImpl(database)
             val narmesteLederFnr = "42"
             brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(
@@ -31,6 +32,8 @@ class BrukerRepositoryNærmesteLederTests : DescribeSpec({
         }
 
         context("når mottar to forskjellige koblinger") {
+            val database = testDatabase(Bruker.databaseConfig)
+            val brukerRepository = BrukerRepositoryImpl(database)
             val narmesteLederId = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
             brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
                 NarmesteLederLeesah(

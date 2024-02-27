@@ -11,8 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 
 class EmergencyBreakTests : DescribeSpec({
-    val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
 
     val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -49,6 +47,9 @@ class EmergencyBreakTests : DescribeSpec({
 
 
     describe("EmergencyBreak") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
         val emergencyBreak = repository.emergencyBreakOn()
 
         it("should be enabled on start up") {

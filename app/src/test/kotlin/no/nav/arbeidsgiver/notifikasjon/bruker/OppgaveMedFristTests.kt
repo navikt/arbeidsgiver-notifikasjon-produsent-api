@@ -12,17 +12,16 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 
 class OppgaveMedFristTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
-        }
-    )
 
     describe("oppgave med frist") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(
             frist = LocalDate.parse("2007-12-03"),
         )
@@ -36,6 +35,14 @@ class OppgaveMedFristTests : DescribeSpec({
     }
 
     describe("ny oppgave med utsatt frist får ny frist") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(
             frist = LocalDate.parse("2007-12-03"),
         )
@@ -54,6 +61,14 @@ class OppgaveMedFristTests : DescribeSpec({
     }
 
     describe("utført oppgave med utsatt frist har samme frist") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(
             frist = LocalDate.parse("2007-12-03"),
         )
@@ -73,6 +88,14 @@ class OppgaveMedFristTests : DescribeSpec({
     }
 
     describe("utgått oppgave med utsatt frist har ny frist") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(
             frist = LocalDate.parse("2007-12-03"),
         )

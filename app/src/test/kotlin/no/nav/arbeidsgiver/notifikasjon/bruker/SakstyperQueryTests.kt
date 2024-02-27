@@ -11,8 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import java.time.OffsetDateTime
-import java.util.*
 
 private val tilgang1 = HendelseModel.AltinnMottaker(
     virksomhetsnummer = "11111",
@@ -37,23 +35,21 @@ private val ikkeTilgang4 = HendelseModel.AltinnMottaker(
 
 
 class SakstyperQueryTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(tjenestetilganger = listOf(tilgang1, tilgang2).map {
-                BrukerModel.Tilgang.Altinn(
-                    virksomhet = it.virksomhetsnummer,
-                    servicecode = it.serviceCode,
-                    serviceedition = it.serviceEdition,
-                )
-            })
-        }
-    )
-
     describe("bruker har diverse tilganger") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(tjenestetilganger = listOf(tilgang1, tilgang2).map {
+                    BrukerModel.Tilgang.Altinn(
+                        virksomhet = it.virksomhetsnummer,
+                        servicecode = it.serviceCode,
+                        serviceedition = it.serviceEdition,
+                    )
+                })
+            }
+        )
         val skalSe = mutableSetOf<String>()
         val skalIkkeSe = mutableSetOf<String>()
 

@@ -16,10 +16,9 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class HardDeleteTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
     describe("HardDelete av notifikasjon") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
         val uuid1 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
         val uuid2 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130004")
 
@@ -84,6 +83,8 @@ class HardDeleteTests : DescribeSpec({
     }
 
     describe("HardDelete av sak") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
         val uuid1 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130003")
         val uuid2 = UUID.fromString("da89eafe-b31b-11eb-8529-0242ac130004")
 

@@ -6,10 +6,10 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
 
 class NyLenkeOppgaveTests: DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("Oppgave med uendret lenke") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
         val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(lenke = "https://opprettelse-lenke")
         it("Starter med lenken fra hendelse") {
             brukerRepository.hentLenke() shouldBe "https://opprettelse-lenke"
@@ -22,6 +22,8 @@ class NyLenkeOppgaveTests: DescribeSpec({
     }
 
     describe("Oppgave med endret lenke") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
         val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(lenke = "https://opprettelse-lenke")
         it("Starter med lenken fra hendelse") {
             brukerRepository.hentLenke() shouldBe "https://opprettelse-lenke"

@@ -15,15 +15,16 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 
 class NærmesteLederTilgangsstyringTests: DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
 
-    suspend fun beskjedOpprettet(mottaker: Mottaker) = brukerRepository.beskjedOpprettet(
+    suspend fun BrukerRepository.beskjedOpprettet(mottaker: Mottaker) = beskjedOpprettet(
         virksomhetsnummer = mottaker.virksomhetsnummer,
         mottakere = listOf(mottaker),
     )
 
     describe("Tilgangsstyring av nærmeste leder") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+
         val virksomhet1 = "1".repeat(9)
         val virksomhet2 = "2".repeat(9)
         val nærmesteLeder = "1".repeat(11)
@@ -48,9 +49,9 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             virksomhetsnummer = virksomhet2,
         )
 
-        val beskjed1 = beskjedOpprettet(mottaker = mottaker1)
-        beskjedOpprettet(mottaker = mottaker2)
-        val beskjed3 = beskjedOpprettet(mottaker = mottaker3)
+        val beskjed1 = brukerRepository.beskjedOpprettet(mottaker = mottaker1)
+        brukerRepository.beskjedOpprettet(mottaker = mottaker2)
+        val beskjed3 = brukerRepository.beskjedOpprettet(mottaker = mottaker3)
 
         it("ingen ansatte gir ingen notifikasjoner") {
             val notifikasjoner = brukerRepository.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)

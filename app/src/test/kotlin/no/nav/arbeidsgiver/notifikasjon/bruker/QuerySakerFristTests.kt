@@ -22,10 +22,6 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class QuerySakerFristTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-
     val inloggetFnr = "0".repeat(11)
     val altinnMottaker = AltinnMottaker(
         virksomhetsnummer = "42",
@@ -38,36 +34,38 @@ class QuerySakerFristTests : DescribeSpec({
         virksomhetsnummer = "42",
     )
 
-    val engine = ktorBrukerTestServer(
-        altinn = AltinnStub(
-            inloggetFnr to Tilganger(
-                tjenestetilganger = listOf(
-                    Tilgang.Altinn(
-                        altinnMottaker.virksomhetsnummer,
-                        altinnMottaker.serviceCode,
-                        altinnMottaker.serviceEdition
-                    )
-                ),
+    suspend fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApplicationEngine> {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            altinn = AltinnStub(
+                inloggetFnr to Tilganger(
+                    tjenestetilganger = listOf(
+                        Tilgang.Altinn(
+                            altinnMottaker.virksomhetsnummer,
+                            altinnMottaker.serviceCode,
+                            altinnMottaker.serviceEdition
+                        )
+                    ),
+                )
+            ),
+            brukerRepository = brukerRepository,
+        )
+        brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
+            NarmesteLederLeesah(
+                narmesteLederId = UUID.randomUUID(),
+                fnr = naermestelederMottaker.ansattFnr,
+                narmesteLederFnr = naermestelederMottaker.naermesteLederFnr,
+                orgnummer = naermestelederMottaker.virksomhetsnummer,
+                aktivTom = null,
             )
-        ),
-        brukerRepository = brukerRepository,
-    )
-
+        )
+        return Pair(brukerRepository, engine)
+    }
 
     describe("Query.saker med frist") {
-        beforeContainer {
-            brukerRepository.oppdaterModellEtterNærmesteLederLeesah(
-                NarmesteLederLeesah(
-                    narmesteLederId = UUID.randomUUID(),
-                    fnr = naermestelederMottaker.ansattFnr,
-                    narmesteLederFnr = naermestelederMottaker.naermesteLederFnr,
-                    orgnummer = naermestelederMottaker.virksomhetsnummer,
-                    aktivTom = null,
-                )
-            )
-        }
-
         context("sak uten oppgaver") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             brukerRepository.opprettSak(tilstander = emptyList(), mottakerSak = listOf(altinnMottaker))
 
             val response = engine.hentSaker()
@@ -79,6 +77,7 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("sak med oppgaver [NY:medfrist, NY:utenfrist]") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val mottaker = listOf(altinnMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
@@ -98,6 +97,7 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("sak med oppgaver nl [NY:medfrist, NY:utenfrist") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val mottaker = listOf(naermestelederMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
@@ -117,6 +117,7 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("sak med oppgaver [UTFOERT:medfrist, UTGAATT:medfrist]") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val mottaker = listOf(naermestelederMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
@@ -136,6 +137,7 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("sak med oppgaver [NY:medfrist]") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
                 tilstander = listOf(
@@ -153,6 +155,7 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("sak med oppgaver er sortert på frist") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val mottaker = listOf(naermestelederMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(
@@ -174,6 +177,7 @@ class QuerySakerFristTests : DescribeSpec({
         }
 
         context("saker er sortert på frist") {
+            val (brukerRepository, engine) = setupRepoOgEngine()
             val mottaker = listOf(naermestelederMottaker)
             val frist = LocalDate.now()
             brukerRepository.opprettSak(

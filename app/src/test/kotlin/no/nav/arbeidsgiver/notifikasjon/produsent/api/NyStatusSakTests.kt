@@ -15,17 +15,9 @@ import java.time.LocalDateTime
 import java.util.*
 
 class NyStatusSakTests : DescribeSpec({
-    val stubbedKafkaProducer = FakeHendelseProdusent()
-
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = stubbedKafkaProducer,
-        produsentRepository = produsentRepository,
-    )
 
     describe("oppdater status") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val nySakResponse = engine.nySak()
         it("vellykket nySak") {
             nySakResponse.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
@@ -85,6 +77,17 @@ class NyStatusSakTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Pair<FakeHendelseProdusent, TestApplicationEngine> {
+    val stubbedKafkaProducer = FakeHendelseProdusent()
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = stubbedKafkaProducer,
+        produsentRepository = produsentRepository,
+    )
+    return Pair(stubbedKafkaProducer, engine)
+}
 
 private fun TestApplicationEngine.nyStatusSak(
     id: UUID,

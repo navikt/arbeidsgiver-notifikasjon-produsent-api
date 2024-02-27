@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
@@ -18,18 +19,12 @@ import org.intellij.lang.annotations.Language
 import java.time.LocalDateTime
 import java.util.*
 
-    class IdempotensOppførselForProdusentApiTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val queryModel = ProdusentRepositoryImpl(database)
+class IdempotensOppførselForProdusentApiTests : DescribeSpec({
 
     val virksomhetsnummer = "1234"
     val mottaker = AltinnMottaker(serviceCode = "5441", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
     val eksternId = "42"
     val grupperingsid = "42"
-
-    val engine = ktorProdusentTestServer(
-        produsentRepository = queryModel
-    )
 
     fun nyBeskjedGql(tekst: String) : String {
         // language=GraphQL
@@ -124,6 +119,7 @@ import java.util.*
 
     describe("Idempotens Oppførsel for Produsent api") {
         context("Beskjed med samme tekst") {
+            val (_, engine) = setupEngine()
             val idNyBeskjed1 = engine.produsentApi(nyBeskjedGql("foo")).getTypedContent<UUID>("/nyBeskjed/id")
             val idNyBeskjed2 = engine.produsentApi(nyBeskjedGql("foo")).getTypedContent<UUID>("/nyBeskjed/id")
 
@@ -133,6 +129,7 @@ import java.util.*
         }
 
         context("Beskjed med ulik tekst") {
+            val (_, engine) = setupEngine()
             val resultat1 = engine.produsentApi(nyBeskjedGql("foo")).getTypedContent<String>("/nyBeskjed/__typename")
             val resultat2 = engine.produsentApi(nyBeskjedGql("bar")).getTypedContent<String>("/nyBeskjed/__typename")
 
@@ -145,6 +142,7 @@ import java.util.*
         }
 
         context("Oppgave med samme tekst") {
+            val (_, engine) = setupEngine()
             val idNyOppgave1 = engine.produsentApi(nyOppgaveGql("foo")).getTypedContent<UUID>("/nyOppgave/id")
             val idNyOppgave2 = engine.produsentApi(nyOppgaveGql("foo")).getTypedContent<UUID>("/nyOppgave/id")
 
@@ -154,6 +152,7 @@ import java.util.*
         }
 
         context("Oppgave med ulik tekst") {
+            val (_, engine) = setupEngine()
             val resultat1 = engine.produsentApi(nyOppgaveGql("foo")).getTypedContent<String>("/nyOppgave/__typename")
             val resultat2 = engine.produsentApi(nyOppgaveGql("bar")).getTypedContent<String>("/nyOppgave/__typename")
 
@@ -166,6 +165,7 @@ import java.util.*
         }
 
         context("Kalenderavtale med samme tekst") {
+            val (queryModel, engine) = setupEngine()
             queryModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
                 merkelapp = "tag",
                 grupperingsid = grupperingsid,
@@ -179,6 +179,7 @@ import java.util.*
         }
 
         context("Oppgave med ulik tekst") {
+            val (queryModel, engine) = setupEngine()
             queryModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
                 merkelapp = "tag",
                 grupperingsid = grupperingsid,
@@ -195,6 +196,7 @@ import java.util.*
         }
 
         context("Beskjed med varsler") {
+            val (_, engine) = setupEngine()
             val nyBeskjedReq = GraphQLRequest(
                 query = nyBeskjedGql("foo"),
                 variables = laxObjectMapper.readValue<Map<String, Any?>>(varlser1),
@@ -208,6 +210,7 @@ import java.util.*
         }
 
         context("Oppgave med varsler") {
+            val (_, engine) = setupEngine()
             val nyOppgaveReq = GraphQLRequest(
                 query = nyOppgaveGql("foo"),
                 variables = laxObjectMapper.readValue<Map<String, Any?>>(varlser1),
@@ -221,6 +224,7 @@ import java.util.*
         }
 
         context("ny oppgave er idempotent også når varsler er sendt") {
+            val (queryModel, engine) = setupEngine()
             val nyOppgaveReq = GraphQLRequest(
                 query = nyOppgaveGql("foo"),
                 variables = laxObjectMapper.readValue<Map<String, Any?>>(varlser1),
@@ -255,6 +259,7 @@ import java.util.*
         }
 
         context("ny oppgave med endrede varsler får feilmelding") {
+            val (_, engine) = setupEngine()
             val resultat1 = engine.produsentApi(
                 GraphQLRequest(
                     query = nyOppgaveGql("foo"),
@@ -277,6 +282,7 @@ import java.util.*
         }
 
         context("Oppgave med påminnelse med varsel") {
+            val (_, engine) = setupEngine()
             // language=GraphQL
             val oppgaveMedPåminnelse = """
             mutation NyOppgave(${'$'}eksterneVarsler: [PaaminnelseEksterntVarselInput!]! = []) {
@@ -321,6 +327,15 @@ import java.util.*
     }
 
 })
+
+private fun DescribeSpec.setupEngine(): Pair<ProdusentRepositoryImpl, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val queryModel = ProdusentRepositoryImpl(database)
+    val engine = ktorProdusentTestServer(
+        produsentRepository = queryModel
+    )
+    return Pair(queryModel, engine)
+}
 
 @Language("json")
 private val varlser1 = """

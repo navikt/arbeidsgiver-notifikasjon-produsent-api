@@ -37,15 +37,9 @@ private val sakOpprettet = HendelseModel.SakOpprettet(
 )
 
 class NySakDuplisertTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-    val hendelseProdusent = FakeHendelseProdusent()
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = hendelseProdusent,
-        produsentRepository = produsentRepository,
-    )
 
     describe("opprett nySak to ganger med samme input") {
+        val (produsentRepository, hendelseProdusent, engine) = setupEngine()
         val response1 = engine.nySak()
         it("should be successfull") {
             response1.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
@@ -70,6 +64,7 @@ class NySakDuplisertTests : DescribeSpec({
     }
 
     describe("opprett ny sak og det finnes en delvis feilet saksopprettelse") {
+        val (produsentRepository, hendelseProdusent, engine) = setupEngine()
         hendelseProdusent.clear()
         hendelseProdusent.hendelser.add(sakOpprettet)
         produsentRepository.oppdaterModellEtterHendelse(sakOpprettet)
@@ -91,6 +86,17 @@ class NySakDuplisertTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val hendelseProdusent = FakeHendelseProdusent()
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = hendelseProdusent,
+        produsentRepository = produsentRepository,
+    )
+    return Triple(produsentRepository, hendelseProdusent, engine)
+}
 
 
 private fun TestApplicationEngine.nySak(

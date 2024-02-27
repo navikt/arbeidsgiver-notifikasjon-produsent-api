@@ -19,25 +19,23 @@ private val tilgang1 = AltinnMottaker(virksomhetsnummer = "43", serviceCode = "5
 private val tilgang2 = AltinnMottaker(virksomhetsnummer = "44", serviceCode = "5441", serviceEdition = "1")
 
 class QuerySakerAntallMerkelapperTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        altinn = AltinnStub(
-            "0".repeat(11) to BrukerModel.Tilganger(
-                tjenestetilganger = listOf(tilgang1, tilgang2).map {
-                    BrukerModel.Tilgang.Altinn(
-                        virksomhet = it.virksomhetsnummer,
-                        servicecode = it.serviceCode,
-                        serviceedition = it.serviceEdition
-                    )
-                },
-            )
-        ),
-        brukerRepository = brukerRepository,
-    )
-
     describe("antall i sakstype (Query.saker)") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            altinn = AltinnStub(
+                "0".repeat(11) to BrukerModel.Tilganger(
+                    tjenestetilganger = listOf(tilgang1, tilgang2).map {
+                        BrukerModel.Tilgang.Altinn(
+                            virksomhet = it.virksomhetsnummer,
+                            servicecode = it.serviceCode,
+                            serviceedition = it.serviceEdition
+                        )
+                    },
+                )
+            ),
+            brukerRepository = brukerRepository,
+        )
         for (merkelapp in listOf("merkelapp1", "merkelapp2")) {
             for (tittel in listOf("sykmelding", "refusjon")) {
                 brukerRepository.opprettSak(

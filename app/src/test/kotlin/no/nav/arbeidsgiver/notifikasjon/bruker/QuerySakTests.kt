@@ -13,22 +13,10 @@ import java.util.*
 class QuerySakTests : DescribeSpec({
     val fallbackTimeNotUsed = OffsetDateTime.parse("2020-01-01T01:01:01Z")
 
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
 
-    val engine = ktorBrukerTestServer(
-        altinn = AltinnStub(
-            "0".repeat(11) to BrukerModel.Tilganger(
-                tjenestetilganger = listOf(
-                    BrukerModel.Tilgang.Altinn("42", "5441", "1"),
-                    BrukerModel.Tilgang.Altinn("43", "5441", "1")
-                ),
-            )
-        ),
-        brukerRepository = brukerRepository,
-    )
 
     describe("Query.sakById") {
+        val (brukerRepository, engine) = setupRepoOgEngine()
         val sak1 = brukerRepository.sakOpprettet(
             virksomhetsnummer = "42",
             merkelapp = "tag",
@@ -78,6 +66,7 @@ class QuerySakTests : DescribeSpec({
     }
 
     describe("Query.sakByGrupperingsid") {
+        val (brukerRepository, engine) = setupRepoOgEngine()
         val sak1 = brukerRepository.sakOpprettet(
             virksomhetsnummer = "42",
             merkelapp = "tag",
@@ -126,6 +115,23 @@ class QuerySakTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApplicationEngine> {
+    val database = testDatabase(Bruker.databaseConfig)
+    val brukerRepository = BrukerRepositoryImpl(database)
+    val engine = ktorBrukerTestServer(
+        altinn = AltinnStub(
+            "0".repeat(11) to BrukerModel.Tilganger(
+                tjenestetilganger = listOf(
+                    BrukerModel.Tilgang.Altinn("42", "5441", "1"),
+                    BrukerModel.Tilgang.Altinn("43", "5441", "1")
+                ),
+            )
+        ),
+        brukerRepository = brukerRepository,
+    )
+    return Pair(brukerRepository, engine)
+}
 
 private fun TestApplicationEngine.sakById(sakId: UUID) = brukerApi(
     GraphQLRequest(

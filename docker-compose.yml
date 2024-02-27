@@ -27,6 +27,8 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRESQL_FSYNC: "off"
+      POSTGRESQL_FULL_PAGE_WRITES: "off"
     volumes:
       - ${PWD}/local-db-init.sql:/docker-entrypoint-initdb.d/init.sql
 

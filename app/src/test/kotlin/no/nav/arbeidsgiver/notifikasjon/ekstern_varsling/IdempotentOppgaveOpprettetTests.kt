@@ -14,8 +14,6 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class IdempotentOppgaveOpprettetTests: DescribeSpec({
-    val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
 
     val smsVarsel = SmsVarselKontaktinfo(
         varselId = uuid("1"),
@@ -47,6 +45,8 @@ class IdempotentOppgaveOpprettetTests: DescribeSpec({
     )
 
     describe("mutual exclusive access to ekstern_varsel") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
 

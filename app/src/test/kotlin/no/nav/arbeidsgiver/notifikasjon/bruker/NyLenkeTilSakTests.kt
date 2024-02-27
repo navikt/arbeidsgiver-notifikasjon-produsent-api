@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
@@ -10,23 +11,13 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 
 class NyLenkeTilSakTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
-        }
-    )
-
-    fun hentLenke() = engine.querySakerJson(
+    fun TestApplicationEngine.hentLenke() = querySakerJson(
         virksomhetsnummer = TEST_VIRKSOMHET_1,
         offset = 0,
         limit = 1,
     ).getTypedContent<String>("saker/saker/0/lenke")
 
-    fun hentSisteStatus() = engine.querySakerJson(
+    fun TestApplicationEngine.hentSisteStatus() = querySakerJson(
         virksomhetsnummer = TEST_VIRKSOMHET_1,
         offset = 0,
         limit = 1,
@@ -34,6 +25,14 @@ class NyLenkeTilSakTests : DescribeSpec({
 
 
     describe("endring av lenke i sak") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val sakOpprettet = brukerRepository.sakOpprettet(
             lenke = "#foo",
         )
@@ -44,7 +43,7 @@ class NyLenkeTilSakTests : DescribeSpec({
         )
 
         it("Får opprinnelig lenke") {
-            hentLenke() shouldBe "#foo"
+            engine.hentLenke() shouldBe "#foo"
         }
 
         brukerRepository.nyStatusSak(
@@ -55,11 +54,11 @@ class NyLenkeTilSakTests : DescribeSpec({
         )
 
         it("Får ny lenke ") {
-            hentLenke() shouldBe "#bar"
+            engine.hentLenke() shouldBe "#bar"
         }
 
         it("Får ny status tidspunkt") {
-            hentSisteStatus().tidspunkt shouldBe OffsetDateTime.parse("2020-01-01T12:00:00Z")
+            engine.hentSisteStatus().tidspunkt shouldBe OffsetDateTime.parse("2020-01-01T12:00:00Z")
         }
 
         brukerRepository.nyStatusSak(
@@ -69,7 +68,7 @@ class NyLenkeTilSakTests : DescribeSpec({
         )
 
         it("status-oppdatering uten endret lenke") {
-            hentLenke() shouldBe "#bar"
+            engine.hentLenke() shouldBe "#bar"
         }
     }
 })

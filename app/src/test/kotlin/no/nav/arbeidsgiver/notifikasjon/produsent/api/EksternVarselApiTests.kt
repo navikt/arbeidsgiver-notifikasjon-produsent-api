@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
@@ -80,12 +81,6 @@ private val jsonVariabler = laxObjectMapper.readValue<Map<String, Any?>>("""
 """)
 
 class EksternVarselApiTests: DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
-
-    val engine = ktorProdusentTestServer(
-        produsentRepository = produsentModel
-    )
 
     fun nyNotifikasjonMutation(type: NyNotifikasjonInputType) = when(type) {
         nyBeskjed,
@@ -191,6 +186,7 @@ class EksternVarselApiTests: DescribeSpec({
         """
 
     describe("Oppretter beskjed med eksterne varsler som sendes OK") {
+        val (produsentModel, engine) = setupEngine()
         val nyNotifikasjonResult = engine.produsentApi(
             GraphQLRequest(
                 query = nyNotifikasjonMutation(nyBeskjed),
@@ -278,6 +274,7 @@ class EksternVarselApiTests: DescribeSpec({
     }
 
     describe("Oppretter oppgave med eksterne varsler som sendes OK") {
+        val (produsentModel, engine) = setupEngine()
         val nyNotifikasjonResult = engine.produsentApi(GraphQLRequest(
             query = nyNotifikasjonMutation(nyOppgave),
             variables = jsonVariabler,
@@ -363,6 +360,7 @@ class EksternVarselApiTests: DescribeSpec({
     }
 
     describe("Oppretter kalenderavtale med eksterne varsler som sendes OK") {
+        val (produsentModel, engine) = setupEngine()
         produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
             virksomhetsnummer = "0",
             merkelapp = "tag",
@@ -453,3 +451,12 @@ class EksternVarselApiTests: DescribeSpec({
     }
 
 })
+
+private fun DescribeSpec.setupEngine(): Pair<ProdusentRepositoryImpl, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentModel = ProdusentRepositoryImpl(database)
+    val engine = ktorProdusentTestServer(
+        produsentRepository = produsentModel
+    )
+    return Pair(produsentModel, engine)
+}

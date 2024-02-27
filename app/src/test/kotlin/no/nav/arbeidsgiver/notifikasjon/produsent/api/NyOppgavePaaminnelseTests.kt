@@ -4,25 +4,16 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.fakeHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.*
 
 class NyOppgavePaaminnelseTests : DescribeSpec({
-    val stubbedKafkaProducer = fakeHendelseProdusent()
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = stubbedKafkaProducer,
-        produsentRepository = produsentRepository,
-    )
 
     describe("oppgave med frist konkret tidspunkt for påminnelse") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2019-11-01T00:00:00Z",
@@ -43,6 +34,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("oppgave uten frist konkret tidspunkt for påminnelse") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2019-11-01T00:00:00Z",
@@ -61,6 +53,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         }
     }
     describe("oppgave med frist konkret tidspunkt for påminnelse etter frist") {
+        val (_, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2019-11-01T00:00:00Z",
@@ -79,6 +72,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         }
     }
     describe("oppgave uten frist konkret tidspunkt for påminnelse før opprettelse") {
+        val (_, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-02T00:00:00Z",
@@ -99,6 +93,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
 
 
     describe("oppgave uten frist, tidspunkt for påminnelse relativ til opprettelse") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -118,6 +113,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("oppgave uten frist, tidspunkt for påminnelse relativ til frist") {
+        val (_, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -136,6 +132,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("oppgave med frist, tidspunkt for påminnelse relativ til frist") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -156,6 +153,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("oppgave med frist, tidspunkt for påminnelse relativ til frist blir før opprettelse") {
+        val (_, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -175,6 +173,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("ekstern varlser med tom liste") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -197,6 +196,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("ekstern varlser med 1 sms") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -240,6 +240,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("ekstern varlser med 1 epost") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -285,6 +286,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("ekstern varlser med epost og sms") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -353,6 +355,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("ekstern varlser med 1 tjeneste") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -398,6 +401,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
     }
 
     describe("ekstern varlser med epost og sms og tjeneste") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
                 "2020-01-01T00:00:00Z",
@@ -486,6 +490,17 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Pair<FakeHendelseProdusent, TestApplicationEngine> {
+    val stubbedKafkaProducer = fakeHendelseProdusent()
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = stubbedKafkaProducer,
+        produsentRepository = produsentRepository,
+    )
+    return Pair(stubbedKafkaProducer, engine)
+}
 
 private fun nyOppgave(opprettetTidspunkt: String, fragment: String) = """
             mutation {

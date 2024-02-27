@@ -18,15 +18,9 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 class NySakTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-    val stubbedKafkaProducer = FakeHendelseProdusent()
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = stubbedKafkaProducer,
-        produsentRepository = produsentRepository,
-    )
 
     describe("opprett nySak") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
         val response1 = engine.nySak()
         it("should be successfull") {
             response1.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
@@ -149,6 +143,17 @@ class NySakTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Pair<FakeHendelseProdusent, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val stubbedKafkaProducer = FakeHendelseProdusent()
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = stubbedKafkaProducer,
+        produsentRepository = produsentRepository,
+    )
+    return Pair(stubbedKafkaProducer, engine)
+}
 
 private fun TestApplicationEngine.nySak(
     grupperingsid: String = "1",
