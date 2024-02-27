@@ -13,10 +13,6 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class HentSakTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-    val engine = ktorProdusentTestServer(produsentRepository = produsentRepository)
-
     val sakOpprettetHendelse = HendelseModel.SakOpprettet(
         virksomhetsnummer = "1",
         merkelapp = "tag",
@@ -80,6 +76,10 @@ class HentSakTests : DescribeSpec({
 
 
     describe("hentSak") {
+        val database = testDatabase(Produsent.databaseConfig)
+        val produsentRepository = ProdusentRepositoryImpl(database)
+        val engine = ktorProdusentTestServer(produsentRepository = produsentRepository)
+
         produsentRepository.oppdaterModellEtterHendelse(sakOpprettetHendelse)
         produsentRepository.oppdaterModellEtterHendelse(nyStatusSakHendelse)
         produsentRepository.oppdaterModellEtterHendelse(sakMedAnnenMerkelappOpprettetHendelse)
