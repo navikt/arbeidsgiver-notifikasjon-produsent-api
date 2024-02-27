@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
@@ -20,15 +21,6 @@ import java.util.*
 
 
 class SoftDeleteNotifikasjonTests : DescribeSpec({
-
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
-    val kafkaProducer = FakeHendelseProdusent()
-
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = kafkaProducer,
-        produsentRepository = produsentModel
-    )
 
     val virksomhetsnummer = "123"
     val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
@@ -72,6 +64,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
 
         context("Eksisterende oppgave blir markert som slettet") {
+            val (produsentModel, kafkaProducer, engine) = setupEngine()
 
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -241,6 +234,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         }
 
         context("Oppgave mangler") {
+            val (_, _, engine) = setupEngine()
             val response = engine.produsentApi(
                 """
                 mutation {
@@ -260,6 +254,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp") {
+            val (produsentModel, _, engine) = setupEngine()
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet.copy(merkelapp = "feil merkelapp"))
 
             val response = engine.produsentApi(
@@ -284,6 +279,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
     describe("softDeleteNotifikasjonByEksternId-oppførsel") {
 
         context("Eksisterende oppgave blir markert som slettet") {
+            val (produsentModel, kafkaProducer, engine) = setupEngine()
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet2)
@@ -327,6 +323,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         }
 
         context("Oppgave mangler") {
+            val (_, _, engine) = setupEngine()
             val response = engine.produsentApi(
                 """
                 mutation {
@@ -346,6 +343,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         }
 
         context("Oppgave med feil merkelapp men riktig eksternId") {
+            val (produsentModel, _, engine) = setupEngine()
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
@@ -368,6 +366,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         }
 
         context("Oppgave med feil eksternId men riktig merkelapp") {
+            val (produsentModel, _, engine) = setupEngine()
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
             val response = engine.produsentApi(
@@ -389,3 +388,14 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentModel = ProdusentRepositoryImpl(database)
+    val kafkaProducer = FakeHendelseProdusent()
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = kafkaProducer,
+        produsentRepository = produsentModel
+    )
+    return Triple(produsentModel, kafkaProducer, engine)
+}

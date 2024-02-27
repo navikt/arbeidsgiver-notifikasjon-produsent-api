@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.typeNavn
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
@@ -12,17 +13,20 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
 class ProdusentModelIdempotensTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
 
     describe("Produsent Model Idempotent oppførsel") {
-        withData(EksempelHendelse.Alle) { hendelse ->
-            produsentModel.oppdaterModellEtterHendelse(hendelse)
-            produsentModel.oppdaterModellEtterHendelse(hendelse)
+        context("alle hendelser to ganger") {
+            val (_, produsentModel) = setupEngine()
+
+            withData(EksempelHendelse.Alle) { hendelse ->
+                produsentModel.oppdaterModellEtterHendelse(hendelse)
+                produsentModel.oppdaterModellEtterHendelse(hendelse)
+            }
         }
 
 
         context("NyBeskjed to ganger") {
+            val (database, produsentModel) = setupEngine()
             produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.BeskjedOpprettet)
             produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.BeskjedOpprettet)
 
@@ -45,6 +49,7 @@ class ProdusentModelIdempotensTests : DescribeSpec({
          * Dette burde egentlig blitt kommunisert som Duplikatgrupperingsid til produsent.
          */
         context("sak opprettet med forskjellig virksomhetsnummer men samme merkelapp og grupperingsid") {
+            val (_, produsentModel) = setupEngine()
             val sakId1 = UUID.randomUUID()
             val sakId2 = UUID.randomUUID()
             produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
@@ -66,6 +71,7 @@ class ProdusentModelIdempotensTests : DescribeSpec({
     describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
             context("$i - ${hendelse.typeNavn}") {
+                val (_, produsentModel) = setupEngine()
                 produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
                     virksomhetsnummer = hendelse.virksomhetsnummer,
                     aggregateId = hendelse.aggregateId,
@@ -75,3 +81,9 @@ class ProdusentModelIdempotensTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Pair<Database, ProdusentRepositoryImpl> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentModel = ProdusentRepositoryImpl(database)
+    return Pair(database, produsentModel)
+}

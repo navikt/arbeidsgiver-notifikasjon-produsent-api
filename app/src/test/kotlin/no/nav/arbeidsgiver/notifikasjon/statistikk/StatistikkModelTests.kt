@@ -29,11 +29,9 @@ import java.time.temporal.ChronoUnit.MILLIS
 import java.util.*
 
 class StatistikkModelTests : DescribeSpec({
-    val database = testDatabase(Statistikk.databaseConfig)
-    val model = StatistikkModel(database)
 
 
-    suspend fun opprettSak(
+    fun opprettSak(
         id: String,
     ): HendelseModel.SakOpprettet {
         val uuid = uuid(id)
@@ -60,11 +58,11 @@ class StatistikkModelTests : DescribeSpec({
         )
     }
 
-    suspend fun opprettOppgave(
+    fun opprettOppgave(
         id: String,
         merkelapp: String,
         grupperingsid: String?,
-    ) = HendelseModel.OppgaveOpprettet(
+    ) = OppgaveOpprettet(
         virksomhetsnummer = "1",
         produsentId = "1",
         hendelseId = uuid(id),
@@ -204,6 +202,8 @@ class StatistikkModelTests : DescribeSpec({
 
 
         context("gitt hendelse med to varsler") {
+            val database = testDatabase(Statistikk.databaseConfig)
+            val model = StatistikkModel(database)
             val meterRegistry = SimpleMeterRegistry()
             val gauge = MultiGauge.builder("antall_varsler")
                 .description("Antall varsler")
@@ -235,6 +235,8 @@ class StatistikkModelTests : DescribeSpec({
         }
 
         context("SoftDelete") {
+            val database = testDatabase(Statistikk.databaseConfig)
+            val model = StatistikkModel(database)
             val softdelete = HendelseModel.SoftDelete(
                 virksomhetsnummer = "42",
                 aggregateId = UUID.randomUUID(),
@@ -255,6 +257,8 @@ class StatistikkModelTests : DescribeSpec({
     }
 
     describe("Statistikk Idempotent oppførsel") {
+        val database = testDatabase(Statistikk.databaseConfig)
+        val model = StatistikkModel(database)
         val metadata = HendelseMetadata(now())
         withData(EksempelHendelse.Alle) { hendelse ->
             model.oppdaterModellEtterHendelse(hendelse, metadata)
@@ -263,6 +267,8 @@ class StatistikkModelTests : DescribeSpec({
     }
 
     describe("SoftDelete på sak sletter også relaterte notifikasjoner") {
+        val database = testDatabase(Statistikk.databaseConfig)
+        val model = StatistikkModel(database)
         model.oppdaterModellEtterHendelse(opprettSak("1"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("01", "tag", "1"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("02", "tag", "2"), HendelseMetadata(now()))
@@ -291,6 +297,8 @@ class StatistikkModelTests : DescribeSpec({
     }
 
     describe("HardDelete av sak sletter også relaterte notifikasjoner") {
+        val database = testDatabase(Statistikk.databaseConfig)
+        val model = StatistikkModel(database)
         model.oppdaterModellEtterHendelse(opprettSak("1"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("01", "tag", "1"), HendelseMetadata(now()))
         model.oppdaterModellEtterHendelse(opprettOppgave("02", "tag", "2"), HendelseMetadata(now()))

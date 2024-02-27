@@ -8,18 +8,17 @@ import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDateTime
 
 class QueryKommendeKalenderavtalerTests: DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
-        }
-    )
     val now = LocalDateTime.now()
 
     describe("kommendeKalenderavtaler") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val grupperingsid = "42"
         val merkelapp = "tag"
         brukerRepository.sakOpprettet(

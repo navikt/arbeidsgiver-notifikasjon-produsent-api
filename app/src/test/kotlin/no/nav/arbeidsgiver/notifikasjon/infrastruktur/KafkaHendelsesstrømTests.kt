@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import io.kotest.core.annotation.Isolate
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -10,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.localKafka
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
+@Isolate
 class KafkaHendelsesstrømTests: DescribeSpec({
     val localKafka = localKafka()
 

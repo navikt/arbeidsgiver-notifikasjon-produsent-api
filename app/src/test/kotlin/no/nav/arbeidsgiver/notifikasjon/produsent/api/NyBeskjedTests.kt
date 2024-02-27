@@ -20,16 +20,9 @@ import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 
 class NyBeskjedTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-    val kafkaProducer = FakeHendelseProdusent()
-
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = kafkaProducer,
-        produsentRepository = produsentRepository,
-    )
 
     describe("produsent-api happy path") {
+        val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val nyBeskjed = opprettOgTestNyBeskjed(engine)
 
         it("sends message to kafka") {
@@ -57,6 +50,7 @@ class NyBeskjedTests : DescribeSpec({
     }
 
     describe("produsent-api happy path med grupperingsid for sak") {
+        val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val sakOpprettet = HendelseModel.SakOpprettet(
             virksomhetsnummer = "1",
             merkelapp = "tag",
@@ -108,6 +102,17 @@ class NyBeskjedTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val kafkaProducer = FakeHendelseProdusent()
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = kafkaProducer,
+        produsentRepository = produsentRepository,
+    )
+    return Triple(produsentRepository, kafkaProducer, engine)
+}
 
 
 private suspend inline fun DescribeSpecContainerScope.opprettOgTestNyBeskjed(

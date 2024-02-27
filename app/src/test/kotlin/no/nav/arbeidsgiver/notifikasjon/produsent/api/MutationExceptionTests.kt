@@ -14,16 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.util.*
 
 class MutationExceptionTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
     val ex = RuntimeException("woops!")
-
-    val engine = ktorProdusentTestServer(
-        produsentRepository = produsentRepository,
-        kafkaProducer = object : FakeHendelseProdusent() {
-            override suspend fun sendOgHentMetadata(hendelse: HendelseModel.Hendelse) = throw ex
-        },
-    )
 
     //language=GraphQL
     val gyldigeMutations = listOf(
@@ -120,6 +111,14 @@ class MutationExceptionTests : DescribeSpec({
     )
 
     describe("robusthet ved intern feil") {
+        val database = testDatabase(Produsent.databaseConfig)
+        val produsentRepository = ProdusentRepositoryImpl(database)
+        val engine = ktorProdusentTestServer(
+            produsentRepository = produsentRepository,
+            kafkaProducer = object : FakeHendelseProdusent() {
+                override suspend fun sendOgHentMetadata(hendelse: HendelseModel.Hendelse) = throw ex
+            },
+        )
         withData(gyldigeMutations) { query ->
             val response = engine.produsentApi(query)
             response.getGraphqlErrors() shouldHaveSize 1

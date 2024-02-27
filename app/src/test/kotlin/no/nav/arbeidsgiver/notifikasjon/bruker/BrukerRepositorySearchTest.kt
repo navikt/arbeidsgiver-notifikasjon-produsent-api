@@ -10,10 +10,10 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class BrukerRepositorySearchTest : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
 
     describe("BrukerRepositoryImpl#hentSaker") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
         brukerRepository.insertSak("1", "Refusjon graviditet - Gerd - 112233")
         brukerRepository.insertSak("2", "Refusjon kronisk syk - Gerd - 112233")
         brukerRepository.insertSak("3", "Refusjon kronisk syk - Gerd - 223344")

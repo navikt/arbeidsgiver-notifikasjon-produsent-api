@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSen
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -25,8 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
 class EksternVarslingServiceTests : DescribeSpec({
-    val database = testDatabase(EksternVarsling.databaseConfig)
-    val repository = EksternVarslingRepository(database)
     val hendelseProdusent = FakeHendelseProdusent()
     val meldingSendt = AtomicBoolean(false)
     val nå = LocalDateTime.parse("2020-01-01T01:01")
@@ -37,28 +36,37 @@ class EksternVarslingServiceTests : DescribeSpec({
         override fun nesteDagtidIkkeSøndag(start: LocalDateTime) = nesteDagtidIkkeSøndag.removeLast()
 
     }
-    val service = EksternVarslingService(
-        åpningstider = åpningstider,
-        osloTid = object : OsloTid {
-            override fun localDateTimeNow() = nå
-            override fun localDateNow() = TODO("Not yet implemented")
-        },
-        eksternVarslingRepository = repository,
-        altinnVarselKlient = object: AltinnVarselKlient {
-            override suspend fun send(
-                eksternVarsel: EksternVarsel
-            ): AltinnVarselKlientResponseOrException {
-                meldingSendt.set(true)
-                return AltinnVarselKlientResponse.Ok(rå = NullNode.instance)
-            }
-        },
-        hendelseProdusent = hendelseProdusent,
-        idleSleepDelay = Duration.ZERO,
-        recheckEmergencyBrakeDelay = Duration.ZERO,
-    )
+
+    fun DescribeSpec.setupService(): Triple<Database, EksternVarslingRepository, EksternVarslingService> {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+        val service = EksternVarslingService(
+            åpningstider = åpningstider,
+            osloTid = object : OsloTid {
+                override fun localDateTimeNow() = nå
+                override fun localDateNow() = TODO("Not yet implemented")
+            },
+            eksternVarslingRepository = repository,
+            altinnVarselKlient = object : AltinnVarselKlient {
+                override suspend fun send(
+                    eksternVarsel: EksternVarsel
+                ): AltinnVarselKlientResponseOrException {
+                    meldingSendt.set(true)
+                    return AltinnVarselKlientResponse.Ok(rå = NullNode.instance)
+                }
+            },
+            hendelseProdusent = hendelseProdusent,
+            idleSleepDelay = Duration.ZERO,
+            recheckEmergencyBrakeDelay = Duration.ZERO,
+        )
+        return Triple(database, repository, service)
+    }
+
 
     describe("EksternVarslingService#start()") {
         context("LØPENDE sendingsvindu") {
+            val (database, repository, service) = setupService()
+
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -113,6 +121,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("NKS_ÅPNINGSTID sendingsvindu innenfor nks åpningstid sendes med en gang") {
+            val (database, repository, service) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -160,6 +169,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("NKS_ÅPNINGSTID sendingsvindu utenfor nks åpningstid reskjeddullerres") {
+            val (database, repository, service) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -216,6 +226,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("DAGTID_IKKE_SØNDAG sendingsvindu innenfor sendes med en gang") {
+            val (database, repository, service) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -264,6 +275,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("DAGTID_IKKE_SØNDAG sendingsvindu utenfor reskjedduleres") {
+            val (database, repository, service) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -311,6 +323,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("SPESIFISERT sendingsvindu som har passert sendes med en gang") {
+            val (database, repository, service) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -358,6 +371,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("SPESIFISERT sendingsvindu som er i fremtid reskjedduleres") {
+            val (database, repository, service) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),

@@ -9,6 +9,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.types.instanceOf
+import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.UTFOERT
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.OppgaveTidslinjeElement
@@ -22,32 +23,23 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 
 class QuerySakerTidslinjeTest: DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
-        }
-    )
-
-    fun fetchTidslinje(sak: HendelseModel.SakOpprettet)
-            = engine.querySakerJson()
-                .getTypedContent<BrukerAPI.SakerResultat>("$.saker")
-                .saker
-                .first { it.id == sak.sakId }
-                .tidslinje
-
     describe("tidslinje") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val sak0 = brukerRepository.sakOpprettet()
         val sak1 = brukerRepository.sakOpprettet(lenke = null)
 
         it("tidslinje er tom til å starte med") {
-            val tidslinje0 = fetchTidslinje(sak0)
+            val tidslinje0 = engine.fetchTidslinje(sak0)
             tidslinje0 should beEmpty()
 
-            val tidslinje1 = fetchTidslinje(sak1)
+            val tidslinje1 = engine.fetchTidslinje(sak1)
             tidslinje1 should beEmpty()
         }
 
@@ -58,7 +50,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01:01+00"),
         )
         it("første oppgave vises på riktig sak") {
-            val tidslinje0 = fetchTidslinje(sak0)
+            val tidslinje0 = engine.fetchTidslinje(sak0)
             tidslinje0 should haveSize(1)
             instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
                 it.tekst shouldBe oppgave0.tekst
@@ -66,7 +58,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.id shouldNot beNull()
             }
 
-            val tidslinje1 = fetchTidslinje(sak1)
+            val tidslinje1 = engine.fetchTidslinje(sak1)
             tidslinje1 should beEmpty()
         }
 
@@ -76,7 +68,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(1),
         )
         it("andre beskjed på samme sak kommer i riktig rekkefølge") {
-            val tidslinje0 = fetchTidslinje(sak0)
+            val tidslinje0 = engine.fetchTidslinje(sak0)
             tidslinje0 should haveSize(2)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
                 it.tekst shouldBe beskjed1.tekst
@@ -86,7 +78,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.tilstand shouldBe NY
             }
 
-            val tidslinje1 = fetchTidslinje(sak1)
+            val tidslinje1 = engine.fetchTidslinje(sak1)
             tidslinje1 should beEmpty()
         }
 
@@ -96,7 +88,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(2),
         )
         it("ny beskjed på andre saken, vises kun der") {
-            val tidslinje0 = fetchTidslinje(sak0)
+            val tidslinje0 = engine.fetchTidslinje(sak0)
             tidslinje0 should haveSize(2)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
                 it.tekst shouldBe beskjed1.tekst
@@ -106,7 +98,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.tilstand shouldBe NY
             }
 
-            val tidslinje1 = fetchTidslinje(sak1)
+            val tidslinje1 = engine.fetchTidslinje(sak1)
             tidslinje1 should haveSize(1)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
                 it.tekst shouldBe beskjed2.tekst
@@ -119,7 +111,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             utfoertTidspunkt = oppgave0.opprettetTidspunkt.plusHours(4),
         )
         it("endret oppgave-status reflekteres i tidslinja, men posisjonen er uendret") {
-            val tidslinje0 = fetchTidslinje(sak0)
+            val tidslinje0 = engine.fetchTidslinje(sak0)
             tidslinje0 should haveSize(2)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
                 it.tekst shouldBe beskjed1.tekst
@@ -129,7 +121,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.tilstand shouldBe UTFOERT
             }
 
-            val tidslinje1 = fetchTidslinje(sak1)
+            val tidslinje1 = engine.fetchTidslinje(sak1)
             tidslinje1 should haveSize(1)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
                 it.tekst shouldBe beskjed2.tekst
@@ -145,7 +137,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             sakId = sak1.sakId,
         )
         it("kalenderavtale på andre saken, vises kun der") {
-            val tidslinje0 = fetchTidslinje(sak0)
+            val tidslinje0 = engine.fetchTidslinje(sak0)
             tidslinje0 should haveSize(2)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
                 it.tekst shouldBe beskjed1.tekst
@@ -154,7 +146,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.tekst shouldBe oppgave0.tekst
             }
 
-            val tidslinje1 = fetchTidslinje(sak1)
+            val tidslinje1 = engine.fetchTidslinje(sak1)
             tidslinje1 should haveSize(2)
             instanceOf<BrukerAPI.KalenderavtaleTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
                 it.tekst shouldBe kalenderavtale.tekst
@@ -173,6 +165,13 @@ class QuerySakerTidslinjeTest: DescribeSpec({
         }
     }
 })
+
+private fun TestApplicationEngine.fetchTidslinje(sak: HendelseModel.SakOpprettet)
+        = querySakerJson()
+    .getTypedContent<BrukerAPI.SakerResultat>("$.saker")
+    .saker
+    .first { it.id == sak.sakId }
+    .tidslinje
 
 suspend inline fun <reified SubClass: Class, Class: Any>TestScope.instanceOf(
     subject: Class,

@@ -11,8 +11,6 @@ import org.apache.kafka.common.record.TimestampType
 
 
 class BackupRepositoryTests : DescribeSpec({
-    val database = testDatabase(KafkaBackup.databaseConfig)
-    val backupRepository = BackupRepository(database)
 
     val record1 = record(
         partition = 0,
@@ -57,6 +55,8 @@ class BackupRepositoryTests : DescribeSpec({
     )
 
     describe("Reading from database") {
+        val database = testDatabase(KafkaBackup.databaseConfig)
+        val backupRepository = BackupRepository(database)
         listOf(record1, record2, record3, record4, record5).forEach {
             backupRepository.process(it)
         }

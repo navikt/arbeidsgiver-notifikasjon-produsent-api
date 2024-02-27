@@ -21,17 +21,9 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 
 class NyOppgaveTests : DescribeSpec({
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentRepository = ProdusentRepositoryImpl(database)
-
-    val kafkaProducer = FakeHendelseProdusent()
-
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = kafkaProducer,
-        produsentRepository = produsentRepository,
-    )
 
     describe("produsent-api happy path") {
+        val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val nyOppgave = opprettOgTestNyOppgave<MutationNyOppgave.NyOppgaveVellykket>(engine)
 
         it("sends message to kafka") {
@@ -65,6 +57,7 @@ class NyOppgaveTests : DescribeSpec({
     }
 
     describe("produsent-api happy path med frist") {
+        val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val nyOppgave = opprettOgTestNyOppgave<MutationNyOppgave.NyOppgaveVellykket>(engine, frist = """frist: "2020-01-02"  """)
 
         it("sends message to kafka") {
@@ -100,6 +93,7 @@ class NyOppgaveTests : DescribeSpec({
     }
 
     describe("produsent-api happy path med grupperingsid for sak") {
+        val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val sakOpprettet = HendelseModel.SakOpprettet(
             virksomhetsnummer = "1",
             merkelapp = "tag",
@@ -154,6 +148,17 @@ class NyOppgaveTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
+    val database = testDatabase(Produsent.databaseConfig)
+    val produsentRepository = ProdusentRepositoryImpl(database)
+    val kafkaProducer = FakeHendelseProdusent()
+    val engine = ktorProdusentTestServer(
+        kafkaProducer = kafkaProducer,
+        produsentRepository = produsentRepository,
+    )
+    return Triple(produsentRepository, kafkaProducer, engine)
+}
 
 private suspend inline fun <reified T: MutationNyOppgave.NyOppgaveResultat> DescribeSpecContainerScope.opprettOgTestNyOppgave(
     engine: TestApplicationEngine,

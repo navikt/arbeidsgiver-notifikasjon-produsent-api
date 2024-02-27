@@ -3,22 +3,24 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloLocalDateTime
-import no.nav.arbeidsgiver.notifikasjon.util.*
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
+import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
 class OppgaveMedPåminnelseTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
-        }
-    )
 
     describe("oppgave med påminnelse blir bumpet og klikk state clearet") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val tidspunkt = OffsetDateTime.parse("2020-12-03T10:15:30+01:00")
         val oppgave0 = brukerRepository.oppgaveOpprettet(
             opprettetTidspunkt = tidspunkt,

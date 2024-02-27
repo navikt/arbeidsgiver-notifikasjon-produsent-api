@@ -7,17 +7,16 @@ import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 
 class OppgaveUførtTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub { _, _ ->
-            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
-        }
-    )
 
     describe("oppgave utført") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val engine = ktorBrukerTestServer(
+            brukerRepository = brukerRepository,
+            altinn = AltinnStub { _, _ ->
+                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            }
+        )
         val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(
             notifikasjonId = uuid("0"),
             opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),

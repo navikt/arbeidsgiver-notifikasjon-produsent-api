@@ -9,7 +9,6 @@ import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import java.time.OffsetDateTime
 
 private val tilgang1 = HendelseModel.AltinnMottaker(
     virksomhetsnummer = "11111",
@@ -18,15 +17,9 @@ private val tilgang1 = HendelseModel.AltinnMottaker(
 )
 
 class SakstyperQueryIngenTilgangerTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
-    val brukerRepository = BrukerRepositoryImpl(database)
-
-    val engine = ktorBrukerTestServer(
-        brukerRepository = brukerRepository,
-        altinn = AltinnStub()
-    )
 
     describe("har ingen tilganger eller saker") {
+        val (_, engine) = setupRepoOgEngine()
         it("får ingen sakstyper") {
             val sakstyper = engine.querySakstyper()
             sakstyper shouldBe emptySet()
@@ -34,11 +27,12 @@ class SakstyperQueryIngenTilgangerTests : DescribeSpec({
     }
 
     describe("har ingen tilganger, men finnes saker") {
-        brukerRepository.sakOpprettet(
+        val (repo, engine) = setupRepoOgEngine()
+        repo.sakOpprettet(
             virksomhetsnummer = tilgang1.virksomhetsnummer,
             mottakere = listOf<HendelseModel.Mottaker>(element = tilgang1),
         ).also {
-            brukerRepository.nyStatusSak(
+            repo.nyStatusSak(
                 sak = it,
                 idempotensKey = IdempotenceKey.initial(),
             )
@@ -49,6 +43,16 @@ class SakstyperQueryIngenTilgangerTests : DescribeSpec({
         }
     }
 })
+
+private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApplicationEngine> {
+    val database = testDatabase(Bruker.databaseConfig)
+    val brukerRepository = BrukerRepositoryImpl(database)
+    val engine = ktorBrukerTestServer(
+        brukerRepository = brukerRepository,
+        altinn = AltinnStub()
+    )
+    return Pair(brukerRepository, engine)
+}
 
 
 private fun TestApplicationEngine.querySakstyper(): Set<String> =
