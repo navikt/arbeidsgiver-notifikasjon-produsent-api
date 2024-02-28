@@ -89,6 +89,7 @@ type Query {
     ): MineNotifikasjonerResultat!
 
     hentNotifikasjon(id: ID!): HentNotifikasjonResultat!
+    hentSak(id: ID!): HentSakResultat!
 }
 
 union MineNotifikasjonerResultat =
@@ -104,6 +105,31 @@ union HentNotifikasjonResultat =
 
 type HentetNotifikasjon {
     notifikasjon: Notifikasjon!
+}
+
+union HentSakResultat =
+    | HentetSak
+    | SakFinnesIkke
+    | UgyldigMerkelapp
+    | UkjentProdusent
+
+
+type HentetSak {
+    sak: Sak!
+}
+
+type Sak {
+    id: ID!
+    grupperingsid: String!
+    virksomhetsnummer: String!
+    tittel: String!
+    lenke: String
+    merkelapp: String!
+}
+
+type Virksomhet {
+    virksomhetsnummer: String!
+    navn: String!
 }
 
 type NotifikasjonConnection {

@@ -43,6 +43,7 @@ object ProdusentAPI {
                 }
 
                 QueryNotifikasjoner(produsentRepository).wire(this)
+                QuerySak(produsentRepository).wire(this)
                 MutationHardDeleteSak(hendelseDispatcher, produsentRepository).wire(this)
                 MutationHardDeleteNotifikasjon(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNyBeskjed(hendelseDispatcher, produsentRepository).wire(this)
