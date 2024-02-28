@@ -754,6 +754,7 @@ object EksempelHendelse {
                 sendeTidspunkt = null
             )
         ),
+        idempotenceKey = UUID.randomUUID().toString(),
     )
 
     val Alle: List<Hendelse> = listOf(

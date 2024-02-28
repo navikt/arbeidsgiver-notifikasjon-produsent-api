@@ -474,6 +474,7 @@ object HendelseModel {
         val hardDelete: HardDeleteUpdate?,
         val eksterneVarsler: List<EksterntVarsel>,
         val påminnelse: Påminnelse?,
+        val idempotenceKey: String?,
     ) : Hendelse() {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId

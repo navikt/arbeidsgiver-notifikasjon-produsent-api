@@ -860,6 +860,19 @@ type Mutation {
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
         hardDelete: HardDeleteUpdateInput
+
+        """
+        Dersom dere angir idempotenceKey så vi konsekvente kall med samme idempotenceKey gi samme resultat.
+        Dette kan f.eks være nyttig hvis dere har retry mekanismer i deres system.
+        """
+        idempotencyKey: String
+
+        """
+        Her kan dere oppgi eksterne varsler som skal sendes i forbindelse med oppdateringen.
+        Disse varslene vil erstatte tidligere bestilte varsler som ikke er sendt enda.
+        Vi anbefaler dere å bruke denn i kombinasjon med idempoencyKey for å unngå å sende samme varsel flere ganger.
+        """
+        eksterneVarsler: [EksterntVarselInput!]! = []
     ): KalenderavtaleOppdaterResultat!
 
 
@@ -928,6 +941,19 @@ type Mutation {
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
         hardDelete: HardDeleteUpdateInput
+
+        """
+        Dersom dere angir idempotenceKey så vi konsekvente kall med samme idempotenceKey gi samme resultat.
+        Dette kan f.eks være nyttig hvis dere har retry mekanismer i deres system.
+        """
+        idempotencyKey: String
+
+        """
+        Her kan dere oppgi eksterne varsler som skal sendes i forbindelse med oppdateringen.
+        Disse varslene vil erstatte tidligere bestilte varsler som ikke er sendt enda.
+        Vi anbefaler dere å bruke denn i kombinasjon med idempoencyKey for å unngå å sende samme varsel flere ganger.
+        """
+        eksterneVarsler: [EksterntVarselInput!]! = []
     ): KalenderavtaleOppdaterResultat!
 
     """

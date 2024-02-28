@@ -175,6 +175,7 @@ suspend fun BrukerRepository.kalenderavtaleOppdatert(
     lokasjon = lokasjon,
     erDigitalt = erDigitalt,
     påminnelse = påminnelse,
+    idempotenceKey = null,
 ).also {
     oppdaterModellEtterHendelse(it)
 }

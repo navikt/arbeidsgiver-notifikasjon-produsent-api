@@ -57,6 +57,7 @@ interface ProdusentRepository {
     suspend fun erHardDeleted(type: AggregateType, merkelapp: String, grupperingsid: String): Boolean
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
+    suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean
 }
 
 class ProdusentRepositoryImpl(
@@ -313,6 +314,17 @@ class ProdusentRepositoryImpl(
             is KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
         }
     }
+
+    override suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean =
+        database.nonTransactionalExecuteQuery(
+            """
+            select * from notifikasjon_oppdatering where notifikasjon_id = ? and idempotence_key = ?
+            """,
+            {
+                uuid(id)
+                text(idempotenceKey)
+            }
+        ) {}.isNotEmpty()
 
     private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: SakOpprettet) {
         database.transaction {
@@ -855,10 +867,23 @@ class ProdusentRepositoryImpl(
                     nullableText(lenke)
                     nullableLocalDateTimeAsText(startTidspunkt)
                     nullableLocalDateTimeAsText(sluttTidspunkt)
-                    nullableJsonb(hendelse.lokasjon)
-                    nullableBoolean(hendelse.erDigitalt)
+                    nullableJsonb(lokasjon)
+                    nullableBoolean(erDigitalt)
 
+                    uuid(notifikasjonId)
+                }
+            }
+            if (hendelse.idempotenceKey != null) {
+                executeUpdate(
+                    """
+                    insert into notifikasjon_oppdatering(
+                        hendelse_id, notifikasjon_id, idempotence_key
+                    ) values (?, ?, ?) on conflict(hendelse_id) do nothing;
+                """
+                ) {
+                    uuid(hendelse.hendelseId)
                     uuid(hendelse.notifikasjonId)
+                    text(hendelse.idempotenceKey)
                 }
             }
         }

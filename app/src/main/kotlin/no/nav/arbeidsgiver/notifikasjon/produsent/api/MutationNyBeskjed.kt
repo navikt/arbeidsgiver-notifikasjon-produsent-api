@@ -66,7 +66,7 @@ internal class MutationNyBeskjed(
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
                 eksterneVarsler = eksterneVarsler.map {
-                    it.tilDomene(metadata.virksomhetsnummer)
+                    it.tilHendelseModel(metadata.virksomhetsnummer)
                 },
                 hardDelete = metadata.hardDelete?.tilHendelseModel(),
                 sakId = sakId,
