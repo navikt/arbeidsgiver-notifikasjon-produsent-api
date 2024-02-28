@@ -317,7 +317,7 @@ fun KalenderavtaleOpprettet.tilProdusentModel() =
             KalenderavtaleTilstand.AVLYST -> AVLYST
         },
         deletedAt = null,
-        eksterneVarsler = listOf(),
+        eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel),
         virksomhetsnummer = this.virksomhetsnummer,
         startTidspunkt = this.startTidspunkt,
         sluttTidspunkt = this.sluttTidspunkt,

@@ -91,6 +91,7 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                 ${'$'}lokasjon: LokasjonInput
                 ${'$'}erDigitalt: Boolean
                 ${'$'}tilstand: KalenderavtaleTilstand
+                ${'$'}eksterneVarsler: [EksterntVarselInput!]! = []
             ) {
                 nyKalenderavtale(
                     grupperingsid: "$grupperingsid",
@@ -108,6 +109,7 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
                     lokasjon: ${'$'}lokasjon
                     erDigitalt: ${'$'}erDigitalt
                     tilstand: ${'$'}tilstand
+                    eksterneVarsler: ${'$'}eksterneVarsler
                 ) {
                     __typename
                     ... on Error { feilmelding }
@@ -223,6 +225,24 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
             }
         }
 
+        context("Kalenderavtale med varsler") {
+            val (queryModel, engine) = setupEngine()
+            queryModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
+                merkelapp = "tag",
+                grupperingsid = grupperingsid,
+            ))
+            val graphQLRequest = GraphQLRequest(
+                query = nyKalenderavtaleGql("foo"),
+                variables = laxObjectMapper.readValue<Map<String, Any?>>(varlser1),
+            )
+            val idNyKalenderavtale = engine.produsentApi(graphQLRequest).getTypedContent<UUID>("/nyKalenderavtale/id")
+            val idNyKalenderavtale2 = engine.produsentApi(graphQLRequest).getTypedContent<UUID>("/nyKalenderavtale/id")
+
+            it("er opprettet med samme id") {
+                idNyKalenderavtale shouldBe idNyKalenderavtale2
+            }
+        }
+
         context("ny oppgave er idempotent også når varsler er sendt") {
             val (queryModel, engine) = setupEngine()
             val nyOppgaveReq = GraphQLRequest(
@@ -258,6 +278,45 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
             }
         }
 
+        context("ny kalenderavtale er idempotent også når varsler er sendt") {
+            val (queryModel, engine) = setupEngine()
+            queryModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
+                merkelapp = "tag",
+                grupperingsid = grupperingsid,
+            ))
+            val req = GraphQLRequest(
+                query = nyKalenderavtaleGql("foo"),
+                variables = laxObjectMapper.readValue<Map<String, Any?>>(varlser1),
+            )
+            val resultat1 = engine.produsentApi(req)
+
+            it("første kall er opprettet") {
+                resultat1.getTypedContent<String>("/nyKalenderavtale/__typename") shouldBe MutationKalenderavtale.NyKalenderavtaleVellykket::class.simpleName
+            }
+
+            val notifikasjonId = resultat1.getTypedContent<UUID>("/nyKalenderavtale/id")
+
+            it ("og varsler blir markert som sendt") {
+                val notifikasjon = queryModel.hentNotifikasjon(notifikasjonId)!!
+                notifikasjon.eksterneVarsler.forEach {
+                    queryModel.oppdaterModellEtterHendelse(HendelseModel.EksterntVarselVellykket(
+                        notifikasjonId = notifikasjonId,
+                        virksomhetsnummer = notifikasjon.virksomhetsnummer,
+                        hendelseId = UUID.randomUUID(),
+                        produsentId = "fager",
+                        kildeAppNavn = "test",
+                        varselId = it.varselId,
+                        råRespons = NullNode.instance,
+                    ))
+                }
+            }
+
+            it("andre kall er idempotent") {
+                val id2 = engine.produsentApi(req).getTypedContent<UUID>("/nyKalenderavtale/id")
+                id2 shouldBe notifikasjonId
+            }
+        }
+
         context("ny oppgave med endrede varsler får feilmelding") {
             val (_, engine) = setupEngine()
             val resultat1 = engine.produsentApi(
@@ -278,6 +337,33 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
             }
             it("andre kall er feilmelding") {
                 resultat2.getTypedContent<String>("/nyOppgave/__typename") shouldBe Error.DuplikatEksternIdOgMerkelapp::class.simpleName
+            }
+        }
+
+        context("ny kalenderavtale med endrede varsler får feilmelding") {
+            val (queryModel, engine) = setupEngine()
+            queryModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
+                merkelapp = "tag",
+                grupperingsid = grupperingsid,
+            ))
+            val resultat1 = engine.produsentApi(
+                GraphQLRequest(
+                    query = nyKalenderavtaleGql("foo"),
+                    variables = laxObjectMapper.readValue<Map<String, Any?>>(varlser1),
+                )
+            )
+            val resultat2 = engine.produsentApi(
+                GraphQLRequest(
+                    query = nyKalenderavtaleGql("foo"),
+                    variables = laxObjectMapper.readValue<Map<String, Any?>>(varlser2),
+                )
+            )
+
+            it("første kall er opprettet") {
+                resultat1.getTypedContent<String>("/nyKalenderavtale/__typename") shouldBe MutationKalenderavtale.NyKalenderavtaleVellykket::class.simpleName
+            }
+            it("andre kall er feilmelding") {
+                resultat2.getTypedContent<String>("/nyKalenderavtale/__typename") shouldBe Error.DuplikatEksternIdOgMerkelapp::class.simpleName
             }
         }
 
