@@ -233,13 +233,21 @@ export type HardDeleteUpdateInput = {
 
 export type HentNotifikasjonResultat = HentetNotifikasjon | NotifikasjonFinnesIkke | UgyldigMerkelapp | UkjentProdusent;
 
+export type HentSakResultat = HentetSak | SakFinnesIkke | UgyldigMerkelapp | UkjentProdusent;
+
 export type HentetNotifikasjon = {
   __typename?: 'HentetNotifikasjon';
   notifikasjon: Notifikasjon;
 };
 
+export type HentetSak = {
+  __typename?: 'HentetSak';
+  sak: Sak;
+};
+
 export type Kalenderavtale = {
   __typename?: 'Kalenderavtale';
+  eksterneVarsler: Array<EksterntVarsel>;
   kalenderavtale: KalenderavtaleData;
   metadata: Metadata;
   mottakere: Array<Mottaker>;
@@ -601,6 +609,7 @@ export type MutationNyBeskjedArgs = {
  */
 export type MutationNyKalenderavtaleArgs = {
   eksternId: Scalars['String']['input'];
+  eksterneVarsler?: Array<EksterntVarselInput>;
   erDigitalt?: InputMaybe<Scalars['Boolean']['input']>;
   grupperingsid: Scalars['String']['input'];
   hardDelete?: InputMaybe<FutureTemporalInput>;
@@ -897,6 +906,7 @@ export type NyKalenderavtaleResultat = DuplikatEksternIdOgMerkelapp | NyKalender
 
 export type NyKalenderavtaleVellykket = {
   __typename?: 'NyKalenderavtaleVellykket';
+  eksterneVarsler: Array<NyEksterntVarselResultat>;
   id: Scalars['ID']['output'];
 };
 
@@ -1130,6 +1140,7 @@ export type PageInfo = {
 export type Query = {
   __typename?: 'Query';
   hentNotifikasjon: HentNotifikasjonResultat;
+  hentSak: HentSakResultat;
   /**
    * Vi bruker det Connections-patternet for paginering. Se
    * [Connection-standaren](https://relay.dev/graphql/connections.htm) for mer
@@ -1153,12 +1164,28 @@ export type QueryHentNotifikasjonArgs = {
 
 
 /** Dette er roten som alle forespørsler starter fra. */
+export type QueryHentSakArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+/** Dette er roten som alle forespørsler starter fra. */
 export type QueryMineNotifikasjonerArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   grupperingsid?: InputMaybe<Scalars['String']['input']>;
   merkelapp?: InputMaybe<Scalars['String']['input']>;
   merkelapper?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type Sak = {
+  __typename?: 'Sak';
+  grupperingsid: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  lenke?: Maybe<Scalars['String']['output']>;
+  merkelapp: Scalars['String']['output'];
+  tittel: Scalars['String']['output'];
+  virksomhetsnummer: Scalars['String']['output'];
 };
 
 export type SakFinnesIkke = Error & {
@@ -1298,4 +1325,10 @@ export type UkjentProdusent = Error & {
 export type UkjentRolle = Error & {
   __typename?: 'UkjentRolle';
   feilmelding: Scalars['String']['output'];
+};
+
+export type Virksomhet = {
+  __typename?: 'Virksomhet';
+  navn: Scalars['String']['output'];
+  virksomhetsnummer: Scalars['String']['output'];
 };
