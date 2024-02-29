@@ -33,11 +33,17 @@
   width: 15vw;
   align-items: flex-end;
   padding: 0 16px;
-  border-right: black 2px solid;
+  border-right: 0.25rem solid var(--a-border-focus-on-inverted);
 }
 
 .meny li {
   list-style-type: none;
+}
+.meny ul {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+
 }
 
 .meny button {

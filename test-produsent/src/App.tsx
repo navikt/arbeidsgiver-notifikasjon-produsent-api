@@ -17,6 +17,7 @@ function App() {
     const [valgtKomponent, setValgtKomponent] = React.useState<ReactNode>(Object.values(komponenter)[0])
 
     const [grupperingsid, setGrupperingsid] = React.useState<string>(() => crypto.randomUUID())
+
     const handleGrupperingsid = (e: React.ChangeEvent<HTMLInputElement>) => {
         setGrupperingsid(e.target.value)
     }
