@@ -1,18 +1,19 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselKansellert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -44,9 +45,11 @@ class EksternVarslingRepository(
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
+            is KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
+            is EksterntVarselKansellert -> oppdaterModellEtterEksterntVarselKansellert(hendelse)
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
             is SoftDelete -> {
                 /* Garanterer sending (på samme måte som hard delete).
@@ -54,86 +57,133 @@ class EksternVarslingRepository(
                  * dette er en noop.
                  */
             }
+
             is OppgaveUtført -> Unit
             is OppgaveUtgått -> Unit
             is BrukerKlikket -> Unit
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
             is FristUtsatt -> Unit
-            is HendelseModel.KalenderavtaleOppdatert -> Unit //TODO: vurder om eksterne varsler på påminnelse skal kanselleres dersom kalenderavtalen er avlyst
         }
     }
 
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: BeskjedOpprettet) {
-        insertVarsler(
-            varsler = beskjedOpprettet.eksterneVarsler,
-            produsentId = beskjedOpprettet.produsentId,
-            notifikasjonsId = beskjedOpprettet.notifikasjonId,
-            notifikasjonOpprettet = beskjedOpprettet.opprettetTidspunkt,
-        ) { tx ->
-            tx.executeUpdate(
-                """
+        /* Rewrite to batch insert? */
+        database.transaction {
+            insertVarsler(
+                notifikasjonsId = beskjedOpprettet.notifikasjonId,
+                varsler = beskjedOpprettet.eksterneVarsler,
+                produsentId = beskjedOpprettet.produsentId,
+                notifikasjonOpprettet = beskjedOpprettet.opprettetTidspunkt
+            ) { tx: Transaction ->
+                tx.executeUpdate(
+                    """
                 insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
                 values (?, ?, ?)
                 on conflict do nothing
                 """
-            ) {
-                text(beskjedOpprettet.merkelapp)
-                nullableText(beskjedOpprettet.grupperingsid)
-                uuid(beskjedOpprettet.notifikasjonId)
+                ) {
+                    text(beskjedOpprettet.merkelapp)
+                    nullableText(beskjedOpprettet.grupperingsid)
+                    uuid(beskjedOpprettet.notifikasjonId)
+                }
             }
         }
     }
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
-        insertVarsler(
-            varsler = oppgaveOpprettet.eksterneVarsler,
-            produsentId = oppgaveOpprettet.produsentId,
-            notifikasjonsId = oppgaveOpprettet.notifikasjonId,
-            notifikasjonOpprettet = oppgaveOpprettet.opprettetTidspunkt,
-        ) { tx ->
-            tx.executeUpdate(
-                """
+        /* Rewrite to batch insert? */
+        database.transaction {
+            insertVarsler(
+                notifikasjonsId = oppgaveOpprettet.notifikasjonId,
+                varsler = oppgaveOpprettet.eksterneVarsler,
+                produsentId = oppgaveOpprettet.produsentId,
+                notifikasjonOpprettet = oppgaveOpprettet.opprettetTidspunkt
+            ) { tx: Transaction ->
+                tx.executeUpdate(
+                    """
                 insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
                 values (?, ?, ?)
                 on conflict do nothing
                 """
-            ) {
-                text(oppgaveOpprettet.merkelapp)
-                nullableText(oppgaveOpprettet.grupperingsid)
-                uuid(oppgaveOpprettet.notifikasjonId)
+                ) {
+                    text(oppgaveOpprettet.merkelapp)
+                    nullableText(oppgaveOpprettet.grupperingsid)
+                    uuid(oppgaveOpprettet.notifikasjonId)
+                }
             }
         }
     }
 
     private suspend fun oppdaterModellEtterKalenderavtaleOpprettet(kalenderavtaleOpprettet: KalenderavtaleOpprettet) {
-        insertVarsler(
-            varsler = kalenderavtaleOpprettet.eksterneVarsler,
-            produsentId = kalenderavtaleOpprettet.produsentId,
-            notifikasjonsId = kalenderavtaleOpprettet.notifikasjonId,
-            notifikasjonOpprettet = kalenderavtaleOpprettet.opprettetTidspunkt,
-        ) { tx ->
-            tx.executeUpdate(
-                """
+        /* Rewrite to batch insert? */
+        database.transaction {
+            insertVarsler(
+                notifikasjonsId = kalenderavtaleOpprettet.notifikasjonId,
+                varsler = kalenderavtaleOpprettet.eksterneVarsler,
+                produsentId = kalenderavtaleOpprettet.produsentId,
+                notifikasjonOpprettet = kalenderavtaleOpprettet.opprettetTidspunkt
+            ) { tx: Transaction ->
+                tx.executeUpdate(
+                    """
                 insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
                 values (?, ?, ?)
                 on conflict do nothing
                 """
-            ) {
-                text(kalenderavtaleOpprettet.merkelapp)
-                nullableText(kalenderavtaleOpprettet.grupperingsid)
-                uuid(kalenderavtaleOpprettet.notifikasjonId)
+                ) {
+                    text(kalenderavtaleOpprettet.merkelapp)
+                    nullableText(kalenderavtaleOpprettet.grupperingsid)
+                    uuid(kalenderavtaleOpprettet.notifikasjonId)
+                }
+            }
+        }
+    }
+
+    private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(kalenderavtaleOppdatert: KalenderavtaleOppdatert) {
+        if (kalenderavtaleOppdatert.eksterneVarsler.isEmpty()) {
+            return
+        }
+
+        database.transaction {
+            executeUpdate("""
+                update ekstern_varsel_kontaktinfo
+                set state = '${EksterntVarselTilstand.KANSELLERT}'
+                where notifikasjon_id = ?
+                and state = '${EksterntVarselTilstand.NY}'
+            """) {
+                uuid(kalenderavtaleOppdatert.notifikasjonId)
+            }
+
+            insertVarsler(
+                notifikasjonsId = kalenderavtaleOppdatert.notifikasjonId,
+                varsler = kalenderavtaleOppdatert.eksterneVarsler,
+                produsentId = kalenderavtaleOppdatert.produsentId,
+                notifikasjonOpprettet = kalenderavtaleOppdatert.oppdatertTidspunkt.atOffset(ZoneOffset.UTC)
+            ) { tx: Transaction ->
+                tx.executeUpdate(
+                    """
+                insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
+                values (?, ?, ?)
+                on conflict do nothing
+                """
+                ) {
+                    text(kalenderavtaleOppdatert.merkelapp)
+                    nullableText(kalenderavtaleOppdatert.grupperingsid)
+                    uuid(kalenderavtaleOppdatert.notifikasjonId)
+                }
             }
         }
     }
 
     private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
-        insertVarsler(
-            varsler = påminnelseOpprettet.eksterneVarsler,
-            produsentId = påminnelseOpprettet.produsentId,
-            notifikasjonsId = påminnelseOpprettet.notifikasjonId,
-            notifikasjonOpprettet = påminnelseOpprettet.opprettetTidpunkt.atOffset(ZoneOffset.UTC),
-        )
+        /* Rewrite to batch insert? */
+        database.transaction {
+            insertVarsler(notifikasjonsId = påminnelseOpprettet.notifikasjonId,
+                varsler = påminnelseOpprettet.eksterneVarsler,
+                produsentId = påminnelseOpprettet.produsentId,
+                notifikasjonOpprettet = påminnelseOpprettet.opprettetTidpunkt.atOffset(ZoneOffset.UTC),
+                callback = {})
+        }
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
@@ -144,8 +194,23 @@ class EksternVarslingRepository(
         oppdaterUtfall(eksterntVarselVellykket.varselId, SendeStatus.OK, eksterntVarselVellykket.råRespons)
     }
 
+    private suspend fun oppdaterModellEtterEksterntVarselKansellert(hendelse: EksterntVarselKansellert) {
+        database.nonTransactionalExecuteUpdate(
+            """
+            update ekstern_varsel_kontaktinfo 
+            set 
+                state = '${EksterntVarselTilstand.KANSELLERT}',
+            where
+                varsel_id = ? 
+        """
+        ) {
+            uuid(hendelse.varselId)
+        }
+    }
+
     private suspend fun oppdaterUtfall(varselId: UUID, sendeStatus: SendeStatus, råRespons: JsonNode) {
-        database.nonTransactionalExecuteUpdate("""
+        database.nonTransactionalExecuteUpdate(
+            """
             update ekstern_varsel_kontaktinfo 
             set 
                 altinn_response = ?::jsonb,
@@ -153,7 +218,8 @@ class EksternVarslingRepository(
                 sende_status = ?::status
             where
                 varsel_id = ? 
-        """) {
+        """
+        ) {
             jsonb(råRespons)
             text(sendeStatus.toString())
             uuid(varselId)
@@ -208,64 +274,64 @@ class EksternVarslingRepository(
     }
 
     suspend fun deleteScheduledHardDeletes() {
-        database.nonTransactionalExecuteUpdate("""
+        database.nonTransactionalExecuteUpdate(
+            """
             delete from ekstern_varsel_kontaktinfo
             where state = '${EksterntVarselTilstand.KVITTERT}'
             and notifikasjon_id in (select notifikasjon_id from hard_delete)
-        """)
+        """
+        )
     }
 
-    private suspend fun insertVarsler(
+    private fun Transaction.insertVarsler(
+        notifikasjonsId: UUID,
         varsler: List<EksterntVarsel>,
         produsentId: String,
-        notifikasjonsId: UUID,
         notifikasjonOpprettet: OffsetDateTime,
-        callback: (tx: Transaction) -> Unit = {}
+        callback: (tx: Transaction) -> Unit
     ) {
-        /* Rewrite to batch insert? */
-        database.transaction {
-            if (isHardDeleted(notifikasjonsId)) {
-                return@transaction
-            }
-            for (varsel in varsler) {
-                putOnJobQueue(varsel.varselId)
-                when (varsel) {
-                    is SmsVarselKontaktinfo -> insertSmsVarsel(
-                        varsel = varsel,
-                        produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId,
-                        notifikasjonOpprettet = notifikasjonOpprettet,
-                    )
-                    is EpostVarselKontaktinfo -> insertEpostVarsel(
-                        varsel = varsel,
-                        produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId,
-                        notifikasjonOpprettet = notifikasjonOpprettet,
-                    )
-
-                    is AltinntjenesteVarselKontaktinfo -> insertAltinntjenesteVarsel(
-                        varsel = varsel,
-                        produsentId = produsentId,
-                        notifikasjonsId = notifikasjonsId,
-                        notifikasjonOpprettet = notifikasjonOpprettet,
-                    )
-                }
-            }
-
-            callback(this)
+        if (isHardDeleted(notifikasjonsId)) {
+            return
         }
+        for (varsel in varsler) {
+            putOnJobQueue(varsel.varselId)
+            when (varsel) {
+                is SmsVarselKontaktinfo -> insertSmsVarsel(
+                    varsel = varsel,
+                    produsentId = produsentId,
+                    notifikasjonsId = notifikasjonsId,
+                    notifikasjonOpprettet = notifikasjonOpprettet,
+                )
+
+                is EpostVarselKontaktinfo -> insertEpostVarsel(
+                    varsel = varsel,
+                    produsentId = produsentId,
+                    notifikasjonsId = notifikasjonsId,
+                    notifikasjonOpprettet = notifikasjonOpprettet,
+                )
+
+                is AltinntjenesteVarselKontaktinfo -> insertAltinntjenesteVarsel(
+                    varsel = varsel,
+                    produsentId = produsentId,
+                    notifikasjonsId = notifikasjonsId,
+                    notifikasjonOpprettet = notifikasjonOpprettet,
+                )
+            }
+        }
+
+        callback(this)
     }
 
     private fun Transaction.isHardDeleted(notifikasjonsId: UUID) = executeQuery(
-            """
+        """
             select 1 from hard_delete where notifikasjon_id = ?
             """,
-            {
-                uuid(notifikasjonsId)
-            },
-            { true }
-        )
-            .firstOrNull() ?: false
+        {
+            uuid(notifikasjonsId)
+        },
+        { true }
+    )
+        .firstOrNull() ?: false
 
     private fun Transaction.insertSmsVarsel(
         varsel: SmsVarselKontaktinfo,
@@ -273,7 +339,8 @@ class EksternVarslingRepository(
         produsentId: String,
         notifikasjonOpprettet: OffsetDateTime,
     ) {
-        executeUpdate("""
+        executeUpdate(
+            """
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
@@ -303,7 +370,8 @@ class EksternVarslingRepository(
                 'NY' /* tilstand */
             )
             ON CONFLICT DO NOTHING;
-        """) {
+        """
+        ) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
             timestamp_without_timezone_utc(notifikasjonOpprettet)
@@ -322,7 +390,8 @@ class EksternVarslingRepository(
         produsentId: String,
         notifikasjonOpprettet: OffsetDateTime,
     ) {
-        executeUpdate("""
+        executeUpdate(
+            """
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
@@ -354,7 +423,8 @@ class EksternVarslingRepository(
                 'NY' /* tilstand */
             )
             ON CONFLICT DO NOTHING;
-        """) {
+        """
+        ) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
             timestamp_without_timezone_utc(notifikasjonOpprettet)
@@ -374,7 +444,8 @@ class EksternVarslingRepository(
         produsentId: String,
         notifikasjonOpprettet: OffsetDateTime,
     ) {
-        executeUpdate("""
+        executeUpdate(
+            """
             INSERT INTO ekstern_varsel_kontaktinfo
             (
                 varsel_id,
@@ -408,7 +479,8 @@ class EksternVarslingRepository(
                 'NY' /* tilstand */
             )
             ON CONFLICT DO NOTHING;
-        """) {
+        """
+        ) {
             uuid(varsel.varselId)
             uuid(notifikasjonsId)
             timestamp_without_timezone_utc(notifikasjonOpprettet)
@@ -430,12 +502,14 @@ class EksternVarslingRepository(
     )
 
     suspend fun releaseTimedOutJobLocks(): List<ReleasedResource> {
-        return database.nonTransactionalExecuteQuery("""
+        return database.nonTransactionalExecuteQuery(
+            """
             UPDATE job_queue
             SET locked = false
             WHERE locked = true AND locked_until < CURRENT_TIMESTAMP
             RETURNING varsel_id, locked_by, locked_at
-        """) {
+        """
+        ) {
             ReleasedResource(
                 varselId = getObject("varsel_id", UUID::class.java),
                 lockedAt = getTimestamp("locked_at").toLocalDateTime(),
@@ -478,7 +552,8 @@ class EksternVarslingRepository(
 
 
     suspend fun createJobsForAbandonedVarsler() {
-        database.nonTransactionalExecuteUpdate("""
+        database.nonTransactionalExecuteUpdate(
+            """
             insert into job_queue (varsel_id, locked)
             (
                 select varsel_id, false as locked from ekstern_varsel_kontaktinfo
@@ -486,7 +561,8 @@ class EksternVarslingRepository(
                     state in ('${EksterntVarselTilstand.NY}', '${EksterntVarselTilstand.SENDT}')
                     and varsel_id not in (select varsel_id from job_queue)
             )
-        """)
+        """
+        )
     }
 
     suspend fun findJob(lockTimeout: Duration): UUID? =
@@ -539,6 +615,7 @@ class EksternVarslingRepository(
                             mobilnummer = getString("tlfnr"),
                             tekst = getString("sms_tekst"),
                         )
+
                         "EMAIL" -> EksternVarsel.Epost(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
                             sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
@@ -547,6 +624,7 @@ class EksternVarslingRepository(
                             tittel = getString("tittel"),
                             body = getString("html_body")
                         )
+
                         "ALTINNTJENESTE" -> EksternVarsel.Altinntjeneste(
                             fnrEllerOrgnr = getString("fnr_eller_orgnr"),
                             sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
@@ -556,6 +634,7 @@ class EksternVarslingRepository(
                             tittel = getString("tjeneste_tittel"),
                             innhold = getString("tjeneste_innhold")
                         )
+
                         else -> throw Error("Ukjent varsel_type '$varselType'")
                     }
                 )
@@ -569,6 +648,9 @@ class EksternVarslingRepository(
 
                     EksterntVarselTilstand.KVITTERT.toString() ->
                         EksternVarselTilstand.Kvittert(data, altinnResponse())
+
+                    EksterntVarselTilstand.KANSELLERT.toString() ->
+                        EksternVarselTilstand.Kansellert(data)
 
                     else -> throw Error("Ukjent tilstand '$state'")
                 }
@@ -609,9 +691,11 @@ class EksternVarslingRepository(
     }
 
     private fun Transaction.deleteFromJobQueue(varselId: UUID) {
-        executeUpdate("""
+        executeUpdate(
+            """
             DELETE FROM job_queue WHERE varsel_id = ?
-        """) {
+        """
+        ) {
             uuid(varselId)
         }
     }
@@ -634,7 +718,8 @@ class EksternVarslingRepository(
 
     suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: AltinnVarselKlientResponse) {
         database.transaction {
-            executeUpdate(""" 
+            executeUpdate(
+                """ 
                 update ekstern_varsel_kontaktinfo
                 set 
                     state = '${EksterntVarselTilstand.SENDT}',
@@ -643,7 +728,8 @@ class EksternVarslingRepository(
                     feilmelding = ?,
                     altinn_feilkode = ?
                 where varsel_id = ?
-            """) {
+            """
+            ) {
                 jsonb(response.rå)
                 when (response) {
                     is AltinnVarselKlientResponse.Ok -> {
@@ -704,20 +790,24 @@ class EksternVarslingRepository(
     }
 
     suspend fun jobQueueCount(): Int {
-        return database.nonTransactionalExecuteQuery("""
+        return database.nonTransactionalExecuteQuery(
+            """
             select count(*) as count from job_queue 
-        """) {
+        """
+        ) {
             this.getInt("count")
         }.first()
     }
 
     suspend fun waitQueueCount(): Pair<Int, Int> {
-        return database.nonTransactionalExecuteQuery("""
+        return database.nonTransactionalExecuteQuery(
+            """
             select
                 count(case when resume_job_at <= now() then 1 end) as past,
                 count(case when resume_job_at > now() then 1 end) as future
             from wait_queue
-        """) {
+        """
+        ) {
             this.getInt("past") to this.getInt("future")
         }.first()
     }
@@ -735,14 +825,16 @@ class EksternVarslingRepository(
     }
 
     suspend fun updateEmergencyBrakeTo(newState: Boolean) {
-        database.nonTransactionalExecuteUpdate("""
+        database.nonTransactionalExecuteUpdate(
+            """
             insert into emergency_break (id, stop_processing, detected_at)
             values (0, ?, CURRENT_TIMESTAMP)
             on conflict (id) do update
                 set 
                     stop_processing = ?,
                     detected_at = CURRENT_TIMESTAMP
-        """) {
+        """
+        ) {
             boolean(newState)
             boolean(newState)
         }

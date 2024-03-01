@@ -464,6 +464,10 @@ object HendelseModel {
         override val produsentId: String,
         override val kildeAppNavn: String,
         val notifikasjonId: UUID,
+        val merkelapp: String,
+        val grupperingsid: String,
+        val opprettetTidspunkt: Instant,
+        val oppdatertTidspunkt: Instant,
         val tilstand: KalenderavtaleTilstand?,
         val lenke: String?,
         val tekst: String?,
@@ -607,6 +611,19 @@ object HendelseModel {
         val råRespons: JsonNode,
         val altinnFeilkode: String,
         val feilmelding: String,
+    ) : Hendelse(), Notifikasjon {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
+
+    @JsonTypeName("EksterntVarselKansellert")
+    data class EksterntVarselKansellert(
+        override val virksomhetsnummer: String,
+        override val notifikasjonId: UUID,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val varselId: UUID,
     ) : Hendelse(), Notifikasjon {
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId

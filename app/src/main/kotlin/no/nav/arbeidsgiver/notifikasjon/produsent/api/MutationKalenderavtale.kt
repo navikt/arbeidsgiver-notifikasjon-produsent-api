@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.NyKalenderavtaleInput.KalenderavtaleTilstand
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.NyKalenderavtaleInput.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -306,6 +307,10 @@ internal class MutationKalenderavtale(
                 eksterneVarsler = eksterneVarsler?.map { it.tilHendelseModel(eksisterende.virksomhetsnummer) } ?: emptyList(),
                 påminnelse = null,
                 idempotenceKey = idempotenceKey,
+                oppdatertTidspunkt = Instant.now(),
+                opprettetTidspunkt = eksisterende.opprettetTidspunkt.toInstant(),
+                merkelapp = eksisterende.merkelapp,
+                grupperingsid = eksisterende.grupperingsid,
             )
         }
         abstract val nyTilstand: KalenderavtaleTilstand?

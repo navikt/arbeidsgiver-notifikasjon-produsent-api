@@ -176,6 +176,10 @@ suspend fun BrukerRepository.kalenderavtaleOppdatert(
     erDigitalt = erDigitalt,
     påminnelse = påminnelse,
     idempotenceKey = null,
+    grupperingsid = randomTekst("kalenderavtale-grupperingsid"),
+    oppdatertTidspunkt = Instant.now(),
+    opprettetTidspunkt = TEST_OPPRETTET_TIDSPUNKT_1.toInstant(),
+    merkelapp = randomMerkelapp(),
 ).also {
     oppdaterModellEtterHendelse(it)
 }

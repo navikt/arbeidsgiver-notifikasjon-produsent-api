@@ -325,6 +325,9 @@ class DataproduktModel(
             is EksterntVarselFeilet -> {
                 updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode,  metadata.timestamp)
             }
+            is HendelseModel.EksterntVarselKansellert -> {
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_KANSELLERT", null,  metadata.timestamp)
+            }
 
             is SoftDelete -> {
                 if (hendelse.grupperingsid != null && hendelse.merkelapp != null){

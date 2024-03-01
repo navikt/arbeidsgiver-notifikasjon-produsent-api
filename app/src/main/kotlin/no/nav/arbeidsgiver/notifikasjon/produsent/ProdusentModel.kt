@@ -164,7 +164,7 @@ object ProdusentModel {
         override val deletedAt: OffsetDateTime?,
         override val virksomhetsnummer: String,
         val tekst: String,
-        val grupperingsid: String? = null,
+        val grupperingsid: String,
         val lenke: String,
         val eksternId: String,
         val mottakere: List<Mottaker>,
@@ -250,6 +250,7 @@ object ProdusentModel {
         enum class Status {
             NY,
             SENDT,
+            KANSELLERT,
             FEILET,
         }
     }

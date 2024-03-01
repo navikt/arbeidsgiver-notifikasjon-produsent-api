@@ -170,6 +170,7 @@ class SkedulertHardDeleteRepositoryImpl(
 
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket,
+            is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.FristUtsatt,

@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselKansellert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
@@ -712,6 +713,7 @@ class BrukerRepositoryImpl(
             }
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
+            is EksterntVarselKansellert -> Unit
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
             is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)

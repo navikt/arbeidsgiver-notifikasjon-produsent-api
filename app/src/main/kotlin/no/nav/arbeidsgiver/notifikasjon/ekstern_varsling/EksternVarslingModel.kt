@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import com.fasterxml.jackson.databind.JsonNode
 import kotlinx.coroutines.slf4j.MDCContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselKansellert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
@@ -75,6 +76,10 @@ sealed interface EksternVarselTilstand {
         val response: AltinnResponse
     ) : EksternVarselTilstand
 
+    data class Kansellert(
+        override val data: EksternVarselStatiskData
+    ) : EksternVarselTilstand
+
 
     data class Kvittert(
         override val data: EksternVarselStatiskData,
@@ -101,7 +106,7 @@ sealed interface EksternVarselTilstand {
 
 
 enum class EksterntVarselTilstand {
-    NY, SENDT, KVITTERT
+    NY, SENDT, KANSELLERT, KVITTERT
 }
 
 enum class SendeStatus {
@@ -133,3 +138,12 @@ fun EksternVarselTilstand.Sendt.toHendelse(): Hendelse =
             feilmelding = response.feilmelding,
         )
     }
+
+fun EksternVarselTilstand.Kansellert.toHendelse() = EksterntVarselKansellert(
+    virksomhetsnummer = data.eksternVarsel.fnrEllerOrgnr,
+    notifikasjonId = data.notifikasjonId,
+    hendelseId = UUID.randomUUID(),
+    produsentId = data.produsentId,
+    kildeAppNavn = naisClientId,
+    varselId = data.varselId,
+)

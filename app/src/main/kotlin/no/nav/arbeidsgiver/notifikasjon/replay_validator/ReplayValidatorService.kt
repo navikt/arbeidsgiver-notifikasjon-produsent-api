@@ -77,6 +77,7 @@ class ReplayValidatorService(
             is HendelseModel.BrukerKlikket,
             is HendelseModel.FristUtsatt,
             is HendelseModel.EksterntVarselFeilet,
+            is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.EksterntVarselVellykket,
             is HendelseModel.SoftDelete,
             is HendelseModel.NyStatusSak -> Unit

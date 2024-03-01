@@ -755,6 +755,10 @@ object EksempelHendelse {
             )
         ),
         idempotenceKey = UUID.randomUUID().toString(),
+        grupperingsid = KalenderavtaleOpprettet.grupperingsid,
+        oppdatertTidspunkt = Instant.now(),
+        opprettetTidspunkt = KalenderavtaleOpprettet.opprettetTidspunkt.toInstant(),
+        merkelapp = KalenderavtaleOpprettet.merkelapp
     )
 
     val Alle: List<Hendelse> = listOf(
