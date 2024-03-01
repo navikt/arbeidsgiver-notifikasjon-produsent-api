@@ -172,6 +172,7 @@ export type EksterntVarselSmsInput = {
 
 export enum EksterntVarselStatus {
   Feilet = 'FEILET',
+  Kansellert = 'KANSELLERT',
   Ny = 'NY',
   Sendt = 'SENDT'
 }
@@ -564,8 +565,10 @@ export type MutationHardDeleteSakByGrupperingsidArgs = {
  * å opprette nye ting.
  */
 export type MutationKalenderavtaleOppdaterArgs = {
+  eksterneVarsler?: Array<EksterntVarselInput>;
   hardDelete?: InputMaybe<HardDeleteUpdateInput>;
   id: Scalars['ID']['input'];
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
   nyErDigitalt?: InputMaybe<Scalars['Boolean']['input']>;
   nyLenke?: InputMaybe<Scalars['String']['input']>;
   nyLokasjon?: InputMaybe<LokasjonInput>;
@@ -582,7 +585,9 @@ export type MutationKalenderavtaleOppdaterArgs = {
  */
 export type MutationKalenderavtaleOppdaterByEksternIdArgs = {
   eksternId: Scalars['String']['input'];
+  eksterneVarsler?: Array<EksterntVarselInput>;
   hardDelete?: InputMaybe<HardDeleteUpdateInput>;
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
   merkelapp: Scalars['String']['input'];
   nyErDigitalt?: InputMaybe<Scalars['Boolean']['input']>;
   nyLenke?: InputMaybe<Scalars['String']['input']>;

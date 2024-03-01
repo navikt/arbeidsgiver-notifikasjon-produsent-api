@@ -1,0 +1,1 @@
+ALTER TYPE eksternt_varsel_status ADD VALUE 'KANSELLERT';

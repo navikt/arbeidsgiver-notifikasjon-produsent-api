@@ -18,15 +18,15 @@ internal data class EksterntVarselInput(
     val altinntjeneste: Altinntjeneste?,
 ) {
 
-    fun tilDomene(virksomhetsnummer: String): EksterntVarsel {
+    fun tilHendelseModel(virksomhetsnummer: String): EksterntVarsel {
         if (sms != null) {
-            return sms.tilDomene(virksomhetsnummer)
+            return sms.tilHendelseModel(virksomhetsnummer)
         }
         if (epost != null) {
-            return epost.tilDomene(virksomhetsnummer)
+            return epost.tilHendelseModel(virksomhetsnummer)
         }
         if (altinntjeneste != null) {
-            return altinntjeneste.tilDomene(virksomhetsnummer)
+            return altinntjeneste.tilHendelseModel(virksomhetsnummer)
         }
         throw RuntimeException("Feil format")
     }
@@ -37,7 +37,7 @@ internal data class EksterntVarselInput(
         val sendetidspunkt: SendetidspunktInput,
     ) {
 
-        fun tilDomene(virksomhetsnummer: String): SmsVarselKontaktinfo {
+        fun tilHendelseModel(virksomhetsnummer: String): SmsVarselKontaktinfo {
             val (sendevindu, sendeTidspunkt) = sendetidspunkt.somVinduOgTidspunkt()
             if (mottaker.kontaktinfo != null) {
                 return SmsVarselKontaktinfo(
@@ -82,7 +82,7 @@ internal data class EksterntVarselInput(
         val epostHtmlBody: String,
         val sendetidspunkt: SendetidspunktInput,
     ) {
-        fun tilDomene(virksomhetsnummer: String): EpostVarselKontaktinfo {
+        fun tilHendelseModel(virksomhetsnummer: String): EpostVarselKontaktinfo {
             val (sendevindu, sendeTidspunkt) = sendetidspunkt.somVinduOgTidspunkt()
             if (mottaker.kontaktinfo != null) {
                 return EpostVarselKontaktinfo(
@@ -114,7 +114,7 @@ internal data class EksterntVarselInput(
         val innhold: String,
         val sendetidspunkt: SendetidspunktInput,
     ) {
-        fun tilDomene(virksomhetsnummer: String): AltinntjenesteVarselKontaktinfo {
+        fun tilHendelseModel(virksomhetsnummer: String): AltinntjenesteVarselKontaktinfo {
             val (sendevindu, sendeTidspunkt) = sendetidspunkt.somVinduOgTidspunkt()
             return AltinntjenesteVarselKontaktinfo(
                 varselId = UUID.randomUUID(),

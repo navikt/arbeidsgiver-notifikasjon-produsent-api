@@ -49,6 +49,7 @@ class ManueltVedlikeholdService(
                 aggregatesSeen[hendelse.aggregateId] = hendelse.virksomhetsnummer
 
             is HendelseModel.EksterntVarselFeilet,
+            is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.EksterntVarselVellykket,
             is HendelseModel.NyStatusSak,
             is HendelseModel.OppgaveUtført,

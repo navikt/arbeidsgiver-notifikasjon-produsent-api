@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.node.NullNode
-import io.kotest.assertions.timing.eventually
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
@@ -9,25 +9,29 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselKansellert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
+import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.sql.ResultSet
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
 class EksternVarslingServiceTests : DescribeSpec({
-    val hendelseProdusent = FakeHendelseProdusent()
-    val meldingSendt = AtomicBoolean(false)
     val nå = LocalDateTime.parse("2020-01-01T01:01")
     val åpningstider = object : Åpningstider {
         val nesteNksÅpningstid = mutableListOf<LocalDateTime>()
@@ -37,15 +41,24 @@ class EksternVarslingServiceTests : DescribeSpec({
 
     }
 
-    fun DescribeSpec.setupService(): Triple<Database, EksternVarslingRepository, EksternVarslingService> {
+    data class Services(
+        val database: Database,
+        val repository: EksternVarslingRepository,
+        val service: EksternVarslingService,
+        val hendelseProdusent: FakeHendelseProdusent,
+        val meldingSendt: AtomicBoolean,
+    )
+
+    fun DescribeSpec.setupService(
+        osloTid: OsloTid = mockOsloTid(nå)
+    ): Services {
+        val meldingSendt = AtomicBoolean(false)
+        val hendelseProdusent = FakeHendelseProdusent()
         val database = testDatabase(EksternVarsling.databaseConfig)
         val repository = EksternVarslingRepository(database)
         val service = EksternVarslingService(
             åpningstider = åpningstider,
-            osloTid = object : OsloTid {
-                override fun localDateTimeNow() = nå
-                override fun localDateNow() = TODO("Not yet implemented")
-            },
+            osloTid = osloTid,
             eksternVarslingRepository = repository,
             altinnVarselKlient = object : AltinnVarselKlient {
                 override suspend fun send(
@@ -59,13 +72,13 @@ class EksternVarslingServiceTests : DescribeSpec({
             idleSleepDelay = Duration.ZERO,
             recheckEmergencyBrakeDelay = Duration.ZERO,
         )
-        return Triple(database, repository, service)
+        return Services(database, repository, service, hendelseProdusent, meldingSendt)
     }
 
 
     describe("EksternVarslingService#start()") {
         context("LØPENDE sendingsvindu") {
-            val (database, repository, service) = setupService()
+            val (database, repository, service, hendelseProdusent, meldingSendt) = setupService()
 
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
@@ -121,7 +134,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("NKS_ÅPNINGSTID sendingsvindu innenfor nks åpningstid sendes med en gang") {
-            val (database, repository, service) = setupService()
+            val (database, repository, service, _, meldingSendt) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -226,7 +239,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("DAGTID_IKKE_SØNDAG sendingsvindu innenfor sendes med en gang") {
-            val (database, repository, service) = setupService()
+            val (database, repository, service, _, meldingSendt) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -323,7 +336,7 @@ class EksternVarslingServiceTests : DescribeSpec({
         }
 
         context("SPESIFISERT sendingsvindu som har passert sendes med en gang") {
-            val (database, repository, service) = setupService()
+            val (database, repository, service, _, meldingSendt) = setupService()
             repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 notifikasjonId = uuid("1"),
@@ -347,7 +360,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     fnrEllerOrgnr = "",
                     smsTekst = "",
                     sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
-                    sendeTidspunkt = LocalDateTime.now().minusMinutes(5),
+                    sendeTidspunkt = nå.minusMinutes(1),
                 )),
                 hardDelete = null,
                 frist = null,
@@ -417,8 +430,147 @@ class EksternVarslingServiceTests : DescribeSpec({
 
             serviceJob.cancel()
         }
+
+        context("Eksterne varsler kanselleres") {
+            val gammelVarselId = uuid("2")
+            val nyVarselId = uuid("3")
+            var mockNow = LocalDateTime.now()
+
+            val osloTid = object : OsloTid {
+                override fun localDateTimeNow() = mockNow
+                override fun localDateNow() = TODO()
+            }
+            val (database, repository, service, hendelseProdusent, meldingSendt) = setupService(osloTid)
+            repository.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet)
+
+            repository.oppdaterModellEtterHendelse(
+                KalenderavtaleOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(AltinnMottaker(
+                        virksomhetsnummer = "",
+                        serviceCode = "",
+                        serviceEdition = "",
+                    )),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                        varselId = gammelVarselId,
+                        tlfnr = "",
+                        fnrEllerOrgnr = "",
+                        smsTekst = "",
+                        sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
+                        sendeTidspunkt = mockNow.plusHours(1),
+                    )),
+                    hardDelete = null,
+                    påminnelse = null,
+                    sakId = EksempelHendelse.SakOpprettet.sakId,
+                    erDigitalt = false,
+                    lokasjon = null,
+                    sluttTidspunkt = null,
+                    startTidspunkt = LocalDateTime.now(),
+                    tilstand = VENTER_SVAR_FRA_ARBEIDSGIVER
+                )
+            )
+
+            database.nonTransactionalExecuteUpdate("""
+                update emergency_break set stop_processing = false where id = 0
+            """)
+
+            var serviceJob = service.start(this)
+
+            it("sending av varsel skeduleres") {
+                eventually(5.seconds) {
+                    repository.waitQueueCount() shouldNotBe (0 to 0)
+                    database.nonTransactionalExecuteQuery("""
+                        select * from wait_queue where varsel_id = '$gammelVarselId'
+                    """) { asMap() } shouldNot beEmpty()
+                }
+            }
+
+            repository.oppdaterModellEtterHendelse(KalenderavtaleOppdatert(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    grupperingsid = "",
+                    tekst = "",
+                    lenke = "",
+                    eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                        varselId = nyVarselId,
+                        tlfnr = "",
+                        fnrEllerOrgnr = "",
+                        smsTekst = "",
+                        sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                        sendeTidspunkt = null,
+                    )),
+                    hardDelete = null,
+                    påminnelse = null,
+                    erDigitalt = false,
+                    lokasjon = null,
+                    sluttTidspunkt = null,
+                    startTidspunkt = LocalDateTime.now(),
+                    tilstand = VENTER_SVAR_FRA_ARBEIDSGIVER,
+                    idempotenceKey = null,
+                    oppdatertTidspunkt = Instant.parse("2020-01-01T10:15:30.00Z"),
+                    opprettetTidspunkt = Instant.parse("2020-01-01T00:01:00.00Z"),
+            ))
+
+            it("melding sendes til kafka") {
+                eventually(5.seconds) {
+                    meldingSendt.get() shouldBe true
+                }
+            }
+
+            it("ny varsel er sendt vellykket") {
+                eventually(2.seconds) {
+                    val velykkedeVarsler = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                    velykkedeVarsler shouldNot beEmpty()
+                    velykkedeVarsler.first().varselId shouldBe nyVarselId
+                }
+            }
+
+            it("gammel varsel er fortsatt i wait_queue") {
+                eventually(2.seconds) {
+                    database.nonTransactionalExecuteQuery<Map<String, Any>>(
+                        """
+                        select * from wait_queue where varsel_id = '$gammelVarselId'
+                    """
+                    ) { asMap() } shouldNot beEmpty()
+                }
+            }
+
+            // trigger rescume scheduled work
+            mockNow = mockNow.plusHours(2)
+            serviceJob.cancel()
+            serviceJob = service.start(this)
+
+            it("gammel varsel kanselleres") {
+                eventually(2.seconds) {
+                    val kansellerteVarsler = hendelseProdusent.hendelserOfType<EksterntVarselKansellert>()
+                    kansellerteVarsler shouldNot beEmpty()
+                    kansellerteVarsler.first().varselId shouldBe gammelVarselId
+                }
+            }
+
+            serviceJob.cancel()
+        }
     }
 })
+
+fun mockOsloTid(mockNow: LocalDateTime) = object : OsloTid {
+    override fun localDateTimeNow() = mockNow
+    override fun localDateNow() = mockNow.toLocalDate()
+}
 
 private fun ResultSet.asMap() = (1..this.metaData.columnCount).associate {
     this.metaData.getColumnName(it) to this.getObject(it)

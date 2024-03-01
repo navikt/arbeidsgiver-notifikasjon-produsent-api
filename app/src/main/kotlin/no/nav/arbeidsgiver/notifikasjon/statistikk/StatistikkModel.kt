@@ -317,6 +317,23 @@ class StatistikkModel(
                 }
             }
 
+            is HendelseModel.EksterntVarselKansellert -> {
+                database.nonTransactionalExecuteUpdate(
+                    """
+                    insert into varsel_resultat 
+                        (hendelse_id, varsel_id, notifikasjon_id, produsent_id, status)
+                    values
+                        (?, ?, ?, ?, 'kansellert')
+                    on conflict do nothing;
+                    """
+                ) {
+                    uuid(hendelse.hendelseId)
+                    uuid(hendelse.varselId)
+                    uuid(hendelse.notifikasjonId)
+                    text(hendelse.produsentId)
+                }
+            }
+
             is SoftDelete -> {
                 database.transaction {
                     if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {

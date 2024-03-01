@@ -57,7 +57,7 @@ const datePlus = (days: number = 0, hours: number = 0) => {
     return date
 }
 
-export const KalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
+export const NyKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
     const [nyKalenderavtale, {
         data,
         loading,
@@ -115,6 +115,93 @@ export const KalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
         />
         <Button variant="primary"
                 onClick={() => nyKalenderavtale({variables})}>Opprett kalenderavtale med ekstern varsling</Button>
+
+        {loading && <p>Laster...</p>}
+        {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
+        {data && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
+
+    </div>
+}
+
+const OPPDATER_KALENDERAVTALE_MED_VARSLING = gql`
+    mutation (
+        $id: ID!
+        $lenke: String
+        $tekst: String
+        $idempotenceKey: String
+        $startTidspunkt: ISO8601LocalDateTime
+        $sluttTidspunkt: ISO8601LocalDateTime
+        $eksterneVarsler: [EksterntVarselInput!]! = []
+        $lokasjon: LokasjonInput
+    ) {
+        kalenderavtaleOppdater(
+            id: $id
+            idempotencyKey: $idempotenceKey
+            nyttStartTidspunkt: $startTidspunkt
+            nyttSluttTidspunkt: $sluttTidspunkt
+            nyLenke: $lenke
+            nyTekst: $tekst
+            nyLokasjon: $lokasjon
+            eksterneVarsler: $eksterneVarsler
+        ) {
+            __typename
+            ... on KalenderavtaleOppdaterVellykket {
+                id
+            }
+            ... on Error {
+                feilmelding
+            }
+        }
+    }
+`
+
+export const OppdaterKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
+    const [kalenderavtaleOppdater, {
+        data,
+        loading,
+        error
+    }] = useMutation<Pick<Mutation, "kalenderavtaleOppdater">>(OPPDATER_KALENDERAVTALE_MED_VARSLING)
+
+
+    const [variables, setVariables] = useState({
+        id: "42",
+        lenke: "https://foo.bar",
+        tekst: "Dette er en kalenderavtale",
+        startTidspunkt: datePlus(1).toISOString().replace('Z', ''),
+        sluttTidspunkt: datePlus(1, 1).toISOString().replace('Z', ''),
+        lokasjon: {
+            postnummer: "1234",
+            poststed: "Kneika",
+            adresse: "rundt svingen og borti høgget"
+        },
+        eksterneVarsler: [{
+            epost: {
+                mottaker: {
+                    kontaktinfo: {
+                        epostadresse: "donald@duck.co"
+                    }
+                },
+                epostTittel: "Varsel fra testpodusent",
+                epostHtmlBody: "<h1>Hei</h1><p>Dette er en test</p>",
+                sendetidspunkt: {
+                    sendevindu: "LOEPENDE",
+                }
+            }
+        }]
+    });
+    return <div className={cssClasses.kalenderavtale}>
+
+        <SyntaxHighlighter language="graphql" style={darcula}>
+            {print(OPPDATER_KALENDERAVTALE_MED_VARSLING)}
+        </SyntaxHighlighter>
+        <Textarea
+            style={{fontSize: "12px", lineHeight: "12px"}}
+            label="Variabler"
+            value={JSON.stringify(variables, null, 2)}
+            onChange={(e) => setVariables(JSON.parse(e.target.value))}
+        />
+        <Button variant="primary"
+                onClick={() => kalenderavtaleOppdater({variables})}>Oppdater kalenderavtale med ekstern varsling</Button>
 
         {loading && <p>Laster...</p>}
         {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}

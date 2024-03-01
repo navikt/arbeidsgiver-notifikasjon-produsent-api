@@ -69,7 +69,8 @@ internal sealed class Error {
     ) :
         Error(),
         MutationNyStatusSak.NyStatusSakResultat,
-        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
+        MutationKalenderavtale.KalenderavtaleOppdaterResultat
 
     @JsonTypeName("DuplikatEksternIdOgMerkelapp")
     data class DuplikatEksternIdOgMerkelapp(

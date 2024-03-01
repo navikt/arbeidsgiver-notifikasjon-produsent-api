@@ -92,6 +92,7 @@ class KalenderavtaleTests : DescribeSpec({
                         )
                         hendelse.erDigitalt shouldBe true
                         hendelse.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
+                        hendelse.eksterneVarsler shouldNot beEmpty()
                     }
                 }
 
@@ -118,13 +119,18 @@ class KalenderavtaleTests : DescribeSpec({
                             adresse = "rundt svingen og borti høgget"
                         )
                         it.digitalt shouldBe true
+                        it.eksterneVarsler shouldNot beEmpty()
                     }
                 }
             }
         }
 
         context("kalenderavtaleOppdater") {
-            engine.kalenderavtaleOppdater(nyKalenderavtale.id).let { response ->
+            val idempotenceKey = "123"
+            engine.kalenderavtaleOppdater(
+                id = nyKalenderavtale.id,
+                idempotenceKey = idempotenceKey,
+            ).let { response ->
                 it("status is 200 OK") {
                     response.status() shouldBe HttpStatusCode.OK
                 }
@@ -154,6 +160,7 @@ class KalenderavtaleTests : DescribeSpec({
                         )
                         hendelse.erDigitalt shouldBe true
                         hendelse.hardDelete shouldBe instanceOf(HendelseModel.HardDeleteUpdate::class)
+                        hendelse.eksterneVarsler shouldNot beEmpty()
                     }
                 }
                 it("updates produsent modell") {
@@ -178,13 +185,25 @@ class KalenderavtaleTests : DescribeSpec({
                             adresse = "rundt svingen og borti høgget"
                         )
                         it.digitalt shouldBe true
+                        it.eksterneVarsler shouldNot beEmpty()
+                    }
+                }
+            }
+
+            context("samme forespørsel med samme idempotensnøkkel gir samme svar") {
+                engine.kalenderavtaleOppdater(
+                    id = nyKalenderavtale.id,
+                    idempotenceKey = idempotenceKey,
+                ).let { response ->
+                    it("response er vellykket") {
+                        response.getTypedContent<String>("kalenderavtaleOppdater/__typename") shouldBe "KalenderavtaleOppdaterVellykket"
                     }
                 }
             }
         }
 
         context("kalenderavtaleOppdaterByEksternId") {
-
+            val idempotenceKey = "321"
             engine.kalenderavtaleOppdaterByEksternId(merkelapp, eksternId).let { response ->
                 it("status is 200 OK") {
                     response.status() shouldBe HttpStatusCode.OK
@@ -205,6 +224,7 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse shouldBe instanceOf<HendelseModel.KalenderavtaleOppdatert>()
                         hendelse as HendelseModel.KalenderavtaleOppdatert
                         hendelse.notifikasjonId shouldBe oppdatertByEksternId.id
+                        hendelse.eksterneVarsler shouldNot beEmpty()
                     }
                 }
 
@@ -230,6 +250,19 @@ class KalenderavtaleTests : DescribeSpec({
                             adresse = "rundt svingen og borti høgget"
                         )
                         it.digitalt shouldBe true
+                        it.eksterneVarsler shouldNot beEmpty()
+                    }
+                }
+            }
+
+            context("samme forespørsel med samme idempotensnøkkel gir samme svar") {
+                engine.kalenderavtaleOppdaterByEksternId(
+                    merkelapp = merkelapp,
+                    eksternId = eksternId,
+                    idempotenceKey = idempotenceKey,
+                ).let { response ->
+                    it("response er vellykket") {
+                        response.getTypedContent<String>("kalenderavtaleOppdaterByEksternId/__typename") shouldBe "KalenderavtaleOppdaterVellykket"
                     }
                 }
             }
@@ -292,15 +325,6 @@ class KalenderavtaleTests : DescribeSpec({
                     valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
                 }
             }
-        }
-    }
-
-    describe("idempotens") {
-        context("samme forespørsel med samme idempotensnøkkel gir samme svar") {
-
-        }
-        context("ulik forespørsel med samme idempotensnøkkel gir feilmelding konflikt") {
-
         }
     }
 })
@@ -381,6 +405,7 @@ private fun TestApplicationEngine.nyKalenderavtale(
 
 private fun TestApplicationEngine.kalenderavtaleOppdater(
     id: UUID,
+    idempotenceKey: String = "1234",
     startTidspunkt: String = "2024-10-12T07:20:50.52",
     sluttTidspunkt: String = "2024-10-12T08:20:50.52",
 ) = produsentApi(
@@ -388,6 +413,7 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
         mutation {
             kalenderavtaleOppdater(
                 id: "$id"
+                idempotencyKey: "$idempotenceKey"
                 nyLenke: "https://foo.bar"
                 nyTekst: "hello world"
                 nyTilstand: ARBEIDSGIVER_HAR_GODTATT
@@ -405,6 +431,19 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
                     }
                   strategi: OVERSKRIV
                 }
+                eksterneVarsler: [{
+                    altinntjeneste: {
+                        sendetidspunkt: {
+                            sendevindu: LOEPENDE
+                        }
+                        mottaker: {
+                            serviceCode: "5441"
+                            serviceEdition: "1"
+                        }
+                        innhold: "foo"
+                        tittel: "bar"
+                    }
+                }]
             ) {
                 __typename
                 ... on KalenderavtaleOppdaterVellykket {
@@ -421,6 +460,7 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
 private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
     merkelapp: String,
     eksternId: String,
+    idempotenceKey: String = "1234",
     startTidspunkt: String = "2024-10-12T07:20:50.52",
     sluttTidspunkt: String = "2024-10-12T08:20:50.52",
 ) = produsentApi(
@@ -429,6 +469,7 @@ private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
             kalenderavtaleOppdaterByEksternId(
                 merkelapp: "$merkelapp"
                 eksternId: "$eksternId"
+                idempotencyKey: "$idempotenceKey"
                 nyTilstand: ARBEIDSGIVER_HAR_GODTATT
                 nyLenke: "https://foo.bar"
                 nyTekst: "hello world"
@@ -446,6 +487,19 @@ private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
                     }
                   strategi: OVERSKRIV
                 }
+                eksterneVarsler: [{
+                    altinntjeneste: {
+                        sendetidspunkt: {
+                            sendevindu: LOEPENDE
+                        }
+                        mottaker: {
+                            serviceCode: "5441"
+                            serviceEdition: "1"
+                        }
+                        innhold: "foo"
+                        tittel: "bar"
+                    }
+                }]
             ) {
                 __typename
                 ... on KalenderavtaleOppdaterVellykket {

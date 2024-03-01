@@ -5,6 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselKansellert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
@@ -156,6 +157,7 @@ val Hendelse.typeNavn: String
         is OppgaveOpprettet -> "OppgaveOpprettet"
         is EksterntVarselVellykket -> "EksterntVarselVellykket"
         is EksterntVarselFeilet -> "EksterntVarselFeilet"
+        is EksterntVarselKansellert -> "EksterntVarselKansellert"
         is PåminnelseOpprettet -> "PåminnelseOpprettet"
         is FristUtsatt -> "FristUtsatt"
         is KalenderavtaleOpprettet -> "KalenderavtaleOpprettet"

@@ -325,6 +325,9 @@ class DataproduktModel(
             is EksterntVarselFeilet -> {
                 updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode,  metadata.timestamp)
             }
+            is HendelseModel.EksterntVarselKansellert -> {
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_KANSELLERT", null,  metadata.timestamp)
+            }
 
             is SoftDelete -> {
                 if (hendelse.grupperingsid != null && hendelse.merkelapp != null){
@@ -558,11 +561,6 @@ class DataproduktModel(
                     }
                 }
 
-                //TODO: vurder om eksterne varsler på påminnelse skal kanselleres dersom kalenderavtalen er avlyst
-                //if (hendelse.tilstand == HendelseModel.KalenderavtaleTilstand.AVLYST) {
-                //    markerIngenUtsendingPåPåminnelseEksterneVarsler(hendelse.notifikasjonId)
-                //}
-
                 database.nonTransactionalExecuteUpdate(
                     """
                         update notifikasjon
@@ -577,6 +575,26 @@ class DataproduktModel(
                         uuid(notifikasjonId)
                     }
                 }
+
+                if (hendelse.påminnelse != null) {
+                    opprettVarselBestilling(
+                        notifikasjonId = hendelse.notifikasjonId,
+                        produsentId = hendelse.produsentId,
+                        merkelapp = hendelse.merkelapp,
+                        eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
+                        opprinnelse = "KalenderavtaleOppdatert.påminnelse",
+                        statusUtsending = "UTSENDING_IKKE_AVGJORT",
+                    )
+                }
+
+                opprettVarselBestilling(
+                    notifikasjonId = hendelse.notifikasjonId,
+                    produsentId = hendelse.produsentId,
+                    merkelapp = hendelse.merkelapp,
+                    eksterneVarsler = hendelse.eksterneVarsler,
+                    opprinnelse = "KalenderavtaleOppdatert.eksterneVarsler",
+                    statusUtsending = "UTSENDING_BESTILT",
+                )
             }
         }
     }

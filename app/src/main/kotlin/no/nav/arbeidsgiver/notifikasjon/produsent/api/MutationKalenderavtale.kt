@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.NyKalenderavtaleInput.KalenderavtaleTilstand
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.NyKalenderavtaleInput.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -62,7 +63,9 @@ internal class MutationKalenderavtale(
                         nyttSluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttSluttTidspunkt"),
                         nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
+                        eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() }.ifEmpty { null },
                         hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
+                        idempotenceKey = env.getTypedArgumentOrNull<String>("idempotenceKey"),
                     ),
                 )
             }
@@ -80,7 +83,9 @@ internal class MutationKalenderavtale(
                         nyttSluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttSluttTidspunkt"),
                         nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
+                        eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() }.ifEmpty { null },
                         hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
+                        idempotenceKey = env.getTypedArgumentOrNull<String>("idempotenceKey"),
                     ),
                 )
             }
@@ -154,7 +159,7 @@ internal class MutationKalenderavtale(
                 erDigitalt = erDigitalt,
                 hardDelete = hardDelete?.tilHendelseModel(),
                 sakId = sakId,
-                eksterneVarsler = eksterneVarsler.map { it.tilDomene(virksomhetsnummer) },
+                eksterneVarsler = eksterneVarsler.map { it.tilHendelseModel(virksomhetsnummer) },
                 påminnelse = null,
             )
         }
@@ -299,11 +304,15 @@ internal class MutationKalenderavtale(
                 lokasjon = nyLokasjon?.tilHendelseModel(),
                 erDigitalt = nyErDigitalt,
                 hardDelete = hardDelete?.tilHendelseModel(),
-                eksterneVarsler = emptyList(),
+                eksterneVarsler = eksterneVarsler?.map { it.tilHendelseModel(eksisterende.virksomhetsnummer) } ?: emptyList(),
                 påminnelse = null,
+                idempotenceKey = idempotenceKey,
+                oppdatertTidspunkt = Instant.now(),
+                opprettetTidspunkt = eksisterende.opprettetTidspunkt.toInstant(),
+                merkelapp = eksisterende.merkelapp,
+                grupperingsid = eksisterende.grupperingsid,
             )
         }
-
         abstract val nyTilstand: KalenderavtaleTilstand?
         abstract val nyTekst: String?
         abstract val nyLenke: String?
@@ -312,6 +321,8 @@ internal class MutationKalenderavtale(
         abstract val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?
         abstract val nyErDigitalt: Boolean?
         abstract val hardDelete: HardDeleteUpdateInput?
+        abstract val eksterneVarsler: List<EksterntVarselInput>?
+        abstract val idempotenceKey: String?
 
         /**
          * siden alle verdier er optional mtp forward compat:
@@ -327,6 +338,8 @@ internal class MutationKalenderavtale(
                 nyLokasjon,
                 nyErDigitalt,
                 hardDelete,
+                eksterneVarsler,
+                idempotenceKey,
             ).isEmpty()
     }
 
@@ -339,7 +352,9 @@ internal class MutationKalenderavtale(
         override val nyttSluttTidspunkt: LocalDateTime?,
         override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
+        override val eksterneVarsler: List<EksterntVarselInput>?,
         override val hardDelete: HardDeleteUpdateInput?,
+        override val idempotenceKey: String?,
     ) : KalenderavtaleOppdaterInput()
 
     data class KalenderavtaleOppdaterByEksternIdInput(
@@ -352,7 +367,9 @@ internal class MutationKalenderavtale(
         override val nyttSluttTidspunkt: LocalDateTime?,
         override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
+        override val eksterneVarsler: List<EksterntVarselInput>?,
         override val hardDelete: HardDeleteUpdateInput?,
+        override val idempotenceKey: String?,
     ) : KalenderavtaleOppdaterInput()
 
     private suspend fun kalenderavtaleOppdaterById(
@@ -409,6 +426,18 @@ internal class MutationKalenderavtale(
             return KalenderavtaleOppdaterVellykket(
                 id = eksisterende.id,
             )
+        }
+
+        input.idempotenceKey?.let {
+            val oppdateringFinnes = produsentRepository.notifikasjonOppdateringFinnes(
+                eksisterende.id,
+                input.idempotenceKey!!
+            )
+            if (oppdateringFinnes) {
+                return KalenderavtaleOppdaterVellykket(
+                    id = eksisterende.id,
+                )
+            }
         }
 
         val hendelse = input.somKalenderavtaleOppdatertHendelse(
