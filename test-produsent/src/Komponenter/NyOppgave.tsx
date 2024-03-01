@@ -1,6 +1,6 @@
 import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useState} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Button, Textarea} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
