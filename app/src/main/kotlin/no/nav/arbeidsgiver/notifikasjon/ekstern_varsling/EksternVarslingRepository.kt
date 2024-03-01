@@ -199,7 +199,7 @@ class EksternVarslingRepository(
             """
             update ekstern_varsel_kontaktinfo 
             set 
-                state = '${EksterntVarselTilstand.KANSELLERT}',
+                state = '${EksterntVarselTilstand.KANSELLERT}'
             where
                 varsel_id = ? 
         """
