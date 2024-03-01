@@ -1,6 +1,6 @@
 import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
-import React, {useContext, useState} from "react";
+import {useContext, useState, FunctionComponent} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Button, Textarea} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
@@ -57,7 +57,7 @@ const datePlus = (days: number = 0, hours: number = 0) => {
     return date
 }
 
-export const KalenderAvtaleMedEksternVarsling: React.FunctionComponent = () => {
+export const KalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
     const [nyKalenderavtale, {
         data,
         loading,

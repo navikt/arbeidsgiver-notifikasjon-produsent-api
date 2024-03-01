@@ -53,245 +53,254 @@ class KalenderavtaleTests : DescribeSpec({
 
         lateinit var nyKalenderavtale: MutationKalenderavtale.NyKalenderavtaleVellykket
 
-        // opprett happy path
-        engine.nyKalenderavtale(grupperingsid, merkelapp, eksternId).let { response ->
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
-
-            it("respons inneholder forventet data") {
-                nyKalenderavtale =
-                    response.getTypedContent<MutationKalenderavtale.NyKalenderavtaleVellykket>("nyKalenderavtale")
-                nyKalenderavtale should beOfType<MutationKalenderavtale.NyKalenderavtaleVellykket>()
-            }
-
-            it("sends message to kafka") {
-                kafkaProducer.hendelser.removeLast().also { hendelse ->
-                    hendelse shouldBe instanceOf<HendelseModel.KalenderavtaleOpprettet>()
-                    hendelse as HendelseModel.KalenderavtaleOpprettet
-                    hendelse.notifikasjonId shouldBe nyKalenderavtale.id
-                    hendelse.sakId shouldBe sakOpprettet.sakId
-                    hendelse.tilstand shouldBe HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-                    hendelse.lenke shouldBe "https://foo.bar"
-                    hendelse.tekst shouldBe "hello world"
-                    hendelse.merkelapp shouldBe "tag"
-                    hendelse.mottakere.single() shouldBe HendelseModel.NærmesteLederMottaker(
-                        naermesteLederFnr = "12345678910",
-                        ansattFnr = "321",
-                        virksomhetsnummer = "42"
-                    )
-                    hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                    hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
-                    hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
-                        postnummer = "1234",
-                        poststed = "Kneika",
-                        adresse = "rundt svingen og borti høgget"
-                    )
-                    hendelse.erDigitalt shouldBe true
-                    hendelse.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
+        context("nyKalenderavtale") {
+            engine.nyKalenderavtale(grupperingsid, merkelapp, eksternId).let { response ->
+                it("status is 200 OK") {
+                    response.status() shouldBe HttpStatusCode.OK
                 }
-            }
-
-            it("updates produsent modell") {
-                val id = nyKalenderavtale.id
-                produsentRepository.hentNotifikasjon(id).let {
-                    it shouldNot beNull()
-                    it should beOfType<ProdusentModel.Kalenderavtale>()
-
-                    it as ProdusentModel.Kalenderavtale
-                    it.merkelapp shouldBe merkelapp
-                    it.virksomhetsnummer shouldBe "42"
-
-                    it.tekst shouldBe "hello world"
-                    it.grupperingsid shouldBe grupperingsid
-                    it.lenke shouldBe "https://foo.bar"
-                    it.eksternId shouldBe eksternId
-                    it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-                    it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                    it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
-                    it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
-                        postnummer = "1234",
-                        poststed = "Kneika",
-                        adresse = "rundt svingen og borti høgget"
-                    )
-                    it.digitalt shouldBe true
+                it("response inneholder ikke feil") {
+                    response.getGraphqlErrors() should beEmpty()
                 }
-            }
-        }
 
-
-        // oppdater happy path
-        engine.kalenderavtaleOppdater(nyKalenderavtale.id).let { response ->
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
-            lateinit var oppdaterVellykket: MutationKalenderavtale.KalenderavtaleOppdaterVellykket
-            it("respons inneholder forventet data") {
-                oppdaterVellykket =
-                    response.getTypedContent<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>("kalenderavtaleOppdater")
-                oppdaterVellykket should beOfType<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>()
-            }
-            it("sends message to kafka") {
-                kafkaProducer.hendelser.removeLast().also { hendelse ->
-                    hendelse shouldBe instanceOf<HendelseModel.KalenderavtaleOppdatert>()
-                    hendelse as HendelseModel.KalenderavtaleOppdatert
-                    hendelse.notifikasjonId shouldBe nyKalenderavtale.id
-                    hendelse.tilstand shouldBe HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT
-                    hendelse.lenke shouldBe "https://foo.bar"
-                    hendelse.tekst shouldBe "hello world"
-                    hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                    hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
-                    hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
-                        postnummer = "1234",
-                        poststed = "Kneika",
-                        adresse = "rundt svingen og borti høgget"
-                    )
-                    hendelse.erDigitalt shouldBe true
-                    hendelse.hardDelete shouldBe instanceOf(HendelseModel.HardDeleteUpdate::class)
+                it("respons inneholder forventet data") {
+                    nyKalenderavtale =
+                        response.getTypedContent<MutationKalenderavtale.NyKalenderavtaleVellykket>("nyKalenderavtale")
+                    nyKalenderavtale should beOfType<MutationKalenderavtale.NyKalenderavtaleVellykket>()
                 }
-            }
-            it("updates produsent modell") {
-                produsentRepository.hentNotifikasjon(oppdaterVellykket.id).let {
-                    it shouldNot beNull()
-                    it should beOfType<ProdusentModel.Kalenderavtale>()
 
-                    it as ProdusentModel.Kalenderavtale
-                    it.merkelapp shouldBe merkelapp
-                    it.virksomhetsnummer shouldBe "42"
+                it("sends message to kafka") {
+                    kafkaProducer.hendelser.removeLast().also { hendelse ->
+                        hendelse shouldBe instanceOf<HendelseModel.KalenderavtaleOpprettet>()
+                        hendelse as HendelseModel.KalenderavtaleOpprettet
+                        hendelse.notifikasjonId shouldBe nyKalenderavtale.id
+                        hendelse.sakId shouldBe sakOpprettet.sakId
+                        hendelse.tilstand shouldBe HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
+                        hendelse.lenke shouldBe "https://foo.bar"
+                        hendelse.tekst shouldBe "hello world"
+                        hendelse.merkelapp shouldBe "tag"
+                        hendelse.mottakere.single() shouldBe HendelseModel.NærmesteLederMottaker(
+                            naermesteLederFnr = "12345678910",
+                            ansattFnr = "321",
+                            virksomhetsnummer = "42"
+                        )
+                        hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                        hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
+                            postnummer = "1234",
+                            poststed = "Kneika",
+                            adresse = "rundt svingen og borti høgget"
+                        )
+                        hendelse.erDigitalt shouldBe true
+                        hendelse.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
+                    }
+                }
 
-                    it.tekst shouldBe "hello world"
-                    it.grupperingsid shouldBe grupperingsid
-                    it.lenke shouldBe "https://foo.bar"
-                    it.eksternId shouldBe eksternId
-                    it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
-                    it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                    it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
-                    it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
-                        postnummer = "1234",
-                        poststed = "Kneika",
-                        adresse = "rundt svingen og borti høgget"
-                    )
-                    it.digitalt shouldBe true
+                it("updates produsent modell") {
+                    val id = nyKalenderavtale.id
+                    produsentRepository.hentNotifikasjon(id).let {
+                        it shouldNot beNull()
+                        it should beOfType<ProdusentModel.Kalenderavtale>()
+
+                        it as ProdusentModel.Kalenderavtale
+                        it.merkelapp shouldBe merkelapp
+                        it.virksomhetsnummer shouldBe "42"
+
+                        it.tekst shouldBe "hello world"
+                        it.grupperingsid shouldBe grupperingsid
+                        it.lenke shouldBe "https://foo.bar"
+                        it.eksternId shouldBe eksternId
+                        it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
+                        it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                        it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
+                            postnummer = "1234",
+                            poststed = "Kneika",
+                            adresse = "rundt svingen og borti høgget"
+                        )
+                        it.digitalt shouldBe true
+                    }
                 }
             }
         }
 
+        context("kalenderavtaleOppdater") {
+            engine.kalenderavtaleOppdater(nyKalenderavtale.id).let { response ->
+                it("status is 200 OK") {
+                    response.status() shouldBe HttpStatusCode.OK
+                }
+                it("response inneholder ikke feil") {
+                    response.getGraphqlErrors() should beEmpty()
+                }
+                lateinit var oppdaterVellykket: MutationKalenderavtale.KalenderavtaleOppdaterVellykket
+                it("respons inneholder forventet data") {
+                    oppdaterVellykket =
+                        response.getTypedContent<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>("kalenderavtaleOppdater")
+                    oppdaterVellykket should beOfType<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>()
+                }
+                it("sends message to kafka") {
+                    kafkaProducer.hendelser.removeLast().also { hendelse ->
+                        hendelse shouldBe instanceOf<HendelseModel.KalenderavtaleOppdatert>()
+                        hendelse as HendelseModel.KalenderavtaleOppdatert
+                        hendelse.notifikasjonId shouldBe nyKalenderavtale.id
+                        hendelse.tilstand shouldBe HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT
+                        hendelse.lenke shouldBe "https://foo.bar"
+                        hendelse.tekst shouldBe "hello world"
+                        hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                        hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
+                            postnummer = "1234",
+                            poststed = "Kneika",
+                            adresse = "rundt svingen og borti høgget"
+                        )
+                        hendelse.erDigitalt shouldBe true
+                        hendelse.hardDelete shouldBe instanceOf(HendelseModel.HardDeleteUpdate::class)
+                    }
+                }
+                it("updates produsent modell") {
+                    produsentRepository.hentNotifikasjon(oppdaterVellykket.id).let {
+                        it shouldNot beNull()
+                        it should beOfType<ProdusentModel.Kalenderavtale>()
 
+                        it as ProdusentModel.Kalenderavtale
+                        it.merkelapp shouldBe merkelapp
+                        it.virksomhetsnummer shouldBe "42"
 
-
-        engine.kalenderavtaleOppdaterByEksternId(merkelapp, eksternId).let { response ->
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
+                        it.tekst shouldBe "hello world"
+                        it.grupperingsid shouldBe grupperingsid
+                        it.lenke shouldBe "https://foo.bar"
+                        it.eksternId shouldBe eksternId
+                        it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
+                        it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                        it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
+                            postnummer = "1234",
+                            poststed = "Kneika",
+                            adresse = "rundt svingen og borti høgget"
+                        )
+                        it.digitalt shouldBe true
+                    }
+                }
             }
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
+        }
 
-            lateinit var oppdatertByEksternId: MutationKalenderavtale.KalenderavtaleOppdaterVellykket
-            it("respons inneholder forventet data") {
-                oppdatertByEksternId =
-                    response.getTypedContent<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>("kalenderavtaleOppdaterByEksternId")
-                oppdatertByEksternId should beOfType<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>()
-            }
+        context("kalenderavtaleOppdaterByEksternId") {
 
-            it("sends message to kafka") {
-                kafkaProducer.hendelser.removeLast().also { hendelse ->
-                    hendelse shouldBe instanceOf<HendelseModel.KalenderavtaleOppdatert>()
-                    hendelse as HendelseModel.KalenderavtaleOppdatert
-                    hendelse.notifikasjonId shouldBe oppdatertByEksternId.id
+            engine.kalenderavtaleOppdaterByEksternId(merkelapp, eksternId).let { response ->
+                it("status is 200 OK") {
+                    response.status() shouldBe HttpStatusCode.OK
+                }
+                it("response inneholder ikke feil") {
+                    response.getGraphqlErrors() should beEmpty()
+                }
+
+                lateinit var oppdatertByEksternId: MutationKalenderavtale.KalenderavtaleOppdaterVellykket
+                it("respons inneholder forventet data") {
+                    oppdatertByEksternId =
+                        response.getTypedContent<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>("kalenderavtaleOppdaterByEksternId")
+                    oppdatertByEksternId should beOfType<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>()
+                }
+
+                it("sends message to kafka") {
+                    kafkaProducer.hendelser.removeLast().also { hendelse ->
+                        hendelse shouldBe instanceOf<HendelseModel.KalenderavtaleOppdatert>()
+                        hendelse as HendelseModel.KalenderavtaleOppdatert
+                        hendelse.notifikasjonId shouldBe oppdatertByEksternId.id
+                    }
+                }
+
+                it("updates produsent modell") {
+                    produsentRepository.hentNotifikasjon(oppdatertByEksternId.id).let {
+                        it shouldNot beNull()
+                        it should beOfType<ProdusentModel.Kalenderavtale>()
+
+                        it as ProdusentModel.Kalenderavtale
+                        it.merkelapp shouldBe merkelapp
+                        it.virksomhetsnummer shouldBe "42"
+
+                        it.tekst shouldBe "hello world"
+                        it.grupperingsid shouldBe grupperingsid
+                        it.lenke shouldBe "https://foo.bar"
+                        it.eksternId shouldBe eksternId
+                        it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
+                        it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
+                        it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
+                            postnummer = "1234",
+                            poststed = "Kneika",
+                            adresse = "rundt svingen og borti høgget"
+                        )
+                        it.digitalt shouldBe true
+                    }
+                }
+            }
+        }
+
+        context("starttidspunkt etter sluttidspunkt ved opprettelse") {
+            engine.nyKalenderavtale(
+                grupperingsid = grupperingsid,
+                merkelapp = merkelapp,
+                eksternId = "400",
+                startTidspunkt = "2024-10-12T08:20:50.52",
+                sluttTidspunkt = "2024-10-12T07:20:50.52"
+            ).let {
+                it("status is 200 OK") {
+                    it.status() shouldBe HttpStatusCode.OK
+                }
+                it("response inneholder ikke feil") {
+                    it.getGraphqlErrors() should beEmpty()
+                }
+                it("respons inneholder forventet data") {
+                    val valideringsfeil =
+                        it.getTypedContent<Error.UgyldigKalenderavtale>("nyKalenderavtale")
+                    valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
                 }
             }
 
-            it("updates produsent modell") {
-                produsentRepository.hentNotifikasjon(oppdatertByEksternId.id).let {
-                    it shouldNot beNull()
-                    it should beOfType<ProdusentModel.Kalenderavtale>()
+            engine.kalenderavtaleOppdater(
+                id = nyKalenderavtale.id,
+                startTidspunkt = "2024-10-12T08:20:50.52",
+                sluttTidspunkt = "2024-10-12T07:20:50.52",
+            ).let { response ->
+                it("status is 200 OK") {
+                    response.status() shouldBe HttpStatusCode.OK
+                }
+                it("response inneholder ikke feil") {
+                    response.getGraphqlErrors() should beEmpty()
+                }
+                it("respons inneholder forventet data") {
+                    val valideringsfeil =
+                        response.getTypedContent<Error.UgyldigKalenderavtale>("kalenderavtaleOppdater")
+                    valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
+                }
+            }
 
-                    it as ProdusentModel.Kalenderavtale
-                    it.merkelapp shouldBe merkelapp
-                    it.virksomhetsnummer shouldBe "42"
-
-                    it.tekst shouldBe "hello world"
-                    it.grupperingsid shouldBe grupperingsid
-                    it.lenke shouldBe "https://foo.bar"
-                    it.eksternId shouldBe eksternId
-                    it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
-                    it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                    it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
-                    it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
-                        postnummer = "1234",
-                        poststed = "Kneika",
-                        adresse = "rundt svingen og borti høgget"
-                    )
-                    it.digitalt shouldBe true
+            engine.kalenderavtaleOppdaterByEksternId(
+                eksternId = eksternId,
+                merkelapp = merkelapp,
+                startTidspunkt = "2024-10-12T08:20:50.52",
+                sluttTidspunkt = "2024-10-12T07:20:50.52",
+            ).let { response ->
+                it("status is 200 OK") {
+                    response.status() shouldBe HttpStatusCode.OK
+                }
+                it("response inneholder ikke feil") {
+                    response.getGraphqlErrors() should beEmpty()
+                }
+                it("respons inneholder forventet data") {
+                    val valideringsfeil =
+                        response.getTypedContent<Error.UgyldigKalenderavtale>("kalenderavtaleOppdaterByEksternId")
+                    valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
                 }
             }
         }
+    }
 
-        // starttidspunkt etter sluttidspunkt ved opprettelse
-        engine.nyKalenderavtale(
-            grupperingsid = grupperingsid,
-            merkelapp = merkelapp,
-            eksternId = "400",
-            startTidspunkt = "2024-10-12T08:20:50.52",
-            sluttTidspunkt = "2024-10-12T07:20:50.52"
-        ).let {
-            it("status is 200 OK") {
-                it.status() shouldBe HttpStatusCode.OK
-            }
-            it("response inneholder ikke feil") {
-                it.getGraphqlErrors() should beEmpty()
-            }
-            it("respons inneholder forventet data") {
-                val valideringsfeil =
-                    it.getTypedContent<Error.UgyldigKalenderavtale>("nyKalenderavtale")
-                valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
-            }
+    describe("idempotens") {
+        context("samme forespørsel med samme idempotensnøkkel gir samme svar") {
+
         }
+        context("ulik forespørsel med samme idempotensnøkkel gir feilmelding konflikt") {
 
-        // starttidspunkt etter sluttidspunkt ved oppdaterById
-        engine.kalenderavtaleOppdater(
-            id = nyKalenderavtale.id,
-            startTidspunkt = "2024-10-12T08:20:50.52",
-            sluttTidspunkt = "2024-10-12T07:20:50.52",
-        ).let { response ->
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
-            it("respons inneholder forventet data") {
-                val valideringsfeil =
-                    response.getTypedContent<Error.UgyldigKalenderavtale>("kalenderavtaleOppdater")
-                valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
-            }
-        }
-
-        // starttidspunkt etter sluttidspunkt ved oppdaterByEksternId
-        engine.kalenderavtaleOppdaterByEksternId(
-            eksternId = eksternId,
-            merkelapp = merkelapp,
-            startTidspunkt = "2024-10-12T08:20:50.52",
-            sluttTidspunkt = "2024-10-12T07:20:50.52",
-        ).let { response ->
-            it("status is 200 OK") {
-                response.status() shouldBe HttpStatusCode.OK
-            }
-            it("response inneholder ikke feil") {
-                response.getGraphqlErrors() should beEmpty()
-            }
-            it("respons inneholder forventet data") {
-                val valideringsfeil =
-                    response.getTypedContent<Error.UgyldigKalenderavtale>("kalenderavtaleOppdaterByEksternId")
-                valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
-            }
         }
     }
 })
@@ -338,6 +347,19 @@ private fun TestApplicationEngine.nyKalenderavtale(
                 }
                 erDigitalt: true
                 virksomhetsnummer: "42"
+                eksterneVarsler: [{
+                    altinntjeneste: {
+                        sendetidspunkt: {
+                            sendevindu: LOEPENDE
+                        }
+                        mottaker: {
+                            serviceCode: "5441"
+                            serviceEdition: "1"
+                        }
+                        innhold: "foo"
+                        tittel: "bar"
+                    }
+                }]
                 hardDelete: {
                   den: "2019-10-13T07:20:50.52"
                 }
