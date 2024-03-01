@@ -9,6 +9,7 @@
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   padding: 16px 10%;
   background-color: white;
   border-bottom: 0.25rem solid var(--a-border-focus-on-inverted);

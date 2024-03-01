@@ -1,11 +1,11 @@
 import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Button, Textarea} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {GrupperingsidContext} from "../App.tsx";
 
 const NY_SAK = gql`
@@ -61,6 +61,12 @@ export const NySak: React.FunctionComponent = () => {
         initiellStatus: "MOTTATT"
     });
 
+    useEffect(() => {
+        setVariables({
+            ...variables,
+            grupperingsid: grupperingsid,
+        })
+    }, [grupperingsid]);
 
 
     return <div className={cssClasses.kalenderavtale}>
@@ -78,7 +84,8 @@ export const NySak: React.FunctionComponent = () => {
                 onClick={() => nySak({variables})}>Opprett en ny sak</Button>
 
         {loading && <p>Laster...</p>}
-        {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
+        {error &&
+            <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
         {data && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
     </div>
 }

@@ -1,6 +1,6 @@
 import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
-import React, {useContext, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Button, Textarea} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
@@ -67,6 +67,14 @@ export const NyOppgave: React.FunctionComponent = () => {
         tekst: "Dette er en ny oppgave",
         initiellStatus: "MOTTATT"
     });
+
+    useEffect(() => {
+        setVariables({
+            ...variables,
+            grupperingsid: grupperingsid,
+        })
+    }, [grupperingsid]);
+
     return <div className={cssClasses.kalenderavtale}>
 
         <SyntaxHighlighter language="graphql" style={darcula}>
