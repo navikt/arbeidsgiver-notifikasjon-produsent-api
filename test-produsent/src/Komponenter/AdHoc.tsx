@@ -1,34 +1,40 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button, Textarea } from "@navikt/ds-react";
 import {gql, useLazyQuery} from "@apollo/client";
 
-export const AdHoc: React.FunctionComponent = () => {
-    const [query, setQuery] = useState<string>('query init{whoami}');
-    const [variables, setVariables] = useState<string>('');
-    const [executeQuery, { loading, error, data }] = useLazyQuery(gql`${query}`); // Legg til din GraphQL spørring her
+const defaultQueryString = `query init {whoami}`
+const initQuery = gql`${defaultQueryString}`
 
-    const handleRunQuery = () => {
+export const AdHoc: React.FunctionComponent = () => {
+    const [executeQuery, { loading, error: apolloError, data }] = useLazyQuery(initQuery);
+
+    const [variables, setVariables] = React.useState("");
+    const [query, setQuery] = React.useState(defaultQueryString);
+    const [error, setError] = React.useState<string | null>(null);
+    const handleRunQuery =  async () => {
         try {
             const parsedVariables = variables !== "" ? JSON.parse(variables) : {};
             if (query === "") {
-                console.error("Query må fylles ut");
-                return;
+                setError("Skriv inn en query ")
             }
-            executeQuery({
+            await executeQuery({
                 variables: parsedVariables,
                 query: gql`${query}`,
             });
+            setError(null)
         } catch (error) {
-            console.error("Feilet parsing. Skriv i JSON-format \'{\"key\":\"value\"}\'", error);
+            setError(`Feilet parsing. Skriv i JSON-format {"{\"key\":\"value\"}"} ${error}`)
         }
     };
 
-    if (loading) return <p>Laster...</p>
-    if (error) return <p>Error: {error.message}</p>
-
     return (
         <>
-            <div>
+            <div style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px"
+
+            }}>
                 <Textarea
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -44,6 +50,9 @@ export const AdHoc: React.FunctionComponent = () => {
                 </Button>
             </div>
             <div>
+                {loading && <p>Laster...</p>}
+                {apolloError && <p>Error: {apolloError.message}</p>}
+                {error && <p>{error}</p>}
                 {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
             </div>
         </>

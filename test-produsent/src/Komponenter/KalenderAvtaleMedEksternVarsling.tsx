@@ -1,11 +1,12 @@
 import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
-import {useState, FunctionComponent} from "react";
+import {useContext, useState, FunctionComponent, useEffect} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Button, Textarea} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {GrupperingsidContext} from "../App.tsx";
 
 const NY_KALENDERAVTALE_MED_VARSSLING = gql`
     mutation (
@@ -63,9 +64,10 @@ export const NyKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
         error
     }] = useMutation<Pick<Mutation, "nyKalenderavtale">>(NY_KALENDERAVTALE_MED_VARSSLING)
 
+    const grupperingsid = useContext(GrupperingsidContext)
 
     const [variables, setVariables] = useState({
-        grupperingsid: "8e3ffcd8-d547-4cfb-abc4-f923dd1c56de",
+        grupperingsid: grupperingsid,
         virksomhetsnummer: "910825526",
         eksternId: "123",
         lenke: "https://foo.bar",
@@ -92,6 +94,14 @@ export const NyKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
             }
         }]
     });
+
+    useEffect(() => {
+        setVariables({
+            ...variables,
+            grupperingsid: grupperingsid,
+        })
+    }, [grupperingsid]);
+
     return <div className={cssClasses.kalenderavtale}>
 
         <SyntaxHighlighter language="graphql" style={darcula}>
