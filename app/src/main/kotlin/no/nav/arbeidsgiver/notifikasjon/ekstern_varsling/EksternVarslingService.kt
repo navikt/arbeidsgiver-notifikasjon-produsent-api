@@ -145,16 +145,6 @@ class EksternVarslingService(
             }
 
             launchProcessingLoop(
-                "resume-scheduled-work",
-                pauseAfterEach = Duration.ofMinutes(5)
-            ) {
-                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(osloTid.localDateTimeNow())
-                if (rescheduledCount > 0) {
-                    log.info("resumed $rescheduledCount jobs from wait queue")
-                }
-            }
-
-            launchProcessingLoop(
                 "gauge-oppdatering",
                 pauseAfterEach = Duration.ofMinutes(1)
             ) {
@@ -164,6 +154,16 @@ class EksternVarslingService(
                     waitQueueFutureSizeGauge.set(future)
                 }
                 log.info("gauge-oppdatering vellykket")
+            }
+
+            launchProcessingLoop(
+                "resume-scheduled-work",
+                pauseAfterEach = Duration.ofMinutes(5)
+            ) {
+                val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(osloTid.localDateTimeNow())
+                if (rescheduledCount > 0) {
+                    log.info("resumed $rescheduledCount jobs from wait queue")
+                }
             }
 
             launchProcessingLoop(
@@ -204,6 +204,7 @@ class EksternVarslingService(
             }
 
         withContext(varsel.asMDCContext()) {
+            //
             when (varsel) {
                 is EksternVarselTilstand.Ny -> {
                     val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
@@ -235,6 +236,16 @@ class EksternVarslingService(
                 }
 
                 is EksternVarselTilstand.Sendt -> {
+                    try {
+                        hendelseProdusent.send(varsel.toHendelse())
+                        eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                    } catch (e: RuntimeException) {
+                        log.error("Exception producing kafka-kvittering", e)
+                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                    }
+                }
+
+                is EksternVarselTilstand.Kansellert -> {
                     try {
                         hendelseProdusent.send(varsel.toHendelse())
                         eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)

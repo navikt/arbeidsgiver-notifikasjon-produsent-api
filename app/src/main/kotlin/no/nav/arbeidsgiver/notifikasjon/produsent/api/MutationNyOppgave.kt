@@ -68,7 +68,7 @@ internal class MutationNyOppgave(
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
                 eksterneVarsler = eksterneVarsler.map {
-                    it.tilDomene(metadata.virksomhetsnummer)
+                    it.tilHendelseModel(metadata.virksomhetsnummer)
                 },
                 påminnelse = paaminnelse?.tilDomene(
                     opprettetTidspunkt = metadata.opprettetTidspunkt,

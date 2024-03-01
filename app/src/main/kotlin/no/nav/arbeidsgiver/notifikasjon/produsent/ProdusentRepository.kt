@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselKansellert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
@@ -57,6 +58,7 @@ interface ProdusentRepository {
     suspend fun erHardDeleted(type: AggregateType, merkelapp: String, grupperingsid: String): Boolean
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
+    suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean
 }
 
 class ProdusentRepositoryImpl(
@@ -308,11 +310,23 @@ class ProdusentRepositoryImpl(
             is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
+            is EksterntVarselKansellert -> oppdaterModellEtterEksterntVarselKansellert(hendelse)
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
             is KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
             is KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
         }
     }
+
+    override suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean =
+        database.nonTransactionalExecuteQuery(
+            """
+            select * from notifikasjon_oppdatering where notifikasjon_id = ? and idempotence_key = ?
+            """,
+            {
+                uuid(id)
+                text(idempotenceKey)
+            }
+        ) {}.isNotEmpty()
 
     private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: SakOpprettet) {
         database.transaction {
@@ -683,6 +697,27 @@ class ProdusentRepositoryImpl(
         }
     }
 
+    private suspend fun oppdaterModellEtterEksterntVarselKansellert(eksterntVarselKansellert: EksterntVarselKansellert) {
+        database.nonTransactionalExecuteUpdate(
+            """
+            update eksternt_varsel 
+            set status = 'KANSELLERT'
+            where varsel_id = ?
+            """
+        ) {
+            uuid(eksterntVarselKansellert.varselId)
+        }
+        database.nonTransactionalExecuteUpdate(
+            """
+            update paaminnelse_eksternt_varsel 
+            set status = 'KANSELLERT'
+            where varsel_id = ?
+            """
+        ) {
+            uuid(eksterntVarselKansellert.varselId)
+        }
+    }
+
     private suspend fun oppdaterModellEtterFristUtsatt(fristUtsatt: FristUtsatt) {
         database.transaction {
             executeUpdate(
@@ -855,10 +890,23 @@ class ProdusentRepositoryImpl(
                     nullableText(lenke)
                     nullableLocalDateTimeAsText(startTidspunkt)
                     nullableLocalDateTimeAsText(sluttTidspunkt)
-                    nullableJsonb(hendelse.lokasjon)
-                    nullableBoolean(hendelse.erDigitalt)
+                    nullableJsonb(lokasjon)
+                    nullableBoolean(erDigitalt)
 
+                    uuid(notifikasjonId)
+                }
+            }
+            if (hendelse.idempotenceKey != null) {
+                executeUpdate(
+                    """
+                    insert into notifikasjon_oppdatering(
+                        hendelse_id, notifikasjon_id, idempotence_key
+                    ) values (?, ?, ?) on conflict(hendelse_id) do nothing;
+                """
+                ) {
+                    uuid(hendelse.hendelseId)
                     uuid(hendelse.notifikasjonId)
+                    text(hendelse.idempotenceKey)
                 }
             }
         }

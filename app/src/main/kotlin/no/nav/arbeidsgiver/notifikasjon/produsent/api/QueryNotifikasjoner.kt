@@ -200,6 +200,7 @@ internal class QueryNotifikasjoner(
                     ProdusentModel.EksterntVarsel.Status.NY -> EksterntVarselStatus.NY
                     ProdusentModel.EksterntVarsel.Status.FEILET -> EksterntVarselStatus.FEILET
                     ProdusentModel.EksterntVarsel.Status.SENDT -> EksterntVarselStatus.SENDT
+                    ProdusentModel.EksterntVarsel.Status.KANSELLERT -> EksterntVarselStatus.KANSELLERT
                 },
                 feilmelding = domene.feilmelding,
             )
@@ -209,7 +210,8 @@ internal class QueryNotifikasjoner(
     enum class EksterntVarselStatus {
         NY,
         SENDT,
-        FEILET
+        FEILET,
+        KANSELLERT
     }
 
     @JsonTypeName("Metadata")

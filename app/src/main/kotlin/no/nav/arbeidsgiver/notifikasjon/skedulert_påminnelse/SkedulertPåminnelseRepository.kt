@@ -190,6 +190,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
             is HendelseModel.SakOpprettet,
             is HendelseModel.NyStatusSak,
             is HendelseModel.EksterntVarselFeilet,
+            is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.EksterntVarselVellykket -> Unit
         }
     }

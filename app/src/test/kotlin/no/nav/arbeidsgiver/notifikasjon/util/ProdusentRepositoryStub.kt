@@ -44,4 +44,8 @@ open class ProdusentRepositoryStub : ProdusentRepository {
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
         TODO("Not yet implemented")
     }
+
+    override suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean {
+        TODO("Not yet implemented")
+    }
 }
