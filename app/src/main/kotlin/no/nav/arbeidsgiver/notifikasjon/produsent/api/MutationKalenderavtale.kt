@@ -338,6 +338,7 @@ internal class MutationKalenderavtale(
                 nyLokasjon,
                 nyErDigitalt,
                 hardDelete,
+                eksterneVarsler,
                 idempotenceKey,
             ).isEmpty()
     }

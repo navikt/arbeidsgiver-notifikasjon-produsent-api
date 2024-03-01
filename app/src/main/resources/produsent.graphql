@@ -863,7 +863,7 @@ type Mutation {
         hardDelete: HardDeleteUpdateInput
 
         """
-        Dersom dere angir idempotenceKey så vi konsekvente kall med samme idempotenceKey gi samme resultat.
+        Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
         Dette kan f.eks være nyttig hvis dere har retry mekanismer i deres system.
         """
         idempotencyKey: String
@@ -944,7 +944,7 @@ type Mutation {
         hardDelete: HardDeleteUpdateInput
 
         """
-        Dersom dere angir idempotenceKey så vi konsekvente kall med samme idempotenceKey gi samme resultat.
+        Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
         Dette kan f.eks være nyttig hvis dere har retry mekanismer i deres system.
         """
         idempotencyKey: String
