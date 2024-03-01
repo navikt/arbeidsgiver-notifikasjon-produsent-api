@@ -495,6 +495,14 @@ object EksempelHendelse {
         altinnFeilkode = "42",
         feilmelding = "oops"
     )
+    val EksterntVarselKansellert = HendelseModel.EksterntVarselKansellert(
+        virksomhetsnummer = "1",
+        notifikasjonId = uuid("1"),
+        hendelseId = hendelseId.next(),
+        produsentId = "1",
+        kildeAppNavn = "1",
+        varselId = uuid("1"),
+    )
     val SakOpprettet = withId { id ->
         HendelseModel.SakOpprettet(
             hendelseId = id,
@@ -778,6 +786,7 @@ object EksempelHendelse {
         BrukerKlikketPåDeletedNotifikasjon,
         EksterntVarselVellykket,
         EksterntVarselFeilet,
+        EksterntVarselKansellert,
         SakOpprettet,
         SakOpprettetNullOppgittTs,
         NyStatusSak,
