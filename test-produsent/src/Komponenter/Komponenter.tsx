@@ -6,14 +6,16 @@ import {NyOppgave} from "./NyOppgave.tsx";
 import {    NyKalenderAvtaleMedEksternVarsling,
     OppdaterKalenderAvtaleMedEksternVarsling
 } from "./KalenderAvtaleMedEksternVarsling.tsx";
+import {NyStatusSak} from "./NyStatusSak.tsx";
 
 export const komponenter = {
     "Who am I": <WhoAmI/>,
     "Ad hoc": <AdHoc/>,
-    "Ny Kalenderavtale med varsling": <NyKalenderAvtaleMedEksternVarsling/>,
-    "Ny sak": <NySak/>,
-    "Ny oppgave": <NyOppgave/>,
     "Hent sak": <HentSak/>,
+    "Ny sak": <NySak/>,
+    "Ny status sak": <NyStatusSak/>,
+    "Ny oppgave": <NyOppgave/>,
+    "Ny Kalenderavtale med varsling": <NyKalenderAvtaleMedEksternVarsling/>,
     "Oppdater Kalenderavtale med varsling": <OppdaterKalenderAvtaleMedEksternVarsling/>,
 }
 
