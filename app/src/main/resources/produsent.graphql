@@ -807,11 +807,6 @@ type Mutation {
     Den nye tilstanden vises til brukeren.
     Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
     Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
-
-    P.T. har det ikke vist seg for å være behov for å endre på data i en kalenderavtale underveis (feks tidspunkt eller sted).
-    Dersom arbeidgiver foreslår endring er flyten i dagens løsninger at kalenderavtalen blir stående eller avlyses og det opprettes en ny.
-
-    Dersom dere har behov for å endre på data i en kalenderavtale underveis, så ta kontakt med oss, så kan vi prioritere å legge til støtte for det.
     """
     kalenderavtaleOppdater(
         """
@@ -883,11 +878,6 @@ type Mutation {
     Den nye tilstanden vises til brukeren.
     Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
     Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
-
-    P.T. har det ikke vist seg for å være behov for å endre på data i en kalenderavtale underveis (feks tidspunkt eller sted).
-    Dersom arbeidgiver foreslår endring er flyten i dagens løsninger at kalenderavtalen blir stående eller avlyses og det opprettes en ny.
-
-    Dersom dere har behov for å endre på data i en kalenderavtale underveis, så ta kontakt med oss, så kan vi prioritere å legge til støtte for det.
     """
     kalenderavtaleOppdaterByEksternId(
         """
@@ -903,6 +893,7 @@ type Mutation {
         """
         Ny tilstand for kalenderavtalen.
         Denne er optional da det vil komme støtte for å oppdatere flere felt etterhvert.
+        Dersom ny tilstand settes til `AVLYST` vil vi stoppe eksterne varslinger som ikke allerede er sendt.
         """
         nyTilstand: KalenderavtaleTilstand
 
@@ -1664,7 +1655,8 @@ input LokasjonInput {
 }
 
 """
-Tilstanden til en kalenderavtale.
+Tilstanden til en kalenderavtale. Disse tilstandene er laget basert på eksisterende behov.
+Har dere behov for flere tilstander, så ta kontakt med oss.
 """
 enum KalenderavtaleTilstand {
     """
