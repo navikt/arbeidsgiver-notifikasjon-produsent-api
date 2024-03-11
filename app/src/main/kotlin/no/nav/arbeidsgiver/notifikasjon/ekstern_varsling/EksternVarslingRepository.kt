@@ -15,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.AVLYST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
@@ -139,37 +140,35 @@ class EksternVarslingRepository(
         }
     }
 
-    private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(kalenderavtaleOppdatert: KalenderavtaleOppdatert) {
-        if (kalenderavtaleOppdatert.eksterneVarsler.isEmpty()) {
-            return
-        }
+    private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(hendelse: KalenderavtaleOppdatert) {
+        if (hendelse.eksterneVarsler.isNotEmpty() || hendelse.tilstand == AVLYST) {
+            database.transaction {
+                executeUpdate("""
+                    update ekstern_varsel_kontaktinfo
+                    set state = '${EksterntVarselTilstand.KANSELLERT}'
+                    where notifikasjon_id = ?
+                    and state = '${EksterntVarselTilstand.NY}'
+                """) {
+                    uuid(hendelse.notifikasjonId)
+                }
 
-        database.transaction {
-            executeUpdate("""
-                update ekstern_varsel_kontaktinfo
-                set state = '${EksterntVarselTilstand.KANSELLERT}'
-                where notifikasjon_id = ?
-                and state = '${EksterntVarselTilstand.NY}'
-            """) {
-                uuid(kalenderavtaleOppdatert.notifikasjonId)
-            }
-
-            insertVarsler(
-                notifikasjonsId = kalenderavtaleOppdatert.notifikasjonId,
-                varsler = kalenderavtaleOppdatert.eksterneVarsler,
-                produsentId = kalenderavtaleOppdatert.produsentId,
-                notifikasjonOpprettet = kalenderavtaleOppdatert.oppdatertTidspunkt.atOffset(ZoneOffset.UTC)
-            ) { tx: Transaction ->
-                tx.executeUpdate(
+                insertVarsler(
+                    notifikasjonsId = hendelse.notifikasjonId,
+                    varsler = hendelse.eksterneVarsler,
+                    produsentId = hendelse.produsentId,
+                    notifikasjonOpprettet = hendelse.oppdatertTidspunkt.atOffset(ZoneOffset.UTC)
+                ) { tx: Transaction ->
+                    tx.executeUpdate(
+                        """
+                    insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
+                    values (?, ?, ?)
+                    on conflict do nothing
                     """
-                insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
-                values (?, ?, ?)
-                on conflict do nothing
-                """
-                ) {
-                    text(kalenderavtaleOppdatert.merkelapp)
-                    nullableText(kalenderavtaleOppdatert.grupperingsid)
-                    uuid(kalenderavtaleOppdatert.notifikasjonId)
+                    ) {
+                        text(hendelse.merkelapp)
+                        nullableText(hendelse.grupperingsid)
+                        uuid(hendelse.notifikasjonId)
+                    }
                 }
             }
         }
