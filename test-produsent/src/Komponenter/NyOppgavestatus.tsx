@@ -2,6 +2,9 @@ import {gql, useMutation} from "@apollo/client";
 import React, {useRef, useState} from "react";
 import {Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
 import {Mutation} from "../api/graphql-types.ts";
+import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
+import {print} from "graphql/language";
+import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 
 const OPPGAVE_UTFOERT = gql`
     mutation (
@@ -149,7 +152,7 @@ const OPPGAVE_UTSETT_FRIST_EKSTERN = gql`
 `
 
 
-export const NyStatusSak: React.FunctionComponent = () => {
+export const NyOppgavestatus: React.FunctionComponent = () => {
     const [toggleInput, setToggleInput] = useState("ID")
     const [toggleQuery, setToggleQuery] = useState("OPPGAVE_UTFØRT")
 
@@ -216,6 +219,9 @@ const OppgaveUtførtId = () => {
         <TextField ref={nyLenkeRef} type="text" label="Ny lenke"/>
         <TextField ref={utfoertTidspunktRef} type="text" label="Utfoert tidspunkt"/>
         <button onClick={handleSend}>Send</button>
+        <SyntaxHighlighter language="graphql" style={darcula}>
+            {print(OPPGAVE_UTFOERT)}
+        </SyntaxHighlighter>
         <p>{loading && "Laster..."}</p>
         <p>{error && JSON.stringify(error)}</p>
         <p>{JSON.stringify(data)}</p>
@@ -268,6 +274,9 @@ const OppgaveUtførtEksternId = () => {
         <TextField ref={nyLenkeRef} type="text" label="Ny lenke"/>
         <TextField ref={utfoertTidspunktRef} type="text" label="Utfoert tidspunkt"/>
         <button onClick={handleSend}>Send</button>
+        <SyntaxHighlighter language="graphql" style={darcula}>
+            {print(OPPGAVE_UTFOERT_EKSTERN)}
+        </SyntaxHighlighter>
         <p>{loading && "Laster..."}</p>
         <p>{error && JSON.stringify(error)}</p>
         <p>{JSON.stringify(data)}</p>
@@ -311,6 +320,9 @@ const OppgaveUtgåttId = () => {
         <TextField ref={nyLenkeRef} type="text" label="Ny lenke"/>
         <TextField ref={utgaattTidspunktRef} type="text" label="Utgaatt tidspunkt"/>
         <button onClick={handleSend}>Send</button>
+        <SyntaxHighlighter language="graphql" style={darcula}>
+            {print(OPPGAVE_UTGAATT)}
+        </SyntaxHighlighter>
         <p>{loading && "Laster..."}</p>
         <p>{error && JSON.stringify(error)}</p>
         <p>{JSON.stringify(data)}</p>
@@ -363,6 +375,9 @@ const OppgaveUtgåttEksternId = () => {
         <TextField ref={nyLenkeRef} type="text" label="Ny lenke"/>
         <TextField ref={utgaattTidspunktRef} type="text" label="Utgaatt tidspunkt"/>
         <button onClick={handleSend}>Send</button>
+        <SyntaxHighlighter language="graphql" style={darcula}>
+            {print(OPPGAVE_UTGAATT_EKSTERN)}
+        </SyntaxHighlighter>
         <p>{loading && "Laster..."}</p>
         <p>{error && JSON.stringify(error)}</p>
         <p>{JSON.stringify(data)}</p>
@@ -406,6 +421,9 @@ const OppgaveUtsettFrist = () => {
         <TextField ref={nyFristRef} type="text" label="Ny frist" error={nyFristError ? "Ny frist må fylles inn" : null}/>
         <Textarea ref={paaminnelseRef} label="Paaminnelse"/>
         <button onClick={handleSend}>Send</button>
+        <SyntaxHighlighter language="graphql" style={darcula}>
+            {print(OPPGAVE_UTSETT_FRIST)}
+        </SyntaxHighlighter>
         <p>{loading && "Laster..."}</p>
         <p>{error && JSON.stringify(error)}</p>
         <p>{JSON.stringify(data)}</p>
@@ -458,6 +476,9 @@ const OppgaveUtsettFristEkstern = () => {
         <TextField ref={nyFristRef} type="text" label="Ny frist" error={nyFristError ? "Ny frist må fylles inn" : null}/>
         <Textarea ref={paaminnelseRef} label="Paaminnelse"/>
         <button onClick={handleSend}>Send</button>
+        <SyntaxHighlighter language="graphql" style={darcula}>
+            {print(OPPGAVE_UTSETT_FRIST_EKSTERN)}
+        </SyntaxHighlighter>
         <p>{loading && "Laster..."}</p>
         <p>{error && JSON.stringify(error)}</p>
         <p>{JSON.stringify(data)}</p>
