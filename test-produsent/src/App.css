@@ -31,7 +31,7 @@
 .meny {
   display: flex;
   flex-direction: column;
-  width: 15vw;
+  min-width: 19rem;
   align-items: flex-end;
   padding: 0 16px;
   border-right: 0.25rem solid var(--a-border-focus-on-inverted);
