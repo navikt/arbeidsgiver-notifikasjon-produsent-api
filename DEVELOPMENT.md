@@ -97,7 +97,7 @@ Hopp over en offset på en gitt partisjon for en consumer group:
 
 Sett til et bestemt offset på en gitt partisjon for en consumer group:
 ```
-kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1881600168/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --to-offset 50 --execute
+kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --to-offset 50 --execute
 ```
 
 Les topic for en gitt partisjon fra et gitt offset:
