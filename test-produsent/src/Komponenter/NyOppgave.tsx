@@ -4,8 +4,8 @@ import React, {useContext, useEffect, useState} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Button, Textarea} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {GrupperingsidContext} from "../App.tsx";
 
 const NY_OPPGAVE = gql`
@@ -15,7 +15,7 @@ const NY_OPPGAVE = gql`
         $lenke: String!
         $tekst: String!
         $frist: ISO8601Date
-
+        $eksternId: String!
     ) {
         nyOppgave(
             nyOppgave: {
@@ -34,7 +34,7 @@ const NY_OPPGAVE = gql`
                 metadata: {
                     grupperingsid: $grupperingsid
                     virksomhetsnummer: $virksomhetsnummer
-                    eksternId: "123"
+                    eksternId: $eksternId
                 }
             }
         ) {
@@ -47,7 +47,7 @@ const NY_OPPGAVE = gql`
             }
         }
     }
-    
+
 `
 
 export const NyOppgave: React.FunctionComponent = () => {
@@ -60,12 +60,13 @@ export const NyOppgave: React.FunctionComponent = () => {
     const grupperingsid = useContext(GrupperingsidContext)
 
     const [variables, setVariables] = useState({
+        frist: "2022-12-24T23:59:59Z",
+        merkelapp: "fager",
+        lenke: "",
+        tekst: "Dette er en oppgave",
         grupperingsid: grupperingsid,
         virksomhetsnummer: "910825526",
         eksternId: "123",
-        lenke: "https://foo.bar",
-        tekst: "Dette er en ny oppgave",
-        initiellStatus: "MOTTATT"
     });
 
     useEffect(() => {
@@ -90,7 +91,8 @@ export const NyOppgave: React.FunctionComponent = () => {
                 onClick={() => nyOppgave({variables})}>Opprett en ny oppgave</Button>
 
         {loading && <p>Laster...</p>}
-        {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
+        {error &&
+            <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
         {data && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
     </div>
 }
