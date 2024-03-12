@@ -60,7 +60,7 @@ export const NyOppgave: React.FunctionComponent = () => {
     const grupperingsid = useContext(GrupperingsidContext)
 
     const [variables, setVariables] = useState({
-        frist: "2022-12-24T23:59:59Z",
+        frist: "2022-12-24",
         merkelapp: "fager",
         lenke: "",
         tekst: "Dette er en oppgave",
