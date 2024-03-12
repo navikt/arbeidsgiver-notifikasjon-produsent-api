@@ -34,7 +34,7 @@ import java.util.*
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
-class EksternVarslingRepositoryTests: DescribeSpec({
+class EksternVarslingRepositoryTests : DescribeSpec({
 
     val oppgaveOpprettet = OppgaveOpprettet(
         virksomhetsnummer = "1",
@@ -572,6 +572,165 @@ class EksternVarslingRepositoryTests: DescribeSpec({
             varsel.data.eksternVarsel.sendeTidspunkt shouldBe LocalDateTime.parse("-999999999-01-01T00:00")
         }
 
+    }
+
+    describe("oppdatert kalenderavtale") {
+        val opprettet = HendelseModel.KalenderavtaleOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = uuid("1"),
+            hendelseId = uuid("1"),
+            produsentId = "1",
+            kildeAppNavn = "1",
+            merkelapp = "1",
+            eksternId = "1",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "1",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                )
+            ),
+            tekst = "1",
+            grupperingsid = "42",
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = emptyList(),
+            hardDelete = null,
+            påminnelse = null,
+            sakId = uuid("1"),
+            startTidspunkt = LocalDateTime.now(),
+            sluttTidspunkt = null,
+            erDigitalt = false,
+            lokasjon = null,
+            tilstand = HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
+        )
+        val oppdatert = HendelseModel.KalenderavtaleOppdatert(
+            virksomhetsnummer = opprettet.virksomhetsnummer,
+            notifikasjonId = opprettet.notifikasjonId,
+            hendelseId = uuid("2"),
+            produsentId = opprettet.produsentId,
+            kildeAppNavn = opprettet.kildeAppNavn,
+            merkelapp = opprettet.merkelapp,
+            tekst = null,
+            grupperingsid = opprettet.grupperingsid,
+            lenke = null,
+            opprettetTidspunkt = opprettet.opprettetTidspunkt.toInstant(),
+            eksterneVarsler = emptyList(),
+            hardDelete = null,
+            påminnelse = null,
+            startTidspunkt = null,
+            sluttTidspunkt = null,
+            erDigitalt = false,
+            lokasjon = null,
+            tilstand = HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT,
+            idempotenceKey = null,
+            oppdatertTidspunkt = Instant.now()
+        )
+
+        describe("uten nye varsler påvirker ikke pending varsler") {
+            val database = testDatabase(EksternVarsling.databaseConfig)
+            val repository = EksternVarslingRepository(database)
+            val varsel = SmsVarselKontaktinfo(
+                varselId = uuid("3"),
+                fnrEllerOrgnr = "1",
+                tlfnr = "1",
+                smsTekst = "hey",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            )
+
+            repository.oppdaterModellEtterHendelse(opprettet.copy(eksterneVarsler = listOf(varsel)))
+
+            it("varsler lagres med tilstand ny") {
+                repository.findVarsel(varsel.varselId).let {
+                    it shouldNot beNull()
+                    it shouldBe instanceOf(EksternVarselTilstand.Ny::class)
+                }
+            }
+
+            repository.oppdaterModellEtterHendelse(oppdatert.copy(eksterneVarsler = emptyList()))
+
+            it("varsler har forstatt tilstand ny") {
+                repository.findVarsel(varsel.varselId).let {
+                    it shouldNot beNull()
+                    it shouldBe instanceOf(EksternVarselTilstand.Ny::class)
+                }
+            }
+        }
+
+        describe("med nye varsler kansellerer pending varsler") {
+            val database = testDatabase(EksternVarsling.databaseConfig)
+            val repository = EksternVarslingRepository(database)
+            val varsel = SmsVarselKontaktinfo(
+                varselId = uuid("3"),
+                fnrEllerOrgnr = "1",
+                tlfnr = "1",
+                smsTekst = "hey",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            )
+
+            repository.oppdaterModellEtterHendelse(opprettet.copy(eksterneVarsler = listOf(varsel)))
+
+            it("varsler lagres med tilstand ny") {
+                repository.findVarsel(varsel.varselId).let {
+                    it shouldNot beNull()
+                    it shouldBe instanceOf(EksternVarselTilstand.Ny::class)
+                }
+            }
+
+            val nyttVarsel = varsel.copy(varselId = uuid("4"))
+            repository.oppdaterModellEtterHendelse(oppdatert.copy(eksterneVarsler = listOf(nyttVarsel)))
+
+            it("gamle varsler kanselleres") {
+                repository.findVarsel(varsel.varselId).let {
+                    it shouldNot beNull()
+                    it shouldBe instanceOf(EksternVarselTilstand.Kansellert::class)
+                }
+            }
+            it("nye varsler lagres med tilstand ny") {
+                repository.findVarsel(nyttVarsel.varselId).let {
+                    it shouldNot beNull()
+                    it shouldBe instanceOf(EksternVarselTilstand.Ny::class)
+                }
+            }
+
+        }
+
+        describe("AVLYST kalenderavtale fører til kansellering av pending varsler") {
+            val database = testDatabase(EksternVarsling.databaseConfig)
+            val repository = EksternVarslingRepository(database)
+
+            val varsel = SmsVarselKontaktinfo(
+                varselId = uuid("3"),
+                fnrEllerOrgnr = "1",
+                tlfnr = "1",
+                smsTekst = "hey",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            )
+
+            repository.oppdaterModellEtterHendelse(opprettet.copy(eksterneVarsler = listOf(varsel)))
+
+            it("varsler lagres med tilstand ny") {
+                repository.findVarsel(varsel.varselId).let {
+                    it shouldNot beNull()
+                    it shouldBe instanceOf(EksternVarselTilstand.Ny::class)
+                }
+            }
+
+            repository.oppdaterModellEtterHendelse(oppdatert.copy(
+                eksterneVarsler = emptyList(),
+                tilstand = HendelseModel.KalenderavtaleTilstand.AVLYST,
+            ))
+
+            it("gamle varsler kanselleres") {
+                repository.findVarsel(varsel.varselId).let {
+                    it shouldNot beNull()
+                    it shouldBe instanceOf(EksternVarselTilstand.Kansellert::class)
+                }
+            }
+        }
     }
 
 })
