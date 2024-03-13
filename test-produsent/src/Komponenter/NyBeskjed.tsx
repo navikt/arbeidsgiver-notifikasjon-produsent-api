@@ -14,6 +14,8 @@ const NY_BESKJED = gql`
         $virksomhetsnummer: String!
         $lenke: String!
         $tekst: String!
+        $eksternId: String!
+        $merkelapp: String!
 
     ) {
         nyBeskjed(
@@ -25,14 +27,14 @@ const NY_BESKJED = gql`
                     }
                 }]
                                 notifikasjon: {
-                    merkelapp: "fager"
+                    merkelapp: $merkelapp 
                     lenke: $lenke
                     tekst: $tekst
                 }
                 metadata: {
                     grupperingsid: $grupperingsid
                     virksomhetsnummer: $virksomhetsnummer
-                    eksternId: "123"
+                    eksternId: $eksternId
                 }
             }
         ) {
@@ -58,11 +60,11 @@ export const NyBeskjed: React.FunctionComponent = () => {
 
     const [variables, setVariables] = useState({
         grupperingsid: grupperingsid,
+        merkelapp: "fager",
         virksomhetsnummer: "910825526",
-        eksternId: "123",
         lenke: "https://foo.bar",
         tekst: "Dette er en ny beskjed",
-        initiellStatus: "MOTTATT"
+        eksternId: "123",
     });
 
     useEffect(() => {
