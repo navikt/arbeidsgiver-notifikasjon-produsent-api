@@ -312,7 +312,8 @@ suspend fun BrukerRepository.påminnelseOpprettet(
     tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
         konkret = konkretPåminnelseTidspunkt,
         opprettetTidspunkt = oppgave.opprettetTidspunkt,
-        frist = oppgave.frist
+        frist = oppgave.frist,
+        startTidspunkt = null,
     ),
     eksterneVarsler = listOf(),
     bestillingHendelseId = oppgave.notifikasjonId,

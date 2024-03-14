@@ -166,7 +166,8 @@ private fun HendelseModel.OppgaveOpprettet.medPåminnelse(
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
             tidspunkt,
             opprettetTidspunkt,
-            frist
+            frist,
+            null
         ),
         eksterneVarsler = listOf()
     ),

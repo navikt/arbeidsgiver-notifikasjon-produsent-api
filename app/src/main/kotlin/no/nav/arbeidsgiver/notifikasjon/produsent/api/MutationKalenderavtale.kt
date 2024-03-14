@@ -46,6 +46,7 @@ internal class MutationKalenderavtale(
                         erDigitalt = env.getTypedArgumentOrNull<Boolean>("erDigitalt") ?: false,
                         tilstand = env.getTypedArgumentOrDefault<KalenderavtaleTilstand>("tilstand") { VENTER_SVAR_FRA_ARBEIDSGIVER },
                         eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() },
+                        paaminnelse = env.getTypedArgumentOrNull<PaaminnelseInput>("paaminnelse"),
                         hardDelete = env.getTypedArgumentOrNull<FutureTemporalInput>("hardDelete"),
                     ),
                 )
@@ -64,6 +65,7 @@ internal class MutationKalenderavtale(
                         nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
                         eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() }.ifEmpty { null },
+                        paaminnelse = env.getTypedArgumentOrNull<PaaminnelseInput>("paaminnelse"),
                         hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
                         idempotenceKey = env.getTypedArgumentOrNull<String>("idempotenceKey"),
                     ),
@@ -84,6 +86,7 @@ internal class MutationKalenderavtale(
                         nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
                         eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() }.ifEmpty { null },
+                        paaminnelse = env.getTypedArgumentOrNull<PaaminnelseInput>("paaminnelse"),
                         hardDelete = env.getTypedArgumentOrNull<HardDeleteUpdateInput>("hardDelete"),
                         idempotenceKey = env.getTypedArgumentOrNull<String>("idempotenceKey"),
                     ),
@@ -123,6 +126,7 @@ internal class MutationKalenderavtale(
         val erDigitalt: Boolean,
         val tilstand: KalenderavtaleTilstand,
         val eksterneVarsler: List<EksterntVarselInput>,
+        val paaminnelse: PaaminnelseInput?,
         val hardDelete: FutureTemporalInput?,
     ) {
         inline fun somKalenderavtaleOpprettetHendelse(
@@ -139,6 +143,7 @@ internal class MutationKalenderavtale(
                     )
                 )
             }
+            val opprettetTidspunkt = OffsetDateTime.now()
             return KalenderavtaleOpprettet(
                 hendelseId = id,
                 notifikasjonId = id,
@@ -148,7 +153,7 @@ internal class MutationKalenderavtale(
                 lenke = lenke,
                 eksternId = eksternId,
                 mottakere = mottakere.map { it.tilHendelseModel(virksomhetsnummer) },
-                opprettetTidspunkt = OffsetDateTime.now(),
+                opprettetTidspunkt = opprettetTidspunkt,
                 virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
@@ -160,7 +165,12 @@ internal class MutationKalenderavtale(
                 hardDelete = hardDelete?.tilHendelseModel(),
                 sakId = sakId,
                 eksterneVarsler = eksterneVarsler.map { it.tilHendelseModel(virksomhetsnummer) },
-                påminnelse = null,
+                påminnelse = paaminnelse?.tilDomene(
+                    opprettetTidspunkt = opprettetTidspunkt,
+                    frist = null,
+                    startTidspunkt = startTidspunkt,
+                    virksomhetsnummer = virksomhetsnummer,
+                ),
             )
         }
 
@@ -305,7 +315,12 @@ internal class MutationKalenderavtale(
                 erDigitalt = nyErDigitalt,
                 hardDelete = hardDelete?.tilHendelseModel(),
                 eksterneVarsler = eksterneVarsler?.map { it.tilHendelseModel(eksisterende.virksomhetsnummer) } ?: emptyList(),
-                påminnelse = null,
+                påminnelse = paaminnelse?.tilDomene(
+                    opprettetTidspunkt = eksisterende.opprettetTidspunkt,
+                    frist = null,
+                    startTidspunkt = nyttStartTidspunkt ?: eksisterende.startTidspunkt,
+                    virksomhetsnummer = eksisterende.virksomhetsnummer,
+                ),
                 idempotenceKey = idempotenceKey,
                 oppdatertTidspunkt = Instant.now(),
                 opprettetTidspunkt = eksisterende.opprettetTidspunkt.toInstant(),
@@ -322,6 +337,7 @@ internal class MutationKalenderavtale(
         abstract val nyErDigitalt: Boolean?
         abstract val hardDelete: HardDeleteUpdateInput?
         abstract val eksterneVarsler: List<EksterntVarselInput>?
+        abstract val paaminnelse: PaaminnelseInput?
         abstract val idempotenceKey: String?
 
         /**
@@ -353,6 +369,7 @@ internal class MutationKalenderavtale(
         override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
         override val eksterneVarsler: List<EksterntVarselInput>?,
+        override val paaminnelse: PaaminnelseInput?,
         override val hardDelete: HardDeleteUpdateInput?,
         override val idempotenceKey: String?,
     ) : KalenderavtaleOppdaterInput()
@@ -368,6 +385,7 @@ internal class MutationKalenderavtale(
         override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
         override val eksterneVarsler: List<EksterntVarselInput>?,
+        override val paaminnelse: PaaminnelseInput?,
         override val hardDelete: HardDeleteUpdateInput?,
         override val idempotenceKey: String?,
     ) : KalenderavtaleOppdaterInput()

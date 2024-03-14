@@ -441,8 +441,13 @@ type Mutation {
         """
         tilstand: KalenderavtaleTilstand
 
-
         eksterneVarsler: [EksterntVarselInput!]! = []
+
+        """
+        Her kan du spesifisere en påminnelse for kalenderavtalen.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        """
+        paaminnelse: PaaminnelseInput
 
         """
         Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
@@ -866,9 +871,16 @@ type Mutation {
         """
         Her kan dere oppgi eksterne varsler som skal sendes i forbindelse med oppdateringen.
         Disse varslene vil erstatte tidligere bestilte varsler som ikke er sendt enda.
-        Vi anbefaler dere å bruke denn i kombinasjon med idempoencyKey for å unngå å sende samme varsel flere ganger.
+        Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey for å unngå å sende samme varsel flere ganger.
         """
         eksterneVarsler: [EksterntVarselInput!]! = []
+
+        """
+        Her kan du spesifisere en påminnelse for kalenderavtalen.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
+        """
+        paaminnelse: PaaminnelseInput
     ): KalenderavtaleOppdaterResultat!
 
 
@@ -946,6 +958,13 @@ type Mutation {
         Vi anbefaler dere å bruke denn i kombinasjon med idempoencyKey for å unngå å sende samme varsel flere ganger.
         """
         eksterneVarsler: [EksterntVarselInput!]! = []
+
+        """
+        Her kan du spesifisere en påminnelse for kalenderavtalen.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
+        """
+        paaminnelse: PaaminnelseInput
     ): KalenderavtaleOppdaterResultat!
 
     """
@@ -1280,7 +1299,7 @@ input PaaminnelseInput {
 
     Hvis du sender `eksterneVarsler`, så vil vi sjekke at vi har
     mulighet for å sende dem før fristen, ellers får du feil ved
-    opprettelse av oppgaven.
+    opprettelse av oppgaven/kalenderavtalen.
     """
     tidspunkt: PaaminnelseTidspunktInput!
     eksterneVarsler: [PaaminnelseEksterntVarselInput!]! = []
@@ -1292,14 +1311,20 @@ input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
     """
     konkret: ISO8601LocalDateTime
     """
-    Relativ til når oppgaven er angitt som opprettet. Altså X duration etter opprettelse.
+    Relativ til når oppgaven/kalenderavtalen er angitt som opprettet. Altså X duration etter opprettelse.
     Ved utsatt frist er den relativ til tidspunktet fristen ble utsatt.
     """
     etterOpprettelse: ISO8601Duration
+
     """
-    Relativ til oppgavens frist, alts X duration før frist. Anses som ugyldig dersom oppgaven ikke har frist.
+    Relativ til oppgavens frist, altså X duration før frist. Anses som ugyldig dersom det ikke er en oppgave med frist.
     """
     foerFrist: ISO8601Duration
+
+    """
+    Relativ til kalenderavtalens startTidspunkt, altså X duration før startTidspunkt. Anses som ugyldig dersom det ikke er en kalenderavtale.
+    """
+    foerStartTidspunkt: ISO8601Duration
 }
 
 input PaaminnelseEksterntVarselInput @ExactlyOneFieldGiven {
@@ -1725,6 +1750,7 @@ type NyOppgaveVellykket {
 type NyKalenderavtaleVellykket {
     id: ID!
     eksterneVarsler: [NyEksterntVarselResultat!]!
+    paaminnelse: PaaminnelseResultat
 }
 
 type PaaminnelseResultat {

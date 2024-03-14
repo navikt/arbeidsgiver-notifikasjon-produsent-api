@@ -93,6 +93,8 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse.erDigitalt shouldBe true
                         hendelse.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
                         hendelse.eksterneVarsler shouldNot beEmpty()
+                        hendelse.påminnelse shouldNot beNull()
+                        hendelse.påminnelse!!.eksterneVarsler shouldNot beEmpty()
                     }
                 }
 
@@ -120,6 +122,7 @@ class KalenderavtaleTests : DescribeSpec({
                         )
                         it.digitalt shouldBe true
                         it.eksterneVarsler shouldNot beEmpty()
+                        it.påminnelseEksterneVarsler shouldNot beEmpty()
                     }
                 }
             }
@@ -161,6 +164,8 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse.erDigitalt shouldBe true
                         hendelse.hardDelete shouldBe instanceOf(HendelseModel.HardDeleteUpdate::class)
                         hendelse.eksterneVarsler shouldNot beEmpty()
+                        hendelse.påminnelse shouldNot beNull()
+                        hendelse.påminnelse!!.eksterneVarsler shouldNot beEmpty()
                     }
                 }
                 it("updates produsent modell") {
@@ -186,6 +191,7 @@ class KalenderavtaleTests : DescribeSpec({
                         )
                         it.digitalt shouldBe true
                         it.eksterneVarsler shouldNot beEmpty()
+                        it.påminnelseEksterneVarsler shouldNot beEmpty()
                     }
                 }
             }
@@ -225,6 +231,8 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse as HendelseModel.KalenderavtaleOppdatert
                         hendelse.notifikasjonId shouldBe oppdatertByEksternId.id
                         hendelse.eksterneVarsler shouldNot beEmpty()
+                        hendelse.påminnelse shouldNot beNull()
+                        hendelse.påminnelse!!.eksterneVarsler shouldNot beEmpty()
                     }
                 }
 
@@ -251,6 +259,7 @@ class KalenderavtaleTests : DescribeSpec({
                         )
                         it.digitalt shouldBe true
                         it.eksterneVarsler shouldNot beEmpty()
+                        it.påminnelseEksterneVarsler shouldNot beEmpty()
                     }
                 }
             }
@@ -384,6 +393,22 @@ private fun TestApplicationEngine.nyKalenderavtale(
                         tittel: "bar"
                     }
                 }]
+                paaminnelse: {
+                    tidspunkt: {
+                        foerStartTidspunkt: "PT24H"
+                    }
+                    eksterneVarsler: [{
+                        altinntjeneste: {
+                            sendevindu: LOEPENDE
+                            mottaker: {
+                                serviceCode: "5441"
+                                serviceEdition: "1"
+                            }
+                            innhold: "baz"
+                            tittel: "buz"
+                        }
+                    }]
+                }
                 hardDelete: {
                   den: "2019-10-13T07:20:50.52"
                 }
@@ -444,6 +469,22 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
                         tittel: "bar"
                     }
                 }]
+                paaminnelse: {
+                    tidspunkt: {
+                        foerStartTidspunkt: "PT24H"
+                    }
+                    eksterneVarsler: [{
+                        altinntjeneste: {
+                            sendevindu: LOEPENDE
+                            mottaker: {
+                                serviceCode: "5441"
+                                serviceEdition: "1"
+                            }
+                            innhold: "baz"
+                            tittel: "buz"
+                        }
+                    }]
+                }
             ) {
                 __typename
                 ... on KalenderavtaleOppdaterVellykket {
@@ -500,6 +541,22 @@ private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
                         tittel: "bar"
                     }
                 }]
+                paaminnelse: {
+                    tidspunkt: {
+                        foerStartTidspunkt: "PT24H"
+                    }
+                    eksterneVarsler: [{
+                        altinntjeneste: {
+                            sendevindu: LOEPENDE
+                            mottaker: {
+                                serviceCode: "5441"
+                                serviceEdition: "1"
+                            }
+                            innhold: "baz"
+                            tittel: "buz"
+                        }
+                    }]
+                }
             ) {
                 __typename
                 ... on KalenderavtaleOppdaterVellykket {
