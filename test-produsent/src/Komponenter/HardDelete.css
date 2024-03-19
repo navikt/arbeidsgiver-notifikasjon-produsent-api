@@ -1,0 +1,17 @@
+.HardDelete {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.HardDelete div:nth-child(-n + 2) {
+    width: 20rem;
+}
+
+.HardDelete input {
+    width: 20rem;
+}
+
+.HardDelete > button {
+    width: 20rem;
+}
