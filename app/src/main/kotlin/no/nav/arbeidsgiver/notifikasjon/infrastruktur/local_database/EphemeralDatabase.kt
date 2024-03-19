@@ -13,6 +13,7 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 
 /** Non-persisted, local database. Each instantiation of `EphemeralDatabase`
@@ -117,6 +118,7 @@ class Setup(
     fun setInstant(instant: Instant) = setText(instant.toString())
     fun setLocalDate(localDate: LocalDate) = setText(localDate.toString())
     fun setLocalDateOrNull(localDate: LocalDate?) = setTextOrNull(localDate?.toString())
+    fun setLocalDateTimeOrNull(localDateTime: LocalDateTime?) = setTextOrNull(localDateTime?.toString())
     fun <E: Enum<E>> setEnum(enum: E) = setText(enum.name)
     fun <A>setJson(value: A) = setText(ephemeralDatabaseObjectMapper.writeValueAsString(value))
 }
@@ -125,6 +127,7 @@ fun ResultSet.getUUID(columnLabel: String): UUID = UUID.fromString(getString(col
 fun ResultSet.getInstant(columnLabel: String): Instant = Instant.parse(getString(columnLabel))
 fun ResultSet.getLocalDate(columnLabel: String): LocalDate = LocalDate.parse(getString(columnLabel))
 fun ResultSet.getLocalDateOrNull(columnLabel: String) = getString(columnLabel)?.let(LocalDate::parse)
+fun ResultSet.getLocalDateTimeOrNull(columnLabel: String) = getString(columnLabel)?.let(LocalDateTime::parse)
 inline fun <reified E: Enum<E>> ResultSet.getEnum(columnLabel: String): E = enumValueOf(getString(columnLabel))
 inline fun <reified A>ResultSet.getJson(columnLabel: String): A =
     ephemeralDatabaseObjectMapper.readValue(getString(columnLabel), A::class.java)
