@@ -49,15 +49,16 @@ export const NySakstatus: React.FunctionComponent = () => {
         error
     }] = useMutation<Pick<Mutation, "nyStatusSak">>(NY_SAKSTATUS)
 
+    const nullIfEmpty = (s: string | undefined) => s === "" || s === undefined ? null : s
 
     const handleSend = () => {
         nySakstatus({
             variables: {
                 id: idRef.current?.value ?? "",
                 nyStatus: nyStatus,
-                nyLenkeTilSak: nyLenkeTilSakRef.current?.value ?? null,
-                overstyrStatustekstMed: overstyrStatustekstMedRef.current?.value ?? null,
-                tidspunkt: tidspunktRef.current?.value === "" ? null : tidspunktRef.current?.value
+                nyLenkeTilSak: nullIfEmpty(nyLenkeTilSakRef.current?.value),
+                overstyrStatustekstMed: nullIfEmpty(overstyrStatustekstMedRef.current?.value),
+                tidspunkt: nullIfEmpty(tidspunktRef.current?.value)
             }
         })
     }
