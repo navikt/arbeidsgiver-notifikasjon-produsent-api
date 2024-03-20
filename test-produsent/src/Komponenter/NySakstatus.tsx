@@ -57,7 +57,7 @@ export const NySakstatus: React.FunctionComponent = () => {
                 nyStatus: nyStatus,
                 nyLenkeTilSak: nyLenkeTilSakRef.current?.value ?? null,
                 overstyrStatustekstMed: overstyrStatustekstMedRef.current?.value ?? null,
-                tidspunkt: tidspunktRef.current?.value ?? null
+                tidspunkt: tidspunktRef.current?.value === "" ? null : tidspunktRef.current?.value
             }
         })
     }
