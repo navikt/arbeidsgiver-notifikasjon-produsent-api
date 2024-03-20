@@ -83,7 +83,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
             variables: {
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
                 virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
-                lenke: nullIfEmpty(lenkeRef.current?.value),
+                lenke: lenkeRef.current?.value ?? "",
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
@@ -102,9 +102,9 @@ export const NyBeskjed: React.FunctionComponent = () => {
         <TextField label={"Grupperingsid*"}  ref={grupperingsidRef}/>
         <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
         <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
-        <TextField label={"Lenke"} ref={lenkeRef}/>
-        <TextField label={"Tekst"} ref={tekstRef} defaultValue="Dette er en ny beskjed"/>
-        <TextField label={"EksternId"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
+        <TextField label={"Lenke*"} ref={lenkeRef}/>
+        <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en ny beskjed"/>
+        <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
         <Button variant="primary"
                 onClick={handleSend}>Opprett en ny beskjed</Button>
 
