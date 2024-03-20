@@ -1,12 +1,12 @@
 import {gql, useMutation} from "@apollo/client";
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {GrupperingsidContext} from "../App.tsx";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";
-import {Button, Textarea, TextField} from "@navikt/ds-react";
+import {Button, TextField} from "@navikt/ds-react";
 
 const NY_BESKJED = gql`
     mutation (
@@ -75,16 +75,18 @@ export const NyBeskjed: React.FunctionComponent = () => {
         }
     }, [grupperingsid]);
 
+    const nullIfEmpty = (s: string | undefined) => s === "" || s === undefined ? null : s
+
+
     const handleSend = () => {
-        console.log("Sending")
         nyBeskjed({
             variables: {
-                grupperingsid: grupperingsidRef.current?.value ?? "",
-                virksomhetsnummer: virksomhetsnummerRef.current?.value ?? "",
-                lenke: lenkeRef.current?.value ?? "",
-                tekst: tekstRef.current?.value ?? "",
-                eksternId: eksternIdRef.current?.value ?? "",
-                merkelapp: merkelappRef.current?.value ?? "",
+                grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
+                virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
+                lenke: nullIfEmpty(lenkeRef.current?.value),
+                tekst: nullIfEmpty(tekstRef.current?.value),
+                eksternId: nullIfEmpty(eksternIdRef.current?.value),
+                merkelapp: nullIfEmpty(merkelappRef.current?.value),
                 opprettetTidspunkt: new Date().toISOString()
             }
         })
