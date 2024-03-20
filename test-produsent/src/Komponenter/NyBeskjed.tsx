@@ -6,7 +6,7 @@ import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";
-import {Button, Textarea} from "@navikt/ds-react";
+import {Button, Textarea, TextField} from "@navikt/ds-react";
 
 const NY_BESKJED = gql`
     mutation (
@@ -16,6 +16,7 @@ const NY_BESKJED = gql`
         $tekst: String!
         $eksternId: String!
         $merkelapp: String!
+        $opprettetTidspunkt: ISO8601DateTime
 
     ) {
         nyBeskjed(
@@ -35,6 +36,7 @@ const NY_BESKJED = gql`
                     grupperingsid: $grupperingsid
                     virksomhetsnummer: $virksomhetsnummer
                     eksternId: $eksternId
+                    opprettetTidspunkt: $opprettetTidspunkt
                 }
             }
         ) {
@@ -58,35 +60,51 @@ export const NyBeskjed: React.FunctionComponent = () => {
 
     const grupperingsid = useContext(GrupperingsidContext)
 
-    const [variables, setVariables] = useState({
-        grupperingsid: grupperingsid,
-        merkelapp: "fager",
-        virksomhetsnummer: "910825526",
-        lenke: "https://foo.bar",
-        tekst: "Dette er en ny beskjed",
-        eksternId: crypto.randomUUID().toString(),
-    });
+
+    const grupperingsidRef = React.useRef<HTMLInputElement>(null);
+    const merkelappRef = React.useRef<HTMLInputElement>(null);
+    const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
+    const lenkeRef = React.useRef<HTMLInputElement>(null);
+    const tekstRef = React.useRef<HTMLInputElement>(null);
+    const eksternIdRef = React.useRef<HTMLInputElement>(null);
+
 
     useEffect(() => {
-        setVariables({
-            ...variables,
-            grupperingsid: grupperingsid,
-        })
+        if (grupperingsidRef.current !== null){
+            grupperingsidRef.current.value = grupperingsid;
+        }
     }, [grupperingsid]);
+
+    const handleSend = () => {
+        console.log("Sending")
+        nyBeskjed({
+            variables: {
+                grupperingsid: grupperingsidRef.current?.value ?? "",
+                virksomhetsnummer: virksomhetsnummerRef.current?.value ?? "",
+                lenke: lenkeRef.current?.value ?? "",
+                tekst: tekstRef.current?.value ?? "",
+                eksternId: eksternIdRef.current?.value ?? "",
+                merkelapp: merkelappRef.current?.value ?? "",
+                opprettetTidspunkt: new Date().toISOString()
+            }
+        })
+
+    }
+
 
     return <div className={cssClasses.kalenderavtale}>
 
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(NY_BESKJED)}
         </SyntaxHighlighter>
-        <Textarea
-            style={{fontSize: "12px", lineHeight: "12px"}}
-            label="Variabler"
-            value={JSON.stringify(variables, null, 2)}
-            onChange={(e) => setVariables(JSON.parse(e.target.value))}
-        />
+        <TextField label={"Grupperingsid*"}  ref={grupperingsidRef}/>
+        <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
+        <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
+        <TextField label={"Lenke"} ref={lenkeRef}/>
+        <TextField label={"Tekst"} ref={tekstRef} defaultValue="Dette er en ny beskjed"/>
+        <TextField label={"EksternId"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
         <Button variant="primary"
-                onClick={() => nyBeskjed({variables})}>Opprett en ny beskjed</Button>
+                onClick={handleSend}>Opprett en ny beskjed</Button>
 
         {loading && <p>Laster...</p>}
         {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
