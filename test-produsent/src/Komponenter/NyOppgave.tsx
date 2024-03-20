@@ -66,7 +66,7 @@ export const NyOppgave: React.FunctionComponent = () => {
         tekst: "Dette er en oppgave",
         grupperingsid: grupperingsid,
         virksomhetsnummer: "910825526",
-        eksternId: "123",
+        eksternId: crypto.randomUUID().toString(),
     });
 
     useEffect(() => {

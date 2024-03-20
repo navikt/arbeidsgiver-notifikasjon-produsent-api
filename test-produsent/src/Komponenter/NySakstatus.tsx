@@ -1,11 +1,11 @@
 import {gql, useMutation} from "@apollo/client";
 import React, {useState} from "react";
-import {Mutation} from "../api/graphql-types.ts";
+import {Mutation, SaksStatus} from "../api/graphql-types.ts";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";
-import {Button, Textarea} from "@navikt/ds-react";
+import {Button, TextField, ToggleGroup} from "@navikt/ds-react";
 
 
 const NY_SAKSTATUS = gql`
@@ -37,6 +37,12 @@ const NY_SAKSTATUS = gql`
 `
 
 export const NySakstatus: React.FunctionComponent = () => {
+    const idRef = React.useRef<HTMLInputElement>(null)
+    const [nyStatus, setNyStatus] = useState<SaksStatus>("FERDIG" as SaksStatus)
+    const nyLenkeTilSakRef = React.useRef<HTMLInputElement>(null)
+    const overstyrStatustekstMedRef = React.useRef<HTMLInputElement>(null)
+    const tidspunktRef = React.useRef<HTMLInputElement>(null)
+
     const [nySakstatus, {
         data,
         loading,
@@ -44,13 +50,17 @@ export const NySakstatus: React.FunctionComponent = () => {
     }] = useMutation<Pick<Mutation, "nyStatusSak">>(NY_SAKSTATUS)
 
 
-    const [variables, setVariables] = useState({
-        id: "123",
-        nyStatus: "MOTTATT",
-        nyLenkeTilSak: "https://nav.no",
-        overstyrStatustekstMed: "Dette er en overstyring",
-        tidspunkt: "2025-08-11T10:00:00Z"
-    })
+    const handleSend = () => {
+        nySakstatus({
+            variables: {
+                id: idRef.current?.value ?? "",
+                nyStatus: nyStatus,
+                nyLenkeTilSak: nyLenkeTilSakRef.current?.value ?? null,
+                overstyrStatustekstMed: overstyrStatustekstMedRef.current?.value ?? null,
+                tidspunkt: tidspunktRef.current?.value ?? null
+            }
+        })
+    }
 
 
     return <div className={cssClasses.kalenderavtale}>
@@ -58,14 +68,17 @@ export const NySakstatus: React.FunctionComponent = () => {
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(NY_SAKSTATUS)}
         </SyntaxHighlighter>
-        <Textarea
-            style={{fontSize: "12px", lineHeight: "12px"}}
-            label="Variabler"
-            value={JSON.stringify(variables, null, 2)}
-            onChange={(e) => setVariables(JSON.parse(e.target.value))}
-        />
+        <div>
+            <TextField label={"Id*"} ref={idRef}/>
+            <ToggleGroup defaultValue={nyStatus} onChange={() => setNyStatus} label="Ny status">
+                {Object.values(SaksStatus).map((status) => <ToggleGroup.Item key={status} value={status}>{status}</ToggleGroup.Item>)}
+            </ToggleGroup>
+            <TextField label={"Ny lenke til sak"} ref={nyLenkeTilSakRef} />
+            <TextField label={"Overstyr tekst med"} ref={overstyrStatustekstMedRef} />
+            <TextField label={"Tidspunkt"} ref={tidspunktRef} defaultValue={"2025-12-03T10:15:30Z"}/>
+        </div>
         <Button variant="primary"
-                onClick={() => nySakstatus({variables})}>Opprett en ny sakstatus</Button>
+                onClick={() => handleSend()}>Opprett en ny sakstatus</Button>
 
         {loading && <p>Laster...</p>}
         {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}

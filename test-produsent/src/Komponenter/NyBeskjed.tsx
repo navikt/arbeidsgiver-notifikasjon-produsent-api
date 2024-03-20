@@ -64,7 +64,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
         virksomhetsnummer: "910825526",
         lenke: "https://foo.bar",
         tekst: "Dette er en ny beskjed",
-        eksternId: "123",
+        eksternId: crypto.randomUUID().toString(),
     });
 
     useEffect(() => {
