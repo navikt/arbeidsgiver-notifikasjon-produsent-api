@@ -134,7 +134,7 @@ const OPPDATER_KALENDERAVTALE_MED_VARSLING = gql`
         $eksterneVarsler: [EksterntVarselInput!]! = []
         $lokasjon: LokasjonInput
     ) {
-        kalenderavtaleOppdater(
+        oppdaterKalenderavtale(
             id: $id
             idempotencyKey: $idempotenceKey
             nyttStartTidspunkt: $startTidspunkt
@@ -145,7 +145,7 @@ const OPPDATER_KALENDERAVTALE_MED_VARSLING = gql`
             eksterneVarsler: $eksterneVarsler
         ) {
             __typename
-            ... on KalenderavtaleOppdaterVellykket {
+            ... on OppdaterKalenderavtaleVellykket {
                 id
             }
             ... on Error {
@@ -156,11 +156,11 @@ const OPPDATER_KALENDERAVTALE_MED_VARSLING = gql`
 `
 
 export const OppdaterKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
-    const [kalenderavtaleOppdater, {
+    const [oppdaterKalenderavtale, {
         data,
         loading,
         error
-    }] = useMutation<Pick<Mutation, "kalenderavtaleOppdater">>(OPPDATER_KALENDERAVTALE_MED_VARSLING)
+    }] = useMutation<Pick<Mutation, "oppdaterKalenderavtale">>(OPPDATER_KALENDERAVTALE_MED_VARSLING)
 
 
     const [variables, setVariables] = useState({
@@ -201,7 +201,7 @@ export const OppdaterKalenderAvtaleMedEksternVarsling: FunctionComponent = () =>
             onChange={(e) => setVariables(JSON.parse(e.target.value))}
         />
         <Button variant="primary"
-                onClick={() => kalenderavtaleOppdater({variables})}>Oppdater kalenderavtale med ekstern varsling</Button>
+                onClick={() => oppdaterKalenderavtale({variables})}>Oppdater kalenderavtale med ekstern varsling</Button>
 
         {loading && <p>Laster...</p>}
         {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}

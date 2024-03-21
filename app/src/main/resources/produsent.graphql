@@ -813,7 +813,7 @@ type Mutation {
     Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
     Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
     """
-    kalenderavtaleOppdater(
+    oppdaterKalenderavtale(
         """
         ID-en som kalenderavtalen har. Den du fikk da du opprettet kalenderavtalen med `nyKalenderavtale`.
         """
@@ -887,7 +887,7 @@ type Mutation {
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
         """
         paaminnelse: PaaminnelseInput
-    ): KalenderavtaleOppdaterResultat!
+    ): OppdaterKalenderavtaleResultat!
 
 
     """
@@ -897,7 +897,7 @@ type Mutation {
     Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
     Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
     """
-    kalenderavtaleOppdaterByEksternId(
+    oppdaterKalenderavtaleByEksternId(
         """
         Merkelapp som kalenderavtalen er registrert med.
         """
@@ -976,7 +976,7 @@ type Mutation {
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
         """
         paaminnelse: PaaminnelseInput
-    ): KalenderavtaleOppdaterResultat!
+    ): OppdaterKalenderavtaleResultat!
 
     """
     Markerer en notifikasjon som slettet (soft delete).
@@ -1225,15 +1225,15 @@ type OppgaveUtsettFristVellykket {
     id: ID!
 }
 
-union KalenderavtaleOppdaterResultat =
-    | KalenderavtaleOppdaterVellykket
+union OppdaterKalenderavtaleResultat =
+    | OppdaterKalenderavtaleVellykket
     | UgyldigKalenderavtale
     | UgyldigMerkelapp
     | Konflikt
     | NotifikasjonFinnesIkke
     | UkjentProdusent
 
-type KalenderavtaleOppdaterVellykket {
+type OppdaterKalenderavtaleVellykket {
     """
     ID-en til kalenderavtalen du oppdaterte.
     """
