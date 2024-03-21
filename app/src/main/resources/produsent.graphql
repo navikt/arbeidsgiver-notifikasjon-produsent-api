@@ -809,7 +809,7 @@ type Mutation {
     """
     Oppdater tilstand på en kalenderavtale.
     Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
-    Den nye tilstanden vises til brukeren.
+    Den nye tilstanden vises til brukeren. Dette kallet er ment for å oppdatere tilstand samt gi brukeren mer utfyllende informasjon når det blir kjent.
     Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
     Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
     """
@@ -839,6 +839,8 @@ type Mutation {
         """
         Nytt tidspunkt for når avtalen starter. Dersom dere hadde påminnelse satt opp, vil vi slette den.
         Angi derfor en ny påminnelse hvis dere fortsatt vil ha det.
+        Vær obs på at endring av starttidspunkt kan være forvirrende for brukeren.
+        Det kan være bedre å opprette en ny avtale.
         """
         nyttStartTidspunkt: ISO8601LocalDateTime
 
@@ -891,7 +893,7 @@ type Mutation {
     """
     Oppdater tilstand på en kalenderavtale (identifisert ved ekstern id).
     Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
-    Den nye tilstanden vises til brukeren.
+    Den nye tilstanden vises til brukeren. Dette kallet er ment for å oppdatere tilstand samt gi brukeren mer utfyllende informasjon når det blir kjent.
     Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
     Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
     """
@@ -926,6 +928,8 @@ type Mutation {
         """
         Nytt tidspunkt for når avtalen starter. Dersom dere hadde påminnelse satt opp, vil vi slette den.
         Angi derfor en ny påminnelse hvis dere fortsatt vil ha det.
+        Vær obs på at endring av starttidspunkt kan være forvirrende for brukeren.
+        Det kan være bedre å opprette en ny avtale.
         """
         nyttStartTidspunkt: ISO8601LocalDateTime
 
