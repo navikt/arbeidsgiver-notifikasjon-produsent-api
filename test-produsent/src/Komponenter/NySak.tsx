@@ -55,7 +55,7 @@ export const NySak: React.FunctionComponent = () => {
     const [variables, setVariables] = useState({
         grupperingsid: grupperingsid,
         virksomhetsnummer: "910825526",
-        eksternId: "123",
+        eksternId: crypto.randomUUID().toString(),
         lenke: "https://foo.bar",
         tittel: "Dette er en ny sak",
         initiellStatus: "MOTTATT"
