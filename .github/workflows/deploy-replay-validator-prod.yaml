@@ -7,10 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: nais/login@v0
+        id: login
+        with:
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          team: fager
       - uses: nais/deploy/actions/deploy@v1
         name: "prod-gcp: deploy replay-validator"
         env:
-          IMAGE: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
+          IMAGE: ${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
           REF: ${{ github.sha }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: prod-gcp
