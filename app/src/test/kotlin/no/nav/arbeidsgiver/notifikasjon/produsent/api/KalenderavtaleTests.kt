@@ -128,9 +128,9 @@ class KalenderavtaleTests : DescribeSpec({
             }
         }
 
-        context("kalenderavtaleOppdater") {
+        context("oppdaterKalenderavtale") {
             val idempotenceKey = "123"
-            engine.kalenderavtaleOppdater(
+            engine.oppdaterKalenderavtale(
                 id = nyKalenderavtale.id,
                 idempotenceKey = idempotenceKey,
             ).let { response ->
@@ -140,11 +140,11 @@ class KalenderavtaleTests : DescribeSpec({
                 it("response inneholder ikke feil") {
                     response.getGraphqlErrors() should beEmpty()
                 }
-                lateinit var oppdaterVellykket: MutationKalenderavtale.KalenderavtaleOppdaterVellykket
+                lateinit var oppdaterVellykket: MutationKalenderavtale.OppdaterKalenderavtaleVellykket
                 it("respons inneholder forventet data") {
                     oppdaterVellykket =
-                        response.getTypedContent<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>("kalenderavtaleOppdater")
-                    oppdaterVellykket should beOfType<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>()
+                        response.getTypedContent<MutationKalenderavtale.OppdaterKalenderavtaleVellykket>("oppdaterKalenderavtale")
+                    oppdaterVellykket should beOfType<MutationKalenderavtale.OppdaterKalenderavtaleVellykket>()
                 }
                 it("sends message to kafka") {
                     kafkaProducer.hendelser.removeLast().also { hendelse ->
@@ -197,20 +197,20 @@ class KalenderavtaleTests : DescribeSpec({
             }
 
             context("samme forespørsel med samme idempotensnøkkel gir samme svar") {
-                engine.kalenderavtaleOppdater(
+                engine.oppdaterKalenderavtale(
                     id = nyKalenderavtale.id,
                     idempotenceKey = idempotenceKey,
                 ).let { response ->
                     it("response er vellykket") {
-                        response.getTypedContent<String>("kalenderavtaleOppdater/__typename") shouldBe "KalenderavtaleOppdaterVellykket"
+                        response.getTypedContent<String>("oppdaterKalenderavtale/__typename") shouldBe "OppdaterKalenderavtaleVellykket"
                     }
                 }
             }
         }
 
-        context("kalenderavtaleOppdaterByEksternId") {
+        context("oppdaterKalenderavtaleByEksternId") {
             val idempotenceKey = "321"
-            engine.kalenderavtaleOppdaterByEksternId(merkelapp, eksternId).let { response ->
+            engine.oppdaterKalenderavtaleByEksternId(merkelapp, eksternId).let { response ->
                 it("status is 200 OK") {
                     response.status() shouldBe HttpStatusCode.OK
                 }
@@ -218,11 +218,11 @@ class KalenderavtaleTests : DescribeSpec({
                     response.getGraphqlErrors() should beEmpty()
                 }
 
-                lateinit var oppdatertByEksternId: MutationKalenderavtale.KalenderavtaleOppdaterVellykket
+                lateinit var oppdatertByEksternId: MutationKalenderavtale.OppdaterKalenderavtaleVellykket
                 it("respons inneholder forventet data") {
                     oppdatertByEksternId =
-                        response.getTypedContent<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>("kalenderavtaleOppdaterByEksternId")
-                    oppdatertByEksternId should beOfType<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>()
+                        response.getTypedContent<MutationKalenderavtale.OppdaterKalenderavtaleVellykket>("oppdaterKalenderavtaleByEksternId")
+                    oppdatertByEksternId should beOfType<MutationKalenderavtale.OppdaterKalenderavtaleVellykket>()
                 }
 
                 it("sends message to kafka") {
@@ -265,13 +265,13 @@ class KalenderavtaleTests : DescribeSpec({
             }
 
             context("samme forespørsel med samme idempotensnøkkel gir samme svar") {
-                engine.kalenderavtaleOppdaterByEksternId(
+                engine.oppdaterKalenderavtaleByEksternId(
                     merkelapp = merkelapp,
                     eksternId = eksternId,
                     idempotenceKey = idempotenceKey,
                 ).let { response ->
                     it("response er vellykket") {
-                        response.getTypedContent<String>("kalenderavtaleOppdaterByEksternId/__typename") shouldBe "KalenderavtaleOppdaterVellykket"
+                        response.getTypedContent<String>("oppdaterKalenderavtaleByEksternId/__typename") shouldBe "OppdaterKalenderavtaleVellykket"
                     }
                 }
             }
@@ -298,7 +298,7 @@ class KalenderavtaleTests : DescribeSpec({
                 }
             }
 
-            engine.kalenderavtaleOppdater(
+            engine.oppdaterKalenderavtale(
                 id = nyKalenderavtale.id,
                 startTidspunkt = "2024-10-12T08:20:50.52",
                 sluttTidspunkt = "2024-10-12T07:20:50.52",
@@ -311,12 +311,12 @@ class KalenderavtaleTests : DescribeSpec({
                 }
                 it("respons inneholder forventet data") {
                     val valideringsfeil =
-                        response.getTypedContent<Error.UgyldigKalenderavtale>("kalenderavtaleOppdater")
+                        response.getTypedContent<Error.UgyldigKalenderavtale>("oppdaterKalenderavtale")
                     valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
                 }
             }
 
-            engine.kalenderavtaleOppdaterByEksternId(
+            engine.oppdaterKalenderavtaleByEksternId(
                 eksternId = eksternId,
                 merkelapp = merkelapp,
                 startTidspunkt = "2024-10-12T08:20:50.52",
@@ -330,7 +330,7 @@ class KalenderavtaleTests : DescribeSpec({
                 }
                 it("respons inneholder forventet data") {
                     val valideringsfeil =
-                        response.getTypedContent<Error.UgyldigKalenderavtale>("kalenderavtaleOppdaterByEksternId")
+                        response.getTypedContent<Error.UgyldigKalenderavtale>("oppdaterKalenderavtaleByEksternId")
                     valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
                 }
             }
@@ -428,7 +428,7 @@ private fun TestApplicationEngine.nyKalenderavtale(
     """.trimIndent()
 )
 
-private fun TestApplicationEngine.kalenderavtaleOppdater(
+private fun TestApplicationEngine.oppdaterKalenderavtale(
     id: UUID,
     idempotenceKey: String = "1234",
     startTidspunkt: String = "2024-10-12T07:20:50.52",
@@ -436,7 +436,7 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
 ) = produsentApi(
     """
         mutation {
-            kalenderavtaleOppdater(
+            oppdaterKalenderavtale(
                 id: "$id"
                 idempotencyKey: "$idempotenceKey"
                 nyLenke: "https://foo.bar"
@@ -487,7 +487,7 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
                 }
             ) {
                 __typename
-                ... on KalenderavtaleOppdaterVellykket {
+                ... on OppdaterKalenderavtaleVellykket {
                     id
                 }
                 ... on Error {
@@ -498,7 +498,7 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
     """.trimIndent()
 )
 
-private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
+private fun TestApplicationEngine.oppdaterKalenderavtaleByEksternId(
     merkelapp: String,
     eksternId: String,
     idempotenceKey: String = "1234",
@@ -507,7 +507,7 @@ private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
 ) = produsentApi(
     """
         mutation {
-            kalenderavtaleOppdaterByEksternId(
+            oppdaterKalenderavtaleByEksternId(
                 merkelapp: "$merkelapp"
                 eksternId: "$eksternId"
                 idempotencyKey: "$idempotenceKey"
@@ -559,7 +559,7 @@ private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
                 }
             ) {
                 __typename
-                ... on KalenderavtaleOppdaterVellykket {
+                ... on OppdaterKalenderavtaleVellykket {
                     id
                 }
                 ... on Error {
