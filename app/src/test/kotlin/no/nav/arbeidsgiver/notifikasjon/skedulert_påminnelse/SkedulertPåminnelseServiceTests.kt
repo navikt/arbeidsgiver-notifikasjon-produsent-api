@@ -169,6 +169,24 @@ private fun HendelseModel.OppgaveOpprettet.medPåminnelse(
             frist,
             null
         ),
-        eksterneVarsler = listOf()
+        eksterneVarsler = listOf(
+            HendelseModel.SmsVarselKontaktinfo(
+                varselId = uuid("3"),
+                fnrEllerOrgnr = "1",
+                tlfnr = "1",
+                smsTekst = "hey",
+                sendevindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            ),
+            HendelseModel.EpostVarselKontaktinfo(
+                varselId = uuid("4"),
+                fnrEllerOrgnr = "1",
+                epostAddr = "1",
+                tittel = "hey",
+                htmlBody = "body",
+                sendevindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            ),
+        )
     ),
 )

@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.zaxxer.hikari.HikariDataSource
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.writeValueAsStringSupportingTypeInfoInCollections
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.measureSql
 import org.intellij.lang.annotations.Language
 import java.io.File
@@ -120,7 +122,8 @@ class Setup(
     fun setLocalDateOrNull(localDate: LocalDate?) = setTextOrNull(localDate?.toString())
     fun setLocalDateTimeOrNull(localDateTime: LocalDateTime?) = setTextOrNull(localDateTime?.toString())
     fun <E: Enum<E>> setEnum(enum: E) = setText(enum.name)
-    fun <A>setJson(value: A) = setText(ephemeralDatabaseObjectMapper.writeValueAsString(value))
+    inline fun <reified A>setJson(value: A) =
+        setText(ephemeralDatabaseObjectMapper.writeValueAsStringSupportingTypeInfoInCollections<A>(value))
 }
 
 fun ResultSet.getUUID(columnLabel: String): UUID = UUID.fromString(getString(columnLabel))
@@ -129,8 +132,7 @@ fun ResultSet.getLocalDate(columnLabel: String): LocalDate = LocalDate.parse(get
 fun ResultSet.getLocalDateOrNull(columnLabel: String) = getString(columnLabel)?.let(LocalDate::parse)
 fun ResultSet.getLocalDateTimeOrNull(columnLabel: String) = getString(columnLabel)?.let(LocalDateTime::parse)
 inline fun <reified E: Enum<E>> ResultSet.getEnum(columnLabel: String): E = enumValueOf(getString(columnLabel))
-inline fun <reified A>ResultSet.getJson(columnLabel: String): A =
-    ephemeralDatabaseObjectMapper.readValue(getString(columnLabel), A::class.java)
+inline fun <reified A> ResultSet.getJson(columnLabel: String) = ephemeralDatabaseObjectMapper.readValue<A>(getString(columnLabel))
 
 fun <T> ResultSet.resultAsList(extractRow: ResultSet.() -> T): List<T> {
     val result = mutableListOf<T>()
