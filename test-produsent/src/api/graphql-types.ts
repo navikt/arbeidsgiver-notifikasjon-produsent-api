@@ -283,10 +283,10 @@ export type KalenderavtaleData = {
   tilstand?: Maybe<KalenderavtaleTilstand>;
 };
 
-export type KalenderavtaleOppdaterResultat = KalenderavtaleOppdaterVellykket | Konflikt | NotifikasjonFinnesIkke | UgyldigKalenderavtale | UgyldigMerkelapp | UkjentProdusent;
+export type OppdaterKalenderavtaleResultat = OppdaterKalenderavtaleVellykket | Konflikt | NotifikasjonFinnesIkke | UgyldigKalenderavtale | UgyldigMerkelapp | UkjentProdusent;
 
-export type KalenderavtaleOppdaterVellykket = {
-  __typename?: 'KalenderavtaleOppdaterVellykket';
+export type OppdaterKalenderavtaleVellykket = {
+  __typename?: 'OppdaterKalenderavtaleVellykket';
   /** ID-en til kalenderavtalen du oppdaterte. */
   id: Scalars['ID']['output'];
 };
@@ -428,7 +428,7 @@ export type Mutation = {
    *
    * Dersom dere har behov for å endre på data i en kalenderavtale underveis, så ta kontakt med oss, så kan vi prioritere å legge til støtte for det.
    */
-  kalenderavtaleOppdater: KalenderavtaleOppdaterResultat;
+  oppdaterKalenderavtale: OppdaterKalenderavtaleResultat;
   /**
    * Oppdater tilstand på en kalenderavtale (identifisert ved ekstern id).
    * Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
@@ -441,7 +441,7 @@ export type Mutation = {
    *
    * Dersom dere har behov for å endre på data i en kalenderavtale underveis, så ta kontakt med oss, så kan vi prioritere å legge til støtte for det.
    */
-  kalenderavtaleOppdaterByEksternId: KalenderavtaleOppdaterResultat;
+  oppdaterKalenderavtaleByEksternId: OppdaterKalenderavtaleResultat;
   /** Opprett en ny beskjed. */
   nyBeskjed: NyBeskjedResultat;
   nyKalenderavtale: NyKalenderavtaleResultat;
