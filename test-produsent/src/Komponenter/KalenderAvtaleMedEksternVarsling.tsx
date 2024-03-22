@@ -107,9 +107,7 @@ export const NyKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
                     },
                     epostTittel: "Varsel ved påminnelse fra testpodusent",
                     epostHtmlBody: "<h1>Hei</h1><p>Dette er en påminnelse</p>",
-                    sendetidspunkt: {
-                        sendevindu: "LOEPENDE",
-                    }
+                    sendevindu: "LOEPENDE",
                 }
             }
         }
@@ -226,9 +224,7 @@ export const OppdaterKalenderAvtaleMedEksternVarsling: FunctionComponent = () =>
                 },
                 epostTittel: "Varsel fra testpodusent",
                 epostHtmlBody: "<h1>Hei</h1><p>Dette er en test</p>",
-                sendetidspunkt: {
-                    sendevindu: "LOEPENDE",
-                }
+                sendevindu: "LOEPENDE",
             }
         }]
     });
