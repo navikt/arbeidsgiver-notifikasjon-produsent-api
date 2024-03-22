@@ -1,6 +1,6 @@
 import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
-import {useContext, useState, FunctionComponent, useEffect} from "react";
+import {useContext, useState, FunctionComponent, useEffect, useRef} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Button, Textarea} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
@@ -18,6 +18,7 @@ const NY_KALENDERAVTALE_MED_VARSSLING = gql`
         $startTidspunkt: ISO8601LocalDateTime!
         $sluttTidspunkt: ISO8601LocalDateTime
         $eksterneVarsler: [EksterntVarselInput!]!
+        $paaminnelse: PaaminnelseInput
         $lokasjon: LokasjonInput
     ) {
         nyKalenderavtale(
@@ -38,6 +39,7 @@ const NY_KALENDERAVTALE_MED_VARSSLING = gql`
             lokasjon: $lokasjon
             erDigitalt: true
             eksterneVarsler: $eksterneVarsler
+            paaminnelse: $paaminnelse
         ) {
             __typename
             ... on NyKalenderavtaleVellykket {
@@ -65,7 +67,6 @@ export const NyKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
     }] = useMutation<Pick<Mutation, "nyKalenderavtale">>(NY_KALENDERAVTALE_MED_VARSSLING)
 
     const grupperingsid = useContext(GrupperingsidContext)
-
     const [variables, setVariables] = useState({
         grupperingsid: grupperingsid,
         virksomhetsnummer: "910825526",
@@ -92,7 +93,26 @@ export const NyKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
                     sendevindu: "LOEPENDE",
                 }
             }
-        }]
+        }],
+        paaminnelse: {
+            tidspunkt: {
+                foerStartTidspunkt: "PT1H"
+            },
+            eksterneVarsler: {
+                epost: {
+                    mottaker: {
+                        kontaktinfo: {
+                            epostadresse: "donald@duck.co"
+                        }
+                    },
+                    epostTittel: "Varsel ved påminnelse fra testpodusent",
+                    epostHtmlBody: "<h1>Hei</h1><p>Dette er en påminnelse</p>",
+                    sendetidspunkt: {
+                        sendevindu: "LOEPENDE",
+                    }
+                }
+            }
+        }
     });
 
     useEffect(() => {
@@ -102,17 +122,40 @@ export const NyKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
         })
     }, [grupperingsid]);
 
+    const varsRef = useRef<HTMLTextAreaElement>(null)
+    const [varsError, setVarsError] = useState<any | null>(null)
+    useEffect(() => {
+        if (varsRef.current) {
+            varsRef.current.value = JSON.stringify(variables, null, 2)
+        }
+    }, []);
+
+
     return <div className={cssClasses.kalenderavtale}>
 
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(NY_KALENDERAVTALE_MED_VARSSLING)}
         </SyntaxHighlighter>
         <Textarea
+            error={varsError}
+            ref={varsRef}
             style={{fontSize: "12px", lineHeight: "12px"}}
             label="Variabler"
-            value={JSON.stringify(variables, null, 2)}
-            onChange={(e) => setVariables(JSON.parse(e.target.value))}
+            onChange={(e) => {
+                try {
+                    setVariables(JSON.parse(e.target.value));
+                    setVarsError(null)
+                } catch (e: Error | any) {
+                    setVarsError(e?.message ?? JSON.stringify(e, null, 2))
+                }
+            }}
         />
+        { varsError !== null && <Button variant="danger" onClick={() => {
+            if (varsRef.current !== null) {
+                varsRef.current.value = JSON.stringify(variables, null, 2)
+                setVarsError(null)
+            }
+        }}>nullstill variabler</Button> }
         <Button variant="primary"
                 onClick={() => nyKalenderavtale({variables})}>Opprett kalenderavtale med ekstern varsling</Button>
 
@@ -189,17 +232,39 @@ export const OppdaterKalenderAvtaleMedEksternVarsling: FunctionComponent = () =>
             }
         }]
     });
+    const varsRef = useRef<HTMLTextAreaElement>(null)
+    const [varsError, setVarsError] = useState<any | null>(null)
+    useEffect(() => {
+        if (varsRef.current) {
+            varsRef.current.value = JSON.stringify(variables, null, 2)
+        }
+    }, []);
+
     return <div className={cssClasses.kalenderavtale}>
 
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(OPPDATER_KALENDERAVTALE_MED_VARSLING)}
         </SyntaxHighlighter>
         <Textarea
+            error={varsError}
+            ref={varsRef}
             style={{fontSize: "12px", lineHeight: "12px"}}
             label="Variabler"
-            value={JSON.stringify(variables, null, 2)}
-            onChange={(e) => setVariables(JSON.parse(e.target.value))}
+            onChange={(e) => {
+                try {
+                    setVariables(JSON.parse(e.target.value));
+                    setVarsError(null)
+                } catch (e: Error | any) {
+                    setVarsError(e?.message ?? JSON.stringify(e, null, 2))
+                }
+            }}
         />
+        { varsError !== null && <Button variant="danger" onClick={() => {
+            if (varsRef.current !== null) {
+                varsRef.current.value = JSON.stringify(variables, null, 2)
+                setVarsError(null)
+            }
+        }}>nullstill variabler</Button> }
         <Button variant="primary"
                 onClick={() => oppdaterKalenderavtale({variables})}>Oppdater kalenderavtale med ekstern varsling</Button>
 
