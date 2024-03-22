@@ -5,16 +5,10 @@ on:
       - fake-produsent-api/**
       - test-produsent/**
   pull_request:
-    types:
-      - closed
   workflow_dispatch:
-
-env:
-  push_to_main: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'Merge pull request') }}
 
 jobs:
   build:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: "read"
       id-token: "write"
@@ -71,6 +65,7 @@ jobs:
         working-directory: app
 
       - uses: nais/docker-build-push@v0
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: gar-push
         with:
           team: fager
@@ -82,7 +77,7 @@ jobs:
           byosbom: app/target/bom.json
 
   deploy:
-    if: ${{ always() }}
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: [build]
     runs-on: ubuntu-latest
     permissions:
@@ -125,8 +120,7 @@ jobs:
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           team: fager
 
-      - if: env.push_to_main == 'true' || github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
-        uses: nais/deploy/actions/deploy@v1
+      - uses: nais/deploy/actions/deploy@v1
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
           IMAGE: ${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ env.DEPLOY_SHA }}
