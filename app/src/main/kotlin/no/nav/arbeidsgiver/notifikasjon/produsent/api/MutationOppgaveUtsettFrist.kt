@@ -29,7 +29,7 @@ internal class MutationOppgaveUtsettFrist(
                         id = env.getTypedArgument<UUID>("id")
                     ) { error -> return@coDataFetcher error },
                     nyFrist = env.getTypedArgument("nyFrist"),
-                    paaminnelse = env.getTypedArgumentOrNull<MutationNyOppgave.PaaminnelseInput>("paaminnelse"),
+                    paaminnelse = env.getTypedArgumentOrNull<PaaminnelseInput>("paaminnelse"),
                 )
             }
             coDataFetcher("oppgaveUtsettFristByEksternId") { env ->
@@ -41,7 +41,7 @@ internal class MutationOppgaveUtsettFrist(
                         merkelapp = env.getTypedArgument<String>("merkelapp")
                     ) { error -> return@coDataFetcher error },
                     nyFrist = env.getTypedArgument("nyFrist"),
-                    paaminnelse = env.getTypedArgumentOrNull<MutationNyOppgave.PaaminnelseInput>("paaminnelse"),
+                    paaminnelse = env.getTypedArgumentOrNull<PaaminnelseInput>("paaminnelse"),
 
                 )
             }
@@ -60,7 +60,7 @@ internal class MutationOppgaveUtsettFrist(
         context: ProdusentAPI.Context,
         notifikasjon: ProdusentModel.Notifikasjon,
         nyFrist: LocalDate,
-        paaminnelse: MutationNyOppgave.PaaminnelseInput?,
+        paaminnelse: PaaminnelseInput?,
     ): OppgaveUtsettFristResultat {
 
         if (notifikasjon !is ProdusentModel.Oppgave) {
@@ -88,6 +88,7 @@ internal class MutationOppgaveUtsettFrist(
                     påminnelse = paaminnelse?.tilDomene(
                         opprettetTidspunkt = OffsetDateTime.now(),
                         frist = nyFrist,
+                        startTidspunkt = null,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     ),
                 )

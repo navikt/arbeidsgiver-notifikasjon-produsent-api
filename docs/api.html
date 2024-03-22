@@ -56,8 +56,8 @@
                   <li><a href="#mutation-hardDeleteNotifikasjonByEksternId_V2">hardDeleteNotifikasjonByEksternId_V2</a></li>
                   <li><a href="#mutation-hardDeleteSak">hardDeleteSak</a></li>
                   <li><a href="#mutation-hardDeleteSakByGrupperingsid">hardDeleteSakByGrupperingsid</a></li>
-                  <li><a href="#mutation-kalenderavtaleOppdater">kalenderavtaleOppdater</a></li>
-                  <li><a href="#mutation-kalenderavtaleOppdaterByEksternId">kalenderavtaleOppdaterByEksternId</a></li>
+                  <li><a href="#mutation-oppdaterKalenderavtale">oppdaterKalenderavtale</a></li>
+                  <li><a href="#mutation-oppdaterKalenderavtaleByEksternId">oppdaterKalenderavtaleByEksternId</a></li>
                   <li><a href="#mutation-nyBeskjed">nyBeskjed</a></li>
                   <li><a href="#mutation-nyKalenderavtale">nyKalenderavtale</a></li>
                   <li><a href="#mutation-nyOppgave">nyOppgave</a></li>
@@ -120,8 +120,8 @@
               <li><a href="#definition-Int">Int</a></li>
               <li><a href="#definition-Kalenderavtale">Kalenderavtale</a></li>
               <li><a href="#definition-KalenderavtaleData">KalenderavtaleData</a></li>
-              <li><a href="#definition-KalenderavtaleOppdaterResultat">KalenderavtaleOppdaterResultat</a></li>
-              <li><a href="#definition-KalenderavtaleOppdaterVellykket">KalenderavtaleOppdaterVellykket</a></li>
+              <li><a href="#definition-OppdaterKalenderavtaleResultat">OppdaterKalenderavtaleResultat</a></li>
+              <li><a href="#definition-OppdaterKalenderavtaleVellykket">OppdaterKalenderavtaleVellykket</a></li>
               <li><a href="#definition-KalenderavtaleTilstand">KalenderavtaleTilstand</a></li>
               <li><a href="#definition-Konflikt">Konflikt</a></li>
               <li><a href="#definition-Lokasjon">Lokasjon</a></li>
@@ -1177,12 +1177,12 @@
               </div>
             </div>
           </section>
-          <section id="mutation-kalenderavtaleOppdater" class="operation operation-mutation" data-traverse-target="mutation-kalenderavtaleOppdater">
+          <section id="mutation-oppdaterKalenderavtale" class="operation operation-mutation" data-traverse-target="mutation-oppdaterKalenderavtale">
             <div class="operation-group-name">
               <a href="#group-Operations-Mutations">Mutations</a>
             </div>
             <h2 class="operation-heading ">
-              <code>kalenderavtaleOppdater</code>
+              <code>oppdaterKalenderavtale</code>
             </h2>
             <div class="doc-row">
               <div class="doc-copy">
@@ -1196,7 +1196,7 @@
               <div class="doc-copy">
                 <div class="operation-response doc-copy-section">
                   <h5>Response</h5>
-                  <p> Returns a <a href="#definition-KalenderavtaleOppdaterResultat"><code>KalenderavtaleOppdaterResultat!</code></a>
+                  <p> Returns a <a href="#definition-OppdaterKalenderavtaleResultat"><code>OppdaterKalenderavtaleResultat!</code></a>
                   </p>
                 </div>
                 <div class="operation-arguments doc-copy-section">
@@ -1285,7 +1285,7 @@
                   <h5>Query</h5>
                   <html>
                     <head></head>
-                    <body><pre><code class="hljs language-gql"><span class="hljs-symbol"><span class="hljs-keyword">mutation</span> kalenderavtaleOppdater<span class="hljs-tag">(
+                    <body><pre><code class="hljs language-gql"><span class="hljs-symbol"><span class="hljs-keyword">mutation</span> oppdaterKalenderavtale<span class="hljs-tag">(
   <span class="hljs-code">$id</span>: ID!,
   <span class="hljs-code">$nyTilstand</span>:<span class="hljs-type"> KalenderavtaleTilstand,</span>
   <span class="hljs-code">$nyTekst</span>:<span class="hljs-type"> String,</span>
@@ -1298,7 +1298,7 @@
   <span class="hljs-code">$idempotencyKey</span>:<span class="hljs-type"> String,</span>
   <span class="hljs-code">$eksterneVarsler</span>: <span class="hljs-type">[EksterntVarselInput!</span>]!
 )</span> <span class="hljs-tag">{
-  <span class="hljs-symbol">kalenderavtaleOppdater<span class="hljs-tag">(
+  <span class="hljs-symbol">oppdaterKalenderavtale<span class="hljs-tag">(
     id: <span class="hljs-code">$id</span>,
     nyTilstand: <span class="hljs-code">$nyTilstand</span>,
     nyTekst: <span class="hljs-code">$nyTekst</span>,
@@ -1311,7 +1311,7 @@
     idempotencyKey: <span class="hljs-code">$idempotencyKey</span>,
     eksterneVarsler: <span class="hljs-code">$eksterneVarsler</span>
   )</span> <span class="hljs-tag">{
-   <span class="hljs-type"> ... on KalenderavtaleOppdaterVellykket <span class="hljs-tag">{
+   <span class="hljs-type"> ... on OppdaterKalenderavtaleVellykket <span class="hljs-tag">{
       <span class="hljs-symbol">id</span>
     }</span>
     ... on UgyldigKalenderavtale <span class="hljs-tag">{
@@ -1362,7 +1362,7 @@
                     <head></head>
                     <body><pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
   <span class="hljs-attr">"data"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
-    <span class="hljs-attr">"kalenderavtaleOppdater"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">KalenderavtaleOppdaterVellykket</span>
+    <span class="hljs-attr">"oppdaterKalenderavtale"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">OppdaterKalenderavtaleVellykket</span>
   <span class="hljs-punctuation">}</span>
 <span class="hljs-punctuation">}</span>
 </code></pre>
@@ -1372,12 +1372,12 @@
               </div>
             </div>
           </section>
-          <section id="mutation-kalenderavtaleOppdaterByEksternId" class="operation operation-mutation" data-traverse-target="mutation-kalenderavtaleOppdaterByEksternId">
+          <section id="mutation-oppdaterKalenderavtaleByEksternId" class="operation operation-mutation" data-traverse-target="mutation-oppdaterKalenderavtaleByEksternId">
             <div class="operation-group-name">
               <a href="#group-Operations-Mutations">Mutations</a>
             </div>
             <h2 class="operation-heading ">
-              <code>kalenderavtaleOppdaterByEksternId</code>
+              <code>oppdaterKalenderavtaleByEksternId</code>
             </h2>
             <div class="doc-row">
               <div class="doc-copy">
@@ -1391,7 +1391,7 @@
               <div class="doc-copy">
                 <div class="operation-response doc-copy-section">
                   <h5>Response</h5>
-                  <p> Returns a <a href="#definition-KalenderavtaleOppdaterResultat"><code>KalenderavtaleOppdaterResultat!</code></a>
+                  <p> Returns a <a href="#definition-OppdaterKalenderavtaleResultat"><code>OppdaterKalenderavtaleResultat!</code></a>
                   </p>
                 </div>
                 <div class="operation-arguments doc-copy-section">
@@ -1486,7 +1486,7 @@
                   <h5>Query</h5>
                   <html>
                     <head></head>
-                    <body><pre><code class="hljs language-gql"><span class="hljs-symbol"><span class="hljs-keyword">mutation</span> kalenderavtaleOppdaterByEksternId<span class="hljs-tag">(
+                    <body><pre><code class="hljs language-gql"><span class="hljs-symbol"><span class="hljs-keyword">mutation</span> oppdaterKalenderavtaleByEksternId<span class="hljs-tag">(
   <span class="hljs-code">$merkelapp</span>:<span class="hljs-type"> String!</span>,
   <span class="hljs-code">$eksternId</span>:<span class="hljs-type"> String!</span>,
   <span class="hljs-code">$nyTilstand</span>:<span class="hljs-type"> KalenderavtaleTilstand,</span>
@@ -1500,7 +1500,7 @@
   <span class="hljs-code">$idempotencyKey</span>:<span class="hljs-type"> String,</span>
   <span class="hljs-code">$eksterneVarsler</span>: <span class="hljs-type">[EksterntVarselInput!</span>]!
 )</span> <span class="hljs-tag">{
-  <span class="hljs-symbol">kalenderavtaleOppdaterByEksternId<span class="hljs-tag">(
+  <span class="hljs-symbol">oppdaterKalenderavtaleByEksternId<span class="hljs-tag">(
     merkelapp: <span class="hljs-code">$merkelapp</span>,
     eksternId: <span class="hljs-code">$eksternId</span>,
     nyTilstand: <span class="hljs-code">$nyTilstand</span>,
@@ -1514,7 +1514,7 @@
     idempotencyKey: <span class="hljs-code">$idempotencyKey</span>,
     eksterneVarsler: <span class="hljs-code">$eksterneVarsler</span>
   )</span> <span class="hljs-tag">{
-   <span class="hljs-type"> ... on KalenderavtaleOppdaterVellykket <span class="hljs-tag">{
+   <span class="hljs-type"> ... on OppdaterKalenderavtaleVellykket <span class="hljs-tag">{
       <span class="hljs-symbol">id</span>
     }</span>
     ... on UgyldigKalenderavtale <span class="hljs-tag">{
@@ -1566,7 +1566,7 @@
                     <head></head>
                     <body><pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
   <span class="hljs-attr">"data"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
-    <span class="hljs-attr">"kalenderavtaleOppdaterByEksternId"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">KalenderavtaleOppdaterVellykket</span>
+    <span class="hljs-attr">"oppdaterKalenderavtaleByEksternId"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">OppdaterKalenderavtaleVellykket</span>
   <span class="hljs-punctuation">}</span>
 <span class="hljs-punctuation">}</span>
 </code></pre>
@@ -5774,11 +5774,11 @@
               </div>
             </div>
           </section>
-          <section id="definition-KalenderavtaleOppdaterResultat" class="definition definition-union" data-traverse-target="definition-KalenderavtaleOppdaterResultat">
+          <section id="definition-OppdaterKalenderavtaleResultat" class="definition definition-union" data-traverse-target="definition-OppdaterKalenderavtaleResultat">
             <div class="definition-group-name">
               <a href="#group-Types">Types</a>
             </div>
-            <h2 class="definition-heading">KalenderavtaleOppdaterResultat</h2>
+            <h2 class="definition-heading">OppdaterKalenderavtaleResultat</h2>
             <div class="doc-row">
               <div class="doc-copy">
                 <div class="definition-properties doc-copy-section">
@@ -5792,7 +5792,7 @@
                     <tbody>
                       <tr>
                         <td>
-                          <p><a href="#definition-KalenderavtaleOppdaterVellykket"><code>KalenderavtaleOppdaterVellykket</code></a></p>
+                          <p><a href="#definition-OppdaterKalenderavtaleVellykket"><code>OppdaterKalenderavtaleVellykket</code></a></p>
                         </td>
                       </tr>
                       <tr>
@@ -5829,7 +5829,7 @@
                   <h5>Example</h5>
                   <html>
                     <head></head>
-                    <body><pre><code class="hljs language-gql"><span class="hljs-symbol">KalenderavtaleOppdaterVellykket</span>
+                    <body><pre><code class="hljs language-gql"><span class="hljs-symbol">OppdaterKalenderavtaleVellykket</span>
 </code></pre>
                     </body>
                   </html>
@@ -5837,11 +5837,11 @@
               </div>
             </div>
           </section>
-          <section id="definition-KalenderavtaleOppdaterVellykket" class="definition definition-object" data-traverse-target="definition-KalenderavtaleOppdaterVellykket">
+          <section id="definition-OppdaterKalenderavtaleVellykket" class="definition definition-object" data-traverse-target="definition-OppdaterKalenderavtaleVellykket">
             <div class="definition-group-name">
               <a href="#group-Types">Types</a>
             </div>
-            <h2 class="definition-heading">KalenderavtaleOppdaterVellykket</h2>
+            <h2 class="definition-heading">OppdaterKalenderavtaleVellykket</h2>
             <div class="doc-row">
               <div class="doc-copy">
                 <div class="definition-properties doc-copy-section">

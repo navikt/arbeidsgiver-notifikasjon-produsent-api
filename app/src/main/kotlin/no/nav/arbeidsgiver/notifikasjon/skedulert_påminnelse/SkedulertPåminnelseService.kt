@@ -35,12 +35,12 @@ class SkedulertPåminnelseService(
         skedulertePåminnelser.forEach { skedulert ->
             hendelseProdusent.send(HendelseModel.PåminnelseOpprettet(
                 virksomhetsnummer = skedulert.virksomhetsnummer,
-                notifikasjonId = skedulert.oppgaveId,
+                notifikasjonId = skedulert.notifikasjonId,
                 hendelseId = UUID.randomUUID(),
                 produsentId = skedulert.produsentId,
                 kildeAppNavn = NaisEnvironment.clientId,
                 opprettetTidpunkt = Instant.now(),
-                fristOpprettetTidspunkt = skedulert.fristOpprettetTidspunkt,
+                fristOpprettetTidspunkt = skedulert.hendelseOpprettetTidspunkt,
                 frist = skedulert.frist,
                 tidspunkt = skedulert.tidspunkt,
                 eksterneVarsler = skedulert.eksterneVarsler,

@@ -277,6 +277,7 @@ class ProdusentRepositoryImpl(
                     id = getObject("id", UUID::class.java),
                     deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                     eksterneVarsler = laxObjectMapper.readValue(getString("eksterne_varsler")),
+                    påminnelseEksterneVarsler = laxObjectMapper.readValue(getString("paaminnelse_eksterne_varsler")),
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
                     sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it) },
@@ -860,6 +861,25 @@ class ProdusentRepositoryImpl(
                 set kilde_hendelse = excluded.kilde_hendelse;
                 """,
                 hendelse.eksterneVarsler
+            ) { eksterntVarsel ->
+                uuid(eksterntVarsel.varselId)
+                uuid(hendelse.notifikasjonId)
+                jsonb(eksterntVarsel)
+            }
+
+            executeBatch(
+                """
+                insert into paaminnelse_eksternt_varsel(
+                    varsel_id,
+                    notifikasjon_id,
+                    status,
+                    kilde_hendelse
+                )
+                values (?, ?, 'NY', ?::jsonb)
+                on conflict(varsel_id) do update 
+                set kilde_hendelse = excluded.kilde_hendelse;
+                """,
+                hendelse.påminnelse?.eksterneVarsler.orEmpty()
             ) { eksterntVarsel ->
                 uuid(eksterntVarsel.varselId)
                 uuid(hendelse.notifikasjonId)

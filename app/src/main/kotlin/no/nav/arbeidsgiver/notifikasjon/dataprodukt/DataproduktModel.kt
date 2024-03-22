@@ -618,6 +618,11 @@ class DataproduktModel(
                 periodAsText(tidspunkt.førFrist)
             }
 
+            is PåminnelseTidspunkt.FørStartTidspunkt -> {
+                text("FørStartTidspunkt")
+                periodAsText(tidspunkt.førStartTidpunkt)
+            }
+
             null -> {
                 nullableText(null)
                 nullableText(null)

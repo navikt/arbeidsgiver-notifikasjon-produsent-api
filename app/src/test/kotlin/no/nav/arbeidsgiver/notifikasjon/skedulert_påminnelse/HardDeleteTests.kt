@@ -223,6 +223,7 @@ private fun oppgaveMedPåminnelse(
             tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
                 tidspunkt,
                 opprettetTidspunkt,
+                null,
                 null
             ),
             eksterneVarsler = listOf()
