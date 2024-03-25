@@ -69,8 +69,8 @@ export const NySakstatus: React.FunctionComponent = () => {
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(NY_SAKSTATUS)}
         </SyntaxHighlighter>
-        <div>
-            <TextField label={"Id*"} ref={idRef}/>
+        <div style={{maxWidth:"36rem"}}>
+        <TextField label={"Id*"} ref={idRef}/>
             <ToggleGroup defaultValue={nyStatus} onChange={() => setNyStatus} label="Ny status">
                 {Object.values(SaksStatus).map((status) => <ToggleGroup.Item key={status} value={status}>{status}</ToggleGroup.Item>)}
             </ToggleGroup>

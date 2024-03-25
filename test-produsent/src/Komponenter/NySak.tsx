@@ -1,8 +1,8 @@
 import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
-import React, {useEffect, useState} from "react";
-import {Mutation} from "../api/graphql-types.ts";
-import {Button, Textarea} from "@navikt/ds-react";
+import React, {useEffect} from "react";
+import {Mutation, SaksStatus} from "../api/graphql-types.ts";
+import {Button, TextField} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -45,6 +45,13 @@ const NY_SAK = gql`
 export const NySak: React.FunctionComponent = () => {
     const grupperingsid = React.useContext(GrupperingsidContext)
 
+    const grupperingsidRef = React.useRef<HTMLInputElement>(null)
+    const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null)
+    const eksternIdRef = React.useRef<HTMLInputElement>(null)
+    const lenkeRef = React.useRef<HTMLInputElement>(null)
+    const tittelRef = React.useRef<HTMLInputElement>(null)
+    const initiellStatusRef = React.useRef<HTMLInputElement>(null)
+
     const [nySak, {
         data,
         loading,
@@ -52,36 +59,44 @@ export const NySak: React.FunctionComponent = () => {
     }] = useMutation<Pick<Mutation, "nySak">>(NY_SAK)
 
 
-    const [variables, setVariables] = useState({
-        grupperingsid: grupperingsid,
-        virksomhetsnummer: "910825526",
-        eksternId: crypto.randomUUID().toString(),
-        lenke: "https://foo.bar",
-        tittel: "Dette er en ny sak",
-        initiellStatus: "MOTTATT"
-    });
-
     useEffect(() => {
-        setVariables({
-            ...variables,
-            grupperingsid: grupperingsid,
-        })
+        if (grupperingsidRef.current !== null) {
+            grupperingsidRef.current.value = grupperingsid
+        }
     }, [grupperingsid]);
 
+    const nullIfEmpty = (s: string | undefined) => s === "" || s === undefined ? null : s
+
+
+    const handleSend = () => {
+        nySak({
+            variables: {
+                grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
+                virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
+                eksternId: nullIfEmpty(eksternIdRef.current?.value),
+                lenke: nullIfEmpty(lenkeRef.current?.value),
+                tittel: nullIfEmpty(tittelRef.current?.value),
+                initiellStatus: initiellStatusRef.current?.value as SaksStatus
+            }
+        })
+    }
 
     return <div className={cssClasses.kalenderavtale}>
 
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(NY_SAK)}
         </SyntaxHighlighter>
-        <Textarea
-            style={{fontSize: "12px", lineHeight: "12px"}}
-            label="Variabler"
-            value={JSON.stringify(variables, null, 2)}
-            onChange={(e) => setVariables(JSON.parse(e.target.value))}
-        />
+        <div style={{maxWidth:"35rem"}}>
+            <TextField label={"Grupperingsid*"}  ref={grupperingsidRef}/>
+            <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
+            <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
+            <TextField label={"Lenke*"} ref={lenkeRef} defaultValue={"https://foo.bar"}/>
+            <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny beskjed"/>
+            <TextField label={"Initiell status*"} ref={initiellStatusRef} defaultValue="MOTTATT"/>
+
+        </div>
         <Button variant="primary"
-                onClick={() => nySak({variables})}>Opprett en ny sak</Button>
+                onClick={handleSend}>Opprett en ny sak</Button>
 
         {loading && <p>Laster...</p>}
         {error &&

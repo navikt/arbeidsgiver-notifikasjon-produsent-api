@@ -14,6 +14,7 @@ const HENT_SAK = gql`
                     grupperingsid,
                     merkelapp,
                     lenke
+                    
                 }
             }
         }

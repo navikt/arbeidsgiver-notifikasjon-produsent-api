@@ -60,7 +60,6 @@ export const NyBeskjed: React.FunctionComponent = () => {
 
     const grupperingsid = useContext(GrupperingsidContext)
 
-
     const grupperingsidRef = React.useRef<HTMLInputElement>(null);
     const merkelappRef = React.useRef<HTMLInputElement>(null);
     const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
@@ -90,22 +89,26 @@ export const NyBeskjed: React.FunctionComponent = () => {
                 opprettetTidspunkt: new Date().toISOString()
             }
         })
-
     }
 
 
     return <div className={cssClasses.kalenderavtale}>
 
-        <SyntaxHighlighter language="graphql" style={darcula}>
+        <SyntaxHighlighter language="graphql" style={darcula}   lineProps={{style: {wordBreak: 'break-all', whiteSpace: 'pre-wrap'}}}
+        >
             {print(NY_BESKJED)}
         </SyntaxHighlighter>
+        <div style={{maxWidth:"35rem"}}>
         <TextField label={"Grupperingsid*"}  ref={grupperingsidRef}/>
         <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
         <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
         <TextField label={"Lenke*"} ref={lenkeRef}/>
         <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en ny beskjed"/>
         <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
-        <Button variant="primary"
+
+        </div>
+
+        <Button style={{maxWidth: "20rem"}} variant="primary"
                 onClick={handleSend}>Opprett en ny beskjed</Button>
 
         {loading && <p>Laster...</p>}
