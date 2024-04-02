@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -39,9 +40,28 @@ abstract class JsonDeserializer<T>(private val clazz: Class<T>) : Deserializer<T
     }
 }
 
+abstract class JsonDeserializerBugfix<T>(private val clazz: Class<T>) : Deserializer<T> {
+    private val log = logger()
+
+    override fun deserialize(topic: String?, data: ByteArray?): T? {
+        return try {
+            kafkaObjectMapper.readValue(data, clazz)
+        } catch (e: Exception) {
+            // temporary fix for broken hendelse i dev-gcp 22.03.2024
+            val json = kafkaObjectMapper.readValue(data, JsonNode::class.java)
+            if (json.at("/hendelseId").asText() == "37f5df5e-c8a2-42ca-80c4-377eb57d8c5f") {
+                return null
+            }
+            throw e
+        }
+    }
+}
+
 class ValueSerializer : JsonSerializer<Hendelse>
 
-class ValueDeserializer : JsonDeserializer<Hendelse>(Hendelse::class.java)
+// TODO: reenable this when the bug is fixed
+class ValueDeserializer : JsonDeserializerBugfix<Hendelse>(Hendelse::class.java)
+//class ValueDeserializer : JsonDeserializer<Hendelse>(Hendelse::class.java)
 
 val COMMON_PROPERTIES = mapOf(
     CommonProp.BOOTSTRAP_SERVERS_CONFIG to (getenv("KAFKA_BROKERS") ?: "localhost:9092"),
