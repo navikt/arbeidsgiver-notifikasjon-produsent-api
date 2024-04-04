@@ -10,8 +10,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.NyKalenderavtaleInput.KalenderavtaleTilstand
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.NyKalenderavtaleInput.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.AVLYST
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.time.Instant
 import java.time.LocalDateTime
@@ -55,7 +55,7 @@ internal class MutationKalenderavtale(
             coDataFetcher("oppdaterKalenderavtale") { env ->
                 kalenderavtaleOppdaterById(
                     context = env.notifikasjonContext(),
-                    input = KalenderavtaleOppdaterByIdInput(
+                    input = OppdaterByIdKalenderavtaleInput(
                         id = env.getTypedArgument<UUID>("id"),
                         nyTilstand = env.getTypedArgumentOrNull<KalenderavtaleTilstand>("nyTilstand"),
                         nyTekst = env.getTypedArgumentOrNull<String>("nyTekst"),
@@ -75,7 +75,7 @@ internal class MutationKalenderavtale(
             coDataFetcher("oppdaterKalenderavtaleByEksternId") { env ->
                 oppdaterKalenderavtaleByEksternId(
                     context = env.notifikasjonContext(),
-                    input = KalenderavtaleOppdaterByEksternIdInput(
+                    input = OppdaterByEksternIdKalenderavtaleInput(
                         merkelapp = env.getTypedArgument<String>("merkelapp"),
                         eksternId = env.getTypedArgument<String>("eksternId"),
                         nyTilstand = env.getTypedArgumentOrNull<KalenderavtaleTilstand>("nyTilstand"),
@@ -186,20 +186,21 @@ internal class MutationKalenderavtale(
             )
         }
 
-        enum class KalenderavtaleTilstand {
-            VENTER_SVAR_FRA_ARBEIDSGIVER,
-            ARBEIDSGIVER_VIL_AVLYSE,
-            ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
-            ARBEIDSGIVER_HAR_GODTATT,
-            AVLYST;
+    }
 
-            fun tilHendelseModel(): HendelseModel.KalenderavtaleTilstand = when (this) {
-                VENTER_SVAR_FRA_ARBEIDSGIVER -> HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-                ARBEIDSGIVER_VIL_AVLYSE -> HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_AVLYSE
-                ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED -> HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
-                ARBEIDSGIVER_HAR_GODTATT -> HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT
-                AVLYST -> HendelseModel.KalenderavtaleTilstand.AVLYST
-            }
+    enum class KalenderavtaleTilstand {
+        VENTER_SVAR_FRA_ARBEIDSGIVER,
+        ARBEIDSGIVER_VIL_AVLYSE,
+        ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
+        ARBEIDSGIVER_HAR_GODTATT,
+        AVLYST;
+
+        fun tilHendelseModel(): HendelseModel.KalenderavtaleTilstand = when (this) {
+            VENTER_SVAR_FRA_ARBEIDSGIVER -> HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
+            ARBEIDSGIVER_VIL_AVLYSE -> HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_AVLYSE
+            ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED -> HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
+            ARBEIDSGIVER_HAR_GODTATT -> HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT
+            AVLYST -> HendelseModel.KalenderavtaleTilstand.AVLYST
         }
     }
 
@@ -267,7 +268,7 @@ internal class MutationKalenderavtale(
     }
 
 
-    sealed class KalenderavtaleOppdaterInput {
+    sealed class OppdaterKalenderavtaleInput {
         inline fun somKalenderavtaleOppdatertHendelse(
             kildeAppNavn: String,
             produsentId: String,
@@ -315,7 +316,7 @@ internal class MutationKalenderavtale(
                 erDigitalt = nyErDigitalt,
                 hardDelete = hardDelete?.tilHendelseModel(),
                 eksterneVarsler = eksterneVarsler?.map { it.tilHendelseModel(eksisterende.virksomhetsnummer) } ?: emptyList(),
-                påminnelse = paaminnelse?.tilDomene(
+                påminnelse = if (nyTilstand == AVLYST) null else paaminnelse?.tilDomene(
                     opprettetTidspunkt = eksisterende.opprettetTidspunkt,
                     frist = null,
                     startTidspunkt = nyttStartTidspunkt ?: eksisterende.startTidspunkt,
@@ -359,7 +360,7 @@ internal class MutationKalenderavtale(
             ).isEmpty()
     }
 
-    data class KalenderavtaleOppdaterByIdInput(
+    data class OppdaterByIdKalenderavtaleInput(
         val id: UUID,
         override val nyTilstand: KalenderavtaleTilstand?,
         override val nyTekst: String?,
@@ -372,9 +373,9 @@ internal class MutationKalenderavtale(
         override val paaminnelse: PaaminnelseInput?,
         override val hardDelete: HardDeleteUpdateInput?,
         override val idempotenceKey: String?,
-    ) : KalenderavtaleOppdaterInput()
+    ) : OppdaterKalenderavtaleInput()
 
-    data class KalenderavtaleOppdaterByEksternIdInput(
+    data class OppdaterByEksternIdKalenderavtaleInput(
         val eksternId: String,
         val merkelapp: String,
         override val nyTilstand: KalenderavtaleTilstand?,
@@ -388,11 +389,11 @@ internal class MutationKalenderavtale(
         override val paaminnelse: PaaminnelseInput?,
         override val hardDelete: HardDeleteUpdateInput?,
         override val idempotenceKey: String?,
-    ) : KalenderavtaleOppdaterInput()
+    ) : OppdaterKalenderavtaleInput()
 
     private suspend fun kalenderavtaleOppdaterById(
         context: ProdusentAPI.Context,
-        input: KalenderavtaleOppdaterByIdInput,
+        input: OppdaterByIdKalenderavtaleInput,
     ): OppdaterKalenderavtaleResultat {
         val produsent = hentProdusent(context) { error -> return error }
 
@@ -412,7 +413,7 @@ internal class MutationKalenderavtale(
 
     private suspend fun oppdaterKalenderavtaleByEksternId(
         context: ProdusentAPI.Context,
-        input: KalenderavtaleOppdaterByEksternIdInput,
+        input: OppdaterByEksternIdKalenderavtaleInput,
     ): OppdaterKalenderavtaleResultat {
         val produsent = hentProdusent(context) { error -> return error }
 
@@ -438,7 +439,7 @@ internal class MutationKalenderavtale(
         kildeAppNavn: String,
         produsentId: String,
         eksisterende: ProdusentModel.Kalenderavtale,
-        input: KalenderavtaleOppdaterInput,
+        input: OppdaterKalenderavtaleInput,
     ): OppdaterKalenderavtaleResultat {
         if (input.isNoOp) {
             return OppdaterKalenderavtaleVellykket(

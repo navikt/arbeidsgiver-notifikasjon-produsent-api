@@ -170,16 +170,12 @@ const OPPDATER_KALENDERAVTALE_MED_VARSLING = gql`
         $lenke: String
         $tekst: String
         $idempotenceKey: String
-        $startTidspunkt: ISO8601LocalDateTime
-        $sluttTidspunkt: ISO8601LocalDateTime
         $eksterneVarsler: [EksterntVarselInput!]! = []
         $lokasjon: LokasjonInput
     ) {
         oppdaterKalenderavtale(
             id: $id
             idempotencyKey: $idempotenceKey
-            nyttStartTidspunkt: $startTidspunkt
-            nyttSluttTidspunkt: $sluttTidspunkt
             nyLenke: $lenke
             nyTekst: $tekst
             nyLokasjon: $lokasjon
@@ -208,8 +204,6 @@ export const OppdaterKalenderAvtaleMedEksternVarsling: FunctionComponent = () =>
         id: "42",
         lenke: "https://foo.bar",
         tekst: "Dette er en kalenderavtale",
-        startTidspunkt: datePlus(1).toISOString().replace('Z', ''),
-        sluttTidspunkt: datePlus(1, 1).toISOString().replace('Z', ''),
         lokasjon: {
             postnummer: "1234",
             poststed: "Kneika",

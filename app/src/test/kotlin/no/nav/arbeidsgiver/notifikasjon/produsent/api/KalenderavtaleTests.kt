@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.*
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -133,6 +134,7 @@ class KalenderavtaleTests : DescribeSpec({
             engine.oppdaterKalenderavtale(
                 id = nyKalenderavtale.id,
                 idempotenceKey = idempotenceKey,
+                nyTilstand = ARBEIDSGIVER_HAR_GODTATT,
             ).let { response ->
                 it("status is 200 OK") {
                     response.status() shouldBe HttpStatusCode.OK
@@ -154,8 +156,6 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse.tilstand shouldBe HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT
                         hendelse.lenke shouldBe "https://foo.bar"
                         hendelse.tekst shouldBe "hello world"
-                        hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                        hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                         hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
                             postnummer = "1234",
                             poststed = "Kneika",
@@ -200,6 +200,7 @@ class KalenderavtaleTests : DescribeSpec({
                 engine.oppdaterKalenderavtale(
                     id = nyKalenderavtale.id,
                     idempotenceKey = idempotenceKey,
+                    AVLYST
                 ).let { response ->
                     it("response er vellykket") {
                         response.getTypedContent<String>("oppdaterKalenderavtale/__typename") shouldBe "OppdaterKalenderavtaleVellykket"
@@ -210,7 +211,7 @@ class KalenderavtaleTests : DescribeSpec({
 
         context("oppdaterKalenderavtaleByEksternId") {
             val idempotenceKey = "321"
-            engine.oppdaterKalenderavtaleByEksternId(merkelapp, eksternId).let { response ->
+            engine.oppdaterKalenderavtaleByEksternId(merkelapp, eksternId, ARBEIDSGIVER_VIL_AVLYSE).let { response ->
                 it("status is 200 OK") {
                     response.status() shouldBe HttpStatusCode.OK
                 }
@@ -249,7 +250,7 @@ class KalenderavtaleTests : DescribeSpec({
                         it.grupperingsid shouldBe grupperingsid
                         it.lenke shouldBe "https://foo.bar"
                         it.eksternId shouldBe eksternId
-                        it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
+                        it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_VIL_AVLYSE
                         it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
                         it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                         it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
@@ -269,6 +270,7 @@ class KalenderavtaleTests : DescribeSpec({
                     merkelapp = merkelapp,
                     eksternId = eksternId,
                     idempotenceKey = idempotenceKey,
+                    nyTilstand = AVLYST
                 ).let { response ->
                     it("response er vellykket") {
                         response.getTypedContent<String>("oppdaterKalenderavtaleByEksternId/__typename") shouldBe "OppdaterKalenderavtaleVellykket"
@@ -294,43 +296,6 @@ class KalenderavtaleTests : DescribeSpec({
                 it("respons inneholder forventet data") {
                     val valideringsfeil =
                         it.getTypedContent<Error.UgyldigKalenderavtale>("nyKalenderavtale")
-                    valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
-                }
-            }
-
-            engine.oppdaterKalenderavtale(
-                id = nyKalenderavtale.id,
-                startTidspunkt = "2024-10-12T08:20:50.52",
-                sluttTidspunkt = "2024-10-12T07:20:50.52",
-            ).let { response ->
-                it("status is 200 OK") {
-                    response.status() shouldBe HttpStatusCode.OK
-                }
-                it("response inneholder ikke feil") {
-                    response.getGraphqlErrors() should beEmpty()
-                }
-                it("respons inneholder forventet data") {
-                    val valideringsfeil =
-                        response.getTypedContent<Error.UgyldigKalenderavtale>("oppdaterKalenderavtale")
-                    valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
-                }
-            }
-
-            engine.oppdaterKalenderavtaleByEksternId(
-                eksternId = eksternId,
-                merkelapp = merkelapp,
-                startTidspunkt = "2024-10-12T08:20:50.52",
-                sluttTidspunkt = "2024-10-12T07:20:50.52",
-            ).let { response ->
-                it("status is 200 OK") {
-                    response.status() shouldBe HttpStatusCode.OK
-                }
-                it("response inneholder ikke feil") {
-                    response.getGraphqlErrors() should beEmpty()
-                }
-                it("respons inneholder forventet data") {
-                    val valideringsfeil =
-                        response.getTypedContent<Error.UgyldigKalenderavtale>("oppdaterKalenderavtaleByEksternId")
                     valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
                 }
             }
@@ -431,8 +396,7 @@ private fun TestApplicationEngine.nyKalenderavtale(
 private fun TestApplicationEngine.oppdaterKalenderavtale(
     id: UUID,
     idempotenceKey: String = "1234",
-    startTidspunkt: String = "2024-10-12T07:20:50.52",
-    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
+    nyTilstand: MutationKalenderavtale.KalenderavtaleTilstand,
 ) = produsentApi(
     """
         mutation {
@@ -441,9 +405,7 @@ private fun TestApplicationEngine.oppdaterKalenderavtale(
                 idempotencyKey: "$idempotenceKey"
                 nyLenke: "https://foo.bar"
                 nyTekst: "hello world"
-                nyTilstand: ARBEIDSGIVER_HAR_GODTATT
-                nyttStartTidspunkt: "$startTidspunkt"
-                nyttSluttTidspunkt: "$sluttTidspunkt"
+                nyTilstand: $nyTilstand
                 nyLokasjon: {
                     postnummer: "1234"
                     poststed: "Kneika"
@@ -501,9 +463,8 @@ private fun TestApplicationEngine.oppdaterKalenderavtale(
 private fun TestApplicationEngine.oppdaterKalenderavtaleByEksternId(
     merkelapp: String,
     eksternId: String,
+    nyTilstand: MutationKalenderavtale.KalenderavtaleTilstand,
     idempotenceKey: String = "1234",
-    startTidspunkt: String = "2024-10-12T07:20:50.52",
-    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
 ) = produsentApi(
     """
         mutation {
@@ -511,11 +472,9 @@ private fun TestApplicationEngine.oppdaterKalenderavtaleByEksternId(
                 merkelapp: "$merkelapp"
                 eksternId: "$eksternId"
                 idempotencyKey: "$idempotenceKey"
-                nyTilstand: ARBEIDSGIVER_HAR_GODTATT
+                nyTilstand: $nyTilstand
                 nyLenke: "https://foo.bar"
                 nyTekst: "hello world"
-                nyttStartTidspunkt: "$startTidspunkt"
-                nyttSluttTidspunkt: "$sluttTidspunkt"
                 nyLokasjon: {
                     postnummer: "1234"
                     poststed: "Kneika"

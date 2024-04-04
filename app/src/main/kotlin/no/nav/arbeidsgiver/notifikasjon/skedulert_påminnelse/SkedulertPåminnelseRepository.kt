@@ -236,8 +236,8 @@ class SkedulertPåminnelseRepository : AutoCloseable {
 
                 if (hendelse.startTidspunkt != null) {
                     /**
-                     * Vi kunne muligens vært smarte og reberegnet påminnelsestidspunkt ved endring av startTidspunkt.
-                     * I skrivende stund er løsningen å dokumentere i spesifikasjonen at eksisterende påminnelser blir kansellert,
+                     * I skrivende stund er det er ikke mulig å endre starttidspunkt på en kalenderavtale.
+                     * Dersom vi åpner for det må det dokumenteres i spesifikasjonen at eksisterende påminnelser blir kansellert,
                      * og at man må angi nye dersom man ønsker det.
                      */
                     markerPåminnelserLukket(notifikasjonId = hendelse.notifikasjonId)

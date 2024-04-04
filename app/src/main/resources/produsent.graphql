@@ -837,19 +837,6 @@ type Mutation {
         nyLenke: String
 
         """
-        Nytt tidspunkt for når avtalen starter. Dersom dere hadde påminnelse satt opp, vil vi slette den.
-        Angi derfor en ny påminnelse hvis dere fortsatt vil ha det.
-        Vær obs på at endring av starttidspunkt kan være forvirrende for brukeren.
-        Det kan være bedre å opprette en ny avtale.
-        """
-        nyttStartTidspunkt: ISO8601LocalDateTime
-
-        """
-        Nytt tidspunkt for når avtalen slutter.
-        """
-        nyttSluttTidspunkt: ISO8601LocalDateTime
-
-        """
         Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
         Denne vil vises til brukeren hvis den er angitt.
         """
@@ -883,7 +870,6 @@ type Mutation {
         Her kan du spesifisere en påminnelse for kalenderavtalen.
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         Dersom dere senere oppdaterer kalenderavtalen og setter den til AVLYST, vil vi kansellere registrerte påminnelser.
-        Hvis dere endrer starttidspunktet for kalenderavtalen vil tildligere påminnelser kanselleres.
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
         """
         paaminnelse: PaaminnelseInput
@@ -926,19 +912,6 @@ type Mutation {
         nyLenke: String
 
         """
-        Nytt tidspunkt for når avtalen starter. Dersom dere hadde påminnelse satt opp, vil vi slette den.
-        Angi derfor en ny påminnelse hvis dere fortsatt vil ha det.
-        Vær obs på at endring av starttidspunkt kan være forvirrende for brukeren.
-        Det kan være bedre å opprette en ny avtale.
-        """
-        nyttStartTidspunkt: ISO8601LocalDateTime
-
-        """
-        Nytt tidspunkt for når avtalen slutter.
-        """
-        nyttSluttTidspunkt: ISO8601LocalDateTime
-
-        """
         Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
         Denne vil vises til brukeren hvis den er angitt.
         """
@@ -972,7 +945,6 @@ type Mutation {
         Her kan du spesifisere en påminnelse for kalenderavtalen.
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         Dersom dere senere oppdaterer kalenderavtalen og setter den til AVLYST, vil vi kansellere registrerte påminnelser.
-        Hvis dere endrer starttidspunktet for kalenderavtalen vil tildligere påminnelser kanselleres.
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
         """
         paaminnelse: PaaminnelseInput
