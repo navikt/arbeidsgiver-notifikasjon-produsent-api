@@ -75,7 +75,7 @@ class HentSakTests : DescribeSpec({
 
 
 
-    describe("hentSak") {
+    describe("hentSakMedId") {
         val database = testDatabase(Produsent.databaseConfig)
         val produsentRepository = ProdusentRepositoryImpl(database)
         val engine = ktorProdusentTestServer(produsentRepository = produsentRepository)
@@ -132,6 +132,69 @@ class HentSakTests : DescribeSpec({
                     }
                 """.trimIndent()
             ).getTypedContent<QuerySak.HentSakResultat>("hentSak").also { HentetSak  ->
+                val hentetSak = HentetSak as QuerySak.HentetSak
+                hentetSak.sak.id shouldBe sakOpprettetHendelse.sakId
+            }
+        }
+    }
+
+    describe("hentSakGrupperingsid") {
+        val database = testDatabase(Produsent.databaseConfig)
+        val produsentRepository = ProdusentRepositoryImpl(database)
+        val engine = ktorProdusentTestServer(produsentRepository = produsentRepository)
+
+        produsentRepository.oppdaterModellEtterHendelse(sakOpprettetHendelse)
+        produsentRepository.oppdaterModellEtterHendelse(nyStatusSakHendelse)
+        produsentRepository.oppdaterModellEtterHendelse(sakMedAnnenMerkelappOpprettetHendelse)
+
+        it("Sak finnes ikke og respons inneholder error.") {
+            engine.produsentApi(
+                """
+                    query {
+                        hentSakMedGrupperingsid(grupperingsid: "${UUID.randomUUID()}" merkelapp: "Fager") {
+                            __typename
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                """.trimIndent()
+            ).getTypedContent<Error.SakFinnesIkke>("hentSakMedGrupperingsid")
+        }
+        it("Sak med annen merkelapp gir UgyldigMerkelapp") {
+            engine.produsentApi(
+                """
+                    query {
+                        hentSakMedGrupperingsid(grupperingsid: "${sakMedAnnenMerkelappOpprettetHendelse.grupperingsid}" merkelapp: "IkkeTag") {
+                            __typename
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                """.trimIndent()
+            ).getTypedContent<Error.UgyldigMerkelapp>("hentSakMedGrupperingsid")
+        }
+        it("Sak finnes og response inneholder saken") {
+            engine.produsentApi(
+                """
+                    query {
+                        hentSakMedGrupperingsid(grupperingsid: "${sakOpprettetHendelse.grupperingsid}" merkelapp: "tag") {
+                            __typename
+                            ... on HentetSak {
+                                sak {
+                                    id
+                                    grupperingsid
+                                    virksomhetsnummer
+                                    tittel
+                                    lenke
+                                    merkelapp
+                                }
+                            }
+                        }
+                    }
+                """.trimIndent()
+            ).getTypedContent<QuerySak.HentSakResultat>("hentSakMedGrupperingsid").also { HentetSak ->
                 val hentetSak = HentetSak as QuerySak.HentetSak
                 hentetSak.sak.id shouldBe sakOpprettetHendelse.sakId
             }
