@@ -439,7 +439,7 @@ object BrukerAPI {
                                 lenke = notifikasjon.lenke,
                                 avtaletilstand = notifikasjon.tilstand.tilBrukerAPI(),
                                 opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
-                                sorteringTidspunkt = notifikasjon.opprettetTidspunkt,
+                                sorteringTidspunkt = notifikasjon.sorteringTidspunkt,
                                 paaminnelseTidspunkt = notifikasjon.paaminnelseTidspunkt,
                                 startTidspunkt = notifikasjon.startTidspunkt.atOsloAsOffsetDateTime(),
                                 sluttTidspunkt = notifikasjon.sluttTidspunkt?.atOsloAsOffsetDateTime(),

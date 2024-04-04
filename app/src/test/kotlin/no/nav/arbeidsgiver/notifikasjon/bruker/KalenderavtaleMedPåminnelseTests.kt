@@ -81,7 +81,7 @@ class KalenderavtaleMedPåminnelseTests : DescribeSpec({
         )
 
         val response2 = engine.queryNotifikasjonerJson()
-        it("listen er sortert på rekkefølge og entry 1 er klikket på") {
+        it("listen er sortert på rekkefølge og entry 1 er ikke klikket på") {
             val oppgaver = response2.getTypedContent<List<UUID>>("$.notifikasjoner.notifikasjoner[*].id")
             oppgaver shouldBe listOf(
                 kalenderavtale2.aggregateId,

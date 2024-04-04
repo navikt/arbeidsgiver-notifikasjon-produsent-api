@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -100,7 +99,7 @@ object BrukerModel {
         )
 
         override val sorteringTidspunkt: OffsetDateTime
-            get() = paaminnelseTidspunkt ?: startTidspunkt.atOslo().toOffsetDateTime()
+            get() = paaminnelseTidspunkt ?: opprettetTidspunkt
 
         enum class Tilstand {
             VENTER_SVAR_FRA_ARBEIDSGIVER,
