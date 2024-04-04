@@ -87,6 +87,7 @@ object BrukerModel {
         val eksternId: String,
         val tilstand: Tilstand,
         val opprettetTidspunkt: OffsetDateTime,
+        val paaminnelseTidspunkt: OffsetDateTime?,
         val startTidspunkt: LocalDateTime,
         val sluttTidspunkt: LocalDateTime?,
         val lokasjon: Lokasjon?,
@@ -99,7 +100,7 @@ object BrukerModel {
         )
 
         override val sorteringTidspunkt: OffsetDateTime
-            get() = startTidspunkt.atOslo().toOffsetDateTime()
+            get() = paaminnelseTidspunkt ?: startTidspunkt.atOslo().toOffsetDateTime()
 
         enum class Tilstand {
             VENTER_SVAR_FRA_ARBEIDSGIVER,

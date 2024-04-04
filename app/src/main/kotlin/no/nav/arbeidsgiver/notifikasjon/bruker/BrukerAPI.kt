@@ -92,6 +92,7 @@ object BrukerAPI {
             val avtaletilstand: Tilstand,
             val opprettetTidspunkt: OffsetDateTime,
             val sorteringTidspunkt: OffsetDateTime,
+            val paaminnelseTidspunkt: OffsetDateTime?,
             val startTidspunkt: OffsetDateTime,
             val sluttTidspunkt: OffsetDateTime?,
             val lokasjon: Lokasjon?,
@@ -439,6 +440,7 @@ object BrukerAPI {
                                 avtaletilstand = notifikasjon.tilstand.tilBrukerAPI(),
                                 opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                                 sorteringTidspunkt = notifikasjon.opprettetTidspunkt,
+                                paaminnelseTidspunkt = notifikasjon.paaminnelseTidspunkt,
                                 startTidspunkt = notifikasjon.startTidspunkt.atOsloAsOffsetDateTime(),
                                 sluttTidspunkt = notifikasjon.sluttTidspunkt?.atOsloAsOffsetDateTime(),
                                 lokasjon = notifikasjon.lokasjon?.let { Lokasjon(
@@ -494,6 +496,7 @@ object BrukerAPI {
                         avtaletilstand = notifikasjon.tilstand.tilBrukerAPI(),
                         opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                         sorteringTidspunkt = notifikasjon.sorteringTidspunkt,
+                        paaminnelseTidspunkt = notifikasjon.paaminnelseTidspunkt,
                         startTidspunkt = notifikasjon.startTidspunkt.atOsloAsOffsetDateTime(),
                         sluttTidspunkt = notifikasjon.sluttTidspunkt?.atOsloAsOffsetDateTime(),
                         lokasjon = notifikasjon.lokasjon?.let { Lokasjon(

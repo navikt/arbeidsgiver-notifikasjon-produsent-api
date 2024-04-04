@@ -321,6 +321,30 @@ suspend fun BrukerRepository.påminnelseOpprettet(
     oppdaterModellEtterHendelse(it)
 }
 
+suspend fun BrukerRepository.påminnelseOpprettet(
+    kalenderavtale: HendelseModel.KalenderavtaleOpprettet,
+    konkretPåminnelseTidspunkt: LocalDateTime
+) = HendelseModel.PåminnelseOpprettet(
+    virksomhetsnummer = kalenderavtale.virksomhetsnummer,
+    hendelseId = UUID.randomUUID(),
+    produsentId = kalenderavtale.produsentId,
+    kildeAppNavn = kalenderavtale.kildeAppNavn,
+    notifikasjonId = kalenderavtale.notifikasjonId,
+    opprettetTidpunkt = Instant.now(),
+    fristOpprettetTidspunkt = kalenderavtale.opprettetTidspunkt.toInstant(),
+    frist = null,
+    tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
+        konkret = konkretPåminnelseTidspunkt,
+        opprettetTidspunkt = kalenderavtale.opprettetTidspunkt,
+        frist = null,
+        startTidspunkt = kalenderavtale.startTidspunkt,
+    ),
+    eksterneVarsler = listOf(),
+    bestillingHendelseId = kalenderavtale.notifikasjonId,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
 suspend fun <H>BrukerRepository.brukerKlikket(
     notifikasjon: H,
     fnr: String = TEST_FNR_1,
