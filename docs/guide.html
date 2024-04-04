@@ -856,7 +856,7 @@ EMAIL  | {tittel} | {innhold}
                 <pre
                         class="highlight"
                 ><code><span class="k">mutation</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">kalenderavtaleOppdater</span><span class="p">(</span><span class="w">
+    </span><span class="n">oppdaterKalenderavtale</span><span class="p">(</span><span class="w">
         </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="s2">"$id"</span><span class="w">
         </span><span class="n">nyLenke</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://foo.bar"</span><span class="w">
         </span><span class="n">nyTekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello world"</span><span class="w">
@@ -877,7 +877,7 @@ EMAIL  | {tittel} | {innhold}
         </span><span class="p">}</span><span class="w">
     </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
         </span><span class="n">__typename</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">KalenderavtaleOppdaterVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">OppdaterKalenderavtaleVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
             </span><span class="n">id</span><span class="w">
         </span><span class="p">}</span><span class="w">
         </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -899,7 +899,7 @@ EMAIL  | {tittel} | {innhold}
                 <pre
                         class="highlight"
                 ><code><span class="k">mutation</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">kalenderavtaleOppdaterByEksternId</span><span class="p">(</span><span class="w">
+    </span><span class="n">oppdaterKalenderavtaleByEksternId</span><span class="p">(</span><span class="w">
         </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"$merkelapp"</span><span class="w">
         </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="s2">"$eksternId"</span><span class="w">
         </span><span class="n">nyTilstand</span><span class="p">:</span><span class="w"> </span><span class="n">ARBEIDSGIVER_HAR_GODTATT</span><span class="w">
@@ -921,7 +921,7 @@ EMAIL  | {tittel} | {innhold}
         </span><span class="p">}</span><span class="w">
     </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
         </span><span class="n">__typename</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">KalenderavtaleOppdaterVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">OppdaterKalenderavtaleVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
             </span><span class="n">id</span><span class="w">
         </span><span class="p">}</span><span class="w">
         </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">

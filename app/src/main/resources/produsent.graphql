@@ -441,8 +441,13 @@ type Mutation {
         """
         tilstand: KalenderavtaleTilstand
 
-
         eksterneVarsler: [EksterntVarselInput!]! = []
+
+        """
+        Her kan du spesifisere en påminnelse for kalenderavtalen.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        """
+        paaminnelse: PaaminnelseInput
 
         """
         Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
@@ -804,11 +809,11 @@ type Mutation {
     """
     Oppdater tilstand på en kalenderavtale.
     Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
-    Den nye tilstanden vises til brukeren.
+    Den nye tilstanden vises til brukeren. Dette kallet er ment for å oppdatere tilstand samt gi brukeren mer utfyllende informasjon når det blir kjent.
     Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
     Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
     """
-    kalenderavtaleOppdater(
+    oppdaterKalenderavtale(
         """
         ID-en som kalenderavtalen har. Den du fikk da du opprettet kalenderavtalen med `nyKalenderavtale`.
         """
@@ -816,7 +821,8 @@ type Mutation {
 
         """
         Ny tilstand for kalenderavtalen.
-        Denne er optional da det vil komme støtte for å oppdatere flere felt etterhvert.
+        Dersom ny tilstand settes til `AVLYST` vil vi stoppe eksterne varslinger som ikke allerede er sendt,
+        og kansellere registrerte påminnelser.
         """
         nyTilstand: KalenderavtaleTilstand
 
@@ -829,16 +835,6 @@ type Mutation {
         Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
         """
         nyLenke: String
-
-        """
-        Når avtalen starter.
-        """
-        nyttStartTidspunkt: ISO8601LocalDateTime
-
-        """
-        Når avtalen slutter.
-        """
-        nyttSluttTidspunkt: ISO8601LocalDateTime
 
         """
         Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
@@ -866,20 +862,28 @@ type Mutation {
         """
         Her kan dere oppgi eksterne varsler som skal sendes i forbindelse med oppdateringen.
         Disse varslene vil erstatte tidligere bestilte varsler som ikke er sendt enda.
-        Vi anbefaler dere å bruke denn i kombinasjon med idempoencyKey for å unngå å sende samme varsel flere ganger.
+        Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey for å unngå å sende samme varsel flere ganger.
         """
         eksterneVarsler: [EksterntVarselInput!]! = []
-    ): KalenderavtaleOppdaterResultat!
+
+        """
+        Her kan du spesifisere en påminnelse for kalenderavtalen.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        Dersom dere senere oppdaterer kalenderavtalen og setter den til AVLYST, vil vi kansellere registrerte påminnelser.
+        Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
+        """
+        paaminnelse: PaaminnelseInput
+    ): OppdaterKalenderavtaleResultat!
 
 
     """
     Oppdater tilstand på en kalenderavtale (identifisert ved ekstern id).
     Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
-    Den nye tilstanden vises til brukeren.
+    Den nye tilstanden vises til brukeren. Dette kallet er ment for å oppdatere tilstand samt gi brukeren mer utfyllende informasjon når det blir kjent.
     Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
     Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
     """
-    kalenderavtaleOppdaterByEksternId(
+    oppdaterKalenderavtaleByEksternId(
         """
         Merkelapp som kalenderavtalen er registrert med.
         """
@@ -892,8 +896,8 @@ type Mutation {
 
         """
         Ny tilstand for kalenderavtalen.
-        Denne er optional da det vil komme støtte for å oppdatere flere felt etterhvert.
-        Dersom ny tilstand settes til `AVLYST` vil vi stoppe eksterne varslinger som ikke allerede er sendt.
+        Dersom ny tilstand settes til `AVLYST` vil vi stoppe eksterne varslinger som ikke allerede er sendt,
+        og kansellere registrerte påminnelser.
         """
         nyTilstand: KalenderavtaleTilstand
 
@@ -906,16 +910,6 @@ type Mutation {
         Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
         """
         nyLenke: String
-
-        """
-        Når avtalen starter.
-        """
-        nyttStartTidspunkt: ISO8601LocalDateTime
-
-        """
-        Når avtalen slutter.
-        """
-        nyttSluttTidspunkt: ISO8601LocalDateTime
 
         """
         Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
@@ -946,7 +940,15 @@ type Mutation {
         Vi anbefaler dere å bruke denn i kombinasjon med idempoencyKey for å unngå å sende samme varsel flere ganger.
         """
         eksterneVarsler: [EksterntVarselInput!]! = []
-    ): KalenderavtaleOppdaterResultat!
+
+        """
+        Her kan du spesifisere en påminnelse for kalenderavtalen.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        Dersom dere senere oppdaterer kalenderavtalen og setter den til AVLYST, vil vi kansellere registrerte påminnelser.
+        Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
+        """
+        paaminnelse: PaaminnelseInput
+    ): OppdaterKalenderavtaleResultat!
 
     """
     Markerer en notifikasjon som slettet (soft delete).
@@ -1195,15 +1197,15 @@ type OppgaveUtsettFristVellykket {
     id: ID!
 }
 
-union KalenderavtaleOppdaterResultat =
-    | KalenderavtaleOppdaterVellykket
+union OppdaterKalenderavtaleResultat =
+    | OppdaterKalenderavtaleVellykket
     | UgyldigKalenderavtale
     | UgyldigMerkelapp
     | Konflikt
     | NotifikasjonFinnesIkke
     | UkjentProdusent
 
-type KalenderavtaleOppdaterVellykket {
+type OppdaterKalenderavtaleVellykket {
     """
     ID-en til kalenderavtalen du oppdaterte.
     """
@@ -1280,7 +1282,7 @@ input PaaminnelseInput {
 
     Hvis du sender `eksterneVarsler`, så vil vi sjekke at vi har
     mulighet for å sende dem før fristen, ellers får du feil ved
-    opprettelse av oppgaven.
+    opprettelse av oppgaven/kalenderavtalen.
     """
     tidspunkt: PaaminnelseTidspunktInput!
     eksterneVarsler: [PaaminnelseEksterntVarselInput!]! = []
@@ -1292,14 +1294,20 @@ input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
     """
     konkret: ISO8601LocalDateTime
     """
-    Relativ til når oppgaven er angitt som opprettet. Altså X duration etter opprettelse.
+    Relativ til når oppgaven/kalenderavtalen er angitt som opprettet. Altså X duration etter opprettelse.
     Ved utsatt frist er den relativ til tidspunktet fristen ble utsatt.
     """
     etterOpprettelse: ISO8601Duration
+
     """
-    Relativ til oppgavens frist, alts X duration før frist. Anses som ugyldig dersom oppgaven ikke har frist.
+    Relativ til oppgavens frist, altså X duration før frist. Anses som ugyldig dersom det ikke er en oppgave med frist.
     """
     foerFrist: ISO8601Duration
+
+    """
+    Relativ til kalenderavtalens startTidspunkt, altså X duration før startTidspunkt. Anses som ugyldig dersom det ikke er en kalenderavtale.
+    """
+    foerStartTidspunkt: ISO8601Duration
 }
 
 input PaaminnelseEksterntVarselInput @ExactlyOneFieldGiven {
@@ -1725,6 +1733,7 @@ type NyOppgaveVellykket {
 type NyKalenderavtaleVellykket {
     id: ID!
     eksterneVarsler: [NyEksterntVarselResultat!]!
+    paaminnelse: PaaminnelseResultat
 }
 
 type PaaminnelseResultat {
