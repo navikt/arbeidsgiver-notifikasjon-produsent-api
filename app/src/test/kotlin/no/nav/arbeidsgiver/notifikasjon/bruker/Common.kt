@@ -312,10 +312,35 @@ suspend fun BrukerRepository.påminnelseOpprettet(
     tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
         konkret = konkretPåminnelseTidspunkt,
         opprettetTidspunkt = oppgave.opprettetTidspunkt,
-        frist = oppgave.frist
+        frist = oppgave.frist,
+        startTidspunkt = null,
     ),
     eksterneVarsler = listOf(),
     bestillingHendelseId = oppgave.notifikasjonId,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
+suspend fun BrukerRepository.påminnelseOpprettet(
+    kalenderavtale: HendelseModel.KalenderavtaleOpprettet,
+    konkretPåminnelseTidspunkt: LocalDateTime
+) = HendelseModel.PåminnelseOpprettet(
+    virksomhetsnummer = kalenderavtale.virksomhetsnummer,
+    hendelseId = UUID.randomUUID(),
+    produsentId = kalenderavtale.produsentId,
+    kildeAppNavn = kalenderavtale.kildeAppNavn,
+    notifikasjonId = kalenderavtale.notifikasjonId,
+    opprettetTidpunkt = Instant.now(),
+    fristOpprettetTidspunkt = kalenderavtale.opprettetTidspunkt.toInstant(),
+    frist = null,
+    tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
+        konkret = konkretPåminnelseTidspunkt,
+        opprettetTidspunkt = kalenderavtale.opprettetTidspunkt,
+        frist = null,
+        startTidspunkt = kalenderavtale.startTidspunkt,
+    ),
+    eksterneVarsler = listOf(),
+    bestillingHendelseId = kalenderavtale.notifikasjonId,
 ).also {
     oppdaterModellEtterHendelse(it)
 }

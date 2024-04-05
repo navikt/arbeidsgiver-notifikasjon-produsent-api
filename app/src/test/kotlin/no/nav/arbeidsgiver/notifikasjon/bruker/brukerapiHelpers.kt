@@ -77,6 +77,7 @@ fun TestApplicationEngine.queryNotifikasjonerJson(): TestApplicationResponse = b
                     merkelapp
                     opprettetTidspunkt
                     sorteringTidspunkt
+                    paaminnelseTidspunkt
                     id
                     startTidspunkt
                     sluttTidspunkt

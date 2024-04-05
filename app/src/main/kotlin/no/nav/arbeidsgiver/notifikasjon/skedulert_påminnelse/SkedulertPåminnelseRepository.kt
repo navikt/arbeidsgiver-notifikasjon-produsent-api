@@ -1,25 +1,31 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.*
-import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Oppgavetilstand.*
+import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Notifikasjontilstand.*
 import java.sql.Connection
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 
-private typealias OppgaveId = UUID
+private typealias NotifikasjonId = UUID
 private typealias BestillingHendelseId = UUID
 
-enum class Oppgavetilstand {
-    OPPGAVE_AKTIV, OPPGAVE_UTFØRT, OPPGAVE_SLETTET
+enum class Notifikasjontilstand {
+    NOTIFIKASJON_AKTIV,
+    OPPGAVE_UTFØRT,
+    KALENDERAVTALE_AVLYST,
+    NOTIFIKASJON_SLETTET,
 }
 
 class SkedulertPåminnelseRepository : AutoCloseable {
     data class SkedulertPåminnelse(
-        val oppgaveId: OppgaveId,
-        val fristOpprettetTidspunkt: Instant,
+        val notifikasjonId: NotifikasjonId,
+        val hendelseOpprettetTidspunkt: Instant,
         val frist: LocalDate?,
+        val startTidspunkt: LocalDateTime?,
         val tidspunkt: HendelseModel.PåminnelseTidspunkt,
         val eksterneVarsler: List<HendelseModel.EksterntVarsel>,
         val virksomhetsnummer: String,
@@ -29,14 +35,14 @@ class SkedulertPåminnelseRepository : AutoCloseable {
 
     private val database = EphemeralDatabase("skedulert_paaminnelse",
         """
-        create table oppgaver (
-            oppgave_id text not null primary key,
+        create table notifikasjoner (
+            notifikasjon_id text not null primary key,
             tilstand text not null,
             merkelapp text not null,
             grupperingsid text
         );
         
-        create index oppgaver_koordinat_idx on oppgaver(merkelapp, grupperingsid);
+        create index notifikasjoner_koordinat_idx on notifikasjoner(merkelapp, grupperingsid);
         
         create table slettede_saker(
             merkelapp text not null,
@@ -52,9 +58,10 @@ class SkedulertPåminnelseRepository : AutoCloseable {
         create table bestillinger(
             bestilling_id text not null primary key,
             paaminnelsestidspunkt text not null,
-            oppgave_id text references oppgaver(oppgave_id),
+            notifikasjon_id text references notifikasjoner(notifikasjon_id),
             frist_opprettet_tidspunkt text not null,
             frist text null,
+            start_tidspunkt text null,
             tidspunkt_json text not null,
             eksterne_varsler_json text not null,
             virksomhetsnummer text not null,
@@ -62,7 +69,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
         );
         
         create index bestillinger_utsendelse_idx on bestillinger(paaminnelsestidspunkt);
-        create index bestillinger_oppgave_id_idx on bestillinger(oppgave_id); 
+        create index bestillinger_notifikasjon_id_idx on bestillinger(notifikasjon_id); 
         """.trimIndent()
     )
 
@@ -75,14 +82,14 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                     delete from bestillinger
                     where 
                         paaminnelsestidspunkt <= ?
-                        and oppgave_id in (
-                            select oppgave_id
-                            from oppgaver
+                        and notifikasjon_id in (
+                            select notifikasjon_id
+                            from notifikasjoner
                             left join slettede_saker on (
-                                oppgaver.merkelapp = slettede_saker.merkelapp
-                                and oppgaver.grupperingsid = slettede_saker.grupperingsid
+                                notifikasjoner.merkelapp = slettede_saker.merkelapp
+                                and notifikasjoner.grupperingsid = slettede_saker.grupperingsid
                             )
-                            where slettede_saker.grupperingsid is null and tilstand = '$OPPGAVE_AKTIV' 
+                            where slettede_saker.grupperingsid is null and tilstand = '$NOTIFIKASJON_AKTIV' 
                         )
                     returning *
                 """.trimIndent(),
@@ -94,9 +101,10 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                     while (next()) {
                         resultat.add(
                             SkedulertPåminnelse(
-                                oppgaveId = getUUID("oppgave_id"),
-                                fristOpprettetTidspunkt = getInstant("frist_opprettet_tidspunkt"),
+                                notifikasjonId = getUUID("notifikasjon_id"),
+                                hendelseOpprettetTidspunkt = getInstant("frist_opprettet_tidspunkt"),
                                 frist = getLocalDateOrNull("frist"),
+                                startTidspunkt = getLocalDateTimeOrNull("start_tidspunkt"),
                                 tidspunkt = getJson("tidspunkt_json"),
                                 eksterneVarsler = getJson("eksterne_varsler_json"),
                                 virksomhetsnummer = getString("virksomhetsnummer"),
@@ -125,30 +133,44 @@ class SkedulertPåminnelseRepository : AutoCloseable {
     fun processHendelse(hendelse: HendelseModel.Hendelse) {
         when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> database.useTransaction {
-                oppgaveOpprettet(hendelse)
+                executeUpdate(
+                    """
+                insert into notifikasjoner (notifikasjon_id, merkelapp, tilstand, grupperingsid)
+                values (?, ?, ?, ?)
+                on conflict (notifikasjon_id) do nothing
+                """.trimIndent()
+                ) {
+                    setUUID(hendelse.aggregateId)
+                    setText(hendelse.merkelapp)
+                    setEnum(NOTIFIKASJON_AKTIV)
+                    setTextOrNull(hendelse.grupperingsid)
+                }
 
                 bestillPåminnelse(
                     hendelse = hendelse,
                     påminnelse = hendelse.påminnelse,
                     fristOpprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
                     frist = hendelse.frist,
+                    startTidspunkt = null,
                 )
             }
 
             is HendelseModel.FristUtsatt -> database.useTransaction {
-                markerPåminnelserLukket(oppgaveId = hendelse.notifikasjonId)
+                markerPåminnelserLukket(notifikasjonId = hendelse.notifikasjonId)
                 when (hentOppgavetilstand(hendelse.notifikasjonId)) {
-                    OPPGAVE_AKTIV -> {
+                    NOTIFIKASJON_AKTIV -> {
                         bestillPåminnelse(
                             hendelse = hendelse,
                             påminnelse = hendelse.påminnelse,
                             frist = hendelse.frist,
+                            startTidspunkt = null,
                             fristOpprettetTidspunkt = hendelse.fristEndretTidspunkt,
                         )
                     }
 
                     OPPGAVE_UTFØRT,
-                    OPPGAVE_SLETTET,
+                    KALENDERAVTALE_AVLYST,
+                    NOTIFIKASJON_SLETTET,
                     null -> {
                         /* noop */
                     }
@@ -160,11 +182,11 @@ class SkedulertPåminnelseRepository : AutoCloseable {
             }
 
             is HendelseModel.OppgaveUtført -> database.useTransaction {
-                settOppgavetilstand(hendelse.notifikasjonId, OPPGAVE_UTFØRT)
+                settNotifikasjontilstand(hendelse.notifikasjonId, OPPGAVE_UTFØRT)
             }
 
             is HendelseModel.OppgaveUtgått -> database.useTransaction {
-                markerPåminnelserLukket(oppgaveId = hendelse.notifikasjonId)
+                markerPåminnelserLukket(notifikasjonId = hendelse.notifikasjonId)
             }
 
             is HendelseModel.SoftDelete -> database.useTransaction {
@@ -183,9 +205,57 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                 )
             }
 
+            is HendelseModel.KalenderavtaleOpprettet -> database.useTransaction {
+                executeUpdate(
+                    """
+                insert into notifikasjoner (notifikasjon_id, merkelapp, tilstand, grupperingsid)
+                values (?, ?, ?, ?)
+                on conflict (notifikasjon_id) do nothing
+                """.trimIndent()
+                ) {
+                    setUUID(hendelse.aggregateId)
+                    setText(hendelse.merkelapp)
+                    setEnum(NOTIFIKASJON_AKTIV)
+                    setTextOrNull(hendelse.grupperingsid)
+                }
+
+                bestillPåminnelse(
+                    hendelse = hendelse,
+                    påminnelse = hendelse.påminnelse,
+                    startTidspunkt = hendelse.startTidspunkt,
+                    fristOpprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
+                    frist = null,
+                )
+            }
+
+            is HendelseModel.KalenderavtaleOppdatert -> database.useTransaction {
+                if (hendelse.tilstand == KalenderavtaleTilstand.AVLYST) {
+                    settNotifikasjontilstand(hendelse.notifikasjonId, KALENDERAVTALE_AVLYST)
+                    markerPåminnelserLukket(notifikasjonId = hendelse.notifikasjonId)
+                }
+
+                if (hendelse.startTidspunkt != null) {
+                    /**
+                     * I skrivende stund er det er ikke mulig å endre starttidspunkt på en kalenderavtale.
+                     * Dersom vi åpner for det må det dokumenteres i spesifikasjonen at eksisterende påminnelser blir kansellert,
+                     * og at man må angi nye dersom man ønsker det.
+                     */
+                    markerPåminnelserLukket(notifikasjonId = hendelse.notifikasjonId)
+                }
+
+                if (hendelse.påminnelse != null) {
+                    markerPåminnelserLukket(notifikasjonId = hendelse.notifikasjonId)
+                    bestillPåminnelse(
+                        hendelse = hendelse,
+                        påminnelse = hendelse.påminnelse,
+                        startTidspunkt = hendelse.startTidspunkt, // kan være null, representerer kun det evt. endrede tidspunktet
+                        fristOpprettetTidspunkt = hendelse.opprettetTidspunkt,
+                        frist = null,
+                    )
+                }
+            }
+
             is HendelseModel.BeskjedOpprettet,
-            is HendelseModel.KalenderavtaleOpprettet,
-            is HendelseModel.KalenderavtaleOppdatert,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.SakOpprettet,
             is HendelseModel.NyStatusSak,
@@ -203,19 +273,19 @@ class SkedulertPåminnelseRepository : AutoCloseable {
         if (merkelapp != null && grupperingsid != null) {
             processSakSlettet(merkelapp, grupperingsid)
         } else {
-            settOppgavetilstand(aggregateId, OPPGAVE_SLETTET)
+            settNotifikasjontilstand(aggregateId, NOTIFIKASJON_SLETTET)
         }
     }
 
-    private fun Connection.markerPåminnelserLukket(oppgaveId: UUID) {
+    private fun Connection.markerPåminnelserLukket(notifikasjonId: UUID) {
         val slettedeBestillingsIder = executeQuery(
             """
                 delete from bestillinger
-                where oppgave_id = ?
+                where notifikasjon_id = ?
                 returning bestilling_id
             """.trimIndent(),
             setup = {
-                setUUID(oppgaveId)
+                setUUID(notifikasjonId)
             },
             result = {
                 resultAsList {
@@ -256,12 +326,12 @@ class SkedulertPåminnelseRepository : AutoCloseable {
     private fun Connection.processSakSlettet(merkelapp: String, grupperingsid: String) {
         executeUpdate(
             """
-                update oppgaver
+                update notifikasjoner
                 set tilstand = ?
                 where merkelapp = ? and grupperingsid = ?
             """.trimIndent()
         ) {
-            setEnum(OPPGAVE_SLETTET)
+            setEnum(NOTIFIKASJON_SLETTET)
             setText(merkelapp)
             setText(grupperingsid)
         }
@@ -281,42 +351,42 @@ class SkedulertPåminnelseRepository : AutoCloseable {
     private fun Connection.oppgaveOpprettet(oppgaveOpprettet: HendelseModel.OppgaveOpprettet) {
         executeUpdate(
             """
-                insert into oppgaver (oppgave_id, merkelapp, tilstand, grupperingsid)
+                insert into notifikasjoner (notifikasjon_id, merkelapp, tilstand, grupperingsid)
                 values (?, ?, ?, ?)
-                on conflict (oppgave_id) do nothing
+                on conflict (notifikasjon_id) do nothing
             """.trimIndent()
         ) {
             setUUID(oppgaveOpprettet.aggregateId)
             setText(oppgaveOpprettet.merkelapp)
-            setEnum(OPPGAVE_AKTIV)
+            setEnum(NOTIFIKASJON_AKTIV)
             setTextOrNull(oppgaveOpprettet.grupperingsid)
         }
     }
 
-    private fun Connection.settOppgavetilstand(oppgaveId: OppgaveId, tilstand: Oppgavetilstand) {
+    private fun Connection.settNotifikasjontilstand(notifikasjonId: NotifikasjonId, tilstand: Notifikasjontilstand) {
         executeUpdate(
             """
-                update oppgaver
+                update notifikasjoner
                 set tilstand = case when tilstand = ? then tilstand else ? end
-                where oppgave_id = ?
+                where notifikasjon_id = ?
             """.trimIndent()
         ) {
-            setEnum(OPPGAVE_SLETTET)
+            setEnum(NOTIFIKASJON_SLETTET)
             setEnum(tilstand)
-            setUUID(oppgaveId)
+            setUUID(notifikasjonId)
         }
     }
 
-    private fun Connection.hentOppgavetilstand(oppgaveId: UUID): Oppgavetilstand? {
+    private fun Connection.hentOppgavetilstand(oppgaveId: UUID): Notifikasjontilstand? {
         return executeQuery(
             """
-            select tilstand from oppgaver where oppgave_id = ?
+            select tilstand from notifikasjoner where notifikasjon_id = ?
             """.trimIndent(),
             setup = {
                 setUUID(oppgaveId)
             },
             result = {
-                if (next()) getEnum<Oppgavetilstand>("tilstand") else null
+                if (next()) getEnum<Notifikasjontilstand>("tilstand") else null
             }
         )
     }
@@ -326,6 +396,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
         påminnelse: HendelseModel.Påminnelse?,
         fristOpprettetTidspunkt: Instant,
         frist: LocalDate?,
+        startTidspunkt: LocalDateTime?,
     ) {
         if (påminnelse == null) {
             return
@@ -334,22 +405,24 @@ class SkedulertPåminnelseRepository : AutoCloseable {
         executeUpdate(
             """
             insert into bestillinger (
-                oppgave_id,
+                notifikasjon_id,
                 frist_opprettet_tidspunkt,
                 frist,
+                start_tidspunkt,
                 tidspunkt_json,
                 eksterne_varsler_json,
                 virksomhetsnummer,
                 produsent_id,
                 bestilling_id,
                 paaminnelsestidspunkt
-            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             on conflict (bestilling_id) do nothing
             """.trimIndent()
         ) {
             setUUID(hendelse.aggregateId)
             setInstant(fristOpprettetTidspunkt)
             setLocalDateOrNull(frist)
+            setLocalDateTimeOrNull(startTidspunkt)
             setJson(påminnelse.tidspunkt)
             setJson(påminnelse.eksterneVarsler)
             setText(hendelse.virksomhetsnummer)

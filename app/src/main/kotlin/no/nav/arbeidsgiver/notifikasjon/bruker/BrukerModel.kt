@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -87,6 +86,7 @@ object BrukerModel {
         val eksternId: String,
         val tilstand: Tilstand,
         val opprettetTidspunkt: OffsetDateTime,
+        val paaminnelseTidspunkt: OffsetDateTime?,
         val startTidspunkt: LocalDateTime,
         val sluttTidspunkt: LocalDateTime?,
         val lokasjon: Lokasjon?,
@@ -99,7 +99,7 @@ object BrukerModel {
         )
 
         override val sorteringTidspunkt: OffsetDateTime
-            get() = startTidspunkt.atOslo().toOffsetDateTime()
+            get() = paaminnelseTidspunkt ?: opprettetTidspunkt
 
         enum class Tilstand {
             VENTER_SVAR_FRA_ARBEIDSGIVER,

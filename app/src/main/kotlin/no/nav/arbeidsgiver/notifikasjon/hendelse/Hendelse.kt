@@ -90,19 +90,21 @@ object HendelseModel {
             fun createAndValidateKonkret(
                 konkret: LocalDateTime,
                 opprettetTidspunkt: OffsetDateTime,
-                frist: LocalDate?
+                frist: LocalDate?,
+                startTidspunkt: LocalDateTime?,
             ) =
                 Konkret(konkret, konkret.inOsloAsInstant()).apply {
-                    validerGrenseVerdier(opprettetTidspunkt, frist)
+                    validerGrenseVerdier(opprettetTidspunkt, frist, startTidspunkt)
                 }
 
             fun createAndValidateEtterOpprettelse(
                 etterOpprettelse: ISO8601Period,
                 opprettetTidspunkt: OffsetDateTime,
-                frist: LocalDate?
+                frist: LocalDate?,
+                startTidspunkt: LocalDateTime?,
             ) =
                 EtterOpprettelse(etterOpprettelse, (opprettetTidspunkt + etterOpprettelse).toInstant()).apply {
-                    validerGrenseVerdier(opprettetTidspunkt, frist)
+                    validerGrenseVerdier(opprettetTidspunkt, frist, startTidspunkt)
                 }
 
             fun createAndValidateFørFrist(
@@ -115,18 +117,35 @@ object HendelseModel {
                 }
 
                 return FørFrist(førFrist, (LocalDateTime.of(frist, LocalTime.MAX) - førFrist).inOsloAsInstant()).apply {
-                    validerGrenseVerdier(opprettetTidspunkt, frist)
+                    validerGrenseVerdier(opprettetTidspunkt, frist, null)
+                }
+            }
+
+            fun createAndValidateFørStartTidspunkt(
+                førStartTidpunkt: ISO8601Period,
+                opprettetTidspunkt: OffsetDateTime,
+                startTidspunkt: LocalDateTime?
+            ): FørStartTidspunkt {
+                if (startTidspunkt == null) {
+                    throw UgyldigPåminnelseTidspunktException("foerStartTidspunkt er kun gyldig på kalenderavtaler")
+                }
+
+                return FørStartTidspunkt(førStartTidpunkt, (startTidspunkt - førStartTidpunkt).inOsloAsInstant()).apply {
+                    validerGrenseVerdier(opprettetTidspunkt, null, startTidspunkt)
                 }
             }
 
         }
 
-        fun validerGrenseVerdier(opprettetTidspunkt: OffsetDateTime, frist: LocalDate?) {
+        fun validerGrenseVerdier(opprettetTidspunkt: OffsetDateTime, frist: LocalDate?, startTidspunkt: LocalDateTime?) {
             if (påminnelseTidspunkt < opprettetTidspunkt.toInstant()) {
                 throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være før oppgaven er opprettet")
             }
             if (frist != null && LocalDateTime.of(frist, LocalTime.MAX).inOsloAsInstant() < påminnelseTidspunkt) {
                 throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være etter fristen på oppgaven")
+            }
+            if (startTidspunkt != null && startTidspunkt.inOsloAsInstant() < påminnelseTidspunkt) {
+                throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være etter startTidspunkt på kalenderavtalen")
             }
         }
 
@@ -152,6 +171,14 @@ object HendelseModel {
         data class FørFrist(
             @JsonProperty("foerFrist")
             val førFrist: ISO8601Period,
+            @JsonProperty("paaminnelseTidspunkt")
+            override val påminnelseTidspunkt: Instant,
+        ) : PåminnelseTidspunkt
+
+        @JsonTypeName("PaaminnelseTidspunkt.FoerStartTidspunkt")
+        data class FørStartTidspunkt(
+            @JsonProperty("foerStartTidspunkt")
+            val førStartTidpunkt: ISO8601Period,
             @JsonProperty("paaminnelseTidspunkt")
             override val påminnelseTidspunkt: Instant,
         ) : PåminnelseTidspunkt
