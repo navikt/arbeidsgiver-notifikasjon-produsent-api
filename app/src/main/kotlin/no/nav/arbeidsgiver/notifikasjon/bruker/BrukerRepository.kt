@@ -204,6 +204,7 @@ class BrukerRepositoryImpl(
                     eksternId = getString("ekstern_id"),
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java),
                     id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa"),
                     startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },
@@ -814,6 +815,7 @@ class BrukerRepositoryImpl(
                     eksternId = getString("ekstern_id"),
                     virksomhetsnummer = getString("virksomhetsnummer"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java),
+                    paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java),
                     id = getUuid("id"),
                     klikketPaa = false, // trenger ikke klikket på i denne sammenheng
                     startTidspunkt = getString("start_tidspunkt").let { LocalDateTime.parse(it) },

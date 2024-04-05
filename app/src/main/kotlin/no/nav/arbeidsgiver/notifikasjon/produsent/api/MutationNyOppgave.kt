@@ -3,20 +3,13 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateEtterOpprettelse
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateFørFrist
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt.Companion.createAndValidateKonkret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.util.*
 
 internal class MutationNyOppgave(
@@ -73,122 +66,12 @@ internal class MutationNyOppgave(
                 påminnelse = paaminnelse?.tilDomene(
                     opprettetTidspunkt = metadata.opprettetTidspunkt,
                     frist = frist,
+                    startTidspunkt = null,
                     virksomhetsnummer = metadata.virksomhetsnummer,
                 ),
                 hardDelete = metadata.hardDelete?.tilHendelseModel(),
                 frist = frist,
                 sakId = sakId,
-            )
-        }
-    }
-
-    data class PaaminnelseInput(
-        val tidspunkt: PaaminnelseTidspunktInput,
-        val eksterneVarsler: List<PaaminnelseEksterntVarselInput>,
-    ) {
-        fun tilDomene(
-            opprettetTidspunkt: OffsetDateTime,
-            frist: LocalDate?,
-            virksomhetsnummer: String,
-        ) : HendelseModel.Påminnelse = HendelseModel.Påminnelse(
-            tidspunkt = tidspunkt.tilDomene(opprettetTidspunkt, frist),
-            eksterneVarsler = eksterneVarsler.map {
-                it.tilDomene(virksomhetsnummer)
-            }
-        )
-    }
-
-    data class PaaminnelseTidspunktInput(
-        val konkret: LocalDateTime?,
-        val etterOpprettelse: ISO8601Period?,
-        val foerFrist: ISO8601Period?,
-    ) {
-        fun tilDomene(
-            opprettetTidspunkt: OffsetDateTime,
-            frist: LocalDate?
-        ): HendelseModel.PåminnelseTidspunkt = when {
-            konkret != null -> createAndValidateKonkret(konkret, opprettetTidspunkt, frist)
-            etterOpprettelse != null -> createAndValidateEtterOpprettelse(etterOpprettelse, opprettetTidspunkt, frist)
-            foerFrist != null -> createAndValidateFørFrist(foerFrist, opprettetTidspunkt, frist)
-            else -> throw RuntimeException("Feil format")
-        }
-    }
-
-    class PaaminnelseEksterntVarselInput(
-        val sms: Sms?,
-        val epost: Epost?,
-        val altinntjeneste: Altinntjeneste?,
-    ) {
-        fun tilDomene(virksomhetsnummer: String): HendelseModel.EksterntVarsel =
-            when {
-                sms != null -> sms.tilDomene(virksomhetsnummer)
-                epost != null -> epost.tilDomene(virksomhetsnummer)
-                altinntjeneste != null -> altinntjeneste.tilDomene(virksomhetsnummer)
-                else -> error("graphql-validation failed, neither sms nor epost nor altinntjeneste defined")
-            }
-
-        class Sms(
-            val mottaker: EksterntVarselInput.Sms.Mottaker,
-            val smsTekst: String,
-            val sendevindu: EksterntVarselInput.Sendevindu,
-        ) {
-            fun tilDomene(virksomhetsnummer: String): HendelseModel.SmsVarselKontaktinfo {
-                if (mottaker.kontaktinfo != null) {
-                    return HendelseModel.SmsVarselKontaktinfo(
-                        varselId = UUID.randomUUID(),
-                        tlfnr = mottaker.kontaktinfo.tlf,
-                        fnrEllerOrgnr = virksomhetsnummer,
-                        smsTekst = smsTekst,
-                        sendevindu = sendevindu.somDomene,
-                        sendeTidspunkt = null,
-                    )
-                }
-                throw RuntimeException("mottaker-felt mangler for sms")
-            }
-        }
-        class Epost(
-            val mottaker: EksterntVarselInput.Epost.Mottaker,
-            val epostTittel: String,
-            val epostHtmlBody: String,
-            val sendevindu: EksterntVarselInput.Sendevindu,
-        ) {
-            fun tilDomene(virksomhetsnummer: String): HendelseModel.EpostVarselKontaktinfo {
-                if (mottaker.kontaktinfo != null) {
-                    return HendelseModel.EpostVarselKontaktinfo(
-                        varselId = UUID.randomUUID(),
-                        epostAddr = mottaker.kontaktinfo.epostadresse,
-                        fnrEllerOrgnr = virksomhetsnummer,
-                        tittel = epostTittel,
-                        htmlBody = epostHtmlBody,
-                        sendevindu = sendevindu.somDomene,
-                        sendeTidspunkt = null,
-                    )
-                }
-                throw RuntimeException("mottaker mangler for epost")
-            }
-        }
-        data class Altinntjeneste(
-            val mottaker: Mottaker,
-            val tittel: String,
-            val innhold: String,
-            val sendevindu: EksterntVarselInput.Sendevindu,
-        ) {
-            fun tilDomene(virksomhetsnummer: String): HendelseModel.AltinntjenesteVarselKontaktinfo {
-                return HendelseModel.AltinntjenesteVarselKontaktinfo(
-                    varselId = UUID.randomUUID(),
-                    serviceCode = mottaker.serviceCode,
-                    serviceEdition = mottaker.serviceEdition,
-                    virksomhetsnummer = virksomhetsnummer,
-                    tittel = tittel.ensureSuffix(". "),
-                    innhold = innhold,
-                    sendevindu = sendevindu.somDomene,
-                    sendeTidspunkt = null
-                )
-            }
-
-            data class Mottaker(
-                val serviceCode: String,
-                val serviceEdition: String,
             )
         }
     }

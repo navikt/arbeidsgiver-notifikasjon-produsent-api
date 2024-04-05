@@ -35,7 +35,7 @@ internal sealed class Error {
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationNyStatusSak.NyStatusSakResultat,
-        MutationKalenderavtale.KalenderavtaleOppdaterResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
     @JsonTypeName("UkjentProdusent")
     data class UkjentProdusent(
@@ -54,7 +54,7 @@ internal sealed class Error {
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationNySak.NySakResultat,
         MutationNyStatusSak.NyStatusSakResultat,
-        MutationKalenderavtale.KalenderavtaleOppdaterResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
     @JsonTypeName("UgyldigMottaker")
     data class UgyldigMottaker(
@@ -70,7 +70,7 @@ internal sealed class Error {
         Error(),
         MutationNyStatusSak.NyStatusSakResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
-        MutationKalenderavtale.KalenderavtaleOppdaterResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
     @JsonTypeName("DuplikatEksternIdOgMerkelapp")
     data class DuplikatEksternIdOgMerkelapp(
@@ -105,7 +105,7 @@ internal sealed class Error {
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         QueryNotifikasjoner.HentNotifikasjonResultat,
-        MutationKalenderavtale.KalenderavtaleOppdaterResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
     @JsonTypeName("UkjentRolle")
     data class UkjentRolle(
@@ -144,7 +144,7 @@ internal sealed class Error {
         override val feilmelding: String,
     ) : Error(),
         MutationKalenderavtale.NyKalenderavtaleResultat,
-        MutationKalenderavtale.KalenderavtaleOppdaterResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
 }
 
