@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.*
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -93,6 +94,8 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse.erDigitalt shouldBe true
                         hendelse.hardDelete shouldBe instanceOf(HendelseModel.LocalDateTimeOrDuration.LocalDateTime::class)
                         hendelse.eksterneVarsler shouldNot beEmpty()
+                        hendelse.påminnelse shouldNot beNull()
+                        hendelse.påminnelse!!.eksterneVarsler shouldNot beEmpty()
                     }
                 }
 
@@ -120,16 +123,18 @@ class KalenderavtaleTests : DescribeSpec({
                         )
                         it.digitalt shouldBe true
                         it.eksterneVarsler shouldNot beEmpty()
+                        it.påminnelseEksterneVarsler shouldNot beEmpty()
                     }
                 }
             }
         }
 
-        context("kalenderavtaleOppdater") {
+        context("oppdaterKalenderavtale") {
             val idempotenceKey = "123"
-            engine.kalenderavtaleOppdater(
+            engine.oppdaterKalenderavtale(
                 id = nyKalenderavtale.id,
                 idempotenceKey = idempotenceKey,
+                nyTilstand = ARBEIDSGIVER_HAR_GODTATT,
             ).let { response ->
                 it("status is 200 OK") {
                     response.status() shouldBe HttpStatusCode.OK
@@ -137,11 +142,11 @@ class KalenderavtaleTests : DescribeSpec({
                 it("response inneholder ikke feil") {
                     response.getGraphqlErrors() should beEmpty()
                 }
-                lateinit var oppdaterVellykket: MutationKalenderavtale.KalenderavtaleOppdaterVellykket
+                lateinit var oppdaterVellykket: MutationKalenderavtale.OppdaterKalenderavtaleVellykket
                 it("respons inneholder forventet data") {
                     oppdaterVellykket =
-                        response.getTypedContent<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>("kalenderavtaleOppdater")
-                    oppdaterVellykket should beOfType<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>()
+                        response.getTypedContent<MutationKalenderavtale.OppdaterKalenderavtaleVellykket>("oppdaterKalenderavtale")
+                    oppdaterVellykket should beOfType<MutationKalenderavtale.OppdaterKalenderavtaleVellykket>()
                 }
                 it("sends message to kafka") {
                     kafkaProducer.hendelser.removeLast().also { hendelse ->
@@ -151,8 +156,6 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse.tilstand shouldBe HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT
                         hendelse.lenke shouldBe "https://foo.bar"
                         hendelse.tekst shouldBe "hello world"
-                        hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                        hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                         hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
                             postnummer = "1234",
                             poststed = "Kneika",
@@ -161,6 +164,8 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse.erDigitalt shouldBe true
                         hendelse.hardDelete shouldBe instanceOf(HendelseModel.HardDeleteUpdate::class)
                         hendelse.eksterneVarsler shouldNot beEmpty()
+                        hendelse.påminnelse shouldNot beNull()
+                        hendelse.påminnelse!!.eksterneVarsler shouldNot beEmpty()
                     }
                 }
                 it("updates produsent modell") {
@@ -186,25 +191,27 @@ class KalenderavtaleTests : DescribeSpec({
                         )
                         it.digitalt shouldBe true
                         it.eksterneVarsler shouldNot beEmpty()
+                        it.påminnelseEksterneVarsler shouldNot beEmpty()
                     }
                 }
             }
 
             context("samme forespørsel med samme idempotensnøkkel gir samme svar") {
-                engine.kalenderavtaleOppdater(
+                engine.oppdaterKalenderavtale(
                     id = nyKalenderavtale.id,
                     idempotenceKey = idempotenceKey,
+                    AVLYST
                 ).let { response ->
                     it("response er vellykket") {
-                        response.getTypedContent<String>("kalenderavtaleOppdater/__typename") shouldBe "KalenderavtaleOppdaterVellykket"
+                        response.getTypedContent<String>("oppdaterKalenderavtale/__typename") shouldBe "OppdaterKalenderavtaleVellykket"
                     }
                 }
             }
         }
 
-        context("kalenderavtaleOppdaterByEksternId") {
+        context("oppdaterKalenderavtaleByEksternId") {
             val idempotenceKey = "321"
-            engine.kalenderavtaleOppdaterByEksternId(merkelapp, eksternId).let { response ->
+            engine.oppdaterKalenderavtaleByEksternId(merkelapp, eksternId, ARBEIDSGIVER_VIL_AVLYSE).let { response ->
                 it("status is 200 OK") {
                     response.status() shouldBe HttpStatusCode.OK
                 }
@@ -212,11 +219,11 @@ class KalenderavtaleTests : DescribeSpec({
                     response.getGraphqlErrors() should beEmpty()
                 }
 
-                lateinit var oppdatertByEksternId: MutationKalenderavtale.KalenderavtaleOppdaterVellykket
+                lateinit var oppdatertByEksternId: MutationKalenderavtale.OppdaterKalenderavtaleVellykket
                 it("respons inneholder forventet data") {
                     oppdatertByEksternId =
-                        response.getTypedContent<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>("kalenderavtaleOppdaterByEksternId")
-                    oppdatertByEksternId should beOfType<MutationKalenderavtale.KalenderavtaleOppdaterVellykket>()
+                        response.getTypedContent<MutationKalenderavtale.OppdaterKalenderavtaleVellykket>("oppdaterKalenderavtaleByEksternId")
+                    oppdatertByEksternId should beOfType<MutationKalenderavtale.OppdaterKalenderavtaleVellykket>()
                 }
 
                 it("sends message to kafka") {
@@ -225,6 +232,8 @@ class KalenderavtaleTests : DescribeSpec({
                         hendelse as HendelseModel.KalenderavtaleOppdatert
                         hendelse.notifikasjonId shouldBe oppdatertByEksternId.id
                         hendelse.eksterneVarsler shouldNot beEmpty()
+                        hendelse.påminnelse shouldNot beNull()
+                        hendelse.påminnelse!!.eksterneVarsler shouldNot beEmpty()
                     }
                 }
 
@@ -241,7 +250,7 @@ class KalenderavtaleTests : DescribeSpec({
                         it.grupperingsid shouldBe grupperingsid
                         it.lenke shouldBe "https://foo.bar"
                         it.eksternId shouldBe eksternId
-                        it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
+                        it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_VIL_AVLYSE
                         it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
                         it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
                         it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
@@ -251,18 +260,20 @@ class KalenderavtaleTests : DescribeSpec({
                         )
                         it.digitalt shouldBe true
                         it.eksterneVarsler shouldNot beEmpty()
+                        it.påminnelseEksterneVarsler shouldNot beEmpty()
                     }
                 }
             }
 
             context("samme forespørsel med samme idempotensnøkkel gir samme svar") {
-                engine.kalenderavtaleOppdaterByEksternId(
+                engine.oppdaterKalenderavtaleByEksternId(
                     merkelapp = merkelapp,
                     eksternId = eksternId,
                     idempotenceKey = idempotenceKey,
+                    nyTilstand = AVLYST
                 ).let { response ->
                     it("response er vellykket") {
-                        response.getTypedContent<String>("kalenderavtaleOppdaterByEksternId/__typename") shouldBe "KalenderavtaleOppdaterVellykket"
+                        response.getTypedContent<String>("oppdaterKalenderavtaleByEksternId/__typename") shouldBe "OppdaterKalenderavtaleVellykket"
                     }
                 }
             }
@@ -285,43 +296,6 @@ class KalenderavtaleTests : DescribeSpec({
                 it("respons inneholder forventet data") {
                     val valideringsfeil =
                         it.getTypedContent<Error.UgyldigKalenderavtale>("nyKalenderavtale")
-                    valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
-                }
-            }
-
-            engine.kalenderavtaleOppdater(
-                id = nyKalenderavtale.id,
-                startTidspunkt = "2024-10-12T08:20:50.52",
-                sluttTidspunkt = "2024-10-12T07:20:50.52",
-            ).let { response ->
-                it("status is 200 OK") {
-                    response.status() shouldBe HttpStatusCode.OK
-                }
-                it("response inneholder ikke feil") {
-                    response.getGraphqlErrors() should beEmpty()
-                }
-                it("respons inneholder forventet data") {
-                    val valideringsfeil =
-                        response.getTypedContent<Error.UgyldigKalenderavtale>("kalenderavtaleOppdater")
-                    valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
-                }
-            }
-
-            engine.kalenderavtaleOppdaterByEksternId(
-                eksternId = eksternId,
-                merkelapp = merkelapp,
-                startTidspunkt = "2024-10-12T08:20:50.52",
-                sluttTidspunkt = "2024-10-12T07:20:50.52",
-            ).let { response ->
-                it("status is 200 OK") {
-                    response.status() shouldBe HttpStatusCode.OK
-                }
-                it("response inneholder ikke feil") {
-                    response.getGraphqlErrors() should beEmpty()
-                }
-                it("respons inneholder forventet data") {
-                    val valideringsfeil =
-                        response.getTypedContent<Error.UgyldigKalenderavtale>("kalenderavtaleOppdaterByEksternId")
                     valideringsfeil should beOfType<Error.UgyldigKalenderavtale>()
                 }
             }
@@ -384,6 +358,22 @@ private fun TestApplicationEngine.nyKalenderavtale(
                         tittel: "bar"
                     }
                 }]
+                paaminnelse: {
+                    tidspunkt: {
+                        foerStartTidspunkt: "PT24H"
+                    }
+                    eksterneVarsler: [{
+                        altinntjeneste: {
+                            sendevindu: LOEPENDE
+                            mottaker: {
+                                serviceCode: "5441"
+                                serviceEdition: "1"
+                            }
+                            innhold: "baz"
+                            tittel: "buz"
+                        }
+                    }]
+                }
                 hardDelete: {
                   den: "2019-10-13T07:20:50.52"
                 }
@@ -403,22 +393,19 @@ private fun TestApplicationEngine.nyKalenderavtale(
     """.trimIndent()
 )
 
-private fun TestApplicationEngine.kalenderavtaleOppdater(
+private fun TestApplicationEngine.oppdaterKalenderavtale(
     id: UUID,
     idempotenceKey: String = "1234",
-    startTidspunkt: String = "2024-10-12T07:20:50.52",
-    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
+    nyTilstand: MutationKalenderavtale.KalenderavtaleTilstand,
 ) = produsentApi(
     """
         mutation {
-            kalenderavtaleOppdater(
+            oppdaterKalenderavtale(
                 id: "$id"
                 idempotencyKey: "$idempotenceKey"
                 nyLenke: "https://foo.bar"
                 nyTekst: "hello world"
-                nyTilstand: ARBEIDSGIVER_HAR_GODTATT
-                nyttStartTidspunkt: "$startTidspunkt"
-                nyttSluttTidspunkt: "$sluttTidspunkt"
+                nyTilstand: $nyTilstand
                 nyLokasjon: {
                     postnummer: "1234"
                     poststed: "Kneika"
@@ -444,9 +431,25 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
                         tittel: "bar"
                     }
                 }]
+                paaminnelse: {
+                    tidspunkt: {
+                        foerStartTidspunkt: "PT24H"
+                    }
+                    eksterneVarsler: [{
+                        altinntjeneste: {
+                            sendevindu: LOEPENDE
+                            mottaker: {
+                                serviceCode: "5441"
+                                serviceEdition: "1"
+                            }
+                            innhold: "baz"
+                            tittel: "buz"
+                        }
+                    }]
+                }
             ) {
                 __typename
-                ... on KalenderavtaleOppdaterVellykket {
+                ... on OppdaterKalenderavtaleVellykket {
                     id
                 }
                 ... on Error {
@@ -457,24 +460,21 @@ private fun TestApplicationEngine.kalenderavtaleOppdater(
     """.trimIndent()
 )
 
-private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
+private fun TestApplicationEngine.oppdaterKalenderavtaleByEksternId(
     merkelapp: String,
     eksternId: String,
+    nyTilstand: MutationKalenderavtale.KalenderavtaleTilstand,
     idempotenceKey: String = "1234",
-    startTidspunkt: String = "2024-10-12T07:20:50.52",
-    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
 ) = produsentApi(
     """
         mutation {
-            kalenderavtaleOppdaterByEksternId(
+            oppdaterKalenderavtaleByEksternId(
                 merkelapp: "$merkelapp"
                 eksternId: "$eksternId"
                 idempotencyKey: "$idempotenceKey"
-                nyTilstand: ARBEIDSGIVER_HAR_GODTATT
+                nyTilstand: $nyTilstand
                 nyLenke: "https://foo.bar"
                 nyTekst: "hello world"
-                nyttStartTidspunkt: "$startTidspunkt"
-                nyttSluttTidspunkt: "$sluttTidspunkt"
                 nyLokasjon: {
                     postnummer: "1234"
                     poststed: "Kneika"
@@ -500,9 +500,25 @@ private fun TestApplicationEngine.kalenderavtaleOppdaterByEksternId(
                         tittel: "bar"
                     }
                 }]
+                paaminnelse: {
+                    tidspunkt: {
+                        foerStartTidspunkt: "PT24H"
+                    }
+                    eksterneVarsler: [{
+                        altinntjeneste: {
+                            sendevindu: LOEPENDE
+                            mottaker: {
+                                serviceCode: "5441"
+                                serviceEdition: "1"
+                            }
+                            innhold: "baz"
+                            tittel: "buz"
+                        }
+                    }]
+                }
             ) {
                 __typename
-                ... on KalenderavtaleOppdaterVellykket {
+                ... on OppdaterKalenderavtaleVellykket {
                     id
                 }
                 ... on Error {

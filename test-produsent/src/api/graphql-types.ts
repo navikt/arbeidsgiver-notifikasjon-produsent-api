@@ -283,15 +283,10 @@ export type KalenderavtaleData = {
   tilstand?: Maybe<KalenderavtaleTilstand>;
 };
 
-export type KalenderavtaleOppdaterResultat = KalenderavtaleOppdaterVellykket | Konflikt | NotifikasjonFinnesIkke | UgyldigKalenderavtale | UgyldigMerkelapp | UkjentProdusent;
-
-export type KalenderavtaleOppdaterVellykket = {
-  __typename?: 'KalenderavtaleOppdaterVellykket';
-  /** ID-en til kalenderavtalen du oppdaterte. */
-  id: Scalars['ID']['output'];
-};
-
-/** Tilstanden til en kalenderavtale. */
+/**
+ * Tilstanden til en kalenderavtale. Disse tilstandene er laget basert på eksisterende behov.
+ * Har dere behov for flere tilstander, så ta kontakt med oss.
+ */
 export enum KalenderavtaleTilstand {
   /** Arbeidsgiver har godtatt avtalen */
   ArbeidsgiverHarGodtatt = 'ARBEIDSGIVER_HAR_GODTATT',
@@ -416,32 +411,6 @@ export type Mutation = {
   hardDeleteSak: HardDeleteSakResultat;
   /** Se dokumentasjon for `hardDeleteSak(id)`. */
   hardDeleteSakByGrupperingsid: HardDeleteSakResultat;
-  /**
-   * Oppdater tilstand på en kalenderavtale.
-   * Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
-   * Den nye tilstanden vises til brukeren.
-   * Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
-   * Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
-   *
-   * P.T. har det ikke vist seg for å være behov for å endre på data i en kalenderavtale underveis (feks tidspunkt eller sted).
-   * Dersom arbeidgiver foreslår endring er flyten i dagens løsninger at kalenderavtalen blir stående eller avlyses og det opprettes en ny.
-   *
-   * Dersom dere har behov for å endre på data i en kalenderavtale underveis, så ta kontakt med oss, så kan vi prioritere å legge til støtte for det.
-   */
-  kalenderavtaleOppdater: KalenderavtaleOppdaterResultat;
-  /**
-   * Oppdater tilstand på en kalenderavtale (identifisert ved ekstern id).
-   * Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
-   * Den nye tilstanden vises til brukeren.
-   * Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
-   * Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
-   *
-   * P.T. har det ikke vist seg for å være behov for å endre på data i en kalenderavtale underveis (feks tidspunkt eller sted).
-   * Dersom arbeidgiver foreslår endring er flyten i dagens løsninger at kalenderavtalen blir stående eller avlyses og det opprettes en ny.
-   *
-   * Dersom dere har behov for å endre på data i en kalenderavtale underveis, så ta kontakt med oss, så kan vi prioritere å legge til støtte for det.
-   */
-  kalenderavtaleOppdaterByEksternId: KalenderavtaleOppdaterResultat;
   /** Opprett en ny beskjed. */
   nyBeskjed: NyBeskjedResultat;
   nyKalenderavtale: NyKalenderavtaleResultat;
@@ -450,6 +419,22 @@ export type Mutation = {
   nySak: NySakResultat;
   nyStatusSak: NyStatusSakResultat;
   nyStatusSakByGrupperingsid: NyStatusSakResultat;
+  /**
+   * Oppdater tilstand på en kalenderavtale.
+   * Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
+   * Den nye tilstanden vises til brukeren. Dette kallet er ment for å oppdatere tilstand samt gi brukeren mer utfyllende informasjon når det blir kjent.
+   * Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
+   * Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
+   */
+  oppdaterKalenderavtale: OppdaterKalenderavtaleResultat;
+  /**
+   * Oppdater tilstand på en kalenderavtale (identifisert ved ekstern id).
+   * Det er ingen regler tilknyttet endring av tilstand. Dere bestemmer her hvilken tilstand avtalen skal ha.
+   * Den nye tilstanden vises til brukeren. Dette kallet er ment for å oppdatere tilstand samt gi brukeren mer utfyllende informasjon når det blir kjent.
+   * Dette kallet vil anses som vellyket uavhengig av om dataen faktisk er endret. Dvs hvis dere sender inn samme tilstand som allerede er satt, så vil kallet anses som vellykket.
+   * Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
+   */
+  oppdaterKalenderavtaleByEksternId: OppdaterKalenderavtaleResultat;
   /** Marker en oppgave (identifisert ved id) som utført. */
   oppgaveUtfoert: OppgaveUtfoertResultat;
   /**
@@ -564,45 +549,6 @@ export type MutationHardDeleteSakByGrupperingsidArgs = {
  * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
  * å opprette nye ting.
  */
-export type MutationKalenderavtaleOppdaterArgs = {
-  eksterneVarsler?: Array<EksterntVarselInput>;
-  hardDelete?: InputMaybe<HardDeleteUpdateInput>;
-  id: Scalars['ID']['input'];
-  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
-  nyErDigitalt?: InputMaybe<Scalars['Boolean']['input']>;
-  nyLenke?: InputMaybe<Scalars['String']['input']>;
-  nyLokasjon?: InputMaybe<LokasjonInput>;
-  nyTekst?: InputMaybe<Scalars['String']['input']>;
-  nyTilstand?: InputMaybe<KalenderavtaleTilstand>;
-  nyttSluttTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
-  nyttStartTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
-};
-
-
-/**
- * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
- * å opprette nye ting.
- */
-export type MutationKalenderavtaleOppdaterByEksternIdArgs = {
-  eksternId: Scalars['String']['input'];
-  eksterneVarsler?: Array<EksterntVarselInput>;
-  hardDelete?: InputMaybe<HardDeleteUpdateInput>;
-  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
-  merkelapp: Scalars['String']['input'];
-  nyErDigitalt?: InputMaybe<Scalars['Boolean']['input']>;
-  nyLenke?: InputMaybe<Scalars['String']['input']>;
-  nyLokasjon?: InputMaybe<LokasjonInput>;
-  nyTekst?: InputMaybe<Scalars['String']['input']>;
-  nyTilstand?: InputMaybe<KalenderavtaleTilstand>;
-  nyttSluttTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
-  nyttStartTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
-};
-
-
-/**
- * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
- * å opprette nye ting.
- */
 export type MutationNyBeskjedArgs = {
   nyBeskjed: NyBeskjedInput;
 };
@@ -622,6 +568,7 @@ export type MutationNyKalenderavtaleArgs = {
   lokasjon?: InputMaybe<LokasjonInput>;
   merkelapp: Scalars['String']['input'];
   mottakere: Array<MottakerInput>;
+  paaminnelse?: InputMaybe<PaaminnelseInput>;
   sluttTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
   startTidspunkt: Scalars['ISO8601LocalDateTime']['input'];
   tekst: Scalars['String']['input'];
@@ -685,6 +632,47 @@ export type MutationNyStatusSakByGrupperingsidArgs = {
   nyStatus: SaksStatus;
   overstyrStatustekstMed?: InputMaybe<Scalars['String']['input']>;
   tidspunkt?: InputMaybe<Scalars['ISO8601DateTime']['input']>;
+};
+
+
+/**
+ * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+ * å opprette nye ting.
+ */
+export type MutationOppdaterKalenderavtaleArgs = {
+  eksterneVarsler?: Array<EksterntVarselInput>;
+  hardDelete?: InputMaybe<HardDeleteUpdateInput>;
+  id: Scalars['ID']['input'];
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
+  nyErDigitalt?: InputMaybe<Scalars['Boolean']['input']>;
+  nyLenke?: InputMaybe<Scalars['String']['input']>;
+  nyLokasjon?: InputMaybe<LokasjonInput>;
+  nyTekst?: InputMaybe<Scalars['String']['input']>;
+  nyTilstand?: InputMaybe<KalenderavtaleTilstand>;
+  nyttSluttTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
+  nyttStartTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
+  paaminnelse?: InputMaybe<PaaminnelseInput>;
+};
+
+
+/**
+ * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+ * å opprette nye ting.
+ */
+export type MutationOppdaterKalenderavtaleByEksternIdArgs = {
+  eksternId: Scalars['String']['input'];
+  eksterneVarsler?: Array<EksterntVarselInput>;
+  hardDelete?: InputMaybe<HardDeleteUpdateInput>;
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
+  merkelapp: Scalars['String']['input'];
+  nyErDigitalt?: InputMaybe<Scalars['Boolean']['input']>;
+  nyLenke?: InputMaybe<Scalars['String']['input']>;
+  nyLokasjon?: InputMaybe<LokasjonInput>;
+  nyTekst?: InputMaybe<Scalars['String']['input']>;
+  nyTilstand?: InputMaybe<KalenderavtaleTilstand>;
+  nyttSluttTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
+  nyttStartTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
+  paaminnelse?: InputMaybe<PaaminnelseInput>;
 };
 
 
@@ -913,6 +901,7 @@ export type NyKalenderavtaleVellykket = {
   __typename?: 'NyKalenderavtaleVellykket';
   eksterneVarsler: Array<NyEksterntVarselResultat>;
   id: Scalars['ID']['output'];
+  paaminnelse?: Maybe<PaaminnelseResultat>;
 };
 
 export type NyOppgaveInput = {
@@ -983,6 +972,14 @@ export enum NyTidStrategi {
   /** Vi bruker den nye tiden uansett. */
   Overskriv = 'OVERSKRIV'
 }
+
+export type OppdaterKalenderavtaleResultat = Konflikt | NotifikasjonFinnesIkke | OppdaterKalenderavtaleVellykket | UgyldigKalenderavtale | UgyldigMerkelapp | UkjentProdusent;
+
+export type OppdaterKalenderavtaleVellykket = {
+  __typename?: 'OppdaterKalenderavtaleVellykket';
+  /** ID-en til kalenderavtalen du oppdaterte. */
+  id: Scalars['ID']['output'];
+};
 
 export type Oppgave = {
   __typename?: 'Oppgave';
@@ -1113,7 +1110,7 @@ export type PaaminnelseInput = {
    *
    * Hvis du sender `eksterneVarsler`, så vil vi sjekke at vi har
    * mulighet for å sende dem før fristen, ellers får du feil ved
-   * opprettelse av oppgaven.
+   * opprettelse av oppgaven/kalenderavtalen.
    */
   tidspunkt: PaaminnelseTidspunktInput;
 };
@@ -1125,12 +1122,14 @@ export type PaaminnelseResultat = {
 
 export type PaaminnelseTidspunktInput = {
   /**
-   * Relativ til når oppgaven er angitt som opprettet. Altså X duration etter opprettelse.
+   * Relativ til når oppgaven/kalenderavtalen er angitt som opprettet. Altså X duration etter opprettelse.
    * Ved utsatt frist er den relativ til tidspunktet fristen ble utsatt.
    */
   etterOpprettelse?: InputMaybe<Scalars['ISO8601Duration']['input']>;
-  /** Relativ til oppgavens frist, alts X duration før frist. Anses som ugyldig dersom oppgaven ikke har frist. */
+  /** Relativ til oppgavens frist, altså X duration før frist. Anses som ugyldig dersom det ikke er en oppgave med frist. */
   foerFrist?: InputMaybe<Scalars['ISO8601Duration']['input']>;
+  /** Relativ til kalenderavtalens startTidspunkt, altså X duration før startTidspunkt. Anses som ugyldig dersom det ikke er en kalenderavtale. */
+  foerStartTidspunkt?: InputMaybe<Scalars['ISO8601Duration']['input']>;
   /** Konkret tidspunkt */
   konkret?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
 };

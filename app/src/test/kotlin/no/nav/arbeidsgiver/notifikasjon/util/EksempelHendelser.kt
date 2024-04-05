@@ -634,7 +634,8 @@ object EksempelHendelse {
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
             konkret = LocalDateTime.parse("2021-01-10T12:00:00"),
             opprettetTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
-            frist = LocalDate.parse("2021-01-14")
+            frist = LocalDate.parse("2021-01-14"),
+            startTidspunkt = null,
         ),
         eksterneVarsler = listOf(),
         bestillingHendelseId = uuid("1"),
@@ -667,7 +668,25 @@ object EksempelHendelse {
                     konkret = LocalDateTime.parse("2020-01-14T01:01"),
                     påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
                 ),
-                eksterneVarsler = listOf()
+                eksterneVarsler = listOf(
+                    SmsVarselKontaktinfo(
+                        varselId = uuid("3"),
+                        fnrEllerOrgnr = "1",
+                        tlfnr = "1",
+                        smsTekst = "hey",
+                        sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                        sendeTidspunkt = null
+                    ),
+                    EpostVarselKontaktinfo(
+                        varselId = uuid("4"),
+                        fnrEllerOrgnr = "1",
+                        epostAddr = "1",
+                        tittel = "hey",
+                        htmlBody = "body",
+                        sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                        sendeTidspunkt = null
+                    ),
+                )
             ),
             sakId = SakOpprettet.sakId,
             lenke = "https://foo.no",
@@ -724,7 +743,25 @@ object EksempelHendelse {
                 konkret = LocalDateTime.parse("2020-01-14T01:01"),
                 påminnelseTidspunkt = Instant.parse("2020-01-14T02:01:00.00Z"),
             ),
-            eksterneVarsler = listOf()
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("3"),
+                    fnrEllerOrgnr = "1",
+                    tlfnr = "1",
+                    smsTekst = "hey",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                EpostVarselKontaktinfo(
+                    varselId = uuid("4"),
+                    fnrEllerOrgnr = "1",
+                    epostAddr = "1",
+                    tittel = "hey",
+                    htmlBody = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+            )
         ),
         lenke = "https://foo.no",
         tekst = "foo",
