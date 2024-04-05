@@ -117,7 +117,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v1
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
-          IMAGE: ${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ env.DEPLOY_SHA }}
+          IMAGE: ${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
