@@ -90,6 +90,7 @@ type Query {
 
     hentNotifikasjon(id: ID!): HentNotifikasjonResultat!
     hentSak(id: ID!): HentSakResultat!
+    hentSakMedGrupperingsid(grupperingsid: String!, merkelapp: String!): HentSakResultat!
 }
 
 union MineNotifikasjonerResultat =

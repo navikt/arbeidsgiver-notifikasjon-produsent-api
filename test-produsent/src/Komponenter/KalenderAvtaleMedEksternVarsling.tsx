@@ -70,7 +70,7 @@ export const NyKalenderAvtaleMedEksternVarsling: FunctionComponent = () => {
     const [variables, setVariables] = useState({
         grupperingsid: grupperingsid,
         virksomhetsnummer: "910825526",
-        eksternId: "123",
+        eksternId: crypto.randomUUID(),
         lenke: "https://foo.bar",
         tekst: "Dette er en kalenderavtale",
         startTidspunkt: datePlus(1).toISOString().replace('Z', ''),
