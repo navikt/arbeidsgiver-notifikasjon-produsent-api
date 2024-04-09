@@ -65,6 +65,10 @@ spec:
           namespace: teamcrm
           cluster: prod-external
 
+        - application: yrkesskade-melding-mottak
+          namespace: yrkesskade
+          cluster: prod-gcp
+
   azure:
     application:
       enabled: true

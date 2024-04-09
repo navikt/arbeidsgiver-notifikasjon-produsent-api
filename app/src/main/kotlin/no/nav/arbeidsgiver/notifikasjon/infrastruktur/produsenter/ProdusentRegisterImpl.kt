@@ -167,7 +167,9 @@ val ARBEIDSGIVERDIALOG = Produsent(
 val YRKESSKADE = Produsent(
     id = "yrkesskade-notifikasjon",
     accessPolicy = basedOnEnv(
-        prod = { listOf()},
+        prod = { listOf(
+            "prod-gcp:yrkesskade:yrkesskade-melding-mottak",
+        )},
         other = { listOf(
             "dev-gcp:yrkesskade:yrkesskade-melding-mottak",
         )},
