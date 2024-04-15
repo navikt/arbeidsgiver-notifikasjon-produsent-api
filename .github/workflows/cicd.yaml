@@ -107,12 +107,6 @@ jobs:
         with:
           fetch-depth: 5
 
-      - if: env.push_to_main == 'true' || github.event_name == 'workflow_dispatch'
-        run: echo "DEPLOY_SHA=${{ github.sha }}" >> $GITHUB_ENV
-
-      - if: env.push_to_main != 'true' && github.event_name != 'workflow_dispatch'
-        run: echo "DEPLOY_SHA=$(git show ${{ github.sha }}^2 --pretty=format:'%H' --no-patch || echo ${{ github.sha }})" >> $GITHUB_ENV
-
       - uses: nais/login@v0
         id: login
         with:
@@ -123,7 +117,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v1
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
-          IMAGE: ${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ env.DEPLOY_SHA }}
+          IMAGE: ${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ matrix.cluster }}
           RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml

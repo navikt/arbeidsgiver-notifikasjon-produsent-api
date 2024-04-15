@@ -21,6 +21,13 @@ class QuerySak (
                     id = env.getTypedArgument<UUID>("id"),
                 )
             }
+            coDataFetcher("hentSakMedGrupperingsid") { env ->
+                hentSakMedGrupperingsid(
+                    context = env.notifikasjonContext(),
+                    grupperingsid = env.getTypedArgument<String>("grupperingsid"),
+                    merkelapp = env.getTypedArgument<String>("merkelapp"),
+                )
+            }
         }
     }
 
@@ -64,6 +71,20 @@ class QuerySak (
         val produsent = hentProdusent(context) { error -> return error }
         val sak = produsentRepository.hentSak(id)
             ?: return Error.SakFinnesIkke("Sak med id $id finnes ikke")
+
+        tilgangsstyrMerkelapp(produsent, sak.merkelapp) { error -> return error }
+
+        return HentetSak(Sak.fraDomene(sak))
+    }
+
+    private suspend fun hentSakMedGrupperingsid(
+        context: ProdusentAPI.Context,
+        grupperingsid: String,
+        merkelapp: String
+    ) : HentSakResultat {
+        val produsent = hentProdusent(context) { error -> return error }
+        val sak = produsentRepository.hentSak(grupperingsid, merkelapp)
+            ?: return Error.SakFinnesIkke("Sak med grupperingsid $grupperingsid og merkelapp $merkelapp finnes ikke")
 
         tilgangsstyrMerkelapp(produsent, sak.merkelapp) { error -> return error }
 
