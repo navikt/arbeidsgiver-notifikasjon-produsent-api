@@ -44,7 +44,7 @@ class SuspendingAltinnClient(
             val accessToken = tokenXClient.exchange(selvbetjeningToken.value, altinnProxyAudience)
             blockingIO {
                 withRetryHandler(
-                    retries = 3,
+                    maxAttempts = 3,
                     delay = 250.milliseconds,
                     isRetryable = {
                     it is AltinnrettigheterProxyKlientFallbackException && it.erDriftsforstyrrelse()
@@ -77,19 +77,19 @@ class SuspendingAltinnClient(
 
 
     private suspend fun <T> withRetryHandler(
-        retries: Int,
+        maxAttempts: Int,
         delay: Duration,
         isRetryable: (Exception) -> Boolean,
         body: () -> T): T {
 
-        for (attempt in 1..retries) {
+        for (attempt in 1..maxAttempts) {
             try {
                 return body()
             } catch (exception: Exception) {
-                if (!isRetryable(exception) || attempt == retries) {
-                    throw exception
-                } else {
+                if (isRetryable(exception) && attempt < maxAttempts) {
                     delay(delay)
+                } else {
+                    throw exception
                 }
             }
         }
