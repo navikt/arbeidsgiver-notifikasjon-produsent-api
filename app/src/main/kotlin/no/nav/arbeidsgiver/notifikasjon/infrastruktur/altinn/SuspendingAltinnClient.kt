@@ -40,13 +40,17 @@ class SuspendingAltinnClient(
         withErrorHandler {
             val accessToken = tokenXClient.exchange(selvbetjeningToken.value, altinnProxyAudience)
             blockingIO {
-                blockingClient.hentOrganisasjoner(
-                    TokenXToken(accessToken),
-                    subject,
-                    serviceCode,
-                    serviceEdition,
-                    filtrerPåAktiveOrganisasjoner
-                )
+                withRetryHandler(3, {
+                    it is AltinnrettigheterProxyKlientFallbackException && it.erDriftsforstyrrelse()
+                }) {
+                    blockingClient.hentOrganisasjoner(
+                        TokenXToken(accessToken),
+                        subject,
+                        serviceCode,
+                        serviceEdition,
+                        filtrerPåAktiveOrganisasjoner
+                    )
+                }
             }
         }
             ?.onEach(observer)
@@ -63,6 +67,27 @@ class SuspendingAltinnClient(
                 failCounter.count()
             }
         }
+    }
+
+
+    private fun <T> withRetryHandler(
+        retries: Int,
+        isRetryable: (Exception) -> Boolean,
+        body: () -> T): T {
+
+        var attempts = 0
+        while (attempts < retries) {
+            attempts++
+            try {
+                return body()
+            } catch (exception: Exception) {
+                if (!isRetryable(exception) || attempts >= retries) {
+                    throw exception
+                }
+            }
+        }
+
+        throw IllegalStateException("retry handler completed without returning a value or throwing an exception")
     }
 
     private fun logException(e: Exception) {
