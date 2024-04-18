@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 import io.ktor.client.plugins.*
 import io.ktor.http.*
 import io.micrometer.core.instrument.Counter
+import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
@@ -12,6 +13,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 
 class SuspendingAltinnClient(
@@ -40,7 +43,10 @@ class SuspendingAltinnClient(
         withErrorHandler {
             val accessToken = tokenXClient.exchange(selvbetjeningToken.value, altinnProxyAudience)
             blockingIO {
-                withRetryHandler(3, {
+                withRetryHandler(
+                    retries = 3,
+                    delay = 250.milliseconds,
+                    isRetryable = {
                     it is AltinnrettigheterProxyKlientFallbackException && it.erDriftsforstyrrelse()
                 }) {
                     blockingClient.hentOrganisasjoner(
@@ -70,19 +76,20 @@ class SuspendingAltinnClient(
     }
 
 
-    private fun <T> withRetryHandler(
+    private suspend fun <T> withRetryHandler(
         retries: Int,
+        delay: Duration,
         isRetryable: (Exception) -> Boolean,
         body: () -> T): T {
 
-        var attempts = 0
-        while (attempts < retries) {
-            attempts++
+        for (attempt in 1..retries) {
             try {
                 return body()
             } catch (exception: Exception) {
-                if (!isRetryable(exception) || attempts >= retries) {
+                if (!isRetryable(exception) || attempt == retries) {
                     throw exception
+                } else {
+                    delay(delay)
                 }
             }
         }
