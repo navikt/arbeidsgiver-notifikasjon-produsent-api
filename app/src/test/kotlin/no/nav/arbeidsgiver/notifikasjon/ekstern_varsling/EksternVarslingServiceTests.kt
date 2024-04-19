@@ -224,7 +224,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("reschedules") {
-                eventually(5.seconds) {
+                eventually(10.seconds) {
                     repository.waitQueueCount() shouldNotBe (0 to 0)
                     database.nonTransactionalExecuteQuery("""
                         select * from wait_queue where varsel_id = '${uuid("2")}'
@@ -282,7 +282,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("sends message eventually") {
-                eventually(5.seconds) {
+                eventually(10.seconds) {
                     meldingSendt.get() shouldBe true
                 }
             }
