@@ -7,6 +7,7 @@ import io.kotest.matchers.types.instanceOf
 import no.altinn.schemas.services.serviceengine.notification._2015._06.NotificationResult
 import no.altinn.schemas.services.serviceengine.notification._2015._06.SendNotificationResultList
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
+import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2022._11.StandaloneNotificationBEListV2
 import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
@@ -49,6 +50,14 @@ class AltinnVarselKlientImplTest : DescribeSpec({
             ): SendNotificationResultList {
                 return answers.removeAt(0).invoke()
             }
+
+            override fun sendStandaloneNotificationBasicV4(
+                systemUserName: String?,
+                systemPassword: String?,
+                standaloneNotifications: StandaloneNotificationBEListV2?
+            ): SendNotificationResultList {
+                TODO("Not yet implemented")
+            }
         }
     }.create()
 
@@ -68,7 +77,9 @@ class AltinnVarselKlientImplTest : DescribeSpec({
     }
 
     describe("returnerer ok for vellykket kall") {
-        val withNotificationResult = SendNotificationResultList().withNotificationResult(NotificationResult())
+        val withNotificationResult = SendNotificationResultList().apply {
+            notificationResult.add(NotificationResult())
+        }
         answers.add { withNotificationResult }
 
         val response = klient.send(
@@ -88,14 +99,15 @@ class AltinnVarselKlientImplTest : DescribeSpec({
 
     describe("returnerer ok for kall med AltinnFault") {
         val faultOF = no.altinn.services.common.fault._2009._10.ObjectFactory()
-        val altinnFault = AltinnFault()
-            .withErrorID(30010)
-            .withErrorGuid(faultOF.createAltinnFaultErrorGuid("uuid"))
-            .withUserId(faultOF.createAltinnFaultUserId("oof"))
-            .withUserGuid(faultOF.createAltinnFaultUserGuid("uuid"))
-            .withAltinnErrorMessage(faultOF.createAltinnFaultAltinnErrorMessage("fubar"))
-            .withAltinnExtendedErrorMessage(faultOF.createAltinnFaultAltinnExtendedErrorMessage("this api"))
-            .withAltinnLocalizedErrorMessage(faultOF.createAltinnFaultAltinnLocalizedErrorMessage("my head"))
+        val altinnFault = AltinnFault().apply {
+            errorID = 30010
+            errorGuid = faultOF.createAltinnFaultErrorGuid("uuid")
+            userId = faultOF.createAltinnFaultUserId("oof")
+            userGuid = faultOF.createAltinnFaultUserGuid("uuid")
+            altinnErrorMessage = faultOF.createAltinnFaultAltinnErrorMessage("fubar")
+            altinnExtendedErrorMessage = faultOF.createAltinnFaultAltinnExtendedErrorMessage("this api")
+            altinnLocalizedErrorMessage = faultOF.createAltinnFaultAltinnLocalizedErrorMessage("my head")
+        }
         val ex = INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage(
             "faultfaultfaustmessagemassage",
             altinnFault
@@ -143,14 +155,15 @@ class AltinnVarselKlientImplTest : DescribeSpec({
     describe("returnerer feil for teknisk feil som bør fosøkes på nytt") {
         val feilkode = 44
         val faultOF = no.altinn.services.common.fault._2009._10.ObjectFactory()
-        val altinnFault = AltinnFault()
-            .withErrorID(feilkode)
-            .withErrorGuid(faultOF.createAltinnFaultErrorGuid("uuid"))
-            .withUserId(faultOF.createAltinnFaultUserId("oof"))
-            .withUserGuid(faultOF.createAltinnFaultUserGuid("uuid"))
-            .withAltinnErrorMessage(faultOF.createAltinnFaultAltinnErrorMessage("fubar"))
-            .withAltinnExtendedErrorMessage(faultOF.createAltinnFaultAltinnExtendedErrorMessage("this api"))
-            .withAltinnLocalizedErrorMessage(faultOF.createAltinnFaultAltinnLocalizedErrorMessage("my head"))
+        val altinnFault = AltinnFault().apply {
+            errorID = feilkode
+            errorGuid = faultOF.createAltinnFaultErrorGuid("uuid")
+            userId = faultOF.createAltinnFaultUserId("oof")
+            userGuid = faultOF.createAltinnFaultUserGuid("uuid")
+            altinnErrorMessage = faultOF.createAltinnFaultAltinnErrorMessage("fubar")
+            altinnExtendedErrorMessage = faultOF.createAltinnFaultAltinnExtendedErrorMessage("this api")
+            altinnLocalizedErrorMessage = faultOF.createAltinnFaultAltinnLocalizedErrorMessage("my head")
+        }
         val ex = INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage(
             "faultfaultfaustmessagemassage",
             altinnFault

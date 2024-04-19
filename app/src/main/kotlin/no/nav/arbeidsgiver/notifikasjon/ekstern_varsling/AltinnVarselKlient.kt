@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.util.logging.*
+import jakarta.xml.bind.JAXBElement
 import kotlinx.coroutines.runBlocking
 import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType
 import no.altinn.schemas.services.serviceengine.notification._2009._10.*
@@ -24,7 +25,6 @@ import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import org.apache.cxf.message.Message
 import org.apache.cxf.phase.AbstractPhaseInterceptor
 import org.apache.cxf.phase.Phase
-import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
 
@@ -116,68 +116,88 @@ class AltinnVarselKlientImpl(
         mobilnummer: String,
         reporteeNumber: String,
         tekst: String,
-    ) = send(StandaloneNotificationBEList().withStandaloneNotification(
-        StandaloneNotification().apply {
-            languageID = 1044
-            notificationType = ns("NotificationType", "TokenTextOnly")
+    ) = send(StandaloneNotificationBEList().apply {
+        standaloneNotification.apply {
+            StandaloneNotification().apply {
+                languageID = 1044
+                notificationType = ns("NotificationType", "TokenTextOnly")
 
-            this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
-            receiverEndPoints = ns("ReceiverEndPoints",
-                ReceiverEndPointBEList().withReceiverEndPoint(
-                    ReceiverEndPoint().apply {
-                        transportType = ns("TransportType", TransportType.SMS)
-                        receiverAddress = ns("ReceiverAddress", mobilnummer)
+                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
+                receiverEndPoints = ns("ReceiverEndPoints",
+                    ReceiverEndPointBEList().apply {
+                        receiverEndPoint.apply {
+                            listOf(
+                                ReceiverEndPoint().apply {
+                                    transportType = ns("TransportType", TransportType.SMS)
+                                    receiverAddress = ns("ReceiverAddress", mobilnummer)
+                                }
+                            )
+                        }
                     }
                 )
-            )
 
-            textTokens = ns("TextTokens",
-                TextTokenSubstitutionBEList().withTextToken(
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", tekst)
-                    },
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", "")
+                textTokens = ns("TextTokens",
+                    TextTokenSubstitutionBEList().apply {
+                        textToken.apply {
+                            listOf(
+                                TextToken().apply {
+                                    tokenValue = ns("TokenValue", tekst)
+                                },
+                                TextToken().apply {
+                                    tokenValue = ns("TokenValue", "")
+                                },
+                            )
+                        }
                     }
                 )
-            )
-            useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
+                useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
+            }
         }
-    ))
+    })
 
     suspend fun sendEpost(
         reporteeNumber: String,
         epostadresse: String,
         tittel: String,
         tekst: String,
-    ) = send(StandaloneNotificationBEList().withStandaloneNotification(
-        StandaloneNotification().apply {
-            languageID = 1044
-            notificationType = ns("NotificationType", "TokenTextOnly")
+    ) = send(StandaloneNotificationBEList().apply {
+        standaloneNotification.apply {
+            StandaloneNotification().apply {
+                languageID = 1044
+                notificationType = ns("NotificationType", "TokenTextOnly")
 
-            this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
-            receiverEndPoints = ns("ReceiverEndPoints",
-                ReceiverEndPointBEList().withReceiverEndPoint(
-                    ReceiverEndPoint().apply {
-                        transportType = ns("TransportType", TransportType.EMAIL)
-                        receiverAddress = ns("ReceiverAddress", epostadresse)
+                this.reporteeNumber = ns("ReporteeNumber", reporteeNumber)
+                receiverEndPoints = ns("ReceiverEndPoints",
+                    ReceiverEndPointBEList().apply {
+                        receiverEndPoint.apply {
+                            listOf(
+                                ReceiverEndPoint().apply {
+                                    transportType = ns("TransportType", TransportType.EMAIL)
+                                    receiverAddress = ns("ReceiverAddress", epostadresse)
+                                }
+                            )
+                        }
                     }
                 )
-            )
 
-            textTokens = ns("TextTokens",
-                TextTokenSubstitutionBEList().withTextToken(
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", tittel)
-                    },
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", tekst)
+                textTokens = ns("TextTokens",
+                    TextTokenSubstitutionBEList().apply {
+                        textToken.apply {
+                            listOf(
+                                TextToken().apply {
+                                    tokenValue = ns("TokenValue", tittel)
+                                },
+                                TextToken().apply {
+                                    tokenValue = ns("TokenValue", tekst)
+                                }
+                            )
+                        }
                     }
                 )
-            )
-            fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+                fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+            }
         }
-    ))
+    })
 
     private suspend fun sendAltinntjeneste(
         serviceCode: String,
@@ -185,37 +205,47 @@ class AltinnVarselKlientImpl(
         virksomhetsnummer: String,
         tittel: String,
         innhold: String,
-    ) = send(StandaloneNotificationBEList().withStandaloneNotification(
-        StandaloneNotification().apply {
-            languageID = 1044
-            notificationType = ns("NotificationType", "TokenTextOnly")
-            reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
-            service = ns("Service", Service().apply {
-                this.serviceCode = serviceCode
-                this.serviceEdition = serviceEdition.toInt()
-            })
+    ) = send(StandaloneNotificationBEList().apply {
+        standaloneNotification.apply {
+            StandaloneNotification().apply {
+                languageID = 1044
+                notificationType = ns("NotificationType", "TokenTextOnly")
+                reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
+                service = ns("Service", Service().apply {
+                    this.serviceCode = serviceCode
+                    this.serviceEdition = serviceEdition.toInt()
+                })
 
-            receiverEndPoints = ns("ReceiverEndPoints",
-                ReceiverEndPointBEList().withReceiverEndPoint(
-                    ReceiverEndPoint().apply {
-                        transportType = ns("TransportType", TransportType.EMAIL_PREFERRED)
+                receiverEndPoints = ns("ReceiverEndPoints",
+                    ReceiverEndPointBEList().apply {
+                        receiverEndPoint.apply {
+                            listOf(
+                                ReceiverEndPoint().apply {
+                                    transportType = ns("TransportType", TransportType.EMAIL_PREFERRED)
+                                }
+                            )
+                        }
                     }
                 )
-            )
 
-            textTokens = ns("TextTokens",
-                TextTokenSubstitutionBEList().withTextToken(
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", tittel)
-                    },
-                    TextToken().apply {
-                        tokenValue = ns("TokenValue", innhold)
+                textTokens = ns("TextTokens",
+                    TextTokenSubstitutionBEList().apply {
+                        textToken.apply {
+                            listOf(
+                                TextToken().apply {
+                                    tokenValue = ns("TokenValue", tittel)
+                                },
+                                TextToken().apply {
+                                    tokenValue = ns("TokenValue", innhold)
+                                }
+                            )
+                        }
                     }
                 )
-            )
-            fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+                fromAddress = ns("FromAddress", "ikke-svar@nav.no")
+            }
         }
-    ))
+    })
 
     private suspend fun send(payload: StandaloneNotificationBEList): AltinnVarselKlientResponseOrException {
         return blockingIO {
