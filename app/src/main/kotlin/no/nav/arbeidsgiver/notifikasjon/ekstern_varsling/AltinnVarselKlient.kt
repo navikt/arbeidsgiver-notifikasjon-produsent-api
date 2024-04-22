@@ -118,7 +118,7 @@ class AltinnVarselKlientImpl(
         tekst: String,
     ) = send(StandaloneNotificationBEList().apply {
         standaloneNotification.apply {
-            StandaloneNotification().apply {
+            add(StandaloneNotification().apply {
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
@@ -126,7 +126,7 @@ class AltinnVarselKlientImpl(
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().apply {
                         receiverEndPoint.apply {
-                            listOf(
+                            add(
                                 ReceiverEndPoint().apply {
                                     transportType = ns("TransportType", TransportType.SMS)
                                     receiverAddress = ns("ReceiverAddress", mobilnummer)
@@ -139,19 +139,21 @@ class AltinnVarselKlientImpl(
                 textTokens = ns("TextTokens",
                     TextTokenSubstitutionBEList().apply {
                         textToken.apply {
-                            listOf(
+                            add(
                                 TextToken().apply {
                                     tokenValue = ns("TokenValue", tekst)
-                                },
+                                }
+                            )
+                            add(
                                 TextToken().apply {
                                     tokenValue = ns("TokenValue", "")
-                                },
+                                }
                             )
                         }
                     }
                 )
                 useServiceOwnerShortNameAsSenderOfSms = ns("UseServiceOwnerShortNameAsSenderOfSms", true)
-            }
+            })
         }
     })
 
@@ -162,7 +164,7 @@ class AltinnVarselKlientImpl(
         tekst: String,
     ) = send(StandaloneNotificationBEList().apply {
         standaloneNotification.apply {
-            StandaloneNotification().apply {
+            add(StandaloneNotification().apply {
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
 
@@ -170,7 +172,7 @@ class AltinnVarselKlientImpl(
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().apply {
                         receiverEndPoint.apply {
-                            listOf(
+                            add(
                                 ReceiverEndPoint().apply {
                                     transportType = ns("TransportType", TransportType.EMAIL)
                                     receiverAddress = ns("ReceiverAddress", epostadresse)
@@ -183,10 +185,12 @@ class AltinnVarselKlientImpl(
                 textTokens = ns("TextTokens",
                     TextTokenSubstitutionBEList().apply {
                         textToken.apply {
-                            listOf(
+                            add(
                                 TextToken().apply {
                                     tokenValue = ns("TokenValue", tittel)
-                                },
+                                }
+                            )
+                            add(
                                 TextToken().apply {
                                     tokenValue = ns("TokenValue", tekst)
                                 }
@@ -195,7 +199,7 @@ class AltinnVarselKlientImpl(
                     }
                 )
                 fromAddress = ns("FromAddress", "ikke-svar@nav.no")
-            }
+            })
         }
     })
 
@@ -207,7 +211,7 @@ class AltinnVarselKlientImpl(
         innhold: String,
     ) = send(StandaloneNotificationBEList().apply {
         standaloneNotification.apply {
-            StandaloneNotification().apply {
+            add(StandaloneNotification().apply {
                 languageID = 1044
                 notificationType = ns("NotificationType", "TokenTextOnly")
                 reporteeNumber = ns("ReporteeNumber", virksomhetsnummer)
@@ -219,7 +223,7 @@ class AltinnVarselKlientImpl(
                 receiverEndPoints = ns("ReceiverEndPoints",
                     ReceiverEndPointBEList().apply {
                         receiverEndPoint.apply {
-                            listOf(
+                            add(
                                 ReceiverEndPoint().apply {
                                     transportType = ns("TransportType", TransportType.EMAIL_PREFERRED)
                                 }
@@ -231,10 +235,12 @@ class AltinnVarselKlientImpl(
                 textTokens = ns("TextTokens",
                     TextTokenSubstitutionBEList().apply {
                         textToken.apply {
-                            listOf(
+                            add(
                                 TextToken().apply {
                                     tokenValue = ns("TokenValue", tittel)
-                                },
+                                }
+                            )
+                            add(
                                 TextToken().apply {
                                     tokenValue = ns("TokenValue", innhold)
                                 }
@@ -243,7 +249,7 @@ class AltinnVarselKlientImpl(
                     }
                 )
                 fromAddress = ns("FromAddress", "ikke-svar@nav.no")
-            }
+            })
         }
     })
 
