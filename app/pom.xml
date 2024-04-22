@@ -12,7 +12,7 @@
         <kotlin.version>1.9.21</kotlin.version>
         <ktor.version>2.3.7</ktor.version>
         <kotest.version>5.7.2</kotest.version>
-        <cxf.version>3.5.7</cxf.version>
+        <cxf.version>4.0.4</cxf.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
         <jvm.version>17</jvm.version>
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
@@ -158,11 +158,6 @@
 
         <!-- altinn-ws -->
         <dependency>
-            <groupId>no.nav.tjenestespesifikasjoner</groupId>
-            <artifactId>altinn-notification-agency-external-basic</artifactId>
-            <version>1.2019.09.25-00.21-49b69f0625e0</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxws</artifactId>
             <version>${cxf.version}</version>
@@ -225,7 +220,7 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>3.6.0</version>
+            <version>3.7.0</version>
         </dependency>
 
         <!-- db -->
@@ -341,6 +336,27 @@
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
 
         <plugins>
+            <plugin>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-codegen-plugin</artifactId>
+                <version>${cxf.version}</version>
+                <executions>
+                    <execution>
+                        <id>wsdl-to-java</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>wsdl2java</goal>
+                        </goals>
+                        <configuration>
+                            <wsdlOptions>
+                                <wsdlOption>
+                                    <wsdl>${basedir}/src/main/resources/wsdl/NotificationAgencyExternalBasic.svc.wsdl</wsdl>
+                                </wsdlOption>
+                            </wsdlOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>

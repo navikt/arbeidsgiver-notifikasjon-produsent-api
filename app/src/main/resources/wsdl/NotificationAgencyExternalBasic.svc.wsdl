@@ -1,0 +1,1368 @@
+<wsdl:definitions name="NotificationAgencyExternalBasicSF"
+                  targetNamespace="http://www.altinn.no/services/ServiceEngine/Notification/2010/10"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata"
+                  xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex"
+                  xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy"
+                  xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract"
+                  xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                  xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+                  xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+                  xmlns:tns="http://www.altinn.no/services/ServiceEngine/Notification/2010/10"
+                  xmlns:wsa10="http://www.w3.org/2005/08/addressing"
+                  xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl"
+                  xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">
+    <wsdl:types>
+        <xs:schema elementFormDefault="qualified" targetNamespace="http://www.altinn.no/services/2009/10"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://www.altinn.no/services/2009/10">
+            <xs:element name="Test">
+                <xs:complexType>
+                    <xs:sequence></xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="TestResponse">
+                <xs:complexType>
+                    <xs:sequence></xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+        <xs:schema attributeFormDefault="qualified" elementFormDefault="qualified"
+                   targetNamespace="http://schemas.microsoft.com/2003/10/Serialization/"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.microsoft.com/2003/10/Serialization/">
+            <xs:element name="anyType" nillable="true" type="xs:anyType"></xs:element>
+            <xs:element name="anyURI" nillable="true" type="xs:anyURI"></xs:element>
+            <xs:element name="base64Binary" nillable="true" type="xs:base64Binary"></xs:element>
+            <xs:element name="boolean" nillable="true" type="xs:boolean"></xs:element>
+            <xs:element name="byte" nillable="true" type="xs:byte"></xs:element>
+            <xs:element name="dateTime" nillable="true" type="xs:dateTime"></xs:element>
+            <xs:element name="decimal" nillable="true" type="xs:decimal"></xs:element>
+            <xs:element name="double" nillable="true" type="xs:double"></xs:element>
+            <xs:element name="float" nillable="true" type="xs:float"></xs:element>
+            <xs:element name="int" nillable="true" type="xs:int"></xs:element>
+            <xs:element name="long" nillable="true" type="xs:long"></xs:element>
+            <xs:element name="QName" nillable="true" type="xs:QName"></xs:element>
+            <xs:element name="short" nillable="true" type="xs:short"></xs:element>
+            <xs:element name="string" nillable="true" type="xs:string"></xs:element>
+            <xs:element name="unsignedByte" nillable="true" type="xs:unsignedByte"></xs:element>
+            <xs:element name="unsignedInt" nillable="true" type="xs:unsignedInt"></xs:element>
+            <xs:element name="unsignedLong" nillable="true" type="xs:unsignedLong"></xs:element>
+            <xs:element name="unsignedShort" nillable="true" type="xs:unsignedShort"></xs:element>
+            <xs:element name="char" nillable="true" type="tns:char"></xs:element>
+            <xs:simpleType name="char">
+                <xs:restriction base="xs:int"></xs:restriction>
+            </xs:simpleType>
+            <xs:element name="duration" nillable="true" type="tns:duration"></xs:element>
+            <xs:simpleType name="duration">
+                <xs:restriction base="xs:duration">
+                    <xs:pattern value="\-?P(\d*D)?(T(\d*H)?(\d*M)?(\d*(\.\d*)?S)?)?"></xs:pattern>
+                    <xs:minInclusive value="-P10675199DT2H48M5.4775808S"></xs:minInclusive>
+                    <xs:maxInclusive value="P10675199DT2H48M5.4775807S"></xs:maxInclusive>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:element name="guid" nillable="true" type="tns:guid"></xs:element>
+            <xs:simpleType name="guid">
+                <xs:restriction base="xs:string">
+                    <xs:pattern
+                            value="[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12}"></xs:pattern>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:attribute name="FactoryType" type="xs:QName"></xs:attribute>
+            <xs:attribute name="Id" type="xs:ID"></xs:attribute>
+            <xs:attribute name="Ref" type="xs:IDREF"></xs:attribute>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified" targetNamespace="http://www.altinn.no/services/common/fault/2009/10"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://www.altinn.no/services/common/fault/2009/10">
+            <xs:complexType name="AltinnFault">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a SOAP fault message used by Altinn to convey exception information to the caller.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="AltinnErrorMessage" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the error message.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="AltinnExtendedErrorMessage" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the verbose version of the error message.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="AltinnLocalizedErrorMessage" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the localized version of the error message.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ErrorGuid" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the unique GUID for the specific fault.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ErrorID" type="xs:int">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the error type id.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="UserGuid" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the GUID of the user.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="UserId" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the id of the user.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="AltinnFault" nillable="true" type="tns:AltinnFault"></xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://www.altinn.no/services/ServiceEngine/Notification/2010/10"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:import
+                    namespace="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2009/10"></xs:import>
+            <xs:import namespace="http://schemas.altinn.no/services/ServiceEngine/Notification/2015/06"></xs:import>
+            <xs:import
+                    namespace="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2022/11"></xs:import>
+            <xs:element name="SendStandaloneNotificationBasic">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="1" name="systemUserName" type="xs:string"></xs:element>
+                        <xs:element minOccurs="1" name="systemPassword" type="xs:string"></xs:element>
+                        <xs:element minOccurs="1" name="standaloneNotifications" type="q1:StandaloneNotificationBEList"
+                                    xmlns:q1="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2009/10"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SendStandaloneNotificationBasicResponse">
+                <xs:complexType>
+                    <xs:sequence></xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SendStandaloneNotificationBasicV2">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="1" name="systemUserName" type="xs:string"></xs:element>
+                        <xs:element minOccurs="1" name="systemPassword" type="xs:string"></xs:element>
+                        <xs:element minOccurs="1" name="standaloneNotifications" type="q2:StandaloneNotificationBEList"
+                                    xmlns:q2="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2009/10"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SendStandaloneNotificationBasicV2Response">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="0" name="SendStandaloneNotificationBasicV2Result" nillable="true"
+                                    type="xs:string"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SendStandaloneNotificationBasicV3">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="1" name="systemUserName" type="xs:string"></xs:element>
+                        <xs:element minOccurs="1" name="systemPassword" type="xs:string"></xs:element>
+                        <xs:element minOccurs="1" name="standaloneNotifications" type="q3:StandaloneNotificationBEList"
+                                    xmlns:q3="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2009/10"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SendStandaloneNotificationBasicV3Response">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="0" name="SendStandaloneNotificationBasicV3Result" nillable="true"
+                                    type="q4:SendNotificationResultList"
+                                    xmlns:q4="http://schemas.altinn.no/services/ServiceEngine/Notification/2015/06"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SendStandaloneNotificationBasicV4">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="1" name="systemUserName" type="xs:string"></xs:element>
+                        <xs:element minOccurs="1" name="systemPassword" type="xs:string"></xs:element>
+                        <xs:element minOccurs="1" name="standaloneNotifications"
+                                    type="q5:StandaloneNotificationBEListV2"
+                                    xmlns:q5="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2022/11"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SendStandaloneNotificationBasicV4Response">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="0" name="SendStandaloneNotificationBasicV4Result" nillable="true"
+                                    type="q6:SendNotificationResultList"
+                                    xmlns:q6="http://schemas.altinn.no/services/ServiceEngine/Notification/2015/06"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2009/10"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2009/10">
+            <xs:import namespace="http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10"></xs:import>
+            <xs:complexType name="StandaloneNotificationBEList">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a strongly typed collection of stand alone notifications.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="StandaloneNotification" nillable="true"
+                                type="q1:StandaloneNotification"
+                                xmlns:q1="http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10"></xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="StandaloneNotificationBEList" nillable="true"
+                        type="tns:StandaloneNotificationBEList"></xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10">
+            <xs:import
+                    namespace="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2015/06"></xs:import>
+            <xs:import namespace="http://schemas.altinn.no/serviceengine/formsengine/2009/10"></xs:import>
+            <xs:complexType name="StandaloneNotification">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a stand alone notification.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="FromAddress" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the from address.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="IsReservable" nillable="true" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a value indicating whether it is possible to be reserved against this
+                                specific notification.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="LanguageID" type="xs:int">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets language code for the language of the notification.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="NotificationType" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the notification type.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ReceiverEndPoints" nillable="true"
+                                type="tns:ReceiverEndPointBEList">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a list of receivers of the notification.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ReporteeNumber" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the receiver id.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="Roles" nillable="true" type="q1:Roles"
+                                xmlns:q1="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2015/06">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a collection of Roles. Users with these roles will receive a Notification.
+                                (NOT IMPLEMENTED)
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="Service" nillable="true" type="q2:Service"
+                                xmlns:q2="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2015/06">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the Service info for the StandaloneNotification.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ShipmentDateTime" type="xs:dateTime">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the date and time for when the notification should be sent.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="TextTokens" nillable="true" type="tns:TextTokenSubstitutionBEList">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a list of replacement tokens. These are used to insert dynamic text into
+                                notification templates.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="UseServiceOwnerShortNameAsSenderOfSms" nillable="true"
+                                type="xs:boolean">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a value indicating whether the registered shortname of the service owner
+                                should be used to set the name of the sender for SMS notifications
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="StandaloneNotification" nillable="true" type="tns:StandaloneNotification"></xs:element>
+            <xs:complexType name="ReceiverEndPointBEList">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a strongly typed list of ReceiverEndPoint elements that can be accessed by index.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="ReceiverEndPoint" nillable="true"
+                                type="tns:ReceiverEndPoint"></xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="ReceiverEndPointBEList" nillable="true" type="tns:ReceiverEndPointBEList"></xs:element>
+            <xs:complexType name="ReceiverEndPoint">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a receiver of a notification.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="TransportType" nillable="true" type="q3:TransportType"
+                                xmlns:q3="http://schemas.altinn.no/serviceengine/formsengine/2009/10">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets what type of transport this receiver end point is. (Email, SMS.)
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ReceiverAddress" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the address of the receiver. Email address or mobile phone number.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="ReceiverEndPoint" nillable="true" type="tns:ReceiverEndPoint"></xs:element>
+            <xs:complexType name="TextTokenSubstitutionBEList">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a strongly typed list of TextToken elements that can be accessed by index.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="TextToken" nillable="true"
+                                type="tns:TextToken"></xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="TextTokenSubstitutionBEList" nillable="true"
+                        type="tns:TextTokenSubstitutionBEList"></xs:element>
+            <xs:complexType name="TextToken">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a TextToken. TextTokens is used to create more dynamic notification texts. A Token
+                        can trigger text substitution
+                        between a token number and a token value.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="TokenNum" type="xs:int">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the token number.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="TokenValue" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the token value.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="TextToken" nillable="true" type="tns:TextToken"></xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://schemas.altinn.no/serviceengine/formsengine/2009/10"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.altinn.no/serviceengine/formsengine/2009/10">
+            <xs:import namespace="http://schemas.microsoft.com/2003/10/Serialization/"></xs:import>
+            <xs:simpleType name="TransportType">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Defines types of transportation for sending notifications.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="SMS">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">1
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Specifies that notifications should be sent via SMS.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="Email">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">2
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Specifies that notifications should be sent via email.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="IM">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">3
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Specifies that notifications should be sent via IM.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="Both">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">4
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Specifies that notifications should be sent via both SMS and email.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="SMSPreferred">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">5
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Specifies that notifications is preferred to be sent via SMS, but should be sent by
+                                email if no phone number exist.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="EmailPreferred">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">6
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Specifies that notifications is preferred to be sent via Email, but should be sent by
+                                SMS, of no email address exist.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:element name="TransportType" nillable="true" type="tns:TransportType"></xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2015/06"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2015/06">
+            <xs:complexType name="Roles">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        List of Roles in unit that should receive Notifications.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="RoleName" nillable="true"
+                                type="xs:string"></xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="Roles" nillable="true" type="tns:Roles"></xs:element>
+            <xs:complexType name="Service">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        List of Roles in unit that should receive Notifications.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element name="ServiceCode" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the ServiceCode. Users who are able to read ReporteeElements with this
+                                ServiceCode for the Reportee will receive a Notification if they're eligible.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element name="ServiceEdition" type="xs:int">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the ServiceCode. Users who are able to read ReporteeElements with this
+                                ServiceCode for the Reportee will receive a Notification if they're eligible.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="Service" nillable="true" type="tns:Service"></xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://schemas.altinn.no/services/ServiceEngine/Notification/2015/06"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.altinn.no/services/ServiceEngine/Notification/2015/06">
+            <xs:import namespace="http://schemas.altinn.no/serviceengine/formsengine/2009/10"></xs:import>
+            <xs:complexType name="SendNotificationResultList">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents the result of a SendStandaloneNotificationV3 service call.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="NotificationResult" nillable="true"
+                                type="tns:NotificationResult"></xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="SendNotificationResultList" nillable="true"
+                        type="tns:SendNotificationResultList"></xs:element>
+            <xs:complexType name="NotificationResult">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        A collection of SendStandaloneNotificationReceiverEndpointResults for a Notification.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="EndPoints" nillable="true" type="tns:EndPointResultList">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets list of EndPoints.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="NotificationType" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets Notification Type.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ReporteeNumber" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets Reportee.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="NotificationResult" nillable="true" type="tns:NotificationResult"></xs:element>
+            <xs:complexType name="EndPointResultList">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        A collection of ReceiverEndPointResults.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="EndPointResult" nillable="true"
+                                type="tns:EndPointResult"></xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="EndPointResultList" nillable="true" type="tns:EndPointResultList"></xs:element>
+            <xs:complexType name="EndPointResult">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a ReceiverEndpoint that received a SendStandaloneNotification.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="Name" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets name of the Reportee
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ReceiverAddress" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the ReceiverAddress.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="RetrieveFromProfile" nillable="true" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a value indicating whether the receiver address was retrieved from the
+                                reportee profile.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="TransportType" type="q1:TransportType"
+                                xmlns:q1="http://schemas.altinn.no/serviceengine/formsengine/2009/10">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the TransportType.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="EndPointResult" nillable="true" type="tns:EndPointResult"></xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2022/11"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2022/11">
+            <xs:import namespace="http://schemas.altinn.no/services/ServiceEngine/Notification/2022/11"></xs:import>
+            <xs:complexType name="StandaloneNotificationBEListV2">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a strongly typed collection of stand alone notifications.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="StandaloneNotificationV2" nillable="true"
+                                type="q1:StandaloneNotificationV2"
+                                xmlns:q1="http://schemas.altinn.no/services/ServiceEngine/Notification/2022/11"></xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="StandaloneNotificationBEListV2" nillable="true"
+                        type="tns:StandaloneNotificationBEListV2"></xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://schemas.altinn.no/services/ServiceEngine/Notification/2022/11"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.altinn.no/services/ServiceEngine/Notification/2022/11">
+            <xs:import
+                    namespace="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2015/06"></xs:import>
+            <xs:import namespace="http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10"></xs:import>
+            <xs:import namespace="http://schemas.altinn.no/serviceengine/notification/2022/11"></xs:import>
+            <xs:complexType name="StandaloneNotificationV2">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a stand alone notification.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="FromAddress" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the from address.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="IsReservable" nillable="true" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a value indicating whether it is possible to be reserved against this
+                                specific notification.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="LanguageID" type="xs:int">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets language code for the language of the notification.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="NotificationType" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the notification type.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ReceiverEndPoints" nillable="true"
+                                type="tns:ReceiverEndPointBEList">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a list of receivers of the notification.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ReporteeNumber" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the receiver id.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="Roles" nillable="true" type="q1:Roles"
+                                xmlns:q1="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2015/06">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a collection of Roles. Users with these roles will receive a Notification.
+                                (NOT IMPLEMENTED)
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="Service" nillable="true" type="q2:Service"
+                                xmlns:q2="http://schemas.altinn.no/services/ServiceEngine/StandaloneNotificationBE/2015/06">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the Service info for the StandaloneNotification.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ShipmentDateTime" type="xs:dateTime">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the date and time for when the notification should be sent.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="TextTokens" nillable="true" type="q3:TextTokenSubstitutionBEList"
+                                xmlns:q3="http://schemas.altinn.no/services/ServiceEngine/Notification/2009/10">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a list of replacement tokens. These are used to insert dynamic text into
+                                notification templates.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="UseServiceOwnerShortNameAsSenderOfSms" nillable="true"
+                                type="xs:boolean">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets a value indicating whether the registered shortname of the service owner
+                                should be used to set the name of the sender for SMS notifications
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="StandaloneNotificationV2" nillable="true"
+                        type="tns:StandaloneNotificationV2"></xs:element>
+            <xs:complexType name="ReceiverEndPointBEList">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a strongly typed list of ReceiverEndPoint elements that can be accessed by index.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="ReceiverEndPoint" nillable="true"
+                                type="tns:ReceiverEndPoint"></xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="ReceiverEndPointBEList" nillable="true" type="tns:ReceiverEndPointBEList"></xs:element>
+            <xs:complexType name="ReceiverEndPoint">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Represents a receiver of a notification.
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:sequence>
+                    <xs:element name="TransportType" nillable="true" type="q4:TransportTypeV2"
+                                xmlns:q4="http://schemas.altinn.no/serviceengine/notification/2022/11">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets what type of transport this receiver end point is. (Email, SMS.)
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ReceiverAddress" nillable="true" type="xs:string">
+                        <xs:annotation>
+                            <xs:appinfo></xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                Gets or sets the address of the receiver. Email address or mobile phone number.
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="ReceiverEndPoint" nillable="true" type="tns:ReceiverEndPoint"></xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://schemas.altinn.no/serviceengine/notification/2022/11"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://schemas.altinn.no/serviceengine/notification/2022/11">
+            <xs:import namespace="http://schemas.microsoft.com/2003/10/Serialization/"></xs:import>
+            <xs:simpleType name="TransportTypeV2">
+                <xs:annotation>
+                    <xs:appinfo></xs:appinfo>
+                    <xs:documentation>&lt;summary&gt;
+                        Enumeration types specifying the TransportTypes for sending the Notifications
+                        &lt;/summary&gt;
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="SMS">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">1
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                When the Transport Type is SMS
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="Email">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">2
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                When the Transport Type is EMAIL
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="IM">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">3
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                When the Transport Type is IM
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="Both">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">4
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                When the Transport Type is BOTH(EMAIL AND SMS)
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="SMSPreferred">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">5
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                When the Transport Type is preferred to be SMS
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="EmailPreferred">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">6
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                When the Transport Type is preferred to be EMAIL
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="PriorityEmailSMSReminder">
+                        <xs:annotation>
+                            <xs:appinfo>
+                                <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">7
+                                </EnumerationValue>
+                            </xs:appinfo>
+                            <xs:documentation>&lt;summary&gt;
+                                When the Transport Type is preferred to be EMAIL
+                                &lt;/summary&gt;
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:element name="TransportTypeV2" nillable="true" type="tns:TransportTypeV2"></xs:element>
+        </xs:schema>
+    </wsdl:types>
+    <wsdl:message name="INotificationAgencyExternalBasic_Test_InputMessage">
+        <wsdl:part name="parameters" element="q1:Test" xmlns:q1="http://www.altinn.no/services/2009/10"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_Test_OutputMessage">
+        <wsdl:part name="parameters" element="q2:TestResponse"
+                   xmlns:q2="http://www.altinn.no/services/2009/10"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_Test_AltinnFaultFault_FaultMessage">
+        <wsdl:part name="detail" element="q3:AltinnFault"
+                   xmlns:q3="http://www.altinn.no/services/common/fault/2009/10"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasic_InputMessage">
+        <wsdl:part name="parameters" element="tns:SendStandaloneNotificationBasic"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasic_OutputMessage">
+        <wsdl:part name="parameters" element="tns:SendStandaloneNotificationBasicResponse"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasic_AltinnFaultFault_FaultMessage">
+        <wsdl:part name="detail" element="q4:AltinnFault"
+                   xmlns:q4="http://www.altinn.no/services/common/fault/2009/10"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV2_InputMessage">
+        <wsdl:part name="parameters" element="tns:SendStandaloneNotificationBasicV2"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV2_OutputMessage">
+        <wsdl:part name="parameters" element="tns:SendStandaloneNotificationBasicV2Response"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message
+            name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV2_AltinnFaultFault_FaultMessage">
+        <wsdl:part name="detail" element="q5:AltinnFault"
+                   xmlns:q5="http://www.altinn.no/services/common/fault/2009/10"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV3_InputMessage">
+        <wsdl:part name="parameters" element="tns:SendStandaloneNotificationBasicV3"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV3_OutputMessage">
+        <wsdl:part name="parameters" element="tns:SendStandaloneNotificationBasicV3Response"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message
+            name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV3_AltinnFaultFault_FaultMessage">
+        <wsdl:part name="detail" element="q6:AltinnFault"
+                   xmlns:q6="http://www.altinn.no/services/common/fault/2009/10"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV4_InputMessage">
+        <wsdl:part name="parameters" element="tns:SendStandaloneNotificationBasicV4"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV4_OutputMessage">
+        <wsdl:part name="parameters" element="tns:SendStandaloneNotificationBasicV4Response"></wsdl:part>
+    </wsdl:message>
+    <wsdl:message
+            name="INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV4_AltinnFaultFault_FaultMessage">
+        <wsdl:part name="detail" element="q7:AltinnFault"
+                   xmlns:q7="http://www.altinn.no/services/common/fault/2009/10"></wsdl:part>
+    </wsdl:message>
+    <wsdl:portType name="INotificationAgencyExternalBasic">
+        <wsdl:documentation>&lt;summary&gt;
+            External interface for exposing service operations used by AgencySystem for sending
+            standalone notifications to users
+            &lt;/summary&gt;
+        </wsdl:documentation>
+        <wsdl:operation name="Test">
+            <wsdl:input wsaw:Action="http://www.altinn.no/services/2009/10/IAltinnContractBase/Test"
+                        message="tns:INotificationAgencyExternalBasic_Test_InputMessage"></wsdl:input>
+            <wsdl:output wsaw:Action="http://www.altinn.no/services/2009/10/IAltinnContractBase/TestResponse"
+                         message="tns:INotificationAgencyExternalBasic_Test_OutputMessage"></wsdl:output>
+            <wsdl:fault wsaw:Action="http://www.altinn.no/services/2009/10/IAltinnContractBase/TestAltinnFaultFault"
+                        name="AltinnFaultFault"
+                        message="tns:INotificationAgencyExternalBasic_Test_AltinnFaultFault_FaultMessage"></wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="SendStandaloneNotificationBasic">
+            <wsdl:documentation>&lt;summary&gt;
+                SendStandaloneNotification operation lets the agency send notifications to users based on templates
+                &lt;/summary&gt;
+                &lt;param name="systemUserName"&gt;
+                System user name is the relevant agency system name that is registered in Altinn - mandatory parameter
+                &lt;/param&gt;
+                &lt;param name="systemPassword"&gt;
+                System password is the password for the corresponding registered agency system - mandatory parameter
+                &lt;/param&gt;
+                &lt;param name="standaloneNotifications"&gt;
+                Contains a list of standalone notification BE with details for the notifications that is to be sent:
+                ReporteeNumber: The SSN of the receiver of the notification (can be used for lookup in user profile if
+                ReceiverEndPoints.ReceiverAddress is not set -
+                mandatory parameter,
+                ReceiverEndPoints: List of mandatory TransportType(SMS, Email or Both) and ReceiverAddress
+                (optionally-if not set profile information will be used)
+                for the recipient - mandatory parameter,
+                LanguageID: Localization language for the notification (English 1033, Bokmål 1044, Nynorsk 2068) -
+                mandatory parameter,
+                NotificationType: identifies the notification template to be used (template needs to be available in
+                database) - mandatory parameter,
+                TextTokens: TokenNumber and TokenValue pairs of numbers and the corresponding substitution string -
+                provide if template support this feature,
+                FromAddress: Optional parameter that can be used to set the from field for e-mail notifications, if not
+                set default Altinn address will be used,
+                ShipmentDateTime: Optional parameter if the notification is to be sent at a later time
+                &lt;/param&gt;
+            </wsdl:documentation>
+            <wsdl:input
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasic"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasic_InputMessage"></wsdl:input>
+            <wsdl:output
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicResponse"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasic_OutputMessage"></wsdl:output>
+            <wsdl:fault
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicAltinnFaultFault"
+                    name="AltinnFaultFault"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasic_AltinnFaultFault_FaultMessage"></wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="SendStandaloneNotificationBasicV2">
+            <wsdl:documentation>&lt;summary&gt;
+                SendStandaloneNotification operation lets the agency send notifications to users based on templates
+                &lt;/summary&gt;
+                &lt;param name="systemUserName"&gt;
+                System user name is the relevant agency system name that is registered in Altinn - mandatory parameter
+                &lt;/param&gt;
+                &lt;param name="systemPassword"&gt;
+                System password is the password for the corresponding registered agency system - mandatory parameter
+                &lt;/param&gt;
+                &lt;param name="standaloneNotifications"&gt;
+                Contains a list of standalone notification BE with details for the notifications that is to be sent:
+                ReporteeNumber: The SSN of the receiver of the notification (can be used for lookup in user profile if
+                ReceiverEndPoints.ReceiverAddress is not set -
+                mandatory parameter,
+                ReceiverEndPoints: List of mandatory TransportType(SMS, Email or Both) and ReceiverAddress
+                (optionally-if not set profile information will be used)
+                for the recipient - mandatory parameter,
+                LanguageID: Localization language for the notification (English 1033, Bokmål 1044, Nynorsk 2068) -
+                mandatory parameter,
+                NotificationType: identifies the notification template to be used (template needs to be available in
+                database) - mandatory parameter,
+                TextTokens: TokenNumber and TokenValue pairs of numbers and the corresponding substitution string -
+                provide if template support this feature,
+                FromAddress: Optional parameter that can be used to set the from field for e-mail notifications, if not
+                set default Altinn address will be used,
+                ShipmentDateTime: Optional parameter if the notification is to be sent at a later time
+                &lt;/param&gt;
+                &lt;returns&gt;
+                Returns a success or failure message
+                &lt;/returns&gt;
+            </wsdl:documentation>
+            <wsdl:input
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV2"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV2_InputMessage"></wsdl:input>
+            <wsdl:output
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV2Response"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV2_OutputMessage"></wsdl:output>
+            <wsdl:fault
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV2AltinnFaultFault"
+                    name="AltinnFaultFault"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV2_AltinnFaultFault_FaultMessage"></wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="SendStandaloneNotificationBasicV3">
+            <wsdl:documentation>&lt;summary&gt;
+                SendStandaloneNotification operation lets the agency send notifications to users based on templates.
+                When Reportee is an Organization and ReceiverEndpoint has no ReceiverAddress, receiverAddresses will be
+                generated from the Organization Profile, and additional ReceiverEndPoints will be generated based on the
+                UnitReportee profile and supplied ServiceCode.
+                &lt;/summary&gt;
+                &lt;param name="systemUserName"&gt;
+                System user name is the relevant agency system name that is registered in Altinn - mandatory parameter
+                &lt;/param&gt;
+                &lt;param name="systemPassword"&gt;
+                System password is the password for the corresponding registered agency system - mandatory parameter
+                &lt;/param&gt;
+                &lt;param name="standaloneNotifications"&gt;
+                Contains a list of standalone notification BE with details for the notifications that is to be sent:
+                ReporteeNumber: The SSN of the receiver of the notification (can be used for lookup in user profile if
+                ReceiverEndPoints.ReceiverAddress is not set -
+                mandatory parameter,
+                ReceiverEndPoints: List of mandatory TransportType(SMS, Email or Both) and ReceiverAddress
+                (optionally-if not set profile information will be used)
+                for the recipient - mandatory parameter,
+                LanguageID: Localization language for the notification (English 1033, Bokmål 1044, Nynorsk 2068) -
+                mandatory parameter,
+                NotificationType: identifies the notification template to be used (template needs to be available in
+                database) - mandatory parameter,
+                TextTokens: TokenNumber and TokenValue pairs of numbers and the corresponding substitution string -
+                provide if template support this feature,
+                FromAddress: Optional parameter that can be used to set the from field for e-mail notifications, if not
+                set default Altinn address will be used,
+                ShipmentDateTime: Optional parameter if the notification is to be sent at a later time
+                &lt;/param&gt;
+                &lt;returns&gt;
+                Returns a success or failure message
+                &lt;/returns&gt;
+            </wsdl:documentation>
+            <wsdl:input
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV3"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV3_InputMessage"></wsdl:input>
+            <wsdl:output
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV3Response"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV3_OutputMessage"></wsdl:output>
+            <wsdl:fault
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV3AltinnFaultFault"
+                    name="AltinnFaultFault"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV3_AltinnFaultFault_FaultMessage"></wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="SendStandaloneNotificationBasicV4">
+            <wsdl:documentation>&lt;summary&gt;
+                SendStandaloneNotification operation lets the agency send notifications to users based on templates.
+                When Reportee is an Organization and ReceiverEndpoint has no ReceiverAddress, receiverAddresses will be
+                generated from the Organization Profile, and additional ReceiverEndPoints will be generated based on the
+                UnitReportee profile and supplied ServiceCode.
+                &lt;/summary&gt;
+                &lt;param name="systemUserName"&gt;
+                System user name is the relevant agency system name that is registered in Altinn - mandatory parameter
+                &lt;/param&gt;
+                &lt;param name="systemPassword"&gt;
+                System password is the password for the corresponding registered agency system - mandatory parameter
+                &lt;/param&gt;
+                &lt;param name="standaloneNotifications"&gt;
+                Contains a list of standalone notification BE with details for the notifications that is to be sent:
+                ReporteeNumber: The SSN of the receiver of the notification (can be used for lookup in user profile if
+                ReceiverEndPoints.ReceiverAddress is not set -
+                mandatory parameter,
+                ReceiverEndPoints: List of mandatory TransportType(SMS, Email or Both) and ReceiverAddress
+                (optionally-if not set profile information will be used)
+                for the recipient - mandatory parameter,
+                LanguageID: Localization language for the notification (English 1033, Bokmål 1044, Nynorsk 2068) -
+                mandatory parameter,
+                NotificationType: identifies the notification template to be used (template needs to be available in
+                database) - mandatory parameter,
+                TextTokens: TokenNumber and TokenValue pairs of numbers and the corresponding substitution string -
+                provide if template support this feature,
+                FromAddress: Optional parameter that can be used to set the from field for e-mail notifications, if not
+                set default Altinn address will be used,
+                ShipmentDateTime: Optional parameter if the notification is to be sent at a later time
+                &lt;/param&gt;
+                &lt;returns&gt;
+                Returns a success or failure message
+                &lt;/returns&gt;
+            </wsdl:documentation>
+            <wsdl:input
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV4"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV4_InputMessage"></wsdl:input>
+            <wsdl:output
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV4Response"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV4_OutputMessage"></wsdl:output>
+            <wsdl:fault
+                    wsaw:Action="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV4AltinnFaultFault"
+                    name="AltinnFaultFault"
+                    message="tns:INotificationAgencyExternalBasic_SendStandaloneNotificationBasicV4_AltinnFaultFault_FaultMessage"></wsdl:fault>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="BasicHttpBinding_INotificationAgencyExternalBasic" type="tns:INotificationAgencyExternalBasic">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http"></soap:binding>
+        <wsdl:operation name="Test">
+            <soap:operation soapAction="http://www.altinn.no/services/2009/10/IAltinnContractBase/Test"
+                            style="document"></soap:operation>
+            <wsdl:input>
+                <soap:body use="literal"></soap:body>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"></soap:body>
+            </wsdl:output>
+            <wsdl:fault name="AltinnFaultFault">
+                <soap:fault use="literal" name="AltinnFaultFault" namespace=""></soap:fault>
+            </wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="SendStandaloneNotificationBasic">
+            <soap:operation
+                    soapAction="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasic"
+                    style="document"></soap:operation>
+            <wsdl:input>
+                <soap:body use="literal"></soap:body>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"></soap:body>
+            </wsdl:output>
+            <wsdl:fault name="AltinnFaultFault">
+                <soap:fault use="literal" name="AltinnFaultFault" namespace=""></soap:fault>
+            </wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="SendStandaloneNotificationBasicV2">
+            <soap:operation
+                    soapAction="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV2"
+                    style="document"></soap:operation>
+            <wsdl:input>
+                <soap:body use="literal"></soap:body>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"></soap:body>
+            </wsdl:output>
+            <wsdl:fault name="AltinnFaultFault">
+                <soap:fault use="literal" name="AltinnFaultFault" namespace=""></soap:fault>
+            </wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="SendStandaloneNotificationBasicV3">
+            <soap:operation
+                    soapAction="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV3"
+                    style="document"></soap:operation>
+            <wsdl:input>
+                <soap:body use="literal"></soap:body>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"></soap:body>
+            </wsdl:output>
+            <wsdl:fault name="AltinnFaultFault">
+                <soap:fault use="literal" name="AltinnFaultFault" namespace=""></soap:fault>
+            </wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="SendStandaloneNotificationBasicV4">
+            <soap:operation
+                    soapAction="http://www.altinn.no/services/ServiceEngine/Notification/2010/10/INotificationAgencyExternalBasic/SendStandaloneNotificationBasicV4"
+                    style="document"></soap:operation>
+            <wsdl:input>
+                <soap:body use="literal"></soap:body>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"></soap:body>
+            </wsdl:output>
+            <wsdl:fault name="AltinnFaultFault">
+                <soap:fault use="literal" name="AltinnFaultFault" namespace=""></soap:fault>
+            </wsdl:fault>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="NotificationAgencyExternalBasicSF">
+        <wsdl:port name="BasicHttpBinding_INotificationAgencyExternalBasic"
+                   binding="tns:BasicHttpBinding_INotificationAgencyExternalBasic">
+            <soap:address
+                    location="https://www.altinn.no/ServiceEngineExternal/NotificationAgencyExternalBasic.svc"></soap:address>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>
