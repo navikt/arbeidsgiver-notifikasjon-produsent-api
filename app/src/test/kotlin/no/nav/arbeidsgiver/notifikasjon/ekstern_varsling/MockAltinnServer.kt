@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import no.altinn.schemas.services.serviceengine.notification._2015._06.NotificationResult
 import no.altinn.schemas.services.serviceengine.notification._2015._06.SendNotificationResultList
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
+import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2022._11.StandaloneNotificationBEListV2
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean
 
@@ -37,9 +38,17 @@ fun main() {
                 systemPassword: String?,
                 standaloneNotifications: StandaloneNotificationBEList?
             ): SendNotificationResultList {
-                return SendNotificationResultList().withNotificationResult(
-                    NotificationResult()
-                )
+                return SendNotificationResultList().apply {
+                    notificationResult.add(NotificationResult())
+                }
+            }
+
+            override fun sendStandaloneNotificationBasicV4(
+                systemUserName: String?,
+                systemPassword: String?,
+                standaloneNotifications: StandaloneNotificationBEListV2?
+            ): SendNotificationResultList {
+                TODO("Not yet implemented")
             }
         }
     }.create()

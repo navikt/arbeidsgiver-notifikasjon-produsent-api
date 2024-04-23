@@ -144,6 +144,8 @@ kafka-cli/bin/./kafka-topics.sh --bootstrap-server $KAFKA_BROKERS --command-conf
   * `kafka-console-consumer --bootstrap-server localhost:9092 --topic fager.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true`
   * _from the beginning_ (legg til `--from-beginning`)
     * `kafka-console-consumer --bootstrap-server localhost:9092 --topic fager.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true --from-beginning`
+  * from a specific offset to a specific offset (useful to check compaction)
+    * `./kafka-console-consumer.sh --bootstrap-server $KAFKA_BROKERS --consumer.config $KAFKA_CONFIG/kafka.properties -topic fager.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true --property print.offset=true --partition 12 --offset 80148 --max-messages 5`
 * produce til en topic
   * `kafka-console-producer --bootstrap-server localhost:9092 --topic fager.notifikasjon`
 * delete messages from a topic
@@ -156,6 +158,7 @@ kafka-cli/bin/./kafka-topics.sh --bootstrap-server $KAFKA_BROKERS --command-conf
   * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon --reset-offsets --to-datetime 2020-11-01T00:00:00Z --execute`
   * specify partition using `--topic topic:0,1,2`. e.g. reset offset for partition 14 to 5004:
   * `kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config /tmp/kafka.properties --group query-model-builder --topic fager.notifikasjon:14 --reset-offsets --to-offset 5004 --execute`
+
 
 ref:
 https://medium.com/@TimvanBaarsen/apache-kafka-cli-commands-cheat-sheet-a6f06eac01b

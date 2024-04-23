@@ -31,7 +31,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
-import javax.xml.bind.JAXBElement
+import jakarta.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
 class EksternVarslingRepositoryTests : DescribeSpec({
@@ -304,9 +304,10 @@ class EksternVarslingRepositoryTests : DescribeSpec({
             id1,
             AltinnVarselKlientResponse.Feil(
                 rå = NullNode.instance,
-                altinnFault = AltinnFault()
-                    .withErrorID(1)
-                    .withAltinnErrorMessage(JAXBElement(QName(""), String::class.java, "hallo"))
+                altinnFault = AltinnFault().apply {
+                    errorID = 1
+                    altinnErrorMessage = JAXBElement(QName(""), String::class.java, "hallo")
+                }
             )
         )
 
