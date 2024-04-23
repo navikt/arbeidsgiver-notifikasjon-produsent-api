@@ -1,10 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import kotlinx.coroutines.delay
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
 import kotlin.math.pow
 import kotlin.reflect.KProperty
+import kotlin.time.Duration
 
 fun <T> basedOnEnv(
     other: () -> T,
@@ -55,3 +57,27 @@ inline fun String.ifNotBlank(transform: (String) -> String) =
 
 val ByteArray.base64Encoded: String get() = Base64.getEncoder().encodeToString(this)
 val String.base64Decoded: ByteArray get() = Base64.getDecoder().decode(this)
+
+
+
+
+suspend fun <T> withRetryHandler(
+    maxAttempts: Int,
+    delay: Duration,
+    isRetryable: (Exception) -> Boolean,
+    body: () -> T): T {
+
+    for (attempt in 1..maxAttempts) {
+        try {
+            return body()
+        } catch (exception: Exception) {
+            if (isRetryable(exception) && attempt < maxAttempts) {
+                delay(delay)
+            } else {
+                throw exception
+            }
+        }
+    }
+
+    throw IllegalStateException("retry handler completed without returning a value or throwing an exception")
+}

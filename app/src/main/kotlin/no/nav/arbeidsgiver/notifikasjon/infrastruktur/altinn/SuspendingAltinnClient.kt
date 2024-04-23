@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 import io.ktor.client.plugins.*
 import io.ktor.http.*
 import io.micrometer.core.instrument.Counter
-import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.error.exceptions.AltinnrettigheterProxyKlientFallbackException
 import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.*
@@ -13,7 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
-import kotlin.time.Duration
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.withRetryHandler
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -73,28 +72,6 @@ class SuspendingAltinnClient(
                 failCounter.count()
             }
         }
-    }
-
-
-    private suspend fun <T> withRetryHandler(
-        maxAttempts: Int,
-        delay: Duration,
-        isRetryable: (Exception) -> Boolean,
-        body: () -> T): T {
-
-        for (attempt in 1..maxAttempts) {
-            try {
-                return body()
-            } catch (exception: Exception) {
-                if (isRetryable(exception) && attempt < maxAttempts) {
-                    delay(delay)
-                } else {
-                    throw exception
-                }
-            }
-        }
-
-        throw IllegalStateException("retry handler completed without returning a value or throwing an exception")
     }
 
     private fun logException(e: Exception) {

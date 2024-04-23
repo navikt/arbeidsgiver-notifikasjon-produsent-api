@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.withRetryHandler
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
@@ -26,6 +27,7 @@ import org.apache.cxf.message.Message
 import org.apache.cxf.phase.AbstractPhaseInterceptor
 import org.apache.cxf.phase.Phase
 import javax.xml.namespace.QName
+import kotlin.time.Duration.Companion.milliseconds
 
 
 interface AltinnVarselKlient {
@@ -256,11 +258,18 @@ class AltinnVarselKlientImpl(
     private suspend fun send(payload: StandaloneNotificationBEList): AltinnVarselKlientResponseOrException {
         return blockingIO {
             try {
-                val response = wsclient.sendStandaloneNotificationBasicV3(
-                    altinnBrukernavn,
-                    altinnPassord,
-                    payload
-                )
+                val response = withRetryHandler(
+                    maxAttempts = 3,
+                    delay = 250.milliseconds,
+                    isRetryable = {
+                        it is com.ctc.wstx.exc.WstxEOFException
+                    }) {
+                    wsclient.sendStandaloneNotificationBasicV3(
+                        altinnBrukernavn,
+                        altinnPassord,
+                        payload
+                    )
+                }
                 AltinnVarselKlientResponse.Ok(
                     rå = try {
                         laxObjectMapper.valueToTree<JsonNode>(response)
