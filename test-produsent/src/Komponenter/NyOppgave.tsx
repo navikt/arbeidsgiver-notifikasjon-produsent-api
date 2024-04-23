@@ -74,6 +74,7 @@ export const NyOppgave: React.FunctionComponent = () => {
     const merkelappRef = React.useRef<HTMLInputElement>(null);
     const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
+
     const eksternVarselSmsNrRef = React.useRef<HTMLInputElement>(null);
     const eksternVarselSmsInnholdRef = React.useRef<HTMLTextAreaElement>(null);
     const eksternVarselEpostRef = React.useRef<HTMLInputElement>(null);
