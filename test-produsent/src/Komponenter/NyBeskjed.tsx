@@ -17,7 +17,7 @@ const NY_BESKJED = gql`
         $eksternId: String!
         $merkelapp: String!
         $opprettetTidspunkt: ISO8601DateTime
-
+        $eksterneVarsler: [EksterntVarselInput!] = []
     ) {
         nyBeskjed(
             nyBeskjed: {
@@ -38,6 +38,7 @@ const NY_BESKJED = gql`
                     eksternId: $eksternId
                     opprettetTidspunkt: $opprettetTidspunkt
                 }
+                eksterneVarsler: $eksterneVarsler
             }
         ) {
             __typename
@@ -55,32 +56,26 @@ type EksternVarselValg = "Ingen" | "SMS" | "EPOST" | "Altinntjeneste"
 
 export const NyBeskjed: React.FunctionComponent = () => {
     const [nyBeskjed, {
-        data,
-        loading,
-        error
-    }] = useMutation<Pick<Mutation, "nyBeskjed">>(NY_BESKJED)
+            data,
+            loading,
+            error
+        }] = useMutation<Pick<Mutation, "nyBeskjed">>(NY_BESKJED);
 
-    const grupperingsid = useContext(GrupperingsidContext)
-    const [eksternVarsel, setEksternVarsel] = React.useState<EksternVarselValg>("Ingen")
+        const grupperingsid = useContext(GrupperingsidContext), [eksternVarsel, setEksternVarsel] = React.useState<EksternVarselValg>("Ingen");
 
-
-    const grupperingsidRef = React.useRef<HTMLInputElement>(null);
-    const merkelappRef = React.useRef<HTMLInputElement>(null);
-    const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
-    const lenkeRef = React.useRef<HTMLInputElement>(null);
-    const tekstRef = React.useRef<HTMLInputElement>(null);
-
-    const eksternIdRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselSmsNrRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselSmsInnholdRef = React.useRef<HTMLTextAreaElement>(null);
-    const eksternVarselEpostRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselEpostTittelRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselEpostInnholdRef = React.useRef<HTMLTextAreaElement>(null);
-    const eksternVarselTidspunktRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselAltinnServiceCodeRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselAltinnServiceEditionRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselAltinnTittelRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselAltinnInnholdRef = React.useRef<HTMLTextAreaElement>(null);
+        const grupperingsidRef = React.useRef<HTMLInputElement>(null), merkelappRef = React.useRef<HTMLInputElement>(null),
+        virksomhetsnummerRef = React.useRef<HTMLInputElement>(null), lenkeRef = React.useRef<HTMLInputElement>(null),
+        tekstRef = React.useRef<HTMLInputElement>(null), eksternIdRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselSmsNrRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselSmsInnholdRef = React.useRef<HTMLTextAreaElement>(null),
+        eksternVarselEpostRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselEpostTittelRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselEpostInnholdRef = React.useRef<HTMLTextAreaElement>(null),
+        eksternVarselTidspunktRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselAltinnServiceCodeRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselAltinnServiceEditionRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselAltinnTittelRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselAltinnInnholdRef = React.useRef<HTMLTextAreaElement>(null);
 
 
     useEffect(() => {
