@@ -141,6 +141,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
                 eksterneVarsler: eksterneVarsler
             }
         })
+        if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
     }
 
 

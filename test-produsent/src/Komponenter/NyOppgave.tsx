@@ -145,6 +145,8 @@ export const NyOppgave: React.FunctionComponent = () => {
                 eksterneVarsler: eksterneVarsler
             }
         })
+
+        if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
     }
 
     return <div className={cssClasses.kalenderavtale}>

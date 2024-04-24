@@ -79,6 +79,7 @@ export const NySak: React.FunctionComponent = () => {
                 initiellStatus: initiellStatusRef.current?.value as SaksStatus
             }
         })
+        if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
     }
 
     return <div className={cssClasses.kalenderavtale}>
