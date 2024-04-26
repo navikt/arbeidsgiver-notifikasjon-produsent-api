@@ -3,7 +3,7 @@ import {Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
 
 type EksternVarselValg = "Ingen" | "SMS" | "EPOST" | "Altinntjeneste"
 
-export type EksternVarsel = SMS | Epost | Altinntjeneste | null
+export type EksternVarsel =  {hentEksternVarsel: () =>  SMS | Epost | Altinntjeneste | null}
 
 
 export type SMS = {
@@ -27,6 +27,8 @@ export type Altinntjeneste = {
     tidspunkt: string
 }
 
+const nullIfEmpty = (s: string | undefined) => s === "" || s === undefined ? null : s
+
 export const EksternVarsel = React.forwardRef((_props, ref) => {
     const [eksternVarsel, setEksternVarsel] = React.useState<EksternVarselValg>("Ingen");
     const
@@ -41,33 +43,35 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
         eksternVarselAltinnTittelRef = React.useRef<HTMLInputElement>(null),
         eksternVarselAltinnInnholdRef = React.useRef<HTMLTextAreaElement>(null);
 
-    React.useImperativeHandle(ref, () => {
-        switch (eksternVarsel) {
-            case "SMS":
-                return {
-                    tlf: eksternVarselSmsNrRef.current?.value ?? null,
-                    smsTekst: eksternVarselSmsInnholdRef.current?.value ?? null,
-                    tidspunkt: eksternVarselTidspunktRef.current?.value ?? null
-                }
-            case "EPOST":
-                return {
-                    epostadresse: eksternVarselEpostRef.current?.value ?? null,
-                    epostTittel: eksternVarselEpostTittelRef.current?.value ?? null,
-                    epostHtmlBody: eksternVarselEpostInnholdRef.current?.value ?? null,
-                    tidspunkt: eksternVarselTidspunktRef.current?.value ?? null
-                }
-            case "Altinntjeneste":
-                return {
-                    serviceCode: eksternVarselAltinnServiceCodeRef.current?.value ?? null,
-                    serviceEdition: eksternVarselAltinnServiceEditionRef.current?.value ?? null,
-                    tittel: eksternVarselAltinnTittelRef.current?.value ?? null,
-                    innhold: eksternVarselAltinnInnholdRef.current?.value ?? null,
-                    tidspunkt: eksternVarselTidspunktRef.current?.value ?? null
-                }
-            default:
-                return null
+    React.useImperativeHandle(ref, () => ({
+        hentEksternVarsel: () => {
+            switch (eksternVarsel) {
+                case "SMS":
+                    return {
+                        tlf: eksternVarselSmsNrRef.current?.value,
+                        smsTekst: eksternVarselSmsInnholdRef.current?.value,
+                        tidspunkt: eksternVarselTidspunktRef.current?.value
+                    }
+                case "EPOST":
+                    return {
+                        epostadresse: eksternVarselEpostRef.current?.value,
+                        epostTittel: eksternVarselEpostTittelRef.current?.value,
+                        epostHtmlBody: eksternVarselEpostInnholdRef.current?.value,
+                        tidspunkt: eksternVarselTidspunktRef.current?.value
+                    }
+                case "Altinntjeneste":
+                    return {
+                        serviceCode: eksternVarselAltinnServiceCodeRef.current?.value,
+                        serviceEdition: eksternVarselAltinnServiceEditionRef.current?.value,
+                        tittel: eksternVarselAltinnTittelRef.current?.value,
+                        innhold: eksternVarselAltinnInnholdRef.current?.value,
+                        tidspunkt: eksternVarselTidspunktRef.current?.value
+                    }
+                default:
+                    return null
+            }
         }
-    }, [eksternVarsel]);
+    }));
 
 
     return <div>
@@ -103,12 +107,9 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
     </div>
 });
 
-
-const nullIfEmpty = (s: string | undefined) => s === "" || s === undefined ? null : s
-
-export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<EksternVarsel>) {
-    const varselfraref = eksternVarselRef.current
-    if (varselfraref === null) return null
+export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<EksternVarsel | null>) {
+    const varselfraref = eksternVarselRef?.current?.hentEksternVarsel()
+    if (varselfraref === null || varselfraref === undefined) return null
     else if ("tlf" in varselfraref) {
         return {
             sms: {
@@ -129,7 +130,8 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
                 mottaker: {
                     kontaktinfo: {
                         epostadresse: nullIfEmpty(varselfraref.epostadresse)
-                    }},
+                    }
+                },
                 epostTittel: nullIfEmpty(varselfraref.epostTittel),
                 epostHtmlBody: nullIfEmpty(varselfraref.epostHtmlBody),
                 sendetidspunkt: {
