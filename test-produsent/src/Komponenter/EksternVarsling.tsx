@@ -3,7 +3,7 @@ import {Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
 
 type EksternVarselValg = "Ingen" | "SMS" | "EPOST" | "Altinntjeneste"
 
-export type EksternVarsel =  {hentEksternVarsel: () =>  SMS | Epost | Altinntjeneste | null}
+export type EksternVarsel = { hentEksternVarsel: () => SMS | Epost | Altinntjeneste | null }
 
 
 export type SMS = {
@@ -111,45 +111,63 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
     const varselfraref = eksternVarselRef?.current?.hentEksternVarsel()
     if (varselfraref === null || varselfraref === undefined) return null
     else if ("tlf" in varselfraref) {
+        const {tlf, smsTekst, tidspunkt} = varselfraref as SMS
+        if (nullIfEmpty(tlf) === null ||
+            nullIfEmpty(smsTekst) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return null
         return {
             sms: {
                 mottaker: {
                     kontaktinfo: {
-                        tlf: nullIfEmpty(varselfraref.tlf)
+                        tlf: tlf
                     }
                 },
-                smsTekst: nullIfEmpty(varselfraref.smsTekst),
+                smsTekst: smsTekst,
                 sendetidspunkt: {
-                    tidspunkt: nullIfEmpty(varselfraref.tidspunkt)
+                    tidspunkt: tidspunkt
                 }
             }
         }
     } else if ("epostadresse" in varselfraref) {
+        const {epostadresse, epostTittel, epostHtmlBody, tidspunkt} = varselfraref as Epost
+        if (nullIfEmpty(epostadresse) === null ||
+            nullIfEmpty(epostTittel) === null ||
+            nullIfEmpty(epostHtmlBody) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return null
         return {
             epost: {
                 mottaker: {
                     kontaktinfo: {
-                        epostadresse: nullIfEmpty(varselfraref.epostadresse)
+                        epostadresse: epostadresse
                     }
                 },
-                epostTittel: nullIfEmpty(varselfraref.epostTittel),
-                epostHtmlBody: nullIfEmpty(varselfraref.epostHtmlBody),
+                epostTittel: epostTittel,
+                epostHtmlBody: epostHtmlBody,
                 sendetidspunkt: {
-                    tidspunkt: nullIfEmpty(varselfraref.tidspunkt)
+                    tidspunkt: tidspunkt
                 }
             }
         }
     } else if ("serviceCode" in varselfraref) {
+        const {serviceCode, serviceEdition, tittel, innhold, tidspunkt} = varselfraref as Altinntjeneste
+        if (nullIfEmpty(serviceCode) === null ||
+            nullIfEmpty(serviceEdition) === null ||
+            nullIfEmpty(tittel) === null ||
+            nullIfEmpty(innhold) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return null
         return {
             altinntjeneste: {
                 mottaker: {
-                    serviceCode: nullIfEmpty(varselfraref.serviceCode),
-                    serviceEdition: nullIfEmpty(varselfraref.serviceEdition)
+                    serviceCode: serviceCode,
+                    serviceEdition: serviceEdition
                 },
-                tittel: nullIfEmpty(varselfraref.tittel),
-                innhold: nullIfEmpty(varselfraref.innhold),
+                tittel: tittel,
+                innhold: innhold,
                 sendetidspunkt: {
-                    tidspunkt: nullIfEmpty(varselfraref.tidspunkt)
+                    tidspunkt: tidspunkt
                 }
             }
         }
