@@ -45,7 +45,7 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
         switch (eksternVarsel) {
             case "SMS":
                 return {
-                    tlf: eksternVarselSmsNrRef.current?.value,
+                    tlf: eksternVarselSmsNrRef.current?.value ?? null,
                     smsTekst: eksternVarselSmsInnholdRef.current?.value ?? null,
                     tidspunkt: eksternVarselTidspunktRef.current?.value ?? null
                 }
@@ -104,6 +104,7 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
 });
 
 
+const nullIfEmpty = (s: string | undefined) => s === "" || s === undefined ? null : s
 
 export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<EksternVarsel>) {
     const varselfraref = eksternVarselRef.current
@@ -113,12 +114,12 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
             sms: {
                 mottaker: {
                     kontaktinfo: {
-                        tlf: varselfraref.tlf
+                        tlf: nullIfEmpty(varselfraref.tlf)
                     }
                 },
-                smsTekst: varselfraref.smsTekst,
+                smsTekst: nullIfEmpty(varselfraref.smsTekst),
                 sendetidspunkt: {
-                    tidspunkt: new Date().toISOString()
+                    tidspunkt: nullIfEmpty(varselfraref.tidspunkt)
                 }
             }
         }
@@ -127,12 +128,12 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
             epost: {
                 mottaker: {
                     kontaktinfo: {
-                        epostadresse: varselfraref.epostadresse
+                        epostadresse: nullIfEmpty(varselfraref.epostadresse)
                     }},
-                epostTittel: varselfraref.epostTittel,
-                epostHtmlBody: varselfraref.epostHtmlBody,
+                epostTittel: nullIfEmpty(varselfraref.epostTittel),
+                epostHtmlBody: nullIfEmpty(varselfraref.epostHtmlBody),
                 sendetidspunkt: {
-                    tidspunkt: new Date().toISOString()
+                    tidspunkt: nullIfEmpty(varselfraref.tidspunkt)
                 }
             }
         }
@@ -140,13 +141,13 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
         return {
             altinntjeneste: {
                 mottaker: {
-                    serviceCode: varselfraref.serviceCode,
-                    serviceEdition: varselfraref.serviceEdition
+                    serviceCode: nullIfEmpty(varselfraref.serviceCode),
+                    serviceEdition: nullIfEmpty(varselfraref.serviceEdition)
                 },
-                tittel: varselfraref.tittel,
-                innhold: varselfraref.innhold,
+                tittel: nullIfEmpty(varselfraref.tittel),
+                innhold: nullIfEmpty(varselfraref.innhold),
                 sendetidspunkt: {
-                    tidspunkt: new Date().toISOString()
+                    tidspunkt: nullIfEmpty(varselfraref.tidspunkt)
                 }
             }
         }
