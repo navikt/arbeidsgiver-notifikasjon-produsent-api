@@ -6,7 +6,8 @@ import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";
-import {Button, Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
+import {Button, TextField} from "@navikt/ds-react";
+import {EksternVarsel, formateEksternVarsel} from "./EksternVarsling.tsx";
 
 const NY_BESKJED = gql`
     mutation (
@@ -52,30 +53,22 @@ const NY_BESKJED = gql`
     }
 `
 
-type EksternVarselValg = "Ingen" | "SMS" | "EPOST" | "Altinntjeneste"
-
 export const NyBeskjed: React.FunctionComponent = () => {
     const [nyBeskjed, {
-            data,
-            loading,
-            error
-        }] = useMutation<Pick<Mutation, "nyBeskjed">>(NY_BESKJED);
+        data,
+        loading,
+        error
+    }] = useMutation<Pick<Mutation, "nyBeskjed">>(NY_BESKJED);
 
-        const grupperingsid = useContext(GrupperingsidContext), [eksternVarsel, setEksternVarsel] = React.useState<EksternVarselValg>("Ingen");
+    const grupperingsid = useContext(GrupperingsidContext);
 
-        const grupperingsidRef = React.useRef<HTMLInputElement>(null), merkelappRef = React.useRef<HTMLInputElement>(null),
-        virksomhetsnummerRef = React.useRef<HTMLInputElement>(null), lenkeRef = React.useRef<HTMLInputElement>(null),
-        tekstRef = React.useRef<HTMLInputElement>(null), eksternIdRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselSmsNrRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselSmsInnholdRef = React.useRef<HTMLTextAreaElement>(null),
-        eksternVarselEpostRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselEpostTittelRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselEpostInnholdRef = React.useRef<HTMLTextAreaElement>(null),
-        eksternVarselTidspunktRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselAltinnServiceCodeRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselAltinnServiceEditionRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselAltinnTittelRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselAltinnInnholdRef = React.useRef<HTMLTextAreaElement>(null);
+    const grupperingsidRef = React.useRef<HTMLInputElement>(null);
+    const merkelappRef = React.useRef<HTMLInputElement>(null);
+    const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
+    const lenkeRef = React.useRef<HTMLInputElement>(null);
+    const tekstRef = React.useRef<HTMLInputElement>(null);
+    const eksternIdRef = React.useRef<HTMLInputElement>(null);
+    const eksternVarselRef = React.useRef<EksternVarsel>(null);
 
 
     useEffect(() => {
@@ -88,42 +81,6 @@ export const NyBeskjed: React.FunctionComponent = () => {
 
 
     const handleSend = () => {
-        const eksterneVarsler = eksternVarsel === "Ingen" ? [] : [{
-            sms: eksternVarsel === "SMS" ? {
-                mottaker: {
-                    kontaktinfo: {
-                        tlf: nullIfEmpty(eksternVarselSmsNrRef.current?.value)
-                    },
-                },
-                smsTekst: nullIfEmpty(eksternVarselSmsInnholdRef.current?.value),
-                sendetidspunkt: {
-                    tidspunkt: nullIfEmpty(eksternVarselTidspunktRef.current?.value)
-                },
-            } : null,
-            epost: eksternVarsel === "EPOST" ? {
-                mottaker: {
-                    kontaktinfo: {
-                        epostadresse: nullIfEmpty(eksternVarselEpostRef.current?.value)
-                    }
-                },
-                epostTittel: nullIfEmpty(eksternVarselEpostTittelRef.current?.value),
-                epostHtmlBody: nullIfEmpty(eksternVarselEpostInnholdRef.current?.value),
-                sendetidspunkt: {
-                    tidspunkt: nullIfEmpty(eksternVarselTidspunktRef.current?.value)
-                }
-            } : null,
-            altinntjeneste: eksternVarsel === "Altinntjeneste" ? {
-                mottaker: {
-                    serviceCode: nullIfEmpty(eksternVarselAltinnServiceCodeRef.current?.value),
-                    serviceEdition: nullIfEmpty(eksternVarselAltinnServiceEditionRef.current?.value)
-                },
-                tittel: nullIfEmpty(eksternVarselAltinnTittelRef.current?.value),
-                innhold: nullIfEmpty(eksternVarselAltinnInnholdRef.current?.value),
-                sendetidspunkt: {
-                    tidspunkt: nullIfEmpty(eksternVarselTidspunktRef.current?.value)
-                },
-            } : null
-        }]
         nyBeskjed({
             variables: {
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
@@ -133,7 +90,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
                 opprettetTidspunkt: new Date().toISOString(),
-                eksterneVarsler: eksterneVarsler
+                eksterneVarsler: formateEksternVarsel(eksternVarselRef)
             }
         })
         if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
@@ -150,43 +107,13 @@ export const NyBeskjed: React.FunctionComponent = () => {
         <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px"}}>
             <div>
                 <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
-                <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
                 <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
-                <TextField label={"Lenke*"} ref={lenkeRef}/>
                 <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en ny beskjed"/>
+                <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
+                <TextField label={"Lenke*"} ref={lenkeRef}/>
                 <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
             </div>
-            <div>
-                <ToggleGroup defaultValue={eksternVarsel}
-                             onChange={(value) => setEksternVarsel(value as EksternVarselValg)}
-                             label="Send ekstern varsel">
-                    <ToggleGroup.Item value="Ingen">Ingen</ToggleGroup.Item>
-                    <ToggleGroup.Item value="SMS">SMS</ToggleGroup.Item>
-                    <ToggleGroup.Item value="EPOST">Epost</ToggleGroup.Item>
-                    <ToggleGroup.Item value="Altinntjeneste">Altinntjeneste</ToggleGroup.Item>
-                </ToggleGroup>
-                {eksternVarsel === "SMS" ?
-                    <>
-                        <TextField label={"Sms nr"} ref={eksternVarselSmsNrRef} defaultValue={"99999999"}/>
-                        <Textarea label={"Sms innhold"} ref={eksternVarselSmsInnholdRef}
-                                  defaultValue={"Dette er en sms-varsel. \nLogg inn på NAV.no/min-side-arbeidsgiver for å lese mer."}/>
-                    </> : null}
-                {eksternVarsel === "EPOST" ?
-                    <>
-                        <TextField label={"Epost*"} ref={eksternVarselEpostRef} defaultValue="foo@bar.baz"/>
-                        <TextField label={"Epost tittel*"} ref={eksternVarselEpostTittelRef}/>
-                        <Textarea label={"Epost innhold"} ref={eksternVarselEpostInnholdRef}/>
-                    </> : null}
-                {eksternVarsel === "Altinntjeneste" ? <>
-                    <TextField label={"Service code"} ref={eksternVarselAltinnServiceCodeRef}/>
-                    <TextField label={"Service edition"} ref={eksternVarselAltinnServiceEditionRef}/>
-                    <TextField label="Tittel" ref={eksternVarselAltinnTittelRef}/>
-                    <Textarea label="Innhold" ref={eksternVarselAltinnInnholdRef}/>
-                </> : null}
-                {eksternVarsel !== "Ingen" ?
-                    <TextField label={"Tidspunkt: \"YYYY-MM-DDThh:mm\""} ref={eksternVarselTidspunktRef}
-                               defaultValue={"2024-12-19T13:30"}/> : null}
-            </div>
+            <EksternVarsel ref={eksternVarselRef}/>
         </div>
 
         <Button style={{maxWidth: "20rem"}} variant="primary"
