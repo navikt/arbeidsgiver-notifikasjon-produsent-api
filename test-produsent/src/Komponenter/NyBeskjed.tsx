@@ -18,7 +18,7 @@ const NY_BESKJED = gql`
         $eksternId: String!
         $merkelapp: String!
         $opprettetTidspunkt: ISO8601DateTime
-        $eksterneVarsler: [EksterntVarselInput!] = []
+        $eksterneVarsler: [EksterntVarselInput!]!
     ) {
         nyBeskjed(
             nyBeskjed: {

@@ -109,13 +109,13 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
 
 export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<EksternVarsel | null>) {
     const varselfraref = eksternVarselRef?.current?.hentEksternVarsel()
-    if (varselfraref === null || varselfraref === undefined) return null
+    if (varselfraref === null || varselfraref === undefined) return []
     else if ("tlf" in varselfraref) {
         const {tlf, smsTekst, tidspunkt} = varselfraref as SMS
         if (nullIfEmpty(tlf) === null ||
             nullIfEmpty(smsTekst) === null ||
             nullIfEmpty(tidspunkt) === null
-        ) return null
+        ) return []
         return {
             sms: {
                 mottaker: {
@@ -172,6 +172,6 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
             }
         }
     } else {
-        return null;
+        return [];
     }
 }

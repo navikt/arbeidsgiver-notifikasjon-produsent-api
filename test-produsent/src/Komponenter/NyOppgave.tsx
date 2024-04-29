@@ -18,7 +18,7 @@ const NY_OPPGAVE = gql`
         $frist: ISO8601Date
         $eksternId: String!
         $opprettetTidspunkt: ISO8601DateTime
-        $eksterneVarsler: [EksterntVarselInput!] = []
+        $eksterneVarsler: [EksterntVarselInput!]!
     ) {
         nyOppgave(
             nyOppgave: {
