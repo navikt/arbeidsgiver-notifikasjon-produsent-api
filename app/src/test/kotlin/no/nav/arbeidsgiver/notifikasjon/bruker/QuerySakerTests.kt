@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.FERDIG
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Duration
@@ -61,7 +62,7 @@ class QuerySakerTests : DescribeSpec({
             )
             brukerRepository.nyStatusSak(
                 sak = sakOpprettet,
-                status = SakStatus.MOTTATT,
+                status = MOTTATT,
                 overstyrStatustekstMed = "noe",
                 oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
                 mottattTidspunkt = OffsetDateTime.now(),
@@ -179,7 +180,7 @@ class QuerySakerTests : DescribeSpec({
 
         context("tekstsøk") {
             val (brukerRepository, engine) = setupRepoOgEngine()
-            val sak1 = brukerRepository.opprettSakForTekstsøk("pippi langstrømpe er friskmeldt")
+            val sak1 = brukerRepository.opprettSakForTekstsøk("pippi langstrømpe er friskmeldt", MOTTATT, "herr nilson er syk")
             val sak2 = brukerRepository.opprettSakForTekstsøk("donald duck er permittert", FERDIG, "saken er avblåst")
 
             it("søk på tittel returnerer riktig sak") {
@@ -189,24 +190,40 @@ class QuerySakerTests : DescribeSpec({
                 saker.first().id shouldBe sak1.sakId
             }
 
-            /** TAG-2137 ignored: vi skrudde av tekstsøk for status, siden vi hadde en
-             * resource leak i forbindelse med replay av hendelser. Søketeksten
-             * ble lengere for hver replay. Quick-fix var å bare bruke tittelen
-             * på saken.
-             */
-            //xit("søk på status returnerer riktig sak") {
-            //    val response = engine.hentSaker(tekstsoek = "ferdig")
-            //    val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
-            //    saker shouldHaveSize 1
-            //    saker.first().id shouldBe sak2.sakId
-            //}
-            //
-            //xit("søk på statustekst returnerer riktig sak") {
-            //    val response = engine.hentSaker(tekstsoek = "avblåst")
-            //    val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
-            //    saker shouldHaveSize 1
-            //    saker.first().id shouldBe sak2.sakId
-            //}
+            it("søk på status returnerer riktig sak") {
+                val response = engine.hentSaker(tekstsoek = "ferdig")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak2.sakId
+            }
+
+            it("søk på statustekst returnerer riktig sak") {
+                val response = engine.hentSaker(tekstsoek = "avblåst")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak2.sakId
+            }
+
+            brukerRepository.nyStatusSak(
+                sak = sak1,
+                status = FERDIG,
+                overstyrStatustekstMed = "i boks med sløyfe på",
+                idempotensKey = IdempotenceKey.initial(),
+            )
+
+            it("søk på opprinnelig statustekst returnerer riktig sak") {
+                val response = engine.hentSaker(tekstsoek = "nilson")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak1.sakId
+            }
+
+            it("søk på ny statustekst returnerer riktig sak") {
+                val response = engine.hentSaker(tekstsoek = "sløyfe")
+                val saker = response.getTypedContent<List<BrukerAPI.Sak>>("saker/saker")
+                saker shouldHaveSize 1
+                saker.first().id shouldBe sak1.sakId
+            }
         }
 
         context("søk på tvers av virksomheter") {
@@ -313,7 +330,7 @@ private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApp
 
 private suspend fun BrukerRepository.opprettSakForTekstsøk(
     tittel: String,
-    status: SakStatus = SakStatus.MOTTATT,
+    status: SakStatus = MOTTATT,
     overstyrStatustekst: String? = null,
 ): SakOpprettet {
     val sakOpprettet = sakOpprettet(
@@ -354,7 +371,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
     shift.forEach {
         nyStatusSak(
             sak = sak,
-            status = SakStatus.MOTTATT,
+            status = MOTTATT,
             overstyrStatustekstMed = "noe",
             mottattTidspunkt = mottattTidspunkt.plus(it),
             idempotensKey = IdempotenceKey.initial(),
@@ -378,7 +395,7 @@ private suspend fun BrukerRepository.opprettSak(
     )
     nyStatusSak(
         sak,
-        status = SakStatus.MOTTATT,
+        status = MOTTATT,
         overstyrStatustekstMed = "noe",
         mottattTidspunkt = oppgittTidspunkt,
         idempotensKey = IdempotenceKey.initial(),
