@@ -1046,6 +1046,21 @@ class BrukerRepositoryImpl(
                 uuid(nyStatusSak.sakId)
             }
 
+            executeUpdate("""
+                with sak_status_agg as (
+                    select s.id, s.tittel || ' ' || s.merkelapp AS tittel_merkelapp, string_agg(ss.status || ' ' || ss.overstyrt_statustekst, ' ') AS statustekst
+                    from sak s
+                        left outer join sak_status ss on s.id = ss.sak_id
+                    where s.id = ?
+                    group by s.id, s.tittel, s.merkelapp
+                )
+                update sak_search set text = lower(sak_status_agg.tittel_merkelapp) || ' ' || lower(coalesce(sak_status_agg.statustekst, ''))
+                from sak_status_agg
+                where sak_search.id = sak_status_agg.id
+            """) {
+                uuid(nyStatusSak.sakId)
+            }
+
             if (nyStatusSak.nyLenkeTilSak != null) {
                 executeUpdate(
                     """
