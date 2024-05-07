@@ -16,6 +16,7 @@ import no.altinn.services.serviceengine.notification._2010._10.INotificationAgen
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.isCausedBy
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
@@ -262,7 +263,7 @@ class AltinnVarselKlientImpl(
                     maxAttempts = 3,
                     delay = 250.milliseconds,
                     isRetryable = {
-                        it is com.ctc.wstx.exc.WstxEOFException
+                        it isCausedBy com.ctc.wstx.exc.WstxEOFException::class.java
                     }) {
                     wsclient.sendStandaloneNotificationBasicV3(
                         altinnBrukernavn,

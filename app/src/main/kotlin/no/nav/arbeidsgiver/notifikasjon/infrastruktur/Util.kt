@@ -81,3 +81,20 @@ suspend fun <T> withRetryHandler(
 
     throw IllegalStateException("retry handler completed without returning a value or throwing an exception")
 }
+
+infix fun Throwable.isCausedBy(cause: Class<out Throwable>): Boolean {
+    var current: Throwable? = this
+    var level = 0
+    while (current != null) {
+        if (cause.isInstance(current)) {
+            return true
+        }
+        if (level > 100) {
+            // avoid stack overflow due to circular references
+            return false
+        }
+        current = current.cause
+        level += 1
+    }
+    return false
+}
