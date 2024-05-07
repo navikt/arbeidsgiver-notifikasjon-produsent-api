@@ -7,6 +7,7 @@ import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";
 import {Button, TextField} from "@navikt/ds-react";
+import {EksternVarsel, formateEksternVarsel} from "./EksternVarsling.tsx";
 
 const NY_BESKJED = gql`
     mutation (
@@ -17,7 +18,7 @@ const NY_BESKJED = gql`
         $eksternId: String!
         $merkelapp: String!
         $opprettetTidspunkt: ISO8601DateTime
-
+        $eksterneVarsler: [EksterntVarselInput!]!
     ) {
         nyBeskjed(
             nyBeskjed: {
@@ -27,8 +28,8 @@ const NY_BESKJED = gql`
                         serviceEdition: "1"
                     }
                 }]
-                                notifikasjon: {
-                    merkelapp: $merkelapp 
+                notifikasjon: {
+                    merkelapp: $merkelapp
                     lenke: $lenke
                     tekst: $tekst
                 }
@@ -38,6 +39,7 @@ const NY_BESKJED = gql`
                     eksternId: $eksternId
                     opprettetTidspunkt: $opprettetTidspunkt
                 }
+                eksterneVarsler: $eksterneVarsler
             }
         ) {
             __typename
@@ -56,9 +58,9 @@ export const NyBeskjed: React.FunctionComponent = () => {
         data,
         loading,
         error
-    }] = useMutation<Pick<Mutation, "nyBeskjed">>(NY_BESKJED)
+    }] = useMutation<Pick<Mutation, "nyBeskjed">>(NY_BESKJED);
 
-    const grupperingsid = useContext(GrupperingsidContext)
+    const grupperingsid = useContext(GrupperingsidContext);
 
     const grupperingsidRef = React.useRef<HTMLInputElement>(null);
     const merkelappRef = React.useRef<HTMLInputElement>(null);
@@ -66,10 +68,11 @@ export const NyBeskjed: React.FunctionComponent = () => {
     const lenkeRef = React.useRef<HTMLInputElement>(null);
     const tekstRef = React.useRef<HTMLInputElement>(null);
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
+    const eksternVarselRef = React.useRef<EksternVarsel>(null);
 
 
     useEffect(() => {
-        if (grupperingsidRef.current !== null){
+        if (grupperingsidRef.current !== null) {
             grupperingsidRef.current.value = grupperingsid;
         }
     }, [grupperingsid]);
@@ -86,33 +89,39 @@ export const NyBeskjed: React.FunctionComponent = () => {
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
-                opprettetTidspunkt: new Date().toISOString()
+                opprettetTidspunkt: new Date().toISOString(),
+                eksterneVarsler: formateEksternVarsel(eksternVarselRef)
             }
         })
+        if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
     }
 
 
     return <div className={cssClasses.kalenderavtale}>
 
-        <SyntaxHighlighter language="graphql" style={darcula}   lineProps={{style: {wordBreak: 'break-all', whiteSpace: 'pre-wrap'}}}
+        <SyntaxHighlighter language="graphql" style={darcula}
+                           lineProps={{style: {wordBreak: 'break-all', whiteSpace: 'pre-wrap'}}}
         >
             {print(NY_BESKJED)}
         </SyntaxHighlighter>
-        <div style={{maxWidth:"35rem"}}>
-        <TextField label={"Grupperingsid*"}  ref={grupperingsidRef}/>
-        <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
-        <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
-        <TextField label={"Lenke*"} ref={lenkeRef}/>
-        <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en ny beskjed"/>
-        <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
-
+        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", width: "70rem", gap: "16px"}}>
+            <div>
+                <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
+                <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
+                <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en ny beskjed"/>
+                <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
+                <TextField label={"Lenke*"} ref={lenkeRef}/>
+                <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
+            </div>
+            <EksternVarsel ref={eksternVarselRef}/>
         </div>
 
         <Button style={{maxWidth: "20rem"}} variant="primary"
                 onClick={handleSend}>Opprett en ny beskjed</Button>
 
         {loading && <p>Laster...</p>}
-        {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
+        {error &&
+            <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
         {data && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
     </div>
 }

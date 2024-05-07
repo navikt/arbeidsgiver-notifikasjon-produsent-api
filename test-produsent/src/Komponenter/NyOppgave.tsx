@@ -7,6 +7,7 @@ import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {GrupperingsidContext} from "../App.tsx";
+import {EksternVarsel, formateEksternVarsel} from "./EksternVarsling.tsx";
 
 const NY_OPPGAVE = gql`
     mutation (
@@ -17,6 +18,7 @@ const NY_OPPGAVE = gql`
         $frist: ISO8601Date
         $eksternId: String!
         $opprettetTidspunkt: ISO8601DateTime
+        $eksterneVarsler: [EksterntVarselInput!]!
     ) {
         nyOppgave(
             nyOppgave: {
@@ -38,6 +40,7 @@ const NY_OPPGAVE = gql`
                     eksternId: $eksternId
                     opprettetTidspunkt: $opprettetTidspunkt
                 }
+                eksterneVarsler: $eksterneVarsler
             }
         ) {
             __typename
@@ -58,7 +61,6 @@ export const NyOppgave: React.FunctionComponent = () => {
         loading,
         error
     }] = useMutation<Pick<Mutation, "nyOppgave">>(NY_OPPGAVE)
-
     const grupperingsid = useContext(GrupperingsidContext)
 
     const grupperingsidRef = React.useRef<HTMLInputElement>(null);
@@ -69,10 +71,12 @@ export const NyOppgave: React.FunctionComponent = () => {
     const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
 
+    const eksternVarselRef = React.useRef<EksternVarsel>(null);
+
 
 
     useEffect(() => {
-        if (grupperingsidRef.current !== null){
+        if (grupperingsidRef.current !== null) {
             grupperingsidRef.current.value = grupperingsid;
         }
     }, [grupperingsid]);
@@ -89,31 +93,38 @@ export const NyOppgave: React.FunctionComponent = () => {
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
-                opprettetTidspunkt: new Date().toISOString()
+                opprettetTidspunkt: new Date().toISOString(),
+                eksterneVarsler: formateEksternVarsel(eksternVarselRef)
             }
         })
+
+        if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
     }
 
     return <div className={cssClasses.kalenderavtale}>
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(NY_OPPGAVE)}
         </SyntaxHighlighter>
-        <div style={{maxWidth:"35rem"}}>
-        <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
-        <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en oppgave"/>
-        <TextField label={"Frist*"} ref={fristRef} defaultValue={"2024-05-17"}/>
-        <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
-        <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
-        <TextField label={"Lenke"} ref={lenkeRef}/>
-        <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
-        </div>
 
+        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", width: "70rem", gap: "16px"}}>
+            <div>
+                <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
+                <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
+                <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en oppgave"/>
+                <TextField label={"Frist*"} ref={fristRef} defaultValue={"2024-05-17"}/>
+                <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
+                <TextField label={"Lenke"} ref={lenkeRef}/>
+                <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
+            </div>
+            <EksternVarsel ref={eksternVarselRef}/>
+        </div>
         <Button style={{maxWidth: "20rem"}} variant="primary"
                 onClick={handleSend}>Opprett en ny oppgave</Button>
 
         {loading && <p>Laster...</p>}
         {error &&
             <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
-        {data && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
+        {data &&
+            <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
     </div>
 }
