@@ -69,20 +69,23 @@ export const NySakstatus: React.FunctionComponent = () => {
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(NY_SAKSTATUS)}
         </SyntaxHighlighter>
-        <div style={{maxWidth:"36rem"}}>
-        <TextField label={"Id*"} ref={idRef}/>
+        <div style={{maxWidth: "36rem", gap: "4px", display:"flex", flexDirection:"column"}}>
+            <TextField label={"Id*"} ref={idRef}/>
             <ToggleGroup defaultValue={nyStatus} onChange={() => setNyStatus} label="Ny status">
-                {Object.values(SaksStatus).map((status) => <ToggleGroup.Item key={status} value={status}>{status}</ToggleGroup.Item>)}
+                {Object.values(SaksStatus).map((status) => <ToggleGroup.Item key={status}
+                                                                             value={status}>{status}</ToggleGroup.Item>)}
             </ToggleGroup>
-            <TextField label={"Ny lenke til sak"} ref={nyLenkeTilSakRef} />
-            <TextField label={"Overstyr tekst med"} ref={overstyrStatustekstMedRef} />
+            <TextField label={"Ny lenke til sak"} ref={nyLenkeTilSakRef}/>
+            <TextField label={"Overstyr tekst med"} ref={overstyrStatustekstMedRef}/>
             <TextField label={"Tidspunkt"} ref={tidspunktRef} defaultValue={"2025-12-03T10:15:30Z"}/>
+            <Button variant="primary"
+                    onClick={() => handleSend()}>Opprett en ny sakstatus</Button>
         </div>
-        <Button variant="primary"
-                onClick={() => handleSend()}>Opprett en ny sakstatus</Button>
+
 
         {loading && <p>Laster...</p>}
-        {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
+        {error &&
+            <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
         {data && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
     </div>
 }

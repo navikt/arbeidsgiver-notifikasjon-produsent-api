@@ -104,7 +104,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
         >
             {print(NY_BESKJED)}
         </SyntaxHighlighter>
-        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px"}}>
+        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", width: "70rem", gap: "16px"}}>
             <div>
                 <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
                 <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
