@@ -1,8 +1,16 @@
 import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
-import React, {useContext, useState, FunctionComponent, useEffect, forwardRef, useImperativeHandle} from "react";
+import React, {
+    useContext,
+    useState,
+    FunctionComponent,
+    useEffect,
+    forwardRef,
+    useImperativeHandle,
+    useRef
+} from "react";
 import {Mutation} from "../api/graphql-types.ts";
-import {Button, Checkbox, Heading, Label, TextField, ToggleGroup} from "@navikt/ds-react";
+import {Button, Checkbox, Heading, Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -70,7 +78,7 @@ export const NyKalenderAvtale: FunctionComponent = () => {
         error
     }] = useMutation<Pick<Mutation, "nyKalenderavtale">>(NY_KALENDERAVTALE)
 
-    const [påminnelse, setPåminnelse] = useState<"Ingen"|"Send påminnelse">("Ingen")
+    const [påminnelse, setPåminnelse] = useState<boolean>(false)
 
     const grupperingsid = useContext(GrupperingsidContext)
 
@@ -97,7 +105,7 @@ export const NyKalenderAvtale: FunctionComponent = () => {
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 startTidspunkt: nullIfEmpty(startTidspunktRef.current?.value),
                 sluttTidspunkt: nullIfEmpty(sluttTidspunktRef.current?.value),
-                paaminnelse: formaterPåminnelse(eksternVarselRef),
+                paaminnelse: påminnelse ? formaterPåminnelse(eksternVarselRef) : null,
                 lokasjon: lokasjonRef.current?.hentLokasjon(),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
                 eksterneVarsler: formateEksternVarsel(eksternVarselRef),
@@ -136,7 +144,7 @@ export const NyKalenderAvtale: FunctionComponent = () => {
                 <hr/>
                 <Lokasjon ref={lokasjonRef}/>
                 <hr/>
-                <ToggleGroup defaultValue="Ingen" onChange={(v) => setPåminnelse(v as "Ingen" | "Send påminnelse")} label="Påminnelse">
+                <ToggleGroup defaultValue="Ingen" onChange={(v) => setPåminnelse(v === "Send påminnelse")} label="Påminnelse">
                     <ToggleGroup.Item value={"Ingen"}>Ingen</ToggleGroup.Item>
                     <ToggleGroup.Item value={"Send påminnelse"}>Send påminnelse</ToggleGroup.Item>
                 </ToggleGroup>
@@ -239,42 +247,68 @@ export const OppdaterKalenderAvtale: FunctionComponent = () => {
         error
     }] = useMutation<Pick<Mutation, "oppdaterKalenderavtale">>(OPPDATER_KALENDERAVTALE_MED_VARSLING)
 
-    const grupperingsid = useContext(GrupperingsidContext)
 
-    const grupperingsidRef = React.useRef<HTMLInputElement>(null);
-    const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
-    const tekstRef = React.useRef<HTMLInputElement>(null);
-    const merkelappRef = React.useRef<HTMLInputElement>(null);
-    const lenkeRef = React.useRef<HTMLInputElement>(null);
-    const eksternIdRef = React.useRef<HTMLInputElement>(null);
-    const eksternVarselRef = React.useRef<EksternVarsel>(null);
-
+    const [variables, setVariables] = useState({
+        id: "42",
+        lenke: "https://foo.bar",
+        tekst: "Dette er en kalenderavtale",
+        lokasjon: {
+            postnummer: "1234",
+            poststed: "Kneika",
+            adresse: "rundt svingen og borti høgget"
+        },
+        eksterneVarsler: [{
+            epost: {
+                mottaker: {
+                    kontaktinfo: {
+                        epostadresse: "donald@duck.co"
+                    }
+                },
+                epostTittel: "Varsel fra testpodusent",
+                epostHtmlBody: "<h1>Hei</h1><p>Dette er en test</p>",
+                sendevindu: "LOEPENDE",
+            }
+        }]
+    });
+    const varsRef = useRef<HTMLTextAreaElement>(null)
+    const [varsError, setVarsError] = useState<any | null>(null)
+    useEffect(() => {
+        if (varsRef.current) {
+            varsRef.current.value = JSON.stringify(variables, null, 2)
+        }
+    }, []);
 
     return <div className={cssClasses.kalenderavtale}>
+
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(OPPDATER_KALENDERAVTALE_MED_VARSLING)}
         </SyntaxHighlighter>
-        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", width: "70rem", gap: "16px"}}>
-            <div>
-                <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
-                <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
-                <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en oppgave"/>
-                <TextField label={"Frist*"} ref={fristRef} defaultValue={"2024-05-17"}/>
-                <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
-                <TextField label={"Lenke"} ref={lenkeRef}/>
-                <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
-            </div>
-            <EksternVarsel ref={eksternVarselRef}/>
+        <Textarea
+            error={varsError}
+            ref={varsRef}
+            style={{fontSize: "12px", lineHeight: "12px"}}
+            label="Variabler"
+            onChange={(e) => {
+                try {
+                    setVariables(JSON.parse(e.target.value));
+                    setVarsError(null)
+                } catch (e: Error | any) {
+                    setVarsError(e?.message ?? JSON.stringify(e, null, 2))
+                }
+            }}
+        />
+        { varsError !== null && <Button variant="danger" onClick={() => {
+            if (varsRef.current !== null) {
+                varsRef.current.value = JSON.stringify(variables, null, 2)
+                setVarsError(null)
+            }
+        }}>nullstill variabler</Button> }
+        <Button variant="primary"
+                onClick={() => oppdaterKalenderavtale({variables})}>Oppdater kalenderavtale med ekstern varsling</Button>
 
+        {loading && <p>Laster...</p>}
+        {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
+        {data && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
 
-            <Button variant="primary"
-                    onClick={handleSend}>Opprett en ny oppgave</Button>
-
-            {loading && <p>Laster...</p>}
-            {error &&
-                <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
-            {data &&
-                <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
-        </div>
     </div>
 }

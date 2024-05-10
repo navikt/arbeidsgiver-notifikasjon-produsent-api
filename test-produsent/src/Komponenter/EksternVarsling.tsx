@@ -1,5 +1,6 @@
 import React from "react";
 import {Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
+import {Sendevindu} from "../api/graphql-types.ts";
 
 type EksternVarselValg = "Ingen" | "SMS" | "EPOST" | "Altinntjeneste"
 
@@ -178,7 +179,7 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
 
 export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<EksternVarsel | null>) => {
     const varselfraref = påminnelseRef?.current?.hentEksternVarsel()
-    if (varselfraref === null || varselfraref === undefined) return []
+    if (varselfraref === null || varselfraref === undefined) return null
     else if ("tlf" in varselfraref) {
         const {tlf, smsTekst, tidspunkt} = varselfraref as SMS
         if (nullIfEmpty(tlf) === null ||
@@ -186,17 +187,20 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
             nullIfEmpty(tidspunkt) === null
         ) return []
         return {
-            sms: {
-                mottaker: {
-                    kontaktinfo: {
-                        tlf: tlf
-                    }
-                },
-                smsTekst: smsTekst,
-                sendetidspunkt: {
-                    tidspunkt: tidspunkt
+            tidspunkt: {
+                etterOpprettelse: "PT1M"
+            },
+            eksterneVarsler: [{
+                sms: {
+                    mottaker: {
+                        kontaktinfo: {
+                            tlf: tlf
+                        }
+                    },
+                    smsTekst: smsTekst,
+                    sendevindu: Sendevindu.NksAapningstid
                 }
-            }
+            }]
         }
     } else if ("epostadresse" in varselfraref) {
         const {epostadresse, epostTittel, epostHtmlBody, tidspunkt} = varselfraref as Epost
@@ -206,18 +210,22 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
             nullIfEmpty(tidspunkt) === null
         ) return null
         return {
-            epost: {
-                mottaker: {
-                    kontaktinfo: {
-                        epostadresse: epostadresse
-                    }
-                },
-                epostTittel: epostTittel,
-                epostHtmlBody: epostHtmlBody,
-                sendetidspunkt: {
-                    tidspunkt: tidspunkt
+            tidspunkt: {
+                etterOpprettelse: "PT1M"
+            },
+            eksterneVarsler: [{
+                epost: {
+                    mottaker: {
+                        kontaktinfo: {
+                            epostadresse: epostadresse
+                        }
+                    },
+                    epostTittel: epostTittel,
+                    epostHtmlBody: epostHtmlBody,
+                    sendevindu: Sendevindu.NksAapningstid
+
                 }
-            }
+            }]
         }
     } else if ("serviceCode" in varselfraref) {
         const {serviceCode, serviceEdition, tittel, innhold, tidspunkt} = varselfraref as Altinntjeneste
@@ -228,18 +236,21 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
             nullIfEmpty(tidspunkt) === null
         ) return null
         return {
-            altinntjeneste: {
-                mottaker: {
-                    serviceCode: serviceCode,
-                    serviceEdition: serviceEdition,
-                },
-                tittel: tittel,
-                innhold: innhold,
-                sendetidspunkt: {
-                    tidspunkt: tidspunkt
+            tidspunkt: {
+                etterOpprettelse: "PT1M"
+            },
+            eksterneVarsler: [{
+                altinntjeneste: {
+                    mottaker: {
+                        serviceCode: serviceCode,
+                        serviceEdition: serviceEdition,
+                    },
+                    tittel: tittel,
+                    innhold: innhold,
+                    sendevindu: Sendevindu.NksAapningstid
                 }
-            }
+            }]
         }
     }
-    return []
+    return null
 }
