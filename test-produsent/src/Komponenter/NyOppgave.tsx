@@ -3,7 +3,7 @@ import {print} from "graphql/language";
 import React, {useContext, useEffect} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Button, TextField} from "@navikt/ds-react";
-import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
+import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {GrupperingsidContext} from "../App.tsx";
@@ -64,15 +64,14 @@ export const NyOppgave: React.FunctionComponent = () => {
     const grupperingsid = useContext(GrupperingsidContext)
 
     const grupperingsidRef = React.useRef<HTMLInputElement>(null);
+    const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
     const tekstRef = React.useRef<HTMLInputElement>(null);
-    const lenkeRef = React.useRef<HTMLInputElement>(null);
     const fristRef = React.useRef<HTMLInputElement>(null);
     const merkelappRef = React.useRef<HTMLInputElement>(null);
-    const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
+    const lenkeRef = React.useRef<HTMLInputElement>(null);
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
 
     const eksternVarselRef = React.useRef<EksternVarsel>(null);
-
 
 
     useEffect(() => {

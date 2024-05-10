@@ -175,3 +175,71 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
         return [];
     }
 }
+
+export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<EksternVarsel | null>) => {
+    const varselfraref = påminnelseRef?.current?.hentEksternVarsel()
+    if (varselfraref === null || varselfraref === undefined) return []
+    else if ("tlf" in varselfraref) {
+        const {tlf, smsTekst, tidspunkt} = varselfraref as SMS
+        if (nullIfEmpty(tlf) === null ||
+            nullIfEmpty(smsTekst) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return []
+        return {
+            sms: {
+                mottaker: {
+                    kontaktinfo: {
+                        tlf: tlf
+                    }
+                },
+                smsTekst: smsTekst,
+                sendetidspunkt: {
+                    tidspunkt: tidspunkt
+                }
+            }
+        }
+    } else if ("epostadresse" in varselfraref) {
+        const {epostadresse, epostTittel, epostHtmlBody, tidspunkt} = varselfraref as Epost
+        if (nullIfEmpty(epostadresse) === null ||
+            nullIfEmpty(epostTittel) === null ||
+            nullIfEmpty(epostHtmlBody) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return null
+        return {
+            epost: {
+                mottaker: {
+                    kontaktinfo: {
+                        epostadresse: epostadresse
+                    }
+                },
+                epostTittel: epostTittel,
+                epostHtmlBody: epostHtmlBody,
+                sendetidspunkt: {
+                    tidspunkt: tidspunkt
+                }
+            }
+        }
+    } else if ("serviceCode" in varselfraref) {
+        const {serviceCode, serviceEdition, tittel, innhold, tidspunkt} = varselfraref as Altinntjeneste
+        if (nullIfEmpty(serviceCode) === null ||
+            nullIfEmpty(serviceEdition) === null ||
+            nullIfEmpty(tittel) === null ||
+            nullIfEmpty(innhold) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return null
+        return {
+            altinntjeneste: {
+                mottaker: {
+                    serviceCode: serviceCode,
+                    serviceEdition: serviceEdition,
+                },
+                tittel: tittel,
+                innhold: innhold,
+                sendetidspunkt: {
+                    tidspunkt: tidspunkt
+                }
+            }
+        }
+    }
+    return []
+}

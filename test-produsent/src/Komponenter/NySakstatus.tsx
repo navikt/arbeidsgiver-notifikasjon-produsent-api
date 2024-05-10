@@ -1,7 +1,7 @@
 import {gql, useMutation} from "@apollo/client";
 import React, {useState} from "react";
 import {Mutation, SaksStatus} from "../api/graphql-types.ts";
-import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
+import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";

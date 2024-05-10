@@ -3,7 +3,7 @@ import {print} from "graphql/language";
 import React, {useEffect} from "react";
 import {Mutation, SaksStatus} from "../api/graphql-types.ts";
 import {Button, TextField} from "@navikt/ds-react";
-import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
+import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {GrupperingsidContext} from "../App.tsx";

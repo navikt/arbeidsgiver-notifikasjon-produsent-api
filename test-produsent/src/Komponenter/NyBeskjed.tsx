@@ -2,7 +2,7 @@ import {gql, useMutation} from "@apollo/client";
 import React, {useContext, useEffect} from "react";
 import {Mutation} from "../api/graphql-types.ts";
 import {GrupperingsidContext} from "../App.tsx";
-import cssClasses from "./KalenderAvtaleMedEksternVarsling.module.css";
+import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";
@@ -63,10 +63,10 @@ export const NyBeskjed: React.FunctionComponent = () => {
     const grupperingsid = useContext(GrupperingsidContext);
 
     const grupperingsidRef = React.useRef<HTMLInputElement>(null);
-    const merkelappRef = React.useRef<HTMLInputElement>(null);
     const virksomhetsnummerRef = React.useRef<HTMLInputElement>(null);
-    const lenkeRef = React.useRef<HTMLInputElement>(null);
     const tekstRef = React.useRef<HTMLInputElement>(null);
+    const merkelappRef = React.useRef<HTMLInputElement>(null);
+    const lenkeRef = React.useRef<HTMLInputElement>(null);
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
     const eksternVarselRef = React.useRef<EksternVarsel>(null);
 
@@ -85,11 +85,11 @@ export const NyBeskjed: React.FunctionComponent = () => {
             variables: {
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
                 virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
-                lenke: lenkeRef.current?.value ?? "",
                 tekst: nullIfEmpty(tekstRef.current?.value),
-                eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
+                lenke: lenkeRef.current?.value ?? "",
                 opprettetTidspunkt: new Date().toISOString(),
+                eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 eksterneVarsler: formateEksternVarsel(eksternVarselRef)
             }
         })
