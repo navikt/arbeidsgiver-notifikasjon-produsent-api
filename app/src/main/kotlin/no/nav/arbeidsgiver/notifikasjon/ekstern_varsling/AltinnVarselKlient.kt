@@ -13,20 +13,18 @@ import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2015._06.Service
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureServiceImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.isCausedBy
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.withRetryHandler
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean
 import org.apache.cxf.message.Message
 import org.apache.cxf.phase.AbstractPhaseInterceptor
 import org.apache.cxf.phase.Phase
+import org.apache.cxf.transport.http.HTTPException
 import javax.xml.namespace.QName
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -262,9 +260,8 @@ class AltinnVarselKlientImpl(
                 val response = withRetryHandler(
                     maxAttempts = 3,
                     delay = 250.milliseconds,
-                    isRetryable = {
-                        it isCausedBy com.ctc.wstx.exc.WstxEOFException::class.java
-                    }) {
+                    isRetryable = { it.erDriftsforstyrrelse() }
+                ) {
                     wsclient.sendStandaloneNotificationBasicV3(
                         altinnBrukernavn,
                         altinnPassord,
@@ -289,6 +286,19 @@ class AltinnVarselKlientImpl(
             }
         }
     }
+
+}
+
+/**
+ * er driftsforstyrrelse hvis http 502,503,504 eller WstxEOFEx
+ */
+private fun Exception.erDriftsforstyrrelse(): Boolean {
+    val isEofEx = isCausedBy(com.ctc.wstx.exc.WstxEOFException::class.java)
+    val is50234Ex = findCause(HTTPException::class.java)?.let {
+        listOf(502, 503).contains(it.responseCode)
+    } ?: false
+
+    return isEofEx || is50234Ex
 }
 
 
