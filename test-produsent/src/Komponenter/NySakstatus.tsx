@@ -1,11 +1,12 @@
 import {gql, useMutation} from "@apollo/client";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Mutation, SaksStatus} from "../api/graphql-types.ts";
 import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";
 import {Button, TextField, ToggleGroup} from "@navikt/ds-react";
+import {GrupperingsidContext} from "../App.tsx";
 
 
 const NY_SAKSTATUS = gql`
@@ -78,6 +79,8 @@ export const NySakstatus: React.FunctionComponent = () => {
     const overstyrStatustekstMedRef = React.useRef<HTMLInputElement>(null)
     const tidspunktRef = React.useRef<HTMLInputElement>(null)
 
+    const grupperingsid = React.useContext(GrupperingsidContext)
+
     const [querytype, setQuerytype] = useState<QueryType>("id" as QueryType)
 
     const [nySakstatus, {
@@ -86,6 +89,11 @@ export const NySakstatus: React.FunctionComponent = () => {
         error
     }] = useMutation<Pick<Mutation, "nyStatusSak" | "nyStatusSakByGrupperingsid">>(querytype === "id" ? NY_SAKSTATUS : NY_SAKSTATUS_GRUPPERINGSID)
 
+    useEffect(() => {
+        if (grupperingsidRef.current !== null) {
+            grupperingsidRef.current.value = grupperingsid
+        }
+    }, [grupperingsid]);
 
     const nullIfEmpty = (s: string | undefined) => s === "" || s === undefined ? null : s
 
@@ -118,8 +126,8 @@ export const NySakstatus: React.FunctionComponent = () => {
             </ToggleGroup>
             {querytype === "id" ? <TextField label={"Id*"} ref={idRef}/>
                 : <>
-                    <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
-                    <TextField label={"Merkelapp*"} ref={merkelappRef}/>
+                    <TextField label={"Grupperingsid*"} ref={grupperingsidRef} defaultValue={grupperingsid}/>
+                    <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
                 </>
             }
             <ToggleGroup defaultValue={nyStatus} onChange={() => setNyStatus} label="Ny status">
