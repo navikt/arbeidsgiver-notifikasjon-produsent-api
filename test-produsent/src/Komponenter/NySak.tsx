@@ -14,6 +14,7 @@ const NY_SAK = gql`
         $virksomhetsnummer: String!
         $lenke: String!
         $tittel: String!
+        $merkelapp: String!
         $initiellStatus: SaksStatus!
 
     ) {
@@ -28,7 +29,7 @@ const NY_SAK = gql`
             grupperingsid: $grupperingsid
             lenke: $lenke
             tittel: $tittel
-            merkelapp: "fager",
+            merkelapp: $merkelapp,
             initiellStatus: $initiellStatus
         ) {
             __typename
@@ -50,6 +51,7 @@ export const NySak: React.FunctionComponent = () => {
     const eksternIdRef = React.useRef<HTMLInputElement>(null)
     const lenkeRef = React.useRef<HTMLInputElement>(null)
     const tittelRef = React.useRef<HTMLInputElement>(null)
+    const merkelapp = React.useRef<HTMLInputElement>(null)
     const initiellStatusRef = React.useRef<HTMLInputElement>(null)
 
     const [nySak, {
@@ -76,6 +78,7 @@ export const NySak: React.FunctionComponent = () => {
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 lenke: nullIfEmpty(lenkeRef.current?.value),
                 tittel: nullIfEmpty(tittelRef.current?.value),
+                merkelapp: nullIfEmpty(merkelapp.current?.value),
                 initiellStatus: initiellStatusRef.current?.value as SaksStatus
             }
         })
@@ -93,6 +96,7 @@ export const NySak: React.FunctionComponent = () => {
             <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
             <TextField label={"Lenke*"} ref={lenkeRef} defaultValue={"https://foo.bar"}/>
             <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny beskjed"/>
+            <TextField label={"Merkelapp*"} ref={merkelapp} defaultValue="fager"/>
             <TextField label={"Initiell status*"} ref={initiellStatusRef} defaultValue="MOTTATT"/>
 
         </div>
