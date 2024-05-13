@@ -14,7 +14,15 @@ val FAGER_TESTPRODUSENT = Produsent(
     tillatteMerkelapper = listOf(
         "fager",
         "fager2",
-        "fager3"
+        "fager3",
+        "Inntektsmelding",
+        "Inntektsmelding sykepenger",
+        "Inntektsmelding foreldrepenger",
+        "Inntektsmelding svangerskapspenger",
+        "Inntektsmelding omsorgspenger",
+        "Inntektsmelding pleiepenger sykt barn",
+        "Inntektsmelding pleiepenger i livets sluttfase",
+        "Inntektsmelding opplæringspenger",
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1"),
