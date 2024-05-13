@@ -37,6 +37,7 @@ val ARBEIDSGIVER_TILTAK = Produsent(
             listOf(
                 "dev-gcp:arbeidsgiver:tiltak-refusjon-api",
                 "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
+                "dev-gcp:team-tiltak:tiltak-notifikasjon",
             )
         }
     ),
