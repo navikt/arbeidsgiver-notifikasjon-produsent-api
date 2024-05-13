@@ -51,6 +51,10 @@ spec:
           namespace: arbeidsgiver
           cluster: dev-fss
 
+        - application: tiltak-notifikasjon
+          namespace: team-tiltak
+          cluster: dev-gcp
+
         - application: esyfovarsel
           namespace: team-esyfo
           cluster: dev-fss
