@@ -82,15 +82,14 @@ suspend fun <T> withRetryHandler(
     throw IllegalStateException("retry handler completed without returning a value or throwing an exception")
 }
 
-infix fun Throwable.isCausedBy(cause: Class<out Throwable>) = findCause(cause) != null
+inline fun <reified T : Throwable> Throwable.isCausedBy() = findCause<T>() != null
 
-fun <T : Throwable> Throwable.findCause(cause: Class<T>): T? {
+inline fun <reified T : Throwable> Throwable.findCause(): T? {
     var current: Throwable? = this
     var level = 0
     while (current != null) {
-        if (cause.isInstance(current)) {
-            @Suppress("UNCHECKED_CAST")
-            return current as T?
+        if (current is T) {
+            return current
         }
         if (level > 100) {
             // avoid stack overflow due to circular references

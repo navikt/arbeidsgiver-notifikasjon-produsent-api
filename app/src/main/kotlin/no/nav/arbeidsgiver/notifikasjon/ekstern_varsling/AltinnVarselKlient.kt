@@ -290,11 +290,11 @@ class AltinnVarselKlientImpl(
 }
 
 /**
- * er driftsforstyrrelse hvis http 502,503,504 eller WstxEOFEx
+ * er driftsforstyrrelse hvis http 502,503 eller WstxEOFEx
  */
-private fun Exception.erDriftsforstyrrelse(): Boolean {
-    val isEofEx = isCausedBy(com.ctc.wstx.exc.WstxEOFException::class.java)
-    val is50234Ex = findCause(HTTPException::class.java)?.let {
+fun Exception.erDriftsforstyrrelse(): Boolean {
+    val isEofEx = isCausedBy<com.ctc.wstx.exc.WstxEOFException>()
+    val is50234Ex = findCause<HTTPException>()?.let {
         listOf(502, 503).contains(it.responseCode)
     } ?: false
 
