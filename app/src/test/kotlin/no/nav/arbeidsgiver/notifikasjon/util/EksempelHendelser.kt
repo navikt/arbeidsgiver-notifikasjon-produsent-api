@@ -528,6 +528,7 @@ object EksempelHendelse {
             lenke = "#foo",
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
+            nesteSteg = null,
             hardDelete = null,
         )
     }
@@ -556,6 +557,7 @@ object EksempelHendelse {
             lenke = "#foo",
             oppgittTidspunkt = null,
             mottattTidspunkt = OffsetDateTime.now(),
+            nesteSteg = null,
             hardDelete = null,
         )
     }
@@ -584,6 +586,7 @@ object EksempelHendelse {
             lenke = null,
             oppgittTidspunkt = null,
             mottattTidspunkt = OffsetDateTime.now(),
+            nesteSteg = null,
             hardDelete = null,
         )
     }

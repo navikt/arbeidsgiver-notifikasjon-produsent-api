@@ -351,6 +351,7 @@ class BrukerRepositoryImpl(
                                 virksomhetsnummer,
                                 tittel,
                                 lenke,
+                                neste_steg,
                                 merkelapp,
                                 grupperingsid,
                                 sist_endret_tidspunkt,
@@ -366,6 +367,7 @@ class BrukerRepositoryImpl(
                                 sak.virksomhetsnummer,
                                 sak.tittel,
                                 sak.lenke,
+                                sak.neste_steg,
                                 sak.merkelapp,
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
@@ -402,6 +404,7 @@ class BrukerRepositoryImpl(
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
                                 'lenke', lenke,
+                                'nesteSteg', neste_steg,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
@@ -488,6 +491,7 @@ class BrukerRepositoryImpl(
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
                                 'lenke', lenke,
+                                'nesteSteg', neste_steg,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
@@ -560,6 +564,7 @@ class BrukerRepositoryImpl(
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
                                 'lenke', lenke,
+                                'nesteSteg', neste_steg,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid

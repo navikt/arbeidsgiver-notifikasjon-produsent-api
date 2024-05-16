@@ -262,6 +262,7 @@ object HendelseModel {
         val lenke: String?,
         val oppgittTidspunkt: OffsetDateTime?,
         val mottattTidspunkt: OffsetDateTime?,
+        val nesteSteg: String?,
         val hardDelete: LocalDateTimeOrDuration?,
     ) : Hendelse(), Sak {
         @JsonIgnore

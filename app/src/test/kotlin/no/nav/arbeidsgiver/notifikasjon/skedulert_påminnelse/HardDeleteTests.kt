@@ -256,6 +256,7 @@ private fun opprettSak(
         lenke = "",
         oppgittTidspunkt = null,
         mottattTidspunkt = null,
+        nesteSteg = null,
         hardDelete = null,
     )
 }

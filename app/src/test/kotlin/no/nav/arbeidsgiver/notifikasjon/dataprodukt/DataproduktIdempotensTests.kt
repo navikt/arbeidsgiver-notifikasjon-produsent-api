@@ -39,6 +39,7 @@ class DataproduktIdempotensTests : DescribeSpec({
         lenke = "#foo",
         oppgittTidspunkt = opprettetTidspunkt,
         mottattTidspunkt = opprettetTidspunkt,
+        nesteSteg = null,
         hardDelete = null,
     )
 

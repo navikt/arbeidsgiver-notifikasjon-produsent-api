@@ -54,6 +54,7 @@ suspend fun SkedulertHardDeleteRepositoryImpl.insert(
             lenke = "https://dev.nav.no/$uuid",
             oppgittTidspunkt = null,
             mottattTidspunkt = OffsetDateTime.parse("1234-12-19T23:32:32.01+05"),
+            nesteSteg = null,
             hardDelete = HendelseModel.LocalDateTimeOrDuration.parse(
                 beregnetSlettetid.toInstant().asOsloLocalDateTime().toString()
             ),

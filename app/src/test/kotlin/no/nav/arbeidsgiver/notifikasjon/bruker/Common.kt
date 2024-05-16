@@ -371,6 +371,7 @@ suspend fun BrukerRepository.sakOpprettet(
     grupperingsid: String = UUID.randomUUID().toString(),
     oppgittTidspunkt: OffsetDateTime? = null,
     mottattTidspunkt: OffsetDateTime? = null,
+    nesteSteg: String? = randomTekst("neste-steg"),
     hardDelete: LocalDateTimeOrDuration? = null,
 ) = HendelseModel.SakOpprettet(
     hendelseId = sakId,
@@ -385,6 +386,7 @@ suspend fun BrukerRepository.sakOpprettet(
     lenke = lenke,
     oppgittTidspunkt = oppgittTidspunkt,
     mottattTidspunkt = mottattTidspunkt,
+    nesteSteg = nesteSteg,
     hardDelete = hardDelete,
 ).also {
     oppdaterModellEtterHendelse(it)

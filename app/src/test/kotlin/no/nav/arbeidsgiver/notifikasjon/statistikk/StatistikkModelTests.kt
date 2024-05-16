@@ -54,6 +54,7 @@ class StatistikkModelTests : DescribeSpec({
             lenke = "#foo",
             oppgittTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
             mottattTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
+            nesteSteg = null,
             hardDelete = null,
         )
     }

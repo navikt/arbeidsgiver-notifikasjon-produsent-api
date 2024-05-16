@@ -125,6 +125,7 @@ type Sak {
     virksomhetsnummer: String!
     tittel: String!
     lenke: String
+    nesteSteg: String
     merkelapp: String!
 }
 
@@ -491,6 +492,14 @@ type Mutation {
         """
         """
         initiellStatus: SaksStatus!
+
+        """
+        Dette feltet er frivillig.
+        Her har dere mulighet til å vise virksomheten hva som er neste steg i saken.
+        F.eks. "Saksbehandlignstiden er lang. Du kan forvente refusjon utbetalt i januar 2025."
+        Dette vises i tidslinjen som en fremtidig handling i saken, over siste oppgave, beskjed eller kalenderavtale.
+        """
+        nesteSteg: String
 
         """
         Når endringen skjedde. Det kan godt være i fortiden.

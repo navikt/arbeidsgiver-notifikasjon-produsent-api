@@ -179,6 +179,7 @@ class ProdusentRepositoryImpl(
                 id = getObject("id", UUID::class.java),
                 deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                 virksomhetsnummer = getString("virksomhetsnummer"),
+                nesteSteg = getString("neste_steg"),
                 statusoppdateringer = laxObjectMapper.readValue(getString("statusoppdateringer"))
             )
         }
@@ -333,8 +334,8 @@ class ProdusentRepositoryImpl(
         database.transaction {
             executeUpdate(
                 """
-                    insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, lenke, tidspunkt_mottatt)
-                    values (?, ?, ?, ?, ?::jsonb, ?, ?, now())
+                    insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, lenke, neste_steg, tidspunkt_mottatt)
+                    values (?, ?, ?, ?, ?::jsonb, ?, ?, ?, now())
                     on conflict do nothing
                 """
             ) {
@@ -345,6 +346,7 @@ class ProdusentRepositoryImpl(
                 jsonb(sakOpprettet.mottakere)
                 text(sakOpprettet.tittel)
                 nullableText(sakOpprettet.lenke)
+                nullableText(sakOpprettet.nesteSteg)
             }.also {
                 if (it == 0) {
                     // noop. saken finnes allerede

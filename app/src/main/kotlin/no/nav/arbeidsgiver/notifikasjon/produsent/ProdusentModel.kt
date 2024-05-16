@@ -29,6 +29,7 @@ object ProdusentModel {
         val lenke: String?,
         val statusoppdateringer: List<SakStatusOppdatering>,
         val mottakere: List<Mottaker>,
+        val nesteSteg: String?,
         val opprettetTidspunkt: OffsetDateTime,
     ) {
         fun statusoppdateringRegistrert() =

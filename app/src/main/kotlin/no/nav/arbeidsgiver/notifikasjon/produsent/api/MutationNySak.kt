@@ -43,6 +43,7 @@ internal class MutationNySak(
                             tidspunkt = env.getTypedArgumentOrNull("tidspunkt"),
                             overstyrStatustekstMed = env.getTypedArgumentOrNull("overstyrStatustekstMed"),
                         ),
+                        nesteSteg = env.getTypedArgumentOrNull("nesteSteg"),
                         hardDelete = env.getTypedArgumentOrNull("hardDelete"),
                     )
                 )
@@ -143,6 +144,7 @@ internal class MutationNySak(
         val tittel: String,
         val lenke: String?,
         val status: SaksStatusInput,
+        val nesteSteg: String?,
         val hardDelete: FutureTemporalInput?,
     ) {
         fun somSakOpprettetHendelse(
@@ -163,6 +165,7 @@ internal class MutationNySak(
             lenke = lenke,
             oppgittTidspunkt = status.tidspunkt,
             mottattTidspunkt = mottattTidspunkt,
+            nesteSteg = nesteSteg,
             hardDelete = hardDelete?.tilHendelseModel(),
         )
 
@@ -207,6 +210,7 @@ internal fun MutationNySak.NySakInput.erDuplikatAv(eksisterende: ProdusentModel.
             this.grupperingsid == eksisterende.grupperingsid &&
             this.tittel == eksisterende.tittel &&
             this.lenke == eksisterende.lenke &&
+            this.nesteSteg == eksisterende.nesteSteg &&
             this.mottakere.equalsAsSets(eksisterende.mottakere, MottakerInput::sammeSom) &&
             (initialOppdatering == null || this.status.isDuplicateOf(initialOppdatering))
 }
