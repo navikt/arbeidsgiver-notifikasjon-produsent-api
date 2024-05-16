@@ -16,6 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NesteStegSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -59,6 +60,7 @@ interface ProdusentRepository {
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean
+    suspend fun nesteStegSakFinnes(id: UUID, idempotenceKey: String): Boolean
 }
 
 class ProdusentRepositoryImpl(
@@ -316,6 +318,7 @@ class ProdusentRepositoryImpl(
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
             is KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
             is KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
+            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
         }
     }
 
@@ -365,6 +368,18 @@ class ProdusentRepositoryImpl(
         }
     }
 
+    override suspend fun nesteStegSakFinnes(id: UUID, idempotenceKey: String): Boolean =
+        database.nonTransactionalExecuteQuery(
+            """
+            select * from sak_oppdatering where sak_id = ? and idempotence_key = ?
+            """,
+            {
+                uuid(id)
+                text(idempotenceKey)
+            }
+        ) {}.isNotEmpty()
+
+
     private fun Transaction.finnDbSakId(sakId: UUID): UUID? =
         executeQuery(
             """
@@ -398,6 +413,36 @@ class ProdusentRepositoryImpl(
         }
     }
 
+    private suspend fun oppdaterModellEtterNesteStegSak(nesteStegSak: HendelseModel.NesteStegSak) {
+        database.transaction {
+            executeUpdate(
+                """
+                update sak
+                set neste_steg = ?
+                where id = ?
+            """
+            ) {
+                nullableText(nesteStegSak.nesteSteg)
+                uuid(nesteStegSak.sakId)
+            }
+
+            nesteStegSak.idempotenceKey?.also {
+                executeUpdate(
+                    """
+                insert into sak_oppdatering(
+                    hendelse_id, sak_id, idempotence_key
+                )
+                values (?, ?, ?)
+                on conflict do nothing
+            """
+                ) {
+                    uuid(nesteStegSak.hendelseId)
+                    uuid(nesteStegSak.sakId)
+                    text(nesteStegSak.idempotenceKey)
+                }
+            }
+        }
+    }
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
         database.transaction {

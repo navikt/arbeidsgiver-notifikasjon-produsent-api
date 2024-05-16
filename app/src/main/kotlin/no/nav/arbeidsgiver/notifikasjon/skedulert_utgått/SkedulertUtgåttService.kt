@@ -95,6 +95,7 @@ class SkedulertUtgåttService(
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.SakOpprettet,
             is HendelseModel.NyStatusSak,
+            is HendelseModel.NesteStegSak,
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.EksterntVarselVellykket -> Unit

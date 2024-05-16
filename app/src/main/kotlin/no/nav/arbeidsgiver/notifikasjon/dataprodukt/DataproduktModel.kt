@@ -17,6 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NesteStegSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -460,6 +461,7 @@ class DataproduktModel(
                     }
                 }
             }
+            is NesteStegSak -> TODO()
             is FristUtsatt -> {
                 database.nonTransactionalExecuteUpdate("""
                     update notifikasjon

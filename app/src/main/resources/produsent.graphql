@@ -330,6 +330,17 @@ type NyStatusSakVellykket {
     statuser: [StatusOppdatering!]!
 }
 
+union NesteStegSakResultat =
+    | NesteStegSakVellykket
+    | SakFinnesIkke
+    | Konflikt
+    | UgyldigMerkelapp
+    | UkjentProdusent
+
+type NesteStegSakVellykket {
+    id: ID!
+}
+
 """
 Statusen påvirker bl.a. hvilket ikon som vises og brukes bl.a.
 for å kunne filtrere saksoversikten på min side arbeidsgiver.
@@ -586,6 +597,35 @@ type Mutation {
         """
         nyLenkeTilSak: String
     ): NyStatusSakResultat!
+
+    nesteStegSak(
+        idempotencyKey: String
+        id: ID!
+
+        """
+        Dette feltet er frivillig.
+        Her har dere mulighet til å vise virksomheten hva som er neste steg i saken.
+        F.eks. "Saksbehandlignstiden er lang. Du kan forvente refusjon utbetalt i januar 2025."
+        Dette vises i tidslinjen som en fremtidig handling i saken, over siste oppgave, beskjed eller kalenderavtale.
+        Her kan dere oppgi verdien null for å fjerne neste steg.
+        """
+        nesteSteg: String
+    ): NesteStegSakResultat!
+
+    nesteStegSakByGrupperingsid(
+        idempotencyKey: String
+        grupperingsid: String!
+        merkelapp: String!
+
+        """
+        Dette feltet er frivillig.
+        Her har dere mulighet til å vise virksomheten hva som er neste steg i saken.
+        F.eks. "Saksbehandlignstiden er lang. Du kan forvente refusjon utbetalt i januar 2025."
+        Dette vises i tidslinjen som en fremtidig handling i saken, over siste oppgave, beskjed eller kalenderavtale.
+        Her kan dere oppgi verdien null for å fjerne neste steg.
+        """
+        nesteSteg: String
+    ): NesteStegSakResultat!
 
     """
     Opprett en ny beskjed.

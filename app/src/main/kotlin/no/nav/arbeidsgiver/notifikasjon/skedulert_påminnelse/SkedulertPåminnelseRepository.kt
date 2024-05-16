@@ -254,6 +254,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                     )
                 }
             }
+            is HendelseModel.NesteStegSak -> TODO()
 
             is HendelseModel.BeskjedOpprettet,
             is HendelseModel.BrukerKlikket,

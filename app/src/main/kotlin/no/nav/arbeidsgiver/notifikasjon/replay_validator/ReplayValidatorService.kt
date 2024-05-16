@@ -80,6 +80,7 @@ class ReplayValidatorService(
             is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.EksterntVarselVellykket,
             is HendelseModel.SoftDelete,
+            is HendelseModel.NesteStegSak,
             is HendelseModel.NyStatusSak -> Unit
         }
 

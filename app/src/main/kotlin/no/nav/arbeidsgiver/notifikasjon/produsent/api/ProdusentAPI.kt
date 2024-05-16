@@ -56,6 +56,7 @@ object ProdusentAPI {
                 MutationNySak(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNyStatusSak(hendelseDispatcher, produsentRepository).wire(this)
                 MutationKalenderavtale(hendelseDispatcher, produsentRepository).wire(this)
+                MutationNesteStegSak(hendelseDispatcher, produsentRepository).wire(this)
             }
         )
     }

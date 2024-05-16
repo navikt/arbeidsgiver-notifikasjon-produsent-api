@@ -305,6 +305,21 @@ object HendelseModel {
             get() = oppgittTidspunkt ?: mottattTidspunkt
     }
 
+    @JsonTypeName("NesteStegSak")
+    data class NesteStegSak(
+        override val hendelseId: UUID,
+        override val virksomhetsnummer: String,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        override val sakId: UUID,
+
+        val idempotenceKey: String?,
+        val nesteSteg: String?,
+    ) : Hendelse(), Sak {
+        @JsonIgnore
+        override val aggregateId: UUID = sakId
+    }
+
     @JsonTypeName("BeskjedOpprettet")
     data class BeskjedOpprettet
     @JsonIgnore constructor(

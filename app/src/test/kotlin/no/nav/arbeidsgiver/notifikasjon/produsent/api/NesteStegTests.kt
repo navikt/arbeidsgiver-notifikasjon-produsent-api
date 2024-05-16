@@ -34,6 +34,55 @@ class NesteStegTests: DescribeSpec({
             sak.nesteSteg shouldBe "foo";
         }
     }
+
+    describe("Endrer nesteSteg på eksisterende sak") {
+        val (produsentRepository, hendelseProdusent, engine) = setupEngine()
+        val sak = engine.nySak(uuid("1").toString(),null)
+        val sakID = sak.getTypedContent<UUID>("$.nySak.id")
+        val idempotencyKey1 = uuid("2").toString()
+        val idempotencyKey2 = uuid("3").toString()
+
+        val nesteSteg1 = engine.endreNesteSteg(sakID, "foo", idempotencyKey1)
+
+        it("Endrer neste steg med ny idempontency key") {
+            nesteSteg1.getTypedContent<String>("$.nesteStegSak.__typename") shouldBe "NesteStegSakVellykket"
+            val hentetSak = produsentRepository.hentSak(sakID)!!
+            hentetSak.nesteSteg shouldBe "foo";
+        }
+
+        it("Forsøker endre neste steg med samme idempontency key og forventer ingen endring") {
+            engine.endreNesteSteg(sakID, "bar", idempotencyKey1)
+            val hentetSak = produsentRepository.hentSak(sakID)!!
+            hentetSak.nesteSteg shouldBe "foo";
+        }
+
+        it ("Endrere med ny idempontency key og forventer endring") {
+            val nesteSteg2 = engine.endreNesteSteg(sakID, "baz", idempotencyKey2)
+            nesteSteg2.getTypedContent<String>("$.nesteStegSak.__typename") shouldBe "NesteStegSakVellykket"
+            val hentetSak = produsentRepository.hentSak(sakID)!!
+            hentetSak.nesteSteg shouldBe "baz";
+        }
+
+        it ("Endrer neste steg til null") {
+            val nesteSteg3 = engine.endreNesteSteg(sakID, null, uuid("4").toString())
+            nesteSteg3.getTypedContent<String>("$.nesteStegSak.__typename") shouldBe "NesteStegSakVellykket"
+            val hentetSak = produsentRepository.hentSak(sakID)!!
+            hentetSak.nesteSteg shouldBe null;
+        }
+        it ("Endrer neste steg uten idempontency key") {
+            val nesteSteg4 = engine.endreNesteSteg(sakID, "foo", null)
+            nesteSteg4.getTypedContent<String>("$.nesteStegSak.__typename") shouldBe "NesteStegSakVellykket"
+            val hentetSak = produsentRepository.hentSak(sakID)!!
+            hentetSak.nesteSteg shouldBe "foo";
+        }
+
+        it ("Endrer til null uten idempontency key") {
+            val nesteSteg5 = engine.endreNesteSteg(sakID, null, null)
+            nesteSteg5.getTypedContent<String>("$.nesteStegSak.__typename") shouldBe "NesteStegSakVellykket"
+            val hentetSak = produsentRepository.hentSak(sakID)!!
+            hentetSak.nesteSteg shouldBe null;
+        }
+    }
 })
 
 private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
@@ -79,3 +128,30 @@ private fun TestApplicationEngine.nySak(
             }
         """
     )
+
+
+private fun TestApplicationEngine.endreNesteSteg(
+    id: UUID,
+    nesteSteg: String?,
+    idempotencyKey: String?,
+) =
+    produsentApi(
+        """
+            mutation {
+                nesteStegSak(
+                    id: "$id"
+                    ${if (nesteSteg == null) "" else "nesteSteg: \"$nesteSteg\""}
+                    ${if (idempotencyKey == null) "" else "idempotencyKey: \"$idempotencyKey\""}
+                ) {
+                    __typename
+                    ... on NesteStegSakVellykket {
+                        id
+                    }
+                    ... on Error {
+                        feilmelding
+                    }
+                }
+            }
+        """
+    )
+

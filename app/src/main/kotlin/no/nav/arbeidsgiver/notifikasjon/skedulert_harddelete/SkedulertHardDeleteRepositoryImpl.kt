@@ -167,7 +167,7 @@ class SkedulertHardDeleteRepositoryImpl(
             }
 
             is HendelseModel.HardDelete -> hardDelete(hendelse)
-
+            is HendelseModel.NesteStegSak -> TODO()
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselVellykket,
             is HendelseModel.EksterntVarselKansellert,

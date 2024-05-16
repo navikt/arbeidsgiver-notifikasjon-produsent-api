@@ -35,6 +35,7 @@ internal sealed class Error {
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationNyStatusSak.NyStatusSakResultat,
+        MutationNesteStegSak.NesteStegSakResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
     @JsonTypeName("UkjentProdusent")
@@ -54,6 +55,7 @@ internal sealed class Error {
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationNySak.NySakResultat,
         MutationNyStatusSak.NyStatusSakResultat,
+        MutationNesteStegSak.NesteStegSakResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
     @JsonTypeName("UgyldigMottaker")
@@ -69,6 +71,7 @@ internal sealed class Error {
     ) :
         Error(),
         MutationNyStatusSak.NyStatusSakResultat,
+        MutationNesteStegSak.NesteStegSakResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
@@ -131,7 +134,8 @@ internal sealed class Error {
         MutationSoftDeleteSak.SoftDeleteSakResultat,
         MutationHardDeleteSak.HardDeleteSakResultat,
         MutationKalenderavtale.NyKalenderavtaleResultat,
-        QuerySak.HentSakResultat
+        QuerySak.HentSakResultat,
+        MutationNesteStegSak.NesteStegSakResultat
 
     @JsonTypeName("OppgavenErAlleredeUtfoert")
     data class OppgavenErAlleredeUtfoert(
