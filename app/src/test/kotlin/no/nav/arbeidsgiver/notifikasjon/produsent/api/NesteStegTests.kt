@@ -49,20 +49,17 @@ class NesteStegTests: DescribeSpec({
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.nesteSteg shouldBe "foo";
         }
-
         it("Forsøker endre neste steg med samme idempontency key og forventer ingen endring") {
             engine.endreNesteSteg(sakID, "bar", idempotencyKey1)
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.nesteSteg shouldBe "foo";
         }
-
         it ("Endrere med ny idempontency key og forventer endring") {
             val nesteSteg2 = engine.endreNesteSteg(sakID, "baz", idempotencyKey2)
             nesteSteg2.getTypedContent<String>("$.nesteStegSak.__typename") shouldBe "NesteStegSakVellykket"
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.nesteSteg shouldBe "baz";
         }
-
         it ("Endrer neste steg til null") {
             val nesteSteg3 = engine.endreNesteSteg(sakID, null, uuid("4").toString())
             nesteSteg3.getTypedContent<String>("$.nesteStegSak.__typename") shouldBe "NesteStegSakVellykket"
@@ -75,7 +72,6 @@ class NesteStegTests: DescribeSpec({
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.nesteSteg shouldBe "foo";
         }
-
         it ("Endrer til null uten idempontency key") {
             val nesteSteg5 = engine.endreNesteSteg(sakID, null, null)
             nesteSteg5.getTypedContent<String>("$.nesteStegSak.__typename") shouldBe "NesteStegSakVellykket"
