@@ -15,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NesteStegSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -356,12 +357,13 @@ class BrukerRepositoryImpl(
                                 neste_steg,
                                 merkelapp,
                                 grupperingsid,
+                                neste_steg,
                                 sist_endret_tidspunkt,
                                 opprettet_tidspunkt,
                                 count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
                                 min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist
                             from mine_saker_filtrert
-                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt, opprettet_tidspunkt
+                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, sist_endret_tidspunkt, opprettet_tidspunkt
                         ),
                         mine_saker_paginert as (
                             select 
@@ -369,8 +371,8 @@ class BrukerRepositoryImpl(
                                 sak.virksomhetsnummer,
                                 sak.tittel,
                                 sak.lenke,
-                                sak.neste_steg,
                                 sak.merkelapp,
+                                sak.neste_steg,
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
@@ -736,7 +738,7 @@ class BrukerRepositoryImpl(
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
             is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
             is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
-            is HendelseModel.NesteStegSak -> TODO()
+            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
         }
     }
 
@@ -975,9 +977,9 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt, opprettet_tidspunkt
+                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, sist_endret_tidspunkt, opprettet_tidspunkt
                 )
-                values (?, ?, ? ,?, ?, ?, ?, ?)
+                values (?, ?, ? ,?, ?, ?, ?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -987,6 +989,7 @@ class BrukerRepositoryImpl(
                 nullableText(sakOpprettet.lenke)
                 text(sakOpprettet.merkelapp)
                 text(sakOpprettet.grupperingsid)
+                nullableText(sakOpprettet.nesteSteg)
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
             }
@@ -1096,6 +1099,24 @@ class BrukerRepositoryImpl(
                     text(nyStatusSak.nyLenkeTilSak)
                     uuid(nyStatusSak.sakId)
                 }
+            }
+        }
+    }
+
+    private suspend fun oppdaterModellEtterNesteStegSak (nesteStegSak: NesteStegSak) {
+        database.transaction {
+            executeUpdate(
+                """
+                insert into sak_oppdatering(
+                    hendelse_id, sak_id, idempotence_key
+                )
+                values (?, ?, ?)
+                on conflict (hendelse_id) do nothing 
+            """
+            ) {
+                uuid(nesteStegSak.hendelseId)
+                uuid(nesteStegSak.sakId)
+                nullableText(nesteStegSak.idempotenceKey)
             }
         }
     }

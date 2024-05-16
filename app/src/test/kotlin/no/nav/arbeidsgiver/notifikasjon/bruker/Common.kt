@@ -371,7 +371,7 @@ suspend fun BrukerRepository.sakOpprettet(
     grupperingsid: String = UUID.randomUUID().toString(),
     oppgittTidspunkt: OffsetDateTime? = null,
     mottattTidspunkt: OffsetDateTime? = null,
-    nesteSteg: String? = randomTekst("neste-steg"),
+    nesteSteg: String? = null,
     hardDelete: LocalDateTimeOrDuration? = null,
 ) = HendelseModel.SakOpprettet(
     hendelseId = sakId,
@@ -418,6 +418,25 @@ suspend fun BrukerRepository.nyStatusSak(
     idempotensKey = idempotensKey,
     hardDelete = hardDelete,
     nyLenkeTilSak = nyLenkeTilSak,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
+suspend fun BrukerRepository.nesteStegSak(
+    sak: HendelseModel.SakOpprettet,
+    hendelseId: UUID = UUID.randomUUID(),
+    virksomhetsnummer: String = sak.virksomhetsnummer,
+    produsentId: String = randomProdusentId(),
+    idempotensKey: String = UUID.randomUUID().toString(),
+    nesteSteg: String? = randomTekst("neste-steg")
+) = HendelseModel.NesteStegSak(
+    hendelseId = hendelseId,
+    virksomhetsnummer = virksomhetsnummer,
+    produsentId = produsentId,
+    kildeAppNavn = randomKildeAppNavn(),
+    sakId = sak.sakId,
+    nesteSteg = nesteSteg,
+    idempotenceKey = idempotensKey,
 ).also {
     oppdaterModellEtterHendelse(it)
 }
