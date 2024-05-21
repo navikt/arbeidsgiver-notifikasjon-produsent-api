@@ -1,12 +1,13 @@
 import fs from 'fs'
 import express from 'express';
-import casual from 'casual';
 import {createLogger, transports, format} from 'winston';
 import require from "./esm-require.js";
+import mocks from "./mocks/index.js";
+import mockEnv from "./env.js"
 
 const {PORT = 8080} = process.env;
 
-const { ApolloServerPluginLandingPageGraphQLPlayground } = require("apollo-server-core");
+const {ApolloServerPluginLandingPageGraphQLPlayground} = require("apollo-server-core");
 const {ApolloServer, gql} = require('apollo-server-express');
 
 const log = createLogger({
@@ -30,11 +31,7 @@ const serve = async () => {
         const typeDefs = gql(sdl.toString());
         const server = new ApolloServer({
             typeDefs,
-            mocks: {
-                Int: () => casual.integer(0, 1000),
-                String: () => casual.string,
-                ISO8601DateTime: () => new Date().toISOString(),
-            },
+            mocks,
             plugins: [
                 ApolloServerPluginLandingPageGraphQLPlayground(),
             ],
@@ -49,6 +46,7 @@ const serve = async () => {
         server.applyMiddleware({app, path: '/'});
         app.listen(PORT, () => {
             log.info(`🚀 Server ready at :${PORT}${server.graphqlPath}`);
+            log.info(`Running with mock config: ${JSON.stringify(mockEnv)}` );
         });
     } catch (error) {
         log.error(`Server failed to start ${error}`);

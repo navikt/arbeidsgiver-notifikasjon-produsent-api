@@ -13,7 +13,7 @@
     "winston": "^3.6.0"
   },
   "scripts": {
-    "start": "nodemon server.js",
+    "start": "nodemon src/server.js",
     "gql:cp_schema": "cp ../../app/src/main/resources/produsent.graphql produsent.graphql"
   }
 }
