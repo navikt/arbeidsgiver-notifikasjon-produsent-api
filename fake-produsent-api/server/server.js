@@ -4,10 +4,32 @@ import casual from 'casual';
 import {createLogger, transports, format} from 'winston';
 import require from "./esm-require.js";
 
-const {PORT = 8080} = process.env;
+const {
+    PORT = 8080,
+    ALWAYS_SUCCESSFUL_RESPONSE = 'false',
+} = process.env;
 
 const {ApolloServerPluginLandingPageGraphQLPlayground} = require("apollo-server-core");
 const {ApolloServer, gql} = require('apollo-server-express');
+
+const successfulMocks = {
+    HardDeleteNotifikasjonResultat: () => ({__typename: "HardDeleteNotifikasjonVellykket"}),
+    HardDeleteSakResultat: () => ({__typename: "HardDeleteSakVellykket"}),
+    HentNotifikasjonResultat: () => ({__typename: "HentetNotifikasjon"}),
+    HentSakResultat: () => ({__typename: "HentetSak"}),
+    MineNotifikasjonerResultat: () => ({__typename: "NotifikasjonConnection"}),
+    NyBeskjedResultat: () => ({__typename: "NyBeskjedVellykket"}),
+    NyKalenderavtaleResultat: () => ({__typename: "NyKalenderavtaleVellykket"}),
+    NyOppgaveResultat: () => ({__typename: "NyOppgaveVellykket"}),
+    NySakResultat: () => ({__typename: "NySakVellykket"}),
+    NyStatusSakResultat: () => ({__typename: "NyStatusSakVellykket"}),
+    OppdaterKalenderavtaleResultat: () => ({__typename: "OppdaterKalenderavtaleVellykket"}),
+    OppgaveUtfoertResultat: () => ({__typename: "OppgaveUtfoertVellykket"}),
+    OppgaveUtgaattResultat: () => ({__typename: "OppgaveUtgaattVellykket"}),
+    OppgaveUtsettFristResultat: () => ({__typename: "OppgaveUtsettFristVellykket"}),
+    SoftDeleteNotifikasjonResultat: () => ({__typename: "SoftDeleteNotifikasjonVellykket" }),
+    SoftDeleteSakResultat: () => ({_typename: "SoftDeleteSakVellykket"}),
+};
 
 const log = createLogger({
     transports: [
@@ -17,38 +39,6 @@ const log = createLogger({
         })
     ]
 })
-
-const successfulMocks = {
-    MineNotifikasjonerResultat: () => ({__typename: "NotifikasjonConnection"}),
-    HentNotifikasjonResultat: () => ({__typename: "HentetNotifikasjon"}),
-    HentSakResultat: () => ({__typename: "HentetSak"}),
-
-    NySakResultat: () => ({__typename: "NySakVellykket"}),
-    NyOppgaveResultat: () => ({__typename: "NyOppgaveVellykket"}),
-    NyBeskjedResultat: () => ({__typename: "NyBeskjedVellykket"}),
-    NyKalenderavtaleResultat: () => ({__typename: "NyKalenderavtaleVellykket"}),
-    NyStatusSakResultat: () => ({__typename: "NyStatusSakVellykket"}),
-    SoftDeleteNotifikasjonResultat: () => ({
-        __typename: "SoftDeleteNotifikasjonVellykket",
-    }),
-    HardDeleteNotifikasjonResultat: () => ({
-        __typename: "HardDeleteNotifikasjonVellykket",
-    }),
-    SoftDeleteSakResultat: () => ({_typename: "SoftDeleteSakVellykket"}),
-    HardDeleteSakResultat: () => ({__typename: "HardDeleteSakVellykket"}),
-    OppgaveUtgaattResultat: () => ({__typename: "OppgaveUtgaattVellykket"}),
-    OppgaveUtfoertResultat: () => ({__typename: "OppgaveUtfoertVellykket"}),
-    OppgaveUtsettFristResultat: () => ({
-        __typename: "OppgaveUtsettFristVellykket",
-    }),
-    OppdaterKalenderavtaleResultat: () => ({
-        __typename: "OppdaterKalenderavtaleVellykket",
-    }),
-};
-
-const {
-    ALWAYS_SUCCESSFUL_RESPONSE = 'false'
-} = process.env;
 
 const serve = async () => {
     try {
