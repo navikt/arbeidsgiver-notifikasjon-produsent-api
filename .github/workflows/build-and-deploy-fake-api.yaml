@@ -11,8 +11,9 @@ on:
 jobs:
   build_and_push:
     permissions:
-      contents: "read"
-      id-token: "write"
+      packages: write
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -59,4 +60,4 @@ jobs:
         with:
           context: fake-produsent-api
           push: true
-          tags: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-fake-produsent-api:latest
+          tags: ghcr.io/${{ github.repository }}/fake-produsent-api:latest
