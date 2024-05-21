@@ -48,3 +48,15 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: fake-produsent-api/nais-application.yaml
           PRINT_PAYLOAD: true
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: fake-produsent-api
+          push: true
+          tags: ghcr.io/${{ github.repository }}/arbeidsgiver-notifikasjon-fake-produsent-api:latest

@@ -1,0 +1,93 @@
+import fs from 'fs'
+import express from 'express';
+import casual from 'casual';
+import {createLogger, transports, format} from 'winston';
+import require from "./esm-require.js";
+
+const {PORT = 8080} = process.env;
+
+const {ApolloServerPluginLandingPageGraphQLPlayground} = require("apollo-server-core");
+const {ApolloServer, gql} = require('apollo-server-express');
+
+const log = createLogger({
+    transports: [
+        new transports.Console({
+            timestamp: true,
+            format: format.json()
+        })
+    ]
+})
+
+const successfulMocks = {
+    MineNotifikasjonerResultat: () => ({__typename: "NotifikasjonConnection"}),
+    HentNotifikasjonResultat: () => ({__typename: "HentetNotifikasjon"}),
+    HentSakResultat: () => ({__typename: "HentetSak"}),
+
+    NySakResultat: () => ({__typename: "NySakVellykket"}),
+    NyOppgaveResultat: () => ({__typename: "NyOppgaveVellykket"}),
+    NyBeskjedResultat: () => ({__typename: "NyBeskjedVellykket"}),
+    NyKalenderavtaleResultat: () => ({__typename: "NyKalenderavtaleVellykket"}),
+    NyStatusSakResultat: () => ({__typename: "NyStatusSakVellykket"}),
+    SoftDeleteNotifikasjonResultat: () => ({
+        __typename: "SoftDeleteNotifikasjonVellykket",
+    }),
+    HardDeleteNotifikasjonResultat: () => ({
+        __typename: "HardDeleteNotifikasjonVellykket",
+    }),
+    SoftDeleteSakResultat: () => ({_typename: "SoftDeleteSakVellykket"}),
+    HardDeleteSakResultat: () => ({__typename: "HardDeleteSakVellykket"}),
+    OppgaveUtgaattResultat: () => ({__typename: "OppgaveUtgaattVellykket"}),
+    OppgaveUtfoertResultat: () => ({__typename: "OppgaveUtfoertVellykket"}),
+    OppgaveUtsettFristResultat: () => ({
+        __typename: "OppgaveUtsettFristVellykket",
+    }),
+    OppdaterKalenderavtaleResultat: () => ({
+        __typename: "OppdaterKalenderavtaleVellykket",
+    }),
+};
+
+const {
+    ALWAYS_SUCCESSFUL_RESPONSE = 'false'
+} = process.env;
+
+const serve = async () => {
+    try {
+        const app = express();
+        app.disable("x-powered-by");
+        app.get('/isalive', (req, res) => res.sendStatus(200));
+        app.get('/isready', (req, res) => res.sendStatus(200));
+        app.get('/started', (req, res) => res.sendStatus(200));
+
+        const sdl = fs.readFileSync('./produsent.graphql');
+        const typeDefs = gql(sdl.toString());
+        const server = new ApolloServer({
+            typeDefs,
+            mocks: {
+                Int: () => casual.integer(0, 1000),
+                String: () => casual.string,
+                ISO8601DateTime: () => new Date().toISOString(),
+                ...(ALWAYS_SUCCESSFUL_RESPONSE === 'true' ? successfulMocks : {})
+            },
+            plugins: [
+                ApolloServerPluginLandingPageGraphQLPlayground(),
+            ],
+            playground: {
+                endpoint: '/',
+                settings: {
+                    "editor.theme": "dark"
+                }
+            }
+        });
+        await server.start();
+        server.applyMiddleware({app, path: '/'});
+        app.listen(PORT, () => {
+            log.info(`🚀 Server ready at :${PORT}${server.graphqlPath} ${ALWAYS_SUCCESSFUL_RESPONSE === 'true' ? 'with always successful mocks' : ''}`);
+        });
+    } catch (error) {
+        log.error(`Server failed to start ${error}`);
+        process.exit(1);
+    }
+
+}
+
+serve().then(/*noop*/);
