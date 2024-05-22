@@ -15,7 +15,7 @@ const NY_SAK = gql`
         $lenke: String!
         $tittel: String!
         $initiellStatus: SaksStatus!
-
+        $nesteSteg: String
     ) {
         nySak(
             mottakere: [{
@@ -30,6 +30,7 @@ const NY_SAK = gql`
             tittel: $tittel
             merkelapp: "fager",
             initiellStatus: $initiellStatus
+            nesteSteg: $nesteSteg
         ) {
             __typename
             ... on NySakVellykket {
@@ -51,6 +52,7 @@ export const NySak: React.FunctionComponent = () => {
     const lenkeRef = React.useRef<HTMLInputElement>(null)
     const tittelRef = React.useRef<HTMLInputElement>(null)
     const initiellStatusRef = React.useRef<HTMLInputElement>(null)
+    const nesteStegRef = React.useRef<HTMLInputElement>(null)
 
     const [nySak, {
         data,
@@ -76,7 +78,8 @@ export const NySak: React.FunctionComponent = () => {
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 lenke: nullIfEmpty(lenkeRef.current?.value),
                 tittel: nullIfEmpty(tittelRef.current?.value),
-                initiellStatus: initiellStatusRef.current?.value as SaksStatus
+                initiellStatus: initiellStatusRef.current?.value as SaksStatus,
+                nesteSteg: nullIfEmpty(nesteStegRef.current?.value)
             }
         })
         if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
@@ -94,6 +97,7 @@ export const NySak: React.FunctionComponent = () => {
             <TextField label={"Lenke*"} ref={lenkeRef} defaultValue={"https://foo.bar"}/>
             <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny beskjed"/>
             <TextField label={"Initiell status*"} ref={initiellStatusRef} defaultValue="MOTTATT"/>
+            <TextField label={"Neste steg"} ref={nesteStegRef} defaultValue="Saken er ventet ferdig behandlet Januar 2050" />
 
         </div>
         <Button variant="primary"
