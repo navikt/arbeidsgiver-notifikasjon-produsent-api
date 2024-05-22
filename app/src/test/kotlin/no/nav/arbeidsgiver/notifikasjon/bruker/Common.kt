@@ -437,6 +437,8 @@ suspend fun BrukerRepository.nesteStegSak(
     sakId = sak.sakId,
     nesteSteg = nesteSteg,
     idempotenceKey = idempotensKey,
+    grupperingsid = sak.grupperingsid,
+    merkelapp = sak.merkelapp,
 ).also {
     oppdaterModellEtterHendelse(it)
 }

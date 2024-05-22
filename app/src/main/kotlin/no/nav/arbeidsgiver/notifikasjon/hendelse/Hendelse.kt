@@ -313,6 +313,8 @@ object HendelseModel {
         override val kildeAppNavn: String,
         override val sakId: UUID,
 
+        val merkelapp: String,
+        val grupperingsid: String,
         val idempotenceKey: String?,
         val nesteSteg: String?,
     ) : Hendelse(), Sak {

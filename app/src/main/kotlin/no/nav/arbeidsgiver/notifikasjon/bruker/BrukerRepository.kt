@@ -354,7 +354,6 @@ class BrukerRepositoryImpl(
                                 virksomhetsnummer,
                                 tittel,
                                 lenke,
-                                neste_steg,
                                 merkelapp,
                                 grupperingsid,
                                 neste_steg,
@@ -1107,16 +1106,13 @@ class BrukerRepositoryImpl(
         database.transaction {
             executeUpdate(
                 """
-                insert into sak_oppdatering(
-                    hendelse_id, sak_id, idempotence_key
-                )
-                values (?, ?, ?)
-                on conflict (hendelse_id) do nothing 
-            """
-            ) {
-                uuid(nesteStegSak.hendelseId)
+                    update sak
+                    set neste_steg = ?
+                    where id = ?
+                """
+            ){
+                nullableText(nesteStegSak.nesteSteg)
                 uuid(nesteStegSak.sakId)
-                nullableText(nesteStegSak.idempotenceKey)
             }
         }
     }

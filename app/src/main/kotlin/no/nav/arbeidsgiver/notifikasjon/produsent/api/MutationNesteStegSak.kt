@@ -57,6 +57,8 @@ class MutationNesteStegSak(
         ): HendelseModel.NesteStegSak {
             return HendelseModel.NesteStegSak(
                 hendelseId = UUID.randomUUID(),
+                merkelapp = tilhørendeSak.merkelapp,
+                grupperingsid = tilhørendeSak.grupperingsid,
                 kildeAppNavn = kildeAppNavn,
                 produsentId = produsentId,
                 sakId = tilhørendeSak.id,
@@ -111,7 +113,7 @@ class MutationNesteStegSak(
 
         nesteSteg.idempotencyKey?.let {
             if (produsentRepository.nesteStegSakFinnes(sak.id, it)) {
-                return NesteStegSakVellykket(sak.id)//TODO Finne ut hva vi gjør her
+                return NesteStegSakVellykket(sak.id)
             }
         }
 

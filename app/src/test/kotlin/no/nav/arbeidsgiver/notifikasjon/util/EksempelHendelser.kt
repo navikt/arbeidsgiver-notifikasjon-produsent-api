@@ -809,6 +809,86 @@ object EksempelHendelse {
         merkelapp = KalenderavtaleOpprettet.merkelapp
     )
 
+    val SakOpprettet_UtenNesteSteg = HendelseModel.SakOpprettet(
+        hendelseId = uuid("1"),
+        virksomhetsnummer = "1",
+        produsentId = "1",
+        kildeAppNavn = "1",
+        sakId = uuid("1"),
+        grupperingsid = "1",
+        merkelapp = "tag",
+        mottakere = listOf(
+            AltinnMottaker(
+                virksomhetsnummer = "1",
+                serviceCode = "1",
+                serviceEdition = "1"
+            ),
+            NærmesteLederMottaker(
+                virksomhetsnummer = "1",
+                ansattFnr = "1",
+                naermesteLederFnr = "2"
+            ),
+        ),
+        tittel = "foo",
+        nesteSteg = null,
+        lenke = "#foo",
+        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
+    )
+
+    val SakOpprettet_MedNesteSteg =  HendelseModel.SakOpprettet(
+        hendelseId = uuid("2"),
+        virksomhetsnummer = "1",
+        produsentId = "1",
+        kildeAppNavn = "1",
+        sakId = uuid("2"),
+        grupperingsid = "2",
+        merkelapp = "tag",
+        mottakere = listOf(
+            AltinnMottaker(
+                virksomhetsnummer = "1",
+                serviceCode = "1",
+                serviceEdition = "1"
+            ),
+            NærmesteLederMottaker(
+                virksomhetsnummer = "1",
+                ansattFnr = "1",
+                naermesteLederFnr = "2"
+            ),
+        ),
+        tittel = "foo",
+        nesteSteg = "Neste steg",
+        lenke = "#foo",
+        oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+        mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = null,
+    )
+
+    val NesteStegSak_TilNull = HendelseModel.NesteStegSak (
+        virksomhetsnummer = "1",
+        sakId = SakOpprettet_UtenNesteSteg.sakId,
+        nesteSteg = null,
+        grupperingsid = SakOpprettet_UtenNesteSteg.grupperingsid,
+        merkelapp = SakOpprettet_UtenNesteSteg.merkelapp,
+        hendelseId = uuid("01"),
+        produsentId = "1",
+        kildeAppNavn = "1",
+        idempotenceKey = UUID.randomUUID().toString(),
+    )
+
+    val NesteStegSak_NyttNesteSteg = HendelseModel.NesteStegSak (
+        virksomhetsnummer = SakOpprettet_MedNesteSteg.virksomhetsnummer,
+        sakId = SakOpprettet_MedNesteSteg.sakId,
+        nesteSteg = "Nytt neste steg",
+        grupperingsid = SakOpprettet_MedNesteSteg.grupperingsid,
+        merkelapp = SakOpprettet_MedNesteSteg.merkelapp,
+        hendelseId = uuid("02"),
+        produsentId = "1",
+        kildeAppNavn = "1",
+        idempotenceKey = UUID.randomUUID().toString(),
+    )
+
     val Alle: List<Hendelse> = listOf(
         BeskjedOpprettet,
         BeskjedOpprettet_2_Mottakere,
@@ -835,5 +915,9 @@ object EksempelHendelse {
         PåminnelseOpprettet,
         KalenderavtaleOpprettet,
         KalenderavtaleOppdatert,
+        SakOpprettet_UtenNesteSteg,
+        SakOpprettet_MedNesteSteg,
+        NesteStegSak_TilNull,
+        NesteStegSak_NyttNesteSteg
     )
 }
