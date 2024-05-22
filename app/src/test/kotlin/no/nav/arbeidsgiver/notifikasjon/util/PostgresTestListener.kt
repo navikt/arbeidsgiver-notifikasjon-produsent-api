@@ -7,11 +7,10 @@ import io.kotest.core.test.TestCase
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.sql.DriverManager
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 val templateDbs = ConcurrentHashMap<Database.Config, String>()
-val ids = generateSequence() { UUID.randomUUID() }.iterator()
+val ids = generateSequence(0) { it + 1 }.iterator()
 private suspend fun createDbFromTemplate(config: Database.Config): Database.Config {
     val templateDb = templateDb(config)
     val database = "${config.database}_${ids.next()}".also { db ->
@@ -34,6 +33,13 @@ private suspend fun templateDb(config: Database.Config): String {
     val templateDb = templateDbs.computeIfAbsent(config) {
         "${config.database}_template".also { db ->
             DriverManager.getConnection(config.jdbcUrl, config.username, config.password).use { conn ->
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate(
+                        (0..5000).joinToString("\n") { i ->
+                            """drop database if exists "${config.database}_$i"; """
+                        }
+                    )
+                }
                 conn.createStatement().use { stmt ->
                     stmt.executeUpdate("""drop database if exists "$db"; """)
                     stmt.executeUpdate("""create database "$db" ; """)
