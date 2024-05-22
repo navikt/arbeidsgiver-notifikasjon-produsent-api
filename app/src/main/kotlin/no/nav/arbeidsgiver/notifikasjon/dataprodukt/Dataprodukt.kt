@@ -15,7 +15,7 @@ object Dataprodukt {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "dataprodukt-model-rebuild-22052024",
+            groupId = "dataprodukt-model-builder-3",
             replayPeriodically = true,
         )
     }
@@ -29,6 +29,15 @@ object Dataprodukt {
                 hendelsesstrøm.forEach { hendelse, metadata ->
                     dataproduktModel.oppdaterModellEtterHendelse(hendelse, metadata)
                 }
+            }
+
+            launch {
+                val dataproduktModel = DataproduktModel(database.await())
+                dataproduktModel.database.nonTransactionalExecuteUpdate("""
+                   update ekstern_varsel ev 
+                    set varsel_type = 'ALTINN_TJENESTE'
+                    where ev.varsel_id in (select varsel_id from ekstern_varsel_mottaker_tjeneste)
+                """)
             }
 
             launchHttpServer(httpPort = httpPort)
