@@ -4,4 +4,4 @@ WORKDIR /usr/src/app/server
 COPY server/ .
 
 EXPOSE 8080
-CMD ["src/server.js"]
+CMD ["server.js"]
