@@ -31,6 +31,15 @@ object Dataprodukt {
                 }
             }
 
+            launch {
+                val dataproduktModel = DataproduktModel(database.await())
+                dataproduktModel.database.nonTransactionalExecuteUpdate("""
+                   update ekstern_varsel ev 
+                    set varsel_type = 'ALTINN_TJENESTE'
+                    where ev.varsel_id in (select varsel_id from ekstern_varsel_mottaker_tjeneste)
+                """)
+            }
+
             launchHttpServer(httpPort = httpPort)
         }
     }
