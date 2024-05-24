@@ -49,7 +49,7 @@ interface ProdusentRepository {
         grupperingsid: String?,
         antall: Int,
         offset: Int,
-    ): List<ProdusentModel.Notifikasjon>
+    ): ResultsWrapper<ProdusentModel.Notifikasjon>
 
     suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak?
 
@@ -60,6 +60,11 @@ interface ProdusentRepository {
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean
 }
+
+data class ResultsWrapper<T>(
+    val results: List<T>,
+    val hasMore: Boolean,
+)
 
 class ProdusentRepositoryImpl(
     private val database: Database,
@@ -95,21 +100,28 @@ class ProdusentRepositoryImpl(
         grupperingsid: String?,
         antall: Int,
         offset: Int,
-    ): List<ProdusentModel.Notifikasjon> =
-        hentNotifikasjonerMedVarsler(
+    ): ResultsWrapper<ProdusentModel.Notifikasjon> {
+        val notifikasjoner = hentNotifikasjonerMedVarsler(
             """ 
-                where 
-                    merkelapp = any(?)
-                    ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
-                limit ?
-                offset ?
-            """
+                    where 
+                        merkelapp = any(?)
+                        ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
+                    limit ?
+                    offset ?
+                """
         ) {
             textArray(merkelapper)
             grupperingsid?.let { text(grupperingsid) }
-            integer(antall)
+            integer(antall + 1)
             integer(offset)
         }
+
+        val hasMore = notifikasjoner.size > antall
+        return ResultsWrapper(
+            results = if (hasMore) notifikasjoner.dropLast(1) else notifikasjoner,
+            hasMore = hasMore
+        )
+    }
 
     override suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak? {
         return hentSaker(

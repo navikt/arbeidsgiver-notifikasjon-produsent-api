@@ -351,12 +351,11 @@ internal class QueryNotifikasjoner(
                 grupperingsid = grupperingsid,
                 antall = first,
                 offset = after.offset
-            )
-            .map(Notifikasjon::fraDomene)
-            .let { notifikasjoner ->
+            ).let {
                 Connection.create(
-                    notifikasjoner,
+                    it.results.map(Notifikasjon::fraDomene),
                     env,
+                    it.hasMore,
                     ::NotifikasjonConnection
                 )
             }

@@ -56,6 +56,7 @@ interface Connection<T> {
         fun <T, I : Connection<T>> create(
             data: List<T>,
             env: DataFetchingEnvironment,
+            hasMore: Boolean,
             factory: (edges: List<Edge<T>>, pageInfo: PageInfo) -> I
         ): I {
             if (data.isEmpty()) {
@@ -70,7 +71,7 @@ interface Connection<T> {
             }.subList(0, first)
             val pageInfo = PageInfo(
                 edges.last().cursor,
-                edges.last().cursor >= after.plus(first)
+                hasMore
             )
 
             return factory(edges, pageInfo)
