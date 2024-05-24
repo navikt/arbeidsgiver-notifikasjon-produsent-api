@@ -411,6 +411,8 @@ export type Mutation = {
   hardDeleteSak: HardDeleteSakResultat;
   /** Se dokumentasjon for `hardDeleteSak(id)`. */
   hardDeleteSakByGrupperingsid: HardDeleteSakResultat;
+  nesteStegSak: NesteStegSakResultat;
+  nesteStegSakByGrupperingsid: NesteStegSakResultat;
   /** Opprett en ny beskjed. */
   nyBeskjed: NyBeskjedResultat;
   nyKalenderavtale: NyKalenderavtaleResultat;
@@ -549,6 +551,29 @@ export type MutationHardDeleteSakByGrupperingsidArgs = {
  * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
  * å opprette nye ting.
  */
+export type MutationNesteStegSakArgs = {
+  id: Scalars['ID']['input'];
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
+  nesteSteg?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/**
+ * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+ * å opprette nye ting.
+ */
+export type MutationNesteStegSakByGrupperingsidArgs = {
+  grupperingsid: Scalars['String']['input'];
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
+  merkelapp: Scalars['String']['input'];
+  nesteSteg?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/**
+ * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+ * å opprette nye ting.
+ */
 export type MutationNyBeskjedArgs = {
   nyBeskjed: NyBeskjedInput;
 };
@@ -597,6 +622,7 @@ export type MutationNySakArgs = {
   lenke?: InputMaybe<Scalars['String']['input']>;
   merkelapp: Scalars['String']['input'];
   mottakere: Array<MottakerInput>;
+  nesteSteg?: InputMaybe<Scalars['String']['input']>;
   overstyrStatustekstMed?: InputMaybe<Scalars['String']['input']>;
   tidspunkt?: InputMaybe<Scalars['ISO8601DateTime']['input']>;
   tittel: Scalars['String']['input'];
@@ -649,8 +675,6 @@ export type MutationOppdaterKalenderavtaleArgs = {
   nyLokasjon?: InputMaybe<LokasjonInput>;
   nyTekst?: InputMaybe<Scalars['String']['input']>;
   nyTilstand?: InputMaybe<KalenderavtaleTilstand>;
-  nyttSluttTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
-  nyttStartTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
   paaminnelse?: InputMaybe<PaaminnelseInput>;
 };
 
@@ -670,8 +694,6 @@ export type MutationOppdaterKalenderavtaleByEksternIdArgs = {
   nyLokasjon?: InputMaybe<LokasjonInput>;
   nyTekst?: InputMaybe<Scalars['String']['input']>;
   nyTilstand?: InputMaybe<KalenderavtaleTilstand>;
-  nyttSluttTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
-  nyttStartTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
   paaminnelse?: InputMaybe<PaaminnelseInput>;
 };
 
@@ -824,6 +846,13 @@ export type NaermesteLederMottaker = {
 export type NaermesteLederMottakerInput = {
   ansattFnr: Scalars['String']['input'];
   naermesteLederFnr: Scalars['String']['input'];
+};
+
+export type NesteStegSakResultat = Konflikt | NesteStegSakVellykket | SakFinnesIkke | UgyldigMerkelapp | UkjentProdusent;
+
+export type NesteStegSakVellykket = {
+  __typename?: 'NesteStegSakVellykket';
+  id: Scalars['ID']['output'];
 };
 
 export type Notifikasjon = Beskjed | Kalenderavtale | Oppgave;
@@ -1145,6 +1174,7 @@ export type Query = {
   __typename?: 'Query';
   hentNotifikasjon: HentNotifikasjonResultat;
   hentSak: HentSakResultat;
+  hentSakMedGrupperingsid: HentSakResultat;
   /**
    * Vi bruker det Connections-patternet for paginering. Se
    * [Connection-standaren](https://relay.dev/graphql/connections.htm) for mer
@@ -1174,6 +1204,13 @@ export type QueryHentSakArgs = {
 
 
 /** Dette er roten som alle forespørsler starter fra. */
+export type QueryHentSakMedGrupperingsidArgs = {
+  grupperingsid: Scalars['String']['input'];
+  merkelapp: Scalars['String']['input'];
+};
+
+
+/** Dette er roten som alle forespørsler starter fra. */
 export type QueryMineNotifikasjonerArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -1188,6 +1225,7 @@ export type Sak = {
   id: Scalars['ID']['output'];
   lenke?: Maybe<Scalars['String']['output']>;
   merkelapp: Scalars['String']['output'];
+  nesteSteg?: Maybe<Scalars['String']['output']>;
   tittel: Scalars['String']['output'];
   virksomhetsnummer: Scalars['String']['output'];
 };
