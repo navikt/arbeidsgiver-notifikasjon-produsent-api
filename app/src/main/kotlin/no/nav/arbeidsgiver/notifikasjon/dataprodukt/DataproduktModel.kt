@@ -825,7 +825,7 @@ class DataproduktModel(
 
                 is AltinntjenesteVarselKontaktinfo -> with(eksterntVarsel) {
                     uuid(varselId)
-                    text("SMS") //varsel_type
+                    text("ALTINN_TJENESTE") //varsel_type
                     uuid(notifikasjonId)
                     text(merkelapp)
                     enumAsText(sendevindu)

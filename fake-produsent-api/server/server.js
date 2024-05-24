@@ -4,10 +4,32 @@ import casual from 'casual';
 import {createLogger, transports, format} from 'winston';
 import require from "./esm-require.js";
 
-const {PORT = 8080} = process.env;
+const {
+    PORT = 8080,
+    ALWAYS_SUCCESSFUL_RESPONSE = 'false',
+} = process.env;
 
-const { ApolloServerPluginLandingPageGraphQLPlayground } = require("apollo-server-core");
+const {ApolloServerPluginLandingPageGraphQLPlayground} = require("apollo-server-core");
 const {ApolloServer, gql} = require('apollo-server-express');
+
+const successfulMocks = {
+    HardDeleteNotifikasjonResultat: () => ({__typename: "HardDeleteNotifikasjonVellykket"}),
+    HardDeleteSakResultat: () => ({__typename: "HardDeleteSakVellykket"}),
+    HentNotifikasjonResultat: () => ({__typename: "HentetNotifikasjon"}),
+    HentSakResultat: () => ({__typename: "HentetSak"}),
+    MineNotifikasjonerResultat: () => ({__typename: "NotifikasjonConnection"}),
+    NyBeskjedResultat: () => ({__typename: "NyBeskjedVellykket"}),
+    NyKalenderavtaleResultat: () => ({__typename: "NyKalenderavtaleVellykket"}),
+    NyOppgaveResultat: () => ({__typename: "NyOppgaveVellykket"}),
+    NySakResultat: () => ({__typename: "NySakVellykket"}),
+    NyStatusSakResultat: () => ({__typename: "NyStatusSakVellykket"}),
+    OppdaterKalenderavtaleResultat: () => ({__typename: "OppdaterKalenderavtaleVellykket"}),
+    OppgaveUtfoertResultat: () => ({__typename: "OppgaveUtfoertVellykket"}),
+    OppgaveUtgaattResultat: () => ({__typename: "OppgaveUtgaattVellykket"}),
+    OppgaveUtsettFristResultat: () => ({__typename: "OppgaveUtsettFristVellykket"}),
+    SoftDeleteNotifikasjonResultat: () => ({__typename: "SoftDeleteNotifikasjonVellykket" }),
+    SoftDeleteSakResultat: () => ({_typename: "SoftDeleteSakVellykket"}),
+};
 
 const log = createLogger({
     transports: [
@@ -34,6 +56,7 @@ const serve = async () => {
                 Int: () => casual.integer(0, 1000),
                 String: () => casual.string,
                 ISO8601DateTime: () => new Date().toISOString(),
+                ...(ALWAYS_SUCCESSFUL_RESPONSE === 'true' ? successfulMocks : {})
             },
             plugins: [
                 ApolloServerPluginLandingPageGraphQLPlayground(),
@@ -48,7 +71,7 @@ const serve = async () => {
         await server.start();
         server.applyMiddleware({app, path: '/'});
         app.listen(PORT, () => {
-            log.info(`🚀 Server ready at :${PORT}${server.graphqlPath}`);
+            log.info(`🚀 Server ready at :${PORT}${server.graphqlPath} ${ALWAYS_SUCCESSFUL_RESPONSE === 'true' ? 'with always successful mocks' : ''}`);
         });
     } catch (error) {
         log.error(`Server failed to start ${error}`);
