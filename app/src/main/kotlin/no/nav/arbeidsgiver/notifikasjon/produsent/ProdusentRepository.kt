@@ -49,7 +49,7 @@ interface ProdusentRepository {
         grupperingsid: String?,
         antall: Int,
         offset: Int,
-    ): ResultsWrapper<ProdusentModel.Notifikasjon>
+    ): List<ProdusentModel.Notifikasjon>
 
     suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak?
 
@@ -60,11 +60,6 @@ interface ProdusentRepository {
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean
 }
-
-data class ResultsWrapper<T>(
-    val results: List<T>,
-    val hasMore: Boolean,
-)
 
 class ProdusentRepositoryImpl(
     private val database: Database,
@@ -100,8 +95,7 @@ class ProdusentRepositoryImpl(
         grupperingsid: String?,
         antall: Int,
         offset: Int,
-    ): ResultsWrapper<ProdusentModel.Notifikasjon> {
-        val notifikasjoner = hentNotifikasjonerMedVarsler(
+    ): List<ProdusentModel.Notifikasjon>  = hentNotifikasjonerMedVarsler(
             """ 
                     where 
                         merkelapp = any(?)
@@ -112,16 +106,9 @@ class ProdusentRepositoryImpl(
         ) {
             textArray(merkelapper)
             grupperingsid?.let { text(grupperingsid) }
-            integer(antall + 1)
+            integer(antall)
             integer(offset)
         }
-
-        val hasMore = notifikasjoner.size > antall
-        return ResultsWrapper(
-            results = if (hasMore) notifikasjoner.dropLast(1) else notifikasjoner,
-            hasMore = hasMore
-        )
-    }
 
     override suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak? {
         return hentSaker(

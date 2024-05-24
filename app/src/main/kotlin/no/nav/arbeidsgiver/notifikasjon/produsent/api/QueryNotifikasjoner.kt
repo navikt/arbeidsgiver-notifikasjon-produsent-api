@@ -349,14 +349,13 @@ internal class QueryNotifikasjoner(
             .finnNotifikasjoner(
                 merkelapper = merkelapper,
                 grupperingsid = grupperingsid,
-                antall = first,
+                antall = first + 1,
                 offset = after.offset
-            ).let {
+            ).map(Notifikasjon::fraDomene).let {
                 Connection.create(
-                    it.results.map(Notifikasjon::fraDomene),
-                    env,
-                    it.hasMore,
-                    ::NotifikasjonConnection
+                    data = it,
+                    env = env,
+                    factory = ::NotifikasjonConnection
                 )
             }
     }

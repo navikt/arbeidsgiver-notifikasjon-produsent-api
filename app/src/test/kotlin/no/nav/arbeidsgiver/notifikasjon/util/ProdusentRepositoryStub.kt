@@ -5,7 +5,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.produsent.ResultsWrapper
 import java.util.*
 
 open class ProdusentRepositoryStub : ProdusentRepository {
@@ -22,7 +21,7 @@ open class ProdusentRepositoryStub : ProdusentRepository {
         grupperingsid: String?,
         antall: Int,
         offset: Int
-    ): ResultsWrapper<ProdusentModel.Notifikasjon> {
+    ): List<ProdusentModel.Notifikasjon> {
         TODO("Not yet implemented")
     }
 
