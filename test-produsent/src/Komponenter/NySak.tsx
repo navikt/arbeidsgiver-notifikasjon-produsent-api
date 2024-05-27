@@ -95,7 +95,7 @@ export const NySak: React.FunctionComponent = () => {
             <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
             <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
             <TextField label={"Lenke*"} ref={lenkeRef} defaultValue={"https://foo.bar"}/>
-            <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny beskjed"/>
+            <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny sak"/>
             <TextField label={"Merkelapp*"} ref={merkelapp} defaultValue="fager"/>
             <TextField label={"Initiell status*"} ref={initiellStatusRef} defaultValue="MOTTATT"/>
 
