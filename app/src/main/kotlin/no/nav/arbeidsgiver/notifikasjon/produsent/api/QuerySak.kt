@@ -38,6 +38,7 @@ class QuerySak (
         val virksomhetsnummer: String,
         val tittel: String,
         val lenke: String?,
+        val nesteSteg: String?,
         val merkelapp: String
     ) {
         companion object {
@@ -48,6 +49,7 @@ class QuerySak (
                     virksomhetsnummer = sak.virksomhetsnummer,
                     tittel = sak.tittel,
                     lenke = sak.lenke,
+                    nesteSteg = sak.nesteSteg,
                     merkelapp = sak.merkelapp
                 )
             }
