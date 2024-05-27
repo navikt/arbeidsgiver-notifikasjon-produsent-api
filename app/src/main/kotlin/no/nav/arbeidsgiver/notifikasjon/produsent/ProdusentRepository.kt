@@ -97,14 +97,13 @@ class ProdusentRepositoryImpl(
         grupperingsid: String?,
         antall: Int,
         offset: Int,
-    ): List<ProdusentModel.Notifikasjon> =
-        hentNotifikasjonerMedVarsler(
+    ) = hentNotifikasjonerMedVarsler(
             """ 
-                where 
-                    merkelapp = any(?)
-                    ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
-                limit ?
-                offset ?
+            where 
+                merkelapp = any(?)
+                ${grupperingsid?.let { "and grupperingsid = ?" } ?: ""} 
+            limit ?
+            offset ?
             """
         ) {
             textArray(merkelapper)

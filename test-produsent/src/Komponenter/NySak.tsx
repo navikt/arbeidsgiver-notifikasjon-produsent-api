@@ -14,6 +14,7 @@ const NY_SAK = gql`
         $virksomhetsnummer: String!
         $lenke: String!
         $tittel: String!
+        $merkelapp: String!
         $initiellStatus: SaksStatus!
         $nesteSteg: String
     ) {
@@ -28,7 +29,7 @@ const NY_SAK = gql`
             grupperingsid: $grupperingsid
             lenke: $lenke
             tittel: $tittel
-            merkelapp: "fager",
+            merkelapp: $merkelapp,
             initiellStatus: $initiellStatus
             nesteSteg: $nesteSteg
         ) {
@@ -51,6 +52,7 @@ export const NySak: React.FunctionComponent = () => {
     const eksternIdRef = React.useRef<HTMLInputElement>(null)
     const lenkeRef = React.useRef<HTMLInputElement>(null)
     const tittelRef = React.useRef<HTMLInputElement>(null)
+    const merkelapp = React.useRef<HTMLInputElement>(null)
     const initiellStatusRef = React.useRef<HTMLInputElement>(null)
     const nesteStegRef = React.useRef<HTMLInputElement>(null)
 
@@ -80,6 +82,7 @@ export const NySak: React.FunctionComponent = () => {
                 tittel: nullIfEmpty(tittelRef.current?.value),
                 initiellStatus: initiellStatusRef.current?.value as SaksStatus,
                 nesteSteg: nullIfEmpty(nesteStegRef.current?.value)
+                merkelapp: nullIfEmpty(merkelapp.current?.value)
             }
         })
         if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
@@ -95,7 +98,8 @@ export const NySak: React.FunctionComponent = () => {
             <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
             <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
             <TextField label={"Lenke*"} ref={lenkeRef} defaultValue={"https://foo.bar"}/>
-            <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny beskjed"/>
+            <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny sak"/>
+            <TextField label={"Merkelapp*"} ref={merkelapp} defaultValue="fager"/>
             <TextField label={"Initiell status*"} ref={initiellStatusRef} defaultValue="MOTTATT"/>
             <TextField label={"Neste steg"} ref={nesteStegRef} defaultValue="Saken er ventet ferdig behandlet Januar 2050" />
 
