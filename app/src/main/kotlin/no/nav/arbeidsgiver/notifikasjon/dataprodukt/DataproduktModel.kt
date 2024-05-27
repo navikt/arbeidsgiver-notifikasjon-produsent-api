@@ -461,16 +461,6 @@ class DataproduktModel(
                     }
                 }
             }
-            is NesteStegSak -> {
-                database.nonTransactionalExecuteUpdate("""
-                    update sak
-                    set neste_steg = ?
-                    where sak_id = ?
-                """.trimIndent()) {
-                    nullableText(hendelse.nesteSteg)
-                    uuid(hendelse.sakId)
-                }
-            }
             is FristUtsatt -> {
                 database.nonTransactionalExecuteUpdate("""
                     update notifikasjon
@@ -483,6 +473,17 @@ class DataproduktModel(
                     date(hendelse.frist)
                     setPåminnelseFelter(hendelse.påminnelse)
                     uuid(hendelse.notifikasjonId)
+                }
+            }
+
+            is NesteStegSak -> {
+                database.nonTransactionalExecuteUpdate("""
+                    update sak
+                    set neste_steg = ?
+                    where sak_id = ?
+                """.trimIndent()) {
+                    nullableText(hendelse.nesteSteg)
+                    uuid(hendelse.sakId)
                 }
             }
 
