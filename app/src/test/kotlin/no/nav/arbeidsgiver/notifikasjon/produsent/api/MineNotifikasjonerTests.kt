@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
@@ -247,6 +248,32 @@ class MineNotifikasjonerTests : DescribeSpec({
             it("respons inneholder forventet data") {
                 response.getTypedContent<QueryNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
             }
+
+            val response2 = engine.produsentApi(
+                """
+                    query {
+                        mineNotifikasjoner(grupperingsid: "sak1") {
+                            __typename
+                            ... on NotifikasjonConnection {
+                                __typename
+                                pageInfo {
+                                    hasNextPage
+                                    endCursor
+                                }
+                                edges {
+                                    cursor
+                                }
+                                
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                response2.getTypedContent<List<Any>>("mineNotifikasjoner/edges") shouldHaveSize 3
+                response2.getTypedContent<Boolean>("mineNotifikasjoner/pageInfo/hasNextPage") shouldBe false
+            }
         }
 
         context("henter alle med angitt paginering") {
@@ -365,11 +392,39 @@ class MineNotifikasjonerTests : DescribeSpec({
                 """.trimIndent()
             )
 
+            val connection = response.getTypedContent<QueryNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
+
             it("respons inneholder forventet data") {
-                val connection = response.getTypedContent<QueryNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
                 connection.edges.size shouldBe 1
                 connection.pageInfo.hasNextPage shouldBe true
             }
+
+            val response2 = engine.produsentApi(
+                """
+                    query {
+                        mineNotifikasjoner(merkelapp: "tag", after: "${connection.pageInfo.endCursor}") {
+                            __typename
+                            ... on NotifikasjonConnection {
+                                __typename
+                                pageInfo {
+                                    hasNextPage
+                                    endCursor
+                                }
+                                edges {
+                                    cursor
+                                }
+                                
+                            }
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            it("respons inneholder forventet data") {
+                response2.getTypedContent<List<Any>>("mineNotifikasjoner/edges") shouldHaveSize 1
+                response2.getTypedContent<Boolean>("mineNotifikasjoner/pageInfo/hasNextPage") shouldBe false
+            }
+
         }
 
         context("når merkelapper=[] i filter") {

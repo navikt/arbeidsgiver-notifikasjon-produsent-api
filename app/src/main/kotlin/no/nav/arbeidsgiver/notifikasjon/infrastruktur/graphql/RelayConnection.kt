@@ -2,8 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.annotation.JsonValue
-import graphql.schema.DataFetchingEnvironment
 import java.util.*
+import kotlin.math.min
 
 @JsonTypeName("PageInfo")
 data class PageInfo(
@@ -55,25 +55,22 @@ interface Connection<T> {
     companion object {
         fun <T, I : Connection<T>> create(
             data: List<T>,
-            env: DataFetchingEnvironment,
-            factory: (edges: List<Edge<T>>, pageInfo: PageInfo) -> I
+            factory: (edges: List<Edge<T>>, pageInfo: PageInfo) -> I,
+            first: Int,
+            after: Cursor,
         ): I {
             if (data.isEmpty()) {
                 return factory(emptyList(), PageInfo(Cursor.empty(), false))
             }
-
-            val first = env.getArgumentOrDefault("first", data.size)
-            val after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
             val cursors = generateSequence(after.next) { it.next }.iterator()
-            val edges = data.map {
-                Edge(cursors.next(), it)
-            }.subList(0, first)
+            val dataEdges = data.map { Edge(cursors.next(), it) }
+            val pageEdges = dataEdges.subList(0, min(first, data.size))
             val pageInfo = PageInfo(
-                edges.last().cursor,
-                edges.last().cursor >= after.plus(first)
+                endCursor = pageEdges.last().cursor,
+                hasNextPage = dataEdges.last().cursor > pageEdges.last().cursor
             )
 
-            return factory(edges, pageInfo)
+            return factory(pageEdges, pageInfo)
         }
     }
 }

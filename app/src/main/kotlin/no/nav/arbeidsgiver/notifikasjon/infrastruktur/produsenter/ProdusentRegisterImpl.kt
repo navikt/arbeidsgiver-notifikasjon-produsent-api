@@ -129,9 +129,10 @@ val HELSEARBEIDSGIVER = Produsent(
     ),
     tillatteMerkelapper = listOf(
         "Inntektsmelding",
+        "Inntektsmelding sykepenger"
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
     )
 )
 
