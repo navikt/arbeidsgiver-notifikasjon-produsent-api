@@ -37,7 +37,7 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         lenke = "#foo",
         oppgittTidspunkt = opprettetTidspunkt,
         mottattTidspunkt = opprettetTidspunkt,
-        nesteSteg = null,
+        nesteSteg = "Neste steg",
         hardDelete = null,
     )
 
