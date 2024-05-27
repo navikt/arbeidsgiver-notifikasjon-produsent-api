@@ -463,18 +463,6 @@ class DataproduktModel(
             }
             is NesteStegSak -> {
                 database.nonTransactionalExecuteUpdate("""
-                    insert into sak_oppdatering (
-                    hendelse_id, sak_id, idempotens_key
-                    )
-                    values (?, ?, ?)
-                    on conflict do nothing
-                """.trimIndent()) {
-                    uuid(hendelse.hendelseId)
-                    uuid(hendelse.sakId)
-                    nullableText(hendelse.idempotenceKey)
-                }
-
-                database.nonTransactionalExecuteUpdate("""
                     update sak
                     set neste_steg = ?
                     where sak_id = ?
