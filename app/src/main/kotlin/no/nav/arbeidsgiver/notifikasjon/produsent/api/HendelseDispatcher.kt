@@ -4,7 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 
-class HendelseDispatcher(
+internal class HendelseDispatcher(
     private val kafkaProducer: HendelseProdusent,
     private val produsentRepository: ProdusentRepository,
 ) {
