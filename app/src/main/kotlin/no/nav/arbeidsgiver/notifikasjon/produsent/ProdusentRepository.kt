@@ -433,7 +433,7 @@ class ProdusentRepositoryImpl(
                     hendelse_id, sak_id, idempotence_key
                 )
                 values (?, ?, ?)
-                on conflict do nothing
+                on conflict(hendelse_id) do nothing
             """
                 ) {
                     uuid(nesteStegSak.hendelseId)
