@@ -1,5 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.JsonMappingException
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Tags
@@ -10,18 +13,8 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
-import org.apache.kafka.clients.consumer.Consumer
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.clients.consumer.ConsumerRecords
-import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.clients.consumer.OffsetAndMetadata
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.Deserializer
 import java.time.Duration

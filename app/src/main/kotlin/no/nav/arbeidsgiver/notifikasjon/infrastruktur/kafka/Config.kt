@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -26,16 +27,22 @@ val kafkaObjectMapper = jacksonObjectMapper().apply {
 }
 
 interface JsonSerializer<T> : Serializer<T> {
-    override fun serialize(topic: String?, data: T): ByteArray {
-        return kafkaObjectMapper.writeValueAsBytes(data)
+    override fun serialize(topic: String?, data: T): ByteArray = try {
+        kafkaObjectMapper.writeValueAsBytes(data)
+    } catch (e: Exception) {
+        if (e is JsonProcessingException) e.clearLocation()
+        throw e
     }
 }
 
 abstract class JsonDeserializer<T>(private val clazz: Class<T>) : Deserializer<T> {
     private val log = logger()
 
-    override fun deserialize(topic: String?, data: ByteArray?): T {
-        return kafkaObjectMapper.readValue(data, clazz)
+    override fun deserialize(topic: String?, data: ByteArray?): T = try {
+        kafkaObjectMapper.readValue(data, clazz)
+    } catch (e: Exception) {
+        if (e is JsonProcessingException) e.clearLocation()
+        throw e
     }
 }
 
