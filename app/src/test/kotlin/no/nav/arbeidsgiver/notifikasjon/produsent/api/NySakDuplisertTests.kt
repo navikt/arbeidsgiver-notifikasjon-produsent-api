@@ -33,6 +33,7 @@ private val sakOpprettet = HendelseModel.SakOpprettet(
     lenke = "#foo",
     oppgittTidspunkt = null,
     mottattTidspunkt = OffsetDateTime.now(),
+    nesteSteg = null,
     hardDelete = null,
 )
 

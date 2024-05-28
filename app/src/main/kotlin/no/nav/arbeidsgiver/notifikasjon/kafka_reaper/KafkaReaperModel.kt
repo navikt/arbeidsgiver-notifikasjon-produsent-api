@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NesteStegSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
@@ -162,4 +163,5 @@ val Hendelse.typeNavn: String
         is FristUtsatt -> "FristUtsatt"
         is KalenderavtaleOpprettet -> "KalenderavtaleOpprettet"
         is KalenderavtaleOppdatert -> "KalenderavtaleOppdatert"
+        is NesteStegSak -> "NesteStegSak"
     }

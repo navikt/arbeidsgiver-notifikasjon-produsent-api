@@ -15,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NesteStegSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -180,6 +181,7 @@ class BrukerRepositoryImpl(
                     id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa")
                 )
+
                 "OPPGAVE" -> BrukerModel.Oppgave(
                     merkelapp = getString("merkelapp"),
                     tilstand = BrukerModel.Oppgave.Tilstand.valueOf(getString("tilstand")),
@@ -196,6 +198,7 @@ class BrukerRepositoryImpl(
                     id = getUuid("id"),
                     klikketPaa = getBoolean("klikketPaa")
                 )
+
                 "KALENDERAVTALE" -> BrukerModel.Kalenderavtale(
                     merkelapp = getString("merkelapp"),
                     tekst = getString("tekst"),
@@ -240,7 +243,7 @@ class BrukerRepositoryImpl(
                     serviceEdition = it.serviceedition,
                     virksomhetsnummer = it.virksomhet
                 )
-            }.filter {  virksomhetsnummer.contains(it.virksomhetsnummer) }
+            }.filter { virksomhetsnummer.contains(it.virksomhetsnummer) }
 
             var tekstsoekElementer = (tekstsoek ?: "")
                 .trim()
@@ -353,12 +356,13 @@ class BrukerRepositoryImpl(
                                 lenke,
                                 merkelapp,
                                 grupperingsid,
+                                neste_steg,
                                 sist_endret_tidspunkt,
                                 opprettet_tidspunkt,
                                 count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
                                 min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist
                             from mine_saker_filtrert
-                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt, opprettet_tidspunkt
+                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, sist_endret_tidspunkt, opprettet_tidspunkt
                         ),
                         mine_saker_paginert as (
                             select 
@@ -367,20 +371,22 @@ class BrukerRepositoryImpl(
                                 sak.tittel,
                                 sak.lenke,
                                 sak.merkelapp,
+                                sak.neste_steg,
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
                             order by ${
-                                when (sortering) {
-                                    BrukerAPI.SakSortering.OPPDATERT -> "sak.sist_endret_tidspunkt desc"
-                                    BrukerAPI.SakSortering.OPPRETTET -> """
+                    when (sortering) {
+                        BrukerAPI.SakSortering.OPPDATERT -> "sak.sist_endret_tidspunkt desc"
+                        BrukerAPI.SakSortering.OPPRETTET -> """
                                        sak.opprettet_tidspunkt desc 
                                     """
-                                    BrukerAPI.SakSortering.FRIST -> """
+
+                        BrukerAPI.SakSortering.FRIST -> """
                                         sak.tidligste_frist nulls last, sak.nye_oppgaver desc, sak.sist_endret_tidspunkt desc
                                     """
-                                }
-                            }
+                    }
+                }
                             limit ? offset ?
                         )
                     select
@@ -402,6 +408,7 @@ class BrukerRepositoryImpl(
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
                                 'lenke', lenke,
+                                'nesteSteg', neste_steg,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
@@ -488,6 +495,7 @@ class BrukerRepositoryImpl(
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
                                 'lenke', lenke,
+                                'nesteSteg', neste_steg,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
@@ -560,6 +568,7 @@ class BrukerRepositoryImpl(
                                 'virksomhetsnummer', virksomhetsnummer,
                                 'tittel', tittel,
                                 'lenke', lenke,
+                                'nesteSteg', neste_steg,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
@@ -631,19 +640,23 @@ class BrukerRepositoryImpl(
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
                     digitalt = getBoolean("digitalt")
                 )
+
                 else ->
                     throw Exception("Ukjent notifikasjonstype '$type'")
             }
         }
             .groupBy { it.grupperingsid }
-            .mapValues { it.value.sortedByDescending { el ->
-                when(el) {
-                    is BrukerModel.TidslinjeElement.Oppgave,
-                    is BrukerModel.TidslinjeElement.Beskjed -> el.opprettetTidspunkt
-                    is BrukerModel.TidslinjeElement.Kalenderavtale -> el.startTidspunkt.toInstant(ZoneOffset.UTC)
-                }
+            .mapValues {
+                it.value.sortedByDescending { el ->
+                    when (el) {
+                        is BrukerModel.TidslinjeElement.Oppgave,
+                        is BrukerModel.TidslinjeElement.Beskjed -> el.opprettetTidspunkt
 
-            } }
+                        is BrukerModel.TidslinjeElement.Kalenderavtale -> el.startTidspunkt.toInstant(ZoneOffset.UTC)
+                    }
+
+                }
+            }
 
         val sisteStatuser = database.nonTransactionalExecuteQuery("""
             with sak_status_med_rank as (
@@ -709,9 +722,14 @@ class BrukerRepositoryImpl(
             is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
-            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp) { tx ->
+            is HardDelete -> oppdaterModellEtterDelete(
+                hendelse.aggregateId,
+                hendelse.grupperingsid,
+                hendelse.merkelapp
+            ) { tx ->
                 registrerHardDelete(tx, hendelse)
             }
+
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
             is EksterntVarselKansellert -> Unit
@@ -719,6 +737,7 @@ class BrukerRepositoryImpl(
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
             is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
             is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
+            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
         }
     }
 
@@ -756,7 +775,7 @@ class BrukerRepositoryImpl(
                 serviceEdition = it.serviceedition,
                 virksomhetsnummer = it.virksomhet
             )
-        }.filter {  virksomhetsnumre.contains(it.virksomhetsnummer) }
+        }.filter { virksomhetsnumre.contains(it.virksomhetsnummer) }
 
         return database.nonTransactionalExecuteQuery(
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
@@ -874,7 +893,7 @@ class BrukerRepositoryImpl(
             WHERE id = ?
         """
         ) {
-            timestamp_with_timezone(utførtHendelse.utfoertTidspunkt?: metdata.timestamp.atOffset(ZoneOffset.UTC))
+            timestamp_with_timezone(utførtHendelse.utfoertTidspunkt ?: metdata.timestamp.atOffset(ZoneOffset.UTC))
             nullableText(utførtHendelse.nyLenke)
             uuid(utførtHendelse.notifikasjonId)
         }
@@ -957,9 +976,9 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, sist_endret_tidspunkt, opprettet_tidspunkt
+                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, sist_endret_tidspunkt, opprettet_tidspunkt
                 )
-                values (?, ?, ? ,?, ?, ?, ?, ?)
+                values (?, ?, ? ,?, ?, ?, ?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -969,6 +988,7 @@ class BrukerRepositoryImpl(
                 nullableText(sakOpprettet.lenke)
                 text(sakOpprettet.merkelapp)
                 text(sakOpprettet.grupperingsid)
+                nullableText(sakOpprettet.nesteSteg)
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
             }
@@ -977,14 +997,16 @@ class BrukerRepositoryImpl(
             /** Slettes etter migrering er kjørt og feltene har fått "not null"-constraint.
              *  NB. `greatest('foo', null) = 'foo'`, og `least('foo', null) = 'foo'`.
              **/
-            executeUpdate("""
+            executeUpdate(
+                """
                 update sak
                 set 
                     sist_endret_tidspunkt = greatest(sist_endret_tidspunkt, ?),
                     opprettet_tidspunkt = least(opprettet_tidspunkt, ?)
                 where 
                     id = ?
-            """) {
+            """
+            ) {
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
                 uuid(sakOpprettet.sakId)
@@ -1037,16 +1059,19 @@ class BrukerRepositoryImpl(
                 nullableTimestamptz(nyStatusSak.oppgittTidspunkt)
             }
 
-            executeUpdate("""
+            executeUpdate(
+                """
                 update sak
                 set sist_endret_tidspunkt = greatest(sist_endret_tidspunkt, ?)
                 where id = ?
-            """) {
+            """
+            ) {
                 instantAsText((nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt).toInstant())
                 uuid(nyStatusSak.sakId)
             }
 
-            executeUpdate("""
+            executeUpdate(
+                """
                 with sak_status_agg as (
                     select s.id, s.tittel || ' ' || s.merkelapp AS tittel_merkelapp, string_agg(ss.status || ' ' || ss.overstyrt_statustekst, ' ') AS statustekst
                     from sak s
@@ -1057,7 +1082,8 @@ class BrukerRepositoryImpl(
                 update sak_search set text = lower(sak_status_agg.tittel_merkelapp) || ' ' || lower(coalesce(sak_status_agg.statustekst, ''))
                 from sak_status_agg
                 where sak_search.id = sak_status_agg.id
-            """) {
+            """
+            ) {
                 uuid(nyStatusSak.sakId)
             }
 
@@ -1072,6 +1098,21 @@ class BrukerRepositoryImpl(
                     text(nyStatusSak.nyLenkeTilSak)
                     uuid(nyStatusSak.sakId)
                 }
+            }
+        }
+    }
+
+    private suspend fun oppdaterModellEtterNesteStegSak (nesteStegSak: NesteStegSak) {
+        database.transaction {
+            executeUpdate(
+                """
+                    update sak
+                    set neste_steg = ?
+                    where id = ?
+                """
+            ){
+                nullableText(nesteStegSak.nesteSteg)
+                uuid(nesteStegSak.sakId)
             }
         }
     }
@@ -1101,18 +1142,21 @@ class BrukerRepositoryImpl(
                 sakId = sakId,
                 mottaker = mottaker
             )
+
             is AltinnMottaker -> storeAltinnMottaker(
                 notifikasjonId = notifikasjonId,
                 sakId = sakId,
                 mottaker = mottaker
             )
+
             is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
                 prod = { throw java.lang.RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
-                other = {  },
+                other = { },
             )
+
             is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
                 prod = { throw java.lang.RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
-                other = {  },
+                other = { },
             )
         }
     }
@@ -1284,7 +1328,8 @@ class BrukerRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterFristUtsatt(hendelse: FristUtsatt) {
-        database.nonTransactionalExecuteUpdate("""
+        database.nonTransactionalExecuteUpdate(
+            """
             update notifikasjon
             set tilstand = '${BrukerModel.Oppgave.Tilstand.NY}',
                 frist = ?,
@@ -1292,7 +1337,8 @@ class BrukerRepositoryImpl(
                 paaminnelse_tidspunkt = null
             where
                 id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
-        """) {
+        """
+        ) {
             date(hendelse.frist)
             uuid(hendelse.notifikasjonId)
         }

@@ -16,7 +16,7 @@ const NY_SAK = gql`
         $tittel: String!
         $merkelapp: String!
         $initiellStatus: SaksStatus!
-
+        $nesteSteg: String
     ) {
         nySak(
             mottakere: [{
@@ -31,6 +31,7 @@ const NY_SAK = gql`
             tittel: $tittel
             merkelapp: $merkelapp,
             initiellStatus: $initiellStatus
+            nesteSteg: $nesteSteg
         ) {
             __typename
             ... on NySakVellykket {
@@ -53,6 +54,7 @@ export const NySak: React.FunctionComponent = () => {
     const tittelRef = React.useRef<HTMLInputElement>(null)
     const merkelapp = React.useRef<HTMLInputElement>(null)
     const initiellStatusRef = React.useRef<HTMLInputElement>(null)
+    const nesteStegRef = React.useRef<HTMLInputElement>(null)
 
     const [nySak, {
         data,
@@ -78,8 +80,9 @@ export const NySak: React.FunctionComponent = () => {
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 lenke: nullIfEmpty(lenkeRef.current?.value),
                 tittel: nullIfEmpty(tittelRef.current?.value),
-                merkelapp: nullIfEmpty(merkelapp.current?.value),
-                initiellStatus: initiellStatusRef.current?.value as SaksStatus
+                initiellStatus: initiellStatusRef.current?.value as SaksStatus,
+                nesteSteg: nullIfEmpty(nesteStegRef.current?.value),
+                merkelapp: nullIfEmpty(merkelapp.current?.value)
             }
         })
         if (eksternIdRef.current !== null) eksternIdRef.current.value = crypto.randomUUID().toString()
@@ -98,6 +101,7 @@ export const NySak: React.FunctionComponent = () => {
             <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny sak"/>
             <TextField label={"Merkelapp*"} ref={merkelapp} defaultValue="fager"/>
             <TextField label={"Initiell status*"} ref={initiellStatusRef} defaultValue="MOTTATT"/>
+            <TextField label={"Neste steg"} ref={nesteStegRef} defaultValue="Saken er ventet ferdig behandlet Januar 2050" />
 
         </div>
         <Button variant="primary"

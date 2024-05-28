@@ -262,6 +262,7 @@ object HendelseModel {
         val lenke: String?,
         val oppgittTidspunkt: OffsetDateTime?,
         val mottattTidspunkt: OffsetDateTime?,
+        val nesteSteg: String?,
         val hardDelete: LocalDateTimeOrDuration?,
     ) : Hendelse(), Sak {
         @JsonIgnore
@@ -302,6 +303,23 @@ object HendelseModel {
         @get:JsonIgnore
         val opprettetTidspunkt: OffsetDateTime
             get() = oppgittTidspunkt ?: mottattTidspunkt
+    }
+
+    @JsonTypeName("NesteStegSak")
+    data class NesteStegSak(
+        override val hendelseId: UUID,
+        override val virksomhetsnummer: String,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        override val sakId: UUID,
+
+        val merkelapp: String,
+        val grupperingsid: String,
+        val idempotenceKey: String?,
+        val nesteSteg: String?,
+    ) : Hendelse(), Sak {
+        @JsonIgnore
+        override val aggregateId: UUID = sakId
     }
 
     @JsonTypeName("BeskjedOpprettet")

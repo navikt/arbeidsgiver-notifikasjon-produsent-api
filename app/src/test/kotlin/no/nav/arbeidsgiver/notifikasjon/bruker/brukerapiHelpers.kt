@@ -157,6 +157,7 @@ fun TestApplicationEngine.querySakerJson(
                     tidspunkt
                 }
                 frister
+                nesteSteg
                 oppgaver {
                     frist
                     tilstand

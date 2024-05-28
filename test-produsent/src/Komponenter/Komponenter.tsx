@@ -10,6 +10,7 @@ import {NyOppgavestatus} from "./NyOppgavestatus.tsx";
 import {NyBeskjed} from "./NyBeskjed.tsx";
 import {HardDelete} from "./HardDelete.tsx";
 import {NySakstatus} from "./NySakstatus.tsx";
+import {NesteStegSak} from "./NesteStegSak.tsx";
 
 export const komponenter = {
     "Who am I": <WhoAmI/>,
@@ -21,6 +22,7 @@ export const komponenter = {
     "Ny Kalenderavtale": <NyKalenderAvtale/>,
     "Oppdater Kalenderavtale": <OppdaterKalenderAvtale/>,
     "Oppdater sak" : <NySakstatus/>,
+    "Neste steg sak": <NesteStegSak/>,
     "Ny oppgavestatus": <NyOppgavestatus/>,
     "Hard delete": <HardDelete/>,
 }

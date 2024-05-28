@@ -15,6 +15,7 @@ const HENT_SAK = gql`
                     virksomhetsnummer,
                     grupperingsid,
                     merkelapp,
+                    nesteSteg,
                     lenke
 
                 }
@@ -32,6 +33,7 @@ const HENT_SAK_GRUPPERINGSID = gql`
                     virksomhetsnummer,
                     grupperingsid,
                     merkelapp,
+                    nesteSteg,
                     lenke
                 }
             }

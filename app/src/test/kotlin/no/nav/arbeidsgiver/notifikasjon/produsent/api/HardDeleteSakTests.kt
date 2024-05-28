@@ -45,6 +45,7 @@ class HardDeleteSakTests : DescribeSpec({
         mottattTidspunkt = opprettetTidspunkt,
         kildeAppNavn = "",
         produsentId = "",
+        nesteSteg = null,
         hardDelete = null,
     )
     val beskjedOpprettet = BeskjedOpprettet(

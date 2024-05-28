@@ -70,6 +70,7 @@ class NyBeskjedTests : DescribeSpec({
             mottattTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
             kildeAppNavn = "",
             produsentId = "",
+            nesteSteg = null,
             hardDelete = null,
         ).also {
             produsentRepository.oppdaterModellEtterHendelse(it)

@@ -176,6 +176,7 @@ object BrukerAPI {
         val merkelapp: String,
         override val virksomhet: Virksomhet,
         val sisteStatus: SakStatus,
+        val nesteSteg: String?,
         val frister: List<LocalDate?>,
         val oppgaver: List<OppgaveMetadata>,
         val tidslinje: List<TidslinjeElement>,
@@ -590,6 +591,7 @@ object BrukerAPI {
                     frister = oppgaver
                         .filter { it.tilstand == BrukerModel.Oppgave.Tilstand.NY }
                         .map { it.frist },
+                    nesteSteg = it.nesteSteg,
                     oppgaver = oppgaver.map { o -> OppgaveMetadata(
                         tilstand = o.tilstand.tilBrukerAPI(),
                         frist = o.frist,
@@ -696,6 +698,7 @@ object BrukerAPI {
                             )
                         }
                     },
+                    nesteSteg = sak.nesteSteg,
                     frister = oppgaver
                         .filter { it.tilstand == BrukerModel.Oppgave.Tilstand.NY }
                         .map { it.frist },
@@ -796,6 +799,7 @@ object BrukerAPI {
                             )
                         }
                     },
+                    nesteSteg = sak.nesteSteg,
                     frister = oppgaver
                         .filter { it.tilstand == BrukerModel.Oppgave.Tilstand.NY }
                         .map { it.frist },

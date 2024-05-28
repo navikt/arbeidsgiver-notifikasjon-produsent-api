@@ -48,4 +48,8 @@ open class ProdusentRepositoryStub : ProdusentRepository {
     override suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean {
         TODO("Not yet implemented")
     }
+
+    override suspend fun nesteStegSakFinnes(id: UUID, idempotenceKey: String): Boolean {
+        TODO("Not yet implemented")
+    }
 }

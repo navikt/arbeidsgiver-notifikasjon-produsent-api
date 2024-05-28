@@ -20,6 +20,7 @@ class QuerySakTests : DescribeSpec({
         val sak1 = brukerRepository.sakOpprettet(
             virksomhetsnummer = "42",
             merkelapp = "tag",
+            nesteSteg = "foo",
             mottakere = listOf(HendelseModel.AltinnMottaker("5441", "1", "42")),
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
@@ -28,6 +29,7 @@ class QuerySakTests : DescribeSpec({
             virksomhetsnummer = "42",
             merkelapp = "tag",
             lenke = null,
+            nesteSteg = null,
             mottakere = listOf(HendelseModel.AltinnMottaker("5441", "1", "42")),
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
@@ -40,6 +42,7 @@ class QuerySakTests : DescribeSpec({
             sak.merkelapp shouldBe "tag"
             sak.lenke shouldBe sak1.lenke
             sak.tittel shouldBe sak1.tittel
+            sak.nesteSteg shouldBe sak1.nesteSteg
             sak.virksomhet.virksomhetsnummer shouldBe sak1.virksomhetsnummer
             sak.sisteStatus.tekst shouldBe "Mottatt"
             sak.sisteStatus.tidspunkt shouldBe sak1.opprettetTidspunkt(fallbackTimeNotUsed)
@@ -51,6 +54,7 @@ class QuerySakTests : DescribeSpec({
             sak.id shouldBe sak2.sakId
             sak.merkelapp shouldBe "tag"
             sak.lenke shouldBe sak2.lenke
+            sak.nesteSteg shouldBe null
             sak.tittel shouldBe sak2.tittel
             sak.virksomhet.virksomhetsnummer shouldBe sak2.virksomhetsnummer
             sak.sisteStatus.tekst shouldBe "Mottatt"
@@ -89,6 +93,7 @@ class QuerySakTests : DescribeSpec({
             sak.id shouldBe sak1.sakId
             sak.merkelapp shouldBe "tag"
             sak.lenke shouldBe sak1.lenke
+            sak.nesteSteg shouldBe null
             sak.tittel shouldBe sak1.tittel
             sak.virksomhet.virksomhetsnummer shouldBe sak1.virksomhetsnummer
             sak.sisteStatus.tekst shouldBe "Mottatt"
@@ -153,6 +158,7 @@ private fun TestApplicationEngine.sakById(sakId: UUID) = brukerApi(
                                 tidspunkt
                             }
                             frister
+                            nesteSteg
                             oppgaver {
                                 frist
                                 tilstand
@@ -206,6 +212,7 @@ private fun TestApplicationEngine.sakByGrupperingsid(grupperingsid: String, merk
                                 tidspunkt
                             }
                             frister
+                            nesteSteg
                             oppgaver {
                                 frist
                                 tilstand
