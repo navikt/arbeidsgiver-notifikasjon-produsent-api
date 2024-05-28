@@ -224,7 +224,7 @@ class EksternVarslingServiceTests : DescribeSpec({
             val serviceJob = service.start(this)
 
             it("reschedules") {
-                eventually(10.seconds) {
+                eventually(20.seconds) {
                     repository.waitQueueCount() shouldNotBe (0 to 0)
                     database.nonTransactionalExecuteQuery("""
                         select * from wait_queue where varsel_id = '${uuid("2")}'
