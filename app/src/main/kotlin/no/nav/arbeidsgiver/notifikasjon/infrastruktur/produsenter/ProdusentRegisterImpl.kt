@@ -197,16 +197,12 @@ val FORELDREPENGER = Produsent(
     accessPolicy = basedOnEnv(
         prod = { listOf() },
         other = { listOf(
-            "dev-fss:teamforeldrepenger:ftinntektsmelding",
+            "dev-gcp:teamforeldrepenger:ftinntektsmelding",
         )},
     ),
     tillatteMerkelapper = listOf(
         "Inntektsmelding foreldrepenger",
         "Inntektsmelding svangerskapspenger",
-        "Inntektsmelding omsorgspenger",
-        "Inntektsmelding pleiepenger sykt barn",
-        "Inntektsmelding pleiepenger i livets sluttfase",
-        "Inntektsmelding opplæringspenger",
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
