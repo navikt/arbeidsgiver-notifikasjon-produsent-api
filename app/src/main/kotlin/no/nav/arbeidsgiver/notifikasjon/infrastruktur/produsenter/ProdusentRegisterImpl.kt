@@ -213,6 +213,25 @@ val FORELDREPENGER = Produsent(
     )
 )
 
+val K9 = Produsent(
+    id = "k9-inntektsmelding-notifikasjon",
+    accessPolicy = basedOnEnv(
+        prod = { listOf() },
+        other = { listOf(
+            "dev-gcp:k9saksbehandling:k9-inntektsmelding",
+        )},
+    ),
+    tillatteMerkelapper = listOf(
+        "Inntektsmelding omsorgspenger",
+        "Inntektsmelding pleiepenger sykt barn",
+        "Inntektsmelding pleiepenger i livets sluttfase",
+        "Inntektsmelding opplæringspenger",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+    )
+)
+
 
 val PRODUSENT_LIST =
     listOf(
@@ -226,6 +245,7 @@ val PRODUSENT_LIST =
         ARBEIDSGIVERDIALOG,
         YRKESSKADE,
         FORELDREPENGER,
+        K9,
     )
         .filter { it.accessPolicy.isNotEmpty() }
 
