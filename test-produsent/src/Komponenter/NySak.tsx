@@ -12,7 +12,7 @@ const NY_SAK = gql`
     mutation (
         $grupperingsid: String!
         $virksomhetsnummer: String!
-        $lenke: String!
+        $lenke: String
         $tittel: String!
         $merkelapp: String!
         $initiellStatus: SaksStatus!
@@ -97,7 +97,7 @@ export const NySak: React.FunctionComponent = () => {
             <TextField label={"Grupperingsid*"}  ref={grupperingsidRef}/>
             <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
             <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
-            <TextField label={"Lenke*"} ref={lenkeRef} defaultValue={"https://foo.bar"}/>
+            <TextField label={"Lenke"} ref={lenkeRef} defaultValue={"https://foo.bar"}/>
             <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny sak"/>
             <TextField label={"Merkelapp*"} ref={merkelapp} defaultValue="fager"/>
             <TextField label={"Initiell status*"} ref={initiellStatusRef} defaultValue="MOTTATT"/>
