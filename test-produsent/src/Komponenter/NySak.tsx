@@ -12,7 +12,7 @@ const NY_SAK = gql`
     mutation (
         $grupperingsid: String!
         $virksomhetsnummer: String!
-        $lenke: String!
+        $lenke: String
         $tittel: String!
         $merkelapp: String!
         $initiellStatus: SaksStatus!
