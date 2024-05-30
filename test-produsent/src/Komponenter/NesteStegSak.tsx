@@ -72,8 +72,14 @@ export const NesteStegSak = () => {
     const handleSend = () => {
         nesteStegSak({
             variables: {
-                ...{...queryType == "Saksid" ? {sakId: sakIdRef.current?.value} :
-                        {grupperingsid: grupperingsidRef.current?.value, merkelapp: merkelappRef.current?.value}},
+                ...{
+                    ...queryType == "Saksid" ? {
+                        sakId: sakIdRef.current?.value
+                    } : {
+                        grupperingsid: grupperingsidRef.current?.value,
+                        merkelapp: merkelappRef.current?.value
+                    }
+                },
                 sakId: sakIdRef.current?.value ?? "",
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value ?? ""),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value ?? ""),
