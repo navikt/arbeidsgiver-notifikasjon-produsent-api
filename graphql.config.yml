@@ -8,6 +8,7 @@ projects:
       - app/src/**/produsent/**/*.kt
       - test-produsent/**/*
       - http/produsent/*.http
+      - docs/**/*.graphql
   produsentapidevgcp:
     schema:
       - app/src/main/resources/produsent.graphql
