@@ -1,0 +1,15 @@
+mutation (
+    $grupperingsid: String!
+    $merkelapp: String!
+    $nesteSteg: String
+    $idempotencyKey: String
+) {
+    nesteStegSakByGrupperingsid(grupperingsid: $grupperingsid, merkelapp: $merkelapp, nesteSteg: $nesteSteg, idempotencyKey: $idempotencyKey) {
+        ... on NesteStegSakVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}

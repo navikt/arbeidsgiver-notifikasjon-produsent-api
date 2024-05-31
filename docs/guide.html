@@ -1160,33 +1160,34 @@ EMAIL  | {tittel} | {innhold}
                 <pre
                         class="highlight"
                 ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$tittel</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+    </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+    </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+    </span><span class="nv">$tittel</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
 </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nySak</span><span class="p">(</span><span class="w">
-    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
-    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Skademelding"</span><span class="w">
-    </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
-    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
-        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">}]</span><span class="w">
-    </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="nv">$tittel</span><span class="w">
-    </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
+    </span><span class="n">nySak</span><span class="p">(</span><span class="w">
+        </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
+        </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Skademelding"</span><span class="w">
+        </span><span class="n">nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
+        </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
+        </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
+            </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
+                </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
+            </span><span class="p">}</span><span class="w">
+        </span><span class="p">}]</span><span class="w">
+        </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="nv">$tittel</span><span class="w">
+        </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
     </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NySakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
+        </span><span class="n">__typename</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NySakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">id</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">feilmelding</span><span class="w">
+        </span><span class="p">}</span><span class="w">
     </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
+</span><span class="p">}</span>
+</code></pre>
                 </div>
             </div>
             <p>
@@ -1248,6 +1249,102 @@ EMAIL  | {tittel} | {innhold}
   </span><span class="nl">"virksomhetsnummer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"012345678"</span><span class="p">,</span><span class="w">
   </span><span class="nl">"grupperingsid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sak-123"</span><span class="p">,</span><span class="w">
   </span><span class="nl">"lenke"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://arbeidsgiver.intern.dev.nav.no/min-side-arbeidsgiver/sak?merkelapp=fager&grupperingsid=42"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                </div>
+            </div>
+            <h2 id="hvordan-sette-endre-neste-steg"><a href="hvordan-sette-endre-neste-steg">Hvordan sette/endre nesteSteg</a></h2>
+            <p>
+                Denne funksjonen lar dere informere arbeidsgiver om forventet neste steg eller estimert saksbehandlingstid. Vi håper dette vil redusere antallet henvendelser til NKS angående status i saken.
+                Eksempler på bruk:
+                «Du kan søke refusjon fra 15. april 2024»
+                «Saken forventes ferdigbehandlet i oktober 2024»
+            </p>
+
+            <p>
+                "Neste steg" kan settes ved opprettelse av sak "NySak" og kan endres med "NesteStegSak" mutasjonen.
+                Her kan man oppgi en oppdatering av neste steg eller fjerne neste steg ved å sende inn null.
+                Det er ingen kobling mellom status på saken og <strong> neste steg </strong>, så det er viktig at dere endrer det manuelt når saken er ferdigbehandlet.
+            </p>
+            <p>
+                Dere kan bruke enten "NesteStegSak" eller "NesteStegSakGrupperingsid" til å endre neste steg på en sak.
+                IdempotencyKey er et frivillig felt som kan brukes for å unngå at samme oppdatering blir utført flere ganger.
+            </p>
+            <p>
+                Med saksid:
+            </p>
+              <div class="language-graphql highlighter-rouge">
+                  <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
+    </span><span class="nv">$sakId</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!,</span><span class="w">
+    </span><span class="nv">$nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w">
+    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
+</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">nesteStegSak</span><span class="p">(</span><span class="n">nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nv">$nesteSteg</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$sakId</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NesteStegSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">id</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">feilmelding</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span></code>
+                </pre>
+                  </div>
+              </div>
+            <p>
+                Med variabler:
+            </p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"sakId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9350-39426-12333-431213"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"nesteSteg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du vil få refusjon utbetalt innen januar 2026"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                </div>
+            </div>
+            <p>
+                Med grupperingsid og merkelapp:
+            </p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
+    </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+    </span><span class="nv">$merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+    </span><span class="nv">$nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
+    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
+</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">nesteStegSakByGrupperingsid</span><span class="p">(</span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="p">,</span><span class="w"> </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nv">$merkelapp</span><span class="p">,</span><span class="w"> </span><span class="n">nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nv">$nesteSteg</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NesteStegSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">id</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">feilmelding</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span>
+                </code>
+                </pre>
+                </div>
+            </div>
+            <p>Med variabler:</p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+                <pre
+                        class="highlight"
+                ><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"grupperingsid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5321-85263-82343-995248"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"merkelapp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fager"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"nesteSteg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du vil få refusjon utbetalt innen januar 2026"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
                 </div>
