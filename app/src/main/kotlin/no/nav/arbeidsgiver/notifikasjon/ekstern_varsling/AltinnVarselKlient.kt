@@ -259,7 +259,7 @@ class AltinnVarselKlientImpl(
             try {
                 val response = withRetryHandler(
                     maxAttempts = 3,
-                    delay = 250.milliseconds,
+                    delay = 1000.milliseconds,
                     isRetryable = { it.erDriftsforstyrrelse() }
                 ) {
                     wsclient.sendStandaloneNotificationBasicV3(
