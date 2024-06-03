@@ -120,7 +120,7 @@ export const NySakstatus: React.FunctionComponent = () => {
         </SyntaxHighlighter>
         <div style={{maxWidth: "36rem", gap: "4px", display: "flex", flexDirection: "column"}}>
             <ToggleGroup onChange={(value) => setQuerytype(value as QueryType)}
-                         label="Saksid eller Grupperingsid/Merkelapp" defaultValue="id">
+                         defaultValue="id">
                 <ToggleGroup.Item value={"id"}>Saksid</ToggleGroup.Item>
                 <ToggleGroup.Item value={"grupperingsid"}>Grupperingsid/Merkelapp</ToggleGroup.Item>
             </ToggleGroup>

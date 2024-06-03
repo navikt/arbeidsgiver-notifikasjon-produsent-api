@@ -7,10 +7,9 @@ import React, {
     useEffect,
     forwardRef,
     useImperativeHandle,
-    useRef
 } from "react";
 import {Mutation} from "../api/graphql-types.ts";
-import {Button, Checkbox, Heading, Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
+import {Button, Checkbox, Heading, TextField, ToggleGroup} from "@navikt/ds-react";
 import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -96,7 +95,7 @@ export const NyKalenderAvtale: FunctionComponent = () => {
 
 
     const handleSend = () => {
-                nyKalenderavtale({
+        nyKalenderavtale({
             variables: {
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
                 virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
@@ -144,7 +143,8 @@ export const NyKalenderAvtale: FunctionComponent = () => {
                 <hr/>
                 <Lokasjon ref={lokasjonRef}/>
                 <hr/>
-                <ToggleGroup defaultValue="Ingen" onChange={(v) => setPåminnelse(v === "Send påminnelse")} label="Påminnelse">
+                <ToggleGroup defaultValue="Ingen" onChange={(v) => setPåminnelse(v === "Send påminnelse")}
+                             label="Påminnelse">
                     <ToggleGroup.Item value={"Ingen"}>Ingen</ToggleGroup.Item>
                     <ToggleGroup.Item value={"Send påminnelse"}>Send påminnelse</ToggleGroup.Item>
                 </ToggleGroup>
@@ -247,67 +247,49 @@ export const OppdaterKalenderAvtale: FunctionComponent = () => {
         error
     }] = useMutation<Pick<Mutation, "oppdaterKalenderavtale">>(OPPDATER_KALENDERAVTALE_MED_VARSLING)
 
+    const notifikasjonIdRef = React.useRef<HTMLInputElement>(null);
+    const lenkeRef = React.useRef<HTMLInputElement>(null);
+    const tekstRef = React.useRef<HTMLInputElement>(null);
+    const eksternVarselRef = React.useRef<EksternVarsel>(null);
+    const lokasjonRef = React.useRef<Lokasjon>(null);
 
-    const [variables, setVariables] = useState({
-        id: "42",
-        lenke: "https://foo.bar",
-        tekst: "Dette er en kalenderavtale",
-        lokasjon: {
-            postnummer: "1234",
-            poststed: "Kneika",
-            adresse: "rundt svingen og borti høgget"
-        },
-        eksterneVarsler: [{
-            epost: {
-                mottaker: {
-                    kontaktinfo: {
-                        epostadresse: "donald@duck.co"
-                    }
-                },
-                epostTittel: "Varsel fra testpodusent",
-                epostHtmlBody: "<h1>Hei</h1><p>Dette er en test</p>",
-                sendevindu: "LOEPENDE",
+    const handleSend = () => {
+        oppdaterKalenderavtale({
+            variables: {
+                id: nullIfEmpty(notifikasjonIdRef.current?.value ?? ""),
+                lenke: nullIfEmpty(lenkeRef.current?.value ?? ""),
+                tekst: nullIfEmpty(tekstRef.current?.value ?? ""),
+                eksterneVarsler: formateEksternVarsel(eksternVarselRef),
+                lokasjon: lokasjonRef.current?.hentLokasjon()
             }
-        }]
-    });
-    const varsRef = useRef<HTMLTextAreaElement>(null)
-    const [varsError, setVarsError] = useState<any | null>(null)
-    useEffect(() => {
-        if (varsRef.current) {
-            varsRef.current.value = JSON.stringify(variables, null, 2)
-        }
-    }, []);
+        })
+    }
+
 
     return <div className={cssClasses.kalenderavtale}>
 
         <SyntaxHighlighter language="graphql" style={darcula}>
             {print(OPPDATER_KALENDERAVTALE_MED_VARSLING)}
         </SyntaxHighlighter>
-        <Textarea
-            error={varsError}
-            ref={varsRef}
-            style={{fontSize: "12px", lineHeight: "12px"}}
-            label="Variabler"
-            onChange={(e) => {
-                try {
-                    setVariables(JSON.parse(e.target.value));
-                    setVarsError(null)
-                } catch (e: Error | any) {
-                    setVarsError(e?.message ?? JSON.stringify(e, null, 2))
-                }
-            }}
-        />
-        { varsError !== null && <Button variant="danger" onClick={() => {
-            if (varsRef.current !== null) {
-                varsRef.current.value = JSON.stringify(variables, null, 2)
-                setVarsError(null)
-            }
-        }}>nullstill variabler</Button> }
-        <Button variant="primary"
-                onClick={() => oppdaterKalenderavtale({variables})}>Oppdater kalenderavtale med ekstern varsling</Button>
 
+        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr 1fr", width: "105rem", gap: "32px"}}>
+            <div style={{display: "flex", flexDirection: "column", gap: "4px"}}>
+                <TextField label={"KalenderavtaleID *"} ref={notifikasjonIdRef}/>
+                <TextField label={"Lenke"} ref={lenkeRef}/>
+                <TextField label={"Tekst"} ref={tekstRef}/>
+
+                <Button variant="primary"
+                        onClick={() => handleSend()}>Oppdater kalenderavtale</Button>
+            </div>
+            <div>
+                <EksternVarsel ref={eksternVarselRef}/>
+                <hr/>
+                <Lokasjon ref={lokasjonRef}/>
+            </div>
+        </div>
         {loading && <p>Laster...</p>}
-        {error && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
+        {error &&
+            <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(error, null, 2)}</SyntaxHighlighter>}
         {data && <SyntaxHighlighter language="json" style={darcula}>{JSON.stringify(data, null, 2)}</SyntaxHighlighter>}
 
     </div>
