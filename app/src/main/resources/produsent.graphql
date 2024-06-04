@@ -127,6 +127,7 @@ type Sak {
     lenke: String
     nesteSteg: String
     merkelapp: String!
+    sisteStatus: SaksStatus
 }
 
 type Virksomhet {
