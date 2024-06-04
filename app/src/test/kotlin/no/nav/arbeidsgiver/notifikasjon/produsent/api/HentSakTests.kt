@@ -51,6 +51,21 @@ class HentSakTests : DescribeSpec({
         overstyrStatustekstMed = null,
     )
 
+    val underbehandlingStatusSakHendelse = HendelseModel.NyStatusSak(
+        sakId = sakOpprettetHendelse.sakId,
+        hendelseId = uuid("13"),
+        produsentId = "",
+        kildeAppNavn = "",
+        status = HendelseModel.SakStatus.UNDER_BEHANDLING,
+        mottattTidspunkt = OffsetDateTime.now(),
+        virksomhetsnummer = "1",
+        idempotensKey = "4321",
+        hardDelete = null,
+        nyLenkeTilSak = null,
+        oppgittTidspunkt = null,
+        overstyrStatustekstMed = null,
+    )
+
     val sakMedAnnenMerkelappOpprettetHendelse = HendelseModel.SakOpprettet(
         virksomhetsnummer = "1",
         merkelapp = "IkkeTag",
@@ -84,6 +99,7 @@ class HentSakTests : DescribeSpec({
 
         produsentRepository.oppdaterModellEtterHendelse(sakOpprettetHendelse)
         produsentRepository.oppdaterModellEtterHendelse(nyStatusSakHendelse)
+        produsentRepository.oppdaterModellEtterHendelse(underbehandlingStatusSakHendelse)
         produsentRepository.oppdaterModellEtterHendelse(sakMedAnnenMerkelappOpprettetHendelse)
 
         it("Sak finnes ikke og respons inneholder error.") {
@@ -128,6 +144,7 @@ class HentSakTests : DescribeSpec({
                                     tittel
                                     lenke
                                     merkelapp
+                                    sisteStatus
                                 }
                             }
                         }
@@ -136,6 +153,7 @@ class HentSakTests : DescribeSpec({
             ).getTypedContent<QuerySak.HentSakResultat>("hentSak").also { HentetSak  ->
                 val hentetSak = HentetSak as QuerySak.HentetSak
                 hentetSak.sak.id shouldBe sakOpprettetHendelse.sakId
+                hentetSak.sak.sisteStatus shouldBe QuerySak.SakStatus.UNDER_BEHANDLING
             }
         }
     }
@@ -147,6 +165,7 @@ class HentSakTests : DescribeSpec({
 
         produsentRepository.oppdaterModellEtterHendelse(sakOpprettetHendelse)
         produsentRepository.oppdaterModellEtterHendelse(nyStatusSakHendelse)
+        produsentRepository.oppdaterModellEtterHendelse(underbehandlingStatusSakHendelse)
         produsentRepository.oppdaterModellEtterHendelse(sakMedAnnenMerkelappOpprettetHendelse)
 
         it("Sak finnes ikke og respons inneholder error.") {
@@ -191,6 +210,7 @@ class HentSakTests : DescribeSpec({
                                     tittel
                                     lenke
                                     merkelapp
+                                    sisteStatus
                                 }
                             }
                         }
@@ -199,6 +219,7 @@ class HentSakTests : DescribeSpec({
             ).getTypedContent<QuerySak.HentSakResultat>("hentSakMedGrupperingsid").also { HentetSak ->
                 val hentetSak = HentetSak as QuerySak.HentetSak
                 hentetSak.sak.id shouldBe sakOpprettetHendelse.sakId
+                hentetSak.sak.sisteStatus shouldBe QuerySak.SakStatus.UNDER_BEHANDLING
             }
         }
     }

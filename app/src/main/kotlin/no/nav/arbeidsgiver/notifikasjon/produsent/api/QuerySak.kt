@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -32,14 +33,15 @@ class QuerySak (
     }
 
     @JsonTypeName("Sak")
-    data class Sak (
+    data class Sak(
         val id: UUID,
         val grupperingsid: String,
         val virksomhetsnummer: String,
         val tittel: String,
         val lenke: String?,
         val nesteSteg: String?,
-        val merkelapp: String
+        val merkelapp: String,
+        val sisteStatus: SakStatus
     ) {
         companion object {
             fun fraDomene(sak: ProdusentModel.Sak): Sak {
@@ -50,11 +52,21 @@ class QuerySak (
                     tittel = sak.tittel,
                     lenke = sak.lenke,
                     nesteSteg = sak.nesteSteg,
-                    merkelapp = sak.merkelapp
+                    merkelapp = sak.merkelapp,
+                    sisteStatus = when(sak.statusoppdateringer.maxBy { it.tidspunktMottatt }.status) {
+                        HendelseModel.SakStatus.MOTTATT -> SakStatus.MOTTATT
+                        HendelseModel.SakStatus.UNDER_BEHANDLING -> SakStatus.UNDER_BEHANDLING
+                        HendelseModel.SakStatus.FERDIG -> SakStatus.FERDIG
+                    }
                 )
             }
         }
+    }
 
+    enum class SakStatus {
+        MOTTATT,
+        UNDER_BEHANDLING,
+        FERDIG;
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
