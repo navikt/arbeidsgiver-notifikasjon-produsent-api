@@ -198,6 +198,7 @@ val FORELDREPENGER = Produsent(
         prod = { listOf() },
         other = { listOf(
             "dev-gcp:teamforeldrepenger:ftinntektsmelding",
+            "dev-gcp:teamforeldrepenger:fpinntektsmelding",
         )},
     ),
     tillatteMerkelapper = listOf(
