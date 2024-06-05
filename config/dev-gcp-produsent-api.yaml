@@ -95,6 +95,10 @@ spec:
           namespace: teamforeldrepenger
           cluster: dev-gcp
 
+        - application: fpinntektsmelding
+          namespace: teamforeldrepenger
+          cluster: dev-gcp
+
         - application: k9-inntektsmelding
           namespace: k9saksbehandling
           cluster: dev-gcp
