@@ -1,0 +1,48 @@
+{
+  "name": "@navikt/arbeidsgiver-notifikasjon-widget",
+  "description": "React component for notifikasjoner for arbeidsgivere",
+  "repository": "github:navikt/arbeidsgiver-notifikasjon-widget",
+  "version": "6.5.9",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
+  "types": "./lib/esm/lib/esm/index.d.ts",
+  "scripts": {
+    "gql:generate": "graphql-codegen",
+    "build": "rollup --config rollup.config.ts --configPlugin typescript",
+    "start": "rollup --config rollup.config.ts --configPlugin typescript --watch",
+    "test": "echo tests not implemented"
+  },
+  "dependencies": {
+    "@apollo/client": "3.8.5",
+    "graphql": "^16.8.1"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^2.13.1",
+    "@graphql-codegen/typescript": "^2.7.3",
+    "@graphql-codegen/typescript-operations": "^2.5.3",
+    "@graphql-codegen/typescript-react-apollo": "^3.3.3",
+    "@rollup/plugin-commonjs": "20",
+    "@rollup/plugin-node-resolve": "13",
+    "@rollup/plugin-typescript": "8",
+    "@rollup/plugin-url": "6",
+    "@types/amplitude-js": "^8.16.2",
+    "@types/node": "16",
+    "@types/react": "^17.0.17",
+    "@types/react-dom": "^17.0.9",
+    "amplitude-js": "^8.21.1",
+    "prop-types": "15.8.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "rollup": "2",
+    "rollup-plugin-peer-deps-external": "2",
+    "rollup-plugin-postcss": "4",
+    "typescript": "^4.8.4"
+  },
+  "peerDependencies": {
+    "react": "17 || 18",
+    "react-dom": "17 || 18",
+    "@navikt/ds-css": ">=2",
+    "@navikt/ds-icons": ">=2",
+    "@navikt/ds-react": ">=2"
+  }
+}

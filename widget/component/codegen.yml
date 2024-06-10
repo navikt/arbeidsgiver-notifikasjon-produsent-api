@@ -1,0 +1,9 @@
+# https://www.graphql-code-generator.com/docs/plugins/typescript-react-apollo
+# https://github.com/dotansimha/graphql-code-generator/blob/master/dev-test/codegen.yml
+generates:
+  ./src/api/graphql-types.ts:
+    schema: ../../app/src/main/resources/bruker.graphql
+    plugins:
+      - typescript
+    config:
+      withHooks: true
