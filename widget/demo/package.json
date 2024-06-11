@@ -1,0 +1,43 @@
+{
+  "name": "arbeidsgiver-notifikasjon-widget-example",
+  "homepage": ".",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  },
+  "dependencies": {
+    "@navikt/arbeidsgiver-notifikasjon-widget": "file:../component",
+    "@navikt/arbeidsgiver-notifikasjoner-brukerapi-mock": "file:../brukerapi-mock",
+    "@navikt/bedriftsmeny": "6.8.0",
+    "@navikt/nav-dekoratoren-moduler": "^1.6.9",
+    "@types/node": "^16.4.13",
+    "@types/react": "17.0.30",
+    "@types/react-dom": "^17.0.18",
+    "@types/react-router-dom": "^5.3.3",
+    "history": "^4.10.1",
+    "react": "file:../component/node_modules/react",
+    "react-dom": "file:../component/node_modules/react-dom",
+    "react-router-dom": "^6.4.5",
+    "react-scripts": "^5.0.0",
+    "@navikt/ds-css": "2.0.5",
+    "@navikt/ds-icons": "2.0.5",
+    "@navikt/ds-react": "2.0.5"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

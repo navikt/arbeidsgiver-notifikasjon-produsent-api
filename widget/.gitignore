@@ -1,0 +1,7 @@
+dist
+node_modules/
+/component/lib
+*.iml
+.idea
+/react-app-env.d.ts
+/demo/build

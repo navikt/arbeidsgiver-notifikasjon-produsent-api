@@ -1,0 +1,7 @@
+
+.notifikasjon_AvtaletilstandLinje.notifikasjon_AvtaletilstandLinje {
+  width: fit-content;
+  --ac-tag-warning-bg: rgba(255, 236, 204, 1);
+  --ac-tag-neutral-bg: rgba(0, 0, 0, 0.05);
+  --ac-tag-success-bg: rgba(204, 241, 214, 1);
+}

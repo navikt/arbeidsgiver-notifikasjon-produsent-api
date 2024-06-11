@@ -1,0 +1,26 @@
+name: update dependencies manual
+on:
+  workflow_dispatch:
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: [ server, proxy-server, component ]
+    steps:
+      - uses: actions/checkout@master
+      - name: set remote url
+        run: git remote set-url --push origin https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+      - name: bump ${{ matrix.dir }}
+        uses: taichi/actions-package-update@master
+        env:
+          WORKING_DIR: widget/${{ matrix.dir }}
+          COMMIT_MESSAGE: bump ${{ matrix.dir }} dependencies (trigget av ${{ github.actor }})
+          AUTHOR_EMAIL: bumpy.bear@users.noreply.github.com
+          AUTHOR_NAME: Bumpy Bear
+          EXECUTE: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOG_LEVEL: debug
+        with:
+          args: -u --packageFile package.json --loglevel verbose
