@@ -100,7 +100,7 @@ export const NyKalenderAvtale: FunctionComponent = () => {
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
                 virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
-                lenke: lenkeRef.current?.value ?? "",
+                lenke: nullIfEmpty(lenkeRef.current?.value),
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 startTidspunkt: nullIfEmpty(startTidspunktRef.current?.value),
                 sluttTidspunkt: nullIfEmpty(sluttTidspunktRef.current?.value),
