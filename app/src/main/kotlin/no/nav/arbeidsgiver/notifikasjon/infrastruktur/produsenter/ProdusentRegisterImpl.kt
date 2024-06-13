@@ -172,7 +172,14 @@ val ARBEIDSGIVERDIALOG = Produsent(
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig Lønnstilskudd"),
-        ServicecodeDefinisjon(code = "5332", version = "2", description = "Arbeidstrening")
+        ServicecodeDefinisjon(
+            code = "5332",
+            version = basedOnEnv(
+                prod = { "2" },
+                other = { "1" }
+            ),
+            description = "Arbeidstrening"
+        )
     )
 )
 
