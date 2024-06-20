@@ -40,7 +40,6 @@ spec:
         - host: tt02.altinn.no
     inbound:
       rules:
-        - application: notifikasjon-test-produsent
         - application: notifikasjon-test-produsent-v2
 
         - application: tiltak-refusjon-api
@@ -89,10 +88,6 @@ spec:
 
         - application: yrkesskade-melding-mottak
           namespace: yrkesskade
-          cluster: dev-gcp
-
-        - application: ftinntektsmelding
-          namespace: teamforeldrepenger
           cluster: dev-gcp
 
         - application: fpinntektsmelding
