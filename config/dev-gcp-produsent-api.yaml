@@ -42,10 +42,6 @@ spec:
       rules:
         - application: notifikasjon-test-produsent-v2
 
-        - application: tiltak-refusjon-api
-          namespace: arbeidsgiver
-          cluster: dev-gcp
-
         - application: tiltaksgjennomforing-api
           namespace: arbeidsgiver
           cluster: dev-fss
