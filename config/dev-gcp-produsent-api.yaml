@@ -40,7 +40,6 @@ spec:
         - host: tt02.altinn.no
     inbound:
       rules:
-        - application: notifikasjon-test-produsent
         - application: notifikasjon-test-produsent-v2
 
         - application: tiltak-refusjon-api
