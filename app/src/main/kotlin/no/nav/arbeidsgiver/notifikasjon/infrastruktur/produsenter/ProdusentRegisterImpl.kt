@@ -206,7 +206,6 @@ val FORELDREPENGER = Produsent(
     accessPolicy = basedOnEnv(
         prod = { listOf() },
         other = { listOf(
-            "dev-gcp:teamforeldrepenger:ftinntektsmelding",
             "dev-gcp:teamforeldrepenger:fpinntektsmelding",
         )},
     ),

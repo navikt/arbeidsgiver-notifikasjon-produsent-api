@@ -91,10 +91,6 @@ spec:
           namespace: yrkesskade
           cluster: dev-gcp
 
-        - application: ftinntektsmelding
-          namespace: teamforeldrepenger
-          cluster: dev-gcp
-
         - application: fpinntektsmelding
           namespace: teamforeldrepenger
           cluster: dev-gcp
