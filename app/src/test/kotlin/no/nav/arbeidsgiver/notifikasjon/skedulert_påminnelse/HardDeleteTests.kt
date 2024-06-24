@@ -13,181 +13,193 @@ import java.time.OffsetDateTime
 import java.util.*
 
 
-class HardDeleteTests: DescribeSpec({
+class HardDeleteTests : DescribeSpec({
     val metadata = PartitionHendelseMetadata(0, 0)
 
-    describe("Hvis oppgave blir hard deleted") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
+    fun deletePåminnelse(
+        deleteType: String,
+        deleteHendelse: (
+            aggregateId: UUID,
+            grupperingsId: String?,
+            merkelapp: String?
+        ) -> HendelseModel.Hendelse
+    ) {
+        describe("Hvis oppgave blir $deleteType deleted") {
+            val hendelseProdusent = FakeHendelseProdusent()
+            val service = SkedulertPåminnelseService(hendelseProdusent)
 
-        val oppgave = oppgaveMedPåminnelse()
-        service.processHendelse(oppgave, metadata)
-        service.processHendelse(
-            hardDelete(
-                aggregateId = oppgave.aggregateId,
-                grupperingsId = null,
-                merkelapp = null,
-            ), metadata
-        )
-
-        it("Sendes ingen påminnelse") {
-            service.sendAktuellePåminnelser()
-            hendelseProdusent.hendelser should beEmpty()
-        }
-    }
-
-    describe("Hvis saker blir hard deleted, og sak opprettes etter oppgaver") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-
-        oppgaveMedPåminnelse(
-            merkelapp = "m1",
-            grupperingsId = "g1",
-        ).also { service.processHendelse(it, metadata) }
-
-        val annenGruppe = oppgaveMedPåminnelse(
-            merkelapp = "m1",
-            grupperingsId = "g2"
-        ).also { service.processHendelse(it, metadata) }
-
-        val annenMerkelapp = oppgaveMedPåminnelse(
-            merkelapp = "m2",
-            grupperingsId = "g1"
-        ).also { service.processHendelse(it, metadata) }
-
-        val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
-            merkelapp = "m2",
-            grupperingsId = "g2"
-        ).also { service.processHendelse(it, metadata) }
-
-        val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
-            .also { service.processHendelse(it, metadata) }
-
-        service.processHendelse(
-            hardDelete(
-                aggregateId = sak1.aggregateId,
-                merkelapp = "m1",
-                grupperingsId = "g1"
-            ), metadata
-        )
-
-        it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
-            service.sendAktuellePåminnelser()
-            val bestillingerUtført = hendelseProdusent.hendelser.map {
-                if (it is HendelseModel.PåminnelseOpprettet)
-                    it.bestillingHendelseId
-                else
-                    null
-            }
-            bestillingerUtført shouldContainExactlyInAnyOrder listOf(
-                annenGruppe.aggregateId,
-                annenMerkelapp.aggregateId,
-                annenGruppeOgMerkelapp.aggregateId,
+            val oppgave = oppgaveMedPåminnelse()
+            service.processHendelse(oppgave, metadata)
+            service.processHendelse(
+                deleteHendelse(
+                    oppgave.aggregateId,
+                    null,
+                    null,
+                ), metadata
             )
-        }
-    }
 
-    describe("Hvis saker blir hard deleted, og sak opprettes før oppgaver") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-
-        val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
-            .also { service.processHendelse(it, metadata) }
-
-        oppgaveMedPåminnelse(
-            merkelapp = "m1",
-            grupperingsId = "g1",
-        ).also { service.processHendelse(it, metadata) }
-
-        val annenGruppe = oppgaveMedPåminnelse(
-            merkelapp = "m1",
-            grupperingsId = "g2"
-        ).also { service.processHendelse(it, metadata) }
-
-        val annenMerkelapp = oppgaveMedPåminnelse(
-            merkelapp = "m2",
-            grupperingsId = "g1"
-        ).also { service.processHendelse(it, metadata) }
-
-        val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
-            merkelapp = "m2",
-            grupperingsId = "g2"
-        ).also { service.processHendelse(it, metadata) }
-
-        service.processHendelse(
-            hardDelete(
-                aggregateId = sak1.aggregateId,
-                merkelapp = "m1",
-                grupperingsId = "g1"
-            ), metadata
-        )
-
-        it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
-            service.sendAktuellePåminnelser()
-            val bestillingerUtført = hendelseProdusent.hendelser.map {
-                if (it is HendelseModel.PåminnelseOpprettet)
-                    it.bestillingHendelseId
-                else
-                    null
+            it("Sendes ingen påminnelse") {
+                service.sendAktuellePåminnelser()
+                hendelseProdusent.hendelser should beEmpty()
             }
-            bestillingerUtført shouldContainExactlyInAnyOrder listOf(
-                annenGruppe.aggregateId,
-                annenMerkelapp.aggregateId,
-                annenGruppeOgMerkelapp.aggregateId,
-            )
         }
-    }
 
-    describe("Hvis saker blir hard deleted, og oppgaver opprettes etter hard delete") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
+        describe("Hvis saker blir $deleteType deleted, og sak opprettes etter oppgaver") {
+            val hendelseProdusent = FakeHendelseProdusent()
+            val service = SkedulertPåminnelseService(hendelseProdusent)
 
-        val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
-            .also { service.processHendelse(it, metadata) }
-
-        service.processHendelse(
-            hardDelete(
-                aggregateId = sak1.aggregateId,
+            oppgaveMedPåminnelse(
                 merkelapp = "m1",
+                grupperingsId = "g1",
+            ).also { service.processHendelse(it, metadata) }
+
+            val annenGruppe = oppgaveMedPåminnelse(
+                merkelapp = "m1",
+                grupperingsId = "g2"
+            ).also { service.processHendelse(it, metadata) }
+
+            val annenMerkelapp = oppgaveMedPåminnelse(
+                merkelapp = "m2",
                 grupperingsId = "g1"
-            ), metadata
-        )
+            ).also { service.processHendelse(it, metadata) }
 
-        oppgaveMedPåminnelse(
-            merkelapp = "m1",
-            grupperingsId = "g1",
-        ).also { service.processHendelse(it, metadata) }
+            val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
+                merkelapp = "m2",
+                grupperingsId = "g2"
+            ).also { service.processHendelse(it, metadata) }
 
-        val annenGruppe = oppgaveMedPåminnelse(
-            merkelapp = "m1",
-            grupperingsId = "g2"
-        ).also { service.processHendelse(it, metadata) }
+            val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
+                .also { service.processHendelse(it, metadata) }
 
-        val annenMerkelapp = oppgaveMedPåminnelse(
-            merkelapp = "m2",
-            grupperingsId = "g1"
-        ).also { service.processHendelse(it, metadata) }
-
-        val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
-            merkelapp = "m2",
-            grupperingsId = "g2"
-        ).also { service.processHendelse(it, metadata) }
-
-        it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
-            service.sendAktuellePåminnelser()
-            val bestillingerUtført = hendelseProdusent.hendelser.map {
-                if (it is HendelseModel.PåminnelseOpprettet)
-                    it.bestillingHendelseId
-                else
-                    null
-            }
-            bestillingerUtført shouldContainExactlyInAnyOrder listOf(
-                annenGruppe.aggregateId,
-                annenMerkelapp.aggregateId,
-                annenGruppeOgMerkelapp.aggregateId,
+            service.processHendelse(
+                deleteHendelse(
+                    sak1.aggregateId,
+                    "g1",
+                    "m1"
+                ), metadata
             )
+
+            it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
+                service.sendAktuellePåminnelser()
+                val bestillingerUtført = hendelseProdusent.hendelser.map {
+                    if (it is HendelseModel.PåminnelseOpprettet)
+                        it.bestillingHendelseId
+                    else
+                        null
+                }
+                bestillingerUtført shouldContainExactlyInAnyOrder listOf(
+                    annenGruppe.aggregateId,
+                    annenMerkelapp.aggregateId,
+                    annenGruppeOgMerkelapp.aggregateId,
+                )
+            }
+        }
+
+        describe("Hvis saker blir $deleteType deleted, og sak opprettes før oppgaver") {
+            val hendelseProdusent = FakeHendelseProdusent()
+            val service = SkedulertPåminnelseService(hendelseProdusent)
+
+            val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
+                .also { service.processHendelse(it, metadata) }
+
+            oppgaveMedPåminnelse(
+                merkelapp = "m1",
+                grupperingsId = "g1",
+            ).also { service.processHendelse(it, metadata) }
+
+            val annenGruppe = oppgaveMedPåminnelse(
+                merkelapp = "m1",
+                grupperingsId = "g2"
+            ).also { service.processHendelse(it, metadata) }
+
+            val annenMerkelapp = oppgaveMedPåminnelse(
+                merkelapp = "m2",
+                grupperingsId = "g1"
+            ).also { service.processHendelse(it, metadata) }
+
+            val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
+                merkelapp = "m2",
+                grupperingsId = "g2"
+            ).also { service.processHendelse(it, metadata) }
+
+            service.processHendelse(
+                deleteHendelse(
+                    sak1.aggregateId,
+                    "g1",
+                    "m1"
+                ), metadata
+            )
+
+            it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
+                service.sendAktuellePåminnelser()
+                val bestillingerUtført = hendelseProdusent.hendelser.map {
+                    if (it is HendelseModel.PåminnelseOpprettet)
+                        it.bestillingHendelseId
+                    else
+                        null
+                }
+                bestillingerUtført shouldContainExactlyInAnyOrder listOf(
+                    annenGruppe.aggregateId,
+                    annenMerkelapp.aggregateId,
+                    annenGruppeOgMerkelapp.aggregateId,
+                )
+            }
+        }
+
+        describe("Hvis saker blir $deleteType deleted, og oppgaver opprettes etter $deleteType delete") {
+            val hendelseProdusent = FakeHendelseProdusent()
+            val service = SkedulertPåminnelseService(hendelseProdusent)
+
+            val sak1 = opprettSak(merkelapp = "m1", grupperingsId = "g1")
+                .also { service.processHendelse(it, metadata) }
+
+            service.processHendelse(
+                deleteHendelse(
+                    sak1.aggregateId,
+                    "g1",
+                    "m1"
+                ), metadata
+            )
+
+            oppgaveMedPåminnelse(
+                merkelapp = "m1",
+                grupperingsId = "g1",
+            ).also { service.processHendelse(it, metadata) }
+
+            val annenGruppe = oppgaveMedPåminnelse(
+                merkelapp = "m1",
+                grupperingsId = "g2"
+            ).also { service.processHendelse(it, metadata) }
+
+            val annenMerkelapp = oppgaveMedPåminnelse(
+                merkelapp = "m2",
+                grupperingsId = "g1"
+            ).also { service.processHendelse(it, metadata) }
+
+            val annenGruppeOgMerkelapp = oppgaveMedPåminnelse(
+                merkelapp = "m2",
+                grupperingsId = "g2"
+            ).also { service.processHendelse(it, metadata) }
+
+            it("sendes ikke påminnelse hvis både merkelapp og grupperingsid matcher") {
+                service.sendAktuellePåminnelser()
+                val bestillingerUtført = hendelseProdusent.hendelser.map {
+                    if (it is HendelseModel.PåminnelseOpprettet)
+                        it.bestillingHendelseId
+                    else
+                        null
+                }
+                bestillingerUtført shouldContainExactlyInAnyOrder listOf(
+                    annenGruppe.aggregateId,
+                    annenMerkelapp.aggregateId,
+                    annenGruppeOgMerkelapp.aggregateId,
+                )
+            }
         }
     }
+
+    deletePåminnelse("hard", ::hardDelete)
+    deletePåminnelse("soft", ::softDelete)
 })
 
 private fun oppgaveMedPåminnelse(
@@ -263,9 +275,24 @@ private fun opprettSak(
 
 private fun hardDelete(
     aggregateId: UUID,
-    merkelapp: String?,
     grupperingsId: String?,
+    merkelapp: String?,
 ) = HendelseModel.HardDelete(
+    virksomhetsnummer = "1",
+    aggregateId = aggregateId,
+    hendelseId = UUID.randomUUID(),
+    produsentId = "",
+    kildeAppNavn = "",
+    deletedAt = OffsetDateTime.now(),
+    grupperingsid = grupperingsId,
+    merkelapp = merkelapp,
+)
+
+private fun softDelete(
+    aggregateId: UUID,
+    grupperingsId: String?,
+    merkelapp: String?,
+) = HendelseModel.SoftDelete(
     virksomhetsnummer = "1",
     aggregateId = aggregateId,
     hendelseId = UUID.randomUUID(),

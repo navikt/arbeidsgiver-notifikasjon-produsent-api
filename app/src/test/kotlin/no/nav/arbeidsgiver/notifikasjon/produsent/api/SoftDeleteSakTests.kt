@@ -5,7 +5,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
@@ -23,6 +25,9 @@ class SoftDeleteSakTests : DescribeSpec({
     val virksomhetsnummer = "123"
     val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
     val uuid2 = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972ca")
+    val uuid3 = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cb")
+    val uuid4 = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cc")
+    val uuid5 = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972ce")
     val merkelapp = "tag"
     val grupperingsid = "123"
     val grupperingsid2 = "234"
@@ -53,6 +58,51 @@ class SoftDeleteSakTests : DescribeSpec({
         grupperingsid = grupperingsid2,
         hendelseId = uuid2,
         sakId = uuid2,
+    )
+
+    val oppgaveOpprettet = OppgaveOpprettet(
+        eksternId = "1",
+        grupperingsid = grupperingsid,
+        merkelapp = merkelapp,
+        frist = null,
+        tekst = "test",
+        sakId = uuid,
+        opprettetTidspunkt = opprettetTidspunkt,
+        eksterneVarsler = listOf(),
+        mottakere = listOf(mottaker),
+        hardDelete = null,
+        hendelseId = UUID.randomUUID(),
+        kildeAppNavn = "",
+        lenke = "https://nav.no",
+        produsentId = "",
+        notifikasjonId = uuid3,
+        virksomhetsnummer = "1",
+        påminnelse = null,
+    )
+
+    val oppgaveOpprettet2 = oppgaveOpprettet.copy(
+        grupperingsid = grupperingsid2,
+        hendelseId = uuid4,
+        notifikasjonId = uuid4,
+        eksternId = "2",
+    )
+
+    val beskjedOpprettet = HendelseModel.BeskjedOpprettet(
+        eksternId = "3",
+        grupperingsid = grupperingsid,
+        merkelapp = merkelapp,
+        tekst = "test",
+        opprettetTidspunkt = opprettetTidspunkt,
+        eksterneVarsler = listOf(),
+        mottakere = listOf(mottaker),
+        hardDelete = null,
+        hendelseId = UUID.randomUUID(),
+        kildeAppNavn = "",
+        lenke = "https://nav.no",
+        produsentId = "",
+        notifikasjonId = uuid5,
+        virksomhetsnummer = "1",
+        sakId = uuid,
     )
 
     describe("Sak SoftDelete-oppførsel") {
@@ -138,6 +188,53 @@ class SoftDeleteSakTests : DescribeSpec({
 
             it("returnerer feilmelding") {
                 response.getTypedContent<Error.UgyldigMerkelapp>("softDeleteSak")
+            }
+        }
+
+        context("SoftDelete cascader fra sak til notifikasjoner"){
+            val (produsentModel, kafkaProducer, engine) = setupEngine()
+            produsentModel.oppdaterModellEtterHendelse(sakOpprettet)
+            produsentModel.oppdaterModellEtterHendelse(sakOpprettet2)
+            produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
+            produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet2)
+            produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
+
+
+            val response = engine.produsentApi(
+                """
+                mutation {
+                    softDeleteSak(id: "$uuid") {
+                        __typename
+                        ... on SoftDeleteSakVellykket {
+                            id
+                        }
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+                """.trimIndent()
+            )
+
+            it ("sak er slettet") {
+                val vellykket =
+                    response.getTypedContent<MutationSoftDeleteSak.SoftDeleteSakVellykket>("softDeleteSak")
+                vellykket.id shouldBe uuid
+            }
+
+            it ("oppgave er slettet") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid3)!!
+                notifikasjon.deletedAt shouldNotBe null
+            }
+
+            it ("oppgave 2 er ikke slettet") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid4)!!
+                notifikasjon.deletedAt shouldBe null
+            }
+
+            it ("beskjed er slettet") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid5)!!
+                notifikasjon.deletedAt shouldNotBe null
             }
         }
     }
