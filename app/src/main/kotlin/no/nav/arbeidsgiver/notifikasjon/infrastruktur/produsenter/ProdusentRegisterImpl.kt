@@ -43,7 +43,6 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         },
         other = {
             listOf(
-                "dev-gcp:arbeidsgiver:tiltak-refusjon-api",
                 "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
                 "dev-gcp:team-tiltak:tiltak-notifikasjon",
             )
@@ -168,9 +167,18 @@ val ARBEIDSGIVERDIALOG = Produsent(
     ),
     tillatteMerkelapper = listOf(
         "Lønnstilskudd",
+        "Arbeidstrening",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig Lønnstilskudd")
+        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig Lønnstilskudd"),
+        ServicecodeDefinisjon(
+            code = "5332",
+            version = basedOnEnv(
+                prod = { "2" },
+                other = { "1" }
+            ),
+            description = "Arbeidstrening"
+        )
     )
 )
 
@@ -197,7 +205,6 @@ val FORELDREPENGER = Produsent(
     accessPolicy = basedOnEnv(
         prod = { listOf() },
         other = { listOf(
-            "dev-gcp:teamforeldrepenger:ftinntektsmelding",
             "dev-gcp:teamforeldrepenger:fpinntektsmelding",
         )},
     ),
