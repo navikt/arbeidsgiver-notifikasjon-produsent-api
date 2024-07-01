@@ -17,11 +17,11 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
 
     describe("Sak med oppgave med frist og påminnelse") {
         val (repo, engine) = setupRepoOgEngine()
-        val sak = repo.opprettSak("1")
-        repo.opprettOppgave(sak, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
-        repo.opprettOppgave(sak, LocalDate.parse("2023-05-15"))
-        repo.opprettOppgave(sak, LocalDate.parse("2023-05-15"))
-        repo.opprettOppgave(sak, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtgått(it) }
+        val sak1 = repo.opprettSak("1")
+        repo.opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
+        repo.opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
+        repo.opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
+        repo.opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtgått(it) }
 
         val sak2 = repo.opprettSak("2")
         repo.opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
@@ -29,6 +29,34 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
 
         val sak3 = repo.opprettSak("3")
         repo.opprettOppgave(sak3, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
+
+        val sak4 = repo.opprettSak("4").also { sak ->
+            repo.kalenderavtaleOpprettet(
+                sakId = sak.sakId,
+                tilstand = HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER,
+                merkelapp = sak.merkelapp,
+                grupperingsid = sak.grupperingsid,
+            )
+        }
+
+        val sak5 = repo.opprettSak("5").also { sak ->
+            repo.kalenderavtaleOpprettet(
+                sakId = sak.sakId,
+                tilstand = HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_AVLYSE,
+                merkelapp = sak.merkelapp,
+                grupperingsid = sak.grupperingsid,
+            )
+        }
+
+        val sak6 = repo.opprettSak("6").also { sak ->
+            repo.opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
+            repo.kalenderavtaleOpprettet(
+                sakId = sak.sakId,
+                tilstand = HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER,
+                merkelapp = sak.merkelapp,
+                grupperingsid = sak.grupperingsid,
+            )
+        }
 
         val res = engine.querySakerJson(
             virksomhetsnummer = "1",
@@ -40,7 +68,7 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
             res.getTypedContent<List<Any>>("$.saker.oppgaveTilstandInfo") shouldContainExactlyInAnyOrder listOf(
                 mapOf(
                     "tilstand" to "NY",
-                    "antall" to 2
+                    "antall" to 4
                 ),
                 mapOf(
                     "tilstand" to "UTGAATT",
@@ -54,7 +82,7 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         }
 
         it("totaltAntallSaker teller saker og ikke oppgaver") {
-            res.getTypedContent<Int>("$.saker.totaltAntallSaker") shouldBe 3
+            res.getTypedContent<Int>("$.saker.totaltAntallSaker") shouldBe 6
         }
     }
 
@@ -66,12 +94,33 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         repo.opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
         repo.opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtgått(it) }
 
-        val sak2 = repo.opprettSak("2")
-        repo.opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
-        repo.opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also { repo.oppgaveTilstandUtført(it) }
-        repo.opprettOppgave(sak2, LocalDate.parse("2023-05-15")).also { repo.oppgaveTilstandUtgått(it) }
+        val sak2 = repo.opprettSak("2").also { sak ->
+            repo.opprettOppgave(sak, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
+            repo.opprettOppgave(sak, LocalDate.parse("2023-05-15")).also { repo.oppgaveTilstandUtført(it) }
+            repo.opprettOppgave(sak, LocalDate.parse("2023-05-15")).also { repo.oppgaveTilstandUtgått(it) }
+            for (tilstand in listOf(
+                HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_AVLYSE,
+                HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
+                HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT,
+                HendelseModel.KalenderavtaleTilstand.AVLYST,
+            )) {
+                repo.kalenderavtaleOpprettet(
+                    sakId = sak.sakId,
+                    tilstand = tilstand,
+                    merkelapp = sak.merkelapp,
+                    grupperingsid = sak.grupperingsid,
+                )
+            }
+        }
 
-        repo.opprettSak("3")
+        val sak3 = repo.opprettSak("3").also { sak ->
+            repo.kalenderavtaleOpprettet(
+                sakId = sak.sakId,
+                tilstand = HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER,
+                merkelapp = sak.merkelapp,
+                grupperingsid = sak.grupperingsid,
+            )
+        }
 
         val res =
             engine.querySakerJson(
@@ -82,7 +131,7 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
             ).getTypedContent<List<UUID>>("$.saker.saker.*.id")
 
 
-        res shouldBe listOf(sak1.sakId)
+        res shouldContainExactlyInAnyOrder listOf(sak1.sakId, sak3.sakId)
     }
 
     describe("Saker med og uten oppgaver") {

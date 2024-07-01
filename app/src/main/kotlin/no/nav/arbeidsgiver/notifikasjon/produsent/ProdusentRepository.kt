@@ -530,6 +530,19 @@ class ProdusentRepositoryImpl(
                 timestamp_with_timezone(softDelete.deletedAt)
                 uuid(softDelete.aggregateId)
             }
+            if (softDelete.grupperingsid !== null && softDelete.merkelapp !== null) {
+                executeUpdate(
+                    """
+                        update notifikasjon
+                        SET deleted_at = ?
+                        WHERE grupperingsid = ? AND merkelapp = ?
+                    """.trimIndent()
+                ) {
+                    timestamp_with_timezone(softDelete.deletedAt)
+                    text(softDelete.grupperingsid)
+                    text(softDelete.merkelapp)
+                }
+            }
             executeUpdate(
                 """
                 UPDATE sak

@@ -64,19 +64,21 @@ private fun randomTekst(prefix: String) = "$prefix ${randomLong()}"
 private fun randomSakStatus() = SakStatus.values().random()
 
 suspend fun BrukerRepository.beskjedOpprettet(
+    sak: HendelseModel.SakOpprettet? = null,
     notifikasjonId: UUID = UUID.randomUUID(),
-    virksomhetsnummer: String = TEST_VIRKSOMHET_1,
-    produsentId: String = randomProdusentId(),
-    kildeAppNavn: String = randomKildeAppNavn(),
-    merkelapp: String = randomMerkelapp(),
+    virksomhetsnummer: String = sak?.virksomhetsnummer ?: TEST_VIRKSOMHET_1,
+    produsentId: String = sak?.produsentId ?: randomProdusentId(),
+    kildeAppNavn: String = sak?.kildeAppNavn ?: randomKildeAppNavn(),
+    merkelapp: String = sak?.merkelapp ?: randomMerkelapp(),
     eksternId: String = UUID.randomUUID().toString(),
-    mottakere: List<HendelseModel.Mottaker> = listOf(TEST_MOTTAKER_1),
+    mottakere: List<HendelseModel.Mottaker> = sak?.mottakere ?: listOf(TEST_MOTTAKER_1),
     tekst: String = randomTekst("Beskjed-tekst"),
-    grupperingsid: String? = null,
+    grupperingsid: String? = sak?.grupperingsid,
     lenke: String = randomLenke("beskjed"),
     opprettetTidspunkt: OffsetDateTime = TEST_OPPRETTET_TIDSPUNKT_1,
     eksterneVarsler: List<HendelseModel.EksterntVarsel> = listOf(),
     hardDelete: LocalDateTimeOrDuration? = null,
+    sakId: UUID? = sak?.sakId,
 ) = HendelseModel.BeskjedOpprettet(
     merkelapp = merkelapp,
     eksternId = eksternId,
@@ -92,22 +94,23 @@ suspend fun BrukerRepository.beskjedOpprettet(
     produsentId = produsentId,
     eksterneVarsler = eksterneVarsler,
     hardDelete = hardDelete,
-    sakId = null,
+    sakId = sakId,
 ).also {
     oppdaterModellEtterHendelse(it)
 }
 
 suspend fun BrukerRepository.kalenderavtaleOpprettet(
+    sak: HendelseModel.SakOpprettet? = null,
     notifikasjonId: UUID = UUID.randomUUID(),
-    sakId: UUID,
-    virksomhetsnummer: String = TEST_VIRKSOMHET_1,
-    produsentId: String = randomProdusentId(),
-    kildeAppNavn: String = randomKildeAppNavn(),
-    merkelapp: String = randomMerkelapp(),
+    sakId: UUID = sak?.sakId ?: UUID.randomUUID(),
+    virksomhetsnummer: String = sak?.virksomhetsnummer ?: TEST_VIRKSOMHET_1,
+    produsentId: String = sak?.produsentId ?: randomProdusentId(),
+    kildeAppNavn: String = sak?.kildeAppNavn ?: randomKildeAppNavn(),
+    merkelapp: String = sak?.merkelapp ?: randomMerkelapp(),
     eksternId: String = UUID.randomUUID().toString(),
-    mottakere: List<HendelseModel.Mottaker> = listOf(TEST_MOTTAKER_1),
+    mottakere: List<HendelseModel.Mottaker> = sak?.mottakere ?: listOf(TEST_MOTTAKER_1),
     tekst: String = randomTekst("kalenderavtale-tekst"),
-    grupperingsid: String = randomTekst("kalenderavtale-grupperingsid"),
+    grupperingsid: String = sak?.grupperingsid ?: randomTekst("kalenderavtale-grupperingsid"),
     lenke: String = randomLenke("kalenderavtale"),
     opprettetTidspunkt: OffsetDateTime = TEST_OPPRETTET_TIDSPUNKT_1,
     tilstand: KalenderavtaleTilstand = KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER,
@@ -185,21 +188,23 @@ suspend fun BrukerRepository.kalenderavtaleOppdatert(
 }
 
 suspend fun BrukerRepository.oppgaveOpprettet(
+    sak: HendelseModel.SakOpprettet? = null,
     notifikasjonId: UUID = UUID.randomUUID(),
-    virksomhetsnummer: String = TEST_VIRKSOMHET_1,
-    produsentId: String = randomProdusentId(),
-    kildeAppNavn: String = randomKildeAppNavn(),
-    merkelapp: String = randomMerkelapp(),
+    virksomhetsnummer: String = sak?.virksomhetsnummer ?: TEST_VIRKSOMHET_1,
+    produsentId: String = sak?.produsentId ?: randomProdusentId(),
+    kildeAppNavn: String = sak?.kildeAppNavn ?: randomKildeAppNavn(),
+    merkelapp: String = sak?.merkelapp ?: randomMerkelapp(),
     eksternId: String = UUID.randomUUID().toString(),
-    mottakere: List<HendelseModel.Mottaker> = listOf(TEST_MOTTAKER_1),
+    mottakere: List<HendelseModel.Mottaker> = sak?.mottakere ?: listOf(TEST_MOTTAKER_1),
     tekst: String = randomTekst("Oppgave-tekst"),
-    grupperingsid: String? = null,
+    grupperingsid: String? = sak?.grupperingsid,
     lenke: String = randomLenke("oppgave"),
     opprettetTidspunkt: OffsetDateTime = TEST_OPPRETTET_TIDSPUNKT_1,
     eksterneVarsler: List<HendelseModel.EksterntVarsel> = listOf(),
     hardDelete: LocalDateTimeOrDuration? = null,
     frist: LocalDate? = null,
     påminnelse: Påminnelse? = null,
+    sakId: UUID? = sak?.sakId,
 ) = OppgaveOpprettet(
     virksomhetsnummer = virksomhetsnummer,
     notifikasjonId = notifikasjonId,
@@ -217,7 +222,7 @@ suspend fun BrukerRepository.oppgaveOpprettet(
     hardDelete = hardDelete,
     frist = frist,
     påminnelse = påminnelse,
-    sakId = null,
+    sakId = sakId,
 ).also {
     oppdaterModellEtterHendelse(it, HendelseModel.HendelseMetadata(opprettetTidspunkt.toInstant()))
 }
@@ -439,6 +444,29 @@ suspend fun BrukerRepository.nesteStegSak(
     idempotenceKey = idempotensKey,
     grupperingsid = sak.grupperingsid,
     merkelapp = sak.merkelapp,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
+suspend fun BrukerRepository.softDelete(
+    sak: HendelseModel.SakOpprettet? = null,
+    virksomhetsnummer: String = sak?.virksomhetsnummer ?: TEST_VIRKSOMHET_1,
+    aggregateId: UUID = sak?.sakId ?: UUID.randomUUID(),
+    hendelseId: UUID = UUID.randomUUID(),
+    produsentId: String = sak?.produsentId ?: randomProdusentId(),
+    kildeAppNavn: String = sak?.kildeAppNavn ?: randomKildeAppNavn(),
+    deletedAt: OffsetDateTime = OffsetDateTime.now(),
+    grupperingsid: String? = sak?.grupperingsid,
+    merkelapp: String? = sak?.merkelapp,
+) = HendelseModel.SoftDelete(
+    virksomhetsnummer = virksomhetsnummer,
+    aggregateId = aggregateId,
+    hendelseId = hendelseId,
+    produsentId = produsentId,
+    kildeAppNavn = kildeAppNavn,
+    deletedAt = deletedAt,
+    grupperingsid = grupperingsid,
+    merkelapp = merkelapp,
 ).also {
     oppdaterModellEtterHendelse(it)
 }

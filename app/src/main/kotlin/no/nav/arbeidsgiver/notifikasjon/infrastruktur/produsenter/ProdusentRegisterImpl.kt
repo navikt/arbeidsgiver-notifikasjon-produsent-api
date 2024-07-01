@@ -43,7 +43,6 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         },
         other = {
             listOf(
-                "dev-gcp:arbeidsgiver:tiltak-refusjon-api",
                 "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
                 "dev-gcp:team-tiltak:tiltak-notifikasjon",
             )
@@ -206,7 +205,6 @@ val FORELDREPENGER = Produsent(
     accessPolicy = basedOnEnv(
         prod = { listOf() },
         other = { listOf(
-            "dev-gcp:teamforeldrepenger:ftinntektsmelding",
             "dev-gcp:teamforeldrepenger:fpinntektsmelding",
         )},
     ),

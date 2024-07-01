@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -302,7 +303,13 @@ class BrukerRepositoryImpl(
                             select 
                             s.*,
                             o.id as oppgave_id, 
-                            o.tilstand as oppgave_tilstand, 
+                            (case
+                                when o.type = 'KALENDERAVTALE' and o.tilstand = '$VENTER_SVAR_FRA_ARBEIDSGIVER'
+                                    then 'NY'
+                                when o.type = 'OPPGAVE'
+                                    then o.tilstand
+                            end)
+                                as oppgave_tilstand, 
                             o.frist as oppgave_frist, 
                             o.paaminnelse_tidspunkt as oppgave_paaminnelse_tidspunkt
                             from mine_saker s
@@ -310,10 +317,13 @@ class BrukerRepositoryImpl(
                                 on 
                                     o.merkelapp = s.merkelapp 
                                     and o.grupperingsid = s.grupperingsid
-                                    and o.type = 'OPPGAVE'
+                                    and (
+                                        o.type = 'OPPGAVE' or 
+                                        (o.type = 'KALENDERAVTALE' and o.tilstand = '$VENTER_SVAR_FRA_ARBEIDSGIVER')
+                                    )
                         ),
                         
-                        -- Beregn antall saker pr. merkelap
+                        -- Beregn antall saker pr. merkelap med filter på oppgave_tilstand
                         mine_saker_oppgave_tilstandfiltrert as (
                             select * 
                             from mine_saker_med_oppgaver
@@ -327,7 +337,7 @@ class BrukerRepositoryImpl(
                             group by merkelapp
                         ),
                         
-                        -- Beregn antall saker pr. oppgave-tilstand
+                        -- Beregn antall saker pr. oppgave-tilstand med filter på merkelapp
                         mine_saker_sakstypefiltrert as (
                             select * 
                             from mine_saker_med_oppgaver
