@@ -55,9 +55,9 @@ jobs:
 
       - run: PGPASSWORD=postgres psql -U postgres -h localhost -p 1337 -f ./local-db-init.sql
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
-          java-version: '17.x'
+          java-version: '21'
           distribution: temurin
           cache: maven
 
