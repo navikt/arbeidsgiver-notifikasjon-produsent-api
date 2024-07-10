@@ -14,7 +14,7 @@
         <kotest.version>5.7.2</kotest.version>
         <cxf.version>4.0.4</cxf.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
-        <jvm.version>17</jvm.version>
+        <jvm.version>21</jvm.version>
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
