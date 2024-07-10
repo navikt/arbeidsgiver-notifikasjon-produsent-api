@@ -17,7 +17,7 @@ jobs:
       run:
         working-directory: terraform
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v2
       - run: terraform init -backend-config=backend.dev.conf
       - run: terraform fmt -check
@@ -36,7 +36,7 @@ jobs:
       run:
         working-directory: terraform
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v2
       - run: terraform init -backend-config=backend.prod.conf
       - run: terraform fmt -check
