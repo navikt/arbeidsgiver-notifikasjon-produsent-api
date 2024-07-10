@@ -1,6 +1,8 @@
 # maven
 target/
 app/target/
+node_modules
+fake-produsent-api/server/produsent.graphql
 
 # intellij
 .idea/
