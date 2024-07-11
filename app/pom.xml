@@ -176,7 +176,7 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.13.2</version>
+            <version>1.12.4</version>
         </dependency>
         <dependency>
             <groupId>com.symbaloo</groupId>
