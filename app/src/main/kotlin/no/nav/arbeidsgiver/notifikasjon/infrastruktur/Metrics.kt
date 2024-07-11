@@ -3,9 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
-import io.micrometer.prometheus.PrometheusConfig
-import io.micrometer.prometheus.PrometheusMeterRegistry
-import io.prometheus.client.CollectorRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
@@ -13,11 +12,7 @@ import java.util.concurrent.TimeUnit
 object Metrics {
     val clock: Clock = Clock.SYSTEM
 
-    val meterRegistry = PrometheusMeterRegistry(
-        PrometheusConfig.DEFAULT,
-        CollectorRegistry.defaultRegistry,
-        clock
-    )
+    val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 }
 
 suspend fun <T> Timer.coRecord(body: suspend () -> T): T {

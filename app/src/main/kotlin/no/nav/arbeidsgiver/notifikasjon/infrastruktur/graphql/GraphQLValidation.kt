@@ -12,12 +12,9 @@ object ValidateDirective : SchemaDirectiveWiring {
         val argument = environment.element
         val validator = argument.createValidator()
             ?: return argument
-        val dataFetcher = environment.codeRegistry.getDataFetcher(
-            environment.fieldsContainer,
-            environment.fieldDefinition
-        )
+        val dataFetcher = environment.fieldDataFetcher
 
-        environment.codeRegistry.dataFetcher(environment.fieldsContainer, environment.fieldDefinition) {
+        environment.fieldDataFetcher = DataFetcher {
             val value = it.getArgument<Any?>(argument.name)
             validator(value)
             dataFetcher.get(it)

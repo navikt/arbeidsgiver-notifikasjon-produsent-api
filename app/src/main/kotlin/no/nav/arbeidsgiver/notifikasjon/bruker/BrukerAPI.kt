@@ -480,7 +480,7 @@ object BrukerAPI {
         coDataFetcher("kommendeKalenderavtaler") { env ->
 
             val context = env.notifikasjonContext<Context>()
-            val virksomhetsnumre = env.getArgument<List<String>>("virksomhetsnumre")
+            val virksomhetsnumre = env.getTypedArgument<List<String>>("virksomhetsnumre")
 
             val tilganger = tilgangerService.hentTilganger(context)
 
@@ -536,10 +536,9 @@ object BrukerAPI {
             val context = env.notifikasjonContext<Context>()
 
             // TODO: fjern fallback når ingen klienter kaller med den lengre
-            val virksomhetsnumre = env.getArgumentOrDefault<List<String>>(
-                "virksomhetsnumre",
-                listOf(env.getArgument("virksomhetsnummer"))
-            )
+            val virksomhetsnumre = env.getTypedArgumentOrDefault<List<String>>("virksomhetsnumre") {
+                listOf(env.getTypedArgument("virksomhetsnummer"))
+            }
 
             val tilganger = tilgangerService.hentTilganger(context)
             val sakerResultat = brukerRepository.hentSaker(
@@ -756,8 +755,8 @@ object BrukerAPI {
             val sak = brukerRepository.hentSakByGrupperingsid(
                 fnr = context.fnr,
                 tilganger = tilganger,
-                grupperingsid = env.getArgument("grupperingsid"),
-                merkelapp = env.getArgument("merkelapp"),
+                grupperingsid = env.getTypedArgument("grupperingsid"),
+                merkelapp = env.getTypedArgument("merkelapp"),
             ) ?: return@coDataFetcher SakResultat(
                 sak = null,
                 feilAltinn = tilganger.harFeil,
@@ -883,16 +882,16 @@ object BrukerAPI {
     private suspend fun <T : WithVirksomhet> fetchVirksomhet(
         virksomhetsinfoService: VirksomhetsinfoService,
         env: DataFetchingEnvironment
-    ): Virksomhet {
+    ): Virksomhet? {
         val source = env.getSource<T>()
-        return if (env.selectionSet.contains("Virksomhet.navn")) {
+        return if (source != null && env.selectionSet.contains("Virksomhet.navn")) {
             val underenhet = virksomhetsinfoService.hentUnderenhet(source.virksomhet.virksomhetsnummer)
             Virksomhet(
                 virksomhetsnummer = underenhet.organisasjonsnummer,
                 navn = underenhet.navn
             )
         } else {
-            source.virksomhet
+            source?.virksomhet
         }
     }
 }
