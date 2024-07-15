@@ -1,10 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.search.MeterNotFoundException
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.DebugProbes
-import kotlinx.coroutines.debug.State
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
@@ -17,7 +14,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicInteger
 
 object Bruker {
     private val log = logger()
@@ -38,15 +34,6 @@ object Bruker {
         }
     }
 
-    private val coroutineGauges = State.values().associateWith {
-        Metrics.meterRegistry.gauge(
-            "kotlin.coroutines.count",
-            Tags.of("state", it.name),
-            AtomicInteger()
-        )
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun main(
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
@@ -57,18 +44,10 @@ object Bruker {
         altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
         httpPort: Int = 8080
     ) {
-        DebugProbes.enableCreationStackTraces = false
-        DebugProbes.install()
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
             val brukerRepositoryAsync = async {
                 BrukerRepositoryImpl(database.await())
-            }
-
-            launchProcessingLoop("debug coroutines", pauseAfterEach = Duration.ofMinutes(1)) {
-                DebugProbes.dumpCoroutinesInfo().groupBy { it.state }.forEach { (state, coroutines) ->
-                    coroutineGauges[state]?.set(coroutines.size)
-                }
             }
 
             val graphql = async {

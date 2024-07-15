@@ -25,8 +25,10 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.intellij.lang.annotations.Language
 
-inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgument(name: String): T =
-    laxObjectMapper.convertValue(this.getArgument(name))
+inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgument(name: String): T {
+    val argument = this.getArgument<Any>(name) ?: throw RuntimeException("argument '$name' required, not provided")
+    return laxObjectMapper.convertValue(argument)
+}
 
 inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgumentOrNull(name: String): T? {
     val value = this.getArgument<Any>(name) ?: return null
