@@ -1,6 +1,6 @@
 import Bedriftsmeny from '@navikt/bedriftsmeny'
 import '@navikt/bedriftsmeny/lib/bedriftsmeny.css'
-import {  NotifikasjonWidget } from '@navikt/arbeidsgiver-notifikasjon-widget'
+import { NotifikasjonWidget } from '@navikt/arbeidsgiver-notifikasjon-widget'
 import "@navikt/arbeidsgiver-notifikasjon-widget/lib/esm/index.css"
 import {BrowserRouter} from 'react-router-dom'
 import './App.css'

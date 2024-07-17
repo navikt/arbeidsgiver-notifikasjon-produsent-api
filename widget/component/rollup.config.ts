@@ -1,11 +1,11 @@
 import typescript from '@rollup/plugin-typescript';
 import postcss from "rollup-plugin-postcss";
 import resolve from "@rollup/plugin-node-resolve";
-import peerDepsExternal from "rollup-plugin-peer-deps-external";
 import commonjs from "@rollup/plugin-commonjs"
 import url from "@rollup/plugin-url";
+import { readFileSync } from 'fs'
 
-const packageJson = require("./package.json");
+const packageJson = JSON.parse(String(readFileSync("./package.json")));
 
 export default {
   input: 'src/index.tsx',
@@ -21,7 +21,10 @@ export default {
       sourcemap: true,
     }
   ],
-  external: Object.keys(packageJson.dependencies),
+  external: [
+    ...Object.keys(packageJson.dependencies),
+    ...Object.keys(packageJson.peerDependencies)
+  ],
   plugins: [
     typescript({ tsconfig: './tsconfig.json' }),
     commonjs(),
@@ -33,6 +36,5 @@ export default {
       include: ["**/*.ttf"],
       limit: Infinity,
     }),
-    peerDepsExternal()
   ]
 };

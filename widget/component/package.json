@@ -5,7 +5,7 @@
   "version": "6.5.9",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
-  "types": "./lib/esm/lib/esm/index.d.ts",
+  "types": "./lib/esm/index.d.ts",
   "scripts": {
     "gql:generate": "graphql-codegen",
     "build": "rollup --config rollup.config.ts --configPlugin typescript",
@@ -13,36 +13,36 @@
     "test": "echo tests not implemented"
   },
   "dependencies": {
-    "@apollo/client": "3.8.5",
-    "graphql": "^16.8.1"
+    "@apollo/client": "^3.10.8",
+    "graphql": "^16.9.0"
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "^2.13.1",
-    "@graphql-codegen/typescript": "^2.7.3",
-    "@graphql-codegen/typescript-operations": "^2.5.3",
-    "@graphql-codegen/typescript-react-apollo": "^3.3.3",
-    "@rollup/plugin-commonjs": "20",
-    "@rollup/plugin-node-resolve": "13",
-    "@rollup/plugin-typescript": "8",
-    "@rollup/plugin-url": "6",
-    "@types/amplitude-js": "^8.16.2",
-    "@types/node": "16",
-    "@types/react": "^17.0.17",
-    "@types/react-dom": "^17.0.9",
-    "amplitude-js": "^8.21.1",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/typescript": "^4.0.9",
+    "@graphql-codegen/typescript-operations": "^4.2.3",
+    "@graphql-codegen/typescript-react-apollo": "^4.3.0",
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@rollup/plugin-url": "^8.0.2",
+    "@types/amplitude-js": "^8.16.5",
+    "@types/node": "^20.14.11",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "amplitude-js": "^8.21.9",
     "prop-types": "15.8.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "rollup": "2",
-    "rollup-plugin-peer-deps-external": "2",
-    "rollup-plugin-postcss": "4",
-    "typescript": "^4.8.4"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "rollup": "^4.18.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-postcss": "^4.0.2",
+    "typescript": "^5.5.3"
   },
   "peerDependencies": {
-    "react": "17 || 18",
-    "react-dom": "17 || 18",
     "@navikt/ds-css": ">=2",
     "@navikt/ds-icons": ">=2",
-    "@navikt/ds-react": ">=2"
+    "@navikt/ds-react": ">=2",
+    "react": "17 || 18",
+    "react-dom": "17 || 18"
   }
 }
