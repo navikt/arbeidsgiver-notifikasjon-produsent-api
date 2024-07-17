@@ -40,10 +40,9 @@ jobs:
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
 
-      - uses: nais/deploy/actions/deploy@v1
+      - uses: nais/deploy/actions/deploy@v2
         env:
-          IMAGE: ${{ steps.docker-push.outputs.image }}
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          VAR: image=${{ steps.docker-push.outputs.image }}
           CLUSTER: dev-gcp
           RESOURCE: fake-produsent-api/nais-application.yaml
           PRINT_PAYLOAD: true
