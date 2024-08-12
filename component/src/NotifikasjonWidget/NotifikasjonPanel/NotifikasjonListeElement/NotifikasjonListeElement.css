@@ -1,31 +1,36 @@
 .notifikasjon_liste_element {
   display: flex;
   flex-direction: column-reverse;
-  margin: 0 16px;
-  padding: 16px 0;
+  padding: 16px;
   gap: 4px;
 }
 
+.notifikasjon_liste_element-todo{
+  border-left: 8px solid rgba(255, 215, 153, 1)
+}
 .notifikasjon_liste_element,
 .notifikasjon_liste_element:hover,
 .notifikasjon_liste_element:active {
   text-decoration: none;
   color: inherit;
+  display: grid;
+  grid-template-areas:
+    "virksomhet virksomhet tomt"
+    "saktekst saktekst tomt"
+    "ikon innhold chevron"
+    ". innhold chevron";
+  grid-template-columns: 32px auto 28px;
+  gap: 8px;
 }
 
 .notifikasjon_liste_element:focus {
   outline: none;
 }
-.notifikasjon_liste_element-metadata {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: baseline;
-}
 
-.notifikasjon_liste_element-lenkepanel-chevron svg {
-  height: 28px;
-  width: 28px;
+.notifikasjon_liste_element-lenkepanel-chevron {
+  grid-area: chevron;
+  height: 24px;
+  width: 24px;
 }
 
 .notifikasjon_liste_element:hover .notifikasjon_liste_element-lenkepanel-chevron {
@@ -33,26 +38,25 @@
   transition: all 100ms linear;
 }
 
-.notifikasjon_liste_element-lenkepanel {
-  display: grid;
-  grid-template-columns: 38px 1fr auto;
-  column-gap: 8px;
-  align-items: center;
-  margin-top: 5px;
+.notifikasjon_liste_element-virksomhet {
+  grid-area: virksomhet;
 }
 
 .notifikasjon_liste_element-lenkepanel-ikon {
-  width: 38px;
-  align-self: flex-start;
+  grid-area: ikon;
 }
 
-.notifikasjon_liste_element-lenkepanel-tekst {
-  margin-right: auto;
-  grid-area: tekst;
+.notifikasjon_liste_element-lenkepanel-sakstekst {
+  grid-area: saktekst;
 }
 
-.notifikasjon_liste_element-lenkepanel-innhold {
+.notifikasjon_liste_element-tomt {
+  grid-area: tomt;
+}
+
+.notifikasjon_liste_element-innhold {
+  grid-area: innhold;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
