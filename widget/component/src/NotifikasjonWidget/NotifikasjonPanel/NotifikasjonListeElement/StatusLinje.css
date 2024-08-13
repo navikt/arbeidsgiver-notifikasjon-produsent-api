@@ -1,14 +1,1 @@
 
-.notifikasjon_StatusLinje.notifikasjon_StatusLinje {
-  width: fit-content;
-  --ac-tag-warning-bg: rgba(255, 236, 204, 1);
-  --ac-tag-neutral-bg: rgba(0, 0, 0, 0.05);
-  --ac-tag-success-bg: rgba(204, 241, 214, 1);
-}
-
-.notifikasjon_oppgave_status_text {
-  grid-column-start: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.5ch;
-}

@@ -15,35 +15,35 @@ export const AvtaletilstandLinje: FC<StatusLinjeProps> = ({ notifikasjon }) => {
   switch (notifikasjon.avtaletilstand) {
     case KalenderavtaleTilstand.VenterSvarFraArbeidsgiver:
       return (
-        <Tag size='small' className='notifikasjon_AvtaletilstandLinje' variant='warning'>
+        <Tag size='small'  variant='warning'>
           Svar på invitasjonen
         </Tag>
       )
 
     case KalenderavtaleTilstand.ArbeidsgiverHarGodtatt:
       return (
-        <Tag size='small' className='notifikasjon_AvtaletilstandLinje' variant='success'>
+        <Tag size='small'  variant='success'>
           Du har takket ja
         </Tag>
       )
 
     case KalenderavtaleTilstand.ArbeidsgiverVilEndreTidEllerSted:
       return (
-        <Tag size='small' className='notifikasjon_AvtaletilstandLinje' variant='neutral'>
+        <Tag size='small'  variant='neutral'>
           Du ønsker å endre tid eller sted
         </Tag>
       )
 
     case KalenderavtaleTilstand.ArbeidsgiverVilAvlyse:
       return (
-        <Tag size='small' className='notifikasjon_AvtaletilstandLinje' variant='neutral'>
+        <Tag size='small'  variant='neutral'>
           Du ønsker å avlyse
         </Tag>
       )
 
     case KalenderavtaleTilstand.Avlyst:
       return (
-        <Tag size='small' className='notifikasjon_AvtaletilstandLinje' variant='info'>
+        <Tag size='small'  variant='info'>
           Avlyst
         </Tag>
       )

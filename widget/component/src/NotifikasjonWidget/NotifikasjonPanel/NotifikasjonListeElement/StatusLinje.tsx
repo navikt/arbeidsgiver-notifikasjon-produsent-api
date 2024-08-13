@@ -17,9 +17,9 @@ export const StatusLinje: FC<StatusLinjeProps> = ({ notifikasjon }) => {
   switch (notifikasjon.tilstand) {
     case OppgaveTilstand.Utfoert:
       return (
-        <StatusIkonMedTekst variant='success'>
-          Utført {notifikasjon.utfoertTidspunkt ? uformellDatotekst(new Date(notifikasjon.utfoertTidspunkt)) : null}
-        </StatusIkonMedTekst>
+        <Tag size='small' variant="success">
+        Utført {notifikasjon.utfoertTidspunkt ? uformellDatotekst(new Date(notifikasjon.utfoertTidspunkt)) : null}
+        </Tag>
       )
 
     case OppgaveTilstand.Utgaatt:
@@ -54,8 +54,8 @@ type StatusIkonMedTekstProps = {
 }
 
 const StatusIkonMedTekst: FC<StatusIkonMedTekstProps> = ({ variant, children }) => (
-  <Tag size='small' className='notifikasjon_StatusLinje' variant={variant}>
-    <span className='notifikasjon_oppgave_status_text'>
+  <Tag size='small' variant={variant}>
+    <span>
       <StopWatch aria-hidden={true} /> {children}
     </span>
   </Tag>
