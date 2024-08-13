@@ -119,8 +119,8 @@ export const NotifikasjonListeElement = (props: Props) => {
       )
       return null
   }
-  const erTodo = (notifikasjon.__typename === 'Oppgave' && notifikasjon.tilstand !== OppgaveTilstand.Ny) ||
-    (notifikasjon.__typename === 'Kalenderavtale' && notifikasjon.avtaletilstand !== KalenderavtaleTilstand.VenterSvarFraArbeidsgiver)
+  const erTodo = (notifikasjon.__typename === 'Oppgave' && notifikasjon.tilstand === OppgaveTilstand.Ny) ||
+    (notifikasjon.__typename === 'Kalenderavtale' && notifikasjon.avtaletilstand === KalenderavtaleTilstand.VenterSvarFraArbeidsgiver)
   return (
     <a
       tabIndex={props.erValgt ? 0 : -1}
@@ -159,7 +159,7 @@ export const NotifikasjonListeElement = (props: Props) => {
       <div className='notifikasjon_liste_element-lenkepanel-ikon'>{ikon}</div>
       <HoyreChevron aria-hidden={true} className='notifikasjon_liste_element-lenkepanel-chevron' />
 
-      <div aria-label={notifikasjon.brukerKlikk?.klikketPaa ? '' : 'ikke besøkt'} />
+      {notifikasjon.brukerKlikk?.klikketPaa ? '' : <BodyShort visuallyHidden>Ikke besøkt</BodyShort>}
       <div className='notifikasjon_liste_element-innhold'>
         <div>{innhold}</div>
         {(notifikasjon.__typename === 'Oppgave'
@@ -173,8 +173,6 @@ export const NotifikasjonListeElement = (props: Props) => {
 
       </div>
       <div className='notifikasjon_liste_element-tomt' />
-
-
     </a>
   )
 }

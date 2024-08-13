@@ -39,9 +39,9 @@
     "typescript": "^5.5.3"
   },
   "peerDependencies": {
-    "@navikt/ds-css": ">=2",
+    "@navikt/ds-css": ">=4",
     "@navikt/ds-icons": ">=2",
-    "@navikt/ds-react": ">=2",
+    "@navikt/ds-react": ">=4",
     "react": "17 || 18",
     "react-dom": "17 || 18"
   }

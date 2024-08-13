@@ -21,9 +21,9 @@
     "react-dom": "file:../component/node_modules/react-dom",
     "react-router-dom": "^6.25.0",
     "react-scripts": "^5.0.1",
-    "@navikt/ds-css": "^6.13.0",
+    "@navikt/ds-css": "^6.15.0",
     "@navikt/ds-icons": "^3.4.3",
-    "@navikt/ds-react": "^6.13.0"
+    "@navikt/ds-react": "^6.15.0"
   },
   "overrides": {
     "nth-check": ">=2.1.1",

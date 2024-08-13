@@ -105,7 +105,6 @@ const NotifikasjonPanel = (
         <button
           id='notifikasjon_panel-header-xbtn'
           className='notifikasjon_panel-header-xbtn'
-          aria-labelledby='notifikasjon_panel-header-xbtn-ikon'
           onKeyDown={(event) => {
             if (event.key === 'Tab') {
               if (event.shiftKey) {
