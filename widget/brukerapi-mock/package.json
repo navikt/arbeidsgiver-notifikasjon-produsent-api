@@ -2,7 +2,7 @@
   "name": "@navikt/arbeidsgiver-notifikasjoner-brukerapi-mock",
   "description": "Mocker graphql-endepunkt for brukerapi. Nyttig for utvikling av @navikt/arbeidsgiver-notifikasjon-widget.",
   "repository": "github:navikt/arbeidsgiver-notifikasjon-widget",
-  "version": "6.5.9",
+  "version": "7.0.0-rc1",
   "license": "MIT",
   "main": "dist/notifikasjonMockMiddleware.js",
   "files": [
