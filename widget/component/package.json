@@ -1,7 +1,10 @@
 {
   "name": "@navikt/arbeidsgiver-notifikasjon-widget",
   "description": "React component for notifikasjoner for arbeidsgivere",
-  "repository": "github:navikt/arbeidsgiver-notifikasjon-widget",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
+  },
   "version": "7.0.0-rc1",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
