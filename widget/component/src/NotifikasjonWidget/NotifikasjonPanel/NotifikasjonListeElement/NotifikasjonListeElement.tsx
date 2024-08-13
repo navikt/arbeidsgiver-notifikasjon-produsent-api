@@ -1,13 +1,27 @@
-import React from 'react'
-import { Next as HoyreChevron } from '@navikt/ds-icons'
-import { BodyShort, Detail } from '@navikt/ds-react'
-import { sendtDatotekst } from '../dato-funksjoner'
-import { Kalenderavtale, KalenderavtaleTilstand, Notifikasjon, OppgaveTilstand } from '../../../api/graphql-types'
+import React, { FC, ReactElement, ReactNode } from 'react'
+import { Next as HoyreChevron, StopWatch } from '@navikt/ds-icons'
+import { BodyShort, Detail, Tag } from '@navikt/ds-react'
+import {
+  formatterDato,
+  sendtDatotekst,
+  uformellDatotekst
+} from '../dato-funksjoner'
+import {
+  Kalenderavtale,
+  KalenderavtaleTilstand,
+  Notifikasjon,
+  Oppgave,
+  OppgaveTilstand
+} from '../../../api/graphql-types'
 import { useAmplitude } from '../../../utils/amplitude'
-import { StatusLinje } from './StatusLinje'
 import './NotifikasjonListeElement.css'
-import { BeskjedIkon, KalenderavtaleIkon, NyOppgaveIkon, OppgaveUtfortIkon, OppgaveUtgaattIkon } from './Ikoner'
-import { AvtaletilstandLinje } from './AvtaletilstandLinje'
+import {
+  BeskjedIkon,
+  KalenderavtaleIkon,
+  NyOppgaveIkon,
+  OppgaveUtfortIkon,
+  OppgaveUtgaattIkon
+} from './Ikoner'
 
 interface Props {
   notifikasjon: Notifikasjon
@@ -20,107 +34,220 @@ interface Props {
 }
 
 export const NotifikasjonListeElement = (props: Props) => {
-  const { loggPilTastNavigasjon } = useAmplitude()
   const notifikasjon = props.notifikasjon
 
-  const date = new Date(notifikasjon.opprettetTidspunkt)
-
-  let ikon
-  switch (props.notifikasjon.__typename) {
+  switch (notifikasjon.__typename) {
     case 'Beskjed':
-      ikon = <BeskjedIkon title='Beskjed' />
-      break
+      return (
+        <NotifikasjonBeskjed
+          notifikasjon={notifikasjon}
+          props={props}
+          erTodo={false}
+          ikon={<BeskjedIkon title='Beskjed' />}
+          tittel={notifikasjon.tekst}
+          visningstidspunkt={new Date(notifikasjon.opprettetTidspunkt)}
+        />
+      )
+
     case 'Oppgave':
-      const tilstand = props.notifikasjon.tilstand
-      const ikoner = {
-        NY: <NyOppgaveIkon title='Uløst oppgave' />,
-        UTFOERT: <OppgaveUtfortIkon title='Utført oppgave' />,
-        UTGAATT: <OppgaveUtgaattIkon title='Utgått oppgave' />
+      const tilstand = notifikasjon.tilstand
+      switch (tilstand) {
+        case OppgaveTilstand.Ny:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={true}
+              ikon={<NyOppgaveIkon title='Uløst oppgave' />}
+              tittel={notifikasjon.tekst}
+              visningstidspunkt={new Date(notifikasjon.opprettetTidspunkt)}
+              statuslinje={<StatuslinjeOppgaveNy notifikasjon={notifikasjon} />}
+            />
+          )
+        case OppgaveTilstand.Utfoert:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={false}
+              ikon={<OppgaveUtfortIkon title='Utført oppgave' />}
+              tittel={notifikasjon.tekst}
+              statuslinje={
+                <Tag size='small' variant='success'>
+                  Utført{' '}
+                  {notifikasjon.utfoertTidspunkt
+                    ? uformellDatotekst(new Date(notifikasjon.utfoertTidspunkt))
+                    : null}
+                </Tag>
+              }
+            />
+          )
+        case OppgaveTilstand.Utgaatt:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={false}
+              ikon={<OppgaveUtgaattIkon title='Utgått oppgave' />}
+              tittel={notifikasjon.tekst}
+              visningstidspunkt={new Date(notifikasjon.opprettetTidspunkt)}
+              statuslinje={
+                <StatusIkonMedTekst variant='neutral'>
+                  Fristen gikk ut{' '}
+                  {uformellDatotekst(new Date(notifikasjon.utgaattTidspunkt))}
+                </StatusIkonMedTekst>
+              }
+            />
+          )
+        default:
+          console.error(`ukjent oppgavetilstand ${tilstand}: ignorerer`)
+          return null
       }
-      ikon = ikoner[tilstand ?? OppgaveTilstand.Ny]
-
-      break
     case 'Kalenderavtale':
-      const avtaletilstand = props.notifikasjon.avtaletilstand
-      const harPassert = new Date(props.notifikasjon.startTidspunkt) < new Date()
-      ikon = avtaletilstand === KalenderavtaleTilstand.Avlyst || harPassert ? (
-        <KalenderavtaleIkon
-          variant='grå'
-          title={
-            harPassert
-              ? 'Kalenderavtale som har passert.'
-              : 'Kalenderavtale som er avlyst.'
-          }
-        />
-      ) : avtaletilstand === KalenderavtaleTilstand.VenterSvarFraArbeidsgiver ? (
-        <KalenderavtaleIkon
-          variant='oransje'
-          title={'Kalenderavtale som du må svare på.'}
-        />
-      ) : (
-        <KalenderavtaleIkon
-          variant='blå'
-          title={'Kalenderavtale som du har svart på.'}
-        />
-      )
-      ikon = <KalenderavtaleIkon title='Kalenderavtale som du må svare på.' variant='oransje' />
+      const avtaletilstand = notifikasjon.avtaletilstand
+      const harPassert = new Date(notifikasjon.startTidspunkt) < new Date()
 
-      break
+      switch (avtaletilstand) {
+        case KalenderavtaleTilstand.VenterSvarFraArbeidsgiver:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={!harPassert}
+              ikon={
+                harPassert ? (
+                  <KalenderavtaleIkon
+                    variant='grå'
+                    title={'Kalenderavtale som har passert.'}
+                  />
+                ) : (
+                  <KalenderavtaleIkon
+                    variant='oransje'
+                    title={'Kalenderavtale som du må svare på.'}
+                  />
+                )
+              }
+              tittel={kalenderavtaleTekst(notifikasjon)}
+              statuslinje={
+                harPassert ? undefined : (
+                  <Tag size='small' variant='warning'>
+                    Svar på invitasjonen
+                  </Tag>
+                )
+              }
+            />
+          )
+        case KalenderavtaleTilstand.ArbeidsgiverHarGodtatt:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={false}
+              ikon={
+                <KalenderavtaleIkon
+                  variant={harPassert ? 'grå' : 'blå'}
+                  title={'Kalenderavtale som du har svart på.'}
+                />
+              }
+              tittel={kalenderavtaleTekst(notifikasjon)}
+              statuslinje={
+                <Tag size='small' variant='success'>
+                  Du har takket ja
+                </Tag>
+              }
+            />
+          )
+        case KalenderavtaleTilstand.ArbeidsgiverVilEndreTidEllerSted:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={false}
+              ikon={
+                <KalenderavtaleIkon
+                  variant={harPassert ? 'grå' : 'blå'}
+                  title={'Kalenderavtale som du har svart på.'}
+                />
+              }
+              tittel={kalenderavtaleTekst(notifikasjon)}
+              statuslinje={
+                <Tag size='small' variant='neutral'>
+                  Du ønsker endre tid eller sted
+                </Tag>
+              }
+            />
+          )
+        case KalenderavtaleTilstand.ArbeidsgiverVilAvlyse:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={false}
+              ikon={
+                <KalenderavtaleIkon
+                  variant={harPassert ? 'grå' : 'blå'}
+                  title={'Kalenderavtale som du har svart på.'}
+                />
+              }
+              tittel={kalenderavtaleTekst(notifikasjon)}
+              statuslinje={
+                <Tag size='small' variant='neutral'>
+                  Du ønsker å avlyse
+                </Tag>
+              }
+            />
+          )
+        case KalenderavtaleTilstand.Avlyst:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={false}
+              ikon={
+                <KalenderavtaleIkon
+                  variant='grå'
+                  title='Kalenderavtale som er avlyst.'
+                />
+              }
+              tittel={kalenderavtaleTekst(notifikasjon)}
+              statuslinje={
+                <Tag size='small' variant='info'>
+                  Avlyst
+                </Tag>
+              }
+            />
+          )
+        default:
+          console.error(`ukjent avtaletilstand ${avtaletilstand}: ignorerer`)
+          return null
+      }
     default:
       console.error(
-        // @ts-ignore
-        `ukjent notifikasjonstype ${props.notifikasjon.__typename}: ignorerer`
+        `ukjent notifikasjonstype ${notifikasjon.__typename}: ignorerer`
       )
       return null
   }
+}
 
-  let innhold
-  switch (props.notifikasjon.__typename) {
-    case 'Beskjed':
-      innhold = <>
-        <BodyShort>
-          {notifikasjon.brukerKlikk?.klikketPaa ? (
-            notifikasjon.tekst
-          ) : (
-            <strong>{notifikasjon.tekst}</strong>
-          )}
-        </BodyShort>
-      </>
-      break
-    case 'Oppgave':
-      innhold = <>
-        <BodyShort>
-          {notifikasjon.brukerKlikk?.klikketPaa ? (
-            notifikasjon.tekst
-          ) : (
-            <strong>{notifikasjon.tekst}</strong>
-          )}
-        </BodyShort>
-      </>
+const NotifikasjonBeskjed = ({
+  notifikasjon,
+  props,
+  erTodo,
+  ikon,
+  tittel,
+  visningstidspunkt,
+  statuslinje
+}: {
+  notifikasjon: Notifikasjon
+  props: Props
+  erTodo: boolean
+  ikon: ReactElement
+  tittel: string
+  visningstidspunkt?: Date
+  statuslinje?: ReactElement
+}) => {
+  const { loggPilTastNavigasjon } = useAmplitude()
 
-      break
-    case 'Kalenderavtale':
-      let kalenderavtaletekst = kalenderavtaleTekst(notifikasjon as Kalenderavtale)
-      innhold = <>
-        <BodyShort>
-          {notifikasjon.brukerKlikk?.klikketPaa ? (
-            kalenderavtaletekst
-          ) : (
-            <strong>{kalenderavtaletekst}</strong>
-          )}
-        </BodyShort>
-      </>
-
-      break
-    default:
-      console.error(
-        // @ts-ignore
-        `ukjent notifikasjonstype ${props.notifikasjon.__typename}: ignorerer`
-      )
-      return null
-  }
-  const erTodo = (notifikasjon.__typename === 'Oppgave' && notifikasjon.tilstand === OppgaveTilstand.Ny) ||
-    (notifikasjon.__typename === 'Kalenderavtale' && notifikasjon.avtaletilstand === KalenderavtaleTilstand.VenterSvarFraArbeidsgiver)
   return (
     <a
       tabIndex={props.erValgt ? 0 : -1}
@@ -148,29 +275,41 @@ export const NotifikasjonListeElement = (props: Props) => {
         {notifikasjon.virksomhet.navn.toUpperCase()}
       </BodyShort>
 
-      {notifikasjon.sak?.tittel ? <BodyShort className='notifikasjon_liste_element-lenkepanel-sakstekst'>
-        {notifikasjon.brukerKlikk?.klikketPaa ? (
-          notifikasjon.sak?.tittel
-        ) : (
-          <strong>{notifikasjon.sak?.tittel}</strong>
-        )}
-      </BodyShort> : null}
+      {notifikasjon.sak?.tittel ? (
+        <BodyShort className='notifikasjon_liste_element-lenkepanel-sakstekst'>
+          {notifikasjon.brukerKlikk?.klikketPaa ? (
+            notifikasjon.sak?.tittel
+          ) : (
+            <strong>{notifikasjon.sak?.tittel}</strong>
+          )}
+        </BodyShort>
+      ) : null}
 
       <div className='notifikasjon_liste_element-lenkepanel-ikon'>{ikon}</div>
-      <HoyreChevron aria-hidden={true} className='notifikasjon_liste_element-lenkepanel-chevron' />
+      <HoyreChevron
+        aria-hidden={true}
+        className='notifikasjon_liste_element-lenkepanel-chevron'
+      />
 
-      {notifikasjon.brukerKlikk?.klikketPaa ? '' : <BodyShort visuallyHidden>Ikke besøkt</BodyShort>}
+      {notifikasjon.brukerKlikk?.klikketPaa ? (
+        ''
+      ) : (
+        <BodyShort visuallyHidden>Ikke besøkt</BodyShort>
+      )}
       <div className='notifikasjon_liste_element-innhold'>
-        <div>{innhold}</div>
-        {(notifikasjon.__typename === 'Oppgave'
-          && notifikasjon.tilstand === OppgaveTilstand.Utfoert
-          || notifikasjon.__typename === 'Kalenderavtale') ? null :
-          <Detail size='small'>{sendtDatotekst(date)}</Detail>}
-        <div>
-          <StatusLinje notifikasjon={notifikasjon} />
-          <AvtaletilstandLinje notifikasjon={notifikasjon} />
-        </div>
-
+        <>
+          <BodyShort>
+            {notifikasjon.brukerKlikk?.klikketPaa ? (
+              tittel
+            ) : (
+              <strong>{tittel}</strong>
+            )}
+          </BodyShort>
+        </>
+        {visningstidspunkt === undefined ? null : (
+          <Detail size='small'>{sendtDatotekst(visningstidspunkt)}</Detail>
+        )}
+        <div>{statuslinje}</div>
       </div>
       <div className='notifikasjon_liste_element-tomt' />
     </a>
@@ -191,9 +330,48 @@ const sluttTidsunktFormat = new Intl.DateTimeFormat('no', {
 
 const kalenderavtaleTekst = (kalenderavtale: Kalenderavtale) => {
   const startTidspunkt = new Date(kalenderavtale.startTidspunkt)
-  const sluttTidspunkt = kalenderavtale.sluttTidspunkt === undefined || kalenderavtale.sluttTidspunkt === null ? undefined : new Date(kalenderavtale.sluttTidspunkt)
+  const sluttTidspunkt =
+    kalenderavtale.sluttTidspunkt === undefined ||
+    kalenderavtale.sluttTidspunkt === null
+      ? undefined
+      : new Date(kalenderavtale.sluttTidspunkt)
   const tidspunkt = `${startTidspunktFormat.format(startTidspunkt)} ${
-    sluttTidspunkt !== undefined ? `– ${sluttTidsunktFormat.format(sluttTidspunkt)}` : ''
+    sluttTidspunkt !== undefined
+      ? `– ${sluttTidsunktFormat.format(sluttTidspunkt)}`
+      : ''
   }`
   return `${kalenderavtale.tekst} ${tidspunkt}`
 }
+
+const StatuslinjeOppgaveNy = ({ notifikasjon }: { notifikasjon: Oppgave }) => {
+  if (!notifikasjon.frist && !notifikasjon.paaminnelseTidspunkt) {
+    return null
+  } else {
+    let innhold
+    if (!notifikasjon.frist && notifikasjon.paaminnelseTidspunkt) {
+      innhold = <>Påminnelse</>
+    } else if (notifikasjon.frist && !notifikasjon.paaminnelseTidspunkt) {
+      innhold = <>Frist {formatterDato(new Date(notifikasjon.frist))}</>
+    } else {
+      innhold = (
+        <>
+          Påminnelse &ndash; Frist {formatterDato(new Date(notifikasjon.frist))}
+        </>
+      )
+    }
+    return (
+      <StatusIkonMedTekst variant='warning'> {innhold} </StatusIkonMedTekst>
+    )
+  }
+}
+
+const StatusIkonMedTekst: FC<{
+  children: ReactNode
+  variant: 'success' | 'neutral' | 'warning'
+}> = ({ variant, children }) => (
+  <Tag size='small' variant={variant}>
+    <span>
+      <StopWatch aria-hidden={true} /> {children}
+    </span>
+  </Tag>
+)
