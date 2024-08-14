@@ -1,7 +1,7 @@
 # Notifikasjkonsplattform referanse doc
 
 Notifikasjonsplattformen består av flere applikasjoner bygget rundt en [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html) arkitektur.
-Hendelser publiseres til kafka topicen [fager.notifikasjon](config/nais-kafka-topic.yaml).
+Hendelser publiseres til kafka topicen [fager.notifikasjon](app/nais/nais-kafka-topic.yaml).
 Hver applikasjon konsumerer hendelser fra denne topicen og bruker hendelsene som kilde til å bygge opp sine modeller.
 
 Følgende diagram viser en oversikt over de forskjellige applikasjonene og hvordan de er koblet sammen.
@@ -105,10 +105,10 @@ C4Dynamic
 ### notifikasjon-produsent-api
 
 [notifikasjon-produsent-api](app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/produsent) brukes av produsenter for å opprette saker, beskjeder, oppgaver og kalenderavtaler. 
-Produsenter kaller applikasjonen gjennom et GraphQL API. Applikasjonen oppretter hendelser på kafka topicen [fager.notifikasjon](config/nais-kafka-topic.yaml) basert på de mutations som produsenter gjør via APIet.
+Produsenter kaller applikasjonen gjennom et GraphQL API. Applikasjonen oppretter hendelser på kafka topicen [fager.notifikasjon](app/nais/nais-kafka-topic.yaml) basert på de mutations som produsenter gjør via APIet.
 Applikasjonen har et register for hvilke produsenter som har tilgang til hvilke merkelapper som definert i [arbeidsgiver-notifikasjon-produsenter](https://github.com/navikt/arbeidsgiver-notifikasjon-produsenter).
 Den har en egen database som brukes for bl.a. idempotens sjekk og validering. 
-Applikasjonen er deployet til nais med følgende definisjon: [prod-gcp-produsent-api.yaml](config/prod-gcp-produsent-api.yaml)
+Applikasjonen er deployet til nais med følgende definisjon: [prod-gcp-produsent-api.yaml](app/nais/prod-gcp-produsent-api.yaml)
 
 ### notifikasjon-bruker-api / notifikasjon-bruker-api-writer  
 

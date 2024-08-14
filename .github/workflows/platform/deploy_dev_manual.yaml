@@ -1,4 +1,3 @@
-name: deploy dev manual
 on:
   workflow_dispatch:
 
@@ -41,4 +40,4 @@ jobs:
           VAR: image=${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
           REF: ${{ github.sha }}
           CLUSTER: ${{ matrix.cluster }}
-          RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
+          RESOURCE: app/nais/${{ matrix.cluster }}-${{ matrix.app }}.yaml
