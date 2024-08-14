@@ -1,3 +1,4 @@
+name: "Platform: deploy replay-validator prod"
 on:
   workflow_dispatch:
 

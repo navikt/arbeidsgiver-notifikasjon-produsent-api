@@ -1,4 +1,4 @@
-
+name: "Platform: deploy kafka topic"
 on:
   push:
     branches: ['main']

@@ -1,3 +1,4 @@
+name: "Platform: build and deploy"
 on:
   push:
     paths:

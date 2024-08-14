@@ -1,3 +1,4 @@
+name: "Testprodusent: build and deploy"
 on:
   push:
     branches:

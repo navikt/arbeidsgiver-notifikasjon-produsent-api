@@ -1,3 +1,4 @@
+name: "Platform: deploy dev manual"
 on:
   workflow_dispatch:
 

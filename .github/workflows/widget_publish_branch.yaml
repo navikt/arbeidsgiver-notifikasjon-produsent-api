@@ -1,3 +1,4 @@
+name: "Widget: publish branch"
 on:
 - workflow_dispatch
 

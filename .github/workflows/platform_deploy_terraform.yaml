@@ -1,4 +1,4 @@
-
+name: "Platform: deploy terraform"
 on:
   push:
     paths:

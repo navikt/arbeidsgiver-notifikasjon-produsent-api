@@ -1,3 +1,4 @@
+name: "Platform: generate docs"
 on:
   push:
     branches:

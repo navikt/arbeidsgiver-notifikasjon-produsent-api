@@ -1,3 +1,4 @@
+name: "Fake produsent api: build and deploy"
 on:
   push:
     branches:
