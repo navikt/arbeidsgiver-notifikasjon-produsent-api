@@ -1,4 +1,4 @@
-name: build and deploy test produsent
+name: "Testprodusent: build and deploy"
 on:
   push:
     branches:

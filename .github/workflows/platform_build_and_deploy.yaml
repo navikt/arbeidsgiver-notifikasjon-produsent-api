@@ -1,9 +1,8 @@
-name: ci/cd
+name: "Platform: build and deploy"
 on:
   push:
-    paths-ignore:
-      - fake-produsent-api/**
-      - test-produsent/**
+    paths:
+      - app/**
   pull_request:
   workflow_dispatch:
 
@@ -119,4 +118,4 @@ jobs:
         env:
           VAR: image=${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
           CLUSTER: ${{ matrix.cluster }}
-          RESOURCE: config/${{ matrix.cluster }}-${{ matrix.app }}.yaml
+          RESOURCE: app/nais/${{ matrix.cluster }}-${{ matrix.app }}.yaml

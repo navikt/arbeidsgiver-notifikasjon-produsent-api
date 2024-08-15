@@ -1,5 +1,4 @@
-name: deploy kafka topic
-
+name: "Platform: deploy kafka topic"
 on:
   push:
     branches: ['main']
@@ -19,7 +18,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: config/nais-kafka-topic.yaml
+          RESOURCE: app/nais/nais-kafka-topic.yaml
           PRINT_PAYLOAD: true
           VAR: pool=nav-dev
 
@@ -27,14 +26,14 @@ jobs:
         if: github.ref == 'refs/heads/main'
         env:
           CLUSTER: prod-gcp
-          RESOURCE: config/nais-kafka-topic.yaml
+          RESOURCE: app/nais/nais-kafka-topic.yaml
           PRINT_PAYLOAD: true
           VAR: pool=nav-prod
 
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: config/nais-kafka-topic-ekstern-varsling-status.yaml
+          RESOURCE: app/nais/nais-kafka-topic-ekstern-varsling-status.yaml
           PRINT_PAYLOAD: true
           VAR: pool=nav-dev
 
@@ -42,6 +41,6 @@ jobs:
         if: github.ref == 'refs/heads/main'
         env:
           CLUSTER: prod-gcp
-          RESOURCE: config/nais-kafka-topic-ekstern-varsling-status.yaml
+          RESOURCE: app/nais/nais-kafka-topic-ekstern-varsling-status.yaml
           PRINT_PAYLOAD: true
           VAR: pool=nav-prod

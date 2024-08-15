@@ -1,4 +1,4 @@
-name: build and deploy fake api
+name: "Fake produsent api: build and deploy"
 on:
   push:
     branches:

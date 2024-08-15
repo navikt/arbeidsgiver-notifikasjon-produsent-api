@@ -1,6 +1,10 @@
-name: publish branch
+name: "Widget: build and publish"
 on:
-- workflow_dispatch
+  push:
+    paths:
+      - 'widget/**'
+      - 'app/src/main/resources/bruker.graphql'
+  workflow_dispatch:
 
 jobs:
   component:
@@ -32,7 +36,8 @@ jobs:
           cd widget/component
           npm test
 
-      - name: publish
+      - if: github.ref == 'refs/heads/main'
+        name: publish
         run: |
           cd widget/component
           if jq --null-input --exit-status \
@@ -52,7 +57,8 @@ jobs:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: publish on github
+      - if: github.ref == 'refs/heads/main'
+        name: publish on github
         run: |
           cd widget/component
           if jq --null-input --exit-status \
@@ -84,7 +90,8 @@ jobs:
           cd widget/brukerapi-mock
           npm run build
 
-      - name: publish npm
+      - if: github.ref == 'refs/heads/main'
+        name: publish
         run: |
           cd widget/brukerapi-mock
           if jq --null-input --exit-status \
@@ -104,7 +111,8 @@ jobs:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: publish on github
+      - if: github.ref == 'refs/heads/main'
+        name: publish on github
         run: |
           cd widget/brukerapi-mock
           if jq --null-input --exit-status \
@@ -118,3 +126,4 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

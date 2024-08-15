@@ -1,4 +1,4 @@
-name: deploy replay validator in prod
+name: "Platform: deploy replay-validator prod"
 on:
   workflow_dispatch:
 
@@ -19,4 +19,4 @@ jobs:
           VAR: image=${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
           REF: ${{ github.sha }}
           CLUSTER: prod-gcp
-          RESOURCE: config/prod-gcp-replay-validator.yaml
+          RESOURCE: app/nais/prod-gcp-replay-validator.yaml

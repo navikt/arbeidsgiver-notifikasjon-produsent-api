@@ -1,4 +1,4 @@
-name: Automatic api documentation update
+name: "Platform: generate docs"
 on:
   push:
     branches:
