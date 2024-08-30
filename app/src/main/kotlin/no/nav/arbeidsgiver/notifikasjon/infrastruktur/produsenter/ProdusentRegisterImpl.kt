@@ -39,6 +39,7 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         prod = {
             listOf(
                 "prod-fss:arbeidsgiver:tiltaksgjennomforing-api",
+                "prod-gcp:team-tiltak:tiltak-notifikasjon",
             )
         },
         other = {
