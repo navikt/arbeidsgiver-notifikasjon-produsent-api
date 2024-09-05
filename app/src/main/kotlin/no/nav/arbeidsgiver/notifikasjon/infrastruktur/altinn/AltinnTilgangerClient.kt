@@ -11,8 +11,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
@@ -54,8 +52,7 @@ class AltinnTilgangerClient(
 
     private val targetAudience = "${NaisEnvironment.clusterName}:fager:arbeidsgiver-altinn-tilganger"
 
-    // TODO: ikke bruk BrukerModel typen her, lag egne DTOer for denne klienten og konverter til BrukerModel i tjenesten
-    suspend fun hentTilganger(subjectToken: String): Tilganger {
+    suspend fun hentTilganger(subjectToken: String): AltinnTilganger {
         val dto = httpClient.post {
             url {
                 path("/altinn-tilganger")
@@ -67,17 +64,12 @@ class AltinnTilgangerClient(
                     targetAudience
                 )
             )
-        }.body<AltinnTilgangerResponse>()
+        }.body<AltinnTilgangerClientResponse>()
 
-        return Tilganger(
+        return AltinnTilganger(
             harFeil = dto.isError,
-            tjenestetilganger = dto.orgNrTilTilganger.flatMap { (orgNr, tilganger) ->
-                tilganger.map { tilgang ->
-                    val (code, edition) = tilgang.split(":").let {
-                        it.first() to it.getOrElse(1) { "" }
-                    }
-                    BrukerModel.Tilgang.Altinn(orgNr, code, edition)
-                }
+            tilganger = dto.orgNrTilTilganger.flatMap { (orgNr, tilganger) ->
+                tilganger.map { AltinnTilgang.parse(orgNr, it) }
             }
         )
     }
@@ -85,7 +77,27 @@ class AltinnTilgangerClient(
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class AltinnTilgangerResponse(
+private data class AltinnTilgangerClientResponse(
     val isError: Boolean,
     val orgNrTilTilganger: Map<String, List<String>>,
 )
+
+data class AltinnTilganger(
+    val harFeil: Boolean,
+    val tilganger: List<AltinnTilgang>,
+)
+
+sealed class AltinnTilgang {
+    data class Altinn2(val orgNr: String, val serviceCode: String, val serviceEdition: String) : AltinnTilgang()
+    data class Altinn3(val orgNr: String, val ressurs: String) : AltinnTilgang()
+
+    companion object {
+        fun parse(orgNr: String, tilgang: String) =
+            if (tilgang.matches(Regex("""\d+:\d+"""))) {
+                val (code, edition) = tilgang.split(":")
+                Altinn2(orgNr = orgNr, serviceCode = code, serviceEdition = edition)
+            } else {
+                Altinn3(orgNr = orgNr, ressurs = tilgang)
+            }
+    }
+}

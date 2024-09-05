@@ -34,7 +34,7 @@ class AltinnTilgangerImpl(
     private val cache = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(10))
         .maximumSize(10_000)
-        .buildAsync<String, Tilganger>()
+        .buildAsync<String, AltinnTilganger>()
 
     override suspend fun hentTilganger(
         fnr: String,
@@ -49,7 +49,24 @@ class AltinnTilgangerImpl(
             cache.synchronous().invalidate(fnr)
         }
 
-        return tilganger
+        return Tilganger(
+            harFeil = tilganger.harFeil,
+            tjenestetilganger = tilganger.tilganger.map {
+                // skjuler altinn3 detaljene for nå ved å mappe begge til samme eksisterende modell
+                when (it) {
+                    is AltinnTilgang.Altinn2 -> BrukerModel.Tilgang.Altinn(
+                        virksomhet = it.orgNr,
+                        servicecode = it.serviceCode,
+                        serviceedition = it.serviceEdition
+                    )
+                    is AltinnTilgang.Altinn3 -> BrukerModel.Tilgang.Altinn(
+                        virksomhet = it.orgNr,
+                        servicecode = it.ressurs,
+                        serviceedition = ""
+                    )
+                }
+            }
+        )
     }
 }
 

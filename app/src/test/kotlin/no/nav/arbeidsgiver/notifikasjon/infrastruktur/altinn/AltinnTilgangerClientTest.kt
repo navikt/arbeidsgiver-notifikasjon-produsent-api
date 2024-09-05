@@ -6,7 +6,6 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
 
 class AltinnTilgangerClientTest : DescribeSpec({
@@ -26,9 +25,9 @@ class AltinnTilgangerClientTest : DescribeSpec({
         it("returns all tilganger") {
             client.hentTilganger("fake tolkien").also {
                 it.harFeil shouldBe true
-                it.tjenestetilganger shouldContainExactlyInAnyOrder listOf(
-                    BrukerModel.Tilgang.Altinn("910825496", "test-fager", ""),
-                    BrukerModel.Tilgang.Altinn("910825496", "4936", "1"),
+                it.tilganger shouldContainExactlyInAnyOrder listOf(
+                    AltinnTilgang.Altinn3("910825496", "test-fager"),
+                    AltinnTilgang.Altinn2("910825496", "4936", "1"),
                 )
             }
         }
