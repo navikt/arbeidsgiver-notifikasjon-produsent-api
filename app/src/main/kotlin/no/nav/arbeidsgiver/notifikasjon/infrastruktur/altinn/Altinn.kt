@@ -28,6 +28,17 @@ interface Altinn {
     ): Tilganger
 }
 
+class AltinnTilgangerImpl(
+    private val altinnTilgangerClient: AltinnTilgangerClient
+): Altinn {
+    // TODO: midlertidig plugget inn i eksisterende interface, underliggende implementasjon bruker bare token
+    override suspend fun hentTilganger(
+        fnr: String,
+        selvbetjeningsToken: String,
+        tjenester: Iterable<ServicecodeDefinisjon>
+    ): Tilganger = altinnTilgangerClient.hentTilganger(selvbetjeningsToken)
+}
+
 class AltinnImpl(
     private val klient: SuspendingAltinnClient,
 ) : Altinn {

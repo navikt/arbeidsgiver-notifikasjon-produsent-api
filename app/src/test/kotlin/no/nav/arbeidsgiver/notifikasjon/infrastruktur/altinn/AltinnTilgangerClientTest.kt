@@ -1,0 +1,76 @@
+package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
+
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.shouldBe
+import io.ktor.client.engine.mock.*
+import io.ktor.http.*
+import io.ktor.utils.io.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
+
+class AltinnTilgangerClientTest : DescribeSpec({
+    describe("AltinnTilgangerClient") {
+
+        val client = AltinnTilgangerClient(
+            tokenXClient = TokenXClientStub(),
+            engine = MockEngine { _ ->
+                respond(
+                    content = ByteReadChannel(altinnTilgangerResponse),
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }
+        )
+
+        it("returns all tilganger") {
+            client.hentTilganger("fake tolkien").also {
+                it.harFeil shouldBe true
+                it.tjenestetilganger shouldContainExactlyInAnyOrder listOf(
+                    BrukerModel.Tilgang.Altinn("910825496", "test-fager", ""),
+                    BrukerModel.Tilgang.Altinn("910825496", "4936", "1"),
+                )
+            }
+        }
+    }
+
+})
+
+private val altinnTilgangerResponse = """
+    {
+      "isError": true,
+      "hierarki": [
+        {
+          "orgNr": "810825472",
+          "altinn3Tilganger": [],
+          "altinn2Tilganger": [],
+          "underenheter": [
+            {
+              "orgNr": "910825496",
+              "altinn3Tilganger": [
+                "test-fager"
+              ],
+              "altinn2Tilganger": [
+                "4936:1"
+              ],
+              "underenheter": []
+            }
+          ]
+        }
+      ],
+      "orgNrTilTilganger": {
+        "910825496": [
+          "test-fager",
+          "4936:1"
+        ]
+      },
+      "tilgangTilOrgNr": {
+        "test-fager": [
+          "910825496"
+        ],
+        "4936:1": [
+          "910825496"
+        ]
+      }
+    }
+""".trimIndent()
