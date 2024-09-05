@@ -12,6 +12,7 @@ import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
@@ -51,22 +52,27 @@ class AltinnTilgangerClient(
         }
     }
 
+    private val targetAudience = "${NaisEnvironment.clusterName}:fager:arbeidsgiver-altinn-tilganger"
+
     // TODO: ikke bruk BrukerModel typen her, lag egne DTOer for denne klienten og konverter til BrukerModel i tjenesten
-    suspend fun hentTilganger(subjectToken: String): BrukerModel.Tilganger {
-        val response = httpClient.post {
+    suspend fun hentTilganger(subjectToken: String): Tilganger {
+        val dto = httpClient.post {
             url {
                 path("/altinn-tilganger")
             }
             accept(ContentType.Application.Json)
-            bearerAuth(tokenXClient.exchange(subjectToken, "${NaisEnvironment.clusterName}:fager:arbeidsgiver-altinn-tilganger"))
-        }
-        val dto = response.body<AltinnTilgangerResponse>()
+            bearerAuth(
+                tokenXClient.exchange(
+                    subjectToken,
+                    targetAudience
+                )
+            )
+        }.body<AltinnTilgangerResponse>()
 
-
-        return BrukerModel.Tilganger(
+        return Tilganger(
             harFeil = dto.isError,
-            tjenestetilganger = dto.orgNrTilTilganger.flatMap {
-                (orgNr, tilganger) -> tilganger.map { tilgang ->
+            tjenestetilganger = dto.orgNrTilTilganger.flatMap { (orgNr, tilganger) ->
+                tilganger.map { tilgang ->
                     val (code, edition) = tilgang.split(":").let {
                         it.first() to it.getOrElse(1) { "" }
                     }

@@ -31,12 +31,26 @@ interface Altinn {
 class AltinnTilgangerImpl(
     private val altinnTilgangerClient: AltinnTilgangerClient
 ): Altinn {
-    // TODO: midlertidig plugget inn i eksisterende interface, underliggende implementasjon bruker bare token
+    private val cache = Caffeine.newBuilder()
+        .expireAfterWrite(Duration.ofMinutes(10))
+        .maximumSize(10_000)
+        .buildAsync<String, Tilganger>()
+
     override suspend fun hentTilganger(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>
-    ): Tilganger = altinnTilgangerClient.hentTilganger(selvbetjeningsToken)
+    ): Tilganger {
+        val tilganger = cache.getAsync(fnr) { _ ->
+            altinnTilgangerClient.hentTilganger(selvbetjeningsToken)
+        }
+
+        if (tilganger.harFeil) {
+            cache.synchronous().invalidate(fnr)
+        }
+
+        return tilganger
+    }
 }
 
 class AltinnImpl(
