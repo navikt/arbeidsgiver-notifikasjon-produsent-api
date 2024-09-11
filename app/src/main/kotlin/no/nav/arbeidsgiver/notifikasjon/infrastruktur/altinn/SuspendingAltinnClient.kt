@@ -77,7 +77,9 @@ class SuspendingAltinnClient(
     private fun logException(e: Exception) {
         if (e is AltinnrettigheterProxyKlientFallbackException && e.erDriftsforstyrrelse()) {
             log.info("Henting av Altinn-tilganger feilet", e)
-        } else {
+        } else if (e is ServerResponseException && e.erDriftsforstyrrelse() ) {
+            log.info("Henting av Altinn-tilganger feilet", e)
+        }else {
             log.error("Henting av Altinn-tilganger feilet", e)
         }
     }
@@ -95,6 +97,16 @@ class SuspendingAltinnClient(
                     else -> false
                 }
             }
+
+            else -> false
+        }
+    }
+
+    private fun ServerResponseException.erDriftsforstyrrelse(): Boolean {
+        return when (response.status) {
+            HttpStatusCode.BadGateway,
+            HttpStatusCode.GatewayTimeout,
+            HttpStatusCode.ServiceUnavailable -> true
 
             else -> false
         }
