@@ -53,17 +53,24 @@ class AltinnTilgangerClient(
     private val targetAudience = "${NaisEnvironment.clusterName}:fager:arbeidsgiver-altinn-tilganger"
 
     suspend fun hentTilganger(subjectToken: String): AltinnTilganger {
+        val token = try {
+            tokenXClient.exchange(
+                subjectToken,
+                targetAudience
+            )
+        } catch (e: RuntimeException) {
+            return AltinnTilganger(
+                harFeil = true,
+                tilganger = listOf()
+            )
+        }
+
         val dto = httpClient.post {
             url {
                 path("/altinn-tilganger")
             }
             accept(ContentType.Application.Json)
-            bearerAuth(
-                tokenXClient.exchange(
-                    subjectToken,
-                    targetAudience
-                )
-            )
+            bearerAuth(token)
         }.body<AltinnTilgangerClientResponse>()
 
         return AltinnTilganger(

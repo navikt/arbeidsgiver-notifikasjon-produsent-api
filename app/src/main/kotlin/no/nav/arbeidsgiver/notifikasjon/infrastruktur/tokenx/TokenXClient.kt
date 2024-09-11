@@ -32,6 +32,7 @@ import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 fun defaultHttpClient() = HttpClient(Apache) {
+    expectSuccess = true
     install(ContentNegotiation) {
         jackson()
     }
@@ -39,7 +40,7 @@ fun defaultHttpClient() = HttpClient(Apache) {
         registry = Metrics.meterRegistry
     }
     install(HttpRequestRetry) {
-        maxRetries = 3
+        maxRetries = 5
         retryIf { _, res ->
             res.status == HttpStatusCode.ServiceUnavailable ||
             res.status == HttpStatusCode.GatewayTimeout ||
