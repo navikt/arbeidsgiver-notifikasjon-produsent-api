@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -63,7 +64,14 @@ internal class MutationNyStatusSak(
     @JsonTypeName("NyStatusSakVellykket")
     data class NyStatusSakVellykket(
         val id: UUID,
+        val statuser: List<StatusOppdatering>,
     ): NyStatusSakResultat
+
+    data class StatusOppdatering(
+        val status: SaksStatus,
+        val tidspunkt: OffsetDateTime,
+        val overstyrStatusTekstMed: String?,
+    )
 
 
     private suspend fun nyStatusSak(
@@ -111,6 +119,18 @@ internal class MutationNyStatusSak(
             it.idempotencyKey == idempotencyKey
         }
 
+        val eksisterendeOppdateringer = sak.statusoppdateringer.map {
+            StatusOppdatering(
+                status = when (it.status) {
+                    HendelseModel.SakStatus.MOTTATT -> SaksStatus.MOTTATT
+                    HendelseModel.SakStatus.UNDER_BEHANDLING -> SaksStatus.UNDER_BEHANDLING
+                    HendelseModel.SakStatus.FERDIG -> SaksStatus.FERDIG
+                },
+                tidspunkt = it.tidspunktOppgitt ?: it.tidspunktMottatt,
+                overstyrStatusTekstMed = it.overstyrStatustekstMed,
+            )
+        }
+
         return when {
             existing == null -> {
                 val nyStatusSakHendelse = NyStatusSak(
@@ -130,13 +150,30 @@ internal class MutationNyStatusSak(
 
                 hendelseDispatcher.send(nyStatusSakHendelse)
                 NyStatusSakVellykket(
-                    id = hendelseId
+                    id = hendelseId,
+                    statuser = (listOf(
+                        StatusOppdatering(
+                            status = status.status.status,
+                            tidspunkt = status.status.tidspunkt ?: nyStatusSakHendelse.mottattTidspunkt,
+                            overstyrStatusTekstMed = status.status.overstyrStatustekstMed,
+                        )
+                    ) + eksisterendeOppdateringer).sortedByDescending { it.tidspunkt }
                 )
             }
             status.status.isDuplicateOf(existing) -> {
                 NyStatusSakVellykket(
-                    id = existing.id
-                )
+                    id = existing.id,
+                    statuser = (listOf(
+                        StatusOppdatering(
+                            status = when (existing.status) {
+                                HendelseModel.SakStatus.MOTTATT -> SaksStatus.MOTTATT
+                                HendelseModel.SakStatus.UNDER_BEHANDLING -> SaksStatus.UNDER_BEHANDLING
+                                HendelseModel.SakStatus.FERDIG -> SaksStatus.FERDIG
+                            },
+                            tidspunkt = existing.tidspunktOppgitt ?: existing.tidspunktMottatt,
+                            overstyrStatusTekstMed = existing.overstyrStatustekstMed,
+                        )
+                    ) + eksisterendeOppdateringer).sortedByDescending { it.tidspunkt })
             }
             else -> {
                 Error.Konflikt(
