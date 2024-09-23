@@ -246,6 +246,7 @@ private suspend fun BrukerRepository.opprettSak(
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
         hardDelete = null,
+        tilleggsinformasjon = null
     )
     nyStatusSak(
         sak = sakOpprettet,

@@ -599,6 +599,7 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.sakOpprettet(
         hardDelete = hardDelete?.let { LocalDateTimeOrDuration.parse(it) },
         nesteSteg = null,
         tittel = "",
+        tilleggsinformasjon = null
     )
 )
 

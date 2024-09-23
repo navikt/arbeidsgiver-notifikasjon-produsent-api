@@ -56,6 +56,7 @@ class StatistikkModelTests : DescribeSpec({
             mottattTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
             nesteSteg = null,
             hardDelete = null,
+            tilleggsinformasjon = null
         )
     }
 

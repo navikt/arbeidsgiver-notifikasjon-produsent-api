@@ -259,6 +259,7 @@ object HendelseModel {
         val merkelapp: String,
         val mottakere: List<Mottaker>,
         val tittel: String,
+        val tilleggsinformasjon: String?,
         val lenke: String?,
         val oppgittTidspunkt: OffsetDateTime?,
         val mottattTidspunkt: OffsetDateTime?,

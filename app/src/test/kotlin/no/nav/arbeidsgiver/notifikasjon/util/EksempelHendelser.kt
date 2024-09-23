@@ -530,6 +530,7 @@ object EksempelHendelse {
             mottattTidspunkt = OffsetDateTime.now(),
             nesteSteg = null,
             hardDelete = null,
+            tilleggsinformasjon = null
         )
     }
     val SakOpprettetNullOppgittTs = withId { id ->
@@ -559,6 +560,7 @@ object EksempelHendelse {
             mottattTidspunkt = OffsetDateTime.now(),
             nesteSteg = null,
             hardDelete = null,
+            tilleggsinformasjon = null
         )
     }
     val SakOpprettetNullOppgittLenke = withId { id ->
@@ -588,6 +590,7 @@ object EksempelHendelse {
             mottattTidspunkt = OffsetDateTime.now(),
             nesteSteg = null,
             hardDelete = null,
+            tilleggsinformasjon = null
         )
     }
     val NyStatusSak = HendelseModel.NyStatusSak(
@@ -835,6 +838,7 @@ object EksempelHendelse {
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
         hardDelete = null,
+        tilleggsinformasjon = null
     )
 
     val SakOpprettet_MedNesteSteg =  HendelseModel.SakOpprettet(
@@ -863,6 +867,7 @@ object EksempelHendelse {
         oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
         mottattTidspunkt = OffsetDateTime.now(),
         hardDelete = null,
+        tilleggsinformasjon = null
     )
 
     val NesteStegSak_TilNull = HendelseModel.NesteStegSak (

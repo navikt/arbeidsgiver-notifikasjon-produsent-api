@@ -113,6 +113,7 @@ private fun TestApplicationEngine.nySak(
                     }]
                     initiellStatus: ${SaksStatus.MOTTATT}
                     tittel: "Foo"
+                    tilleggsinformasjon: "Her er noe tilleggsinformasjon"
                     ${if (nesteSteg == null) "" else "nesteSteg: \"$nesteSteg\""}
                     lenke: null
                 ) {

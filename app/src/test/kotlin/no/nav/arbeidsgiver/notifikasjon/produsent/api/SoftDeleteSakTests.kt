@@ -53,6 +53,7 @@ class SoftDeleteSakTests : DescribeSpec({
         produsentId = "",
         nesteSteg = null,
         hardDelete = null,
+        tilleggsinformasjon = null
     )
     val sakOpprettet2 = sakOpprettet.copy(
         grupperingsid = grupperingsid2,

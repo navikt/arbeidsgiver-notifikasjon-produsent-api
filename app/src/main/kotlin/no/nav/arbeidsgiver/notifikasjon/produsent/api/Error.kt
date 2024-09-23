@@ -150,5 +150,9 @@ internal sealed class Error {
         MutationKalenderavtale.NyKalenderavtaleResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat
 
+    @JsonTypeName("UgyldigTilleggsinformasjon")
+    data class UgyldigTilleggsinformasjon(
+        override val feilmelding: String,
+    ) : Error(), MutationNySak.NySakResultat
 }
 

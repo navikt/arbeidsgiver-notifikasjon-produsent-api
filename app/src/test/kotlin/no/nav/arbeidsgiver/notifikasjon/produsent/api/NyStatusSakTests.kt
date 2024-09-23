@@ -144,6 +144,7 @@ private fun TestApplicationEngine.nySak(
                     }]
                     initiellStatus: $status
                     tittel: "tittel"
+                    tilleggsinformasjon: "tilleggsinformasjon"
                     lenke: "lenke"
                 ) {
                     __typename

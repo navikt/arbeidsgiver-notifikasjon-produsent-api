@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Påminnelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -372,6 +373,7 @@ suspend fun BrukerRepository.sakOpprettet(
     merkelapp: String = randomMerkelapp(),
     lenke: String? = randomLenke("sak"),
     tittel: String = randomTekst("Sak-tittel"),
+    tilleggsinformasjon: String? = null,
     mottakere: List<HendelseModel.Mottaker> = listOf(TEST_MOTTAKER_1),
     grupperingsid: String = UUID.randomUUID().toString(),
     oppgittTidspunkt: OffsetDateTime? = null,
@@ -393,6 +395,7 @@ suspend fun BrukerRepository.sakOpprettet(
     mottattTidspunkt = mottattTidspunkt,
     nesteSteg = nesteSteg,
     hardDelete = hardDelete,
+    tilleggsinformasjon = tilleggsinformasjon
 ).also {
     oppdaterModellEtterHendelse(it)
 }

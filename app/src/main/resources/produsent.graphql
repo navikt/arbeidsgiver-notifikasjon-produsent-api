@@ -126,6 +126,7 @@ type Sak {
     tittel: String!
     lenke: String
     nesteSteg: String
+    tilleggsinformasjon: String
     merkelapp: String!
     sisteStatus: SaksStatus
 }
@@ -312,6 +313,7 @@ union NySakResultat =
     | DuplikatGrupperingsidEtterDelete
     | UkjentProdusent
     | UkjentRolle
+    | UgyldigTilleggsinformasjon
 
 type NySakVellykket {
     id: ID!
@@ -494,6 +496,9 @@ type Mutation {
 
         """En tittel på saken, som vises til brukeren."""
         tittel: String!
+
+        """Tilleggssinformasjon som vises under tittelen på en sak. Maks 1000 tegn"""
+        tilleggsinformasjon: String
 
         """
         Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken.
@@ -1808,6 +1813,13 @@ type UgyldigMerkelapp implements Error {
 Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.
 """
 type UgyldigMottaker implements Error {
+    feilmelding: String!
+}
+
+"""
+Denne feilen returneres dersom en produsent forsøker å sette flere enn 1000 tegn i tillegsinformasjon.
+"""
+type UgyldigTilleggsinformasjon implements Error{
     feilmelding: String!
 }
 

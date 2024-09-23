@@ -81,7 +81,8 @@ private suspend fun BrukerRepository.nySakHendelse(nesteSteg: String?) = Hendels
     mottattTidspunkt = OffsetDateTime.now(),
     lenke = null,
     sakId = UUID.randomUUID(),
-    tittel = "foo"
+    tittel = "foo",
+    tilleggsinformasjon = null
 ).also{oppdaterModellEtterHendelse(it)}
 
 private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApplicationEngine> {

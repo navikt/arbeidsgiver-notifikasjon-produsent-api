@@ -37,6 +37,7 @@ internal class MutationNySak(
                         virksomhetsnummer = env.getTypedArgument("virksomhetsnummer"),
                         mottakere = env.getTypedArgument("mottakere"),
                         tittel = env.getTypedArgument("tittel"),
+                        tilleggsinformasjon = env.getTypedArgument("tilleggsinformasjon"),
                         lenke = env.getTypedArgumentOrNull("lenke"),
                         status = SaksStatusInput(
                             status = env.getTypedArgument("initiellStatus"),
@@ -69,6 +70,9 @@ internal class MutationNySak(
         } catch (e: UkjentRolleException) {
             return Error.UkjentRolle(e.message!!)
         }
+
+        if (nySak.tilleggsinformasjon != null && nySak.tilleggsinformasjon.length > 1000)
+            return Error.UgyldigTilleggsinformasjon("Tilleggssinformasjon kan ikke inneholde fler enn 1000 tegn. Du har oppgitt ${nySak.tilleggsinformasjon.length} tegn.")
 
         val statusoppdateringHendelse = nySak.somNyStatusSakHendelse(
             hendelseId = UUID.randomUUID(),
@@ -142,6 +146,7 @@ internal class MutationNySak(
         val virksomhetsnummer: String,
         val mottakere: List<MottakerInput>,
         val tittel: String,
+        val tilleggsinformasjon: String?,
         val lenke: String?,
         val status: SaksStatusInput,
         val nesteSteg: String?,
@@ -162,6 +167,7 @@ internal class MutationNySak(
             merkelapp = merkelapp,
             mottakere = mottakere.map { it.tilHendelseModel(virksomhetsnummer) },
             tittel = tittel,
+            tilleggsinformasjon = tilleggsinformasjon,
             lenke = lenke,
             oppgittTidspunkt = status.tidspunkt,
             mottattTidspunkt = mottattTidspunkt,

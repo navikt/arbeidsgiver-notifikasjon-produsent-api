@@ -336,8 +336,8 @@ class ProdusentRepositoryImpl(
         database.transaction {
             executeUpdate(
                 """
-                    insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, lenke, neste_steg, tidspunkt_mottatt)
-                    values (?, ?, ?, ?, ?::jsonb, ?, ?, ?, now())
+                    insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, tilleggsinformasjon, lenke, neste_steg, tidspunkt_mottatt)
+                    values (?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, now())
                     on conflict do nothing
                 """
             ) {
@@ -347,6 +347,7 @@ class ProdusentRepositoryImpl(
                 text(sakOpprettet.virksomhetsnummer)
                 jsonb(sakOpprettet.mottakere)
                 text(sakOpprettet.tittel)
+                nullableText(sakOpprettet.tilleggsinformasjon)
                 nullableText(sakOpprettet.lenke)
                 nullableText(sakOpprettet.nesteSteg)
             }.also {

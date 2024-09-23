@@ -41,6 +41,7 @@ class DataproduktIdempotensTests : DescribeSpec({
         mottattTidspunkt = opprettetTidspunkt,
         nesteSteg = "Neste steg",
         hardDelete = null,
+        tilleggsinformasjon = null
     )
 
     val oppgaveKnyttetTilSak = HendelseModel.OppgaveOpprettet(

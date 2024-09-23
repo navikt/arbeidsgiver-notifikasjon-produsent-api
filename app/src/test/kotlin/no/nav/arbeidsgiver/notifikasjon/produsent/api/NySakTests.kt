@@ -160,6 +160,7 @@ private fun TestApplicationEngine.nySak(
     status: SaksStatus = SaksStatus.MOTTATT,
     tittel: String = "tittel",
     lenke: String? = "lenke",
+    tilleggsinformasjon: String? = "her er noe tilleggsinformasjon",
     hardDeleteDen: String? = null,
     hardDeleteOm: String? = null,
 ) =
@@ -176,6 +177,7 @@ private fun TestApplicationEngine.nySak(
                             serviceEdition: "1"
                         }
                     }]
+                    tilleggsinformasjon: "$tilleggsinformasjon"
                     initiellStatus: $status
                     tidspunkt: "2020-01-01T01:01Z"
                     tittel: "$tittel"

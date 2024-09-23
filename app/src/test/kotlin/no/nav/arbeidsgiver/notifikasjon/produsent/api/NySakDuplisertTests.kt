@@ -35,6 +35,7 @@ private val sakOpprettet = HendelseModel.SakOpprettet(
     mottattTidspunkt = OffsetDateTime.now(),
     nesteSteg = null,
     hardDelete = null,
+    tilleggsinformasjon = null
 )
 
 class NySakDuplisertTests : DescribeSpec({
@@ -118,6 +119,7 @@ private fun TestApplicationEngine.nySak(
                     }]
                     initiellStatus: $status
                     tittel: "${sakOpprettet.tittel}"
+                    tilleggsinformasjon: "${sakOpprettet.tilleggsinformasjon}"
                     lenke: "${sakOpprettet.lenke}"
                 ) {
                     __typename

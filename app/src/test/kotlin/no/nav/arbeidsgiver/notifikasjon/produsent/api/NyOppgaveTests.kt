@@ -115,6 +115,7 @@ class NyOppgaveTests : DescribeSpec({
             produsentId = "",
             nesteSteg = null,
             hardDelete = null,
+            tilleggsinformasjon = null
         ).also {
             produsentRepository.oppdaterModellEtterHendelse(it)
         }
