@@ -37,7 +37,7 @@ internal class MutationNySak(
                         virksomhetsnummer = env.getTypedArgument("virksomhetsnummer"),
                         mottakere = env.getTypedArgument("mottakere"),
                         tittel = env.getTypedArgument("tittel"),
-                        tilleggsinformasjon = env.getTypedArgument("tilleggsinformasjon"),
+                        tilleggsinformasjon = env.getTypedArgumentOrNull("tilleggsinformasjon"),
                         lenke = env.getTypedArgumentOrNull("lenke"),
                         status = SaksStatusInput(
                             status = env.getTypedArgument("initiellStatus"),
@@ -217,6 +217,7 @@ internal fun MutationNySak.NySakInput.erDuplikatAv(eksisterende: ProdusentModel.
             this.tittel == eksisterende.tittel &&
             this.lenke == eksisterende.lenke &&
             this.nesteSteg == eksisterende.nesteSteg &&
+            this.tilleggsinformasjon == eksisterende.tilleggsinformasjon &&
             this.mottakere.equalsAsSets(eksisterende.mottakere, MottakerInput::sammeSom) &&
             (initialOppdatering == null || this.status.isDuplicateOf(initialOppdatering))
 }

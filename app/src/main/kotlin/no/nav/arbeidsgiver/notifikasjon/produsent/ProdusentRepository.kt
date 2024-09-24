@@ -181,6 +181,7 @@ class ProdusentRepositoryImpl(
                 deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                 virksomhetsnummer = getString("virksomhetsnummer"),
                 nesteSteg = getString("neste_steg"),
+                tilleggsinformasjon = getString("tilleggsinformasjon"),
                 statusoppdateringer = laxObjectMapper.readValue(getString("statusoppdateringer"))
             )
         }

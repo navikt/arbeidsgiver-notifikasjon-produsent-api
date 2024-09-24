@@ -118,9 +118,8 @@ private fun TestApplicationEngine.nySak(
                         }
                     }]
                     initiellStatus: $status
-                    tittel: "${sakOpprettet.tittel}"
-                    tilleggsinformasjon: "${sakOpprettet.tilleggsinformasjon}"
-                    lenke: "${sakOpprettet.lenke}"
+                    tittel: "${sakOpprettet.tittel}" 
+                    lenke: "${sakOpprettet.lenke}" 
                 ) {
                     __typename
                     ... on NySakVellykket {

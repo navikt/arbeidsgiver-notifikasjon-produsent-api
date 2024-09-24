@@ -497,7 +497,10 @@ type Mutation {
         """En tittel på saken, som vises til brukeren."""
         tittel: String!
 
-        """Tilleggssinformasjon som vises under tittelen på en sak. Maks 1000 tegn"""
+        """
+        Dette feltet er frivillig.
+        Tilleggssinformasjon som vises under tittelen på en sak. Maks 1000 tegn
+        """
         tilleggsinformasjon: String
 
         """

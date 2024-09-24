@@ -140,6 +140,25 @@ class NySakTests : DescribeSpec({
         it("should be successful") {
             response11.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
         }
+
+        val response12 = engine.nySak(
+            tilleggsinformasjon = "A".repeat(1001)
+        )
+
+        it("should fail because too long tilleggsinformasjon"){
+            response12.getTypedContent<String>("$.nySak.__typename") shouldBe "UgyldigTilleggsinformasjon"
+        }
+
+        engine.nySak(
+            grupperingsid = "13",
+            tilleggsinformasjon = "Dette er tilleggsinfo"
+        )
+
+        it ("tilleggsinformasjon should be set") {
+            val hendelse = stubbedKafkaProducer.hendelser
+                .filterIsInstance<HendelseModel.SakOpprettet>().first { it.grupperingsid == "13" }
+            hendelse.tilleggsinformasjon shouldBe "Dette er tilleggsinfo"
+        }
     }
 })
 

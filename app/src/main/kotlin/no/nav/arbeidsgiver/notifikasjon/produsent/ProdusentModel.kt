@@ -27,6 +27,7 @@ object ProdusentModel {
         val deletedAt: OffsetDateTime?,
         val tittel: String,
         val lenke: String?,
+        val tilleggsinformasjon: String?,
         val statusoppdateringer: List<SakStatusOppdatering>,
         val mottakere: List<Mottaker>,
         val nesteSteg: String?,
