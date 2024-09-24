@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Påminnelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.Error
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime

@@ -367,12 +367,13 @@ class BrukerRepositoryImpl(
                                 merkelapp,
                                 grupperingsid,
                                 neste_steg,
+                                tilleggsinformasjon,
                                 sist_endret_tidspunkt,
                                 opprettet_tidspunkt,
                                 count(*) filter (where oppgave_tilstand = 'NY') as nye_oppgaver,
                                 min(oppgave_frist) filter (where oppgave_tilstand = 'NY') as tidligste_frist
                             from mine_saker_filtrert
-                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, sist_endret_tidspunkt, opprettet_tidspunkt
+                            group by id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, tilleggsinformasjon, sist_endret_tidspunkt, opprettet_tidspunkt
                         ),
                         mine_saker_paginert as (
                             select 
@@ -382,6 +383,7 @@ class BrukerRepositoryImpl(
                                 sak.lenke,
                                 sak.merkelapp,
                                 sak.neste_steg,
+                                sak.tilleggsinformasjon,
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
@@ -419,6 +421,7 @@ class BrukerRepositoryImpl(
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'nesteSteg', neste_steg,
+                                'tilleggsinformasjon', tilleggsinformasjon,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
@@ -506,6 +509,7 @@ class BrukerRepositoryImpl(
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'nesteSteg', neste_steg,
+                                'tilleggsinformasjon', tilleggsinformasjon,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
@@ -579,6 +583,7 @@ class BrukerRepositoryImpl(
                                 'tittel', tittel,
                                 'lenke', lenke,
                                 'nesteSteg', neste_steg,
+                                'tilleggsinformasjon', tilleggsinformasjon,
                                 'merkelapp', merkelapp,
                                 'opprettetTidspunkt', opprettet_tidspunkt,
                                 'grupperingsid', grupperingsid
@@ -986,9 +991,9 @@ class BrukerRepositoryImpl(
             executeUpdate(
                 """
                 insert into sak(
-                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, sist_endret_tidspunkt, opprettet_tidspunkt
+                    id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, tilleggsinformasjon, sist_endret_tidspunkt, opprettet_tidspunkt
                 )
-                values (?, ?, ? ,?, ?, ?, ?, ?, ?)
+                values (?, ?, ? ,?, ?, ?, ?, ?, ?, ?)
                 on conflict do nothing;
             """
             ) {
@@ -999,6 +1004,7 @@ class BrukerRepositoryImpl(
                 text(sakOpprettet.merkelapp)
                 text(sakOpprettet.grupperingsid)
                 nullableText(sakOpprettet.nesteSteg)
+                nullableText(sakOpprettet.tilleggsinformasjon)
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
                 instantAsText(sakOpprettet.opprettetTidspunkt(hendelseMetadata.timestamp))
             }
