@@ -6,6 +6,12 @@ metadata:
   labels:
     team: fager
 spec:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
   image: {{image}}
   liveness:
     path: /internal/alive
