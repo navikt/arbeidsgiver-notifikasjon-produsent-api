@@ -64,13 +64,22 @@ class NyStatusSakTests : DescribeSpec({
             r4.getTypedContent<String>("$.nyStatusSak.__typename") shouldBe "Konflikt"
         }
 
-        val r5 = engine.nyStatusSak(
+        val r5 = engine.nyStatusSakByGrupperingsid(
+            grupperingsid = "grupperingsid",
+            merkelapp = "tag",
+            SaksStatus.FERDIG,
+        )
+        it("vellyket oppdatering ved grupperingsid") {
+            r5.getTypedContent<String>("$.nyStatusSakByGrupperingsid.__typename") shouldBe "NyStatusSakVellykket"
+        }
+
+        val r6 = engine.nyStatusSak(
             id = sakId,
             SaksStatus.FERDIG,
             hardDelete = LocalDateTime.MAX
         )
         it("vellyket oppdatering med harddelete satt i kafka") {
-            r5.getTypedContent<String>("$.nyStatusSak.__typename") shouldBe "NyStatusSakVellykket"
+            r6.getTypedContent<String>("$.nyStatusSak.__typename") shouldBe "NyStatusSakVellykket"
             val hendelse = stubbedKafkaProducer.hendelser.last()
             hendelse should beInstanceOf<HendelseModel.NyStatusSak>()
             (hendelse as HendelseModel.NyStatusSak).hardDelete shouldNotBe null
@@ -118,6 +127,54 @@ private fun TestApplicationEngine.nyStatusSak(
                     __typename
                     ... on NyStatusSakVellykket {
                         id
+                        statuser {
+                            overstyrStatusTekstMed
+                            status
+                            tidspunkt
+                        }
+                    }
+                }
+            }
+        """
+    )
+}
+
+private fun TestApplicationEngine.nyStatusSakByGrupperingsid(
+    grupperingsid: String,
+    merkelapp: String,
+    status: SaksStatus,
+    idempotencyKey: String? = null,
+    hardDelete: LocalDateTime? = null,
+): TestApplicationResponse {
+    return produsentApi(
+        """
+            mutation {
+                nyStatusSakByGrupperingsid(
+                    grupperingsid: "$grupperingsid"
+                    merkelapp: "${merkelapp}"
+                    idempotencyKey: ${idempotencyKey?.let { "\"$it\"" }}
+                    nyStatus: $status
+                    ${
+            hardDelete?.let {
+                """
+                        hardDelete: {
+                            nyTid: {
+                                den: "$it"
+                            }
+                            strategi: OVERSKRIV
+                        }
+                    """.trimIndent()
+            } ?: ""
+        }
+                ) {
+                    __typename
+                    ... on NyStatusSakVellykket {
+                        id
+                        statuser {
+                            overstyrStatusTekstMed
+                            status
+                            tidspunkt
+                        }
                     }
                 }
             }

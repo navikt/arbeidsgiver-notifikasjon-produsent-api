@@ -1,12 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.micrometer.core.instrument.search.MeterNotFoundException
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnCachedImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
@@ -41,7 +42,10 @@ object Bruker {
         suspendingAltinnClient: SuspendingAltinnClient = SuspendingAltinnClient(
             observer = virksomhetsinfoService::altinnObserver
         ),
-        altinn: Altinn = AltinnCachedImpl(suspendingAltinnClient),
+        altinn: Altinn = basedOnEnv(
+            prod = { AltinnCachedImpl(suspendingAltinnClient) },
+            other = { AltinnTilgangerImpl(AltinnTilgangerClient()) }
+        ),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {
