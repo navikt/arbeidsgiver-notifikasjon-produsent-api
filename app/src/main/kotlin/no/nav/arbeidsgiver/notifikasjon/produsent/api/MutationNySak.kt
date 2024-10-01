@@ -71,9 +71,6 @@ internal class MutationNySak(
             return Error.UkjentRolle(e.message!!)
         }
 
-        if (nySak.tilleggsinformasjon != null && nySak.tilleggsinformasjon.length > 1000)
-            return Error.UgyldigTilleggsinformasjon("Tilleggssinformasjon kan ikke inneholde fler enn 1000 tegn. Du har oppgitt ${nySak.tilleggsinformasjon.length} tegn.")
-
         val statusoppdateringHendelse = nySak.somNyStatusSakHendelse(
             hendelseId = UUID.randomUUID(),
             sakId = sakId,

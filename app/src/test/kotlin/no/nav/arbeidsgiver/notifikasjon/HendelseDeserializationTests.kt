@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.kafkaObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -20,6 +21,44 @@ import java.time.*
  * may be seen in kafka log.
  */
 class HendelseDeserializationTests : DescribeSpec({
+    describe("sak opprettet før nye felter er lagt til kan parses") {
+        val sakOpprettet = kafkaObjectMapper.readValue<Hendelse>("""
+            {
+              "@type": "SakOpprettet",
+              "hendelseId": "da89eafe-b31b-11eb-8529-000000000017",
+              "virksomhetsnummer": "1",
+              "produsentId": "1",
+              "kildeAppNavn": "1",
+              "sakId": "da89eafe-b31b-11eb-8529-000000000017",
+              "grupperingsid": "da89eafe-b31b-11eb-8529-000000000017",
+              "merkelapp": "tag",
+              "mottakere": [
+                {
+                  "@type": "altinn",
+                  "serviceCode": "1",
+                  "serviceEdition": "1",
+                  "virksomhetsnummer": "1"
+                },
+                {
+                  "@type": "naermesteLeder",
+                  "naermesteLederFnr": "2",
+                  "ansattFnr": "1",
+                  "virksomhetsnummer": "1"
+                }
+              ],
+              "tittel": "foo",
+              "lenke": "#foo",
+              "oppgittTidspunkt": "2021-01-01T13:37:00Z",
+              "mottattTidspunkt": "2024-09-27T11:15:11.077955+02:00",
+              "hardDelete": null
+            }
+        """.trimIndent())
+        it("Manglende felter skal bli null") {
+            sakOpprettet as SakOpprettet
+            sakOpprettet.nesteSteg shouldBe null
+            sakOpprettet.tilleggsinformasjon shouldBe null
+       }
+    }
 
     describe("kun 'mottaker'") {
         val oppgaveOpprettet = kafkaObjectMapper.readValue<Hendelse>("""
