@@ -25,10 +25,12 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationTilleggsinformasjonSak
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -753,6 +755,7 @@ class BrukerRepositoryImpl(
             is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
             is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
+            is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
         }
     }
 
@@ -1114,6 +1117,21 @@ class BrukerRepositoryImpl(
                     text(nyStatusSak.nyLenkeTilSak)
                     uuid(nyStatusSak.sakId)
                 }
+            }
+        }
+    }
+
+    private suspend fun oppdaterModellEtterTilleggsinformasjonSak ( tilleggsinformasjonSak: TilleggsinformasjonSak) {
+        database.transaction {
+            executeUpdate(
+                """
+                    update sak
+                    set tilleggsinformasjon = ?
+                    where id = ?
+                """
+            ){
+                nullableText(tilleggsinformasjonSak.tilleggsinformasjon)
+                uuid(tilleggsinformasjonSak.sakId)
             }
         }
     }

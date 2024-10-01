@@ -20,6 +20,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.time.OffsetDateTime
 import java.util.*
@@ -164,4 +165,5 @@ val Hendelse.typeNavn: String
         is KalenderavtaleOpprettet -> "KalenderavtaleOpprettet"
         is KalenderavtaleOppdatert -> "KalenderavtaleOppdatert"
         is NesteStegSak -> "NesteStegSak"
+        is TilleggsinformasjonSak -> "TillegsinformasjonSak"
     }

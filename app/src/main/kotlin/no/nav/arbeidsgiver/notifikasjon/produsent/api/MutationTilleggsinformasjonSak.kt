@@ -10,59 +10,59 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
 
-internal class MutationNesteStegSak(
+internal class MutationTilleggsinformasjonSak(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
 
-    private fun DataFetchingEnvironment.getNesteSteg(): NesteStegSakInput {
-        return NesteStegSakInput(
-            nesteSteg = getTypedArgumentOrNull("nesteSteg"),
+    private fun DataFetchingEnvironment.getTilleggsinformasjon(): TilleggsinformasjonSakInput {
+        return TilleggsinformasjonSakInput(
+            tilleggsinformasjon = getTypedArgumentOrNull("tilleggsinformasjon"),
             idempotencyKey = getTypedArgumentOrNull("idempotencyKey"),
         )
     }
 
     fun wire(runtime: RuntimeWiring.Builder) {
-        runtime.resolveSubtypes<NesteStegSakResultat>()
+        runtime.resolveSubtypes<TilleggsinformasjonSakResultat>()
 
         runtime.wire("Mutation") {
-            coDataFetcher("nesteStegSak") { env ->
-                nesteStegSak(
+            coDataFetcher("tilleggsinformasjonSak") { env ->
+                tilleggsinformasjonSak(
                     context = env.notifikasjonContext(),
                     id = env.getTypedArgument("id"),
-                    nesteSteg = env.getNesteSteg()
+                    tilleggsinformasjon = env.getTilleggsinformasjon()
                 )
             }
-            coDataFetcher("nesteStegSakByGrupperingsid") { env ->
-                nesteStegSakByGrupperingsid(
+            coDataFetcher("tilleggsinformasjonSakByGrupperingsid") { env ->
+                tilleggsinformasjonSakByGrupperingsid(
                     context = env.notifikasjonContext(),
                     grupperingsid = env.getTypedArgument("grupperingsid"),
                     merkelapp = env.getTypedArgument("merkelapp"),
-                    nesteSteg = env.getNesteSteg()
+                    tilleggsinformasjon = env.getTilleggsinformasjon()
                 )
             }
         }
     }
 
 
-    data class NesteStegSakInput(
-        val nesteSteg: String?,
+    data class TilleggsinformasjonSakInput(
+        val tilleggsinformasjon: String?,
         val idempotencyKey: String?,
-    ){
-        fun nesteStegSakHendelse(
+    ) {
+        fun tilleggsinformasjonSakHendelse(
             kildeAppNavn: String,
             produsentId: String,
             tilhørendeSak: ProdusentModel.Sak,
             idempotencyKey: String?
-        ): HendelseModel.NesteStegSak {
-            return HendelseModel.NesteStegSak(
+        ): HendelseModel.TilleggsinformasjonSak {
+            return HendelseModel.TilleggsinformasjonSak(
                 hendelseId = UUID.randomUUID(),
                 merkelapp = tilhørendeSak.merkelapp,
                 grupperingsid = tilhørendeSak.grupperingsid,
                 kildeAppNavn = kildeAppNavn,
                 produsentId = produsentId,
                 sakId = tilhørendeSak.id,
-                nesteSteg = nesteSteg,
+                tilleggsinformasjon = tilleggsinformasjon,
                 idempotenceKey = idempotencyKey,
                 virksomhetsnummer = tilhørendeSak.virksomhetsnummer,
             )
@@ -70,40 +70,40 @@ internal class MutationNesteStegSak(
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
-    sealed interface NesteStegSakResultat
+    sealed interface TilleggsinformasjonSakResultat
 
-    @JsonTypeName("NesteStegSakVellykket")
-    data class NesteStegSakVellykket(
+    @JsonTypeName("TilleggsinformasjonSakVellykket")
+    data class TilleggsinformasjonSakVellykket(
         val id: UUID,
-    ) : NesteStegSakResultat
+    ) : TilleggsinformasjonSakResultat
 
 
-    private suspend fun nesteStegSak(
+    private suspend fun tilleggsinformasjonSak(
         context: ProdusentAPI.Context,
         id: UUID,
-        nesteSteg: NesteStegSakInput,
-    ): NesteStegSakResultat {
+        tilleggsinformasjon: TilleggsinformasjonSakInput,
+    ): TilleggsinformasjonSakResultat {
         val sak = produsentRepository.hentSak(id)
             ?: return Error.SakFinnesIkke("sak med id=$id finnes ikke")
-        return nesteStegSak(context = context, sak = sak, nesteSteg = nesteSteg)
+        return tillegsinformasjonSak(context = context, sak = sak, tilleggsinformasjon = tilleggsinformasjon)
     }
 
-    private suspend fun nesteStegSakByGrupperingsid(
+    private suspend fun tilleggsinformasjonSakByGrupperingsid(
         context: ProdusentAPI.Context,
         grupperingsid: String,
         merkelapp: String,
-        nesteSteg: NesteStegSakInput
-    ): NesteStegSakResultat {
+        tilleggsinformasjon: TilleggsinformasjonSakInput
+    ): TilleggsinformasjonSakResultat {
         val sak = produsentRepository.hentSak(merkelapp = merkelapp, grupperingsid = grupperingsid)
             ?: return Error.SakFinnesIkke("sak med merkelapp='$merkelapp' og grupperingsid='$grupperingsid' finnes ikke")
-        return nesteStegSak(context = context, sak = sak, nesteSteg = nesteSteg)
+        return tillegsinformasjonSak(context = context, sak = sak, tilleggsinformasjon = tilleggsinformasjon)
     }
 
-    private suspend fun nesteStegSak(
+    private suspend fun tillegsinformasjonSak(
         context: ProdusentAPI.Context,
         sak: ProdusentModel.Sak,
-        nesteSteg: NesteStegSakInput,
-    ): NesteStegSakResultat {
+        tilleggsinformasjon: TilleggsinformasjonSakInput,
+    ): TilleggsinformasjonSakResultat {
         val produsent = hentProdusent(context) { error -> return error }
 
         tilgangsstyrMerkelapp(
@@ -111,21 +111,20 @@ internal class MutationNesteStegSak(
             sak.merkelapp,
         ) { error -> return error }
 
-        nesteSteg.idempotencyKey?.let {
+        tilleggsinformasjon.idempotencyKey?.let {
             if (produsentRepository.sakOppdateringFinnes(sak.id, it)) {
-                return NesteStegSakVellykket(sak.id)
+                return TilleggsinformasjonSakVellykket(sak.id)
             }
         }
 
-        val hendelse = nesteSteg.nesteStegSakHendelse(
+        val hendelse = tilleggsinformasjon.tilleggsinformasjonSakHendelse(
             context.appName,
             produsent.id,
             sak,
-            nesteSteg.idempotencyKey
+            tilleggsinformasjon.idempotencyKey
         )
 
         hendelseDispatcher.send(hendelse)
-        return NesteStegSakVellykket(sak.id)
+        return TilleggsinformasjonSakVellykket(sak.id)
     }
-
 }

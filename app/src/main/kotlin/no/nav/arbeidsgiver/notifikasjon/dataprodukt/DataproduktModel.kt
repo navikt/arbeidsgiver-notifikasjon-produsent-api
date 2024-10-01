@@ -28,6 +28,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ParameterSetters
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -475,6 +476,17 @@ class DataproduktModel(
                     date(hendelse.frist)
                     setPåminnelseFelter(hendelse.påminnelse)
                     uuid(hendelse.notifikasjonId)
+                }
+            }
+
+            is TilleggsinformasjonSak -> {
+                database.nonTransactionalExecuteUpdate("""
+                    update sak
+                    set tilleggsinformasjon = ?
+                    where sak_id = ?
+                """.trimIndent()) {
+                    nullableText(hendelse.tilleggsinformasjon)
+                    uuid(hendelse.sakId)
                 }
             }
 

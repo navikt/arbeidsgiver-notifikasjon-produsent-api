@@ -332,12 +332,23 @@ type NyStatusSakVellykket {
     statuser: [StatusOppdatering!]!
 }
 
+union TilleggsinformasjonSakResultat =
+    | TilleggsinformasjonSakVellykket
+    | SakFinnesIkke
+    | Konflikt
+    | UgyldigMerkelapp
+    | UkjentProdusent
+
 union NesteStegSakResultat =
     | NesteStegSakVellykket
     | SakFinnesIkke
     | Konflikt
     | UgyldigMerkelapp
     | UkjentProdusent
+
+type TilleggsinformasjonSakVellykket {
+    id: ID!
+}
 
 type NesteStegSakVellykket {
     id: ID!
@@ -605,6 +616,19 @@ type Mutation {
         """
         nyLenkeTilSak: String
     ): NyStatusSakResultat!
+
+    tilleggsinformasjonSak(
+        idempotencyKey: String
+        id: ID!
+
+        """
+        Dette feltet er frivillig.
+        Her har dere mulighet til å vise virksomheten mer informasjon om saken.
+        Feltet er begrenset til 1000 tegn og kan ikke inneholde personnummer.
+        """
+        tilleggsinformasjon: String @Validate @MaxLength(max: 1000) @NonIdentifying
+    ): TilleggsinformasjonSakResultat!
+
 
     nesteStegSak(
         idempotencyKey: String

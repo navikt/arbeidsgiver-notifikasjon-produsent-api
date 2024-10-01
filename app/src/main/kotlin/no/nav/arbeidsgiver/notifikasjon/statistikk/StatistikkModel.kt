@@ -27,6 +27,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOppret
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -438,6 +439,10 @@ class StatistikkModel(
             }
 
             is NesteStegSak -> {
+                // noop
+            }
+
+            is TilleggsinformasjonSak -> {
                 // noop
             }
 
