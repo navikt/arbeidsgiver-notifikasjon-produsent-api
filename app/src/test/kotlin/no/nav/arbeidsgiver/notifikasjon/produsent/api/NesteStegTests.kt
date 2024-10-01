@@ -12,7 +12,7 @@ import java.util.*
 
 class NesteStegTests: DescribeSpec({
     describe("Oppretter ny sak med neste steg") {
-        val (produsentRepository, hendelseProdusent, engine) = setupEngine()
+        val (produsentRepository, _, engine) = setupEngine()
         val sakUtenNesteSteg = engine.nySak(uuid("1").toString())
         val sakMedNesteSteg = engine.nySak(uuid("2").toString(),"foo")
 
@@ -36,7 +36,7 @@ class NesteStegTests: DescribeSpec({
     }
 
     describe("Endrer nesteSteg på eksisterende sak") {
-        val (produsentRepository, hendelseProdusent, engine) = setupEngine()
+        val (produsentRepository, _, engine) = setupEngine()
         val sak = engine.nySak(uuid("1").toString(),null)
         val sakID = sak.getTypedContent<UUID>("$.nySak.id")
         val idempotencyKey1 = uuid("2").toString()
