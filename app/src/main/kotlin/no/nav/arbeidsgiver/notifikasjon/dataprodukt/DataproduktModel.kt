@@ -399,9 +399,9 @@ class DataproduktModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                         insert into sak (
-                            sak_id, grupperings_id, produsent_id, merkelapp, tittel, tilleggsinformasjon,  lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
+                            sak_id, grupperings_id, produsent_id, merkelapp, tittel, tilleggsinformasjon, neste_steg, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
                         ) 
-                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         on conflict do nothing
                     """
                 ) {
@@ -411,6 +411,7 @@ class DataproduktModel(
                     text(hendelse.merkelapp)
                     text(hendelse.tittel)
                     nullableText(hendelse.tilleggsinformasjon)
+                    nullableText(hendelse.nesteSteg)
                     nullableText(hendelse.lenke)
                     nullableInstantAsText(hendelse.oppgittTidspunkt?.toInstant())
                     instantAsText(hendelse.mottattTidspunkt?.toInstant() ?: metadata.timestamp)
