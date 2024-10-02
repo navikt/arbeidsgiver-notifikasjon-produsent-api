@@ -206,7 +206,9 @@ val YRKESSKADE = Produsent(
 val FORELDREPENGER = Produsent(
     id = "fp-inntektsmelding-notifikasjon",
     accessPolicy = basedOnEnv(
-        prod = { listOf() },
+        prod = { listOf(
+            "prod-gcp:teamforeldrepenger:fpinntektsmelding"
+        ) },
         other = { listOf(
             "dev-gcp:teamforeldrepenger:fpinntektsmelding",
         )},
