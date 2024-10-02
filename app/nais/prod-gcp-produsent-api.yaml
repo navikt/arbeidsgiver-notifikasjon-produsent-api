@@ -73,10 +73,6 @@ spec:
           namespace: yrkesskade
           cluster: prod-gcp
 
-        - application: fpinntektsmelding
-          namespace: teamforeldrepenger
-          cluster: prod-gcp
-
   azure:
     application:
       enabled: true
