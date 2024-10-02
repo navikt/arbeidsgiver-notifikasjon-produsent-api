@@ -136,10 +136,7 @@ const eksempler = {
     'Tilskuddsberegning i avtale endret av veileder.',
     'Avtalen må godkjennes på nytt.',
     'Kontaktinformasjon i avtale endret av veileder.'
-  ],
-  'Foreldrepenger' : [
-
-  ],//TODO: Fylle inn mock-eksempler
+  ]
 }
 
 const saker = [
