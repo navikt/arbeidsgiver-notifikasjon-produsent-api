@@ -629,6 +629,19 @@ type Mutation {
         tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
     ): TilleggsinformasjonSakResultat!
 
+    tilleggsinformasjonSakByGrupperingsid(
+        idempotencyKey: String
+        grupperingsid: String!
+        merkelapp: String!
+
+        """
+        Dette feltet er frivillig.
+        Her har dere mulighet til å vise virksomheten mer informasjon om saken.
+        Feltet er begrenset til 140 tegn og kan ikke inneholde personnummer.
+        """
+        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
+    ): TilleggsinformasjonSakResultat!
+
 
     nesteStegSak(
         idempotencyKey: String
