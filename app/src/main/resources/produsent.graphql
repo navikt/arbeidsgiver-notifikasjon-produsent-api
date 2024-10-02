@@ -509,9 +509,9 @@ type Mutation {
 
         """
         Dette feltet er frivillig.
-        Tilleggssinformasjon som vises under tittelen på en sak. Maks 1000 tegn
+        Tilleggssinformasjon som vises under tittelen på en sak. Maks 140 tegn
         """
-        tilleggsinformasjon: String @Validate @MaxLength(max: 1000) @NonIdentifying
+        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
 
         """
         Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken.
@@ -624,9 +624,9 @@ type Mutation {
         """
         Dette feltet er frivillig.
         Her har dere mulighet til å vise virksomheten mer informasjon om saken.
-        Feltet er begrenset til 1000 tegn og kan ikke inneholde personnummer.
+        Feltet er begrenset til 140 tegn og kan ikke inneholde personnummer.
         """
-        tilleggsinformasjon: String @Validate @MaxLength(max: 1000) @NonIdentifying
+        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
     ): TilleggsinformasjonSakResultat!
 
 

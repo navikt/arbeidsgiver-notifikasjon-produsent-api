@@ -140,7 +140,7 @@ class NySakTests : DescribeSpec({
         }
 
         val response12 = engine.nySak(
-            tilleggsinformasjon = "A".repeat(1001)
+            tilleggsinformasjon = "A".repeat(141)
         )
 
         it("should fail because too long tilleggsinformasjon"){
