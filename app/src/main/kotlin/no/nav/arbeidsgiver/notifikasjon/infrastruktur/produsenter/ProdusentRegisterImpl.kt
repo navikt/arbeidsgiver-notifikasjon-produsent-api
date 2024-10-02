@@ -6,10 +6,12 @@ val FAGER_TESTPRODUSENT = Produsent(
     id = "fager",
     accessPolicy = basedOnEnv(
         prod = { listOf() },
-        other = { listOf(
-            "dev-gcp:fager:notifikasjon-test-produsent",
-            "dev-gcp:fager:notifikasjon-test-produsent-v2",
-        ) },
+        other = {
+            listOf(
+                "dev-gcp:fager:notifikasjon-test-produsent",
+                "dev-gcp:fager:notifikasjon-test-produsent-v2",
+            )
+        },
     ),
     tillatteMerkelapper = listOf(
         "fager",
@@ -75,12 +77,16 @@ val ARBEIDSGIVER_TILTAK = Produsent(
 val ESYFO = Produsent(
     id = "esyfovarsel",
     accessPolicy = basedOnEnv(
-        prod = { listOf(
-            "prod-gcp:team-esyfo:esyfovarsel",
-        ) },
-        other = { listOf(
-            "dev-gcp:team-esyfo:esyfovarsel",
-        ) },
+        prod = {
+            listOf(
+                "prod-gcp:team-esyfo:esyfovarsel",
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:team-esyfo:esyfovarsel",
+            )
+        },
     ),
     tillatteMerkelapper = listOf(
         "Dialogmøte",
@@ -101,7 +107,11 @@ val PERMITTERING = Produsent(
         "Innskrenking av arbeidstid",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "5810", version = "1", description = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV"),
+        ServicecodeDefinisjon(
+            code = "5810",
+            version = "1",
+            description = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV"
+        ),
     )
 )
 
@@ -120,12 +130,18 @@ val FRITAKAGP = Produsent(
 val HELSEARBEIDSGIVER = Produsent(
     id = "helsearbeidsgiver",
     accessPolicy = basedOnEnv(
-        prod = { listOf(
-            "prod-gcp:helsearbeidsgiver:im-notifikasjon",
-        ) },
-        other = { listOf(
-            "dev-gcp:helsearbeidsgiver:im-notifikasjon",
-        ) },
+        prod = {
+            listOf(
+                "prod-gcp:helsearbeidsgiver:im-notifikasjon",
+                "prod-gcp:helsearbeidsgiver:hag-admin"
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:helsearbeidsgiver:im-notifikasjon",
+                "dev-gcp:helsearbeidsgiver:hag-admin"
+            )
+        },
     ),
     tillatteMerkelapper = listOf(
         "Inntektsmelding",
@@ -139,12 +155,16 @@ val HELSEARBEIDSGIVER = Produsent(
 val TOI = Produsent(
     id = "toi",
     accessPolicy = basedOnEnv(
-        prod = { listOf(
-            "prod-gcp:toi:toi-arbeidsgiver-notifikasjon"
-        ) },
-        other = { listOf(
-            "dev-gcp:toi:toi-arbeidsgiver-notifikasjon",
-        ) },
+        prod = {
+            listOf(
+                "prod-gcp:toi:toi-arbeidsgiver-notifikasjon"
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:toi:toi-arbeidsgiver-notifikasjon",
+            )
+        },
     ),
     tillatteMerkelapper = listOf(
         "Kandidater",
@@ -157,14 +177,18 @@ val TOI = Produsent(
 val ARBEIDSGIVERDIALOG = Produsent(
     id = "arbeidsgiver-dialog",
     accessPolicy = basedOnEnv(
-        prod = { listOf(
-            "prod-external:teamcrm:salesforce",
-            "prod-gcp:teamcrm:saas-proxy",
-        )},
-        other = { listOf(
-            "dev-external:teamcrm:salesforce",
-            "dev-gcp:teamcrm:saas-proxy",
-        )},
+        prod = {
+            listOf(
+                "prod-external:teamcrm:salesforce",
+                "prod-gcp:teamcrm:saas-proxy",
+            )
+        },
+        other = {
+            listOf(
+                "dev-external:teamcrm:salesforce",
+                "dev-gcp:teamcrm:saas-proxy",
+            )
+        },
     ),
     tillatteMerkelapper = listOf(
         "Lønnstilskudd",
@@ -186,18 +210,26 @@ val ARBEIDSGIVERDIALOG = Produsent(
 val YRKESSKADE = Produsent(
     id = "yrkesskade-notifikasjon",
     accessPolicy = basedOnEnv(
-        prod = { listOf(
-            "prod-gcp:yrkesskade:yrkesskade-melding-mottak",
-        )},
-        other = { listOf(
-            "dev-gcp:yrkesskade:yrkesskade-melding-mottak",
-        )},
+        prod = {
+            listOf(
+                "prod-gcp:yrkesskade:yrkesskade-melding-mottak",
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:yrkesskade:yrkesskade-melding-mottak",
+            )
+        },
     ),
     tillatteMerkelapper = listOf(
         "Skademelding",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "5902", version = "1", description = "Skademelding ved arbeidsulykke eller yrkessykdom")
+        ServicecodeDefinisjon(
+            code = "5902",
+            version = "1",
+            description = "Skademelding ved arbeidsulykke eller yrkessykdom"
+        )
     )
 )
 
@@ -205,9 +237,11 @@ val FORELDREPENGER = Produsent(
     id = "fp-inntektsmelding-notifikasjon",
     accessPolicy = basedOnEnv(
         prod = { listOf() },
-        other = { listOf(
-            "dev-gcp:teamforeldrepenger:fpinntektsmelding",
-        )},
+        other = {
+            listOf(
+                "dev-gcp:teamforeldrepenger:fpinntektsmelding",
+            )
+        },
     ),
     tillatteMerkelapper = listOf(
         "Inntektsmelding foreldrepenger",
@@ -222,9 +256,11 @@ val K9 = Produsent(
     id = "k9-inntektsmelding-notifikasjon",
     accessPolicy = basedOnEnv(
         prod = { listOf() },
-        other = { listOf(
-            "dev-gcp:k9saksbehandling:k9-inntektsmelding",
-        )},
+        other = {
+            listOf(
+                "dev-gcp:k9saksbehandling:k9-inntektsmelding",
+            )
+        },
     ),
     tillatteMerkelapper = listOf(
         "Inntektsmelding omsorgspenger",
