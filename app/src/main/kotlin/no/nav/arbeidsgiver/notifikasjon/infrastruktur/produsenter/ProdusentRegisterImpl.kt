@@ -122,9 +122,11 @@ val HELSEARBEIDSGIVER = Produsent(
     accessPolicy = basedOnEnv(
         prod = { listOf(
             "prod-gcp:helsearbeidsgiver:im-notifikasjon",
+            "prod-gcp:helsearbeidsgiver:hag-admin"
         ) },
         other = { listOf(
             "dev-gcp:helsearbeidsgiver:im-notifikasjon",
+            "dev-gcp:helsearbeidsgiver:hag-admin"
         ) },
     ),
     tillatteMerkelapper = listOf(
