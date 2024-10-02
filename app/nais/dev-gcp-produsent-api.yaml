@@ -70,6 +70,10 @@ spec:
           namespace: helsearbeidsgiver
           cluster: dev-gcp
 
+        - application: hag-admin
+          namespace: helsearbeidsgiver
+          cluster: dev-gcp
+
         - application: toi-arbeidsgiver-notifikasjon
           namespace: toi
           cluster: dev-gcp
