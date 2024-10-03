@@ -47,6 +47,7 @@ class HardDeleteSakTests : DescribeSpec({
         produsentId = "",
         nesteSteg = null,
         hardDelete = null,
+        tilleggsinformasjon = null
     )
     val beskjedOpprettet = BeskjedOpprettet(
         virksomhetsnummer = "1",
@@ -237,6 +238,7 @@ class HardDeleteSakTests : DescribeSpec({
                             initiellStatus: MOTTATT
                             tidspunkt: "2020-01-01T01:01Z"
                             tittel: "ny sak"
+                            tilleggsinformasjon: "Her er noe tilleggsinformasjon"
                             lenke: "#foo"
                         ) {
                             __typename

@@ -34,6 +34,7 @@ class HentSakTests : DescribeSpec({
         produsentId = "",
         nesteSteg = null,
         hardDelete = null,
+        tilleggsinformasjon = null
     )
 
     val nyStatusSakHendelse = HendelseModel.NyStatusSak(
@@ -87,6 +88,7 @@ class HentSakTests : DescribeSpec({
         produsentId = "",
         nesteSteg = null,
         hardDelete = null,
+        tilleggsinformasjon = null
     )
 
 

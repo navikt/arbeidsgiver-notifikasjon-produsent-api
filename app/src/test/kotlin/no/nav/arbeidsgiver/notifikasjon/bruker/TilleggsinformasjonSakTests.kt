@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
@@ -10,53 +11,52 @@ import java.time.OffsetDateTime
 import java.util.*
 
 
-class NesteStegSakTests : DescribeSpec({
+class TilleggsinformasjonSakTests : DescribeSpec({
     val (brukerRepository, engine) = setupRepoOgEngine()
 
-    describe("Sak med nesteSteg null") {
-        val sak = brukerRepository.nySakHendelse(nesteSteg = null)
+    describe("Sak med tilleggsinformasjon null") {
+        val sak = brukerRepository.nySakHendelse(tilleggsinformasjon = null)
 
-        it ("Neste steg skal være null") {
+        it ("Tilleggsinformasjon skal være null") {
             val sakRespons = engine.sakById(sak.sakId)
-            val neste = sakRespons.getTypedContent<String?>("$.sakById.sak.nesteSteg")
-            neste shouldBe null
+            val tilleggsinformasjon = sakRespons.getTypedContent<String?>("$.sakById.sak.tilleggsinformasjon")
+            tilleggsinformasjon shouldBe null
         }
 
-        it("burde få ny nesteSteg med idempotensnøkkel null") {
-            brukerRepository.nesteStegHendelse(
-                nesteSteg = "nesteSteg",
+        it("burde få ny tilleggsinformasjon med idempotensnøkkel null") {
+            brukerRepository.tilleggsinformasjonHendelse(
+                tilleggsinformasjon = "tilleggsinformasjon",
                 sakId = sak.sakId,
                 grupperingsid = sak.grupperingsid,
                 idempotenceKey = null
             )
             val sakRespons = engine.sakById(sak.sakId)
-            val neste = sakRespons.getTypedContent<String?>("$.sakById.sak.nesteSteg")
-            neste shouldBe "nesteSteg"
+            val tilleggsinformasjon = sakRespons.getTypedContent<String?>("$.sakById.sak.tilleggsinformasjon")
+            tilleggsinformasjon shouldBe "tilleggsinformasjon"
         }
 
-        it("burde få ny nesteSteg med idempotensnøkkel") {
-            brukerRepository.nesteStegHendelse(
-                nesteSteg = "nytt steg",
+        it("burde få ny tilleggsinformasjon med idempotensnøkkel") {
+            brukerRepository.tilleggsinformasjonHendelse(
+                tilleggsinformasjon = "ny tilleggsinformasjon",
                 sakId = sak.sakId,
                 grupperingsid = sak.grupperingsid,
                 idempotenceKey = "idempotensnøkkel"
             )
             val sakRespons = engine.sakById(sak.sakId)
-            val neste = sakRespons.getTypedContent<String?>("$.sakById.sak.nesteSteg")
-            neste shouldBe "nytt steg"
+            val tilleggsinformasjon = sakRespons.getTypedContent<String?>("$.sakById.sak.tilleggsinformasjon")
+            tilleggsinformasjon shouldBe "ny tilleggsinformasjon"
         }
-
     }
 })
 
-private suspend fun BrukerRepository.nesteStegHendelse(
-    nesteSteg: String?,
+private suspend fun BrukerRepository.tilleggsinformasjonHendelse(
+    tilleggsinformasjon: String?,
     sakId: UUID,
     grupperingsid: String,
     idempotenceKey: String?
 ) =
-    HendelseModel.NesteStegSak(
-        nesteSteg = nesteSteg,
+    HendelseModel.TilleggsinformasjonSak(
+        tilleggsinformasjon = tilleggsinformasjon,
         sakId = sakId,
         grupperingsid = grupperingsid,
         merkelapp = "tag",
@@ -67,10 +67,10 @@ private suspend fun BrukerRepository.nesteStegHendelse(
         kildeAppNavn = "1",
     ).also{oppdaterModellEtterHendelse(it)}
 
-private suspend fun BrukerRepository.nySakHendelse(nesteSteg: String?) = HendelseModel.SakOpprettet(
+private suspend fun BrukerRepository.nySakHendelse(tilleggsinformasjon: String?) = HendelseModel.SakOpprettet(
     virksomhetsnummer = "42",
     merkelapp = "tag",
-    nesteSteg = nesteSteg,
+    nesteSteg = null,
     mottakere = listOf(HendelseModel.AltinnMottaker("5441", "1", "42")),
     oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
     grupperingsid = UUID.randomUUID().toString(),
@@ -82,7 +82,7 @@ private suspend fun BrukerRepository.nySakHendelse(nesteSteg: String?) = Hendels
     lenke = null,
     sakId = UUID.randomUUID(),
     tittel = "foo",
-    tilleggsinformasjon = null
+    tilleggsinformasjon = tilleggsinformasjon
 ).also{oppdaterModellEtterHendelse(it)}
 
 private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApplicationEngine> {
@@ -109,7 +109,7 @@ private fun TestApplicationEngine.sakById(sakId: UUID) = brukerApi(
                     sakById(id: ${"$"}id) {
                         sak {
                             id
-                            nesteSteg
+                            tilleggsinformasjon
                             merkelapp
                             virksomhet {
                                 virksomhetsnummer                                

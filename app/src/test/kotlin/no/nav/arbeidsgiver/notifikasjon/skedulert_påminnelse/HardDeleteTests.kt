@@ -270,6 +270,7 @@ private fun opprettSak(
         mottattTidspunkt = null,
         nesteSteg = null,
         hardDelete = null,
+        tilleggsinformasjon = null
     )
 }
 

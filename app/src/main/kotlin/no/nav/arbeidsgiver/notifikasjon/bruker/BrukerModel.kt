@@ -116,6 +116,7 @@ object BrukerModel {
         val tittel: String,
         val lenke: String?,
         val nesteSteg: String?,
+        val tilleggsinformasjon: String?,
         val merkelapp: String,
         val opprettetTidspunkt: Instant,
         val grupperingsid: String,

@@ -255,6 +255,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                 }
             }
             is HendelseModel.NesteStegSak,
+            is HendelseModel.TilleggsinformasjonSak,
             is HendelseModel.BeskjedOpprettet,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.SakOpprettet,

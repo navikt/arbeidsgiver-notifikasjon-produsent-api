@@ -36,7 +36,9 @@ internal sealed class Error {
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         MutationNyStatusSak.NyStatusSakResultat,
         MutationNesteStegSak.NesteStegSakResultat,
-        MutationKalenderavtale.OppdaterKalenderavtaleResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat,
+        MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat
+
 
     @JsonTypeName("UkjentProdusent")
     data class UkjentProdusent(
@@ -56,7 +58,8 @@ internal sealed class Error {
         MutationNySak.NySakResultat,
         MutationNyStatusSak.NyStatusSakResultat,
         MutationNesteStegSak.NesteStegSakResultat,
-        MutationKalenderavtale.OppdaterKalenderavtaleResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat,
+        MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat
 
     @JsonTypeName("UgyldigMottaker")
     data class UgyldigMottaker(
@@ -73,7 +76,8 @@ internal sealed class Error {
         MutationNyStatusSak.NyStatusSakResultat,
         MutationNesteStegSak.NesteStegSakResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
-        MutationKalenderavtale.OppdaterKalenderavtaleResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat,
+        MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat
 
     @JsonTypeName("DuplikatEksternIdOgMerkelapp")
     data class DuplikatEksternIdOgMerkelapp(
@@ -135,7 +139,8 @@ internal sealed class Error {
         MutationHardDeleteSak.HardDeleteSakResultat,
         MutationKalenderavtale.NyKalenderavtaleResultat,
         QuerySak.HentSakResultat,
-        MutationNesteStegSak.NesteStegSakResultat
+        MutationNesteStegSak.NesteStegSakResultat,
+        MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat
 
     @JsonTypeName("OppgavenErAlleredeUtfoert")
     data class OppgavenErAlleredeUtfoert(
@@ -149,6 +154,5 @@ internal sealed class Error {
     ) : Error(),
         MutationKalenderavtale.NyKalenderavtaleResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat
-
 }
 

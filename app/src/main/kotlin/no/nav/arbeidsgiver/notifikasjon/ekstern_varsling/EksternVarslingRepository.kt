@@ -26,6 +26,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOppret
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
@@ -67,6 +68,7 @@ class EksternVarslingRepository(
             is SakOpprettet -> Unit
             is NyStatusSak -> Unit
             is NesteStegSak -> Unit
+            is TilleggsinformasjonSak -> Unit
             is FristUtsatt -> Unit
         }
     }

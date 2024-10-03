@@ -3,8 +3,8 @@
 
 
 directive @Validate on ARGUMENT_DEFINITION
-directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION
-directive @NonIdentifying on INPUT_FIELD_DEFINITION
+directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
+directive @NonIdentifying on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 directive @ExactlyOneFieldGiven on INPUT_OBJECT
 directive @MaxValue(upToIncluding: Int) on ARGUMENT_DEFINITION
 
@@ -126,6 +126,7 @@ type Sak {
     tittel: String!
     lenke: String
     nesteSteg: String
+    tilleggsinformasjon: String
     merkelapp: String!
     sisteStatus: SaksStatus
 }
@@ -331,12 +332,23 @@ type NyStatusSakVellykket {
     statuser: [StatusOppdatering!]!
 }
 
+union TilleggsinformasjonSakResultat =
+    | TilleggsinformasjonSakVellykket
+    | SakFinnesIkke
+    | Konflikt
+    | UgyldigMerkelapp
+    | UkjentProdusent
+
 union NesteStegSakResultat =
     | NesteStegSakVellykket
     | SakFinnesIkke
     | Konflikt
     | UgyldigMerkelapp
     | UkjentProdusent
+
+type TilleggsinformasjonSakVellykket {
+    id: ID!
+}
 
 type NesteStegSakVellykket {
     id: ID!
@@ -496,6 +508,12 @@ type Mutation {
         tittel: String!
 
         """
+        Dette feltet er frivillig.
+        Tilleggssinformasjon som vises under tittelen på en sak. Maks 140 tegn
+        """
+        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
+
+        """
         Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken.
         Dersom lenken ikke oppgis vil saken lenke til en enkel visning av saken i Min side - Arbeidsgiver.
         """
@@ -598,6 +616,32 @@ type Mutation {
         """
         nyLenkeTilSak: String
     ): NyStatusSakResultat!
+
+    tilleggsinformasjonSak(
+        idempotencyKey: String
+        id: ID!
+
+        """
+        Dette feltet er frivillig.
+        Her har dere mulighet til å vise virksomheten mer informasjon om saken.
+        Feltet er begrenset til 140 tegn og kan ikke inneholde personnummer.
+        """
+        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
+    ): TilleggsinformasjonSakResultat!
+
+    tilleggsinformasjonSakByGrupperingsid(
+        idempotencyKey: String
+        grupperingsid: String!
+        merkelapp: String!
+
+        """
+        Dette feltet er frivillig.
+        Her har dere mulighet til å vise virksomheten mer informasjon om saken.
+        Feltet er begrenset til 140 tegn og kan ikke inneholde personnummer.
+        """
+        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
+    ): TilleggsinformasjonSakResultat!
+
 
     nesteStegSak(
         idempotencyKey: String

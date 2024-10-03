@@ -24,6 +24,7 @@ class QuerySakTests : DescribeSpec({
             mottakere = listOf(HendelseModel.AltinnMottaker("5441", "1", "42")),
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
+            tilleggsinformasjon = "tilleggsinformasjon1"
         )
         val sak2 = brukerRepository.sakOpprettet(
             virksomhetsnummer = "42",
@@ -33,6 +34,7 @@ class QuerySakTests : DescribeSpec({
             mottakere = listOf(HendelseModel.AltinnMottaker("5441", "1", "42")),
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
+            tilleggsinformasjon = "tilleggsinformasjon2"
         )
 
         it("sak1 response inneholder riktig data") {
@@ -46,6 +48,7 @@ class QuerySakTests : DescribeSpec({
             sak.virksomhet.virksomhetsnummer shouldBe sak1.virksomhetsnummer
             sak.sisteStatus.tekst shouldBe "Mottatt"
             sak.sisteStatus.tidspunkt shouldBe sak1.opprettetTidspunkt(fallbackTimeNotUsed)
+            sak.tilleggsinformasjon shouldBe "tilleggsinformasjon1"
         }
 
         it("sak2 response inneholder riktig data") {
@@ -59,6 +62,7 @@ class QuerySakTests : DescribeSpec({
             sak.virksomhet.virksomhetsnummer shouldBe sak2.virksomhetsnummer
             sak.sisteStatus.tekst shouldBe "Mottatt"
             sak.sisteStatus.tidspunkt shouldBe sak2.opprettetTidspunkt(fallbackTimeNotUsed)
+            sak.tilleggsinformasjon shouldBe "tilleggsinformasjon2"
         }
 
         it("bogus request response inneholder riktig data") {
@@ -85,6 +89,7 @@ class QuerySakTests : DescribeSpec({
             mottakere = listOf(HendelseModel.AltinnMottaker("5441", "1", "42")),
             oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             mottattTidspunkt = OffsetDateTime.now(),
+            tilleggsinformasjon = "tilleggsinformasjon"
         )
 
         it("sak1 response inneholder riktig data") {
@@ -98,6 +103,7 @@ class QuerySakTests : DescribeSpec({
             sak.virksomhet.virksomhetsnummer shouldBe sak1.virksomhetsnummer
             sak.sisteStatus.tekst shouldBe "Mottatt"
             sak.sisteStatus.tidspunkt shouldBe sak1.opprettetTidspunkt(fallbackTimeNotUsed)
+            sak.tilleggsinformasjon shouldBe null
         }
 
         it("sak2 response inneholder riktig data") {
@@ -110,6 +116,7 @@ class QuerySakTests : DescribeSpec({
             sak.virksomhet.virksomhetsnummer shouldBe sak2.virksomhetsnummer
             sak.sisteStatus.tekst shouldBe "Mottatt"
             sak.sisteStatus.tidspunkt shouldBe sak2.opprettetTidspunkt(fallbackTimeNotUsed)
+            sak.tilleggsinformasjon shouldBe "tilleggsinformasjon"
         }
 
         it("bogus request response inneholder riktig data") {
@@ -159,6 +166,7 @@ private fun TestApplicationEngine.sakById(sakId: UUID) = brukerApi(
                             }
                             frister
                             nesteSteg
+                            tilleggsinformasjon
                             oppgaver {
                                 frist
                                 tilstand
@@ -213,6 +221,7 @@ private fun TestApplicationEngine.sakByGrupperingsid(grupperingsid: String, merk
                             }
                             frister
                             nesteSteg
+                            tilleggsinformasjon
                             oppgaver {
                                 frist
                                 tilstand

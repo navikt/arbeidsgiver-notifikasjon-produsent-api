@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 
 interface KafkaReaperService {
@@ -43,8 +44,10 @@ class KafkaReaperServiceImpl(
                     kafkaReaperModel.fjernRelasjon(relatertHendelseId)
                 }
             }
+
             is SakOpprettet,
             is NesteStegSak,
+            is TilleggsinformasjonSak,
             is NyStatusSak,
             is SoftDelete,
             is BeskjedOpprettet,

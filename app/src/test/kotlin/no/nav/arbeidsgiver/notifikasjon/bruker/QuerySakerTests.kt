@@ -33,6 +33,7 @@ class QuerySakerTests : DescribeSpec({
                 mottakere = listOf(AltinnMottaker("5441", "1", "42")),
                 oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
                 mottattTidspunkt = OffsetDateTime.now(),
+                tilleggsinformasjon = "tilleggsinformasjon"
             )
 
             val response = engine.hentSaker()
@@ -46,6 +47,7 @@ class QuerySakerTests : DescribeSpec({
                 sak.virksomhet.virksomhetsnummer shouldBe sakOpprettet.virksomhetsnummer
                 sak.sisteStatus.tekst shouldBe "Mottatt"
                 sak.sisteStatus.tidspunkt shouldBe sakOpprettet.opprettetTidspunkt(fallbackTimeNotUsed)
+                sak.tilleggsinformasjon shouldBe "tilleggsinformasjon"
             }
         }
 

@@ -96,6 +96,7 @@ class MutationExceptionTests : DescribeSpec({
                     initiellStatus: MOTTATT
                     tidspunkt: "2020-01-01T01:01Z"
                     tittel: "foo"
+                    tilleggsinformasjon: "Her er noe tilleggsinformasjon"
                     lenke: "https://foo.no"
                 ) {
                     __typename

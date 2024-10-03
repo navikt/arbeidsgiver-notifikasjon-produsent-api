@@ -4,15 +4,13 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContainIgnoringCase
 import io.kotest.matchers.types.instanceOf
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -140,6 +138,32 @@ class NySakTests : DescribeSpec({
         it("should be successful") {
             response11.getTypedContent<String>("$.nySak.__typename") shouldBe "NySakVellykket"
         }
+
+        val response12 = engine.nySak(
+            tilleggsinformasjon = "A".repeat(141)
+        )
+
+        it("should fail because too long tilleggsinformasjon"){
+            response12.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien overstiger maks antall tegn"
+        }
+
+        val response13 = engine.nySak(
+            tilleggsinformasjon = "Stor Lampe identifiserende data: 99999999999"
+        )
+        it("Should fail because of sensitive information") {
+            response13.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien inneholder uønsket data: personnummer (11 siffer)"
+        }
+
+        engine.nySak(
+            grupperingsid = "13",
+            tilleggsinformasjon = "Dette er tilleggsinfo"
+        )
+
+        it ("tilleggsinformasjon should be set") {
+            val hendelse = stubbedKafkaProducer.hendelser
+                .filterIsInstance<HendelseModel.SakOpprettet>().first { it.grupperingsid == "13" }
+            hendelse.tilleggsinformasjon shouldBe "Dette er tilleggsinfo"
+        }
     }
 })
 
@@ -160,6 +184,7 @@ private fun TestApplicationEngine.nySak(
     status: SaksStatus = SaksStatus.MOTTATT,
     tittel: String = "tittel",
     lenke: String? = "lenke",
+    tilleggsinformasjon: String? = "her er noe tilleggsinformasjon",
     hardDeleteDen: String? = null,
     hardDeleteOm: String? = null,
 ) =
@@ -176,6 +201,7 @@ private fun TestApplicationEngine.nySak(
                             serviceEdition: "1"
                         }
                     }]
+                    tilleggsinformasjon: "$tilleggsinformasjon"
                     initiellStatus: $status
                     tidspunkt: "2020-01-01T01:01Z"
                     tittel: "$tittel"

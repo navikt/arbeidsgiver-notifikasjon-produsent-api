@@ -60,7 +60,7 @@ interface ProdusentRepository {
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean
-    suspend fun nesteStegSakFinnes(id: UUID, idempotenceKey: String): Boolean
+    suspend fun sakOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean
 }
 
 class ProdusentRepositoryImpl(
@@ -181,6 +181,7 @@ class ProdusentRepositoryImpl(
                 deletedAt = getObject("deleted_at", OffsetDateTime::class.java),
                 virksomhetsnummer = getString("virksomhetsnummer"),
                 nesteSteg = getString("neste_steg"),
+                tilleggsinformasjon = getString("tilleggsinformasjon"),
                 statusoppdateringer = laxObjectMapper.readValue(getString("statusoppdateringer"))
             )
         }
@@ -318,6 +319,7 @@ class ProdusentRepositoryImpl(
             is KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
             is KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
+            is HendelseModel.TilleggsinformasjonSak -> oppdaterModellEtterTillegsinformasjonSak(hendelse)
         }
     }
 
@@ -336,8 +338,8 @@ class ProdusentRepositoryImpl(
         database.transaction {
             executeUpdate(
                 """
-                    insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, lenke, neste_steg, tidspunkt_mottatt)
-                    values (?, ?, ?, ?, ?::jsonb, ?, ?, ?, now())
+                    insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, tilleggsinformasjon, lenke, neste_steg, tidspunkt_mottatt)
+                    values (?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, now())
                     on conflict do nothing
                 """
             ) {
@@ -347,6 +349,7 @@ class ProdusentRepositoryImpl(
                 text(sakOpprettet.virksomhetsnummer)
                 jsonb(sakOpprettet.mottakere)
                 text(sakOpprettet.tittel)
+                nullableText(sakOpprettet.tilleggsinformasjon)
                 nullableText(sakOpprettet.lenke)
                 nullableText(sakOpprettet.nesteSteg)
             }.also {
@@ -367,7 +370,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    override suspend fun nesteStegSakFinnes(id: UUID, idempotenceKey: String): Boolean =
+    override suspend fun sakOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean =
         database.nonTransactionalExecuteQuery(
             """
             select * from sak_oppdatering where sak_id = ? and idempotence_key = ?
@@ -377,7 +380,6 @@ class ProdusentRepositoryImpl(
                 text(idempotenceKey)
             }
         ) {}.isNotEmpty()
-
 
     private fun Transaction.finnDbSakId(sakId: UUID): UUID? =
         executeQuery(
@@ -408,6 +410,37 @@ class ProdusentRepositoryImpl(
                 nullableText(nyStatusSak.overstyrStatustekstMed)
                 nullableTimestamptz(nyStatusSak.oppgittTidspunkt)
                 timestamp_with_timezone(nyStatusSak.mottattTidspunkt)
+            }
+        }
+    }
+
+    private suspend fun oppdaterModellEtterTillegsinformasjonSak(tilleggsinformasjonSak: HendelseModel.TilleggsinformasjonSak) {
+        database.transaction {
+            executeUpdate(
+                """
+                    update sak
+                    set tilleggsinformasjon = ?
+                    where id = ?
+                """
+            ) {
+                nullableText(tilleggsinformasjonSak.tilleggsinformasjon)
+                uuid(tilleggsinformasjonSak.sakId)
+            }
+
+            tilleggsinformasjonSak.idempotenceKey?.also {
+                executeUpdate(
+                    """
+                        insert into sak_oppdatering(
+                            hendelse_id, sak_id, idempotence_key
+                        )
+                        values (?, ?, ?)
+                        on conflict(hendelse_id) do nothing
+                    """.trimIndent()
+                ) {
+                    uuid(tilleggsinformasjonSak.hendelseId)
+                    uuid(tilleggsinformasjonSak.sakId)
+                    text(tilleggsinformasjonSak.idempotenceKey)
+                }
             }
         }
     }

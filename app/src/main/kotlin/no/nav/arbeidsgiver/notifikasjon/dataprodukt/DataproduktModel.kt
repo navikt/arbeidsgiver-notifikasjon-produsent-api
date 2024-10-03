@@ -28,6 +28,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ParameterSetters
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -399,9 +400,9 @@ class DataproduktModel(
                 database.nonTransactionalExecuteUpdate(
                     """
                         insert into sak (
-                            sak_id, grupperings_id, produsent_id, merkelapp, tittel, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
+                            sak_id, grupperings_id, produsent_id, merkelapp, tittel, tilleggsinformasjon, neste_steg, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
                         ) 
-                        values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         on conflict do nothing
                     """
                 ) {
@@ -410,6 +411,8 @@ class DataproduktModel(
                     text(hendelse.produsentId)
                     text(hendelse.merkelapp)
                     text(hendelse.tittel)
+                    nullableText(hendelse.tilleggsinformasjon)
+                    nullableText(hendelse.nesteSteg)
                     nullableText(hendelse.lenke)
                     nullableInstantAsText(hendelse.oppgittTidspunkt?.toInstant())
                     instantAsText(hendelse.mottattTidspunkt?.toInstant() ?: metadata.timestamp)
@@ -473,6 +476,17 @@ class DataproduktModel(
                     date(hendelse.frist)
                     setPåminnelseFelter(hendelse.påminnelse)
                     uuid(hendelse.notifikasjonId)
+                }
+            }
+
+            is TilleggsinformasjonSak -> {
+                database.nonTransactionalExecuteUpdate("""
+                    update sak
+                    set tilleggsinformasjon = ?
+                    where sak_id = ?
+                """.trimIndent()) {
+                    nullableText(hendelse.tilleggsinformasjon)
+                    uuid(hendelse.sakId)
                 }
             }
 

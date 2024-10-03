@@ -158,6 +158,7 @@ fun TestApplicationEngine.querySakerJson(
                 }
                 frister
                 nesteSteg
+                tilleggsinformasjon
                 oppgaver {
                     frist
                     tilstand

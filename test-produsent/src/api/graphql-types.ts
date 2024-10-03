@@ -496,6 +496,8 @@ export type Mutation = {
   softDeleteSak: SoftDeleteSakResultat;
   /** Se dokumentasjon for `softDeleteSak(id)`. */
   softDeleteSakByGrupperingsid: SoftDeleteSakResultat;
+  tilleggsinformasjonSak: TilleggsinformasjonSakResultat;
+  tilleggsinformasjonSakByGrupperingsid: TilleggsinformasjonSakResultat;
 };
 
 
@@ -625,6 +627,7 @@ export type MutationNySakArgs = {
   nesteSteg?: InputMaybe<Scalars['String']['input']>;
   overstyrStatustekstMed?: InputMaybe<Scalars['String']['input']>;
   tidspunkt?: InputMaybe<Scalars['ISO8601DateTime']['input']>;
+  tilleggsinformasjon?: InputMaybe<Scalars['String']['input']>;
   tittel: Scalars['String']['input'];
   virksomhetsnummer: Scalars['String']['input'];
 };
@@ -827,6 +830,29 @@ export type MutationSoftDeleteSakArgs = {
 export type MutationSoftDeleteSakByGrupperingsidArgs = {
   grupperingsid: Scalars['String']['input'];
   merkelapp: Scalars['String']['input'];
+};
+
+
+/**
+ * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+ * å opprette nye ting.
+ */
+export type MutationTilleggsinformasjonSakArgs = {
+  id: Scalars['ID']['input'];
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
+  tilleggsinformasjon?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/**
+ * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+ * å opprette nye ting.
+ */
+export type MutationTilleggsinformasjonSakByGrupperingsidArgs = {
+  grupperingsid: Scalars['String']['input'];
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
+  merkelapp: Scalars['String']['input'];
+  tilleggsinformasjon?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type NaermesteLederMottaker = {
@@ -1226,6 +1252,8 @@ export type Sak = {
   lenke?: Maybe<Scalars['String']['output']>;
   merkelapp: Scalars['String']['output'];
   nesteSteg?: Maybe<Scalars['String']['output']>;
+  sisteStatus?: Maybe<SaksStatus>;
+  tilleggsinformasjon?: Maybe<Scalars['String']['output']>;
   tittel: Scalars['String']['output'];
   virksomhetsnummer: Scalars['String']['output'];
 };
@@ -1332,6 +1360,13 @@ export type StatusOppdatering = {
   overstyrStatusTekstMed?: Maybe<Scalars['String']['output']>;
   status: SaksStatus;
   tidspunkt: Scalars['ISO8601DateTime']['output'];
+};
+
+export type TilleggsinformasjonSakResultat = Konflikt | SakFinnesIkke | TilleggsinformasjonSakVellykket | UgyldigMerkelapp | UkjentProdusent;
+
+export type TilleggsinformasjonSakVellykket = {
+  __typename?: 'TilleggsinformasjonSakVellykket';
+  id: Scalars['ID']['output'];
 };
 
 /** Kalenderavtalen er ugyldig. Det kan f.eks være at startTidspunkt er etter sluttTidspunkt. Detaljer kommer i feilmelding. */

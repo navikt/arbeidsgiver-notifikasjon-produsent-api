@@ -58,6 +58,7 @@ suspend fun SkedulertHardDeleteRepositoryImpl.insert(
             hardDelete = HendelseModel.LocalDateTimeOrDuration.parse(
                 beregnetSlettetid.toInstant().asOsloLocalDateTime().toString()
             ),
+            tilleggsinformasjon = null
         ),
         kafkaTimestamp = Instant.EPOCH,
     )

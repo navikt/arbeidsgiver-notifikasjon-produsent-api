@@ -59,6 +59,7 @@ class ManueltVedlikeholdService(
             is HendelseModel.BrukerKlikket,
             is HendelseModel.FristUtsatt,
             is HendelseModel.NesteStegSak,
+            is HendelseModel.TilleggsinformasjonSak,
             is HendelseModel.SoftDelete -> Unit
         }
     }

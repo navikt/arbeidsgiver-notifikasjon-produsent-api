@@ -82,7 +82,7 @@ type Sak {
     frister: [ISO8601Date]!
     oppgaver: [OppgaveMetadata!]!
     nesteSteg: String
-
+    tilleggsinformasjon: String
     tidslinje: [TidslinjeElement!]!
 }
 

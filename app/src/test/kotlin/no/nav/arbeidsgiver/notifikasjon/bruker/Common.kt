@@ -372,6 +372,7 @@ suspend fun BrukerRepository.sakOpprettet(
     merkelapp: String = randomMerkelapp(),
     lenke: String? = randomLenke("sak"),
     tittel: String = randomTekst("Sak-tittel"),
+    tilleggsinformasjon: String? = null,
     mottakere: List<HendelseModel.Mottaker> = listOf(TEST_MOTTAKER_1),
     grupperingsid: String = UUID.randomUUID().toString(),
     oppgittTidspunkt: OffsetDateTime? = null,
@@ -393,6 +394,7 @@ suspend fun BrukerRepository.sakOpprettet(
     mottattTidspunkt = mottattTidspunkt,
     nesteSteg = nesteSteg,
     hardDelete = hardDelete,
+    tilleggsinformasjon = tilleggsinformasjon
 ).also {
     oppdaterModellEtterHendelse(it)
 }
