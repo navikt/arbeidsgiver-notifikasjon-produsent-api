@@ -83,7 +83,7 @@ export const NySak: React.FunctionComponent = () => {
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 lenke: nullIfEmpty(lenkeRef.current?.value),
                 tittel: nullIfEmpty(tittelRef.current?.value),
-                tilleggsinformasjonRef: nullIfEmpty(tilleggsinformasjonRef.current?.value),
+                tilleggsinformasjon: nullIfEmpty(tilleggsinformasjonRef.current?.value),
                 initiellStatus: initiellStatusRef.current?.value as SaksStatus,
                 nesteSteg: nullIfEmpty(nesteStegRef.current?.value),
                 merkelapp: nullIfEmpty(merkelapp.current?.value)
