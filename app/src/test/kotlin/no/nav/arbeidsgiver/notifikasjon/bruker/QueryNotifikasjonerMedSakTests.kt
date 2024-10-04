@@ -51,6 +51,8 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
                 mottakere = it.mottakere,
                 tittel = "Sakstittel for oppgave",
                 mottattTidspunkt = OffsetDateTime.now(),
+                tilleggsinformasjon = "Tilleggsinformasjon om saken"
+
             )
         }
         
@@ -99,6 +101,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
                     it.id shouldBe oppgaveMedSakOpprettet.aggregateId
                     it.sak shouldNot beNull()
                     it.sak!!.tittel shouldBe "Sakstittel for oppgave"
+                    it.sak!!.tilleggsinformasjon shouldBe "Tilleggsinformasjon om saken"
                 }
                 (notifikasjoner[3] as BrukerAPI.Notifikasjon.Beskjed).let {
                     it.id shouldBe beskjedMedSakOpprettet.aggregateId

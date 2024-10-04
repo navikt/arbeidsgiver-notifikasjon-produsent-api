@@ -30,7 +30,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationTilleggsinformasjonSak
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -99,7 +98,7 @@ interface BrukerRepository {
     suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String>
     suspend fun hentSakerForNotifikasjoner(
         grupperinger: List<BrukerModel.Gruppering>
-    ): Map<String, String>
+    ): Map<String, BrukerModel.SakMetadata>
 
     suspend fun hentKommendeKalenderavaler(
         fnr: String,
@@ -761,7 +760,7 @@ class BrukerRepositoryImpl(
 
     override suspend fun hentSakerForNotifikasjoner(
         grupperinger: List<BrukerModel.Gruppering>,
-    ): Map<String, String> = timer.coRecord {
+    ): Map<String, BrukerModel.SakMetadata> = timer.coRecord {
         val rows = database.nonTransactionalExecuteQuery(
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
@@ -777,7 +776,10 @@ class BrukerRepositoryImpl(
                 jsonb(grupperinger)
             }
         ) {
-            getString("grupperingsid") to getString("tittel")
+            getString("grupperingsid") to BrukerModel.SakMetadata(
+                tittel = getString("tittel"),
+                tilleggsinformasjon = getString("tilleggsinformasjon")
+            )
         }
         return@coRecord rows.toMap()
     }
@@ -1121,7 +1123,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterTilleggsinformasjonSak ( tilleggsinformasjonSak: TilleggsinformasjonSak) {
+    private suspend fun oppdaterModellEtterTilleggsinformasjonSak(tilleggsinformasjonSak: TilleggsinformasjonSak) {
         database.transaction {
             executeUpdate(
                 """
@@ -1129,14 +1131,14 @@ class BrukerRepositoryImpl(
                     set tilleggsinformasjon = ?
                     where id = ?
                 """
-            ){
+            ) {
                 nullableText(tilleggsinformasjonSak.tilleggsinformasjon)
                 uuid(tilleggsinformasjonSak.sakId)
             }
         }
     }
 
-    private suspend fun oppdaterModellEtterNesteStegSak (nesteStegSak: NesteStegSak) {
+    private suspend fun oppdaterModellEtterNesteStegSak(nesteStegSak: NesteStegSak) {
         database.transaction {
             executeUpdate(
                 """
@@ -1144,7 +1146,7 @@ class BrukerRepositoryImpl(
                     set neste_steg = ?
                     where id = ?
                 """
-            ){
+            ) {
                 nullableText(nesteStegSak.nesteSteg)
                 uuid(nesteStegSak.sakId)
             }

@@ -195,5 +195,11 @@ object BrukerModel {
             fun List<Tilganger>.flatten() = this.fold(EMPTY, Tilganger::plus)
         }
     }
+
+
+    data class SakMetadata(
+        val tittel: String,
+        val tilleggsinformasjon: String?
+    )
 }
 
