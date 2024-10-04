@@ -35,7 +35,7 @@ open class BrukerRepositoryStub : BrukerRepository {
     ): BrukerModel.Sak? = TODO("Not yet implemented")
 
     override suspend fun hentSakstyper(fnr: String, tilganger: BrukerModel.Tilganger): List<String> = TODO("Not yet implemented")
-    override suspend fun hentSakerForNotifikasjoner(grupperinger: List<BrukerModel.Gruppering>): Map<String, String> = TODO("Not yet implemented")
+    override suspend fun hentSakerForNotifikasjoner(grupperinger: List<BrukerModel.Gruppering>): Map<String, BrukerModel.SakMetadata> = TODO("Not yet implemented")
     override suspend fun hentKommendeKalenderavaler(
         fnr: String,
         virksomhetsnumre: List<String>,
