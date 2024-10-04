@@ -17,10 +17,13 @@
   grid-template-areas:
     "virksomhet virksomhet tomt"
     "saktekst saktekst tomt"
+    "tilleggsinformasjon tilleggsinformasjon tomt"
     "ikon innhold chevron"
     ". innhold chevron";
   grid-template-columns: 32px auto 28px;
-  gap: 8px;
+  column-gap: 8px;
+  row-gap: 0;
+
 }
 
 .notifikasjon_liste_element:focus {
@@ -48,6 +51,11 @@
 
 .notifikasjon_liste_element-lenkepanel-sakstekst {
   grid-area: saktekst;
+}
+
+.notifikasjon_liste_element-lenkepanel-tilleggsinformasjon {
+  grid-area: tilleggsinformasjon;
+  margin-bottom: 8px;
 }
 
 .notifikasjon_liste_element-tomt {
