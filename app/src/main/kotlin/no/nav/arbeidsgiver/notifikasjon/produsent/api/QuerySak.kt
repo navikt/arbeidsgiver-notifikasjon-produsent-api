@@ -38,6 +38,7 @@ class QuerySak (
         val grupperingsid: String,
         val virksomhetsnummer: String,
         val tittel: String,
+        val tilleggsinformasjon: String?,
         val lenke: String?,
         val nesteSteg: String?,
         val merkelapp: String,
@@ -52,6 +53,7 @@ class QuerySak (
                     tittel = sak.tittel,
                     lenke = sak.lenke,
                     nesteSteg = sak.nesteSteg,
+                    tilleggsinformasjon = sak.tilleggsinformasjon,
                     merkelapp = sak.merkelapp,
                     sisteStatus = when(sak.statusoppdateringer.maxBy { it.tidspunktMottatt }.status) {
                         HendelseModel.SakStatus.MOTTATT -> SakStatus.MOTTATT
