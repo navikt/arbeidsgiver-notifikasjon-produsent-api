@@ -46,6 +46,7 @@ export const HENT_NOTIFIKASJONER: TypedDocumentNode<Pick<Query, "notifikasjoner"
                 id
                 sak {
                   tittel
+                  tilleggsinformasjon
                 }
             }
             ... on Oppgave {
@@ -70,6 +71,7 @@ export const HENT_NOTIFIKASJONER: TypedDocumentNode<Pick<Query, "notifikasjoner"
                 frist
                 sak {
                   tittel
+                  tilleggsinformasjon
                 }
             }
             ... on Kalenderavtale {
@@ -98,6 +100,7 @@ export const HENT_NOTIFIKASJONER: TypedDocumentNode<Pick<Query, "notifikasjoner"
               id
               sak {
                 tittel
+                tilleggsinformasjon
               }
             }
         }
