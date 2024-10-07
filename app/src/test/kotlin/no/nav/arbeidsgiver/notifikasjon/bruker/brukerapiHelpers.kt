@@ -38,6 +38,7 @@ fun TestApplicationEngine.queryNotifikasjonerJson(): TestApplicationResponse = b
                     }
                     sak {
                         tittel
+                        tilleggsinformasjon
                     }
                 }
                 ...on Oppgave {
@@ -63,6 +64,7 @@ fun TestApplicationEngine.queryNotifikasjonerJson(): TestApplicationResponse = b
                     }
                     sak {
                         tittel
+                        tilleggsinformasjon
                     }
                 }
                 ...on Kalenderavtale {
@@ -93,6 +95,7 @@ fun TestApplicationEngine.queryNotifikasjonerJson(): TestApplicationResponse = b
                     }
                     sak {
                         tittel
+                        tilleggsinformasjon
                     }
                 }
             }

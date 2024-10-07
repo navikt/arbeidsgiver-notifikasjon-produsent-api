@@ -133,6 +133,7 @@ enum SakStatusType {
 
 type SakMetadata {
     tittel: String!
+    tilleggsinformasjon: String
 }
 
 type NotifikasjonerResultat {

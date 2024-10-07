@@ -132,6 +132,7 @@ object BrukerAPI {
     @JsonTypeName("SakMetadata")
     data class SakMetadata(
         val tittel: String,
+        val tilleggsinformasjon: String?
     )
 
     enum class SakSortering {
@@ -156,7 +157,7 @@ object BrukerAPI {
     )
 
     @JsonTypeName("OppgaveTilstandInfo")
-    data class OppgaveTilstandInfo (
+    data class OppgaveTilstandInfo(
         val tilstand: Notifikasjon.Oppgave.Tilstand,
         val antall: Int,
     )
@@ -207,7 +208,7 @@ object BrukerAPI {
         FERDIG("Ferdig");
 
         companion object {
-            fun fraModel(model: HendelseModel.SakStatus) : SakStatusType = when(model) {
+            fun fraModel(model: HendelseModel.SakStatus): SakStatusType = when (model) {
                 HendelseModel.SakStatus.MOTTATT -> MOTTATT
                 HendelseModel.SakStatus.UNDER_BEHANDLING -> UNDER_BEHANDLING
                 HendelseModel.SakStatus.FERDIG -> FERDIG
@@ -359,7 +360,10 @@ object BrukerAPI {
         }
     )
 
-    private fun TypeRuntimeWiring.Builder.querySakstyper(brukerRepository: BrukerRepository, tilgangerService: TilgangerService) {
+    private fun TypeRuntimeWiring.Builder.querySakstyper(
+        brukerRepository: BrukerRepository,
+        tilgangerService: TilgangerService
+    ) {
         coDataFetcher("sakstyper") { env ->
             val context = env.notifikasjonContext<Context>()
             val tilganger = tilgangerService.hentTilganger(context)
@@ -409,8 +413,14 @@ object BrukerAPI {
                                     id = "${context.fnr}-${notifikasjon.id}",
                                     klikketPaa = notifikasjon.klikketPaa
                                 ),
-                                sak = sakstitler[notifikasjon.grupperingsid]?.let { SakMetadata(tittel = it) },
+                                sak = sakstitler[notifikasjon.grupperingsid]?.let {
+                                    SakMetadata(
+                                        tittel = it.tittel,
+                                        tilleggsinformasjon = it.tilleggsinformasjon
+                                    )
+                                },
                             )
+
                         is BrukerModel.Oppgave ->
                             Notifikasjon.Oppgave(
                                 merkelapp = notifikasjon.merkelapp,
@@ -431,7 +441,12 @@ object BrukerAPI {
                                     id = "${context.fnr}-${notifikasjon.id}",
                                     klikketPaa = notifikasjon.klikketPaa
                                 ),
-                                sak = sakstitler[notifikasjon.grupperingsid]?.let { SakMetadata(tittel = it) },
+                                sak = sakstitler[notifikasjon.grupperingsid]?.let {
+                                    SakMetadata(
+                                        tittel = it.tittel,
+                                        tilleggsinformasjon = it.tilleggsinformasjon
+                                    )
+                                },
                             )
 
                         is BrukerModel.Kalenderavtale ->
@@ -445,11 +460,13 @@ object BrukerAPI {
                                 paaminnelseTidspunkt = notifikasjon.paaminnelseTidspunkt,
                                 startTidspunkt = notifikasjon.startTidspunkt.atOsloAsOffsetDateTime(),
                                 sluttTidspunkt = notifikasjon.sluttTidspunkt?.atOsloAsOffsetDateTime(),
-                                lokasjon = notifikasjon.lokasjon?.let { Lokasjon(
-                                    adresse = it.adresse,
-                                    postnummer = it.postnummer,
-                                    poststed = it.poststed,
-                                )},
+                                lokasjon = notifikasjon.lokasjon?.let {
+                                    Lokasjon(
+                                        adresse = it.adresse,
+                                        postnummer = it.postnummer,
+                                        poststed = it.poststed,
+                                    )
+                                },
                                 erDigitalt = notifikasjon.erDigitalt,
                                 id = notifikasjon.id,
                                 virksomhet = Virksomhet(
@@ -459,7 +476,12 @@ object BrukerAPI {
                                     id = "${context.fnr}-${notifikasjon.id}",
                                     klikketPaa = notifikasjon.klikketPaa
                                 ),
-                                sak = sakstitler[notifikasjon.grupperingsid]?.let { SakMetadata(tittel = it) },
+                                sak = sakstitler[notifikasjon.grupperingsid]?.let {
+                                    SakMetadata(
+                                        tittel = it.tittel,
+                                        tilleggsinformasjon = it.tilleggsinformasjon
+                                    )
+                                },
                             )
                     }
                 }
@@ -485,7 +507,8 @@ object BrukerAPI {
 
             val tilganger = tilgangerService.hentTilganger(context)
 
-            val kalenderAvtalerDb: List<BrukerModel.Kalenderavtale> = brukerRepository.hentKommendeKalenderavaler(context.fnr, virksomhetsnumre, tilganger)
+            val kalenderAvtalerDb: List<BrukerModel.Kalenderavtale> =
+                brukerRepository.hentKommendeKalenderavaler(context.fnr, virksomhetsnumre, tilganger)
             val sakstitler = brukerRepository.hentSakerForNotifikasjoner(
                 kalenderAvtalerDb.mapNotNull { it.gruppering },
             )
@@ -501,11 +524,13 @@ object BrukerAPI {
                         paaminnelseTidspunkt = notifikasjon.paaminnelseTidspunkt,
                         startTidspunkt = notifikasjon.startTidspunkt.atOsloAsOffsetDateTime(),
                         sluttTidspunkt = notifikasjon.sluttTidspunkt?.atOsloAsOffsetDateTime(),
-                        lokasjon = notifikasjon.lokasjon?.let { Lokasjon(
-                            adresse = it.adresse,
-                            postnummer = it.postnummer,
-                            poststed = it.poststed,
-                        )},
+                        lokasjon = notifikasjon.lokasjon?.let {
+                            Lokasjon(
+                                adresse = it.adresse,
+                                postnummer = it.postnummer,
+                                poststed = it.poststed,
+                            )
+                        },
                         erDigitalt = notifikasjon.erDigitalt,
                         id = notifikasjon.id,
                         virksomhet = Virksomhet(
@@ -515,7 +540,12 @@ object BrukerAPI {
                             id = "${context.fnr}-${notifikasjon.id}",
                             klikketPaa = notifikasjon.klikketPaa
                         ),
-                        sak = sakstitler[notifikasjon.grupperingsid]?.let { SakMetadata(tittel = it) },
+                        sak = sakstitler[notifikasjon.grupperingsid]?.let {
+                            SakMetadata(
+                                tittel = it.tittel,
+                                tilleggsinformasjon = it.tilleggsinformasjon
+                            )
+                        },
                     )
                 }
             (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
@@ -579,7 +609,8 @@ object BrukerAPI {
                             tekst = BrukerAPI.SakStatusType.MOTTATT.visningsTekst,
                             tidspunkt = it.opprettetTidspunkt.atOffset(UTC),
                         )
-                        else ->  {
+
+                        else -> {
                             val type = SakStatusType.fraModel(sisteStatus.status)
                             SakStatus(
                                 type = type,
@@ -593,12 +624,14 @@ object BrukerAPI {
                         .map { it.frist },
                     nesteSteg = it.nesteSteg,
                     tilleggsinformasjon = it.tilleggsinformasjon,
-                    oppgaver = oppgaver.map { o -> OppgaveMetadata(
-                        tilstand = o.tilstand.tilBrukerAPI(),
-                        frist = o.frist,
-                        paaminnelseTidspunkt = o.paaminnelseTidspunkt?.atOffset(UTC),
-                    )},
-                    tidslinje = berikelse?.tidslinje.orEmpty().map {element ->
+                    oppgaver = oppgaver.map { o ->
+                        OppgaveMetadata(
+                            tilstand = o.tilstand.tilBrukerAPI(),
+                            frist = o.frist,
+                            paaminnelseTidspunkt = o.paaminnelseTidspunkt?.atOffset(UTC),
+                        )
+                    },
+                    tidslinje = berikelse?.tidslinje.orEmpty().map { element ->
                         when (element) {
                             is BrukerModel.TidslinjeElement.Oppgave -> OppgaveTidslinjeElement(
                                 id = element.id,
@@ -610,11 +643,13 @@ object BrukerAPI {
                                 utfoertTidspunkt = element.utfoertTidspunkt?.atOffset(UTC),
                                 frist = element.frist,
                             )
+
                             is BrukerModel.TidslinjeElement.Beskjed -> BeskjedTidslinjeElement(
                                 id = element.id,
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
                             )
+
                             is BrukerModel.TidslinjeElement.Kalenderavtale -> KalenderavtaleTidslinjeElement(
                                 id = element.id,
                                 tekst = element.tekst,
@@ -622,11 +657,13 @@ object BrukerAPI {
                                 avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
                                 startTidspunkt = element.startTidspunkt.atOsloAsOffsetDateTime(),
                                 sluttTidspunkt = element.sluttTidspunkt?.atOsloAsOffsetDateTime(),
-                                lokasjon = element.lokasjon?.let { Lokasjon(
-                                    adresse = it.adresse,
-                                    postnummer = it.postnummer,
-                                    poststed = it.poststed,
-                                )},
+                                lokasjon = element.lokasjon?.let {
+                                    Lokasjon(
+                                        adresse = it.adresse,
+                                        postnummer = it.postnummer,
+                                        poststed = it.poststed,
+                                    )
+                                },
                                 digitalt = element.digitalt,
                             )
                         }
@@ -637,10 +674,15 @@ object BrukerAPI {
             (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
             SakerResultat(
                 saker = saker,
-                sakstyper = sakerResultat.sakstyper.map { sakstype -> Sakstype(sakstype.navn, sakstype.antall)},
+                sakstyper = sakerResultat.sakstyper.map { sakstype -> Sakstype(sakstype.navn, sakstype.antall) },
                 feilAltinn = tilganger.harFeil,
                 totaltAntallSaker = sakerResultat.totaltAntallSaker,
-                oppgaveTilstandInfo = sakerResultat.oppgaveTilstanderMedAntall.map { tilstand -> OppgaveTilstandInfo(tilstand.navn.tilBrukerAPI(), tilstand.antall)}
+                oppgaveTilstandInfo = sakerResultat.oppgaveTilstanderMedAntall.map { tilstand ->
+                    OppgaveTilstandInfo(
+                        tilstand.navn.tilBrukerAPI(),
+                        tilstand.antall
+                    )
+                }
             )
         }
     }
@@ -736,11 +778,13 @@ object BrukerAPI {
                                 avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
                                 startTidspunkt = element.startTidspunkt.atOsloAsOffsetDateTime(),
                                 sluttTidspunkt = element.sluttTidspunkt?.atOsloAsOffsetDateTime(),
-                                lokasjon = element.lokasjon?.let { Lokasjon(
-                                    adresse = it.adresse,
-                                    postnummer = it.postnummer,
-                                    poststed = it.poststed,
-                                )},
+                                lokasjon = element.lokasjon?.let {
+                                    Lokasjon(
+                                        adresse = it.adresse,
+                                        postnummer = it.postnummer,
+                                        poststed = it.poststed,
+                                    )
+                                },
                                 digitalt = element.digitalt,
                             )
                         }
@@ -838,11 +882,13 @@ object BrukerAPI {
                                 avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
                                 startTidspunkt = element.startTidspunkt.atOsloAsOffsetDateTime(),
                                 sluttTidspunkt = element.sluttTidspunkt?.atOsloAsOffsetDateTime(),
-                                lokasjon = element.lokasjon?.let { Lokasjon(
-                                    adresse = it.adresse,
-                                    postnummer = it.postnummer,
-                                    poststed = it.poststed,
-                                )},
+                                lokasjon = element.lokasjon?.let {
+                                    Lokasjon(
+                                        adresse = it.adresse,
+                                        postnummer = it.postnummer,
+                                        poststed = it.poststed,
+                                    )
+                                },
                                 digitalt = element.digitalt,
                             )
                         }

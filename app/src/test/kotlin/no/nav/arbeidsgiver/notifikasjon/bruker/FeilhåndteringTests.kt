@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.http.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakMetadata
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.util.*
 
@@ -20,7 +21,7 @@ class FeilhåndteringTests : DescribeSpec({
 
             override suspend fun hentSakerForNotifikasjoner(
                 grupperinger: List<BrukerModel.Gruppering>
-            ) = emptyMap<String, String>()
+            ) = emptyMap<String, BrukerModel.SakMetadata>()
         },
     )
 

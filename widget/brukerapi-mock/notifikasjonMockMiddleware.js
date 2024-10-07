@@ -212,6 +212,7 @@ const Notifikasjon = (navn) => {
   const paaminnelseTidspunkt = casual.boolean ? casualDate().toISOString() : null
   const startTidspunkt = casual.boolean ? utgåttDate().toISOString() : casualFutureDate().toISOString()
   const sluttTidspunkt = casual.boolean ? datePlusTimer(new Date(startTidspunkt), 1).toISOString() : null
+  const tilleggsinformasjoner = ["Sykemeldingsperiode: 01.09.2024 - 30.09.2024; 01.09.2024 - 30.09.2024; 01.09.2024 - 30.09.2024; 01.09.2024 - 30.09.2024", null, "Du må sende inntektsmelding"]
   return {
     __typename: navn,
     id: Math.random().toString(36),
@@ -254,7 +255,7 @@ const Notifikasjon = (navn) => {
         'Storfonsa og Fredrikstad Regnskap'
       ])
     },
-    sak: casual.boolean ? { tittel: casual.random_element(saker) } : null
+    sak:  { tittel: casual.random_element(saker), tilleggsinformasjon: casual.random_element(tilleggsinformasjoner)}
   }
 }
 

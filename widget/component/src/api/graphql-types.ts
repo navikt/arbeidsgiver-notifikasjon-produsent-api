@@ -215,12 +215,14 @@ export type Sak = {
   oppgaver: Array<OppgaveMetadata>;
   sisteStatus: SakStatus;
   tidslinje: Array<TidslinjeElement>;
+  tilleggsinformasjon?: Maybe<Scalars['String']['output']>;
   tittel: Scalars['String']['output'];
   virksomhet: Virksomhet;
 };
 
 export type SakMetadata = {
   __typename?: 'SakMetadata';
+  tilleggsinformasjon?: Maybe<Scalars['String']['output']>;
   tittel: Scalars['String']['output'];
 };
 
