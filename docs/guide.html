@@ -112,7 +112,8 @@
   </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
   </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
   </span><span class="nv">$tittel</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+  </span><span class="nv">$tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
+  </span><span class="nv">$nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
 </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
   </span><span class="n">nySak</span><span class="p">(</span><span class="w">
     </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
@@ -125,6 +126,8 @@
       </span><span class="p">}</span><span class="w">
     </span><span class="p">}]</span><span class="w">
     </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="nv">$tittel</span><span class="w">
+    </span><span class="n">tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nv">$tilleggsinformasjon</span><span class="w">
+    </span><span class="n">nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nv">$nesteSteg</span><span class="w">
     </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
     </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
     </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T17:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
@@ -1344,6 +1347,103 @@ EMAIL  | {tittel} | {innhold}
   </span><span class="nl">"grupperingsid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5321-85263-82343-995248"</span><span class="p">,</span><span class="w">
   </span><span class="nl">"merkelapp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fager"</span><span class="p">,</span><span class="w">
   </span><span class="nl">"nesteSteg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du vil få refusjon utbetalt innen januar 2026"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                </div>
+            </div>
+            <h2 id="hvordan-sette-endre-tilleggsinformasjon"><a href="#hvordan-sette-endre-tilleggsinformasjon">Hvordan sette/endre tilleggsinformasjon</a></h2>
+            <p>
+                Med dette feltet kan dere gi arbeidsgiver tilleggsinformasjon på opp til 140 tegn. Det skal ikke inneholde personnummer.
+                Eksempler på bruk:
+                «Avtaleperiode: 01.09.2024-01.12.2024»
+                «Sykemeldingsperiode: 01.09.2024-01.12.2024»
+                «Du trenger ikke å sende inn inntektsmelding.»
+            </p>
+
+            <p>
+                "Tilleggsinformasjon" kan settes ved opprettelse av sak "NySak" og kan endres med "tilleggsinformasjonSak" mutasjonen.
+                Her kan man både endre tilleggsinformasjon til en annen tekst eller fjerne det ved å sette til null.
+                Tilleggsinformasjon vises også i notifikasjonsbjellen på notifikasjoner som er tilknyttet saken.
+            </p>
+            <p>
+                Dere kan bruke enten "tilleggsinformasjonSak" eller "tilleggsinformasjonSakNyGrupperingsid" til å endre tilleggsinformasjon på en sak.
+                IdempotencyKey er et frivillig felt som kan brukes for å unngå at samme oppdatering blir utført flere ganger.
+            </p>
+            <p>
+                Med saksid:
+            </p>
+            <div class="language-graphql highlighter-rouge">
+                <div class="highlight">
+                <pre
+                    class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
+    </span><span class="nv">$sakId</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!,</span><span class="w">
+    </span><span class="nv">$tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w">
+    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
+</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">tilleggsinformasjonSak</span><span class="p">(</span><span class="n">tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nv">$tilleggsinformasjon</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$sakId</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">TilleggsinformasjonSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">id</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">feilmelding</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span></code>
+                </pre>
+                </div>
+            </div>
+            <p>
+                Med variabler:
+            </p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+                <pre
+                    class="highlight"
+                ><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"sakId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9350-39426-12333-431213"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"tilleggsinformasjon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtaleperioden er: 01.09.2024 - 01.12.2024"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+                </div>
+            </div>
+            <p>
+                Med grupperingsid og merkelapp:
+            </p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+                <pre
+                    class="highlight"
+                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
+    </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+    </span><span class="nv">$merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
+    </span><span class="nv">$tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
+    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
+</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">tilleggsinformasjonSakByGrupperingsid</span><span class="p">(</span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="p">,</span><span class="w"> </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nv">$merkelapp</span><span class="p">,</span><span class="w"> </span><span class="n">tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nv">$tilleggsinformasjon</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">TilleggsinformasjonSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">id</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="n">feilmelding</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span>
+                </code>
+                </pre>
+                </div>
+            </div>
+            <p>Med variabler:</p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+                <pre
+                    class="highlight"
+                ><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"grupperingsid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5321-85263-82343-995248"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"merkelapp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fager"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"tilleggsinformasjon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du trenger ikke å sende inntektsmelding."</span><span class="p">,</span><span class="w">
   </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
