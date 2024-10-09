@@ -509,7 +509,8 @@ type Mutation {
 
         """
         Dette feltet er frivillig.
-        Tilleggssinformasjon som vises under tittelen på en sak. Maks 140 tegn
+        Tilleggssinformasjon som vises under tittelen på en sak.
+        Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
         """
         tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
 
@@ -624,7 +625,7 @@ type Mutation {
         """
         Dette feltet er frivillig.
         Her har dere mulighet til å vise virksomheten mer informasjon om saken.
-        Feltet er begrenset til 140 tegn og kan ikke inneholde personnummer.
+        Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
         """
         tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
     ): TilleggsinformasjonSakResultat!
@@ -637,7 +638,7 @@ type Mutation {
         """
         Dette feltet er frivillig.
         Her har dere mulighet til å vise virksomheten mer informasjon om saken.
-        Feltet er begrenset til 140 tegn og kan ikke inneholde personnummer.
+        Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
         """
         tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
     ): TilleggsinformasjonSakResultat!
@@ -1655,7 +1656,7 @@ input NotifikasjonInput {
     merkelapp: String!
 
     """
-    Teksten som vises til brukeren.
+    Teksten som vises til brukeren. Feltet er begrenset til 300 tegn og kan ikke inneholde fødselsnummer.
     """
     tekst: String! @MaxLength(max: 300) @NonIdentifying
 
