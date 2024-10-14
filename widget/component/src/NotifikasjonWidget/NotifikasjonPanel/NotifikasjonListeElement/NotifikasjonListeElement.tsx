@@ -92,10 +92,15 @@ export const NotifikasjonListeElement = (props: Props) => {
               tittel={notifikasjon.tekst}
               visningstidspunkt={new Date(notifikasjon.opprettetTidspunkt)}
               statuslinje={
-                <StatusIkonMedTekst variant="neutral">
-                  Fristen gikk ut{' '}
-                  {uformellDatotekst(new Date(notifikasjon.utgaattTidspunkt))}
-                </StatusIkonMedTekst>
+                notifikasjon.frist !== null ?
+                  <StatusIkonMedTekst variant="neutral">
+                    Fristen gikk ut{' '}
+                    {uformellDatotekst(new Date(notifikasjon.utgaattTidspunkt))}
+                  </StatusIkonMedTekst>
+                  :
+                  <Tag size="small" variant="neutral">
+                    Utgått {uformellDatotekst(new Date(notifikasjon.utgaattTidspunkt))}
+                  </Tag>
               }
             />
           );
