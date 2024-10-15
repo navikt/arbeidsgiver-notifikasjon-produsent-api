@@ -3,7 +3,6 @@ on:
   push:
     paths:
       - app/**
-  pull_request:
   workflow_dispatch:
 
 jobs:
