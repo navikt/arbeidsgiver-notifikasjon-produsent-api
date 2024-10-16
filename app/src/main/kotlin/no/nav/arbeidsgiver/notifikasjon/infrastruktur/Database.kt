@@ -61,7 +61,7 @@ class Database private constructor(
                 username = config.username
                 password = config.password
                 driverClassName = "org.postgresql.Driver"
-                metricsTrackerFactory = PrometheusMetricsTrackerFactory()
+                metricRegistry = Metrics.meterRegistry
                 minimumIdle = 1
                 maximumPoolSize = 10
                 connectionTimeout = 10000
