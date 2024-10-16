@@ -17,6 +17,12 @@ on:
     paths:
       - 'widget/**'
       - 'app/src/main/resources/bruker.graphql'
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ main ]
+    paths:
+      - 'widget/**'
+      - 'app/src/main/resources/bruker.graphql'
   schedule:
     - cron: '19 17 * * 0'
 
