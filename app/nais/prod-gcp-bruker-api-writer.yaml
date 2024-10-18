@@ -12,7 +12,6 @@ spec:
       cpu: 400m
       memory: 512Mi
     limits:
-      cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
       memory: 1024Mi
   liveness:
     path: /internal/alive
@@ -24,8 +23,6 @@ spec:
   kafka:
     pool: nav-prod
   env:
-    - name: JAVA_OPTS
-      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
     - name: CLOUD_SQL_INSTANCE
       value: fager-prod-dd77:europe-north1:notifikasjon-bruker-api
   gcp:

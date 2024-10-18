@@ -12,7 +12,6 @@ spec:
       cpu: 400m
       memory: 512Mi
     limits:
-      cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
       memory: 1024Mi
   replicas:
     max: 24
@@ -62,8 +61,5 @@ spec:
       external:
         - host: api-gw.oera.no # fallback for altinn-rettigheter-proxy-client
         - host: ereg-services.prod-fss-pub.nais.io # ereg brukes i bruker-api
-  env:
-    - name: JAVA_OPTS
-      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
