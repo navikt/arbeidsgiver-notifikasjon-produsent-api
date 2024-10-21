@@ -1,32 +1,30 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
+import com.github.benmanes.caffeine.cache.Caffeine
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret.Underenhet
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.FunkyCache
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.cache.getAsync
+import java.util.concurrent.CompletableFuture
 
 class VirksomhetsinfoService(
-    enhetsregisteret: Enhetsregisteret,
+    val enhetsregisteret: Enhetsregisteret,
 ) {
-    private val log = logger()
 
-    private val cache = FunkyCache<String, Underenhet>(600_000) { orgnr ->
-        log.debug("oppslag ereg $orgnr")
-        enhetsregisteret.hentUnderenhet(orgnr)
-    }
+    private val cache = Caffeine.newBuilder().maximumSize(600_000).buildAsync<String, Underenhet>()
 
     suspend fun hentUnderenhet(virksomhetsnummer: String): Underenhet =
-        cache.get(virksomhetsnummer).also {
-            log.debug("hentUnderenhet($virksomhetsnummer) -> $it")
+        cache.getAsync(virksomhetsnummer) {
+            enhetsregisteret.hentUnderenhet(virksomhetsnummer)
         }
 
-    fun altinnObserver(altinnReportee: AltinnReportee) {
-        log.debug("observe altinn $altinnReportee")
-        val virksomhetsnummer = altinnReportee.organizationNumber ?: return
-        cache.put(virksomhetsnummer, Underenhet(
-            navn = altinnReportee.name,
-            organisasjonsnummer = virksomhetsnummer,
-        ))
+    fun cachePut(orgnr: String, navn: String) {
+        cache.put(
+            orgnr, CompletableFuture.completedFuture(
+                Underenhet(
+                    navn = navn,
+                    organisasjonsnummer = orgnr,
+                )
+            )
+        )
     }
 }

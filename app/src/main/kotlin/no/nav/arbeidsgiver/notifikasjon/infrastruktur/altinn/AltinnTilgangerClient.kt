@@ -23,6 +23,7 @@ import javax.net.ssl.SSLHandshakeException
 class AltinnTilgangerClient(
     private val baseUrl: String? = null,
     private val tokenXClient: TokenXClient = TokenXClientImpl(),
+    private val observer: (orgnr: String, navn: String) -> Unit,
     engine: HttpClientEngine = Apache.create(),
 ) {
 
@@ -73,10 +74,35 @@ class AltinnTilgangerClient(
             bearerAuth(token)
         }.body<AltinnTilgangerClientResponse>()
 
+        val alleFlatt = dto.hierarki.flatMap {
+            flatten(it) { o ->
+                observer(o.orgNr, o.name)
+                AltinnTilgangFlatt(
+                    organisasjonsnummer = o.orgNr,
+                    navn = o.name,
+                    altinn3Tilganger = o.altinn3Tilganger,
+                    altinn2Tilganger = o.altinn2Tilganger,
+                )
+            }
+        }
+
         return AltinnTilganger(
             harFeil = dto.isError,
-            tilganger = dto.orgNrTilTilganger.flatMap { (orgNr, tilganger) ->
-                tilganger.map { AltinnTilgang.parse(orgNr, it) }
+            tilganger = alleFlatt.flatMap { org ->
+                observer(org.organisasjonsnummer, org.navn)
+                org.altinn2Tilganger.map {
+                    val (serviceCode, serviceEdition) = it.split(":")
+                    AltinnTilgang.Altinn2(
+                        orgNr = org.organisasjonsnummer,
+                        serviceCode = serviceCode,
+                        serviceEdition = serviceEdition
+                    )
+                } + org.altinn3Tilganger.map {
+                    AltinnTilgang.Altinn3(
+                        orgNr = org.organisasjonsnummer,
+                        ressurs = it
+                    )
+                }
             }
         )
     }
@@ -86,7 +112,35 @@ class AltinnTilgangerClient(
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class AltinnTilgangerClientResponse(
     val isError: Boolean,
-    val orgNrTilTilganger: Map<String, List<String>>,
+    val hierarki: List<AltinnTilgang>,
+) {
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class AltinnTilgang(
+        val orgNr: String,
+        val underenheter: List<AltinnTilgang>,
+        val name: String,
+
+        val altinn3Tilganger: Set<String>,
+        val altinn2Tilganger: Set<String>,
+    )
+}
+
+private fun <T> flatten(
+    altinnTilgang:AltinnTilgangerClientResponse.AltinnTilgang,
+    mapFn: (AltinnTilgangerClientResponse.AltinnTilgang) -> T
+): Set<T> {
+    val children = altinnTilgang.underenheter.flatMap { flatten(it, mapFn) }
+    return setOf(
+        mapFn(altinnTilgang)
+    ) + children
+}
+
+private data class AltinnTilgangFlatt(
+    val organisasjonsnummer: String,
+    val navn: String,
+    val altinn3Tilganger: Set<String>,
+    val altinn2Tilganger: Set<String>,
 )
 
 data class AltinnTilganger(
@@ -97,14 +151,4 @@ data class AltinnTilganger(
 sealed class AltinnTilgang {
     data class Altinn2(val orgNr: String, val serviceCode: String, val serviceEdition: String) : AltinnTilgang()
     data class Altinn3(val orgNr: String, val ressurs: String) : AltinnTilgang()
-
-    companion object {
-        fun parse(orgNr: String, tilgang: String) =
-            if (tilgang.matches(Regex("""\d+:\d+"""))) {
-                val (code, edition) = tilgang.split(":")
-                Altinn2(orgNr = orgNr, serviceCode = code, serviceEdition = edition)
-            } else {
-                Altinn3(orgNr = orgNr, ressurs = tilgang)
-            }
-    }
 }

@@ -4,10 +4,8 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.executable.Port
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.EnhetsregisteretStub
 import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_BRUKER_AUTHENTICATION
@@ -21,10 +19,6 @@ fun main() {
             LOCALHOST_BRUKER_AUTHENTICATION,
         ),
         enhetsregisteret = EnhetsregisteretStub(),
-        suspendingAltinnClient = SuspendingAltinnClient(
-            tokenXClient = TokenXClientStub(),
-            observer = {},
-        ),
         altinn = AltinnStub { _, _ ->
             val alleOrgnr = listOf(
                 "811076732",

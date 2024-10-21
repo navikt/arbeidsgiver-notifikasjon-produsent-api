@@ -22,12 +22,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency> <!-- altinn-rettigheter-proxy-klient includes old version (1.3.x) -->
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-reflect</artifactId>
-                <version>${kotlin.version}</version>
-            </dependency>
-
             <!-- bump da 1.11 som kommer inn via ktor-client-apache-jvm har vulnerabilities -->
             <dependency>
                 <groupId>commons-codec</groupId>
@@ -126,13 +120,6 @@
             <groupId>io.ktor</groupId>
             <artifactId>ktor-serialization-jackson-jvm</artifactId>
             <version>${ktor.version}</version>
-        </dependency>
-
-        <!-- altinnklient -->
-        <dependency>
-            <groupId>no.nav.arbeidsgiver</groupId>
-            <artifactId>altinn-rettigheter-proxy-klient</artifactId>
-            <version>3.1.0</version>
         </dependency>
 
         <!-- altinn-ws -->
