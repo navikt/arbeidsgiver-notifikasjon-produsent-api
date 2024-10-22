@@ -29,7 +29,7 @@ class AltinnTilgangerImpl(
 
     private val cache = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(10))
-        .maximumSize(10_000)
+        .maximumSize(25_000)
         .buildAsync<String, AltinnTilganger>()
 
     override suspend fun hentTilganger(
