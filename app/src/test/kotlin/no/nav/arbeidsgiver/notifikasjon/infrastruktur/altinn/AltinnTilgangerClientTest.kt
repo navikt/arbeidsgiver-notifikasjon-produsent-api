@@ -13,6 +13,7 @@ class AltinnTilgangerClientTest : DescribeSpec({
 
         val client = AltinnTilgangerClient(
             tokenXClient = TokenXClientStub(),
+            observer = { _, _ -> },
             engine = MockEngine { _ ->
                 respond(
                     content = ByteReadChannel(altinnTilgangerResponse),
@@ -35,17 +36,20 @@ class AltinnTilgangerClientTest : DescribeSpec({
 
 })
 
+//language=JSON
 private val altinnTilgangerResponse = """
     {
       "isError": true,
       "hierarki": [
         {
           "orgNr": "810825472",
+          "name": "foo",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [],
           "underenheter": [
             {
               "orgNr": "910825496",
+              "name": "bar",
               "altinn3Tilganger": [
                 "test-fager"
               ],

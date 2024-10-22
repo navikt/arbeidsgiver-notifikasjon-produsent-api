@@ -55,11 +55,7 @@ spec:
         - application: presenterte-kandidater
           namespace: toi
     outbound:
-      rules:
-        - application: altinn-rettigheter-proxy
-          namespace: arbeidsgiver
       external:
-        - host: api-gw.oera.no # fallback for altinn-rettigheter-proxy-client
         - host: ereg-services.prod-fss-pub.nais.io # ereg brukes i bruker-api
   envFrom:
     - secret: notifikasjon-bruker-api-secrets
