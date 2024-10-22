@@ -1,8 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.cache.getAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import java.time.Duration
@@ -18,6 +20,13 @@ interface Altinn {
 class AltinnTilgangerImpl(
     private val altinnTilgangerClient: AltinnTilgangerClient
 ): Altinn {
+    private val initiatedCounter = Counter.builder("altinn.rettigheter.lookup.initiated")
+        .register(Metrics.meterRegistry)
+    private val successCounter = Counter.builder("altinn.rettigheter.lookup.success")
+        .register(Metrics.meterRegistry)
+    private val failCounter = Counter.builder("altinn.rettigheter.lookup.fail")
+        .register(Metrics.meterRegistry)
+
     private val cache = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(10))
         .maximumSize(10_000)
@@ -28,12 +37,16 @@ class AltinnTilgangerImpl(
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>
     ): Tilganger {
+        initiatedCounter.increment()
         val tilganger = cache.getAsync(fnr) { _ ->
             altinnTilgangerClient.hentTilganger(selvbetjeningsToken)
         }
 
         if (tilganger.harFeil) {
             cache.synchronous().invalidate(fnr)
+            failCounter.increment()
+        } else {
+            successCounter.increment()
         }
 
         return Tilganger(
