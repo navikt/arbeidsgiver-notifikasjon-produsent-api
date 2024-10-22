@@ -55,6 +55,8 @@ spec:
         - application: presenterte-kandidater
           namespace: toi
     outbound:
+      rules:
+        - application: arbeidsgiver-altinn-tilganger
       external:
         - host: ereg-services.prod-fss-pub.nais.io # ereg brukes i bruker-api
   envFrom:
