@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.cache.getAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ServicecodeDefinisjon
 import java.time.Duration
 
@@ -20,6 +21,7 @@ interface Altinn {
 class AltinnTilgangerImpl(
     private val altinnTilgangerClient: AltinnTilgangerClient
 ): Altinn {
+    private val timer = Metrics.meterRegistry.timer("altinn_klient_hent_alle_tilganger")
     private val initiatedCounter = Counter.builder("altinn.rettigheter.lookup.initiated")
         .register(Metrics.meterRegistry)
     private val successCounter = Counter.builder("altinn.rettigheter.lookup.success")
@@ -36,8 +38,9 @@ class AltinnTilgangerImpl(
         fnr: String,
         selvbetjeningsToken: String,
         tjenester: Iterable<ServicecodeDefinisjon>
-    ): Tilganger {
+    ): Tilganger = timer.coRecord {
         initiatedCounter.increment()
+
         val tilganger = cache.getAsync(fnr) { _ ->
             altinnTilgangerClient.hentTilganger(selvbetjeningsToken)
         }
@@ -49,7 +52,7 @@ class AltinnTilgangerImpl(
             successCounter.increment()
         }
 
-        return Tilganger(
+        Tilganger(
             harFeil = tilganger.harFeil,
             tjenestetilganger = tilganger.tilganger.map {
                 // skjuler altinn3 detaljene for nå ved å mappe begge til samme eksisterende modell
