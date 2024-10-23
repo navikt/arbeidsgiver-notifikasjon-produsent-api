@@ -2,12 +2,12 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import io.ktor.http.*
-import io.ktor.serialization.jackson.JacksonConverter
+import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
-import io.ktor.server.cio.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -192,7 +192,7 @@ fun Application.baseSetup(
         exception<JsonProcessingException> { call, ex ->
             ex.clearLocation()
 
-            this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            this@baseSetup.log.error("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
@@ -201,7 +201,7 @@ fun Application.baseSetup(
         }
 
         exception<Throwable> { call, ex ->
-            this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            this@baseSetup.log.error("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
