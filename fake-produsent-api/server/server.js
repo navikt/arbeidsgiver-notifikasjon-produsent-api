@@ -29,6 +29,7 @@ const successfulMocks = {
     OppgaveUtsettFristResultat: () => ({__typename: "OppgaveUtsettFristVellykket"}),
     SoftDeleteNotifikasjonResultat: () => ({__typename: "SoftDeleteNotifikasjonVellykket" }),
     SoftDeleteSakResultat: () => ({_typename: "SoftDeleteSakVellykket"}),
+    TilleggsinformasjonSakResultat: () => ({_typename: "TilleggsinformasjonSakVellykket"}),
 };
 
 const log = createLogger({
