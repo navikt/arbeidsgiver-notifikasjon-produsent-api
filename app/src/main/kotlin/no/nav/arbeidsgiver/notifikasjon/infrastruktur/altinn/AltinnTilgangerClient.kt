@@ -11,10 +11,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCPlugin
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
 import org.apache.http.ConnectionClosedException
@@ -26,6 +23,8 @@ class AltinnTilgangerClient(
     private val observer: (orgnr: String, navn: String) -> Unit,
     engine: HttpClientEngine = Apache.create(),
 ) {
+
+    private val log = logger()
 
     private val httpClient = HttpClient(engine) {
         defaultRequest {
@@ -49,6 +48,7 @@ class AltinnTilgangerClient(
             }
             delayMillis { 250L }
         }
+        expectSuccess = true
     }
 
     private val targetAudience = "${NaisEnvironment.clusterName}:fager:arbeidsgiver-altinn-tilganger"
@@ -60,19 +60,28 @@ class AltinnTilgangerClient(
                 targetAudience
             )
         } catch (e: RuntimeException) {
+            log.error("Failed to exchange token", e)
             return AltinnTilganger(
                 harFeil = true,
                 tilganger = listOf()
             )
         }
 
-        val dto = httpClient.post {
-            url {
-                path("/altinn-tilganger")
-            }
-            accept(ContentType.Application.Json)
-            bearerAuth(token)
-        }.body<AltinnTilgangerClientResponse>()
+        val dto = try {
+            httpClient.post {
+                url {
+                    path("/altinn-tilganger")
+                }
+                accept(ContentType.Application.Json)
+                bearerAuth(token)
+            }.body<AltinnTilgangerClientResponse>()
+        } catch (e: Exception) {
+            log.error("Failed to fetch tilganger", e)
+            return AltinnTilganger(
+                harFeil = true,
+                tilganger = listOf()
+            )
+        }
 
         val alleFlatt = dto.hierarki.flatMap {
             flatten(it) { o ->
