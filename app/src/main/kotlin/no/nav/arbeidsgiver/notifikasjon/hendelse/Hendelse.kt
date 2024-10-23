@@ -607,6 +607,19 @@ object HendelseModel {
         override val aggregateId: UUID = notifikasjonId
     }
 
+    @JsonTypeName("EndrePaaminnelse")
+    data class EndrePaaminnelse(
+        override val virksomhetsnummer: String,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val notifikasjonId: UUID,
+        val påminnelse: Påminnelse?,
+    ) : Hendelse(){
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
+
     @JsonTypeName("SoftDelete")
     data class SoftDelete(
         override val virksomhetsnummer: String,

@@ -901,6 +901,43 @@ type Mutation {
         paaminnelse: PaaminnelseInput
     ): OppgaveUtsettFristResultat!
 
+    """
+    TODO: skriv beskrivelse
+    """
+    oppgaveEndrePaaminnelse(
+        """
+        ID-en som oppgaven har. Den du fikk da du opprettet oppgaven med `nyOppgave`.
+        """
+        id: ID!
+
+        """
+        Her kan du spesifisere en påminnelse for oppgaven.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        """
+        paaminnelse: PaaminnelseInput
+    ) : OppgaveEndrePaaminnelseResultat
+
+    """
+    TODO: skriv beskrivelse
+    """
+    oppgaveEndrePaaminnelseByExternId(
+        """
+        Merkelapp som oppgaven er registrert med.
+        """
+        merkelapp: String!,
+
+        """
+        ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
+        """
+        eksternId: String!
+
+        """
+        Her kan du spesifisere en påminnelse for oppgaven.
+        Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
+        """
+        paaminnelse: PaaminnelseInput
+    ) : OppgaveEndrePaaminnelseResultat
+
 
     """
     Oppdater tilstand på en kalenderavtale.
@@ -1292,6 +1329,21 @@ type OppgaveUtsettFristVellykket {
     """
     id: ID!
 }
+
+type OppgaveEndrePaaminnelseVellykket {
+    """
+    ID-en til oppgaven du oppdaterte.
+    """
+    id: ID!
+}
+
+union OppgaveEndrePaaminnelseResultat =
+    | OppgaveEndrePaaminnelseVellykket
+    | UgyldigMerkelapp
+    | UgyldigPaaminnelseTidspunkt
+    | OppgavenErAlleredeUtfoert
+    | NotifikasjonFinnesIkke
+    | UkjentProdusent
 
 union OppdaterKalenderavtaleResultat =
     | OppdaterKalenderavtaleVellykket

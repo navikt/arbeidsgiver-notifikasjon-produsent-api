@@ -37,7 +37,8 @@ internal sealed class Error {
         MutationNyStatusSak.NyStatusSakResultat,
         MutationNesteStegSak.NesteStegSakResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat,
-        MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat
+        MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat,
+        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
 
 
     @JsonTypeName("UkjentProdusent")
@@ -59,7 +60,8 @@ internal sealed class Error {
         MutationNyStatusSak.NyStatusSakResultat,
         MutationNesteStegSak.NesteStegSakResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat,
-        MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat
+        MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat,
+        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UgyldigMottaker")
     data class UgyldigMottaker(
@@ -112,7 +114,8 @@ internal sealed class Error {
         MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonResultat,
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         QueryNotifikasjoner.HentNotifikasjonResultat,
-        MutationKalenderavtale.OppdaterKalenderavtaleResultat
+        MutationKalenderavtale.OppdaterKalenderavtaleResultat,
+        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UkjentRolle")
     data class UkjentRolle(
@@ -128,7 +131,8 @@ internal sealed class Error {
     ) :
         Error(),
         MutationNyOppgave.NyOppgaveResultat,
-        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat
+        MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
+        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("SakFinnesIkke")
     data class SakFinnesIkke(
@@ -146,7 +150,8 @@ internal sealed class Error {
     data class OppgavenErAlleredeUtfoert(
         override val feilmelding: String,
     ):  Error(),
-        MutationOppgaveUtgaatt.OppgaveUtgaattResultat
+        MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
+        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UgyldigKalenderavtale")
     data class UgyldigKalenderavtale(
