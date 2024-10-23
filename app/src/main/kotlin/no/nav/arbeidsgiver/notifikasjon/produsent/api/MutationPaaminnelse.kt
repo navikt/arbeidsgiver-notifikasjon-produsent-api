@@ -64,24 +64,26 @@ internal class MutationPaaminnelse(
         val produsent = hentProdusent(context) { error -> return error }
 
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+
+        //TODO: trengs duplikat håndtering?
         try {
             hendelseDispatcher.send(
-                HendelseModel.EndrePaaminnelse(
+                HendelseModel.PaaminnelseEndret(
                     hendelseId = UUID.randomUUID(),
                     notifikasjonId = notifikasjon.id,
                     virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     produsentId = produsent.id,
                     kildeAppNavn = context.appName,
                     påminnelse = paaminnelse?.tilDomene(
-                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt, //TODO: skal dette være etter oppgaven ble opprettet, eller etter nå?
-                        frist = notifikasjon.frist, //TODO: sjekk denne
-                        startTidspunkt = null, // endre dersom kalenderavtale?
+                        opprettetTidspunkt = OffsetDateTime.now(),
+                        frist = notifikasjon.frist,
+                        startTidspunkt = null, //TODO: notifikasjon er oppgave, denne er irrelevant?
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     )
                 )
             )
         }
-        catch (e: UgyldigPåminnelseTidspunktException) { // Er dette riktig?
+        catch (e: UgyldigPåminnelseTidspunktException) {
             return Error.UgyldigPåminnelseTidspunkt(e.message!!)
         }
 

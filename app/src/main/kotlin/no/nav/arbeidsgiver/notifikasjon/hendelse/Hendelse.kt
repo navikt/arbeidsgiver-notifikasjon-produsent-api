@@ -608,7 +608,7 @@ object HendelseModel {
     }
 
     @JsonTypeName("EndrePaaminnelse")
-    data class EndrePaaminnelse(
+    data class PaaminnelseEndret(
         override val virksomhetsnummer: String,
         override val hendelseId: UUID,
         override val produsentId: String,
