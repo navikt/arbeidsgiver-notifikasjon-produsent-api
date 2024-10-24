@@ -71,7 +71,7 @@ class KafkaReaperServiceImpl(
                 } else Unit
             }
 
-            is HendelseModel.PaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
         }
     }
 }

@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-internal class MutationPaaminnelse(
+internal class MutationOppgavePaaminnelse(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
@@ -67,7 +67,7 @@ internal class MutationPaaminnelse(
         //TODO: trengs duplikat håndtering?
         try {
             hendelseDispatcher.send(
-                HendelseModel.PaaminnelseEndret(
+                HendelseModel.OppgavePaaminnelseEndret(
                     hendelseId = UUID.randomUUID(),
                     notifikasjonId = notifikasjon.id,
                     virksomhetsnummer = notifikasjon.virksomhetsnummer,

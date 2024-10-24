@@ -459,7 +459,7 @@ class StatistikkModel(
                 }
             }
 
-            is HendelseModel.PaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
         }
     }
 

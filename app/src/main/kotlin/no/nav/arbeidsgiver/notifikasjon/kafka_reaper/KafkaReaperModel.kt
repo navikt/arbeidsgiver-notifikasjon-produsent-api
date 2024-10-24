@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
-import com.typesafe.config.ConfigException.Null
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -166,5 +165,5 @@ val Hendelse.typeNavn: String
         is KalenderavtaleOppdatert -> "KalenderavtaleOppdatert"
         is NesteStegSak -> "NesteStegSak"
         is TilleggsinformasjonSak -> "TillegsinformasjonSak"
-        is HendelseModel.PaaminnelseEndret -> "PåminnelseEndret"
+        is HendelseModel.OppgavePaaminnelseEndret -> "OppgavePåminnelseEndret"
     }

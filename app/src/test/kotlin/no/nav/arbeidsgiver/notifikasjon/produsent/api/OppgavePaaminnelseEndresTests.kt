@@ -16,7 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import java.time.OffsetDateTime
 import java.util.*
 
-class PaaminnelseEndresTests : DescribeSpec({
+class OppgavePaaminnelseEndresTests : DescribeSpec({
 
     describe("oppgavePåminnelseEndres-oppførsel") {
         val virksomhetsnummer = "123"
@@ -83,13 +83,13 @@ class PaaminnelseEndresTests : DescribeSpec({
 
             it("returnerer tilbake oppgave id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationPaaminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
+                    response.getTypedContent<MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
                 vellykket.id shouldBe uuid
             }
 
             it("har sendt melding til kafka") {
                 val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<HendelseModel.PaaminnelseEndret>()
+                    .filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>()
                     .last()
                 hendelse.påminnelse?.tidspunkt shouldBe HendelseModel.PåminnelseTidspunkt.Konkret(
                     konkretPaaminnelsesTidspunkt,

@@ -38,7 +38,7 @@ internal sealed class Error {
         MutationNesteStegSak.NesteStegSakResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat,
         MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat,
-        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
 
 
     @JsonTypeName("UkjentProdusent")
@@ -61,7 +61,7 @@ internal sealed class Error {
         MutationNesteStegSak.NesteStegSakResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat,
         MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat,
-        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UgyldigMottaker")
     data class UgyldigMottaker(
@@ -115,7 +115,7 @@ internal sealed class Error {
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         QueryNotifikasjoner.HentNotifikasjonResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat,
-        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UkjentRolle")
     data class UkjentRolle(
@@ -132,7 +132,7 @@ internal sealed class Error {
         Error(),
         MutationNyOppgave.NyOppgaveResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
-        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("SakFinnesIkke")
     data class SakFinnesIkke(
@@ -151,7 +151,7 @@ internal sealed class Error {
         override val feilmelding: String,
     ):  Error(),
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
-        MutationPaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UgyldigKalenderavtale")
     data class UgyldigKalenderavtale(

@@ -320,7 +320,7 @@ class ProdusentRepositoryImpl(
             is KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
             is HendelseModel.TilleggsinformasjonSak -> oppdaterModellEtterTillegsinformasjonSak(hendelse)
-            is HendelseModel.PaaminnelseEndret -> Unit //TODO: verifiser dette
+            is HendelseModel.OppgavePaaminnelseEndret -> Unit //TODO: verifiser dette
         }
     }
 

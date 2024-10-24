@@ -264,7 +264,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
             is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.EksterntVarselVellykket -> Unit
 
-            is HendelseModel.PaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
         }
     }
 

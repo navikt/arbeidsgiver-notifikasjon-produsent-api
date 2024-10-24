@@ -607,8 +607,8 @@ object HendelseModel {
         override val aggregateId: UUID = notifikasjonId
     }
 
-    @JsonTypeName("EndrePaaminnelse")
-    data class PaaminnelseEndret(
+    @JsonTypeName("OppgavePaaminnelseEndret")
+    data class OppgavePaaminnelseEndret(
         override val virksomhetsnummer: String,
         override val hendelseId: UUID,
         override val produsentId: String,

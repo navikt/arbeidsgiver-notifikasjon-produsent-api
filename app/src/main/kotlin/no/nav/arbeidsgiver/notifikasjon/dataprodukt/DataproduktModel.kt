@@ -623,7 +623,7 @@ class DataproduktModel(
                 )
             }
 
-            is HendelseModel.PaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
         }
     }
 
