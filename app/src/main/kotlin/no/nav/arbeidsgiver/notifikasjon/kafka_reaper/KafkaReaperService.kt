@@ -70,6 +70,8 @@ class KafkaReaperServiceImpl(
                     kafkaReaperModel.fjernRelasjon(hendelse.hendelseId)
                 } else Unit
             }
+
+            is HendelseModel.PaaminnelseEndret -> TODO()
         }
     }
 }

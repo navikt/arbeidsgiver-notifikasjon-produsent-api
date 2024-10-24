@@ -622,6 +622,8 @@ class DataproduktModel(
                     statusUtsending = "UTSENDING_BESTILT",
                 )
             }
+
+            is HendelseModel.PaaminnelseEndret -> TODO()
         }
     }
 

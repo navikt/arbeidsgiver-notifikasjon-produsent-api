@@ -166,4 +166,5 @@ val Hendelse.typeNavn: String
         is KalenderavtaleOppdatert -> "KalenderavtaleOppdatert"
         is NesteStegSak -> "NesteStegSak"
         is TilleggsinformasjonSak -> "TillegsinformasjonSak"
+        is HendelseModel.PaaminnelseEndret -> "PåminnelseEndret"
     }

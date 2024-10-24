@@ -755,6 +755,7 @@ class BrukerRepositoryImpl(
             is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
             is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
+            is HendelseModel.PaaminnelseEndret -> TODO()
         }
     }
 

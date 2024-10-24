@@ -61,6 +61,8 @@ class ManueltVedlikeholdService(
             is HendelseModel.NesteStegSak,
             is HendelseModel.TilleggsinformasjonSak,
             is HendelseModel.SoftDelete -> Unit
+
+            is HendelseModel.PaaminnelseEndret -> TODO()
         }
     }
 

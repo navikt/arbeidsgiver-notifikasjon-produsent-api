@@ -58,6 +58,7 @@ object ProdusentAPI {
                 MutationKalenderavtale(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNesteStegSak(hendelseDispatcher, produsentRepository).wire(this)
                 MutationTilleggsinformasjonSak(hendelseDispatcher, produsentRepository).wire(this)
+                MutationPaaminnelse(hendelseDispatcher, produsentRepository).wire(this)
             }
         )
     }

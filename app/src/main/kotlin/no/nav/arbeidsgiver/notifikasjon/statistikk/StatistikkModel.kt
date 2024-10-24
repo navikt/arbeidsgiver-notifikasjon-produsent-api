@@ -458,6 +458,8 @@ class StatistikkModel(
                     uuid(hendelse.notifikasjonId)
                 }
             }
+
+            is HendelseModel.PaaminnelseEndret -> TODO()
         }
     }
 

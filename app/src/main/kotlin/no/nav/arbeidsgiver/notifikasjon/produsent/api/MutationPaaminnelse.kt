@@ -7,7 +7,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -17,7 +16,7 @@ internal class MutationPaaminnelse(
 ) {
 
     fun wire(runtime: RuntimeWiring.Builder) {
-        runtime.resolveSubtypes<OppgaveUtsettFristResultat>()
+        runtime.resolveSubtypes<OppgaveEndrePaaminnelseResultat>()
 
         runtime.wire("Mutation") {
             coDataFetcher("oppgaveEndrePaaminnelse") { env ->
