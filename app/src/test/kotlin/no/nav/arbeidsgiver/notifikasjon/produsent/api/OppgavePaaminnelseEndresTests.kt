@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
@@ -56,8 +57,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 produsentModel.oppdaterModellEtterHendelse(it)
             }
 
-            val req =
-                """
+            val response = engine.produsentApi("""
                 mutation {
                     oppgaveEndrePaaminnelse(
                         id: "$uuid",
@@ -75,11 +75,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                         }
                     }
                 }
-                """
-
-            val response = engine.produsentApi(
-                req
-            )
+                """)
 
             it("returnerer tilbake oppgave id-en") {
                 val vellykket =
@@ -87,7 +83,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 vellykket.id shouldBe uuid
             }
 
-            it("har sendt melding til kafka") {
+            it("har sendt melding til kafka med korrekt påminnelse") {
                 val hendelse = stubbedKafkaProducer.hendelser
                     .filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>()
                     .last()
@@ -99,8 +95,118 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
         }
 
         context("Oppgave får fjernet påminnelse") {
-            TODO("implementer")
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+            OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottakere = listOf(mottaker),
+                hendelseId = uuid,
+                notifikasjonId = uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = oppgaveOpprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
+                hardDelete = null,
+                frist = null,
+                påminnelse = HendelseModel.Påminnelse(
+                    tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(konkretPaaminnelsesTidspunkt, konkretPaaminnelsesTidspunkt.inOsloAsInstant()),
+                    eksterneVarsler = listOf()
+                ),
+                sakId = null,
+            ).also {
+                produsentModel.oppdaterModellEtterHendelse(it)
+            }
+
+            val response = engine.produsentApi("""
+                mutation {
+                    oppgaveEndrePaaminnelse(
+                        id: "$uuid", 
+                    ) {
+                        __typename
+                        ... on OppgaveEndrePaaminnelseVellykket {
+                            id
+                        }
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+                """)
+
+            it("returnerer tilbake oppgave id-en") {
+                val vellykket =
+                    response.getTypedContent<MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
+                vellykket.id shouldBe uuid
+            }
+
+            it("har sendt melding til kafka med tom påminnelse") {
+                val hendelse = stubbedKafkaProducer.hendelser
+                    .filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>()
+                    .last()
+                hendelse.påminnelse shouldBe null
+            }
         }
+
+        context("Oppgave finnes ikke") {
+            val (_, stubbedKafkaProducer, engine) = setupEngine()
+            val response = engine.produsentApi("""
+                mutation {
+                    oppgaveEndrePaaminnelse(
+                        id: "$uuid", 
+                    ) {
+                        __typename
+                        ... on OppgaveEndrePaaminnelseVellykket {
+                            id
+                        }
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+                """)
+
+            it("returnerer oppgave finnes ikke") {
+                val finnesIkke = response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveEndrePaaminnelse")
+                finnesIkke.feilmelding shouldNotBe null
+            }
+
+            it("melding er ikke sendt på kafka") {
+                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>() shouldBe emptyList()
+            }
+        }
+
+        context("Påminnelsestidspunkt er ugyldig") {
+            val (_, stubbedKafkaProducer, engine) = setupEngine()
+            val response = engine.produsentApi("""
+                mutation {
+                    oppgaveEndrePaaminnelse(
+                        id: "$uuid", 
+                    ) {
+                        __typename
+                        ... on OppgaveEndrePaaminnelseVellykket {
+                            id
+                        }
+                        ... on Error {
+                            feilmelding
+                        }
+                    }
+                }
+                """)
+
+            it("returnerer oppgave finnes ikke") {
+                val finnesIkke = response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveEndrePaaminnelse")
+                finnesIkke.feilmelding shouldNotBe null
+            }
+
+            it("melding er ikke sendt på kafka") {
+                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>() shouldBe emptyList()
+            }
+        }
+        //TODO: flere tester?
     }
 })
 
