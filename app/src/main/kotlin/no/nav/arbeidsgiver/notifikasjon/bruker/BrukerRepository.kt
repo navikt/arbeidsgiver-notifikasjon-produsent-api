@@ -1382,31 +1382,17 @@ class BrukerRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterOppgavePaaminnelseEndret(hendelse: HendelseModel.OppgavePaaminnelseEndret){
-        if (hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt == null){
-            database.nonTransactionalExecuteUpdate(
+        val påminnelsesTidpunkt = hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt?.atOffset(ZoneOffset.UTC)
+        database.nonTransactionalExecuteUpdate(
             """
             update notifikasjon
-            set paaminnelse_tidspunkt = null
+            set paaminnelse_tidspunkt = ?
             where
                 id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
             """ // where check riktig?
-            ) {
-                uuid(hendelse.notifikasjonId)
-            }
-        }
-        else{
-            val påminnelsesTidpunkt = hendelse.påminnelse.tidspunkt.påminnelseTidspunkt.atOffset(ZoneOffset.UTC)
-            database.nonTransactionalExecuteUpdate(
-                """
-                update notifikasjon
-                set paaminnelse_tidspunkt = ?
-                where
-                    id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
-                """ // where check riktig?
-            ) {
-                timestamp_with_timezone(påminnelsesTidpunkt)
-                uuid(hendelse.notifikasjonId)
-            }
+        ) {
+            nullableTimestamptz(påminnelsesTidpunkt)
+            uuid(hendelse.notifikasjonId)
         }
     }
 
