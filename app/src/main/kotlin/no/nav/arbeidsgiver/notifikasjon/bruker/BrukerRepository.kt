@@ -1384,7 +1384,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterOppgavePaaminnelseEndret(hendelse: HendelseModel.OppgavePaaminnelseEndret){
         if (hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt == null){
             database.nonTransactionalExecuteUpdate(
-                """
+            """
             update notifikasjon
             set paaminnelse_tidspunkt = null
             where
