@@ -614,6 +614,7 @@ object HendelseModel {
         override val produsentId: String,
         override val kildeAppNavn: String,
         val notifikasjonId: UUID,
+        val frist: LocalDate?,
         val påminnelse: Påminnelse?,
     ) : Hendelse(){
         @JsonIgnore

@@ -78,7 +78,8 @@ internal class MutationOppgavePaaminnelse(
                         frist = notifikasjon.frist,
                         startTidspunkt = null, //TODO: notifikasjon er oppgave, denne er irrelevant?
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
-                    )
+                    ),
+                    frist = notifikasjon.frist
                 )
             )
         }

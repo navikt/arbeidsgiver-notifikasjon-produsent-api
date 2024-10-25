@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
@@ -15,18 +16,28 @@ class OppgaveEndrePåminnelseTests : DescribeSpec({
     val (brukerRepository, engine) = setupRepoOgEngine()
 
     describe("Oppgave får endret påminnelse") {
-        val oppgave = brukerRepository.oppgaveOpprettet()
+        val oppgaveOpprettetTidspunkt = OffsetDateTime.now()
+        val oppgave = brukerRepository.oppgaveOpprettet(opprettetTidspunkt = oppgaveOpprettetTidspunkt)
 
-        it("Oppgave har ingen påminnelse, men får en påminnelse opprettet")
+        it("Oppgave har ingen påminnelse, men får en påminnelse opprettet") {
+
             val response1 = engine.queryNotifikasjonerJson()
-            val harPåminnelse =
-                response1.getTypedContent<List<OffsetDateTime?>>("$.notifikasjoner.notifikasjoner[*].paaminnelseTidspunkt")
-                    .map { it != null }
-            harPåminnelse shouldBe listOf(false)
+            val harIkkePåminnelse =
+                response1.getTypedContent<List<OffsetDateTime?>>("$.notifikasjoner.notifikasjoner[0].paaminnelseTidspunkt")
+            harIkkePåminnelse shouldBe null
+            val påminnelsesTidspunkt = oppgaveOpprettetTidspunkt.minusDays(2).toLocalDateTime()
 
-        brukerRepository.oppgavePåminnelseEndret(oppgave.notifikasjonId,
-            HendelseModel.Påminnelse(
-        ))
+            brukerRepository.oppgavePåminnelseEndret(
+                oppgave.notifikasjonId,
+                HendelseModel.Påminnelse(
+                    tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(påminnelsesTidspunkt, påminnelsesTidspunkt.inOsloAsInstant()),
+                    eksterneVarsler = emptyList()
+                )
+            )
+            val response2 = engine.queryNotifikasjonerJson()
+            val harPåminnelse = response2.getTypedContent<List<OffsetDateTime?>>("$.notifikasjoner.notifikasjoner[0].paaminnelseTidspunkt")
+            harPåminnelse.count() shouldBe 1
+        }
     }
 })
 
@@ -37,7 +48,8 @@ private suspend fun BrukerRepository.oppgavePåminnelseEndret(oppgaveId: UUID, p
         påminnelse = paaminnelse,
         notifikasjonId = oppgaveId,
         kildeAppNavn = "1",
-        produsentId = "1"
+        produsentId = "1",
+        frist = null
     ).also {
         oppdaterModellEtterHendelse(it)
     }
@@ -48,15 +60,10 @@ private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApp
     val database = testDatabase(Bruker.databaseConfig)
     val brukerRepository = BrukerRepositoryImpl(database)
     val engine = ktorBrukerTestServer(
-        altinn = AltinnStub(
-            "0".repeat(11) to BrukerModel.Tilganger(
-                tjenestetilganger = listOf(
-                    BrukerModel.Tilgang.Altinn("42", "5441", "1"),
-                    BrukerModel.Tilgang.Altinn("43", "5441", "1")
-                ),
-            )
-        ),
         brukerRepository = brukerRepository,
+        altinn = AltinnStub { _, _ ->
+            BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+        }
     )
     return Pair(brukerRepository, engine)
 }

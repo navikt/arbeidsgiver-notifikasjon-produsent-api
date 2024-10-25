@@ -1382,17 +1382,31 @@ class BrukerRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterOppgavePaaminnelseEndret(hendelse: HendelseModel.OppgavePaaminnelseEndret){
-        val påminnelsesTidpunkt = hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt?.atOffset(ZoneOffset.UTC)
-        database.nonTransactionalExecuteUpdate(
-            """
+        if (hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt == null){
+            database.nonTransactionalExecuteUpdate(
+                """
             update notifikasjon
-            set paaminnelse_tidspunkt = ?
+            set paaminnelse_tidspunkt = null
             where
-                id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}
+                id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
             """ // where check riktig?
-        ) {
-            if (påminnelsesTidpunkt != null) timestamp_with_timezone(påminnelsesTidpunkt) else null //TODO: er dette lov?
-            uuid(hendelse.notifikasjonId)
+            ) {
+                uuid(hendelse.notifikasjonId)
+            }
+        }
+        else{
+            val påminnelsesTidpunkt = hendelse.påminnelse.tidspunkt.påminnelseTidspunkt.atOffset(ZoneOffset.UTC)
+            database.nonTransactionalExecuteUpdate(
+                """
+                update notifikasjon
+                set paaminnelse_tidspunkt = ?
+                where
+                    id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
+                """ // where check riktig?
+            ) {
+                timestamp_with_timezone(påminnelsesTidpunkt)
+                uuid(hendelse.notifikasjonId)
+            }
         }
     }
 
