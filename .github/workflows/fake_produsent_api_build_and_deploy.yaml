@@ -48,6 +48,7 @@ jobs:
           PRINT_PAYLOAD: true
 
   ghcr_push:
+    if: github.ref == 'refs/heads/main'
     permissions:
       packages: write
       contents: read
