@@ -254,6 +254,29 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                     )
                 }
             }
+
+            is HendelseModel.OppgavePaaminnelseEndret -> database.useTransaction {
+                markerBestillingLukket(hendelse.notifikasjonId)
+                when(hentOppgavetilstand(hendelse.notifikasjonId)){
+                    NOTIFIKASJON_AKTIV -> {
+                        bestillPåminnelse(
+                            hendelse = hendelse,
+                            påminnelse = hendelse.påminnelse,
+                            frist = hendelse.frist,
+                            startTidspunkt = null,
+                            fristOpprettetTidspunkt = hendelse.oppgaveOpprettetTidspunkt,
+                        )
+                    }
+
+                    OPPGAVE_UTFØRT,
+                    KALENDERAVTALE_AVLYST,
+                    NOTIFIKASJON_SLETTET,
+                    null -> {
+                        /* noop */
+                    }
+                }
+            }
+
             is HendelseModel.NesteStegSak,
             is HendelseModel.TilleggsinformasjonSak,
             is HendelseModel.BeskjedOpprettet,
@@ -264,7 +287,6 @@ class SkedulertPåminnelseRepository : AutoCloseable {
             is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.EksterntVarselVellykket -> Unit
 
-            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
         }
     }
 

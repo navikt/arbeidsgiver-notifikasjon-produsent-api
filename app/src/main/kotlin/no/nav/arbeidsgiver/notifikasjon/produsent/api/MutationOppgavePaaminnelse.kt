@@ -64,7 +64,6 @@ internal class MutationOppgavePaaminnelse(
 
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
-        //TODO: trengs duplikat håndtering?
         try {
             hendelseDispatcher.send(
                 HendelseModel.OppgavePaaminnelseEndret(
@@ -76,10 +75,11 @@ internal class MutationOppgavePaaminnelse(
                     påminnelse = paaminnelse?.tilDomene(
                         opprettetTidspunkt = OffsetDateTime.now(),
                         frist = notifikasjon.frist,
-                        startTidspunkt = null, //TODO: notifikasjon er oppgave, denne er irrelevant?
+                        startTidspunkt = null,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     ),
-                    frist = notifikasjon.frist
+                    frist = notifikasjon.frist,
+                    oppgaveOpprettetTidspunkt = notifikasjon.opprettetTidspunkt.toInstant()
                 )
             )
         }
