@@ -8,6 +8,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -189,6 +190,15 @@ fun Application.baseSetup(
     }
 
     install(StatusPages) {
+        exception<BadRequestException> { call, ex ->
+            this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            call.respond(
+                HttpStatusCode.InternalServerError, mapOf(
+                    "error" to "unexpected error",
+                )
+            )
+        }
+
         exception<JsonProcessingException> { call, ex ->
             ex.clearLocation()
 
