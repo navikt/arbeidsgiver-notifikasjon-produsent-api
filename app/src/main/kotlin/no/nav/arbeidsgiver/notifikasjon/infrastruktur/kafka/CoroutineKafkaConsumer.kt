@@ -115,8 +115,8 @@ private constructor(
     ) {
         withContext(kafkaContext) {
             while (!stop.get() && !Health.terminating) {
-                consumer.resume(resumeQueue.pollAll())
                 replayer.replayWhenLeap()
+                consumer.resume(resumeQueue.pollAll())
                 val records = try {
                     consumer.poll(Duration.ofMillis(1000))
                 } catch (e: Exception) {
