@@ -34,7 +34,7 @@ const ENDRE_PAAMINNELSE_OPPGAVE_EKSTERN_ID = gql`
         $merkelapp: String!
         $paaminnelse: PaaminnelseInput
     ) {
-        oppgaveEndrePaaminnelseByExternId(
+        oppgaveEndrePaaminnelseByEksternId(
             eksternId: $eksternId
             merkelapp: $merkelapp
             paaminnelse: $paaminnelse
