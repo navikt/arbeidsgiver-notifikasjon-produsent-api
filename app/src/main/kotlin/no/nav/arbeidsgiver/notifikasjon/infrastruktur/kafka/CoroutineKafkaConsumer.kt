@@ -1,8 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
-import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.JsonMappingException
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Tags
@@ -118,8 +115,8 @@ private constructor(
     ) {
         withContext(kafkaContext) {
             while (!stop.get() && !Health.terminating) {
-                replayer.replayWhenLeap()
                 consumer.resume(resumeQueue.pollAll())
+                replayer.replayWhenLeap()
                 val records = try {
                     consumer.poll(Duration.ofMillis(1000))
                 } catch (e: Exception) {
