@@ -60,9 +60,9 @@ class ManueltVedlikeholdService(
             is HendelseModel.FristUtsatt,
             is HendelseModel.NesteStegSak,
             is HendelseModel.TilleggsinformasjonSak,
+            is HendelseModel.OppgavePåminnelseEndret,
             is HendelseModel.SoftDelete -> Unit
 
-            is HendelseModel.OppgavePåminnelseEndret -> TODO()
         }
     }
 
