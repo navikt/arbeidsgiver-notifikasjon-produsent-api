@@ -80,6 +80,7 @@ internal class MutationOppgaveUtsettFrist(
                 FristUtsatt(
                     hendelseId = UUID.randomUUID(),
                     notifikasjonId = notifikasjon.id,
+                    merkelapp = notifikasjon.merkelapp,
                     virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     produsentId = produsent.id,
                     kildeAppNavn = context.appName,
