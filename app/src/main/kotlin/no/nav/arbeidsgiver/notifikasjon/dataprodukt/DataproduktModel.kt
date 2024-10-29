@@ -639,7 +639,7 @@ class DataproduktModel(
                     opprettVarselBestilling(
                         notifikasjonId = hendelse.notifikasjonId,
                         produsentId = hendelse.produsentId,
-                        merkelapp = hendelse.merkelapp,
+                        merkelapp = hendelse.merkelapp ?: "?",  // bakoverkompabilitet, glemte å legge til merkelapp før hendelser ble registrert i dev
                         eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
                         opprinnelse = "OppgavePåminnelseEndret.påminnelse",
                         statusUtsending = "UTSENDING_IKKE_AVGJORT",
