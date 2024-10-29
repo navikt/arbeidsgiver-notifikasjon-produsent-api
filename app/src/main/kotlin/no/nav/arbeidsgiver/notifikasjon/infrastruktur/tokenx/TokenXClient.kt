@@ -24,7 +24,7 @@ import io.ktor.serialization.jackson.*
 import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.getAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.cache.getAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.http.ConnectionClosedException
 import java.time.Instant
