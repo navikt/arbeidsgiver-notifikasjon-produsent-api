@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-internal class MutationOppgavePaaminnelse(
+internal class MutationOppgavePåminnelse(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {

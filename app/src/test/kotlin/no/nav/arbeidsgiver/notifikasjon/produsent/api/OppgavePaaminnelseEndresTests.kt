@@ -81,7 +81,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
 
             it("returnerer tilbake oppgave id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
+                    response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
                 vellykket.id shouldBe uuid
             }
 
@@ -146,7 +146,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
 
             it("returnerer tilbake oppgave id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
+                    response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
                 vellykket.id shouldBe uuid
             }
 
