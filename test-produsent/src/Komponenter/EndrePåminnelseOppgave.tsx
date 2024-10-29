@@ -1,11 +1,11 @@
 import { gql, useMutation } from '@apollo/client';
-import { Mutation, PaaminnelseTidspunktInput, Sendevindu } from '../api/graphql-types.ts';
+import { Mutation, Sendevindu } from '../api/graphql-types.ts';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { print } from 'graphql/language';
 import React from 'react';
 import cssClasses from './KalenderAvtale.module.css';
-import { Button, Checkbox, Select, TextField, ToggleGroup } from '@navikt/ds-react';
+import { Button, Checkbox, TextField, ToggleGroup } from '@navikt/ds-react';
 import { Altinntjeneste, EksternVarsel, Epost, SMS } from './EksternVarsling.tsx';
 
 
@@ -14,7 +14,10 @@ const ENDRE_PAAMINNELSE_OPPGAVE = gql`
         $oppgaveId: ID!
         $paaminnelse: PaaminnelseInput
     ) {
-        oppgaveEndrePaaminnelse(id: $oppgaveId, paaminnelse: $paaminnelse, ) {
+        oppgaveEndrePaaminnelse(
+            id: $oppgaveId
+            paaminnelse: $paaminnelse 
+        ) {
             ... on OppgaveEndrePaaminnelseVellykket {
                 id
             }
@@ -29,12 +32,12 @@ const ENDRE_PAAMINNELSE_OPPGAVE_EKSTERN_ID = gql`
     mutation (
         $eksternId: String!
         $merkelapp: String!
-        $paminnelse: PaaminnelseInput
+        $paaminnelse: PaaminnelseInput
     ) {
         oppgaveEndrePaaminnelseByExternId(
             eksternId: $eksternId
             merkelapp: $merkelapp
-            paaminnelse: $paminnelse
+            paaminnelse: $paaminnelse
         ) {
             ... on OppgaveEndrePaaminnelseVellykket {
                 id
@@ -79,17 +82,16 @@ export const EndrePåminnelseOppgave = () => {
                         merkelapp: merkelappRef.current?.value,
                     },
                 },
-                ...{
-                    ...paaminnelse ? {
-                        paminnelse: {
-                            tidspunkt:
-                                { etterOpprettelse: nullIfEmpty(tidspunktRef.current?.value ?? '') },
-                            eksterneVarsler: paaminnelse ? [handleEksternIdRef(eksternVarselRef)] : null,
-                        },
-                    } : {
-                        paminnelse: null,
+                ...paaminnelse ? {
+                    paaminnelse: {
+                        tidspunkt:
+                            { etterOpprettelse: nullIfEmpty(tidspunktRef.current?.value ?? '') },
+                        eksterneVarsler: paaminnelse ? [handleEksternIdRef(eksternVarselRef)].filter(it => it !== null) : null,
                     },
+                } : {
+                    paaminnelse: null,
                 },
+
             },
         });
     };
@@ -97,7 +99,7 @@ export const EndrePåminnelseOppgave = () => {
     return (
         <div className={cssClasses.kalenderavtale} style={{ minWidth: 'min(60rem, 100%)' }}>
             <SyntaxHighlighter language="graphql" style={darcula}>
-                {queryType == "Oppgave-id" ? print(ENDRE_PAAMINNELSE_OPPGAVE) : print(ENDRE_PAAMINNELSE_OPPGAVE_EKSTERN_ID)}
+                {queryType == 'Oppgave-id' ? print(ENDRE_PAAMINNELSE_OPPGAVE) : print(ENDRE_PAAMINNELSE_OPPGAVE_EKSTERN_ID)}
             </SyntaxHighlighter>
             <div style={{ maxWidth: '35rem' }}>
                 <ToggleGroup onChange={(it) => setQueryType(it as QueryType)} defaultValue={'Oppgave-id'}>
@@ -116,11 +118,7 @@ export const EndrePåminnelseOppgave = () => {
                     Skal ha påminnelse
                 </Checkbox>
                 {paaminnelse && <>
-                    <Select label={"Velg type tidspunkt"}>
-                        {Object.keys(PaaminnelseTidspunktType).map(it => <option value={it.toString()}>{PaaminnelseTidspunktType[it]}</option> )}
-                    </Select>
-
-                    <TextField label="Tidspunkt" ref={tidspunktRef} />
+                    <TextField label="Tidspunkt (ISO8601Duration fra endring)" ref={tidspunktRef} />
                     <EksternVarsel ref={eksternVarselRef} />
                 </>}
                 <Button style={{ marginTop: '8px' }} onClick={handleSend}>Send</Button>
@@ -146,17 +144,15 @@ const handleEksternIdRef = (paaminnelseRef: React.MutableRefObject<EksternVarsel
             nullIfEmpty(tidspunkt) === null
         ) return [];
         return {
-            eksterneVarsler: [{
-                sms: {
-                    mottaker: {
-                        kontaktinfo: {
-                            tlf: tlf,
-                        },
+            sms: {
+                mottaker: {
+                    kontaktinfo: {
+                        tlf: tlf,
                     },
-                    smsTekst: smsTekst,
-                    sendevindu: Sendevindu.NksAapningstid,
                 },
-            }],
+                smsTekst: smsTekst,
+                sendevindu: Sendevindu.NksAapningstid,
+            },
         };
     } else if ('epostadresse' in varselfraref) {
         const { epostadresse, epostTittel, epostHtmlBody, tidspunkt } = varselfraref as Epost;
@@ -166,19 +162,17 @@ const handleEksternIdRef = (paaminnelseRef: React.MutableRefObject<EksternVarsel
             nullIfEmpty(tidspunkt) === null
         ) return null;
         return {
-            eksterneVarsler: [{
-                epost: {
-                    mottaker: {
-                        kontaktinfo: {
-                            epostadresse: epostadresse,
-                        },
-                    },
-                    epostTittel: epostTittel,
-                    epostHtmlBody: epostHtmlBody,
-                    sendevindu: Sendevindu.NksAapningstid,
 
+            epost: {
+                mottaker: {
+                    kontaktinfo: {
+                        epostadresse: epostadresse,
+                    },
                 },
-            }],
+                epostTittel: epostTittel,
+                epostHtmlBody: epostHtmlBody,
+                sendevindu: Sendevindu.NksAapningstid,
+            },
         };
     } else if ('serviceCode' in varselfraref) {
         const { serviceCode, serviceEdition, tittel, innhold, tidspunkt } = varselfraref as Altinntjeneste;
@@ -189,17 +183,15 @@ const handleEksternIdRef = (paaminnelseRef: React.MutableRefObject<EksternVarsel
             nullIfEmpty(tidspunkt) === null
         ) return null;
         return {
-            eksterneVarsler: [{
-                altinntjeneste: {
-                    mottaker: {
-                        serviceCode: serviceCode,
-                        serviceEdition: serviceEdition,
-                    },
-                    tittel: tittel,
-                    innhold: innhold,
-                    sendevindu: Sendevindu.NksAapningstid,
+            altinntjeneste: {
+                mottaker: {
+                    serviceCode: serviceCode,
+                    serviceEdition: serviceEdition,
                 },
-            }],
+                tittel: tittel,
+                innhold: innhold,
+                sendevindu: Sendevindu.NksAapningstid,
+            },
         };
     }
     return null;
