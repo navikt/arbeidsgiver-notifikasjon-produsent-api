@@ -264,7 +264,12 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                             påminnelse = hendelse.påminnelse,
                             frist = hendelse.frist,
                             startTidspunkt = null,
-                            fristOpprettetTidspunkt = hendelse.oppgaveOpprettetTidspunkt, //TODO: hva skal dette egentlig være?
+                            /**
+                             * I mangel av at vi ikke har noen god måte å vite når eksisterende frist ble opprettet, i tillegg til
+                             * at feltet fristOpprettetTidspunkt ikke ser ut til å blir brukt noe sted, har vi valgt å sette dette feltet til tidspunktet når oppgaven ble opprettet.
+                             * Dersom man ønsker å sette dette korrekt, vil en løsning være å persistere fristOpprettetTidspunkt i produsent apiet, og populere det gjennom OppgavePåminnelseEndret hendelsen.
+                             */
+                            fristOpprettetTidspunkt = hendelse.oppgaveOpprettetTidspunkt,
                         )
                     }
 
