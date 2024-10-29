@@ -1,17 +1,3 @@
-# Notifikasjoner for arbeidsgivere
-
-Dette repoet inneholder notifikasjonsplatformen for arbeidsgivere.
-
-Har du tenkt å bruke plattformen eller lurer på hva den er kan du se i [brukerdokumentasjonen](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/)
-
-Er du utvikler og vil bidra til plattformen kan du se i [utvikler guiden].
-
-Har du Spørsmål? Ta kontakt med teamet på Slack i kanalen #arbeidsgiver-notifikasjon eller #team-fager.
-
-
-
-
-
 # Lokal utvikling og tester
 
 For lokal utvikling benyttes docker-compose til å starte nødvendige platform tjenester (postgres, kafka etc). Vi har god erfaring med  [colima](https://github.com/abiosoft/colima). 
@@ -44,10 +30,7 @@ deploy ny app:
 
 ## Koble direkte til DEV databaser
 
-Du må ha være autentisert med `gcloud` og ha `cloud_sql_proxy` installert.
-
-Kjør `./cloudsql-connect.sh dev notifikasjon-bruker-api 5432` og postgres-databasen vil være tilgjengelig på 
-localhost:5432. Brukernavn er e-post-adressen din. Passord får du ved å kjøre `gcloud auth print-access-token`.
+Se nais cli postgres command i dokumentasjonen https://doc.nais.io/operate/cli/reference/postgres/?h=proxy
 
 ## Koble direkte til en topic på aiven
 
@@ -108,6 +91,12 @@ Les topic for en gitt partisjon fra et gitt offset:
 Describe topic:
 ```
 kafka-cli/bin/./kafka-topics.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --topic fager.notifikasjon --describe
+```
+
+Konsumer topic fra starten, pipe til fil og koble fra når ferdig:
+```
+.kafka-cli/bin/./kafka-console-consumer.sh --bootstrap-server $KAFKA_BROKERS --consumer.config $KAFKA_CONFIG/kafka.properties --topic fager.notifikasjon --formatter kafka.to
+ols.DefaultMessageFormatter --property print.key=true --property print.value=true --property print.offset=true --property print.timestamp=true --timeout-ms 30000 --from-beginning > dev.fager.notifikasjon.topic
 ```
 
 ## Ticks n' Trips
