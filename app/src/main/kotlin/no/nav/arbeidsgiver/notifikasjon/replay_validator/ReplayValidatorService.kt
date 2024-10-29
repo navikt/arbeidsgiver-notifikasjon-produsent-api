@@ -82,9 +82,9 @@ class ReplayValidatorService(
             is HendelseModel.SoftDelete,
             is HendelseModel.NesteStegSak,
             is HendelseModel.TilleggsinformasjonSak,
+            is HendelseModel.OppgavePåminnelseEndret,
             is HendelseModel.NyStatusSak -> Unit
 
-            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
         }
 
     }

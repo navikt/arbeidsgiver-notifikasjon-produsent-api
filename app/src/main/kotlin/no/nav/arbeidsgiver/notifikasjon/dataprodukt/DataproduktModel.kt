@@ -623,7 +623,7 @@ class DataproduktModel(
                 )
             }
 
-            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePåminnelseEndret -> Unit
         }
     }
 

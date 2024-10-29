@@ -755,7 +755,7 @@ class BrukerRepositoryImpl(
             is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
             is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
-            is HendelseModel.OppgavePaaminnelseEndret -> oppdaterModellEtterOppgavePaaminnelseEndret(hendelse)
+            is HendelseModel.OppgavePåminnelseEndret -> Unit
         }
     }
 
@@ -1378,35 +1378,6 @@ class BrukerRepositoryImpl(
         ) {
             date(hendelse.frist)
             uuid(hendelse.notifikasjonId)
-        }
-    }
-
-    private suspend fun oppdaterModellEtterOppgavePaaminnelseEndret(hendelse: HendelseModel.OppgavePaaminnelseEndret){
-        if (hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt == null){
-            database.nonTransactionalExecuteUpdate(
-                """
-            update notifikasjon
-            set paaminnelse_tidspunkt = null
-            where
-                id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
-            """ // where check riktig?
-            ) {
-                uuid(hendelse.notifikasjonId)
-            }
-        }
-        else{
-            val påminnelsesTidpunkt = hendelse.påminnelse.tidspunkt.påminnelseTidspunkt.atOffset(ZoneOffset.UTC)
-            database.nonTransactionalExecuteUpdate(
-                """
-                update notifikasjon
-                set paaminnelse_tidspunkt = ?
-                where
-                    id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
-                """ // where check riktig?
-            ) {
-                timestamp_with_timezone(påminnelsesTidpunkt)
-                uuid(hendelse.notifikasjonId)
-            }
         }
     }
 

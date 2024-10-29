@@ -608,13 +608,14 @@ object HendelseModel {
     }
 
     @JsonTypeName("OppgavePaaminnelseEndret")
-    data class OppgavePaaminnelseEndret(
+    data class OppgavePåminnelseEndret(
         override val virksomhetsnummer: String,
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
         val notifikasjonId: UUID,
         val frist: LocalDate?,
+        val oppgaveOpprettetTidspunkt: Instant,
         val påminnelse: Påminnelse?,
     ) : Hendelse(){
         @JsonIgnore

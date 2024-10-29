@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.OffsetDateTime
 import java.util.*
 
-internal class MutationOppgavePaaminnelse(
+internal class MutationOppgavePåminnelse(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
@@ -51,7 +51,7 @@ internal class MutationOppgavePaaminnelse(
         val id: UUID
     ) : OppgaveEndrePaaminnelseResultat
 
-    private suspend fun oppgaveEndrePaaminnelse( //TODO: påminnelse på kalenderavtale også?
+    private suspend fun oppgaveEndrePaaminnelse(
         context: ProdusentAPI.Context,
         notifikasjon: ProdusentModel.Notifikasjon,
         paaminnelse: PaaminnelseInput?,
@@ -64,10 +64,9 @@ internal class MutationOppgavePaaminnelse(
 
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
-        //TODO: trengs duplikat håndtering?
         try {
             hendelseDispatcher.send(
-                HendelseModel.OppgavePaaminnelseEndret(
+                HendelseModel.OppgavePåminnelseEndret(
                     hendelseId = UUID.randomUUID(),
                     notifikasjonId = notifikasjon.id,
                     virksomhetsnummer = notifikasjon.virksomhetsnummer,
@@ -76,10 +75,11 @@ internal class MutationOppgavePaaminnelse(
                     påminnelse = paaminnelse?.tilDomene(
                         opprettetTidspunkt = OffsetDateTime.now(),
                         frist = notifikasjon.frist,
-                        startTidspunkt = null, //TODO: notifikasjon er oppgave, denne er irrelevant?
+                        startTidspunkt = null,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     ),
-                    frist = notifikasjon.frist
+                    frist = notifikasjon.frist,
+                    oppgaveOpprettetTidspunkt = notifikasjon.opprettetTidspunkt.toInstant()
                 )
             )
         }

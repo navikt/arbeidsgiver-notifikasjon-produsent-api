@@ -446,6 +446,10 @@ class StatistikkModel(
                 // noop
             }
 
+            is HendelseModel.OppgavePåminnelseEndret -> {
+                // noop
+            }
+
             is FristUtsatt -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -459,7 +463,6 @@ class StatistikkModel(
                 }
             }
 
-            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
         }
     }
 

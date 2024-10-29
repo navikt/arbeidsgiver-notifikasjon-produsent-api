@@ -38,7 +38,7 @@ internal sealed class Error {
         MutationNesteStegSak.NesteStegSakResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat,
         MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat,
-        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePåminnelse.OppgaveEndrePaaminnelseResultat
 
 
     @JsonTypeName("UkjentProdusent")
@@ -61,7 +61,7 @@ internal sealed class Error {
         MutationNesteStegSak.NesteStegSakResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat,
         MutationTilleggsinformasjonSak.TilleggsinformasjonSakResultat,
-        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePåminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UgyldigMottaker")
     data class UgyldigMottaker(
@@ -115,7 +115,7 @@ internal sealed class Error {
         MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonResultat,
         QueryNotifikasjoner.HentNotifikasjonResultat,
         MutationKalenderavtale.OppdaterKalenderavtaleResultat,
-        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePåminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UkjentRolle")
     data class UkjentRolle(
@@ -132,7 +132,7 @@ internal sealed class Error {
         Error(),
         MutationNyOppgave.NyOppgaveResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
-        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePåminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("SakFinnesIkke")
     data class SakFinnesIkke(
@@ -151,7 +151,7 @@ internal sealed class Error {
         override val feilmelding: String,
     ):  Error(),
         MutationOppgaveUtgaatt.OppgaveUtgaattResultat,
-        MutationOppgavePaaminnelse.OppgaveEndrePaaminnelseResultat
+        MutationOppgavePåminnelse.OppgaveEndrePaaminnelseResultat
 
     @JsonTypeName("UgyldigKalenderavtale")
     data class UgyldigKalenderavtale(
