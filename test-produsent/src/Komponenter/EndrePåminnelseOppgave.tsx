@@ -151,7 +151,7 @@ const handleEksternIdRef = (paaminnelseRef: React.MutableRefObject<EksternVarsel
                     },
                 },
                 smsTekst: smsTekst,
-                sendevindu: Sendevindu.NksAapningstid,
+                sendevindu: Sendevindu.Loepende,
             },
         };
     } else if ('epostadresse' in varselfraref) {
@@ -171,7 +171,7 @@ const handleEksternIdRef = (paaminnelseRef: React.MutableRefObject<EksternVarsel
                 },
                 epostTittel: epostTittel,
                 epostHtmlBody: epostHtmlBody,
-                sendevindu: Sendevindu.NksAapningstid,
+                sendevindu: Sendevindu.Loepende,
             },
         };
     } else if ('serviceCode' in varselfraref) {
@@ -190,7 +190,7 @@ const handleEksternIdRef = (paaminnelseRef: React.MutableRefObject<EksternVarsel
                 },
                 tittel: tittel,
                 innhold: innhold,
-                sendevindu: Sendevindu.NksAapningstid,
+                sendevindu: Sendevindu.Loepende,
             },
         };
     }
