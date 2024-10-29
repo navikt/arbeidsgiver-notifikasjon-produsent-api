@@ -51,7 +51,7 @@ internal class MutationOppgavePaaminnelse(
         val id: UUID
     ) : OppgaveEndrePaaminnelseResultat
 
-    private suspend fun oppgaveEndrePaaminnelse( //TODO: påminnelse på kalenderavtale også?
+    private suspend fun oppgaveEndrePaaminnelse(
         context: ProdusentAPI.Context,
         notifikasjon: ProdusentModel.Notifikasjon,
         paaminnelse: PaaminnelseInput?,
@@ -66,7 +66,7 @@ internal class MutationOppgavePaaminnelse(
 
         try {
             hendelseDispatcher.send(
-                HendelseModel.OppgavePaaminnelseEndret(
+                HendelseModel.OppgavePåminnelseEndret(
                     hendelseId = UUID.randomUUID(),
                     notifikasjonId = notifikasjon.id,
                     virksomhetsnummer = notifikasjon.virksomhetsnummer,

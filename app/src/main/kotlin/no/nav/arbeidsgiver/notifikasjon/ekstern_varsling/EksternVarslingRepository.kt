@@ -70,7 +70,7 @@ class EksternVarslingRepository(
             is NesteStegSak -> Unit
             is TilleggsinformasjonSak -> Unit
             is FristUtsatt -> Unit
-            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePåminnelseEndret -> TODO()
         }
     }
 

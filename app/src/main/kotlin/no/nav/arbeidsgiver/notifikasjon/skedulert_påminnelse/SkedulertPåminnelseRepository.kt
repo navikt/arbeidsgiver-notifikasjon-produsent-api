@@ -255,8 +255,8 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                 }
             }
 
-            is HendelseModel.OppgavePaaminnelseEndret -> database.useTransaction {
-                markerBestillingLukket(hendelse.notifikasjonId)
+            is HendelseModel.OppgavePåminnelseEndret -> database.useTransaction {
+                markerPåminnelserLukket(notifikasjonId = hendelse.notifikasjonId)
                 when(hentOppgavetilstand(hendelse.notifikasjonId)){
                     NOTIFIKASJON_AKTIV -> {
                         bestillPåminnelse(
@@ -264,7 +264,7 @@ class SkedulertPåminnelseRepository : AutoCloseable {
                             påminnelse = hendelse.påminnelse,
                             frist = hendelse.frist,
                             startTidspunkt = null,
-                            fristOpprettetTidspunkt = hendelse.oppgaveOpprettetTidspunkt,
+                            fristOpprettetTidspunkt = hendelse.oppgaveOpprettetTidspunkt, //TODO: hva skal dette egentlig være?
                         )
                     }
 

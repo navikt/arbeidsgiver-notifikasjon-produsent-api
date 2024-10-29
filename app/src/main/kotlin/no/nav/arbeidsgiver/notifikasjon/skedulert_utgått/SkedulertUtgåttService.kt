@@ -101,7 +101,7 @@ class SkedulertUtgåttService(
             is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.EksterntVarselVellykket -> Unit
 
-            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePåminnelseEndret -> TODO()
         }
     }
 

@@ -178,7 +178,7 @@ class SkedulertHardDeleteRepositoryImpl(
             is HendelseModel.FristUtsatt,
             is HendelseModel.SoftDelete -> Unit
 
-            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePåminnelseEndret -> TODO()
         }
     }
 

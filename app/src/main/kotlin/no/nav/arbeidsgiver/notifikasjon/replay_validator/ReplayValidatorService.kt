@@ -84,7 +84,7 @@ class ReplayValidatorService(
             is HendelseModel.TilleggsinformasjonSak,
             is HendelseModel.NyStatusSak -> Unit
 
-            is HendelseModel.OppgavePaaminnelseEndret -> TODO()
+            is HendelseModel.OppgavePåminnelseEndret -> TODO()
         }
 
     }

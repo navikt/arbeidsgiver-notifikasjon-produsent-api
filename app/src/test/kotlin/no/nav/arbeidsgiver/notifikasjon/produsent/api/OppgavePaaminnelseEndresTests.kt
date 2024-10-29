@@ -87,7 +87,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
 
             it("har sendt melding til kafka med korrekt påminnelse") {
                 val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>()
+                    .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
                     .last()
                 hendelse.påminnelse?.tidspunkt shouldBe HendelseModel.PåminnelseTidspunkt.Konkret(
                     konkretPaaminnelsesTidspunkt,
@@ -152,7 +152,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
 
             it("har sendt melding til kafka med tom påminnelse") {
                 val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>()
+                    .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
                     .last()
                 hendelse.påminnelse shouldBe null
             }
@@ -184,7 +184,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
             }
 
             it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>() shouldBe emptyList()
+                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
             }
         }
 
@@ -248,7 +248,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
 
 
             it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>() shouldBe emptyList()
+                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
             }
         }
 
@@ -310,7 +310,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
             }
 
             it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>() shouldBe emptyList()
+                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
             }
         }
 
@@ -374,7 +374,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
             }
 
             it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>() shouldBe emptyList()
+                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
             }
         }
 
@@ -438,7 +438,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
             }
 
             it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePaaminnelseEndret>() shouldBe emptyList()
+                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
             }
 
         }
