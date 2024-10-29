@@ -569,7 +569,7 @@ object HendelseModel {
         override val produsentId: String,
         override val kildeAppNavn: String,
         val notifikasjonId: UUID,
-        val merkelapp: String,
+        val merkelapp: String?,
         val fristEndretTidspunkt: Instant,
         val frist: LocalDate,
         val påminnelse: Påminnelse?,

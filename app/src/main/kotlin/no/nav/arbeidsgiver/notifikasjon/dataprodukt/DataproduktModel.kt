@@ -482,7 +482,7 @@ class DataproduktModel(
                     opprettVarselBestilling(
                         notifikasjonId = hendelse.notifikasjonId,
                         produsentId = hendelse.produsentId,
-                        merkelapp = hendelse.merkelapp,
+                        merkelapp = hendelse.merkelapp ?: "?",
                         eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
                         opprinnelse = "FristUtsatt.påminnelse",
                         statusUtsending = "UTSENDING_IKKE_AVGJORT",
