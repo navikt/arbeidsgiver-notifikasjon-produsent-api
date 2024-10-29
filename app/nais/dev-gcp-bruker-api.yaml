@@ -7,6 +7,12 @@ metadata:
     team: fager
 spec:
   image: {{image}}
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
   ingresses:
     - https://ag-notifikasjon-bruker-api.intern.dev.nav.no/
   liveness:
@@ -52,12 +58,9 @@ spec:
           namespace: toi
     outbound:
       rules:
-        - application: altinn-rettigheter-proxy
-          namespace: arbeidsgiver
         - application: arbeidsgiver-altinn-tilganger
       external:
         - host: fakedings.intern.dev.nav.no # fakedings login
-        - host: api-gw-q1.oera.no # fallback for altinn-rettigheter-proxy-client
         - host: ereg-services-q1.dev-fss-pub.nais.io # ereg brukes i bruker-api
   envFrom:
     - secret: notifikasjon-bruker-api-secrets

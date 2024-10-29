@@ -2,16 +2,11 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.coEvery
-import io.mockk.mockk
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.AltinnrettigheterProxyKlient
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.AltinnReportee
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.SelvbetjeningToken
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceCode
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.ServiceEdition
-import no.nav.arbeidsgiver.altinnrettigheter.proxy.klient.model.Subject
+import io.ktor.client.engine.mock.*
+import io.ktor.http.*
+import io.ktor.utils.io.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.SuspendingAltinnClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
 
 class VirksomhetsinfoServiceTests: DescribeSpec({
@@ -25,29 +20,50 @@ class VirksomhetsinfoServiceTests: DescribeSpec({
         enhetsregisteret = enhetsregisteret,
     )
 
-    val altinnrettigheteterProxyKlient = mockk<AltinnrettigheterProxyKlient>()
-
-    coEvery {
-        altinnrettigheteterProxyKlient.hentOrganisasjoner(any(), any(), any(), any(), any())
-    } returns listOf(
-        baseAltinnReportee.copy(
-            name = "altinn 1",
-            organizationNumber = "1"
-        ),
-        baseAltinnReportee.copy(
-            name = "altinn 2",
-            organizationNumber = "2",
-        ),
-        baseAltinnReportee.copy(
-            name = "altinn 3",
-            organizationNumber = "3",
-        )
-    )
-
-    val altinn = SuspendingAltinnClient(
-        blockingClient = altinnrettigheteterProxyKlient,
-        observer = virksomhetsinfoService::altinnObserver,
+    val altinn = AltinnTilgangerClient(
+        observer = virksomhetsinfoService::cachePut,
         tokenXClient = TokenXClientStub(),
+        engine = MockEngine { _ ->
+            respond(
+                content = ByteReadChannel(//language=JSON
+                    """
+                    {
+                      "isError": false,
+                      "hierarki": [
+                        {
+                          "orgNr": "1",
+                          "name": "altinn 1",
+                          "organizationForm": "AS",
+                          "altinn3Tilganger": [],
+                          "altinn2Tilganger": [],
+                          "underenheter": [
+                            {
+                              "orgNr": "2",
+                              "name": "altinn 2",
+                              "organizationForm": "BEDR",
+                              "altinn3Tilganger": [],
+                              "altinn2Tilganger": [],
+                              "underenheter": []
+                            },
+                            {
+                              "orgNr": "3",
+                              "name": "altinn 3",
+                              "organizationForm": "BEDR",
+                              "altinn3Tilganger": [],
+                              "altinn2Tilganger": [],
+                              "underenheter": []
+                            }
+                          ]
+                        }
+                      ],
+                      "orgNrTilTilganger": {},
+                      "tilgangTilOrgNr": {}
+                    }
+                """),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
     )
 
     describe("automatisk caching av virksomhetsnavn fra altinn-kall") {
@@ -57,7 +73,7 @@ class VirksomhetsinfoServiceTests: DescribeSpec({
         }
 
         it("caching av navn forekommer") {
-            altinn.hentOrganisasjoner(SelvbetjeningToken(""), Subject(""), ServiceCode(""), ServiceEdition(""), false)
+            altinn.hentTilganger("dummy token")
             virksomhetsinfoService.hentUnderenhet("1").navn shouldBe "altinn 1"
             virksomhetsinfoService.hentUnderenhet("2").navn shouldBe "altinn 2"
             virksomhetsinfoService.hentUnderenhet("3").navn shouldBe "altinn 3"
@@ -65,13 +81,3 @@ class VirksomhetsinfoServiceTests: DescribeSpec({
         }
     }
 })
-
-private val baseAltinnReportee = AltinnReportee(
-    name = "",
-    type = "",
-    parentOrganizationNumber = null,
-    organizationNumber = "",
-    organizationForm = null,
-    status = null,
-    socialSecurityNumber = null,
-)

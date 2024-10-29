@@ -7,6 +7,12 @@ metadata:
     team: fager
 spec:
   image: {{image}}
+  resources:
+    requests:
+      cpu: 400m
+      memory: 512Mi
+    limits:
+      memory: 1024Mi
   liveness:
     path: /internal/alive
   readiness:
@@ -14,9 +20,6 @@ spec:
   replicas:
     min: 1
     max: 1
-  resources:
-    limits:
-      cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
   prometheus:
     enabled: true
     path: /internal/metrics
@@ -33,6 +36,3 @@ spec:
         autoBackupHour: 1
         maintenance:
           hour: 3
-  env:
-    - name: JAVA_OPTS
-      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"

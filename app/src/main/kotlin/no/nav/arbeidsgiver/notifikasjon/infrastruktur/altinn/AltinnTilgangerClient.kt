@@ -11,10 +11,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCPlugin
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
 import org.apache.http.ConnectionClosedException
@@ -23,8 +20,11 @@ import javax.net.ssl.SSLHandshakeException
 class AltinnTilgangerClient(
     private val baseUrl: String? = null,
     private val tokenXClient: TokenXClient = TokenXClientImpl(),
+    private val observer: (orgnr: String, navn: String) -> Unit,
     engine: HttpClientEngine = Apache.create(),
 ) {
+
+    private val log = logger()
 
     private val httpClient = HttpClient(engine) {
         defaultRequest {
@@ -48,6 +48,7 @@ class AltinnTilgangerClient(
             }
             delayMillis { 250L }
         }
+        expectSuccess = true
     }
 
     private val targetAudience = "${NaisEnvironment.clusterName}:fager:arbeidsgiver-altinn-tilganger"
@@ -59,24 +60,58 @@ class AltinnTilgangerClient(
                 targetAudience
             )
         } catch (e: RuntimeException) {
+            log.error("Failed to exchange token", e)
             return AltinnTilganger(
                 harFeil = true,
                 tilganger = listOf()
             )
         }
 
-        val dto = httpClient.post {
-            url {
-                path("/altinn-tilganger")
+        val dto = try {
+            httpClient.post {
+                url {
+                    path("/altinn-tilganger")
+                }
+                accept(ContentType.Application.Json)
+                bearerAuth(token)
+            }.body<AltinnTilgangerClientResponse>()
+        } catch (e: Exception) {
+            log.error("Failed to fetch tilganger", e)
+            return AltinnTilganger(
+                harFeil = true,
+                tilganger = listOf()
+            )
+        }
+
+        val alleFlatt = dto.hierarki.flatMap {
+            flatten(it) { o ->
+                observer(o.orgNr, o.name)
+                AltinnTilgangFlatt(
+                    organisasjonsnummer = o.orgNr,
+                    navn = o.name,
+                    altinn3Tilganger = o.altinn3Tilganger,
+                    altinn2Tilganger = o.altinn2Tilganger,
+                )
             }
-            accept(ContentType.Application.Json)
-            bearerAuth(token)
-        }.body<AltinnTilgangerClientResponse>()
+        }
 
         return AltinnTilganger(
             harFeil = dto.isError,
-            tilganger = dto.orgNrTilTilganger.flatMap { (orgNr, tilganger) ->
-                tilganger.map { AltinnTilgang.parse(orgNr, it) }
+            tilganger = alleFlatt.flatMap { org ->
+                observer(org.organisasjonsnummer, org.navn)
+                org.altinn2Tilganger.map {
+                    val (serviceCode, serviceEdition) = it.split(":")
+                    AltinnTilgang.Altinn2(
+                        orgNr = org.organisasjonsnummer,
+                        serviceCode = serviceCode,
+                        serviceEdition = serviceEdition
+                    )
+                } + org.altinn3Tilganger.map {
+                    AltinnTilgang.Altinn3(
+                        orgNr = org.organisasjonsnummer,
+                        ressurs = it
+                    )
+                }
             }
         )
     }
@@ -86,7 +121,35 @@ class AltinnTilgangerClient(
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class AltinnTilgangerClientResponse(
     val isError: Boolean,
-    val orgNrTilTilganger: Map<String, List<String>>,
+    val hierarki: List<AltinnTilgang>,
+) {
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class AltinnTilgang(
+        val orgNr: String,
+        val underenheter: List<AltinnTilgang>,
+        val name: String,
+
+        val altinn3Tilganger: Set<String>,
+        val altinn2Tilganger: Set<String>,
+    )
+}
+
+private fun <T> flatten(
+    altinnTilgang:AltinnTilgangerClientResponse.AltinnTilgang,
+    mapFn: (AltinnTilgangerClientResponse.AltinnTilgang) -> T
+): Set<T> {
+    val children = altinnTilgang.underenheter.flatMap { flatten(it, mapFn) }
+    return setOf(
+        mapFn(altinnTilgang)
+    ) + children
+}
+
+private data class AltinnTilgangFlatt(
+    val organisasjonsnummer: String,
+    val navn: String,
+    val altinn3Tilganger: Set<String>,
+    val altinn2Tilganger: Set<String>,
 )
 
 data class AltinnTilganger(
@@ -97,14 +160,4 @@ data class AltinnTilganger(
 sealed class AltinnTilgang {
     data class Altinn2(val orgNr: String, val serviceCode: String, val serviceEdition: String) : AltinnTilgang()
     data class Altinn3(val orgNr: String, val ressurs: String) : AltinnTilgang()
-
-    companion object {
-        fun parse(orgNr: String, tilgang: String) =
-            if (tilgang.matches(Regex("""\d+:\d+"""))) {
-                val (code, edition) = tilgang.split(":")
-                Altinn2(orgNr = orgNr, serviceCode = code, serviceEdition = edition)
-            } else {
-                Altinn3(orgNr = orgNr, ressurs = tilgang)
-            }
-    }
 }

@@ -16,6 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.*
 import no.nav.arbeidsgiver.notifikasjon.util.*
+import org.joda.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -54,10 +55,18 @@ class KalenderavtaleTests : DescribeSpec({
             produsentRepository.oppdaterModellEtterHendelse(it)
         }
 
+        val start = LocalDateTime.now().plusDays(10)
+        val slutt = LocalDateTime.now().plusDays(10).plusHours(1)
         lateinit var nyKalenderavtale: MutationKalenderavtale.NyKalenderavtaleVellykket
 
         context("nyKalenderavtale") {
-            engine.nyKalenderavtale(grupperingsid, merkelapp, eksternId).let { response ->
+            engine.nyKalenderavtale(
+                grupperingsid = grupperingsid,
+                merkelapp = merkelapp,
+                startTidspunkt = start.toString(),
+                sluttTidspunkt = slutt.toString(),
+                eksternId = eksternId
+            ).let { response ->
                 it("status is 200 OK") {
                     response.status() shouldBe HttpStatusCode.OK
                 }
@@ -86,8 +95,8 @@ class KalenderavtaleTests : DescribeSpec({
                             ansattFnr = "321",
                             virksomhetsnummer = "42"
                         )
-                        hendelse.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                        hendelse.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        hendelse.startTidspunkt shouldBe start
+                        hendelse.sluttTidspunkt shouldBe slutt
                         hendelse.lokasjon shouldBe HendelseModel.Lokasjon(
                             postnummer = "1234",
                             poststed = "Kneika",
@@ -116,8 +125,8 @@ class KalenderavtaleTests : DescribeSpec({
                         it.lenke shouldBe "https://foo.bar"
                         it.eksternId shouldBe eksternId
                         it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-                        it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                        it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        it.startTidspunkt shouldBe start
+                        it.sluttTidspunkt shouldBe slutt
                         it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
                             postnummer = "1234",
                             poststed = "Kneika",
@@ -184,8 +193,8 @@ class KalenderavtaleTests : DescribeSpec({
                         it.lenke shouldBe "https://foo.bar"
                         it.eksternId shouldBe eksternId
                         it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT
-                        it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                        it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        it.startTidspunkt shouldBe start
+                        it.sluttTidspunkt shouldBe slutt
                         it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
                             postnummer = "1234",
                             poststed = "Kneika",
@@ -253,8 +262,8 @@ class KalenderavtaleTests : DescribeSpec({
                         it.lenke shouldBe "https://foo.bar"
                         it.eksternId shouldBe eksternId
                         it.tilstand shouldBe ProdusentModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_VIL_AVLYSE
-                        it.startTidspunkt shouldBe LocalDateTime.parse("2024-10-12T07:20:50.52")
-                        it.sluttTidspunkt shouldBe LocalDateTime.parse("2024-10-12T08:20:50.52")
+                        it.startTidspunkt shouldBe start
+                        it.sluttTidspunkt shouldBe slutt
                         it.lokasjon shouldBe ProdusentModel.Kalenderavtale.Lokasjon(
                             postnummer = "1234",
                             poststed = "Kneika",
@@ -320,9 +329,9 @@ private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHend
 private fun TestApplicationEngine.nyKalenderavtale(
     grupperingsid: String,
     merkelapp: String,
+    startTidspunkt: String,
+    sluttTidspunkt: String,
     eksternId: String = "heu",
-    startTidspunkt: String = "2024-10-12T07:20:50.52",
-    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
 ) = produsentApi(
     """
         mutation {

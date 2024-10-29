@@ -139,13 +139,13 @@ object HendelseModel {
 
         fun validerGrenseVerdier(opprettetTidspunkt: OffsetDateTime, frist: LocalDate?, startTidspunkt: LocalDateTime?) {
             if (påminnelseTidspunkt < opprettetTidspunkt.toInstant()) {
-                throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være før oppgaven er opprettet")
+                throw UgyldigPåminnelseTidspunktException("påminnelsestidspunktet kan ikke være før oppgaven er opprettet")
             }
             if (frist != null && LocalDateTime.of(frist, LocalTime.MAX).inOsloAsInstant() < påminnelseTidspunkt) {
-                throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være etter fristen på oppgaven")
+                throw UgyldigPåminnelseTidspunktException("påminnelsestidspunktet kan ikke være etter fristen på oppgaven")
             }
             if (startTidspunkt != null && startTidspunkt.inOsloAsInstant() < påminnelseTidspunkt) {
-                throw UgyldigPåminnelseTidspunktException("påmindelsestidspunktet kan ikke være etter startTidspunkt på kalenderavtalen")
+                throw UgyldigPåminnelseTidspunktException("påminnelsestidspunktet kan ikke være etter startTidspunkt på kalenderavtalen")
             }
         }
 
