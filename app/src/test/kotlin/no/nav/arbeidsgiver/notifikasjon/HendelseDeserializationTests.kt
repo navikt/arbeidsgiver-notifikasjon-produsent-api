@@ -304,7 +304,8 @@ class HendelseDeserializationTests : DescribeSpec({
                     "kildeAppNavn": "en:app:foo",
                     "fristEndretTidspunkt": "2020-02-02T01:02:03Z",
                     "frist": "2020-01-01",
-                    "påminnelse": null
+                    "påminnelse": null,
+                    "merkelapp": "merkelapp"
                     }
                 """)
                 .shouldBeInstanceOf<HendelseModel.FristUtsatt>()
@@ -322,7 +323,8 @@ class HendelseDeserializationTests : DescribeSpec({
                     "kildeAppNavn": "en:app:foo",
                     "fristEndretTidspunkt": "2020-02-02T01:02:03+05:00",
                     "frist": "2020-01-01",
-                    "påminnelse": null
+                    "påminnelse": null,
+                    "merkelapp": "merkelapp"
                     }
                 """)
                 .shouldBeInstanceOf<HendelseModel.FristUtsatt>()
@@ -341,7 +343,8 @@ class HendelseDeserializationTests : DescribeSpec({
                     "kildeAppNavn": "en:app:foo",
                     "fristEndretTidspunkt": 1580590923,
                     "frist": "2020-01-01",
-                    "påminnelse": null
+                    "påminnelse": null,
+                    "merkelapp": "merkelapp"
                     }
                 """)
                 .shouldBeInstanceOf<HendelseModel.FristUtsatt>()

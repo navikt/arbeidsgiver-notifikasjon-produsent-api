@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import kotlinx.coroutines.flow.merge
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
@@ -32,6 +33,7 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 frist = oppgaveUtenPaminnelseOpprettet.frist,
                 oppgaveOpprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt.toInstant(),
                 påminnelse = førstePåminnelse,
+                merkelapp = "merkelapp"
             ), metadata
         )
 
@@ -54,7 +56,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 notifikasjonId = oppgaveUtenPaminnelseOpprettet.notifikasjonId,
                 frist = oppgaveUtenPaminnelseOpprettet.frist,
                 oppgaveOpprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt.toInstant(),
-                påminnelse = null
+                påminnelse = null,
+                merkelapp = "merkelapp"
             ), metadata
         )
 
@@ -77,7 +80,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 notifikasjonId = oppgaveUtenPaminnelseOpprettet.notifikasjonId,
                 frist = oppgaveUtenPaminnelseOpprettet.frist,
                 oppgaveOpprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt.toInstant(),
-                påminnelse = andrePåminnelse
+                påminnelse = andrePåminnelse,
+                merkelapp = "merkelapp"
             ), metadata
         )
 

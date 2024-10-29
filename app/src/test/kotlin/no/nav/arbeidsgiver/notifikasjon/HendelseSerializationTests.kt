@@ -28,7 +28,7 @@ class HendelseSerializationTests : DescribeSpec({
             kildeAppNavn = "",
             deletedAt = OffsetDateTime.parse("2020-02-02T02:02+02"),
             grupperingsid = null,
-            merkelapp = null,
+            merkelapp = "merkelapp",
         )
 
         it("OffsetDateTime serialiseres med offset") {
@@ -46,6 +46,7 @@ class HendelseSerializationTests : DescribeSpec({
             fristEndretTidspunkt= Instant.parse("2020-01-01T01:02:03Z"),
             frist = LocalDate.of(2020,1, 20),
             påminnelse = null,
+            merkelapp = "merkelapp"
         )
         it("Instant serialiseres med Z") {
             val json = kafkaObjectMapper.readTree(kafkaObjectMapper.writeValueAsString(fristUtsatt))
