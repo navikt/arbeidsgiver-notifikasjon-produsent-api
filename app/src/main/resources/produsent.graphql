@@ -902,7 +902,9 @@ type Mutation {
     ): OppgaveUtsettFristResultat!
 
     """
-    TODO: skriv beskrivelse
+    Endre påminnelsen for en oppgave.
+    Dersom oppgaven har en eksisterende påminnelse, vil denne bli overskrevet. Eksterne varsler blir også overskrevet
+    For fjerning av påminnelse, kan man send inn null
     """
     oppgaveEndrePaaminnelse(
         """
@@ -912,13 +914,16 @@ type Mutation {
 
         """
         Her kan du spesifisere en påminnelse for oppgaven.
+        Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
         paaminnelse: PaaminnelseInput
     ) : OppgaveEndrePaaminnelseResultat
 
     """
-    TODO: skriv beskrivelse
+    Endre påminnelsen for en oppgave (identifisert ved ekstern id)
+    Dersom oppgaven har en eksisterende påminnelse, vil denne bli overskrevet. Eksterne varsler blir også overskrevet
+    For fjerning av påminnelse, kan man send inn null
     """
     oppgaveEndrePaaminnelseByExternId(
         """
@@ -933,6 +938,7 @@ type Mutation {
 
         """
         Her kan du spesifisere en påminnelse for oppgaven.
+        Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
         paaminnelse: PaaminnelseInput
