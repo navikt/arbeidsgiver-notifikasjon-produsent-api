@@ -2,7 +2,7 @@ import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
 import React, {useContext, useEffect} from "react";
 import {Mutation} from "../api/graphql-types.ts";
-import {Button, TextField} from "@navikt/ds-react";
+import { Button, Checkbox, TextField } from '@navikt/ds-react';
 import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -19,6 +19,7 @@ const NY_OPPGAVE = gql`
         $eksternId: String!
         $opprettetTidspunkt: ISO8601DateTime
         $eksterneVarsler: [EksterntVarselInput!]!
+        $paaminnelse: PaaminnelseInput
     ) {
         nyOppgave(
             nyOppgave: {
@@ -41,6 +42,7 @@ const NY_OPPGAVE = gql`
                     opprettetTidspunkt: $opprettetTidspunkt
                 }
                 eksterneVarsler: $eksterneVarsler
+                paaminnelse: $paaminnelse
             }
         ) {
             __typename
@@ -70,9 +72,10 @@ export const NyOppgave: React.FunctionComponent = () => {
     const merkelappRef = React.useRef<HTMLInputElement>(null);
     const lenkeRef = React.useRef<HTMLInputElement>(null);
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
-
+    const paaminnelseRef = React.useRef<HTMLInputElement>(null);
     const eksternVarselRef = React.useRef<EksternVarsel>(null);
 
+    const [harPaaminnelse, setHarPaaminnelse] = React.useState<boolean>(false);
 
     useEffect(() => {
         if (grupperingsidRef.current !== null) {
@@ -93,6 +96,12 @@ export const NyOppgave: React.FunctionComponent = () => {
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
                 opprettetTidspunkt: new Date().toISOString(),
+                ... harPaaminnelse ? {
+                    paaminnelse: {
+                        tidspunkt: {etterOpprettelse: nullIfEmpty(paaminnelseRef.current?.value ?? "")},
+                        eksterneVarsler: []
+                    }
+                    }:null,
                 eksterneVarsler: formateEksternVarsel(eksternVarselRef)
             }
         })
@@ -114,6 +123,8 @@ export const NyOppgave: React.FunctionComponent = () => {
                 <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
                 <TextField label={"Lenke"} ref={lenkeRef}/>
                 <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
+                <Checkbox onChange={() => setHarPaaminnelse(!harPaaminnelse)} checked={harPaaminnelse}>Påminnelse</Checkbox>
+                {harPaaminnelse && <TextField label="Tidspunkt" ref={paaminnelseRef} defaultValue="PT3M"/>}
             </div>
             <EksternVarsel ref={eksternVarselRef}/>
         </div>
