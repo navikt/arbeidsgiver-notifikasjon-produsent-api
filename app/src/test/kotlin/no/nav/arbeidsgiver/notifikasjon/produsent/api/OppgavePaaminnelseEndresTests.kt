@@ -440,7 +440,82 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
             it("melding er ikke sendt på kafka") {
                 stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
             }
+        }
 
+        context("Identisk Idepotency Key") {
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+            val oppgaveFrist = oppgaveOpprettetTidspunkt.plusWeeks(1)
+
+            OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottakere = listOf(mottaker),
+                hendelseId = UUID.randomUUID(),
+                notifikasjonId = uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = oppgaveOpprettetTidspunkt,
+                kildeAppNavn = "",
+                produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
+                hardDelete = null,
+                frist = oppgaveFrist.toLocalDate(),
+                påminnelse = HendelseModel.Påminnelse(
+                    tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+                        konkretPaaminnelsesTidspunkt,
+                        konkretPaaminnelsesTidspunkt.inOsloAsInstant()
+                    ),
+                    eksterneVarsler = listOf()
+                ),
+                sakId = null,
+
+                ).also {
+                produsentModel.oppdaterModellEtterHendelse(it)
+            }
+
+            it("Mutation med identisk idepotency key kalles to ganger, men kun en melding sendes på kafka") {
+                fun kallOppgaveEndrePaaminnelse(): TestApplicationResponse {
+                    return engine.produsentApi(
+                        """
+                        mutation {
+                        oppgaveEndrePaaminnelse(
+                            id: "$uuid",
+                            paaminnelse: {
+                                eksterneVarsler:[],
+                                tidspunkt: {konkret: "$konkretPaaminnelsesTidspunkt"}
+                            }
+                            idempotencyKey: "1234"
+                        ) {
+                            __typename
+                            ... on OppgaveEndrePaaminnelseVellykket {
+                                id
+                            }
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                    """
+                    )
+                }
+
+                val vellykket1 =
+                    kallOppgaveEndrePaaminnelse().getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>(
+                        "oppgaveEndrePaaminnelse"
+                    )
+                vellykket1.id shouldBe uuid
+
+                val vellykket2 =
+                    kallOppgaveEndrePaaminnelse().getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>(
+                        "oppgaveEndrePaaminnelse"
+                    )
+                vellykket2.id shouldBe uuid
+
+                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
+                    .count() shouldBe 1
+            }
         }
     }
 })

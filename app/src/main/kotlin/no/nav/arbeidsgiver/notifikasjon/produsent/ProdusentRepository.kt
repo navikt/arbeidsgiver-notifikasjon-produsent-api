@@ -320,7 +320,7 @@ class ProdusentRepositoryImpl(
             is KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
             is HendelseModel.TilleggsinformasjonSak -> oppdaterModellEtterTillegsinformasjonSak(hendelse)
-            is HendelseModel.OppgavePåminnelseEndret -> Unit
+            is HendelseModel.OppgavePåminnelseEndret -> oppdaterModellEtterOppgavePåminnelseEndret(hendelse)
         }
     }
 
@@ -1016,6 +1016,23 @@ class ProdusentRepositoryImpl(
                         hendelse_id, notifikasjon_id, idempotence_key
                     ) values (?, ?, ?) on conflict(hendelse_id) do nothing;
                 """
+                ) {
+                    uuid(hendelse.hendelseId)
+                    uuid(hendelse.notifikasjonId)
+                    text(hendelse.idempotenceKey)
+                }
+            }
+        }
+    }
+    private suspend fun oppdaterModellEtterOppgavePåminnelseEndret(hendelse: HendelseModel.OppgavePåminnelseEndret) {
+        database.transaction {
+            if (hendelse.idempotenceKey != null) {
+                executeUpdate(
+                    """
+                        insert into notifikasjon_oppdatering(
+                            hendelse_id, notifikasjon_id, idempotence_key
+                        ) values (?, ?, ?) on conflict(hendelse_id) do nothing;
+                    """
                 ) {
                     uuid(hendelse.hendelseId)
                     uuid(hendelse.notifikasjonId)

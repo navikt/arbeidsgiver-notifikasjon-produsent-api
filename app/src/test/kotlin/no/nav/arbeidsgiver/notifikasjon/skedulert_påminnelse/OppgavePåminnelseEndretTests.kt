@@ -33,7 +33,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 frist = oppgaveUtenPaminnelseOpprettet.frist,
                 oppgaveOpprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt.toInstant(),
                 påminnelse = førstePåminnelse,
-                merkelapp = "merkelapp"
+                merkelapp = "merkelapp",
+                idempotenceKey = null
             ), metadata
         )
 
@@ -57,7 +58,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 frist = oppgaveUtenPaminnelseOpprettet.frist,
                 oppgaveOpprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt.toInstant(),
                 påminnelse = null,
-                merkelapp = "merkelapp"
+                merkelapp = "merkelapp",
+                idempotenceKey = null
             ), metadata
         )
 
@@ -81,7 +83,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 frist = oppgaveUtenPaminnelseOpprettet.frist,
                 oppgaveOpprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt.toInstant(),
                 påminnelse = andrePåminnelse,
-                merkelapp = "merkelapp"
+                merkelapp = "merkelapp",
+                idempotenceKey = null
             ), metadata
         )
 

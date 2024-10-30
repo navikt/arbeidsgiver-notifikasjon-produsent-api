@@ -22,6 +22,7 @@ internal class MutationOppgavePåminnelse(
             coDataFetcher("oppgaveEndrePaaminnelse") { env ->
                 oppgaveEndrePaaminnelse(
                     context = env.notifikasjonContext(),
+                    idempotenceKey = env.getTypedArgumentOrNull<String>("idempotencyKey"),
                     notifikasjon = hentNotifikasjon(
                         produsentRepository,
                         id = env.getTypedArgument<UUID>("id")
@@ -32,6 +33,7 @@ internal class MutationOppgavePåminnelse(
             coDataFetcher("oppgaveEndrePaaminnelseByEksternId") { env ->
                 oppgaveEndrePaaminnelse(
                     context = env.notifikasjonContext(),
+                    idempotenceKey = env.getTypedArgumentOrNull<String>("idempotencyKey"),
                     notifikasjon = hentNotifikasjon(
                         produsentRepository,
                         eksternId = env.getTypedArgument<String>("eksternId"),
@@ -53,6 +55,7 @@ internal class MutationOppgavePåminnelse(
 
     private suspend fun oppgaveEndrePaaminnelse(
         context: ProdusentAPI.Context,
+        idempotenceKey: String?,
         notifikasjon: ProdusentModel.Notifikasjon,
         paaminnelse: PaaminnelseInput?,
     ) : OppgaveEndrePaaminnelseResultat {
@@ -63,6 +66,12 @@ internal class MutationOppgavePåminnelse(
         val produsent = hentProdusent(context) { error -> return error }
 
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
+
+        idempotenceKey?.let {
+            if (produsentRepository.notifikasjonOppdateringFinnes(notifikasjon.id, it)) {
+                return OppgaveEndrePaaminnelseVellykket(notifikasjon.id)
+            }
+        }
 
         try {
             hendelseDispatcher.send(
@@ -80,11 +89,11 @@ internal class MutationOppgavePåminnelse(
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     ),
                     frist = notifikasjon.frist,
-                    oppgaveOpprettetTidspunkt = notifikasjon.opprettetTidspunkt.toInstant()
+                    oppgaveOpprettetTidspunkt = notifikasjon.opprettetTidspunkt.toInstant(),
+                    idempotenceKey = idempotenceKey
                 )
             )
-        }
-        catch (e: UgyldigPåminnelseTidspunktException) {
+        } catch (e: UgyldigPåminnelseTidspunktException) {
             return Error.UgyldigPåminnelseTidspunkt(e.message!!)
         }
 

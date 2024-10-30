@@ -913,6 +913,12 @@ type Mutation {
         id: ID!
 
         """
+        Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
+        Dette kan f.eks være nyttig hvis dere har retry mekanismer i deres system.
+        """
+        idempotencyKey: String
+
+        """
         Her kan du spesifisere en påminnelse for oppgaven.
         Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
@@ -935,6 +941,12 @@ type Mutation {
         ID-en som *dere ga oss* da dere opprettet oppgaven med `nyOppgave`.
         """
         eksternId: String!
+
+        """
+        Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
+        Dette kan f.eks være nyttig hvis dere har retry mekanismer i deres system.
+        """
+        idempotencyKey: String
 
         """
         Her kan du spesifisere en påminnelse for oppgaven.

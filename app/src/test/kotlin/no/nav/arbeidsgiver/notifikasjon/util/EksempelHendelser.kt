@@ -431,7 +431,8 @@ object EksempelHendelse {
             merkelapp = OppgaveOpprettet_MedPåminnelse.merkelapp,
             virksomhetsnummer = OppgaveOpprettet_MedPåminnelse.virksomhetsnummer,
             kildeAppNavn = OppgaveOpprettet_MedPåminnelse.kildeAppNavn,
-            produsentId = OppgaveOpprettet_MedPåminnelse.produsentId
+            produsentId = OppgaveOpprettet_MedPåminnelse.produsentId,
+            idempotenceKey = IdempotenceKey.initial()
         )
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",

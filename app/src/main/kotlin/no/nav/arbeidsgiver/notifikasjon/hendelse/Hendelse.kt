@@ -619,6 +619,7 @@ object HendelseModel {
         val frist: LocalDate?,
         val oppgaveOpprettetTidspunkt: Instant,
         val påminnelse: Påminnelse?,
+        val idempotenceKey: String?,
     ) : Hendelse(){
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
