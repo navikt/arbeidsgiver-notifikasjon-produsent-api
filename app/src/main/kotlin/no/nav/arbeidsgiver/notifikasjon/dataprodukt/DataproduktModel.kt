@@ -477,6 +477,17 @@ class DataproduktModel(
                     setPåminnelseFelter(hendelse.påminnelse)
                     uuid(hendelse.notifikasjonId)
                 }
+
+                if (hendelse.påminnelse != null) {
+                    opprettVarselBestilling(
+                        notifikasjonId = hendelse.notifikasjonId,
+                        produsentId = hendelse.produsentId,
+                        merkelapp = hendelse.merkelapp ?: "?",
+                        eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
+                        opprinnelse = "FristUtsatt.påminnelse",
+                        statusUtsending = "UTSENDING_IKKE_AVGJORT",
+                    )
+                }
             }
 
             is TilleggsinformasjonSak -> {
@@ -621,6 +632,19 @@ class DataproduktModel(
                     opprinnelse = "KalenderavtaleOppdatert.eksterneVarsler",
                     statusUtsending = "UTSENDING_BESTILT",
                 )
+            }
+
+            is HendelseModel.OppgavePåminnelseEndret -> {
+                if (hendelse.påminnelse != null) {
+                    opprettVarselBestilling(
+                        notifikasjonId = hendelse.notifikasjonId,
+                        produsentId = hendelse.produsentId,
+                        merkelapp = hendelse.merkelapp ?: "?",  // bakoverkompabilitet, glemte å legge til merkelapp før hendelser ble registrert i dev
+                        eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
+                        opprinnelse = "OppgavePåminnelseEndret.påminnelse",
+                        statusUtsending = "UTSENDING_IKKE_AVGJORT",
+                    )
+                }
             }
         }
     }

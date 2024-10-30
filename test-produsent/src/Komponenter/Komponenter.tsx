@@ -12,6 +12,7 @@ import {HardDelete} from "./HardDelete.tsx";
 import {NySakstatus} from "./NySakstatus.tsx";
 import {NesteStegSak} from "./NesteStegSak.tsx";
 import { TilleggsinformasjonSak } from './TilleggsinformasjonSak.tsx';
+import { EndrePåminnelseOppgave } from './EndrePåminnelseOppgave.tsx';
 
 export const komponenter = {
     "Who am I": <WhoAmI/>,
@@ -23,6 +24,7 @@ export const komponenter = {
     "Ny Kalenderavtale": <NyKalenderAvtale/>,
     "Oppdater Kalenderavtale": <OppdaterKalenderAvtale/>,
     "Oppdater sak" : <NySakstatus/>,
+    "Endre påminnelse oppgave" : <EndrePåminnelseOppgave/>,
     "Neste steg sak": <NesteStegSak/>,
     "Tilleggsinformasjon sak": <TilleggsinformasjonSak/>,
     "Ny oppgavestatus": <NyOppgavestatus/>,

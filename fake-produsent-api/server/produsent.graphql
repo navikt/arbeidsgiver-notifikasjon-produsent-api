@@ -902,9 +902,7 @@ type Mutation {
     ): OppgaveUtsettFristResultat!
 
     """
-    Endre påminnelsen for en oppgave.
-    Dersom oppgaven har en eksisterende påminnelse, vil denne bli overskrevet. Eksterne varsler blir også overskrevet
-    For fjerning av påminnelse, kan man send inn null
+    TODO: skriv beskrivelse
     """
     oppgaveEndrePaaminnelse(
         """
@@ -913,25 +911,16 @@ type Mutation {
         id: ID!
 
         """
-        Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
-        Dette kan f.eks være nyttig hvis dere har retry mekanismer i deres system.
-        """
-        idempotencyKey: String
-
-        """
         Her kan du spesifisere en påminnelse for oppgaven.
-        Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
         paaminnelse: PaaminnelseInput
     ) : OppgaveEndrePaaminnelseResultat
 
     """
-    Endre påminnelsen for en oppgave (identifisert ved ekstern id)
-    Dersom oppgaven har en eksisterende påminnelse, vil denne bli overskrevet. Eksterne varsler blir også overskrevet
-    For fjerning av påminnelse, kan man send inn null
+    TODO: skriv beskrivelse
     """
-    oppgaveEndrePaaminnelseByEksternId(
+    oppgaveEndrePaaminnelseByExternId(
         """
         Merkelapp som oppgaven er registrert med.
         """
@@ -943,14 +932,7 @@ type Mutation {
         eksternId: String!
 
         """
-        Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
-        Dette kan f.eks være nyttig hvis dere har retry mekanismer i deres system.
-        """
-        idempotencyKey: String
-
-        """
         Her kan du spesifisere en påminnelse for oppgaven.
-        Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
         paaminnelse: PaaminnelseInput

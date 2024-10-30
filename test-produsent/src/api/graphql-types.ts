@@ -437,6 +437,10 @@ export type Mutation = {
    * Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
    */
   oppdaterKalenderavtaleByEksternId: OppdaterKalenderavtaleResultat;
+  /** TODO: skriv beskrivelse */
+  oppgaveEndrePaaminnelse?: Maybe<OppgaveEndrePaaminnelseResultat>;
+  /** TODO: skriv beskrivelse */
+  oppgaveEndrePaaminnelseByExternId?: Maybe<OppgaveEndrePaaminnelseResultat>;
   /** Marker en oppgave (identifisert ved id) som utført. */
   oppgaveUtfoert: OppgaveUtfoertResultat;
   /**
@@ -705,6 +709,27 @@ export type MutationOppdaterKalenderavtaleByEksternIdArgs = {
  * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
  * å opprette nye ting.
  */
+export type MutationOppgaveEndrePaaminnelseArgs = {
+  id: Scalars['ID']['input'];
+  paaminnelse?: InputMaybe<PaaminnelseInput>;
+};
+
+
+/**
+ * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+ * å opprette nye ting.
+ */
+export type MutationOppgaveEndrePaaminnelseByExternIdArgs = {
+  eksternId: Scalars['String']['input'];
+  merkelapp: Scalars['String']['input'];
+  paaminnelse?: InputMaybe<PaaminnelseInput>;
+};
+
+
+/**
+ * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
+ * å opprette nye ting.
+ */
 export type MutationOppgaveUtfoertArgs = {
   hardDelete?: InputMaybe<HardDeleteUpdateInput>;
   id: Scalars['ID']['input'];
@@ -916,7 +941,7 @@ export type NotifikasjonInput = {
    * Hva du kan oppgi som merkelapp er bestemt av produsent-registeret.
    */
   merkelapp: Scalars['String']['input'];
-  /** Teksten som vises til brukeren. */
+  /** Teksten som vises til brukeren. Feltet er begrenset til 300 tegn og kan ikke inneholde fødselsnummer. */
   tekst: Scalars['String']['input'];
 };
 
@@ -1054,6 +1079,14 @@ export type OppgaveData = {
   /** Teksten som vises til brukeren. */
   tekst: Scalars['String']['output'];
   tilstand?: Maybe<OppgaveTilstand>;
+};
+
+export type OppgaveEndrePaaminnelseResultat = NotifikasjonFinnesIkke | OppgaveEndrePaaminnelseVellykket | OppgavenErAlleredeUtfoert | UgyldigMerkelapp | UgyldigPaaminnelseTidspunkt | UkjentProdusent;
+
+export type OppgaveEndrePaaminnelseVellykket = {
+  __typename?: 'OppgaveEndrePaaminnelseVellykket';
+  /** ID-en til oppgaven du oppdaterte. */
+  id: Scalars['ID']['output'];
 };
 
 /** Tilstanden til en oppgave. */

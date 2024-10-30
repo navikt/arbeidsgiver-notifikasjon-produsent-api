@@ -446,6 +446,10 @@ class StatistikkModel(
                 // noop
             }
 
+            is HendelseModel.OppgavePåminnelseEndret -> {
+                // noop
+            }
+
             is FristUtsatt -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -458,6 +462,7 @@ class StatistikkModel(
                     uuid(hendelse.notifikasjonId)
                 }
             }
+
         }
     }
 

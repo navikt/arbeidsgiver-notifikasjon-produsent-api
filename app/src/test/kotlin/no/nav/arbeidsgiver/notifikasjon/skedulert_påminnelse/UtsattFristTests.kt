@@ -244,6 +244,7 @@ private val fristUtsatt = HendelseModel.FristUtsatt(
     notifikasjonId = oppgaveOpprettet.notifikasjonId,
     fristEndretTidspunkt = fristEndretTidspunkt.toInstant(),
     frist = andreFrist,
+    merkelapp = oppgaveOpprettet.merkelapp,
     påminnelse = HendelseModel.Påminnelse(
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateEtterOpprettelse(
             etterOpprettelse = ISO8601Period.parse("P7D"),

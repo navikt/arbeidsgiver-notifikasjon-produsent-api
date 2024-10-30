@@ -276,6 +276,7 @@ suspend fun BrukerRepository.oppgaveFristUtsatt(
     fristEndretTidspunkt = Instant.now(),
     frist = frist,
     påminnelse = påminnelse,
+    merkelapp = oppgave.merkelapp
 ).also {
     oppdaterModellEtterHendelse(it)
 }
