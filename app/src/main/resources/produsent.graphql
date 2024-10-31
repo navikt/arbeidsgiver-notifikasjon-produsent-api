@@ -684,7 +684,7 @@ type Mutation {
     nyOppgave(nyOppgave: NyOppgaveInput! @Validate): NyOppgaveResultat!
 
     """
-    Marker en oppgave (identifisert ved id) som utført.
+    Marker en oppgave (identifisert ved id) som utført. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert.
     """
     oppgaveUtfoert(
         """
@@ -714,7 +714,7 @@ type Mutation {
     ): OppgaveUtfoertResultat!
 
     """
-    Marker en oppgave (identifisert ved ekstern id) som utført.
+    Marker en oppgave (identifisert ved ekstern id) som utført. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert.
     """
     oppgaveUtfoertByEksternId(
         """
@@ -737,7 +737,7 @@ type Mutation {
     )
 
     """
-    Marker en oppgave (identifisert ved ekstern id) som utført.
+    Marker en oppgave (identifisert ved ekstern id) som utført. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert.
     """
     oppgaveUtfoertByEksternId_V2(
         """
@@ -772,7 +772,7 @@ type Mutation {
     ): OppgaveUtfoertResultat!
 
     """
-    Marker en oppgave (identifisert ved id) som utgått.
+    Marker en oppgave (identifisert ved id) som utgått. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert.
     """
     oppgaveUtgaatt(
         """
@@ -803,7 +803,7 @@ type Mutation {
 
 
     """
-    Marker en oppgave (identifisert ved ekstern id) som utgått.
+    Marker en oppgave (identifisert ved ekstern id) som utgått. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert.
     """
     oppgaveUtgaattByEksternId(
         """
