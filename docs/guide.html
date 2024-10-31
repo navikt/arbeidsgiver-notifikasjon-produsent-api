@@ -2,31 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
     <title>Guide | Notifikasjoner for arbeidsgivere</title>
-    <meta property="og:title" content="Guide" />
-    <meta property="og:locale" content="en_US" />
+    <meta content="Guide" property="og:title" />
+    <meta content="en_US" property="og:locale" />
     <meta
-        name="description"
         content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+        name="description"
     />
     <meta
-        property="og:description"
         content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+        property="og:description"
     />
     <link
-        rel="canonical"
         href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
+        rel="canonical"
     />
     <meta
-        property="og:url"
         content="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
+        property="og:url"
     />
-    <meta property="og:site_name" content="Notifikasjoner for arbeidsgivere" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <meta property="twitter:title" content="Guide" />
+    <meta content="Notifikasjoner for arbeidsgivere" property="og:site_name" />
+    <meta content="website" property="og:type" />
+    <meta content="summary" name="twitter:card" />
+    <meta content="Guide" property="twitter:title" />
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -36,12 +36,12 @@
             "url": "https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
         }
     </script>
-    <link rel="stylesheet" href="main.css" />
+    <link href="main.css" rel="stylesheet" />
 </head>
 <body>
 <header class="site-header" role="banner">
     <div class="wrapper">
-        <a class="site-title" rel="author" href="index.html">
+        <a class="site-title" href="index.html" rel="author">
             Saker med beskjeder og oppgaver for arbeidsgivere
         </a>
         <nav>
@@ -53,7 +53,7 @@
         </nav>
     </div>
 </header>
-<main class="page-content" aria-label="Content">
+<main aria-label="Content" class="page-content">
     <div class="wrapper">
         <article class="post">
             <header class="post-header">
@@ -90,8 +90,8 @@
                 </p>
                 <p>
                     <img
-                        src="/arbeidsgiver-notifikasjon-produsent-api/images/forklaring.png"
                         alt=""
+                        src="/arbeidsgiver-notifikasjon-produsent-api/images/forklaring.png"
                     />
                 </p>
                 <p>
@@ -1505,8 +1505,8 @@ EMAIL  | {tittel} | {innhold}
             </p>
             <figure>
                 <img
-                    src="images/saksdetaljer.png"
                     alt="Enkel side som viser alel detaljer på en sak"
+                    src="images/saksdetaljer.png"
                 />
             </figure>
             <p>
@@ -1953,28 +1953,31 @@ EMAIL  | {tittel} | {innhold}
             </p>
 
             <p>
-                For å slette en eksisterende påminnelse, kan dere sende inn null i "påminnelse" feltet
+                For å slette en eksisterende påminnelse, kan dere sende inn null i "paaminnelse" feltet
+            </p>
+            <p>
+                Med oppgaveId (id):
             </p>
             <div class="language-graphql highlighter-rouge">
                 <div class="highlight">
                 <pre
                     class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
-    </span><span class="nv">$id</span><span class="p">:</span><span class="w"> </span><span
-                    class="nb">String</span><span
+                ><code><span class="k">mutation</span><span class="p">(</span><span class="w">
+    </span><span class="nv">$id</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span
+                    class="p">!,</span><span class="w">
+    </span><span class="nv">$idemptoencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span
                     class="p">,</span><span class="w">
-    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span
+    </span><span class="nv">$paaminnelse</span><span class="p">:</span><span class="w"> </span><span class="n">PaaminnelseInput</span><span
                     class="w">
 </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">tilleggsinformasjonSak</span><span class="p">(</span><span
-                    class="n">tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span
-                    class="nv">$tilleggsinformasjon</span><span class="p">,</span><span class="w"> </span><span
-                    class="n">id</span><span class="p">:</span><span class="w"> </span><span
-                    class="nv">$sakId</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span
-                    class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span
-                    class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">oppgaveEndrePaaminnelse</span><span class="p">(</span><span class="n">id</span><span
+                    class="p">:</span><span class="w"> </span><span class="nv">$id</span><span class="p">,</span><span
+                    class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span
+                    class="w"> </span><span class="nv">$idemptoencyKey</span><span class="p">,</span><span
+                    class="w"> </span><span class="n">paaminnelse</span><span class="p">:</span><span class="w"> </span><span
+                    class="nv">$paaminnelse</span><span class="p">){</span><span class="w">
         </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span
-                    class="n">TilleggsinformasjonSakVellykket</span><span class="w"> </span><span
+                    class="n">OppgaveEndrePaaminnelseVellykket</span><span class="w"> </span><span
                     class="p">{</span><span class="w">
             </span><span class="n">id</span><span class="w">
         </span><span class="p">}</span><span class="w">
@@ -1983,8 +1986,36 @@ EMAIL  | {tittel} | {innhold}
             </span><span class="n">feilmelding</span><span class="w">
         </span><span class="p">}</span><span class="w">
     </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span></code>
-                </pre>
+</span><span class="p">}</span><span class="w"></span>
+</code></pre></div>
+            </div>
+            <p>
+                Med variabler:
+            </p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+        <pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"d02c44e7-f56e-404c-9ed6-440060c4577b"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">"12341234"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"paaminnelse"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"tidspunkt"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"foerFrist"</span><span class="p">:</span><span class="w"> </span><span class="s2">"P7DT"</span><span class="w">
+        </span><span class="p">}</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"eksterneVarsler"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span></code></pre>
+                </div>
+            </div>
+            <p>
+                For å slette påminnelse:
+            </p>
+            <div class="language-json highlighter-rouge">
+                <div class="highlight">
+        <pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"d02c44e7-f56e-404c-9ed6-440060c4577b"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">"12341234"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"paaminnelse"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="w">
+</span><span class="p">}</span></code></pre>
                 </div>
             </div>
         </article>
