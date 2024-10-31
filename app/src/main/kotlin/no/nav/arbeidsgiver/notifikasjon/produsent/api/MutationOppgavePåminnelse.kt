@@ -3,66 +3,62 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import java.time.Instant
-import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
-internal class MutationOppgaveUtsettFrist(
+internal class MutationOppgavePåminnelse(
     private val hendelseDispatcher: HendelseDispatcher,
     private val produsentRepository: ProdusentRepository,
 ) {
 
     fun wire(runtime: RuntimeWiring.Builder) {
-        runtime.resolveSubtypes<OppgaveUtsettFristResultat>()
+        runtime.resolveSubtypes<OppgaveEndrePaaminnelseResultat>()
 
         runtime.wire("Mutation") {
-            coDataFetcher("oppgaveUtsettFrist") { env ->
-                oppgaveUtsettFrist(
+            coDataFetcher("oppgaveEndrePaaminnelse") { env ->
+                oppgaveEndrePaaminnelse(
                     context = env.notifikasjonContext(),
+                    idempotenceKey = env.getTypedArgumentOrNull<String>("idempotencyKey"),
                     notifikasjon = hentNotifikasjon(
                         produsentRepository,
                         id = env.getTypedArgument<UUID>("id")
                     ) { error -> return@coDataFetcher error },
-                    nyFrist = env.getTypedArgument("nyFrist"),
                     paaminnelse = env.getTypedArgumentOrNull<PaaminnelseInput>("paaminnelse"),
                 )
             }
-            coDataFetcher("oppgaveUtsettFristByEksternId") { env ->
-                oppgaveUtsettFrist(
+            coDataFetcher("oppgaveEndrePaaminnelseByEksternId") { env ->
+                oppgaveEndrePaaminnelse(
                     context = env.notifikasjonContext(),
+                    idempotenceKey = env.getTypedArgumentOrNull<String>("idempotencyKey"),
                     notifikasjon = hentNotifikasjon(
                         produsentRepository,
                         eksternId = env.getTypedArgument<String>("eksternId"),
                         merkelapp = env.getTypedArgument<String>("merkelapp")
                     ) { error -> return@coDataFetcher error },
-                    nyFrist = env.getTypedArgument("nyFrist"),
                     paaminnelse = env.getTypedArgumentOrNull<PaaminnelseInput>("paaminnelse"),
-
                 )
             }
         }
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
-    sealed interface OppgaveUtsettFristResultat
+    sealed interface OppgaveEndrePaaminnelseResultat
 
-    @JsonTypeName("OppgaveUtsettFristVellykket")
-    data class OppgaveUtsettFristVellykket(
+    @JsonTypeName("OppgaveEndrePaaminnelseVellykket")
+    data class OppgaveEndrePaaminnelseVellykket(
         val id: UUID
-    ) : OppgaveUtsettFristResultat
+    ) : OppgaveEndrePaaminnelseResultat
 
-    private suspend fun oppgaveUtsettFrist(
+    private suspend fun oppgaveEndrePaaminnelse(
         context: ProdusentAPI.Context,
+        idempotenceKey: String?,
         notifikasjon: ProdusentModel.Notifikasjon,
-        nyFrist: LocalDate,
         paaminnelse: PaaminnelseInput?,
-    ): OppgaveUtsettFristResultat {
-
+    ) : OppgaveEndrePaaminnelseResultat {
         if (notifikasjon !is ProdusentModel.Oppgave) {
             return Error.NotifikasjonFinnesIkke("Notifikasjonen (id ${notifikasjon.id}) er ikke en oppgave")
         }
@@ -71,33 +67,36 @@ internal class MutationOppgaveUtsettFrist(
 
         tilgangsstyrMerkelapp(produsent, notifikasjon.merkelapp) { error -> return error }
 
-        if (notifikasjon.frist != null && notifikasjon.frist > nyFrist) {
-            return Error.Konflikt("Ny frist kan ikke være tidligere enn den gamle")
+        idempotenceKey?.let {
+            if (produsentRepository.notifikasjonOppdateringFinnes(notifikasjon.id, it)) {
+                return OppgaveEndrePaaminnelseVellykket(notifikasjon.id)
+            }
         }
 
         try {
             hendelseDispatcher.send(
-                FristUtsatt(
+                HendelseModel.OppgavePåminnelseEndret(
                     hendelseId = UUID.randomUUID(),
                     notifikasjonId = notifikasjon.id,
                     merkelapp = notifikasjon.merkelapp,
                     virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     produsentId = produsent.id,
                     kildeAppNavn = context.appName,
-                    frist = nyFrist,
-                    fristEndretTidspunkt = Instant.now(),
                     påminnelse = paaminnelse?.tilDomene(
                         opprettetTidspunkt = OffsetDateTime.now(),
-                        frist = nyFrist,
+                        frist = notifikasjon.frist,
                         startTidspunkt = null,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,
                     ),
+                    frist = notifikasjon.frist,
+                    oppgaveOpprettetTidspunkt = notifikasjon.opprettetTidspunkt.toInstant(),
+                    idempotenceKey = idempotenceKey
                 )
             )
         } catch (e: UgyldigPåminnelseTidspunktException) {
             return Error.UgyldigPåminnelseTidspunkt(e.message!!)
         }
 
-        return OppgaveUtsettFristVellykket(notifikasjon.id)
+        return OppgaveEndrePaaminnelseVellykket(notifikasjon.id)
     }
 }

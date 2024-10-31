@@ -61,6 +61,7 @@ private val fristUtsatt = HendelseModel.FristUtsatt(
     fristEndretTidspunkt = fristEndretTidspunkt.toInstant(),
     frist = utsattFrist,
     påminnelse = null,
+    merkelapp = "merkelapp"
 )
 
 private val oppgaveUtgått = OppgaveUtgått(

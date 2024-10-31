@@ -171,7 +171,7 @@ Se for eksempel [bruk av notifikasjoner](https://grafana.nav.cloud.nais.io/d/vk9
 
 ### notifikasjon-dataprodukt
 
-[notifikasjon-dataprodukt](app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/dataprodukt) eksporterer pseudonymisert statistikk til [dataprodukt i metabase](https://metabase.intern.nav.no/collection/1039-team-fager).
+[notifikasjon-dataprodukt](app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/dataprodukt) eksporterer pseudonymisert statistikk til [dataprodukt i metabase](https://metabase.ansatt.nav.no/collection/1039-team-fager).
 Denne statistikken brukes til å lage dashboards og rapporter som produsenter selv kan bruke for innsikt i bruk av plattformen.
 
 

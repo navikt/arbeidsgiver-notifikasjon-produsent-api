@@ -61,6 +61,7 @@ class KafkaReaperServiceImpl(
             is FristUtsatt,
             is EksterntVarselFeilet,
             is EksterntVarselKansellert,
+            is HendelseModel.OppgavePåminnelseEndret,
             is EksterntVarselVellykket -> {
                 if (kafkaReaperModel.erSlettet(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(
@@ -70,6 +71,7 @@ class KafkaReaperServiceImpl(
                     kafkaReaperModel.fjernRelasjon(hendelse.hendelseId)
                 } else Unit
             }
+
         }
     }
 }
