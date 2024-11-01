@@ -42,14 +42,14 @@ private val altinnTilgangerResponse = """
       "isError": true,
       "hierarki": [
         {
-          "orgNr": "810825472",
-          "name": "foo",
+          "orgnr": "810825472",
+          "navn": "foo",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [],
           "underenheter": [
             {
-              "orgNr": "910825496",
-              "name": "bar",
+              "orgnr": "910825496",
+              "navn": "bar",
               "altinn3Tilganger": [
                 "test-fager"
               ],
