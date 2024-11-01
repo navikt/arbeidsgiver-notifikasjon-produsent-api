@@ -924,7 +924,7 @@ type Mutation {
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
         paaminnelse: PaaminnelseInput
-    ) : OppgaveEndrePaaminnelseResultat
+    ) : OppgaveEndrePaaminnelseResultat!
 
     """
     Endre påminnelsen for en oppgave (identifisert ved ekstern id)
@@ -954,7 +954,7 @@ type Mutation {
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
         paaminnelse: PaaminnelseInput
-    ) : OppgaveEndrePaaminnelseResultat
+    ) : OppgaveEndrePaaminnelseResultat!
 
 
     """
