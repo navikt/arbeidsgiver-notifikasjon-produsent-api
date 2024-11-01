@@ -85,10 +85,10 @@ class AltinnTilgangerClient(
 
         val alleFlatt = dto.hierarki.flatMap {
             flatten(it) { o ->
-                observer(o.orgNr, o.name)
+                observer(o.orgnr, o.navn)
                 AltinnTilgangFlatt(
-                    organisasjonsnummer = o.orgNr,
-                    navn = o.name,
+                    organisasjonsnummer = o.orgnr,
+                    navn = o.navn,
                     altinn3Tilganger = o.altinn3Tilganger,
                     altinn2Tilganger = o.altinn2Tilganger,
                 )
@@ -126,9 +126,9 @@ private data class AltinnTilgangerClientResponse(
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class AltinnTilgang(
-        val orgNr: String,
+        val orgnr: String,
+        val navn: String,
         val underenheter: List<AltinnTilgang>,
-        val name: String,
 
         val altinn3Tilganger: Set<String>,
         val altinn2Tilganger: Set<String>,
