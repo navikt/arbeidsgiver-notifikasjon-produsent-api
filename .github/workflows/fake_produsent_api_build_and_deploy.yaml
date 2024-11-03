@@ -7,6 +7,8 @@ on:
       - app/src/main/resources/produsent.graphql
       - fake-produsent-api/**
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
 
 jobs:
   build_and_push:

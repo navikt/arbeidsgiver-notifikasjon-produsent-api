@@ -6,6 +6,9 @@ on:
     paths:
       - test-produsent/**
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
 
 jobs:
   build_and_push:
