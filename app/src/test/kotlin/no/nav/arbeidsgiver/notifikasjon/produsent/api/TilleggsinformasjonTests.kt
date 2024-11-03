@@ -40,39 +40,34 @@ class TilleggsinformasjonTests: DescribeSpec({
         val idempotencyKey1 = uuid("2").toString()
         val idempotencyKey2 = uuid("3").toString()
 
-        val tilleggsinformasjon1 = engine.endreTilleggsinformasjon(sakID, "foo", idempotencyKey1)
+        engine.endreTilleggsinformasjonOgForventSuksess(sakID, "foo", idempotencyKey1)
 
         it("Endrer tilleggsinformasjon med ny idempontency key") {
-            tilleggsinformasjon1.getTypedContent<String>("$.tilleggsinformasjonSak.__typename") shouldBe "TilleggsinformasjonSakVellykket"
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.tilleggsinformasjon shouldBe "foo";
         }
         it("Forsøker endre tilleggsinformasjon med samme idempontency key og forventer ingen endring") {
-            engine.endreTilleggsinformasjon(sakID, "bar", idempotencyKey1)
+            engine.endreTilleggsinformasjonOgForventSuksess(sakID, "bar", idempotencyKey1)
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.tilleggsinformasjon shouldBe "foo";
         }
         it ("Endrere med ny idempontency key og forventer endring") {
-            val tilleggsinformasjon2 = engine.endreTilleggsinformasjon(sakID, "baz", idempotencyKey2)
-            tilleggsinformasjon2.getTypedContent<String>("$.tilleggsinformasjonSak.__typename") shouldBe "TilleggsinformasjonSakVellykket"
+            engine.endreTilleggsinformasjonOgForventSuksess(sakID, "baz", idempotencyKey2)
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.tilleggsinformasjon shouldBe "baz";
         }
         it ("Endrer tilleggsinformasjon til null") {
-            val tilleggsinformasjon3 = engine.endreTilleggsinformasjon(sakID, null, uuid("4").toString())
-            tilleggsinformasjon3.getTypedContent<String>("$.tilleggsinformasjonSak.__typename") shouldBe "TilleggsinformasjonSakVellykket"
+            engine.endreTilleggsinformasjonOgForventSuksess(sakID, null, uuid("4").toString())
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.tilleggsinformasjon shouldBe null;
         }
         it ("Endrer tilleggsinformasjon uten idempontency key") {
-            val tilleggsinformasjon4 = engine.endreTilleggsinformasjon(sakID, "foo", null)
-            tilleggsinformasjon4.getTypedContent<String>("$.tilleggsinformasjonSak.__typename") shouldBe "TilleggsinformasjonSakVellykket"
+            engine.endreTilleggsinformasjonOgForventSuksess(sakID, "foo", null)
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.tilleggsinformasjon shouldBe "foo";
         }
         it ("Endrer til null uten idempontency key") {
-            val tilleggsinformasjon5 = engine.endreTilleggsinformasjon(sakID, null, null)
-            tilleggsinformasjon5.getTypedContent<String>("$.tilleggsinformasjonSak.__typename") shouldBe "TilleggsinformasjonSakVellykket"
+            engine.endreTilleggsinformasjonOgForventSuksess(sakID, null, null)
             val hentetSak = produsentRepository.hentSak(sakID)!!
             hentetSak.tilleggsinformasjon shouldBe null;
         }
@@ -125,7 +120,7 @@ private fun TestApplicationEngine.nySak(
     )
 
 
-private fun TestApplicationEngine.endreTilleggsinformasjon(
+private fun TestApplicationEngine.endreTilleggsinformasjonOgForventSuksess(
     id: UUID,
     tilleggsinformasjon: String?,
     idempotencyKey: String?,
@@ -148,5 +143,7 @@ private fun TestApplicationEngine.endreTilleggsinformasjon(
                 }
             }
         """
-    )
+    ).also{
+        it.getTypedContent<MutationTilleggsinformasjonSak.TilleggsinformasjonSakVellykket>("$.tilleggsinformasjonSak")
+    }
 

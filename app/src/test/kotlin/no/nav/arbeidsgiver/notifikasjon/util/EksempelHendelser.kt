@@ -415,6 +415,25 @@ object EksempelHendelse {
             sakId = null,
         )
     }
+    val OppgavePåmminelseEndret =
+        HendelseModel.OppgavePåminnelseEndret(
+            notifikasjonId = OppgaveOpprettet_MedPåminnelse.notifikasjonId,
+            hendelseId = hendelseId.next(),
+            oppgaveOpprettetTidspunkt = OppgaveOpprettet_MedPåminnelse.opprettetTidspunkt.toInstant(),
+            påminnelse = HendelseModel.Påminnelse(
+                tidspunkt = HendelseModel.PåminnelseTidspunkt.Konkret(
+                    konkret = LocalDateTime.parse("2020-01-15T01:01"),
+                    påminnelseTidspunkt = Instant.parse("2020-01-15T02:01:00.00Z"),
+                ),
+                eksterneVarsler = listOf()
+            ),
+            frist = OppgaveOpprettet_MedPåminnelse.frist,
+            merkelapp = OppgaveOpprettet_MedPåminnelse.merkelapp,
+            virksomhetsnummer = OppgaveOpprettet_MedPåminnelse.virksomhetsnummer,
+            kildeAppNavn = OppgaveOpprettet_MedPåminnelse.kildeAppNavn,
+            produsentId = OppgaveOpprettet_MedPåminnelse.produsentId,
+            idempotenceKey = IdempotenceKey.initial()
+        )
     val OppgaveUtført = HendelseModel.OppgaveUtført(
         virksomhetsnummer = "1",
         notifikasjonId = uuid("1"),
@@ -903,6 +922,7 @@ object EksempelHendelse {
         OppgaveOpprettet_3_Mottakere,
         OppgaveOpprettet_MedFrist,
         OppgaveOpprettet_MedPåminnelse,
+        OppgavePåmminelseEndret,
         OppgaveUtført,
         OppgaveUtgått,
         SoftDelete,

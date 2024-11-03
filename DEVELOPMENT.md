@@ -1,16 +1,8 @@
-# Notifikasjoner for arbeidsgivere
+# Prerequisites
 
-Dette repoet inneholder notifikasjonsplatformen for arbeidsgivere.
+For devops av notifikasjonsplattformen er det nødvendig at naisdevice, nais cli og kubectl er installert.
 
-Har du tenkt å bruke plattformen eller lurer på hva den er kan du se i [brukerdokumentasjonen](https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/)
-
-Er du utvikler og vil bidra til plattformen kan du se i [utvikler guiden].
-
-Har du Spørsmål? Ta kontakt med teamet på Slack i kanalen #arbeidsgiver-notifikasjon eller #team-fager.
-
-
-
-
+Se: https://doc.nais.io/operate/how-to/command-line-access/?h=
 
 # Lokal utvikling og tester
 
@@ -44,27 +36,25 @@ deploy ny app:
 
 ## Koble direkte til DEV databaser
 
-Du må ha være autentisert med `gcloud` og ha `cloud_sql_proxy` installert.
-
-Kjør `./cloudsql-connect.sh dev notifikasjon-bruker-api 5432` og postgres-databasen vil være tilgjengelig på 
-localhost:5432. Brukernavn er e-post-adressen din. Passord får du ved å kjøre `gcloud auth print-access-token`.
+Se nais cli postgres command i dokumentasjonen https://doc.nais.io/operate/cli/reference/postgres/?h=proxy
 
 ## Koble direkte til en topic på aiven
 
 Dersom man trenger å administrere en topic (f.eks. inspisere en topic, eller endre offsets for en consumer group),
 så kan man benytte [kafka cli](https://kafka.apache.org/quickstart) kombinert med [nais aiven cli](https://doc.nais.io/cli/commands/aiven/#aiven-command)
-kafka-cli kan man laste ned med `./download_kafka_cli.sh` nais aiven [installeres](https://doc.nais.io/cli/install/) med feks homebrew.
+kafka-cli kan man laste ned med `./download_kafka_cli.sh` nais aiven [installeres](https://doc.nais.io/operate/cli/how-to/install/).
 
 Det er opprettet en `notifikasjon-devops` applikasjon med read access til topic i dev og prod.
 Etter nais aiven er installert kan man opprette applikasjonen. husk å ha valgt riktig context i k8s først:
+`nais login`
 `nais aiven create kafka notifikasjon-devops fager`
 
-
-Deretter kan man generere credentials som kan brukes med f.eks kafka-cli:
-`nais aiven get fager-notifikasjon-devops-ad9c851a fager`
+Kommandoen over vil gi deg instruks for å generere klienter når du kjører den.
+Kopier siste linje fra output og kjør den. F.eks:
+`nais aiven get kafka fager-notifikasjon-devops-ad9c851a fager`
 
 Dette genererer noen filer med secrets i en mappe lokalt, og viser hvor disse ble laget. 
-Man kan med disse credentials bruke f.eks. kafka-console-consumer eler kafka-consumer-groups.
+Man kan med disse credentials bruke kafka-cli f.eks. kafka-console-consumer eler kafka-consumer-groups.
 
 Noen eksempler på bruk:
 
@@ -80,14 +70,35 @@ set KAFKA_CONFIG /var/folders/7d/d3gk6jrx4c31pbjqb3qcyc_r0000gn/T/aiven-secret-1
 bass "set -a; source $KAFKA_CONFIG/kafka-secret.env"
 ```
 
-List offsets for en consumer group:
+se at $KAFKA_BROKERS er satt fra secrets:
+```
+echo $KAFKA_BROKERS
+```
+
+List alle consumer groups på fager.notifikasjon topic: 
+```
+# TODO: funker dette??
+./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --all-groups count_errors --describe
+```
+
+List offsets for en consumer group (fra listen over consumer groups):
 ```
 ./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group bruker-model-builder --describe
 ```
 
 Dersom man skal endre en offset på en partisjon må consumer group være inaktiv. Dette gjøres enklest ved å skalere ned deployment til 0:
 ```
-kubectl scale --replicas=0 deployment/notifikasjon-bruker-api
+kubectl scale --replicas=0 deployment/notifikasjon-dataprodukt 
+```
+
+Sett til et bestemt offset på en gitt partisjon for en consumer group:
+```
+.kafka-cli/bin/kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group dataprodukt-model-builder-3 --topic fager.notifikasjon:12 --reset-offsets --to-offset 94700 --execute
+```
+
+Deretter skalerer man opp igjen til antall replicas som er definert i nais deployment descriptoren (yml):
+```
+kubectl scale --replicas=1 deployment/notifikasjon-dataprodukt 
 ```
 
 Hopp over en offset på en gitt partisjon for en consumer group:
@@ -95,10 +106,6 @@ Hopp over en offset på en gitt partisjon for en consumer group:
 ./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --shift-by 1 --execute
 ```
 
-Sett til et bestemt offset på en gitt partisjon for en consumer group:
-```
-kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group bruker-model-builder --topic fager.notifikasjon:12 --reset-offsets --to-offset 50 --execute
-```
 
 Les topic for en gitt partisjon fra et gitt offset:
 ```
@@ -108,6 +115,12 @@ Les topic for en gitt partisjon fra et gitt offset:
 Describe topic:
 ```
 kafka-cli/bin/./kafka-topics.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --topic fager.notifikasjon --describe
+```
+
+Konsumer topic fra starten, pipe til fil og koble fra når ferdig:
+```
+.kafka-cli/bin/./kafka-console-consumer.sh --bootstrap-server $KAFKA_BROKERS --consumer.config $KAFKA_CONFIG/kafka.properties --topic fager.notifikasjon --formatter kafka.to
+ols.DefaultMessageFormatter --property print.key=true --property print.value=true --property print.offset=true --property print.timestamp=true --timeout-ms 30000 --from-beginning > dev.fager.notifikasjon.topic
 ```
 
 ## Ticks n' Trips

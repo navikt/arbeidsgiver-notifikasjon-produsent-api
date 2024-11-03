@@ -569,6 +569,7 @@ object HendelseModel {
         override val produsentId: String,
         override val kildeAppNavn: String,
         val notifikasjonId: UUID,
+        val merkelapp: String?,
         val fristEndretTidspunkt: Instant,
         val frist: LocalDate,
         val påminnelse: Påminnelse?,
@@ -603,6 +604,23 @@ object HendelseModel {
         val nyLenke: String?,
         val utfoertTidspunkt: OffsetDateTime?, //Vi har ikke utfoertTidspunkt på tidligere hendelser. Hentes fra metadata til kafka-eventet.
     ) : Hendelse(), Notifikasjon {
+        @JsonIgnore
+        override val aggregateId: UUID = notifikasjonId
+    }
+
+    @JsonTypeName("OppgavePaaminnelseEndret")
+    data class OppgavePåminnelseEndret(
+        override val virksomhetsnummer: String,
+        override val hendelseId: UUID,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        val notifikasjonId: UUID,
+        val merkelapp: String?,
+        val frist: LocalDate?,
+        val oppgaveOpprettetTidspunkt: Instant,
+        val påminnelse: Påminnelse?,
+        val idempotenceKey: String?,
+    ) : Hendelse(){
         @JsonIgnore
         override val aggregateId: UUID = notifikasjonId
     }

@@ -31,24 +31,24 @@ class VirksomhetsinfoServiceTests: DescribeSpec({
                       "isError": false,
                       "hierarki": [
                         {
-                          "orgNr": "1",
-                          "name": "altinn 1",
-                          "organizationForm": "AS",
+                          "orgnr": "1",
+                          "navn": "altinn 1",
+                          "organisasjonsform": "AS",
                           "altinn3Tilganger": [],
                           "altinn2Tilganger": [],
                           "underenheter": [
                             {
-                              "orgNr": "2",
-                              "name": "altinn 2",
-                              "organizationForm": "BEDR",
+                              "orgnr": "2",
+                              "navn": "altinn 2",
+                              "organisasjonsform": "BEDR",
                               "altinn3Tilganger": [],
                               "altinn2Tilganger": [],
                               "underenheter": []
                             },
                             {
-                              "orgNr": "3",
-                              "name": "altinn 3",
-                              "organizationForm": "BEDR",
+                              "orgnr": "3",
+                              "navn": "altinn 3",
+                              "organisasjonsform": "BEDR",
                               "altinn3Tilganger": [],
                               "altinn2Tilganger": [],
                               "underenheter": []

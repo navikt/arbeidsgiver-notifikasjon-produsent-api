@@ -1,1136 +1,1028 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+    <meta charset="utf-8"/>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
     <title>Guide | Notifikasjoner for arbeidsgivere</title>
-    <meta property="og:title" content="Guide" />
-    <meta property="og:locale" content="en_US" />
+    <meta content="Guide" property="og:title"/>
+    <meta content="en_US" property="og:locale"/>
     <meta
-      name="description"
-      content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+            content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+            name="description"
     />
     <meta
-      property="og:description"
-      content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+            content="Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere."
+            property="og:description"
     />
     <link
-      rel="canonical"
-      href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
+            href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
+            rel="canonical"
     />
     <meta
-      property="og:url"
-      content="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
+            content="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
+            property="og:url"
     />
-    <meta property="og:site_name" content="Notifikasjoner for arbeidsgivere" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <meta property="twitter:title" content="Guide" />
+    <meta content="Notifikasjoner for arbeidsgivere" property="og:site_name"/>
+    <meta content="website" property="og:type"/>
+    <meta content="summary" name="twitter:card"/>
+    <meta content="Guide" property="twitter:title"/>
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        "description": "Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.",
-        "headline": "Guide",
-        "url": "https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
-      }
+        {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "description": "Dokumentasjon for å produsere notifikasjoner rettet mot arbeidsgivere.",
+            "headline": "Guide",
+            "url": "https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/guide/"
+        }
     </script>
-    <link rel="stylesheet" href="main.css" />
-  </head>
-  <body>
-    <header class="site-header" role="banner">
-      <div class="wrapper">
-        <a class="site-title" rel="author" href="index.html">
+    <link href="main.css" rel="stylesheet"/>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/graphql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+<header class="site-header" role="banner">
+    <div class="wrapper">
+        <a class="site-title" href="index.html" rel="author">
             Saker med beskjeder og oppgaver for arbeidsgivere
         </a>
         <nav>
-          <a href="index.html">Introduksjon</a>
-          <a href="guide.html">Guide</a>
-          <a href="api.html">API-dokumentasjon</a>
-          <a href="vilkaar.html">Bruksvilkår</a>
-          <a href="faq.html">FAQ</a>
+            <a href="index.html">Introduksjon</a>
+            <a href="guide.html">Guide</a>
+            <a href="api.html">API-dokumentasjon</a>
+            <a href="vilkaar.html">Bruksvilkår</a>
+            <a href="faq.html">FAQ</a>
         </nav>
-      </div>
-    </header>
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
+    </div>
+</header>
+<main aria-label="Content" class="page-content">
+    <div class="wrapper">
         <article class="post">
-          <header class="post-header">
-            <h1 class="post-title">Guide</h1>
-          </header>
+            <header class="post-header">
+                <h1 class="post-title">Guide</h1>
+            </header>
 
-          <div class="post-content">
-              <h2 id="onboarding-og-tilganger"><a href="#onboarding-og-tilganger">Onboarding og tilganger</a></h2>
-              <p>
-              For å få tilgang til API-et må teamet ditt godta
-              <a href="vilkaar.html">vilkårene</a>, ved å registerer dere i
-              repoet
-              <a
-                href="https://github.com/navikt/arbeidsgiver-notifikasjon-produsenter"
-                >navikt/arbeidsgiver-notifikasjon-produsenter</a
-              >. Der er også tilgangsstyring spesifisert.
-            </p>
-            <h2 id="terminologi-og-beskrivelse-av-felter"><a href="#terminologi-og-beskrivelse-av-felter">
-              Terminologi og beskrivelse av felter
-            </a></h2>
-            <p>
-              Merkelapp bestems av produsenten og skal gjøre det tydelig for
-              mottaker hvilken domene notifikasjonen er om. T ex sykemeldte
-              eller tiltak. Fet skrift på meldingen betyr at brukern ikke
-              klikket på lenken. Hvilken virksomhet notifikasjonen gjelder vises
-              også.
-            </p>
-            <p>
-              Utført oppgave vises med grå ikon i tilegg til teksten
-              &quot;oppgave utført&quot;. Beroende av hvordan dere valgt å
-              spesifisere mottakere kan det vare flere i virksomheten som mottat
-              samme oppgave. Oppgaven kan derfor være utført av en annen person
-              en den brukeren som ser &quot;oppgave utført&quot;.
-            </p>
-            <p>
-              <img
-                src="/arbeidsgiver-notifikasjon-produsent-api/images/forklaring.png"
-                alt=""
-              />
-            </p>
-            <p>
-              Bjella med notifikasjoner er en egen NPM-pakke som hvert enkelt
-              team i tilegg kan plassere i bedriftsmenyen i sin applikasjon
-              (eller direkte i applikasjonen hvis dere ikke bruker
-              bedriftsmenyn). Dette gjør det enklere for arbeidgsiver å kunne
-              navigere mellom oppgaver og beskjeder i forskjellige applikasjoner
-              uten å alltid må inom Min side - arbeidgsiver.
-            </p>
+            <div class="post-content">
+                <h2 id="onboarding-og-tilganger"><a href="#onboarding-og-tilganger">Onboarding og tilganger</a></h2>
+                <p>
+                    For å få tilgang til API-et må teamet ditt godta
+                    <a href="vilkaar.html">vilkårene</a>, ved å registerer dere i
+                    repoet
+                    <a
+                            href="https://github.com/navikt/arbeidsgiver-notifikasjon-produsenter"
+                    >navikt/arbeidsgiver-notifikasjon-produsenter</a
+                    >. Der er også tilgangsstyring spesifisert.
+                </p>
+                <h2 id="terminologi-og-beskrivelse-av-felter"><a href="#terminologi-og-beskrivelse-av-felter">
+                    Terminologi og beskrivelse av felter
+                </a></h2>
+                <p>
+                    Merkelapp bestems av produsenten og skal gjøre det tydelig for
+                    mottaker hvilken domene notifikasjonen er om. T ex sykemeldte
+                    eller tiltak. Fet skrift på meldingen betyr at brukern ikke
+                    klikket på lenken. Hvilken virksomhet notifikasjonen gjelder vises
+                    også.
+                </p>
+                <p>
+                    Utført oppgave vises med grå ikon i tilegg til teksten
+                    &quot;oppgave utført&quot;. Beroende av hvordan dere valgt å
+                    spesifisere mottakere kan det vare flere i virksomheten som mottat
+                    samme oppgave. Oppgaven kan derfor være utført av en annen person
+                    en den brukeren som ser &quot;oppgave utført&quot;.
+                </p>
+                <p>
+                    <img
+                        alt="bilde som peker forklaring av terminologi til elementer"
+                        src="images/forklaring.png"
+                    />
+                </p>
+                <p>
+                    Bjella med notifikasjoner er en egen NPM-pakke som hvert enkelt
+                    team i tilegg kan plassere i bedriftsmenyen i sin applikasjon
+                    (eller direkte i applikasjonen hvis dere ikke bruker
+                    bedriftsmenyn). Dette gjør det enklere for arbeidgsiver å kunne
+                    navigere mellom oppgaver og beskjeder i forskjellige applikasjoner
+                    uten å alltid må inom Min side - arbeidgsiver.
+                </p>
 
-              <h2 id="hvordan-opprette-ny-sak"><a href="#hvordan-opprette-ny-sak">Hvordan opprette ny sak</a></h2>
-              <div class="language-graphql highlighter-rouge">
-                  <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$tittel</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
-  </span><span class="nv">$nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nySak</span><span class="p">(</span><span class="w">
-    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
-    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tiltak"</span><span class="w">
-    </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
-    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"4321"</span><span class="w">
-        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">}]</span><span class="w">
-    </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="nv">$tittel</span><span class="w">
-    </span><span class="n">tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nv">$tilleggsinformasjon</span><span class="w">
-    </span><span class="n">nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nv">$nesteSteg</span><span class="w">
-    </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-    </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
-    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T17:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NySakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                  </div>
-              </div>
-              <p>
-                  Merk at vi sender tittel som variabel, siden innholdet er dynamisk
-                  (etternavn satt inn).
-              </p>
-              <p>
-                  For å koble notifikasjoner til en sak benytter dere samme merkelapp og grupperingsid som på saken.
-              </p>
-              <h2 id="hvordan-oppdatere-status-i-sak"><a href="#hvordan-oppdatere-status-i-sak">
-                  Hvordan oppdatere status i sak
-              </a></h2>
-              <p>
-                  Du kan oppdatere status i sak ved å referer til vår ID (id) eller
-                  deres id (grupperingsid + merkelapp).
-              </p>
-              <p>Vår ID:</p>
-              <div class="language-graphql highlighter-rouge">
-                  <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="nv">$id</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyStatusSak</span><span class="p">(</span><span class="w">
-    </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$id</span><span class="w">
-    </span><span class="n">nyStatus</span><span class="p">:</span><span class="w"> </span><span class="n">UNDER_BEHANDLING</span><span class="w">
-    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T18:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyStatusSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                  </div>
-              </div>
-              <p>Deres ID:</p>
-              <div class="language-graphql highlighter-rouge">
-                  <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyStatusSakByGrupperingsid</span><span class="p">(</span><span class="w">
-    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
-    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tiltak"</span><span class="w">
-    </span><span class="n">nyStatus</span><span class="p">:</span><span class="w"> </span><span class="n">UNDER_BEHANDLING</span><span class="w">
-    </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-03-01T18:18:00+01"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-    </span><span class="n">overstyrStatustekstMed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtale opprettet"</span><span class="w"> </span><span class="c"># optional</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyStatusSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                  </div>
-              </div>
-            <h2 id="hvordan-opprette-en-beskjed"><a href="#hvordan-opprette-en-beskjed">
-              Hvordan opprette en beskjed
-            </a></h2>
-            <p>
-              Når dere lager en GraphQL-spørring burde dere bruke variabler for
-              å skille det statiske og dynamiske i spørringene.
-            </p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNyBeskjed</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyBeskjed</span><span class="p">(</span><span class="n">nyBeskjed</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="w">
-      </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
-        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">}]</span><span class="w">
-    </span><span class="n">notifikasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"EtSakssystem"</span><span class="w">
-      </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har fått svar på din søknad"</span><span class="w">
-      </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">})</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyBeskjedVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>Med variabler:</p>
-            <div class="language-json highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"eksternId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234-oppdatering"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"virksomhetsnummer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"012345678"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"lenke"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://dev.nav.no/sakssystem/?sak=1234"</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <h2 id="hvordan-opprette-en-oppgave"><a href="#hvordan-opprette-en-oppgave">
-              Hvordan opprette en oppgave
-            </a></h2>
-            <p>Følgende mutation oppretter en ny oppgave:</p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNyOppgave</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$tekst</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$grupperingsId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyOppgave</span><span class="p">(</span><span class="n">nyOppgave</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="w">
-      </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsId</span><span class="w">
-      </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-      </span><span class="p">{</span><span class="w">
-        </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-          </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"4321"</span><span class="w">
-          </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">]</span><span class="w">
-    </span><span class="n">notifikasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Pensjon"</span><span class="w">
-      </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="nv">$tekst</span><span class="w">
-      </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">})</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyOppgaveVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
+                <h2 id="hvordan-opprette-ny-sak"><a href="#hvordan-opprette-ny-sak">Hvordan opprette ny sak</a></h2>
+<pre><code class="language-graphql">
+mutation OpprettNySak(
+  $grupperingsid: String!
+  $virksomhetsnummer: String!
+  $tittel: String!
+  $tilleggsinformasjon: String
+  $nesteSteg: String
+) {
+  nySak(
+    grupperingsid: $grupperingsid
+    merkelapp: "Tiltak"
+    virksomhetsnummer: $virksomhetsnummer
+    mottakere: [{
+      altinn: {
+        serviceCode: "4321"
+        serviceEdition: "1"
+      }
+    }]
+    tittel: $tittel
+    tilleggsinformasjon: $tilleggsinformasjon
+    nesteSteg: $nesteSteg
+    lenke: $lenke
+    initiellStatus: MOTTATT
+    tidspunkt: "2022-03-01T17:18:00+01" # optional
+    overstyrStatustekstMed: "Avtale opprettet" # optional
+  ) {
+    __typename
+    ... on NySakVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+                <p>
+                    Merk at vi sender tittel som variabel, siden innholdet er dynamisk
+                    (etternavn satt inn).
+                </p>
+                <p>
+                    For å koble notifikasjoner til en sak benytter dere samme merkelapp og grupperingsid som på saken.
+                </p>
+                <h2 id="hvordan-oppdatere-status-i-sak"><a href="#hvordan-oppdatere-status-i-sak">
+                    Hvordan oppdatere status i sak
+                </a></h2>
+                <p>
+                    Du kan oppdatere status i sak ved å referer til vår ID (id) eller
+                    deres id (grupperingsid + merkelapp).
+                </p>
+                <p>Vår ID:</p>
+<pre><code class="language-graphql">
+mutation OpprettNySak($id: ID!) {
+  nyStatusSak(
+    id: $id
+    nyStatus: UNDER_BEHANDLING
+    tidspunkt: "2022-03-01T18:18:00+01" # optional
+    overstyrStatustekstMed: "Avtale opprettet" # optional
+  ) {
+    __typename
+    ... on NyStatusSakVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+                <p>Deres ID:</p>
+<pre><code class="language-graphql">
+mutation OpprettNySak($grupperingsid: String!) {
+  nyStatusSakByGrupperingsid(
+    grupperingsid: $grupperingsid
+    merkelapp: "Tiltak"
+    nyStatus: UNDER_BEHANDLING
+    tidspunkt: "2022-03-01T18:18:00+01" # optional
+    overstyrStatustekstMed: "Avtale opprettet" # optional
+  ) {
+    __typename
+    ... on NyStatusSakVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+                <h2 id="hvordan-opprette-en-beskjed"><a href="#hvordan-opprette-en-beskjed">
+                    Hvordan opprette en beskjed
+                </a></h2>
+                <p>
+                    Når dere lager en GraphQL-spørring burde dere bruke variabler for
+                    å skille det statiske og dynamiske i spørringene.
+                </p>
+<pre><code class="language-graphql">
+mutation OpprettNyBeskjed(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $lenke: String!
+) {
+  nyBeskjed(nyBeskjed: {
+    metadata: {
+      eksternId: $eksternId
+      virksomhetsnummer: $virksomhetsnummer
+    }
+    mottakere: [{
+      altinn: {
+        serviceCode: "1234"
+        serviceEdition: "1"
+      }
+    }]
+    notifikasjon: {
+      merkelapp: "EtSakssystem"
+      tekst: "Du har fått svar på din søknad"
+      lenke: $lenke
+    }
+  }) {
+    __typename
+    ... on NyBeskjedVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+                <p>Med variabler:</p>
+<pre><code class="language-graphql">
+{
+  "eksternId": "1234-oppdatering",
+  "virksomhetsnummer": "012345678",
+  "lenke": "https://dev.nav.no/sakssystem/?sak=1234"
+}
+</code></pre>
 
-</span></code></pre>
-              </div>
-            </div>
-            <p>Med variabler:</p>
-            <div class="language-json highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"eksternId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"saksnummer-1234"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"grupperingsId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"saksnummer-1234"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"virksomhetsnummer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"012345678"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"tekst"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har en søknad du må fylle ut"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"lenke"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://dev.nav.no/sakssystem/?sak=1234"</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <h2 id="hvordan-markere-oppgave-som-utfrt"><a href="#hvordan-markere-oppgave-som-utfrt">
-              Hvordan markere oppgave som utført
-            </a></h2>
-            <p>
-              Dere kan markere en oppgave som utført, ved å bruke en av
-              følgende:
-            </p>
-            <ul>
-              <li>
-                vår ID, som vi returnerte til dere da dere opprettet oppgaven
-              </li>
-              <li>
-                deres ID, som dere oppga som <code>eksternId</code> da dere
-                opprettet oppgaven.
-              </li>
-            </ul>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">MarkerOppgaveSomUtfoert</span><span class="p">(</span><span class="nv">$id</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">oppgaveUtfoert</span><span class="p">(</span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">MarkerOppgaveSomUtfoert</span><span class="p">(</span><span class="nv">$merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!,</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">oppgaveUtfoertByEksternId_V2</span><span class="p">(</span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nv">$merkelapp</span><span class="p">,</span><span class="w"> </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <h2 id="hvordan-markere-oppgave-som-utgtt"><a href="#hvordan-markere-oppgave-som-utgtt">
-              Hvordan markere oppgave som utgått
-            </a></h2>
-            <p>
-              Dere kan markere en oppgave som utgått, ved å bruke en av
-              følgende:
-            </p>
-            <ul>
-              <li>
-                vår ID, som vi returnerte til dere da dere opprettet oppgaven
-              </li>
-              <li>
-                deres ID, som dere oppga som <code>eksternId</code> da dere
-                opprettet oppgaven.
-              </li>
-            </ul>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">MarkerOppgaveSomUtgaatt</span><span class="p">(</span><span class="nv">$id</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">oppgaveUtgaatt</span><span class="p">(</span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">MarkerOppgaveSomUtgaatt</span><span class="p">(</span><span class="nv">$merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!,</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">oppgaveUtgaattByEksternId</span><span class="p">(</span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nv">$merkelapp</span><span class="p">,</span><span class="w"> </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <h2 id="spesifisere-mottakere"><a href="#spesifisere-mottakere">Spesifisere mottakere</a></h2>
-            <p>
-              Du kan spesifisere mottakerene av notifikasjonen på mange måter.
-              Det er viktig å spesifisere mottaker riktig, så eventuelle
-              personopplysninger kun vises til de med tjenestelig behov. Har
-              dere behov for en annen måte å spesifisere mottakere på, så
-              kontakt oss!
-            </p>
-            <p>Dette eksempelet viser alle mottakerene vi støtter:</p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNyBeskjed</span><span class="p">(</span><span class="w">
-    </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$reporteeFnr</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$ansattFnr</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$naermesteLederFnr</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-</span><span class="n">nyBeskjed</span><span class="p">(</span><span class="w">
-</span><span class="n">nyBeskjed</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">,</span><span class="w"> </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w"> </span><span class="p">}</span><span class="w">
-            </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-                </span><span class="p">{</span><span class="w">
-                    </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="p">,</span><span class="w">
-                        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-                    </span><span class="p">}</span><span class="w">
-                </span><span class="p">}</span><span class="w">
-                </span><span class="p">{</span><span class="w">
-                    </span><span class="n">naermesteLeder</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                        </span><span class="n">ansattFnr</span><span class="p">:</span><span class="w"> </span><span class="nv">$ansattFnr</span><span class="w">
-                        </span><span class="n">naermesteLederFnr</span><span class="p">:</span><span class="w"> </span><span class="nv">$naermesteLederFnr</span><span class="w">
-                    </span><span class="p">}</span><span class="w">
-                </span><span class="p">}</span><span class="w">
-            </span><span class="p">]</span><span class="w">
-            </span><span class="n">notifikasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"EtSakssystem"</span><span class="w">
-                </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har fått svar på din søknad"</span><span class="w">
-                </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">__typename</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyBeskjedVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <h2 id="hvordan-opprette-beskjed-med-varsling-p-sms-og-e-post"><a href="#hvordan-opprette-beskjed-med-varsling-p-sms-og-e-post">
-              Hvordan opprette beskjed med varsling på SMS og e-post
-            </a></h2>
-            <p>
-              SMS eller e-post skal ikke inneholde noen personopplysninger men
-              si generelt hva varslet gjelder. F.eks. “<em
+                <h2 id="hvordan-opprette-en-oppgave"><a href="#hvordan-opprette-en-oppgave">
+                    Hvordan opprette en oppgave
+                </a></h2>
+                <p>Følgende mutation oppretter en ny oppgave:</p>
+<pre><code class="language-graphql">
+mutation OpprettNyOppgave(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $lenke: String!
+  $tekst: String!
+  $grupperingsId: String!
+) {
+  nyOppgave(nyOppgave: {
+    metadata: {
+      eksternId: $eksternId
+      grupperingsid: $grupperingsId
+      virksomhetsnummer: $virksomhetsnummer
+    }
+    mottakere: [
+      {
+        altinn: {
+          serviceCode: "4321"
+          serviceEdition: "1"
+        }
+      }
+    ]
+    notifikasjon: {
+      merkelapp: "Pensjon"
+      tekst: $tekst
+      lenke: $lenke
+    }
+  }) {
+    __typename
+    ... on NyOppgaveVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+
+                <p>Med variabler:</p>
+<pre><code class="language-json">
+{
+  "eksternId": "saksnummer-1234",
+  "grupperingsId": "saksnummer-1234",
+  "virksomhetsnummer": "012345678",
+  "tekst": "Du har en søknad du må fylle ut",
+  "lenke": "https://dev.nav.no/sakssystem/?sak=1234"
+}
+</code></pre>
+
+                <h2 id="hvordan-markere-oppgave-som-utfrt"><a href="#hvordan-markere-oppgave-som-utfrt">
+                    Hvordan markere oppgave som utført
+                </a></h2>
+                <p>
+                    Dere kan markere en oppgave som utført, ved å bruke en av
+                    følgende:
+                </p>
+                <ul>
+                    <li>
+                        vår ID, som vi returnerte til dere da dere opprettet oppgaven
+                    </li>
+                    <li>
+                        deres ID, som dere oppga som <code>eksternId</code> da dere
+                        opprettet oppgaven.
+                    </li>
+                </ul>
+<pre><code class="language-graphql">
+mutation MarkerOppgaveSomUtfoert($id: ID!) {
+  oppgaveUtfoert(id: $id) {
+    __typename
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+<pre><code class="language-graphql">
+mutation MarkerOppgaveSomUtfoert($merkelapp: String!, $eksternId: String!) {
+  oppgaveUtfoertByEksternId_V2(merkelapp: $merkelapp, eksternId: $eksternId) {
+    __typename
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+                <h2 id="hvordan-markere-oppgave-som-utgtt"><a href="#hvordan-markere-oppgave-som-utgtt">
+                    Hvordan markere oppgave som utgått
+                </a></h2>
+                <p>
+                    Dere kan markere en oppgave som utgått, ved å bruke en av
+                    følgende:
+                </p>
+                <ul>
+                    <li>
+                        vår ID, som vi returnerte til dere da dere opprettet oppgaven
+                    </li>
+                    <li>
+                        deres ID, som dere oppga som <code>eksternId</code> da dere
+                        opprettet oppgaven.
+                    </li>
+                </ul>
+<pre><code class="language-graphql">
+mutation MarkerOppgaveSomUtgaatt($id: ID!) {
+  oppgaveUtgaatt(id: $id) {
+    __typename
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+<pre><code class="language-graphql">
+mutation MarkerOppgaveSomUtgaatt($merkelapp: String!, $eksternId: String!) {
+  oppgaveUtgaattByEksternId(merkelapp: $merkelapp, eksternId: $eksternId) {
+    __typename
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+                <h2 id="spesifisere-mottakere"><a href="#spesifisere-mottakere">Spesifisere mottakere</a></h2>
+                <p>
+                    Du kan spesifisere mottakerene av notifikasjonen på mange måter.
+                    Det er viktig å spesifisere mottaker riktig, så eventuelle
+                    personopplysninger kun vises til de med tjenestelig behov. Har
+                    dere behov for en annen måte å spesifisere mottakere på, så
+                    kontakt oss!
+                </p>
+                <p>Dette eksempelet viser alle mottakerene vi støtter:</p>
+<pre><code class="language-graphql">
+mutation OpprettNyBeskjed(
+    $eksternId: String!
+    $virksomhetsnummer: String!
+    $lenke: String!
+    $reporteeFnr: String!
+    $ansattFnr: String!
+    $naermesteLederFnr: String!
+) {
+nyBeskjed(
+nyBeskjed: {
+            metadata: { eksternId: $eksternId, virksomhetsnummer: $virksomhetsnummer }
+            mottakere: [
+                {
+                    altinn: {
+                        serviceCode: "1234",
+                        serviceEdition: "1"
+                    }
+                }
+                {
+                    naermesteLeder: {
+                        ansattFnr: $ansattFnr
+                        naermesteLederFnr: $naermesteLederFnr
+                    }
+                }
+            ]
+            notifikasjon: {
+                merkelapp: "EtSakssystem"
+                tekst: "Du har fått svar på din søknad"
+                lenke: $lenke
+            }
+        }
+    ) {
+        __typename
+        ... on NyBeskjedVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
+                <h2 id="hvordan-opprette-beskjed-med-varsling-p-sms-og-e-post"><a
+                        href="#hvordan-opprette-beskjed-med-varsling-p-sms-og-e-post">
+                    Hvordan opprette beskjed med varsling på SMS og e-post
+                </a></h2>
+                <p>
+                    SMS eller e-post skal ikke inneholde noen personopplysninger men
+                    si generelt hva varslet gjelder. F.eks. “<em
                 >Du har en ny sykemelding. Logg inn på NAV på Min side –
-                arbeidsgiver for å finne den</em
-              >”. Se bruksvilkårene for flere detaljer.
-            </p>
-            <p>
-              Vi støtter ekstern varsling der dere som produsent har
-              kontaktinformasjon (telefonnummer eller e-postadresse) til den som
-              skal varsles.
-            </p>
-            <p>
-              Vil dere sende sms/epost til arbeidsgivere basert på tjenestekode
-              i Altinn se neste avsnitt
-            </p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNyBeskjed</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$epostHtmlBody</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$ansattFnr</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$naermesteLederFnr</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$tlf</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$epost</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyBeskjed</span><span class="p">(</span><span class="w">
-    </span><span class="n">nyBeskjed</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">,</span><span class="w"> </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w"> </span><span class="p">}</span><span class="w">
-      </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-        </span><span class="n">naermesteLeder</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-          </span><span class="n">ansattFnr</span><span class="p">:</span><span class="w"> </span><span class="nv">$ansattFnr</span><span class="w">
-          </span><span class="n">naermesteLederFnr</span><span class="p">:</span><span class="w"> </span><span class="nv">$naermesteLederFnr</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">}]</span><span class="w">
-      </span><span class="n">notifikasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Sykemelding"</span><span class="w">
-        </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har mottatt en ny sykemelding."</span><span class="w">
-        </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-      </span><span class="n">eksterneVarsler</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-        </span><span class="p">{</span><span class="w">
-          </span><span class="n">sms</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">mottaker</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="n">kontaktinfo</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                </span><span class="n">tlf</span><span class="p">:</span><span class="w"> </span><span class="nv">$tlf</span><span class="w">
-              </span><span class="p">}</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-            </span><span class="n">smsTekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har en ny sykemelding. Logg inn på NAV på Min side – arbeidsgiver for å finne den"</span><span class="w">
-            </span><span class="n">sendetidspunkt</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="n">sendevindu</span><span class="p">:</span><span class="w"> </span><span class="n">NKS_AAPNINGSTID</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-          </span><span class="p">}</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">{</span><span class="w">
-          </span><span class="n">epost</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">mottaker</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="n">kontaktinfo</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                </span><span class="n">epostadresse</span><span class="p">:</span><span class="w"> </span><span class="nv">$epost</span><span class="w">
-              </span><span class="p">}</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-            </span><span class="n">epostTittel</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har en ny sykemelding."</span><span class="w">
-            </span><span class="n">epostHtmlBody</span><span class="p">:</span><span class="w"> </span><span class="nv">$epostHtmlBody</span><span class="w">
-            </span><span class="n">sendetidspunkt</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="n">sendevindu</span><span class="p">:</span><span class="w"> </span><span class="n">LOEPENDE</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-          </span><span class="p">}</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">]</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyBeskjedVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>med variabler</p>
-            <div class="language-json highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"eksternId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234556"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"virksomhetsnummer"</span><span class="p">:</span><span class="s2">"012345678"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"lenke"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://dev.nav.no/sykemelding/12345"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"tlf"</span><span class="p">:</span><span class="w"> </span><span class="s2">"123445"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"epost"</span><span class="p">:</span><span class="w"> </span><span class="s2">"foobar@baz.no"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"epostHtmlBody"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;h1&gt;Du har en ny sykemelding.&lt;/h1&gt;&lt;br&gt;Logg inn på NAV sin hjemmeside som arbeidsgiver. &lt;br&gt; Hilsen NAV"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"ansattFnr"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"naermesteLederFnr"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <h2
-              id="hvordan-opprette-beskjed-med-varsling-mot-tjenestekode-i-altinn-enkelttjeneste"
-            ><a href="#hvordan-opprette-beskjed-med-varsling-mot-tjenestekode-i-altinn-enkelttjeneste">
-              Hvordan opprette beskjed med varsling mot tjenestekode i Altinn
-              (enkelttjeneste)
-            </a></h2>
-            <p>
-              Vi støtter også ekstern varsling der dere som produsent ønsker å
-              varsle alle med tilgang til en enkeltrettighet på en virksomhet.
-              Her gjelder samme retningslinjer og bruksvilkår hva gjelder
-              personopplysninger.
-            </p>
-            <p>
-              Når dere bruker denne varslingsmekanismen så kan ikke vi garantere
-              om det er SMS eller Epost som blir sendt, men vi vil si til Altinn
-              at de skal velge Epost dersom den er tilgjengelig. Hvis en bruker
-              i Altinn har oppgitt SMS og ikke Epost i tilknytning til tjenesten
-              på den gitte virksomheten så vil de motta SMS. Det er derfor
-              viktig at man tenker over tittel og innhold slik at den blir
-              forståelig uavhengig av medium. Dvs samme tittel og innhold blir
-              brukt i begge tilfeller i altinn, og reglene for hvordan
-              formatering blir er definert der som følger:
-            </p>
-            <pre>
+                    arbeidsgiver for å finne den</em
+                >”. Se bruksvilkårene for flere detaljer.
+                </p>
+                <p>
+                    Vi støtter ekstern varsling der dere som produsent har
+                    kontaktinformasjon (telefonnummer eller e-postadresse) til den som
+                    skal varsles.
+                </p>
+                <p>
+                    Vil dere sende sms/epost til arbeidsgivere basert på tjenestekode
+                    i Altinn se neste avsnitt
+                </p>
+<pre><code class="language-graphql">
+mutation OpprettNyBeskjed(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $lenke: String!
+  $epostHtmlBody: String!
+  $ansattFnr: String!
+  $naermesteLederFnr: String!
+  $tlf: String!
+  $epost: String!
+) {
+  nyBeskjed(
+    nyBeskjed: {
+      metadata: { eksternId: $eksternId, virksomhetsnummer: $virksomhetsnummer }
+      mottakere: [{
+        naermesteLeder: {
+          ansattFnr: $ansattFnr
+          naermesteLederFnr: $naermesteLederFnr
+        }
+      }]
+      notifikasjon: {
+        merkelapp: "Sykemelding"
+        tekst: "Du har mottatt en ny sykemelding."
+        lenke: $lenke
+      }
+      eksterneVarsler: [
+        {
+          sms: {
+            mottaker: {
+              kontaktinfo: {
+                tlf: $tlf
+              }
+            }
+            smsTekst: "Du har en ny sykemelding. Logg inn på NAV på Min side – arbeidsgiver for å finne den"
+            sendetidspunkt: {
+              sendevindu: NKS_AAPNINGSTID
+            }
+          }
+        }
+        {
+          epost: {
+            mottaker: {
+              kontaktinfo: {
+                epostadresse: $epost
+              }
+            }
+            epostTittel: "Du har en ny sykemelding."
+            epostHtmlBody: $epostHtmlBody
+            sendetidspunkt: {
+              sendevindu: LOEPENDE
+            }
+          }
+        }
+      ]
+    }
+  ) {
+    __typename
+    ... on NyBeskjedVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+
+                <p>med variabler</p>
+<pre><code class="language-json">
+{
+  "eksternId": "1234556",
+  "virksomhetsnummer":"012345678",
+  "lenke": "https://dev.nav.no/sykemelding/12345",
+  "tlf": "123445",
+  "epost": "foobar@baz.no",
+  "epostHtmlBody": "&lt;h1&gt;Du har en ny sykemelding.&lt;/h1&gt;&lt;br&gt;Logg inn p&aring; NAV sin hjemmeside som arbeidsgiver. &lt;br&gt; Hilsen NAV",
+  "ansattFnr": "1234",
+  "naermesteLederFnr": "1234"
+}
+</code></pre>
+                <h2 id="hvordan-opprette-beskjed-med-varsling-mot-tjenestekode-i-altinn-enkelttjeneste">
+                    <a href="#hvordan-opprette-beskjed-med-varsling-mot-tjenestekode-i-altinn-enkelttjeneste">
+                    Hvordan opprette beskjed med varsling mot tjenestekode i Altinn
+                    (enkelttjeneste)
+                    </a>
+                </h2>
+                <p>
+                    Vi støtter også ekstern varsling der dere som produsent ønsker å
+                    varsle alle med tilgang til en enkeltrettighet på en virksomhet.
+                    Her gjelder samme retningslinjer og bruksvilkår hva gjelder
+                    personopplysninger.
+                </p>
+                <p>
+                    Når dere bruker denne varslingsmekanismen så kan ikke vi garantere
+                    om det er SMS eller Epost som blir sendt, men vi vil si til Altinn
+                    at de skal velge Epost dersom den er tilgjengelig. Hvis en bruker
+                    i Altinn har oppgitt SMS og ikke Epost i tilknytning til tjenesten
+                    på den gitte virksomheten så vil de motta SMS. Det er derfor
+                    viktig at man tenker over tittel og innhold slik at den blir
+                    forståelig uavhengig av medium. Dvs samme tittel og innhold blir
+                    brukt i begge tilfeller i altinn, og reglene for hvordan
+                    formatering blir er definert der som følger:
+                </p>
+                <pre>
 type   | subject  | notificationText
 SMS    |          | {tittel}{innhold}
 EMAIL  | {tittel} | {innhold}
 </pre
-            >
-            <p>
-              De som har registrert sin kontaktadresse på underenheten (enten
-              uten filter eller hvor filteret stemmer med tjenestekoden som
-              oppgis) vil bli varslet. Den offisielle kontaktinformasjonen til
-              overenheten vil bli varslet.
-            </p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNyBeskjed</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$serviceCode</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$innhold</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyBeskjed</span><span class="p">(</span><span class="w">
-    </span><span class="n">nyBeskjed</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="p">,</span><span class="w"> </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w"> </span><span class="p">}</span><span class="w">
-      </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-        </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-          </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="nv">$serviceCode</span><span class="w">
-          </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="nv">$serviceEdition</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">}]</span><span class="w">
-      </span><span class="n">notifikasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Sykemelding"</span><span class="w">
-        </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har mottatt en ny sykemelding."</span><span class="w">
-        </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-      </span><span class="n">eksterneVarsler</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-        </span><span class="p">{</span><span class="w">
-          </span><span class="n">altinntjeneste</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">mottaker</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="nv">$serviceCode</span><span class="w">
-              </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="nv">$serviceEdition</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-            </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har mottatt en ny sykemelding."</span><span class="w">
-            </span><span class="n">innhold</span><span class="p">:</span><span class="w"> </span><span class="nv">$innhold</span><span class="w">
-            </span><span class="n">sendetidspunkt</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="n">sendevindu</span><span class="p">:</span><span class="w"> </span><span class="n">NKS_AAPNINGSTID</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-          </span><span class="p">}</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">]</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyBeskjedVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>med variabler</p>
-            <div class="language-json highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"eksternId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234556"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"virksomhetsnummer"</span><span class="p">:</span><span class="s2">"012345678"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"serviceCode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"4936"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"serviceEdition"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"lenke"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://dev.nav.no/sykemelding/12345"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"innhold"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Logg inn på NAV sin hjemmeside som arbeidsgiver. Hilsen NAV"</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <h2
-              id="hvordan-opprette-en-oppgave-med-frist-og-automatisk-pminnelse-fr-fristen"
-            ><a href="hvordan-opprette-en-oppgave-med-frist-og-automatisk-pminnelse-fr-fristen">
-              Hvordan opprette en oppgave med frist og automatisk påminnelse før
-              fristen
-            </a></h2>
-            <p>
-              Du kan spesifisere frist for når oppgaven skal utføres av bruker.
-              Ideen er at etter fristen, så har ikke bruker lov, eller dere
-              sperret for, å gjøre oppgaven. Fristen vises til bruker i
-              grensesnittet. Oppgaven blir automatisk markert som
-              <code>UTGAAT</code> når fristen er forbi.
-            </p>
-            <p>
-              Du kan også spesifisere en påminnelse for en oppgave. Brukeren vil
-              bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du
-              oppgir det. Du kan også velge å angi ekstern varsling som vil
-              sendes når påminnelsen aktiveres.
-            </p>
-            <p>
-              Funksjonaliteten rundt frist og påminnelse er dokumentert i
-              <a
-                href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/"
-                >API dokumentasjonen</a
-              >
-            </p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNyOppgaveMedFristOgPaaMinnelse</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$tekst</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$grupperingsId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$tlf</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$frist</span><span class="p">:</span><span class="w"> </span><span class="n">ISO8601Date</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyOppgave</span><span class="p">(</span><span class="n">nyOppgave</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="w">
-      </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsId</span><span class="w">
-      </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="n">frist</span><span class="p">:</span><span class="w"> </span><span class="nv">$frist</span><span class="w">
-    </span><span class="n">paaminnelse</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">tidspunkt</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">foerFrist</span><span class="p">:</span><span class="w"> </span><span class="s2">"P5D"</span><span class="w">
-        </span><span class="c">#etterOpprettelse: "P10D"</span><span class="w">
-        </span><span class="c">#konkret: "2022-12-24T00:00:00"</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-      </span><span class="n">eksterneVarsler</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-        </span><span class="p">{</span><span class="w">
-          </span><span class="n">sms</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">mottaker</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="n">kontaktinfo</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                </span><span class="n">tlf</span><span class="p">:</span><span class="w"> </span><span class="nv">$tlf</span><span class="w">
-              </span><span class="p">}</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-            </span><span class="n">smsTekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"Vi mangler svar fra deg. Logg inn på NAV på Min side – arbeidsgiver for å svare"</span><span class="w">
-            </span><span class="n">sendevindu</span><span class="p">:</span><span class="w"> </span><span class="n">NKS_AAPNINGSTID</span><span class="w">
-          </span><span class="p">}</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">]</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-      </span><span class="p">{</span><span class="w">
-        </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-          </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"4321"</span><span class="w">
-          </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">]</span><span class="w">
-    </span><span class="n">notifikasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Pensjon"</span><span class="w">
-      </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="nv">$tekst</span><span class="w">
-      </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">})</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyOppgaveVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>med variabler</p>
-            <div class="language-json highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"eksternId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"saksnummer-1234"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"grupperingsId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"saksnummer-1234"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"virksomhetsnummer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"012345678"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"tekst"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har en søknad du må fylle ut"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"lenke"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://dev.nav.no/sakssystem/?sak=1234"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"tlf"</span><span class="p">:</span><span class="w"> </span><span class="s2">"123445"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"frist"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-12-31"</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-
-
-
-              <h2 id="hvordan-opprette-en-kalenderavtale"><a href="#hvordan-opprette-en-kalenderavtale">
-                  Hvordan opprette en kalenderavtale
-              </a></h2>
-              <p>Følgende mutation oppretter en ny kalenderavtale:</p>
-              <div class="language-graphql highlighter-rouge">
-                  <div class="highlight">
-                <pre class="highlight"><code><span class="k">mutation</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">nyKalenderavtale</span><span class="p">(</span><span class="w">
-        </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-            </span><span class="n">naermesteLeder</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                </span><span class="n">naermesteLederFnr</span><span class="p">:</span><span class="w"> </span><span class="s2">"12345678910"</span><span class="w">
-                </span><span class="n">ansattFnr</span><span class="p">:</span><span class="w"> </span><span class="s2">"321"</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-        </span><span class="p">}]</span><span class="w">
-        </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://foo.bar"</span><span class="w">
-        </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello world"</span><span class="w">
-        </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"$merkelapp"</span><span class="w">
-        </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="s2">"$grupperingsid"</span><span class="w">
-        </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="s2">"$eksternId"</span><span class="w">
-        </span><span class="n">startTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$startTidspunkt"</span><span class="w">
-        </span><span class="n">sluttTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$sluttTidspunkt"</span><span class="w">
-        </span><span class="n">lokasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">postnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
-            </span><span class="n">poststed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Kneika"</span><span class="w">
-            </span><span class="n">adresse</span><span class="p">:</span><span class="w"> </span><span class="s2">"rundt svingen og borti høgget"</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="n">erDigitalt</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-        </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"42"</span><span class="w">
-        </span><span class="n">hardDelete</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">den</span><span class="p">:</span><span class="w"> </span><span class="s2">"2019-10-13T07:20:50.52"</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">__typename</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyKalenderavtaleVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span>
-
-                </code></pre>
-                  </div>
-              </div>
-
-              <h2 id="hvordan-oppdatere-en-kalenderavtale"><a href="#hvordan-oppdatere-en-kalenderavtale">
-                  Hvordan oppdatere en kalenderavtale
-              </a></h2>
-              <p>Følgende mutation oppdaterer en kalenderavtale:</p>
-              <div class="language-graphql highlighter-rouge">
-                  <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">oppdaterKalenderavtale</span><span class="p">(</span><span class="w">
-        </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="s2">"$id"</span><span class="w">
-        </span><span class="n">nyLenke</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://foo.bar"</span><span class="w">
-        </span><span class="n">nyTekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello world"</span><span class="w">
-        </span><span class="n">nyTilstand</span><span class="p">:</span><span class="w"> </span><span class="n">ARBEIDSGIVER_HAR_GODTATT</span><span class="w">
-        </span><span class="n">nyttStartTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$startTidspunkt"</span><span class="w">
-        </span><span class="n">nyttSluttTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$sluttTidspunkt"</span><span class="w">
-        </span><span class="n">nyLokasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">postnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
-            </span><span class="n">poststed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Kneika"</span><span class="w">
-            </span><span class="n">adresse</span><span class="p">:</span><span class="w"> </span><span class="s2">"rundt svingen og borti høgget"</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="n">nyErDigitalt</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-        </span><span class="n">hardDelete</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">nyTid</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                </span><span class="n">den</span><span class="p">:</span><span class="w"> </span><span class="s2">"2019-10-13T07:20:50.52"</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-            </span><span class="n">strategi</span><span class="p">:</span><span class="w"> </span><span class="n">OVERSKRIV</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">__typename</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">OppdaterKalenderavtaleVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span>
-
+>
+                <p>
+                    De som har registrert sin kontaktadresse på underenheten (enten
+                    uten filter eller hvor filteret stemmer med tjenestekoden som
+                    oppgis) vil bli varslet. Den offisielle kontaktinformasjonen til
+                    overenheten vil bli varslet.
+                </p>
+<pre><code class="language-graphql">
+mutation OpprettNyBeskjed(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $serviceCode: String!
+  $serviceEdition: String!
+  $lenke: String!
+  $innhold: String!
+) {
+  nyBeskjed(
+    nyBeskjed: {
+      metadata: { eksternId: $eksternId, virksomhetsnummer: $virksomhetsnummer }
+      mottakere: [{
+        altinn: {
+          serviceCode: $serviceCode
+          serviceEdition: $serviceEdition
+        }
+      }]
+      notifikasjon: {
+        merkelapp: "Sykemelding"
+        tekst: "Du har mottatt en ny sykemelding."
+        lenke: $lenke
+      }
+      eksterneVarsler: [
+        {
+          altinntjeneste: {
+            mottaker: {
+              serviceCode: $serviceCode
+              serviceEdition: $serviceEdition
+            }
+            tittel: "Du har mottatt en ny sykemelding."
+            innhold: $innhold
+            sendetidspunkt: {
+              sendevindu: NKS_AAPNINGSTID
+            }
+          }
+        }
+      ]
+    }
+  ) {
+    __typename
+    ... on NyBeskjedVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
 </code></pre>
-                  </div>
-              </div>
-
-              <h2 id="hvordan-oppdatere-en-kalenderavtale-eksternid"><a href="#hvordan-oppdatere-en-kalenderavtale-eksternid">
-                  Hvordan oppdatere en kalenderavtale ved eksternId
-              </a></h2>
-              <p>Følgende mutation oppdaterer en kalenderavtale for en gitt eksternId:</p>
-              <div class="language-graphql highlighter-rouge">
-                  <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">oppdaterKalenderavtaleByEksternId</span><span class="p">(</span><span class="w">
-        </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"$merkelapp"</span><span class="w">
-        </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="s2">"$eksternId"</span><span class="w">
-        </span><span class="n">nyTilstand</span><span class="p">:</span><span class="w"> </span><span class="n">ARBEIDSGIVER_HAR_GODTATT</span><span class="w">
-        </span><span class="n">nyLenke</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://foo.bar"</span><span class="w">
-        </span><span class="n">nyTekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello world"</span><span class="w">
-        </span><span class="n">nyttStartTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$startTidspunkt"</span><span class="w">
-        </span><span class="n">nyttSluttTidspunkt</span><span class="p">:</span><span class="w"> </span><span class="s2">"$sluttTidspunkt"</span><span class="w">
-        </span><span class="n">nyLokasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">postnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
-            </span><span class="n">poststed</span><span class="p">:</span><span class="w"> </span><span class="s2">"Kneika"</span><span class="w">
-            </span><span class="n">adresse</span><span class="p">:</span><span class="w"> </span><span class="s2">"rundt svingen og borti høgget"</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="n">nyErDigitalt</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-        </span><span class="n">hardDelete</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">nyTid</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                </span><span class="n">den</span><span class="p">:</span><span class="w"> </span><span class="s2">"2019-10-13T07:20:50.52"</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-            </span><span class="n">strategi</span><span class="p">:</span><span class="w"> </span><span class="n">OVERSKRIV</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">__typename</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">OppdaterKalenderavtaleVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span>
+                <p>med variabler</p>
+<pre><code class="language-json">
+{
+  "eksternId": "1234556",
+  "virksomhetsnummer":"012345678",
+  "serviceCode": "4936",
+  "serviceEdition": "1",
+  "lenke": "https://dev.nav.no/sykemelding/12345",
+  "innhold": "Logg inn på NAV sin hjemmeside som arbeidsgiver. Hilsen NAV"
+}
 </code></pre>
-                  </div>
-              </div>
 
+                <h2
+                        id="hvordan-opprette-en-oppgave-med-frist-og-automatisk-pminnelse-fr-fristen"
+                ><a href="hvordan-opprette-en-oppgave-med-frist-og-automatisk-pminnelse-fr-fristen">
+                    Hvordan opprette en oppgave med frist og automatisk påminnelse før
+                    fristen
+                </a></h2>
+                <p>
+                    Du kan spesifisere frist for når oppgaven skal utføres av bruker.
+                    Ideen er at etter fristen, så har ikke bruker lov, eller dere
+                    sperret for, å gjøre oppgaven. Fristen vises til bruker i
+                    grensesnittet. Oppgaven blir automatisk markert som
+                    <code>UTGAAT</code> når fristen er forbi.
+                </p>
+                <p>
+                    Du kan også spesifisere en påminnelse for en oppgave. Brukeren vil
+                    bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du
+                    oppgir det. Du kan også velge å angi ekstern varsling som vil
+                    sendes når påminnelsen aktiveres.
+                </p>
+                <p>
+                    Funksjonaliteten rundt frist og påminnelse er dokumentert i
+                    <a
+                            href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/"
+                    >API dokumentasjonen</a
+                    >
+                </p>
+<pre><code class="language-graphql">
+mutation OpprettNyOppgaveMedFristOgPaaMinnelse(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $lenke: String!
+  $tekst: String!
+  $grupperingsId: String!
+  $tlf: String!
+  $frist: ISO8601Date!
+) {
+  nyOppgave(nyOppgave: {
+    metadata: {
+      eksternId: $eksternId
+      grupperingsid: $grupperingsId
+      virksomhetsnummer: $virksomhetsnummer
+    }
+    frist: $frist
+    paaminnelse: {
+      tidspunkt: {
+        foerFrist: "P5D"
+        #etterOpprettelse: "P10D"
+        #konkret: "2022-12-24T00:00:00"
+      }
+      eksterneVarsler: [
+        {
+          sms: {
+            mottaker: {
+              kontaktinfo: {
+                tlf: $tlf
+              }
+            }
+            smsTekst: "Vi mangler svar fra deg. Logg inn på NAV på Min side – arbeidsgiver for å svare"
+            sendevindu: NKS_AAPNINGSTID
+          }
+        }
+      ]
+    }
+    mottakere: [
+      {
+        altinn: {
+          serviceCode: "4321"
+          serviceEdition: "1"
+        }
+      }
+    ]
+    notifikasjon: {
+      merkelapp: "Pensjon"
+      tekst: $tekst
+      lenke: $lenke
+    }
+  }) {
+    __typename
+    ... on NyOppgaveVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
+                <p>med variabler</p>
+<pre><code class="language-json">
+{
+  "eksternId": "saksnummer-1234",
+  "grupperingsId": "saksnummer-1234",
+  "virksomhetsnummer": "012345678",
+  "tekst": "Du har en søknad du må fylle ut",
+  "lenke": "https://dev.nav.no/sakssystem/?sak=1234",
+  "tlf": "123445",
+  "frist": "2022-12-31"
+}
+</code></pre>
+                <h2 id="hvordan-opprette-en-kalenderavtale"><a href="#hvordan-opprette-en-kalenderavtale">
+                    Hvordan opprette en kalenderavtale
+                </a></h2>
+                <p>Følgende mutation oppretter en ny kalenderavtale:</p>
+<pre><code class="language-graphql">
+mutation {
+    nyKalenderavtale(
+        mottakere: [{
+            naermesteLeder: {
+                naermesteLederFnr: "12345678910"
+                ansattFnr: "321"
+            }
+        }]
+        lenke: "https://foo.bar"
+        tekst: "hello world"
+        merkelapp: "$merkelapp"
+        grupperingsid: "$grupperingsid"
+        eksternId: "$eksternId"
+        startTidspunkt: "$startTidspunkt"
+        sluttTidspunkt: "$sluttTidspunkt"
+        lokasjon: {
+            postnummer: "1234"
+            poststed: "Kneika"
+            adresse: "rundt svingen og borti høgget"
+        }
+        erDigitalt: true
+        virksomhetsnummer: "42"
+        hardDelete: {
+            den: "2019-10-13T07:20:50.52"
+        }
+    ) {
+        __typename
+        ... on NyKalenderavtaleVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
+                <h2 id="hvordan-oppdatere-en-kalenderavtale"><a href="#hvordan-oppdatere-en-kalenderavtale">
+                    Hvordan oppdatere en kalenderavtale
+                </a></h2>
+                <p>Følgende mutation oppdaterer en kalenderavtale:</p>
+<pre><code class="language-graphql">
+mutation {
+    oppdaterKalenderavtale(
+        id: "$id"
+        nyLenke: "https://foo.bar"
+        nyTekst: "hello world"
+        nyTilstand: ARBEIDSGIVER_HAR_GODTATT
+        nyttStartTidspunkt: "$startTidspunkt"
+        nyttSluttTidspunkt: "$sluttTidspunkt"
+        nyLokasjon: {
+            postnummer: "1234"
+            poststed: "Kneika"
+            adresse: "rundt svingen og borti høgget"
+        }
+        nyErDigitalt: true
+        hardDelete: {
+            nyTid: {
+                den: "2019-10-13T07:20:50.52"
+            }
+            strategi: OVERSKRIV
+        }
+    ) {
+        __typename
+        ... on OppdaterKalenderavtaleVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
+                <h2 id="hvordan-oppdatere-en-kalenderavtale-eksternid"><a
+                        href="#hvordan-oppdatere-en-kalenderavtale-eksternid">
+                    Hvordan oppdatere en kalenderavtale ved eksternId
+                </a></h2>
+                <p>Følgende mutation oppdaterer en kalenderavtale for en gitt eksternId:</p>
+<pre><code class="language-graphql">
+mutation {
+    oppdaterKalenderavtaleByEksternId(
+        merkelapp: "$merkelapp"
+        eksternId: "$eksternId"
+        nyTilstand: ARBEIDSGIVER_HAR_GODTATT
+        nyLenke: "https://foo.bar"
+        nyTekst: "hello world"
+        nyttStartTidspunkt: "$startTidspunkt"
+        nyttSluttTidspunkt: "$sluttTidspunkt"
+        nyLokasjon: {
+            postnummer: "1234"
+            poststed: "Kneika"
+            adresse: "rundt svingen og borti høgget"
+        }
+        nyErDigitalt: true
+        hardDelete: {
+            nyTid: {
+                den: "2019-10-13T07:20:50.52"
+            }
+            strategi: OVERSKRIV
+        }
+    ) {
+        __typename
+        ... on OppdaterKalenderavtaleVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
+                <h2 id="hvordan-slette-notifikasjoner-og-saker-automatisk"><a
+                        href="#hvordan-slette-notifikasjoner-og-saker-automatisk">
+                    Hvordan slette notifikasjoner og saker automatisk
+                </a></h2>
+                <p>
+                    For å slette en notifikasjon helt, både fra databaser og
+                    kafka-topics, så må dere bruke hard delete. Da slettes
+                    informasjonen knyttet til notifikasjonen helt.
+                </p>
+                <ul>
+                    <li>
+                        Sletting av notifikasjoner kan være forvirrende for brukere. Vi
+                        anbefaler at dere lar notifikasjonene være til dere har en grunn
+                        til å slette dem.
+                    </li>
+                    <li>
+                        Bruk soft-delete hvis dere vil skjule notifikasjonen for
+                        brukeren.
+                    </li>
+                    <li>
+                        Bruk hard-delete hvis dere ikke lengere har hjemmel for å
+                        beholde dataen.
+                    </li>
+                </ul>
+                <p>
+                    Dere kan skedulere automtisk hard delete når dere lager eller
+                    oppdaterer en sak eller notifikasjon.
+                </p>
+                <p>
+                    Dette eksempelet viser hvordan man automatisk sletter en sak etter
+                    5 måneder.
+                </p>
+<pre><code class="language-graphql">
+mutation OpprettSakMedAutomatiskSletting {
+  nySak(
+    # Dette argumentet
+    hardDelete: {
+      om: "P5M" # Fem månder (se https://en.wikipedia.org/wiki/ISO_8601#Durations for mer info)
+    }
+    grupperingsid: "12345"
+    merkelapp: "Tiltak"
+    virksomhetsnummer: "000000000"
+    initiellStatus: MOTTATT
+    mottakere: [{
+      altinn: {
+        serviceEdition: "1"
+        serviceCode: "1"
+      }
+    }]
+    tittel: "Du har en ny avtale"
+    lenke: "https://dev.nav.no/avtale/12345"
+  ) {
+    __typename
+  }
+}
+</code></pre>
+                <p>
+                    Når du oppgir et intervall, som 5 månder over, så regnes det ut
+                    fra <code>tidspunkt</code>-feltet hvis det er oppgitt, ellers fra
+                    tidspunktet vi mottok saken/notifikasjonen. Hvis du ønsker å
+                    beregne dato selv, så kan du skrive
+                    <code>den: &quot;2020-01-01T12:30Z</code> i stede for
+                    <code>om: &quot;T5M&quot;</code>.
+                </p>
+                <p>
+                    Hvis du oppdaterer en oppgave eller en sak, så kan du også
+                    skedulere automatisk hard delete. Her er et eksempel hvor vi
+                    forlenger slettetiden på saken over med 5 månder.
+                </p>
+<pre><code class="language-graphql">
+mutation OppdaterSakMedAutomatiskSletting {
+  nyStatusSakByGrupperingsid(
+    hardDelete: {
+      nyTid: {
+          om: "P5M"
+      }
+      strategi: FORLENG
+    }
+    grupperingsid: "12345"
+    merkelapp: "Tiltak"
+    nyStatus: UNDER_BEHANDLING
+  ) {
+    __typename
+  }
+}
+</code></pre>
+                <p>
+                    Dere kan skedulere slettingen i en status-oppdatering, uavhengig
+                    av om dere har skedulert sletting tidligere. Men dere må oppgi
+                    <code>strategi</code>, som forteller oss hvordan vi skal håndtere
+                    andre skeduleringer dere eventult har gjort:
+                </p>
+                <ul>
+                    <li><code>FORLENG</code> vil forlenge tiden før sletting.</li>
+                    <li>
+                        <code>OVERSKRIV</code> vil overskrive eventuelt tidligere
+                        skeduleringer.
+                    </li>
+                </ul>
+                <h2 id="hvordan-slette-notifikasjoner-og-saker-manuelt"><a
+                        href="#hvordan-slette-notifikasjoner-og-saker-manuelt">
+                    Hvordan slette notifikasjoner og saker manuelt
+                </a></h2>
+                <p>
+                    En soft-delete markerer en notifikasjon eller sak som slettet i
+                    våre systemer. Det er ikke mulig å angre på en soft delete, men
+                    dataen vil ligge igjen i databasene våre, så det kan graves fram.
+                    Eksempel på soft delete av notifikasjon:
+                </p>
+<pre><code class="language-graphql">
+mutation SoftDeleteNotifikasjon($id: ID!) {
+    softDeleteNotifikasjon(id: $id) {
+        __typename
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
+                <p>
+                    Dere kan også spesifisere notifikasjonen med
+                    <code>merkelapp</code> og <code>eksternId</code> ved bruk av
+                    <code>softDeleteNotifikasjonByEksternId_V2</code>. Her er en liste
+                    over de forskjellige variantene (sak vs notifikasjon, soft vs
+                    hard, by id vs by ekstern id):
+                </p>
+                <ul>
+                    <li><code>softDeleteNotifikasjon(id)</code></li>
+                    <li>
+                        <code
+                        >softDeleteNotifikasjonByEksternId_V2(merkelapp,
+                            eksternId)</code
+                        >
+                    </li>
+                    <li><code>hardDeleteNotifikasjon(id)</code></li>
+                    <li>
+                        <code
+                        >hardDeleteNotifikasjonByEksternId_V2(merkelapp,
+                            eksternId)</code
+                        >
+                    </li>
+                    <li><code>softDeleteSak(id)</code></li>
+                    <li>
+                        <code
+                        >softDeleteSakByGrupperingsid(merkelapp, grupperingsid)</code
+                        >
+                    </li>
+                    <li><code>hardDeleteSak(id)</code></li>
+                    <li>
+                        <code
+                        >hardDeleteSakByGrupperingsid(merkelapp, grupperingsid)</code
+                        >
+                    </li>
+                </ul>
+                <h2 id="hvor-lenge-vises-notifikasjonen-for-mottakere-og-lagres-i-loggene"><a
+                        href="#hvor-lenge-vises-notifikasjonen-for-mottakere-og-lagres-i-loggene">
+                    Hvor lenge vises notifikasjonen for mottakere og lagres i loggene?
+                </a></h2>
+                <p>
+                    Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere
+                    fortsatt har tilgang å se dem og notifikasjonen ikke er slettet.
+                    Dere som produsent må derfor vurdere hvor lenge notifikasjonen bør
+                    vises for mottakeren og lagres i loggene. Dere utfør sletting med
+                    hjelp av våre API-er for sletting, se
+                    <a
+                            href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/"
+                    >API dokumentasjon</a
+                    >. Vi jobber med funksjonalitet der produsenten vid opprettelse av
+                    en notifikasjon kan definere hvor lenge den skal vises for
+                    mottakeren og hvor lenge loggene skal lagres.
+                </p>
+            </div>
 
-            <h2 id="hvordan-slette-notifikasjoner-og-saker-automatisk"><a href="#hvordan-slette-notifikasjoner-og-saker-automatisk">
-              Hvordan slette notifikasjoner og saker automatisk
-            </a></h2>
+            <h2 id="hvordan-opprette-ny-sak-uten-lenke"><a href="#hvordan-opprette-ny-sak-uten-lenke">Hvordan opprette
+                en sak uten lenke</a></h2>
             <p>
-              For å slette en notifikasjon helt, både fra databaser og
-              kafka-topics, så må dere bruke hard delete. Da slettes
-              informasjonen knyttet til notifikasjonen helt.
-            </p>
-            <ul>
-              <li>
-                Sletting av notifikasjoner kan være forvirrende for brukere. Vi
-                anbefaler at dere lar notifikasjonene være til dere har en grunn
-                til å slette dem.
-              </li>
-              <li>
-                Bruk soft-delete hvis dere vil skjule notifikasjonen for
-                brukeren.
-              </li>
-              <li>
-                Bruk hard-delete hvis dere ikke lengere har hjemmel for å
-                beholde dataen.
-              </li>
-            </ul>
-            <p>
-              Dere kan skedulere automtisk hard delete når dere lager eller
-              oppdaterer en sak eller notifikasjon.
-            </p>
-            <p>
-              Dette eksempelet viser hvordan man automatisk sletter en sak etter
-              5 måneder.
-            </p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettSakMedAutomatiskSletting</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nySak</span><span class="p">(</span><span class="w">
-    </span><span class="c"># Dette argumentet</span><span class="w">
-    </span><span class="n">hardDelete</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">om</span><span class="p">:</span><span class="w"> </span><span class="s2">"P5M"</span><span class="w"> </span><span class="c"># Fem månder (se https://en.wikipedia.org/wiki/ISO_8601#Durations for mer info)</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="s2">"12345"</span><span class="w">
-    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tiltak"</span><span class="w">
-    </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="s2">"000000000"</span><span class="w">
-    </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
-    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">}]</span><span class="w">
-    </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har en ny avtale"</span><span class="w">
-    </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://dev.nav.no/avtale/12345"</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>
-              Når du oppgir et intervall, som 5 månder over, så regnes det ut
-              fra <code>tidspunkt</code>-feltet hvis det er oppgitt, ellers fra
-              tidspunktet vi mottok saken/notifikasjonen. Hvis du ønsker å
-              beregne dato selv, så kan du skrive
-              <code>den: &quot;2020-01-01T12:30Z</code> i stede for
-              <code>om: &quot;T5M&quot;</code>.
-            </p>
-            <p>
-              Hvis du oppdaterer en oppgave eller en sak, så kan du også
-              skedulere automatisk hard delete. Her er et eksempel hvor vi
-              forlenger slettetiden på saken over med 5 månder.
-            </p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OppdaterSakMedAutomatiskSletting</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyStatusSakByGrupperingsid</span><span class="p">(</span><span class="w">
-    </span><span class="n">hardDelete</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">nyTid</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-          </span><span class="n">om</span><span class="p">:</span><span class="w"> </span><span class="s2">"P5M"</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-      </span><span class="n">strategi</span><span class="p">:</span><span class="w"> </span><span class="n">FORLENG</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="s2">"12345"</span><span class="w">
-    </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tiltak"</span><span class="w">
-    </span><span class="n">nyStatus</span><span class="p">:</span><span class="w"> </span><span class="n">UNDER_BEHANDLING</span><span class="w">
-  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>
-              Dere kan skedulere slettingen i en status-oppdatering, uavhengig
-              av om dere har skedulert sletting tidligere. Men dere må oppgi
-              <code>strategi</code>, som forteller oss hvordan vi skal håndtere
-              andre skeduleringer dere eventult har gjort:
-            </p>
-            <ul>
-              <li><code>FORLENG</code> vil forlenge tiden før sletting.</li>
-              <li>
-                <code>OVERSKRIV</code> vil overskrive eventuelt tidligere
-                skeduleringer.
-              </li>
-            </ul>
-            <h2 id="hvordan-slette-notifikasjoner-og-saker-manuelt"><a href="#hvordan-slette-notifikasjoner-og-saker-manuelt">
-              Hvordan slette notifikasjoner og saker manuelt
-            </a></h2>
-            <p>
-              En soft-delete markerer en notifikasjon eller sak som slettet i
-              våre systemer. Det er ikke mulig å angre på en soft delete, men
-              dataen vil ligge igjen i databasene våre, så det kan graves fram.
-              Eksempel på soft delete av notifikasjon:
-            </p>
-            <div class="language-graphql highlighter-rouge">
-              <div class="highlight">
-                <pre
-                  class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">SoftDeleteNotifikasjon</span><span class="p">(</span><span class="nv">$id</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">softDeleteNotifikasjon</span><span class="p">(</span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">__typename</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-              </div>
-            </div>
-            <p>
-              Dere kan også spesifisere notifikasjonen med
-              <code>merkelapp</code> og <code>eksternId</code> ved bruk av
-              <code>softDeleteNotifikasjonByEksternId_V2</code>. Her er en liste
-              over de forskjellige variantene (sak vs notifikasjon, soft vs
-              hard, by id vs by ekstern id):
-            </p>
-            <ul>
-              <li><code>softDeleteNotifikasjon(id)</code></li>
-              <li>
-                <code
-                  >softDeleteNotifikasjonByEksternId_V2(merkelapp,
-                  eksternId)</code
-                >
-              </li>
-              <li><code>hardDeleteNotifikasjon(id)</code></li>
-              <li>
-                <code
-                  >hardDeleteNotifikasjonByEksternId_V2(merkelapp,
-                  eksternId)</code
-                >
-              </li>
-              <li><code>softDeleteSak(id)</code></li>
-              <li>
-                <code
-                  >softDeleteSakByGrupperingsid(merkelapp, grupperingsid)</code
-                >
-              </li>
-              <li><code>hardDeleteSak(id)</code></li>
-              <li>
-                <code
-                  >hardDeleteSakByGrupperingsid(merkelapp, grupperingsid)</code
-                >
-              </li>
-            </ul>
-            <h2 id="hvor-lenge-vises-notifikasjonen-for-mottakere-og-lagres-i-loggene"><a href="#hvor-lenge-vises-notifikasjonen-for-mottakere-og-lagres-i-loggene">
-              Hvor lenge vises notifikasjonen for mottakere og lagres i loggene?
-            </a></h2>
-            <p>
-              Oppgaver og beskjeder vises i bjella så lenge arbeidsgivere
-              fortsatt har tilgang å se dem og notifikasjonen ikke er slettet.
-              Dere som produsent må derfor vurdere hvor lenge notifikasjonen bør
-              vises for mottakeren og lagres i loggene. Dere utfør sletting med
-              hjelp av våre API-er for sletting, se
-              <a
-                href="https://navikt.github.io/arbeidsgiver-notifikasjon-produsent-api/api/"
-                >API dokumentasjon</a
-              >. Vi jobber med funksjonalitet der produsenten vid opprettelse av
-              en notifikasjon kan definere hvor lenge den skal vises for
-              mottakeren og hvor lenge loggene skal lagres.
-            </p>
-          </div>
-
-            <h2 id="hvordan-opprette-ny-sak-uten-lenke"><a href="#hvordan-opprette-ny-sak-uten-lenke">Hvordan opprette en sak uten lenke</a></h2>
-            <p>
-                Dersom dere ikke har egen frontend løsning eller nettside, men likevel ønsker å nå ut til arbeidsgivere, kan dere benytte saker uten lenke.
-                Dersom en sak opprettes uten lenke, så vil lenken på saken i saksoversikten automatisk lenke til en detaljvisning av saken i Min side - Arbeidsgiver.
+                Dersom dere ikke har egen frontend løsning eller nettside, men likevel ønsker å nå ut til arbeidsgivere,
+                kan dere benytte saker uten lenke.
+                Dersom en sak opprettes uten lenke, så vil lenken på saken i saksoversikten automatisk lenke til en
+                detaljvisning av saken i Min side - Arbeidsgiver.
             </p>
             <figure>
                 <img
-                        src="images/saksdetaljer.png"
                         alt="Enkel side som viser alel detaljer på en sak"
+                        src="images/saksdetaljer.png"
                 />
             </figure>
             <p>
@@ -1147,118 +1039,108 @@ EMAIL  | {tittel} | {innhold}
                 <tr>
                     <td>dev</td>
                     <td>
-                        <code class="hljs language-text">https://arbeidsgiver.intern.dev.nav.no/min-side-arbeidsgiver/sak</code>
+                        <code>https://arbeidsgiver.intern.dev.nav.no/min-side-arbeidsgiver/sak</code>
                     </td>
                 </tr>
                 <tr>
                     <td>prod</td>
                     <td>
-                        <code class="hljs language-text">https://arbeidsgiver.nav.no/min-side-arbeidsgiver/sak</code>
+                        <code>https://arbeidsgiver.nav.no/min-side-arbeidsgiver/sak</code>
                     </td>
                 </tr>
                 </tbody>
             </table>
-            <div class="language-graphql highlighter-rouge">
-                <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNySak</span><span class="p">(</span><span class="w">
-    </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$tittel</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">nySak</span><span class="p">(</span><span class="w">
-        </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
-        </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Skademelding"</span><span class="w">
-        </span><span class="n">nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
-        </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
-        </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-            </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-                </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
-                </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-        </span><span class="p">}]</span><span class="w">
-        </span><span class="n">tittel</span><span class="p">:</span><span class="w"> </span><span class="nv">$tittel</span><span class="w">
-        </span><span class="n">initiellStatus</span><span class="p">:</span><span class="w"> </span><span class="n">MOTTATT</span><span class="w">
-    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">__typename</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NySakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span>
+<pre><code class="language-graphql">
+mutation OpprettNySak(
+    $grupperingsid: String!
+    $virksomhetsnummer: String!
+    $tittel: String!
+) {
+    nySak(
+        grupperingsid: $grupperingsid
+        merkelapp: "Skademelding"
+        nesteSteg: null
+        virksomhetsnummer: $virksomhetsnummer
+        mottakere: [{
+            altinn: {
+                serviceCode: "1234"
+                serviceEdition: "1"
+            }
+        }]
+        tittel: $tittel
+        initiellStatus: MOTTATT
+    ) {
+        __typename
+        ... on NySakVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
 </code></pre>
-                </div>
-            </div>
             <p>
-                Når dere har opprettet saken kan dere så lage beskjeder og oppgaver på saken, og angi lenke på disse som lenke til saken i Min side - Arbeidsgiver.
-                Siden for saksdetaljer i Min side - Arbeidsgiver støtter parameterne <code class="hljs language-text">saksid</code> eller kombinasjonen <code class="hljs language-text">merkelapp</code> og <code class="hljs language-text">grupperingsid</code>.
+                Når dere har opprettet saken kan dere så lage beskjeder og oppgaver på saken, og angi lenke på disse som
+                lenke til saken i Min side - Arbeidsgiver.
+                Siden for saksdetaljer i Min side - Arbeidsgiver støtter parameterne <code>saksid</code>
+                eller kombinasjonen <code>merkelapp</code> og <code>grupperingsid</code>.
 
-                Ved bruk av merkelapp og grupperingsid i lenken slipper dere å ta vare på id til saken fra oppret sak kallet. Dersom dere allerede tar vare på id til saken kan dere bruke denne i lenken.
+                Ved bruk av merkelapp og grupperingsid i lenken slipper dere å ta vare på id til saken fra oppret sak
+                kallet. Dersom dere allerede tar vare på id til saken kan dere bruke denne i lenken.
             </p>
             <p>
                 Eksempel på opprett beskjed med lenke til saken vha merkelapp og grupperingsid.
             </p>
-            <div class="language-graphql highlighter-rouge">
-                <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="n">OpprettNyBeskjed</span><span class="p">(</span><span class="w">
-  </span><span class="nv">$eksternId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$lenke</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-  </span><span class="nv">$grupperingsId</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-  </span><span class="n">nyBeskjed</span><span class="p">(</span><span class="n">nyBeskjed</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">eksternId</span><span class="p">:</span><span class="w"> </span><span class="nv">$eksternId</span><span class="w">
-      </span><span class="n">virksomhetsnummer</span><span class="p">:</span><span class="w"> </span><span class="nv">$virksomhetsnummer</span><span class="w">
-      </span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="n">mottakere</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
-      </span><span class="n">altinn</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">serviceCode</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234"</span><span class="w">
-        </span><span class="n">serviceEdition</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">}]</span><span class="w">
-    </span><span class="n">notifikasjon</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="s2">"Skademelding"</span><span class="w">
-      </span><span class="n">tekst</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du har fått svar på din søknad"</span><span class="w">
-      </span><span class="n">lenke</span><span class="p">:</span><span class="w"> </span><span class="nv">$lenke</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">})</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">__typename</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NyBeskjedVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">id</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-    </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">feilmelding</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                </div>
-            </div>
+<pre><code class="language-graphql">
+mutation OpprettNyBeskjed(
+  $eksternId: String!
+  $virksomhetsnummer: String!
+  $lenke: String!
+  $grupperingsId: String!
+) {
+  nyBeskjed(nyBeskjed: {
+    metadata: {
+      eksternId: $eksternId
+      virksomhetsnummer: $virksomhetsnummer
+      grupperingsid: $grupperingsid
+    }
+    mottakere: [{
+      altinn: {
+        serviceCode: "1234"
+        serviceEdition: "1"
+      }
+    }]
+    notifikasjon: {
+      merkelapp: "Skademelding"
+      tekst: "Du har fått svar på din søknad"
+      lenke: $lenke
+    }
+  }) {
+    __typename
+    ... on NyBeskjedVellykket {
+      id
+    }
+    ... on Error {
+      feilmelding
+    }
+  }
+}
+</code></pre>
             <p>Med variabler:</p>
-            <div class="language-json highlighter-rouge">
-                <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"eksternId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234-oppdatering"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"virksomhetsnummer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"012345678"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"grupperingsid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sak-123"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"lenke"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://arbeidsgiver.intern.dev.nav.no/min-side-arbeidsgiver/sak?merkelapp=fager&grupperingsid=42"</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                </div>
-            </div>
-            <h2 id="hvordan-sette-endre-neste-steg"><a href="#hvordan-sette-endre-neste-steg">Hvordan sette/endre nesteSteg</a></h2>
+<pre><code class="language-json">
+{
+  "eksternId": "1234-oppdatering",
+  "virksomhetsnummer": "012345678",
+  "grupperingsid": "sak-123",
+  "lenke": "https://arbeidsgiver.intern.dev.nav.no/min-side-arbeidsgiver/sak?merkelapp=fager&grupperingsid=42"
+}
+</code></pre>
+            <h2 id="hvordan-sette-endre-neste-steg"><a href="#hvordan-sette-endre-neste-steg">Hvordan sette/endre
+                nesteSteg</a></h2>
             <p>
-                Denne funksjonen lar dere informere arbeidsgiver om forventet neste steg eller estimert saksbehandlingstid. Vi håper dette vil redusere antallet henvendelser til NKS angående status i saken.
+                Denne funksjonen lar dere informere arbeidsgiver om forventet neste steg eller estimert
+                saksbehandlingstid. Vi håper dette vil redusere antallet henvendelser til NKS angående status i saken.
                 Eksempler på bruk:
                 «Du kan søke refusjon fra 15. april 2024»
                 «Saken forventes ferdigbehandlet i oktober 2024»
@@ -1267,94 +1149,77 @@ EMAIL  | {tittel} | {innhold}
             <p>
                 "Neste steg" kan settes ved opprettelse av sak "NySak" og kan endres med "NesteStegSak" mutasjonen.
                 Her kan man oppgi en oppdatering av neste steg eller fjerne neste steg ved å sende inn null.
-                Det er ingen kobling mellom status på saken og <strong> neste steg </strong>, så det er viktig at dere endrer det manuelt når saken er ferdigbehandlet.
+                Det er ingen kobling mellom status på saken og <strong> neste steg </strong>, så det er viktig at dere
+                endrer det manuelt når saken er ferdigbehandlet.
             </p>
             <p>
                 Dere kan bruke enten "NesteStegSak" eller "NesteStegSakGrupperingsid" til å endre neste steg på en sak.
-                IdempotencyKey er et frivillig felt som kan brukes for å unngå at samme oppdatering blir utført flere ganger.
+                IdempotencyKey er et frivillig felt som kan brukes for å unngå at samme oppdatering blir utført flere
+                ganger.
             </p>
             <p>
                 Med saksid:
             </p>
-              <div class="language-graphql highlighter-rouge">
-                  <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
-    </span><span class="nv">$sakId</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!,</span><span class="w">
-    </span><span class="nv">$nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w">
-    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">nesteStegSak</span><span class="p">(</span><span class="n">nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nv">$nesteSteg</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$sakId</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NesteStegSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span></code>
-                </pre>
-                  </div>
-              </div>
+<pre><code class="language-graphql">
+mutation (
+    $sakId: ID!,
+    $nesteSteg: String,
+    $idempotencyKey: String
+) {
+    nesteStegSak(nesteSteg: $nesteSteg, id: $sakId, idempotencyKey: $idempotencyKey) {
+        ... on NesteStegSakVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
             <p>
                 Med variabler:
             </p>
-            <div class="language-json highlighter-rouge">
-                <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"sakId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9350-39426-12333-431213"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"nesteSteg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du vil få refusjon utbetalt innen januar 2026"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                </div>
-            </div>
+<pre><code class="language-json">
+{
+  "sakId": "9350-39426-12333-431213",
+  "nesteSteg": "Du vil få refusjon utbetalt innen januar 2026",
+  "idempotencyKey": null,
+}
+</code></pre>
             <p>
                 Med grupperingsid og merkelapp:
             </p>
-            <div class="language-json highlighter-rouge">
-                <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
-    </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
-    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">nesteStegSakByGrupperingsid</span><span class="p">(</span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="p">,</span><span class="w"> </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nv">$merkelapp</span><span class="p">,</span><span class="w"> </span><span class="n">nesteSteg</span><span class="p">:</span><span class="w"> </span><span class="nv">$nesteSteg</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">NesteStegSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span>
-                </code>
-                </pre>
-                </div>
-            </div>
+<pre><code class="language-graphql">
+mutation (
+    $grupperingsid: String!
+    $merkelapp: String!
+    $nesteSteg: String
+    $idempotencyKey: String
+) {
+    nesteStegSakByGrupperingsid(grupperingsid: $grupperingsid, merkelapp: $merkelapp, nesteSteg: $nesteSteg, idempotencyKey: $idempotencyKey) {
+        ... on NesteStegSakVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
             <p>Med variabler:</p>
-            <div class="language-json highlighter-rouge">
-                <div class="highlight">
-                <pre
-                        class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"grupperingsid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5321-85263-82343-995248"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"merkelapp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fager"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"nesteSteg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du vil få refusjon utbetalt innen januar 2026"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                </div>
-            </div>
-            <h2 id="hvordan-sette-endre-tilleggsinformasjon"><a href="#hvordan-sette-endre-tilleggsinformasjon">Hvordan sette/endre tilleggsinformasjon</a></h2>
+<pre><code class="language-json">
+{
+  "grupperingsid": "5321-85263-82343-995248",
+  "merkelapp": "fager",
+  "nesteSteg": "Du vil få refusjon utbetalt innen januar 2026",
+  "idempotencyKey": null,
+}
+</code></pre>
+            <h2 id="hvordan-sette-endre-tilleggsinformasjon"><a href="#hvordan-sette-endre-tilleggsinformasjon">Hvordan
+                sette/endre tilleggsinformasjon</a></h2>
             <p>
-                Med dette feltet kan dere gi arbeidsgiver tilleggsinformasjon på opp til 140 tegn. Det skal ikke inneholde fødselsnummer.
+                Med dette feltet kan dere gi arbeidsgiver tilleggsinformasjon på opp til 140 tegn. Det skal ikke
+                inneholde fødselsnummer.
                 Eksempler på bruk:
                 «Avtaleperiode: 01.09.2024-01.12.2024»
                 «Sykemeldingsperiode: 01.09.2024-01.12.2024»
@@ -1362,95 +1227,132 @@ EMAIL  | {tittel} | {innhold}
             </p>
 
             <p>
-                "Tilleggsinformasjon" kan settes ved opprettelse av sak "NySak" og kan endres med "tilleggsinformasjonSak" mutasjonen.
+                "Tilleggsinformasjon" kan settes ved opprettelse av sak "NySak" og kan endres med
+                "tilleggsinformasjonSak" mutasjonen.
                 Her kan man både endre tilleggsinformasjon til en annen tekst eller fjerne det ved å sette til null.
                 Tilleggsinformasjon vises også i notifikasjonsbjellen på notifikasjoner som er tilknyttet saken.
             </p>
             <p>
-                Dere kan bruke enten "tilleggsinformasjonSak" eller "tilleggsinformasjonSakNyGrupperingsid" til å endre tilleggsinformasjon på en sak.
-                IdempotencyKey er et frivillig felt som kan brukes for å unngå at samme oppdatering blir utført flere ganger.
+                Dere kan bruke enten "tilleggsinformasjonSak" eller "tilleggsinformasjonSakNyGrupperingsid" til å endre
+                tilleggsinformasjon på en sak.
+                IdempotencyKey er et frivillig felt som kan brukes for å unngå at samme oppdatering blir utført flere
+                ganger.
             </p>
             <p>
                 Med saksid:
             </p>
-            <div class="language-graphql highlighter-rouge">
-                <div class="highlight">
-                <pre
-                    class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
-    </span><span class="nv">$sakId</span><span class="p">:</span><span class="w"> </span><span class="nb">ID</span><span class="p">!,</span><span class="w">
-    </span><span class="nv">$tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w">
-    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">tilleggsinformasjonSak</span><span class="p">(</span><span class="n">tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nv">$tilleggsinformasjon</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nv">$sakId</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">TilleggsinformasjonSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span></code>
-                </pre>
-                </div>
-            </div>
+<pre><code class="language-graphql">
+mutation (
+    $sakId: ID!,
+    $tilleggsinformasjon: String,
+    $idempotencyKey: String
+) {
+    tilleggsinformasjonSak(tilleggsinformasjon: $tilleggsinformasjon, id: $sakId, idempotencyKey: $idempotencyKey) {
+        ... on TilleggsinformasjonSakVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
             <p>
                 Med variabler:
             </p>
-            <div class="language-json highlighter-rouge">
-                <div class="highlight">
-                <pre
-                    class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"sakId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9350-39426-12333-431213"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"tilleggsinformasjon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Avtaleperioden er: 01.09.2024 - 01.12.2024"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                </div>
-            </div>
+<pre><code class="language-json">
+{
+  "sakId": "9350-39426-12333-431213",
+  "tilleggsinformasjon": "Avtaleperioden er: 01.09.2024 - 01.12.2024",
+  "idempotencyKey": null,
+}
+</code></pre>
             <p>
                 Med grupperingsid og merkelapp:
             </p>
-            <div class="language-json highlighter-rouge">
-                <div class="highlight">
-                <pre
-                    class="highlight"
-                ><code><span class="k">mutation</span><span class="w"> </span><span class="p">(</span><span class="w">
-    </span><span class="nv">$grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!</span><span class="w">
-    </span><span class="nv">$tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
-    </span><span class="nv">$idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w">
-</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">tilleggsinformasjonSakByGrupperingsid</span><span class="p">(</span><span class="n">grupperingsid</span><span class="p">:</span><span class="w"> </span><span class="nv">$grupperingsid</span><span class="p">,</span><span class="w"> </span><span class="n">merkelapp</span><span class="p">:</span><span class="w"> </span><span class="nv">$merkelapp</span><span class="p">,</span><span class="w"> </span><span class="n">tilleggsinformasjon</span><span class="p">:</span><span class="w"> </span><span class="nv">$tilleggsinformasjon</span><span class="p">,</span><span class="w"> </span><span class="n">idempotencyKey</span><span class="p">:</span><span class="w"> </span><span class="nv">$idempotencyKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">TilleggsinformasjonSakVellykket</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">id</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-        </span><span class="p">...</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="n">feilmelding</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span>
-                </code>
-                </pre>
-                </div>
-            </div>
+<pre><code class="language-graphql">
+mutation (
+    $grupperingsid: String!
+    $merkelapp: String!
+    $tilleggsinformasjon: String
+    $idempotencyKey: String
+) {
+    tilleggsinformasjonSakByGrupperingsid(grupperingsid: $grupperingsid, merkelapp: $merkelapp, tilleggsinformasjon: $tilleggsinformasjon, idempotencyKey: $idempotencyKey) {
+        ... on TilleggsinformasjonSakVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
             <p>Med variabler:</p>
-            <div class="language-json highlighter-rouge">
-                <div class="highlight">
-                <pre
-                    class="highlight"
-                ><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"grupperingsid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5321-85263-82343-995248"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"merkelapp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fager"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"tilleggsinformasjon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Du trenger ikke å sende inntektsmelding."</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"idempotencyKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">null</span><span class="p">,</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre>
-                </div>
-            </div>
+<pre><code class="language-json">
+{
+  "grupperingsid": "5321-85263-82343-995248",
+  "merkelapp": "fager",
+  "tilleggsinformasjon": "Du trenger ikke å sende inntektsmelding.",
+  "idempotencyKey": null,
+}
+</code></pre>
+            <h2 id="hvordan-endre-påminnelse-oppgave"><a href="#hvordan-endre-påminnelse-oppgave">Hvordan
+                sette/endre/slette påminnelse på en oppgave</a></h2>
+            <p>
+                Denne funksjonen lar dere sette, endre eller slette påminnelser på oppgaver. Dersom en oppgave har en
+                påminnelse satt fra før, vil denne bli overskrevet. Dette gjelder også alle eksterne varsler som er satt
+                i påminnelsen.
+            </p>
+
+            <p>
+                For å slette en eksisterende påminnelse, kan dere sende inn null i "paaminnelse" feltet
+            </p>
+            <p>
+                Med oppgaveId (id):
+            </p>
+<pre><code class="language-graphql">
+mutation(
+    $id: ID!,
+    $idemptoencyKey: String,
+    $paaminnelse: PaaminnelseInput
+) {
+    oppgaveEndrePaaminnelse(id: $id, idempotencyKey: $idemptoencyKey, paaminnelse: $paaminnelse){
+        ... on OppgaveEndrePaaminnelseVellykket {
+            id
+        }
+        ... on Error {
+            feilmelding
+        }
+    }
+}
+</code></pre>
+            <p>
+                Med variabler:
+            </p>
+<pre><code class="language-json">
+{
+    "id": "d02c44e7-f56e-404c-9ed6-440060c4577b",
+    "idempotencyKey": "12341234",
+    "paaminnelse": {
+        "tidspunkt": {
+            "foerFrist": "P7DT"
+        },
+        "eksterneVarsler": []
+    }
+}
+</code></pre>
+            <p>
+                For å slette påminnelse:
+            </p>
+<pre><code class="language-json">
+{
+    "id": "d02c44e7-f56e-404c-9ed6-440060c4577b",
+    "idempotencyKey": "12341234",
+    "paaminnelse": null
+}
+</code></pre>
         </article>
-      </div>
-    </main>
-  </body>
+    </div>
+</main>
+</body>
 </html>
