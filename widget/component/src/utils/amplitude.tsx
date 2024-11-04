@@ -1,28 +1,30 @@
-import amplitude, {AmplitudeClient} from 'amplitude-js'
+import * as amplitude from '@amplitude/analytics-browser';
+import {Types} from '@amplitude/analytics-browser';
 import {Notifikasjon} from '../api/graphql-types'
 import React, {createContext, ReactNode, useContext, useMemo} from "react";
 import {Miljø} from "../index";
 
-const createAmpltiudeInstance = (apiKey: string) => {
-  const instance = amplitude.getInstance()
-  instance.init(apiKey, '', {
-    apiEndpoint: 'amplitude.nav.no/collect',
-    saveEvents: false,
-    includeUtm: true,
-    batchEvents: false,
-    includeReferrer: true
-  })
-  return instance
-}
+type AmplitudeInstance = Pick<Types.BrowserClient, 'logEvent'>;
+const createAmpltiudeInstance = (apiKey: string): AmplitudeInstance => {
+  amplitude
+    .init(apiKey, undefined, {
+      serverUrl: 'https://amplitude.nav.no/collect',
+      useBatch: false,
+    })
+    .promise.catch((error) => {
+    console.error('error initializing amplitude', error);
+  });
+  return amplitude;
+};
 
 const getLimitedUrl = () => {
   const {origin, pathname } = window.location;
   return `${origin}/${pathname.split('/')[1]}`;
 }
 
-const createAmplitudeLogger = (amplitudeClient: AmplitudeClient) => ({
+const createAmplitudeLogger = (instance: AmplitudeInstance) => ({
   loggLasting: (antallNotifikasjoner: number, ulesteNotifikasjoner: number) => {
-    amplitudeClient.logEvent('last-komponent', {
+    instance.logEvent('last-komponent', {
       tittel: 'notifikasjons-widget',
       url: getLimitedUrl(),
       'antall-notifikasjoner': antallNotifikasjoner,
@@ -32,7 +34,7 @@ const createAmplitudeLogger = (amplitudeClient: AmplitudeClient) => ({
   },
 
   loggÅpning: (antallNotifikasjoner: number, ulesteNotifikasjoner: number) => {
-    amplitudeClient.logEvent('panel-ekspander', {
+    instance.logEvent('panel-ekspander', {
       tittel: 'arbeidsgiver notifikasjon panel',
       url: getLimitedUrl(),
       'antall-notifikasjoner': antallNotifikasjoner,
@@ -42,21 +44,21 @@ const createAmplitudeLogger = (amplitudeClient: AmplitudeClient) => ({
   },
 
   loggLukking: () => {
-    amplitudeClient.logEvent('panel-kollaps', {
+    instance.logEvent('panel-kollaps', {
       tittel: 'arbeidsgiver notifikasjon panel',
       url: getLimitedUrl(),
     })
   },
 
   loggPilTastNavigasjon: () => {
-    amplitudeClient.logEvent('piltast-navigasjon', {
+    instance.logEvent('piltast-navigasjon', {
       url: getLimitedUrl(),
     })
   },
 
   loggNotifikasjonKlikk: (notifikasjon: Notifikasjon, index: number) => {
     const klikketPaaTidligere = notifikasjon.brukerKlikk.klikketPaa
-    amplitudeClient.logEvent('notifikasjon-klikk', {
+    instance.logEvent('notifikasjon-klikk', {
       url: getLimitedUrl(),
       index: index,
       'merkelapp': notifikasjon.merkelapp,
@@ -66,16 +68,24 @@ const createAmplitudeLogger = (amplitudeClient: AmplitudeClient) => ({
   }
 })
 
-const stubbedAmplitudeClient = {
-  logEvent: (event: string, data?: any) => {
-    console.log(`${event}: ${JSON.stringify(data)}`, {event, data})
+const mockedAmplitude = (): AmplitudeInstance => ({
+  logEvent: (eventInput: Types.BaseEvent | string, eventProperties?: Record<string, any>) => {
+    console.group('Mocked amplitude-event');
+    console.table({ eventInput, ...eventProperties });
+    console.groupEnd();
+    return {
+      promise: new Promise<Types.Result>((resolve) =>
+        resolve({
+          event: { event_type: 'MockEvent' },
+          code: 200,
+          message: 'Success: mocked amplitude-tracking',
+        })
+      ),
+    };
   },
-  setUserProperties: (userProps: object) => {
-    console.log(`set userprops: ${JSON.stringify(userProps)}`)
-  }
-} as amplitude.AmplitudeClient
+});
 
-const AmplitudeContext = createContext(createAmplitudeLogger(stubbedAmplitudeClient))
+const AmplitudeContext = createContext(createAmplitudeLogger(mockedAmplitude()))
 
 type Props = {
   miljo: Miljø,
@@ -95,7 +105,7 @@ export function useAmplitude() {
 }
 
 
-const useAmplitudeClient = (miljø: Miljø): AmplitudeClient => {
+const useAmplitudeClient = (miljø: Miljø): AmplitudeInstance => {
   return useMemo(
     () => {
       switch (miljø) {
@@ -104,7 +114,7 @@ const useAmplitudeClient = (miljø: Miljø): AmplitudeClient => {
         case 'dev':
           return createAmpltiudeInstance('6ed1f00aabc6ced4fd6fcb7fcdc01b30');
         default:
-          return stubbedAmplitudeClient
+          return mockedAmplitude()
       }
     }, [miljø]
   )
