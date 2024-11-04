@@ -10,6 +10,14 @@ const createAmpltiudeInstance = (apiKey: string): AmplitudeInstance => {
     .init(apiKey, undefined, {
       serverUrl: 'https://amplitude.nav.no/collect',
       useBatch: false,
+      autocapture: {
+        attribution: true,
+        fileDownloads: false,
+        formInteractions: false,
+        pageViews: true,
+        sessions: true,
+        elementInteractions: false,
+      },
     })
     .promise.catch((error) => {
     console.error('error initializing amplitude', error);
