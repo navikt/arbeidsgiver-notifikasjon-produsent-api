@@ -3,13 +3,11 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -228,14 +226,6 @@ private fun MottakerInput.sammeSom(mottaker: Mottaker): Boolean {
         is NærmesteLederMottaker ->
             mottaker.ansattFnr == this.naermesteLeder?.ansattFnr &&
                     mottaker.naermesteLederFnr == this.naermesteLeder.naermesteLederFnr
-        is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
-            prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
-            other = { false },
-        )
-        is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
-            prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
-            other = { false },
-        )
     }
 }
 
