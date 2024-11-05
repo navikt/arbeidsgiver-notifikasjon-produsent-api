@@ -1,9 +1,9 @@
 //import React from 'react'
-import ReactDOM from 'react-dom'
 import '@navikt/ds-css'
 import App from './App'
 
-import { injectDecoratorClientSide } from '@navikt/nav-dekoratoren-moduler'
+import {injectDecoratorClientSide} from '@navikt/nav-dekoratoren-moduler'
+import {createRoot} from "react-dom/client";
 
 injectDecoratorClientSide({
   env: "dev",
@@ -13,4 +13,4 @@ injectDecoratorClientSide({
   level: 'Level4'
 }).catch((e: Error) => {console.error(e)});
 
-ReactDOM.render(<App />, document.getElementById('root'))
+createRoot(document.getElementById('app')!).render(<App/>);
