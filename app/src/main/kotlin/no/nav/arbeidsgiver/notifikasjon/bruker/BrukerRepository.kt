@@ -1185,16 +1185,6 @@ class BrukerRepositoryImpl(
                 sakId = sakId,
                 mottaker = mottaker
             )
-
-            is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
-                prod = { throw java.lang.RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
-                other = { },
-            )
-
-            is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
-                prod = { throw java.lang.RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
-                other = { },
-            )
         }
     }
 

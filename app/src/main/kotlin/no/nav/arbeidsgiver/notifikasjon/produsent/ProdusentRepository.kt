@@ -852,15 +852,6 @@ class ProdusentRepositoryImpl(
         when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
-            is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
-                prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
-                other = { },
-            )
-
-            is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
-                prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
-                other = { },
-            )
         }
     }
 

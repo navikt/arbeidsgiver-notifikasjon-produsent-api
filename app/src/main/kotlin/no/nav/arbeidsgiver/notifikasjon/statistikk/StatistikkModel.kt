@@ -522,15 +522,6 @@ fun List<Mottaker>.oppsummering(): String =
         when (it) {
             is NærmesteLederMottaker -> "NærmesteLeder"
             is AltinnMottaker -> "Altinn:${it.serviceCode}:${it.serviceEdition}"
-            is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
-                prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
-                other = { "AltinnRolleMottaker" },
-            )
-
-            is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
-                prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
-                other = { "AltinnReporteeMottaker" },
-            )
         }
     }
         .sorted()

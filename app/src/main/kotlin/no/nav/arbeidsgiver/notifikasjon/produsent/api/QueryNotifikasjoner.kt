@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -267,14 +266,6 @@ internal class QueryNotifikasjoner(
                 return when (domene) {
                     is HendelseModel.AltinnMottaker -> AltinnMottaker.fraDomene(domene)
                     is HendelseModel.NærmesteLederMottaker -> NærmesteLederMottaker.fraDomene(domene)
-                    is HendelseModel._AltinnRolleMottaker -> basedOnEnv(
-                        prod = { throw RuntimeException("AltinnRolleMottaker støttes ikke i prod") },
-                        other = { AltinnMottaker("", "", "") },
-                    )
-                    is HendelseModel._AltinnReporteeMottaker -> basedOnEnv(
-                        prod = { throw RuntimeException("AltinnReporteeMottaker støttes ikke i prod") },
-                        other = { AltinnMottaker("", "", "") },
-                    )
                 }
             }
         }
