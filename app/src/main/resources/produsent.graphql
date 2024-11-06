@@ -7,6 +7,7 @@ directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 directive @NonIdentifying on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 directive @ExactlyOneFieldGiven on INPUT_OBJECT
 directive @MaxValue(upToIncluding: Int) on ARGUMENT_DEFINITION
+directive @NorwegianMobilePhoneNumber on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 
 """
 DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
@@ -1659,7 +1660,12 @@ input SmsMottakerInput @ExactlyOneFieldGiven {
 input SmsKontaktInfoInput {
     """deprecated. value is ignored. """
     fnr: String
-    tlf: String!
+    """
+    Må være et gyldig norsk mobilnummer. Kan inneholde landkode på format +47 eller 0047.
+    Nummeret må være gyldig iht norske mobilnummer-regler (40000000-49999999, 90000000-99999999)
+    se https://nkom.no/telefoni-og-telefonnummer/telefonnummer-og-den-norske-nummerplan/alle-nummerserier-for-norske-telefonnumre
+    """
+    tlf: String! @NorwegianMobilePhoneNumber
 }
 
 input EpostMottakerInput @ExactlyOneFieldGiven {

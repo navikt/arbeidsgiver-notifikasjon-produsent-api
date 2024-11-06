@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldContainIgnoringCase
@@ -148,6 +149,125 @@ class InputValideringTests : DescribeSpec({
             it("feil pga identifiserende data i tekst") {
                 response.getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
             }
+        }
+
+        context("når ekstern varsling er mot telefonnummer") {
+            withData(listOf(
+                "40000000",
+                "004740000000",
+                "+4740000000",
+                "49999999",
+                "004749999999",
+                "+4749999999",
+                "90000000",
+                "004790000000",
+                "+4790000000",
+                "99999999",
+                "004799999999",
+                "+4799999999",
+            )) { tlf ->
+                engine.produsentApi(
+                    """
+                        mutation {
+                            nyBeskjed(nyBeskjed: {
+                                notifikasjon: {
+                                    lenke: "https://foo.bar",
+                                    tekst: "teste teste",
+                                    merkelapp: "tag",
+                                }
+                                mottaker: {
+                                    naermesteLeder: {
+                                        naermesteLederFnr: "12345678910",
+                                        ansattFnr: "3213"
+                                    } 
+                                }
+                                metadata: {
+                                    eksternId: "heuer",
+                                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                    virksomhetsnummer: "42"
+                                }
+                                eksterneVarsler: [
+                                    {
+                                        sms: {
+                                            mottaker: {
+                                               kontaktinfo: {
+                                                  tlf: "$tlf"  
+                                               }
+                                            }
+                                            smsTekst: "test"
+                                            sendetidspunkt: {
+                                                sendevindu: LOEPENDE
+                                            }
+                                        }
+                                    }
+                                ]
+                            }) {
+                                __typename
+                            }
+                        }
+                    """
+                ).let {
+                    it.getGraphqlErrors() shouldHaveSize 0
+                }
+            }
+
+            withData(listOf(
+                "39999999",
+                "004739999999",
+                "+4739999999",
+                "50000000",
+                "004750000000",
+                "+4750000000",
+                "89999999",
+                "004789999999",
+                "+4789999999",
+            )) { tlf ->
+                engine.produsentApi(
+                    """
+                        mutation {
+                            nyBeskjed(nyBeskjed: {
+                                notifikasjon: {
+                                    lenke: "https://foo.bar",
+                                    tekst: "teste teste",
+                                    merkelapp: "tag",
+                                }
+                                mottaker: {
+                                    naermesteLeder: {
+                                        naermesteLederFnr: "12345678910",
+                                        ansattFnr: "3213"
+                                    } 
+                                }
+                                metadata: {
+                                    eksternId: "heuer",
+                                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                                    virksomhetsnummer: "42"
+                                }
+                                eksterneVarsler: [
+                                    {
+                                        sms: {
+                                            mottaker: {
+                                               kontaktinfo: {
+                                                  tlf: "$tlf"  
+                                               }
+                                            }
+                                            smsTekst: "test"
+                                            sendetidspunkt: {
+                                                sendevindu: LOEPENDE
+                                            }
+                                        }
+                                    }
+                                ]
+                            }) {
+                                __typename
+                            }
+                        }
+                    """
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "ikke et gyldig norsk mobilnummer"
+                }
+            }
+
+
         }
     }
 })

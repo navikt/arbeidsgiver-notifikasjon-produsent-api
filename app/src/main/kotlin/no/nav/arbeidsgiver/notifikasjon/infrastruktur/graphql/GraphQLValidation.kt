@@ -202,7 +202,22 @@ private val VALIDATORS = listOf(
                 }
             }
         }
-    }
+    },
+    object : ValueValidator {
+        override val name = "NorwegianMobilePhoneNumber"
+
+        override fun createValidator(path: Path, directive: GraphQLDirective, type: GraphQLType): Validator {
+            return { value ->
+                if (value == null) Unit
+
+                val valueStr = value as String
+
+                if (!valueStr.matches(Regex("""(\+47|0047)?[49]\d{7}"""))) {
+                    throw ValideringsFeil("${path.asString()}: verdien er ikke et gyldig norsk mobilnummer.")
+                }
+            }
+        }
+    },
 ).associateBy { it.name }
 
 class ValideringsFeil(message: String): GraphqlErrorException(newErrorException().message(message))

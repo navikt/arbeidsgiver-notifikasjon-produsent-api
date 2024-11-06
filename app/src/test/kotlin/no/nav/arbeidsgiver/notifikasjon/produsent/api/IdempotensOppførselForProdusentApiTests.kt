@@ -432,7 +432,7 @@ private val varlser1 = """
         "mottaker": {
           "kontaktinfo": {
             "fnr": "1234",
-            "tlf": "4321"
+            "tlf": "99999999"
           }
         },
         "smsTekst": "En test SMS",
@@ -482,7 +482,7 @@ private val varlser2 = """
         "mottaker": {
           "kontaktinfo": {
             "fnr": "1337",
-            "tlf": "470000"
+            "tlf": "40000000"
           }
         },
         "smsTekst": "En test SMS",
@@ -531,7 +531,7 @@ private val påminnelseVarsler = """
         "mottaker": {
           "kontaktinfo": {
             "fnr": "1337",
-            "tlf": "470000"
+            "tlf": "49999999"
           }
         },
         "smsTekst": "En test SMS",
