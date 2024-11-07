@@ -20,8 +20,10 @@ import kotlin.reflect.jvm.jvmErasure
  * TODO oppdater alle funksjoner til å ta inn konkrete hendelser slik at vi lett kan lage en oversikt ved å kjøre dette verktøyet.
  */
 fun main() {
-    val results = findClassesWithFunctionTakingSealedSubclass("no.nav.arbeidsgiver.notifikasjon", HendelseModel.Hendelse::class)
+    val results =
+        findClassesWithFunctionTakingSealedSubclass("no.nav.arbeidsgiver.notifikasjon", HendelseModel.Hendelse::class)
 
+    // TODO: skriv ut som mermaid uml
     val groupedResults = results.groupBy { it.first.qualifiedName?.substringBeforeLast(".") ?: "" }
     groupedResults.forEach { (pkg, functions) ->
         println("")
@@ -41,18 +43,13 @@ fun findClassesWithFunctionTakingSealedSubclass(
 ): List<Triple<KClass<*>, KFunction<*>, KClass<*>>> {
     val classes = getClasses(packageName).filterNot {
         "test" in (it.toString().lowercase(Locale.getDefault())) ||
-                "stub" in (it.toString().lowercase(Locale.getDefault()))
+                "stub" in (it.toString().lowercase(Locale.getDefault())) ||
+                it.isSubclassOf(sealedType)
     }
 
     return classes.flatMap { clazz ->
         clazz.functions.mapNotNull { function ->
-            val parametersToCheck = function.parameters
-                .drop(1)
-                .let { params ->
-                    if (function.isSuspend) params.dropLast(1) else params // Ignore `Continuation` for suspend
-                }
-
-            parametersToCheck.firstOrNull { param ->
+            function.parameters.firstOrNull { param ->
                 try {
                     param.type.jvmErasure.isSubclassOf(sealedType)
                 } catch (e: Throwable) {
