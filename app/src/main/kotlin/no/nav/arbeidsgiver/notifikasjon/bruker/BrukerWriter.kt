@@ -34,7 +34,7 @@ object BrukerWriter {
     private val rebuildAlltinnTilganger by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "bruker-model-rebuild-07.11.2024-1",
+            groupId = "bruker-model-rebuild-07.11.2024-2",
             replayPeriodically = true,
         )
     }
@@ -58,15 +58,7 @@ object BrukerWriter {
             launch {
                 val brukerRepository = brukerRepositoryAsync.await()
                 rebuildAlltinnTilganger.forEach { event, metadata ->
-                    when (event) {
-                        is HendelseModel.KalenderavtaleOpprettet,
-                        is HendelseModel.BeskjedOpprettet,
-                        is HendelseModel.OppgaveOpprettet,
-                        is HendelseModel.SakOpprettet ->
-                            brukerRepository.oppdaterModellEtterHendelse(event, metadata)
-
-                        else -> Unit
-                    }
+                    brukerRepository.oppdaterModellEtterHendelse(event, metadata)
                 }
             }
 
