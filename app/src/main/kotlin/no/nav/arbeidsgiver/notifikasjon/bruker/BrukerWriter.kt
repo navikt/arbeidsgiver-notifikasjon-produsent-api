@@ -34,7 +34,7 @@ object BrukerWriter {
     private val rebuildAlltinnTilganger by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "bruker-model-rebuild-${UUID.randomUUID()}",
+            groupId = "bruker-model-rebuild-07.11.2024-1",
             replayPeriodically = true,
         )
     }
