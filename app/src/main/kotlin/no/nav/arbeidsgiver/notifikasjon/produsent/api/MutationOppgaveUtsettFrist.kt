@@ -9,7 +9,6 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.time.Instant
 import java.time.LocalDate
-import java.time.OffsetDateTime
 import java.util.*
 
 internal class MutationOppgaveUtsettFrist(
@@ -87,7 +86,7 @@ internal class MutationOppgaveUtsettFrist(
                     frist = nyFrist,
                     fristEndretTidspunkt = Instant.now(),
                     påminnelse = paaminnelse?.tilDomene(
-                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
+                        notifikasjonOpprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                         frist = nyFrist,
                         startTidspunkt = null,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,

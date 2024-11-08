@@ -87,27 +87,27 @@ object HendelseModel {
         companion object {
             fun createAndValidateKonkret(
                 konkret: LocalDateTime,
-                opprettetTidspunkt: OffsetDateTime,
+                notifikasjonOpprettetTidspunkt: OffsetDateTime,
                 frist: LocalDate?,
                 startTidspunkt: LocalDateTime?,
             ) =
                 Konkret(konkret, konkret.inOsloAsInstant()).apply {
-                    validerGrenseVerdier(opprettetTidspunkt, frist, startTidspunkt)
+                    validerGrenseVerdier(notifikasjonOpprettetTidspunkt, frist, startTidspunkt)
                 }
 
             fun createAndValidateEtterOpprettelse(
                 etterOpprettelse: ISO8601Period,
-                opprettetTidspunkt: OffsetDateTime,
+                notifikasjonOpprettetTidspunkt: OffsetDateTime,
                 frist: LocalDate?,
                 startTidspunkt: LocalDateTime?,
             ) =
-                EtterOpprettelse(etterOpprettelse, (opprettetTidspunkt + etterOpprettelse).toInstant()).apply {
-                    validerGrenseVerdier(opprettetTidspunkt, frist, startTidspunkt)
+                EtterOpprettelse(etterOpprettelse, (notifikasjonOpprettetTidspunkt + etterOpprettelse).toInstant()).apply {
+                    validerGrenseVerdier(notifikasjonOpprettetTidspunkt, frist, startTidspunkt)
                 }
 
             fun createAndValidateFørFrist(
                 førFrist: ISO8601Period,
-                opprettetTidspunkt: OffsetDateTime,
+                notifikasjonOpprettetTidspunkt: OffsetDateTime,
                 frist: LocalDate?
             ): FørFrist {
                 if (frist == null) {
@@ -115,13 +115,13 @@ object HendelseModel {
                 }
 
                 return FørFrist(førFrist, (LocalDateTime.of(frist, LocalTime.MAX) - førFrist).inOsloAsInstant()).apply {
-                    validerGrenseVerdier(opprettetTidspunkt, frist, null)
+                    validerGrenseVerdier(notifikasjonOpprettetTidspunkt, frist, null)
                 }
             }
 
             fun createAndValidateFørStartTidspunkt(
                 førStartTidpunkt: ISO8601Period,
-                opprettetTidspunkt: OffsetDateTime,
+                notifikasjonOpprettetTidspunkt: OffsetDateTime,
                 startTidspunkt: LocalDateTime?
             ): FørStartTidspunkt {
                 if (startTidspunkt == null) {
@@ -129,14 +129,13 @@ object HendelseModel {
                 }
 
                 return FørStartTidspunkt(førStartTidpunkt, (startTidspunkt - førStartTidpunkt).inOsloAsInstant()).apply {
-                    validerGrenseVerdier(opprettetTidspunkt, null, startTidspunkt)
+                    validerGrenseVerdier(notifikasjonOpprettetTidspunkt, null, startTidspunkt)
                 }
             }
-
         }
 
-        fun validerGrenseVerdier(opprettetTidspunkt: OffsetDateTime, frist: LocalDate?, startTidspunkt: LocalDateTime?) {
-            if (påminnelseTidspunkt < opprettetTidspunkt.toInstant()) {
+        fun validerGrenseVerdier(notifikasjonOpprettetTidspunkt: OffsetDateTime, frist: LocalDate?, startTidspunkt: LocalDateTime?) {
+            if (påminnelseTidspunkt < notifikasjonOpprettetTidspunkt.toInstant()) {
                 throw UgyldigPåminnelseTidspunktException("påminnelsestidspunktet kan ikke være før oppgaven er opprettet")
             }
             if (frist != null && LocalDateTime.of(frist, LocalTime.MAX).inOsloAsInstant() < påminnelseTidspunkt) {

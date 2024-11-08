@@ -66,7 +66,7 @@ class KalenderavtaleTests : DescribeSpec({
         service.processHendelse(kalenderavtaleOpprettet, metadata)
         val nyttTidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateFørStartTidspunkt(
             førStartTidpunkt = ISO8601Period.parse("P2D"),
-            opprettetTidspunkt = opprettetTidspunkt,
+            notifikasjonOpprettetTidspunkt = opprettetTidspunkt,
             startTidspunkt = startTidspunkt,
         )
         service.processHendelse(
@@ -154,7 +154,7 @@ private val kalenderavtaleOpprettet = HendelseModel.KalenderavtaleOpprettet(
     påminnelse = HendelseModel.Påminnelse(
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateFørStartTidspunkt(
             førStartTidpunkt = ISO8601Period.parse("P1D"),
-            opprettetTidspunkt = opprettetTidspunkt,
+            notifikasjonOpprettetTidspunkt = opprettetTidspunkt,
             startTidspunkt = startTidspunkt,
         ),
         eksterneVarsler = listOf(

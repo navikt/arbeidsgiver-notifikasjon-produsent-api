@@ -64,7 +64,7 @@ internal class MutationNyOppgave(
                     it.tilHendelseModel(metadata.virksomhetsnummer)
                 },
                 påminnelse = paaminnelse?.tilDomene(
-                    opprettetTidspunkt = metadata.opprettetTidspunkt,
+                    notifikasjonOpprettetTidspunkt = metadata.opprettetTidspunkt,
                     frist = frist,
                     startTidspunkt = null,
                     virksomhetsnummer = metadata.virksomhetsnummer,
