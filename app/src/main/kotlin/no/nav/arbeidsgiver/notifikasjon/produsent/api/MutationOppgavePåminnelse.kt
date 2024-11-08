@@ -83,7 +83,7 @@ internal class MutationOppgavePåminnelse(
                     produsentId = produsent.id,
                     kildeAppNavn = context.appName,
                     påminnelse = paaminnelse?.tilDomene(
-                        opprettetTidspunkt = OffsetDateTime.now(),
+                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                         frist = notifikasjon.frist,
                         startTidspunkt = null,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,

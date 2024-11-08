@@ -87,7 +87,7 @@ internal class MutationOppgaveUtsettFrist(
                     frist = nyFrist,
                     fristEndretTidspunkt = Instant.now(),
                     påminnelse = paaminnelse?.tilDomene(
-                        opprettetTidspunkt = OffsetDateTime.now(),
+                        opprettetTidspunkt = notifikasjon.opprettetTidspunkt,
                         frist = nyFrist,
                         startTidspunkt = null,
                         virksomhetsnummer = notifikasjon.virksomhetsnummer,

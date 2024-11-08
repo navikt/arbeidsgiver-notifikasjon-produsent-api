@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
@@ -564,6 +565,80 @@ class UtsattFristTests : DescribeSpec({
 
             it("Får feilmelding") {
                 response.getTypedContent<Error.Konflikt>("oppgaveUtsettFristByEksternId")
+            }
+        }
+        context("Utgått Oppgave får utsatt frist") {
+
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+            OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottakere = listOf(mottaker),
+                hendelseId = uuid,
+                notifikasjonId = uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = OffsetDateTime.parse("2024-01-01T01:01:00Z"),
+                kildeAppNavn = "",
+                produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
+                hardDelete = null,
+                frist = null,
+                påminnelse = null,
+                sakId = null,
+            ).also {
+                produsentModel.oppdaterModellEtterHendelse(it)
+                produsentModel.oppdaterModellEtterHendelse(
+                    OppgaveUtgått(
+                        virksomhetsnummer = it.virksomhetsnummer,
+                        notifikasjonId = it.notifikasjonId,
+                        hendelseId = it.hendelseId,
+                        produsentId = it.produsentId,
+                        kildeAppNavn = it.kildeAppNavn,
+                        hardDelete = null,
+                        nyLenke = null,
+                        utgaattTidspunkt = OffsetDateTime.parse("2024-01-07T01:01Z")
+                        )
+                )
+            }
+
+            val response = engine.produsentApi(
+                """
+            mutation {
+                oppgaveUtsettFristByEksternId(
+                    eksternId: "$eksternId", 
+                    merkelapp: "$merkelapp",
+                    nyFrist: "2024-01-21",
+                    paaminnelse: {
+                        tidspunkt: {
+                            etterOpprettelse: "P14DT"
+                        }
+                    }
+                ) {
+                __typename
+                    ... on OppgaveUtsettFristVellykket {
+                        id
+                    }
+                    ... on Error {
+                        feilmelding
+                    }
+                }
+            }
+            """
+            )
+            it("Påminnelsestidspunkt er satt relativ til opprettelse av oppgave") {
+                val vellykket =
+                    response.getTypedContent<MutationOppgaveUtsettFrist.OppgaveUtsettFristVellykket>("oppgaveUtsettFristByEksternId")
+                vellykket.id shouldBe uuid
+            }
+            it("har sendt melding til kafka") {
+                val hendelse = stubbedKafkaProducer.hendelser
+                    .filterIsInstance<FristUtsatt>()
+                    .last()
+                hendelse.frist shouldBe LocalDate.parse("2024-01-21")
+                hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt shouldBe OffsetDateTime.parse("2024-01-15T01:01:00Z").toInstant()
             }
         }
     }
