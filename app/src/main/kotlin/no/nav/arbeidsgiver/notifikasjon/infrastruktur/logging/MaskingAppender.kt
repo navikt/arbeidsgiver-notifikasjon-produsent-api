@@ -30,9 +30,16 @@ class MaskingAppender: AppenderBase<ILoggingEvent>() {
     }
 
     companion object {
-        private val FNR = Regex("""(^|\D)\d{11}(?=$|\D)""")
+        val FNR = Regex("""(^|\D)\d{11}(?=$|\D)""")
+        val ORGNR = Regex("""(^|\D)\d{9}(?=$|\D)""")
+        val EPOST = Regex("""(^|\D)[\w.-]+@[\w.-]+(?=$|\D)""")
+
         fun mask(string: String?): String? {
-            return string?.replace(FNR, "$1***********")
+            return string?.let {
+                FNR.replace(it, "$1***********")
+                    .replace(ORGNR, "$1*********")
+                    .replace(EPOST, "$1********")
+            }
         }
     }
 }

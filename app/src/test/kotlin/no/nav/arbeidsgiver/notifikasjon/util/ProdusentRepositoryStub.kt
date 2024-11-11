@@ -3,17 +3,21 @@ package no.nav.arbeidsgiver.notifikasjon.util
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
 
 open class ProdusentRepositoryStub : ProdusentRepository {
+    private val log = logger()
     override suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon? {
-        TODO("Not yet implemented")
+        log.warn("STUB hentNotifikasjon($id)")
+        return null
     }
 
     override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String): ProdusentModel.Notifikasjon? {
-        TODO("Not yet implemented")
+        log.warn("STUB hentNotifikasjon($eksternId, $merkelapp)")
+        return null
     }
 
     override suspend fun finnNotifikasjoner(
@@ -22,15 +26,18 @@ open class ProdusentRepositoryStub : ProdusentRepository {
         antall: Int,
         offset: Int
     ): List<ProdusentModel.Notifikasjon> {
-        TODO("Not yet implemented")
+        log.warn("STUB finnNotifikasjoner($merkelapper, $grupperingsid, $antall, $offset)")
+        return emptyList()
     }
 
     override suspend fun hentSak(grupperingsid: String, merkelapp: String): ProdusentModel.Sak? {
-        TODO("Not yet implemented")
+        log.warn("STUB hentSak($grupperingsid, $merkelapp)")
+        return null
     }
 
     override suspend fun hentSak(id: UUID): ProdusentModel.Sak? {
-        TODO("Not yet implemented")
+        log.warn("STUB hentSak($id)")
+        return null
     }
 
     override suspend fun erHardDeleted(
@@ -38,18 +45,21 @@ open class ProdusentRepositoryStub : ProdusentRepository {
         merkelapp: String,
         grupperingsid: String
     ): Boolean {
-        TODO("Not yet implemented")
+        log.warn("STUB erHardDeleted($type, $merkelapp, $grupperingsid)")
+        return false
     }
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
-        TODO("Not yet implemented")
+        log.warn("STUB oppdaterModellEtterHendelse($hendelse, $metadata)")
     }
 
     override suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean {
-        TODO("Not yet implemented")
+        log.warn("STUB notifikasjonOppdateringFinnes($id, $idempotenceKey)")
+        return false
     }
 
     override suspend fun sakOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean {
-        TODO("Not yet implemented")
+        log.warn("STUB sakOppdateringFinnes($id, $idempotenceKey)")
+        return false
     }
 }

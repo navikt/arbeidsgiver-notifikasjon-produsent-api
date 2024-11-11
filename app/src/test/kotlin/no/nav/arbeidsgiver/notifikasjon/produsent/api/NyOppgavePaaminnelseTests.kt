@@ -211,7 +211,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
                                 sms: {
                                     mottaker: {
                                         kontaktinfo: {
-                                            tlf: "1234"
+                                            tlf: "99999999"
                                         }
                                     }
                                     smsTekst: "hei"
@@ -230,7 +230,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
             val varsel = hendelse.påminnelse!!.eksterneVarsler[0]
             varsel shouldBe HendelseModel.SmsVarselKontaktinfo(
                 varselId = r.paaminnelse!!.eksterneVarsler[0].id,
-                tlfnr = "1234",
+                tlfnr = "99999999",
                 fnrEllerOrgnr = "0",
                 smsTekst = "hei",
                 sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
@@ -313,7 +313,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
                                 sms: {
                                     mottaker: {
                                         kontaktinfo: {
-                                            tlf: "1234"
+                                            tlf: "99999999"
                                         }
                                     }
                                     smsTekst: "hei"
@@ -344,7 +344,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
                 ),
                 HendelseModel.SmsVarselKontaktinfo(
                     varselId = varsler[1].id,
-                    tlfnr = "1234",
+                    tlfnr = "99999999",
                     fnrEllerOrgnr = "0",
                     smsTekst = "hei",
                     sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
@@ -428,7 +428,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
                                 sms: {
                                     mottaker: {
                                         kontaktinfo: {
-                                            tlf: "1234"
+                                            tlf: "99999999"
                                         }
                                     }
                                     smsTekst: "hei"
@@ -470,7 +470,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
                 ),
                 HendelseModel.SmsVarselKontaktinfo(
                     varselId = varsler[1].id,
-                    tlfnr = "1234",
+                    tlfnr = "99999999",
                     fnrEllerOrgnr = "0",
                     smsTekst = "hei",
                     sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,

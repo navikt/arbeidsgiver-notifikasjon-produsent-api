@@ -658,7 +658,7 @@ object EksempelHendelse {
         frist = LocalDate.parse("2021-01-14"),
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
             konkret = LocalDateTime.parse("2021-01-10T12:00:00"),
-            opprettetTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
+            notifikasjonOpprettetTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
             frist = LocalDate.parse("2021-01-14"),
             startTidspunkt = null,
         ),

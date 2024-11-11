@@ -39,7 +39,7 @@ private val jsonVariabler = laxObjectMapper.readValue<Map<String, Any?>>("""
         "mottaker": {
           "kontaktinfo": {
             "fnr": "",
-            "tlf": ""
+            "tlf": "90000000"
           }
         },
         "smsTekst": "En test SMS",

@@ -166,7 +166,7 @@ internal class MutationKalenderavtale(
                 sakId = sakId,
                 eksterneVarsler = eksterneVarsler.map { it.tilHendelseModel(virksomhetsnummer) },
                 påminnelse = paaminnelse?.tilDomene(
-                    opprettetTidspunkt = opprettetTidspunkt,
+                    notifikasjonOpprettetTidspunkt = opprettetTidspunkt,
                     frist = null,
                     startTidspunkt = startTidspunkt,
                     virksomhetsnummer = virksomhetsnummer,
@@ -317,7 +317,7 @@ internal class MutationKalenderavtale(
                 hardDelete = hardDelete?.tilHendelseModel(),
                 eksterneVarsler = eksterneVarsler?.map { it.tilHendelseModel(eksisterende.virksomhetsnummer) } ?: emptyList(),
                 påminnelse = if (nyTilstand == AVLYST) null else paaminnelse?.tilDomene(
-                    opprettetTidspunkt = eksisterende.opprettetTidspunkt,
+                    notifikasjonOpprettetTidspunkt = eksisterende.opprettetTidspunkt,
                     frist = null,
                     startTidspunkt = nyttStartTidspunkt ?: eksisterende.startTidspunkt,
                     virksomhetsnummer = eksisterende.virksomhetsnummer,
