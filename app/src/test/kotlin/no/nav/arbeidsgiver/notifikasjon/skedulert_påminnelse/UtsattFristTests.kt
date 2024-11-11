@@ -213,7 +213,7 @@ private val oppgaveOpprettet = HendelseModel.OppgaveOpprettet(
     påminnelse = HendelseModel.Påminnelse(
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateEtterOpprettelse(
             etterOpprettelse = ISO8601Period.parse("P7D"),
-            opprettetTidspunkt = oppgaveOpprettetTidspunkt,
+            notifikasjonOpprettetTidspunkt = oppgaveOpprettetTidspunkt,
             frist = førsteFrist,
             startTidspunkt = null,
         ),
@@ -248,7 +248,7 @@ private val fristUtsatt = HendelseModel.FristUtsatt(
     påminnelse = HendelseModel.Påminnelse(
         tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateEtterOpprettelse(
             etterOpprettelse = ISO8601Period.parse("P7D"),
-            opprettetTidspunkt = fristEndretTidspunkt,
+            notifikasjonOpprettetTidspunkt = fristEndretTidspunkt,
             frist = andreFrist,
             startTidspunkt = null,
         ),

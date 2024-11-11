@@ -10,7 +10,10 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.Deserializer
@@ -99,10 +102,7 @@ private constructor(
 
     private val replayer = PeriodicReplayer(
         consumer,
-        isBigLeap = basedOnEnv(
-            prod = {{ t -> t.hour == 5 && t.minute == 0 }},
-            other = {{ t -> t.hour % 2 == 0  && t.minute == 0 }}
-        ),
+        isBigLeap = { t -> t.hour == 5 && t.minute == 0 },
         isSmallLeap = { t -> t.minute == 0 },
         bigLeap = 10_000,
         smallLeap = 100,

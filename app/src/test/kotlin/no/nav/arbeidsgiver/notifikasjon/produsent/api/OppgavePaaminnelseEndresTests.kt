@@ -6,7 +6,9 @@ import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
@@ -14,6 +16,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -515,6 +518,65 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
 
                 stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
                     .count() shouldBe 1
+            }
+        }
+        context("Påminnelse blir endret relativ til op") {
+
+            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+            OppgaveOpprettet(
+                virksomhetsnummer = "1",
+                merkelapp = merkelapp,
+                eksternId = eksternId,
+                mottakere = listOf(mottaker),
+                hendelseId = uuid,
+                notifikasjonId = uuid,
+                tekst = "test",
+                lenke = "https://nav.no",
+                opprettetTidspunkt = OffsetDateTime.parse("2024-01-01T01:01:00Z"),
+                kildeAppNavn = "",
+                produsentId = "",
+                grupperingsid = null,
+                eksterneVarsler = listOf(),
+                hardDelete = null,
+                frist = null,
+                påminnelse = null,
+                sakId = null
+            ).also { produsentModel.oppdaterModellEtterHendelse(it) }
+
+            val response = engine.produsentApi(
+                """
+                        mutation {
+                        oppgaveEndrePaaminnelse(
+                            id: "$uuid",
+                            paaminnelse: {
+                                tidspunkt: {
+                                    etterOpprettelse: "P14DT"
+                                }
+                            }
+                            idempotencyKey: "1234"
+                        ) {
+                            __typename
+                            ... on OppgaveEndrePaaminnelseVellykket {
+                                id
+                            }
+                            ... on Error {
+                                feilmelding
+                            }
+                        }
+                    }
+                    """
+            )
+
+            it("Påminnelsestidspunkt er satt relativ til opprettelse av oppgave") {
+                val vellykket =
+                    response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
+                vellykket.id shouldBe uuid
+            }
+            it("har sendt melding til kafka") {
+                val hendelse = stubbedKafkaProducer.hendelser
+                    .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
+                    .last()
+                hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt shouldBe OffsetDateTime.parse("2024-01-15T01:01:00Z").toInstant()
             }
         }
     }
