@@ -317,7 +317,7 @@ suspend fun BrukerRepository.påminnelseOpprettet(
     frist = oppgave.frist,
     tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
         konkret = konkretPåminnelseTidspunkt,
-        opprettetTidspunkt = oppgave.opprettetTidspunkt,
+        notifikasjonOpprettetTidspunkt = oppgave.opprettetTidspunkt,
         frist = oppgave.frist,
         startTidspunkt = null,
     ),
@@ -341,7 +341,7 @@ suspend fun BrukerRepository.påminnelseOpprettet(
     frist = null,
     tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
         konkret = konkretPåminnelseTidspunkt,
-        opprettetTidspunkt = kalenderavtale.opprettetTidspunkt,
+        notifikasjonOpprettetTidspunkt = kalenderavtale.opprettetTidspunkt,
         frist = null,
         startTidspunkt = kalenderavtale.startTidspunkt,
     ),

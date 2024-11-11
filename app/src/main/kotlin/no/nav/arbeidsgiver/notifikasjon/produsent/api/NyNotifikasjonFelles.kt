@@ -219,12 +219,12 @@ internal data class PaaminnelseInput(
     val eksterneVarsler: List<PaaminnelseEksterntVarselInput>,
 ) {
     fun tilDomene(
-        opprettetTidspunkt: OffsetDateTime,
+        notifikasjonOpprettetTidspunkt: OffsetDateTime,
         frist: LocalDate?,
         startTidspunkt: LocalDateTime?,
         virksomhetsnummer: String,
     ) : HendelseModel.Påminnelse = HendelseModel.Påminnelse(
-        tidspunkt = tidspunkt.tilDomene(opprettetTidspunkt, frist, startTidspunkt),
+        tidspunkt = tidspunkt.tilDomene(notifikasjonOpprettetTidspunkt, frist, startTidspunkt),
         eksterneVarsler = eksterneVarsler.map {
             it.tilDomene(virksomhetsnummer)
         }
@@ -238,30 +238,30 @@ data class PaaminnelseTidspunktInput(
     val foerStartTidspunkt: ISO8601Period?,
 ) {
     fun tilDomene(
-        opprettetTidspunkt: OffsetDateTime,
+        notifikasjonOpprettetTidspunkt: OffsetDateTime,
         frist: LocalDate?,
         startTidspunkt: LocalDateTime?,
     ): HendelseModel.PåminnelseTidspunkt = when {
         konkret != null -> HendelseModel.PåminnelseTidspunkt.createAndValidateKonkret(
             konkret,
-            opprettetTidspunkt,
+            notifikasjonOpprettetTidspunkt,
             frist,
             startTidspunkt,
         )
         etterOpprettelse != null -> HendelseModel.PåminnelseTidspunkt.createAndValidateEtterOpprettelse(
             etterOpprettelse,
-            opprettetTidspunkt,
+            notifikasjonOpprettetTidspunkt,
             frist,
             startTidspunkt
         )
         foerFrist != null -> HendelseModel.PåminnelseTidspunkt.createAndValidateFørFrist(
             foerFrist,
-            opprettetTidspunkt,
+            notifikasjonOpprettetTidspunkt,
             frist,
         )
         foerStartTidspunkt != null -> HendelseModel.PåminnelseTidspunkt.createAndValidateFørStartTidspunkt(
             foerStartTidspunkt,
-            opprettetTidspunkt,
+            notifikasjonOpprettetTidspunkt,
             startTidspunkt,
         )
         else -> throw RuntimeException("Feil format")

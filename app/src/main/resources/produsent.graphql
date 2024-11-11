@@ -1461,7 +1461,6 @@ input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
     konkret: ISO8601LocalDateTime
     """
     Relativ til når oppgaven/kalenderavtalen er angitt som opprettet. Altså X duration etter opprettelse.
-    Ved utsatt frist er den relativ til tidspunktet fristen ble utsatt.
     """
     etterOpprettelse: ISO8601Duration
 

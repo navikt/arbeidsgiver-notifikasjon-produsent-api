@@ -132,7 +132,7 @@ private val oppgaveUtenPaminnelseOpprettet = HendelseModel.OppgaveOpprettet(
 private val førstePåminnelse = HendelseModel.Påminnelse(
     tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateEtterOpprettelse(
         etterOpprettelse = ISO8601Period.parse("P4D"),
-        opprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt,
+        notifikasjonOpprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt,
         frist = frist,
         startTidspunkt = null,
     ),
@@ -142,7 +142,7 @@ private val førstePåminnelse = HendelseModel.Påminnelse(
 private val andrePåminnelse = HendelseModel.Påminnelse(
     tidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateEtterOpprettelse(
         etterOpprettelse = ISO8601Period.parse("P11D"),
-        opprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt,
+        notifikasjonOpprettetTidspunkt = oppgaveUtenPaminnelseOpprettet.opprettetTidspunkt,
         frist = frist,
         startTidspunkt = null,
     ),
