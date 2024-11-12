@@ -5,18 +5,22 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.http.*
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakMetadata
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.util.*
 
 class FeilhåndteringTests : DescribeSpec({
 
     val engine = ktorBrukerTestServer(
-        altinn = AltinnStub { _, _ -> Tilganger.FAILURE },
+        altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
+            AltinnTilganger(
+                harFeil = true,
+                tilganger = listOf()
+            )
+        },
 
         brukerRepository = object : BrukerRepositoryStub() {
             override suspend fun hentNotifikasjoner(
-                fnr: String, tilganger: Tilganger
+                fnr: String, altinnTilganger: AltinnTilganger
             ) = emptyList<BrukerModel.Notifikasjon>()
 
             override suspend fun hentSakerForNotifikasjoner(

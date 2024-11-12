@@ -5,6 +5,7 @@ import io.kotest.core.test.TestScope
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.haveSize
 import io.kotest.matchers.nulls.beNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -15,8 +16,9 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Ti
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.OppgaveTidslinjeElement
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.TidslinjeElement
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnTilgangerServiceStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -28,8 +30,11 @@ class QuerySakerTidslinjeTest: DescribeSpec({
         val brukerRepository = BrukerRepositoryImpl(database)
         val engine = ktorBrukerTestServer(
             brukerRepository = brukerRepository,
-            altinn = AltinnStub { _, _ ->
-                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf(TEST_TILGANG_1)
+                )
             }
         )
         val sak0 = brukerRepository.sakOpprettet()
@@ -135,6 +140,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             startTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(3),
             sluttTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(4),
             sakId = sak1.sakId,
+            lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz")
         )
         it("kalenderavtale på andre saken, vises kun der") {
             val tidslinje0 = engine.fetchTidslinje(sak0)
@@ -153,10 +159,10 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.avtaletilstand shouldBe BrukerAPI.Notifikasjon.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
                 it.startTidspunkt.toInstant() shouldBe kalenderavtale.startTidspunkt.atOslo().toInstant()
                 it.sluttTidspunkt?.toInstant() shouldBe kalenderavtale.sluttTidspunkt?.atOslo()?.toInstant()
-                it.lokasjon shouldNot beNull()
-                it.lokasjon!!.adresse shouldBe kalenderavtale.lokasjon!!.adresse
-                it.lokasjon!!.poststed shouldBe kalenderavtale.lokasjon!!.poststed
-                it.lokasjon!!.postnummer shouldBe kalenderavtale.lokasjon!!.postnummer
+                it.lokasjon.shouldNotBeNull()
+                it.lokasjon.adresse shouldBe kalenderavtale.lokasjon!!.adresse
+                it.lokasjon.poststed shouldBe kalenderavtale.lokasjon.poststed
+                it.lokasjon.postnummer shouldBe kalenderavtale.lokasjon.postnummer
                 it.digitalt shouldBe kalenderavtale.erDigitalt
             }
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[1]) {

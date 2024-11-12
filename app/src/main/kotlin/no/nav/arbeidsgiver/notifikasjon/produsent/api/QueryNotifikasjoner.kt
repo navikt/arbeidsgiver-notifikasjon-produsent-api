@@ -266,6 +266,7 @@ internal class QueryNotifikasjoner(
                 return when (domene) {
                     is HendelseModel.AltinnMottaker -> AltinnMottaker.fraDomene(domene)
                     is HendelseModel.NærmesteLederMottaker -> NærmesteLederMottaker.fraDomene(domene)
+                    is HendelseModel.AltinnTilgangMottaker -> TODO()
                 }
             }
         }

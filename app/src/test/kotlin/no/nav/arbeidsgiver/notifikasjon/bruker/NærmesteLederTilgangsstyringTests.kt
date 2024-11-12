@@ -6,10 +6,10 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.virksomhetsnummer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -54,7 +54,10 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
         val beskjed3 = brukerRepository.beskjedOpprettet(mottaker = mottaker3)
 
         it("ingen ansatte gir ingen notifikasjoner") {
-            val notifikasjoner = brukerRepository.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
+            val notifikasjoner = brukerRepository.hentNotifikasjoner(nærmesteLeder, AltinnTilganger(
+                harFeil = false,
+                tilganger = listOf()
+            ))
             notifikasjoner should beEmpty()
         }
 
@@ -68,7 +71,10 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
             )
         )
         it("får notifikasjon om nåværende ansatt") {
-            val notifikasjoner = brukerRepository.hentNotifikasjoner(nærmesteLeder, Tilganger.EMPTY)
+            val notifikasjoner = brukerRepository.hentNotifikasjoner(nærmesteLeder, AltinnTilganger(
+                harFeil = false,
+                tilganger = listOf()
+            ))
             notifikasjoner shouldHaveSize 1
             val beskjed = notifikasjoner[0] as BrukerModel.Beskjed
             beskjed.id shouldBe beskjed1.notifikasjonId
@@ -91,7 +97,10 @@ class NærmesteLederTilgangsstyringTests: DescribeSpec({
         ) {
             val notifikasjoner = brukerRepository.hentNotifikasjoner(
                 nærmesteLeder,
-                Tilganger.EMPTY,
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf()
+                ),
                 //ansatte(mottaker1.copy(virksomhetsnummer = virksomhet2))
             )
             notifikasjoner shouldHaveSize 2

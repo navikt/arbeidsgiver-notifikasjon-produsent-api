@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnTilgangerServiceStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -49,7 +49,7 @@ private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApp
     val brukerRepository = BrukerRepositoryImpl(database)
     val engine = ktorBrukerTestServer(
         brukerRepository = brukerRepository,
-        altinn = AltinnStub()
+        altinnTilgangerService = AltinnTilgangerServiceStub()
     )
     return Pair(brukerRepository, engine)
 }

@@ -99,17 +99,10 @@ class AltinnTilgangerClient(
             harFeil = dto.isError,
             tilganger = alleFlatt.flatMap { org ->
                 observer(org.organisasjonsnummer, org.navn)
-                org.altinn2Tilganger.map {
-                    val (serviceCode, serviceEdition) = it.split(":")
-                    AltinnTilgang.Altinn2(
+                (org.altinn2Tilganger + org.altinn3Tilganger).map {
+                    AltinnTilgang(
                         orgNr = org.organisasjonsnummer,
-                        serviceCode = serviceCode,
-                        serviceEdition = serviceEdition
-                    )
-                } + org.altinn3Tilganger.map {
-                    AltinnTilgang.Altinn3(
-                        orgNr = org.organisasjonsnummer,
-                        ressurs = it
+                        tilgang = it
                     )
                 }
             }
@@ -157,7 +150,9 @@ data class AltinnTilganger(
     val tilganger: List<AltinnTilgang>,
 )
 
-sealed class AltinnTilgang {
-    data class Altinn2(val orgNr: String, val serviceCode: String, val serviceEdition: String) : AltinnTilgang()
-    data class Altinn3(val orgNr: String, val ressurs: String) : AltinnTilgang()
-}
+
+/**
+ * DTO for altinn 2 og 3 tilganger
+ * tilgang: "1234:1" for Altinn 2 og "nav_permitering_og_nedbemanning_innsyn_blabla" for Altinn 3
+ */
+data class AltinnTilgang(val orgNr: String, val tilgang: String)

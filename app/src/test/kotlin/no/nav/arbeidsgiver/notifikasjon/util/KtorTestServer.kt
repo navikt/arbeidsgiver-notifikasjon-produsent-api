@@ -8,10 +8,13 @@ import io.ktor.http.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.CompletableDeferred
-import no.nav.arbeidsgiver.notifikasjon.bruker.*
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
+import no.nav.arbeidsgiver.notifikasjon.bruker.TEST_FNR_1
+import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
@@ -25,8 +28,7 @@ fun Spec.ktorBrukerTestServer(
     enhetsregisteret: Enhetsregisteret = EnhetsregisteretStub(),
     brukerRepository: BrukerRepository = BrukerRepositoryStub(),
     kafkaProducer: HendelseProdusent = NoopHendelseProdusent,
-    altinn: Altinn = AltinnStub(),
-    tilgangerService: TilgangerService = TilgangerServiceImpl(altinn),
+    altinnTilgangerService: AltinnTilgangerService = AltinnTilgangerServiceStub(),
     environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
 ): TestApplicationEngine {
     val engine = TestApplicationEngine(
@@ -35,7 +37,7 @@ fun Spec.ktorBrukerTestServer(
     val brukerGraphQL = BrukerAPI.createBrukerGraphQL(
         brukerRepository = brukerRepository,
         hendelseProdusent = kafkaProducer,
-        tilgangerService = tilgangerService,
+        altinnTilgangerService = altinnTilgangerService,
         virksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
     )
     listener(KtorTestListener(engine))

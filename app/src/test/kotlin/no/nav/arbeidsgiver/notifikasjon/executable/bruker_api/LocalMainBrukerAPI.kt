@@ -1,12 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.executable.bruker_api
 
 import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.executable.Port
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.MottakerRegister
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnTilgangerServiceStub
 import no.nav.arbeidsgiver.notifikasjon.util.EnhetsregisteretStub
 import no.nav.arbeidsgiver.notifikasjon.util.LOCALHOST_BRUKER_AUTHENTICATION
 
@@ -19,7 +19,7 @@ fun main() {
             LOCALHOST_BRUKER_AUTHENTICATION,
         ),
         enhetsregisteret = EnhetsregisteretStub(),
-        altinn = AltinnStub { _, _ ->
+        altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
             val alleOrgnr = listOf(
                 "811076732",
                 "811076112",
@@ -35,16 +35,16 @@ fun main() {
                 "910825555",
                 "999999999",
             )
-            Tilganger(
-                alleOrgnr.flatMap { orgnr ->
+            AltinnTilganger(
+                harFeil = false,
+                tilganger = alleOrgnr.flatMap { orgnr ->
                     MottakerRegister.servicecodeDefinisjoner.map { tjeneste ->
-                        BrukerModel.Tilgang.Altinn(
-                            virksomhet = orgnr,
-                            servicecode = tjeneste.code,
-                            serviceedition = tjeneste.version,
+                        AltinnTilgang(
+                            orgNr = orgnr,
+                            tilgang = "${tjeneste.code}:${tjeneste.version}"
                         )
                     }
-                },
+                }
             )
         }
     )

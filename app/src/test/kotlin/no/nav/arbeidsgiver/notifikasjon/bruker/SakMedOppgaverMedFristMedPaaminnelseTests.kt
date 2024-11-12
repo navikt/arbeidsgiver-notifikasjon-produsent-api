@@ -4,6 +4,8 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.FRIST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloLocalDateTime
@@ -20,15 +22,12 @@ class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
         val brukerRepository = BrukerRepositoryImpl(database)
         val engine = ktorBrukerTestServer(
             brukerRepository = brukerRepository,
-            altinn = AltinnStub { _, _ ->
-                BrukerModel.Tilganger(
-                    listOf(
-                        BrukerModel.Tilgang.Altinn(
-                            virksomhet = "1",
-                            servicecode = "1",
-                            serviceedition = "1",
-                        )
-                    )
+            altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf(
+                        AltinnTilgang("1", "1:1"),
+                    ),
                 )
             }
         )

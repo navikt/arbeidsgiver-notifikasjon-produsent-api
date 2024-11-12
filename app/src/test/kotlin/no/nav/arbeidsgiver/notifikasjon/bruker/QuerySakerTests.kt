@@ -8,13 +8,13 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.OPPRETTET
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.FERDIG
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Duration
@@ -320,9 +320,13 @@ private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApp
     val database = testDatabase(Bruker.databaseConfig)
     val brukerRepository = BrukerRepositoryImpl(database)
     val engine = ktorBrukerTestServer(
-        altinn = AltinnStub(
-            "0".repeat(11) to Tilganger(
-                tjenestetilganger = listOf(Tilgang.Altinn("42", "5441", "1"), Tilgang.Altinn("43", "5441", "1")),
+        altinnTilgangerService = AltinnTilgangerServiceStub(
+            "0".repeat(11) to AltinnTilganger(
+                harFeil = false,
+                tilganger = listOf(
+                    AltinnTilgang("42", "5441:1"),
+                    AltinnTilgang("43", "5441:1")
+                ),
             )
         ),
         brukerRepository = brukerRepository,

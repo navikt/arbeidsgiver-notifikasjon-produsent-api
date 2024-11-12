@@ -27,7 +27,7 @@ class BrukerModelIdempotensTests : DescribeSpec({
 
         it("ingen duplikat mottaker") {
             val antallMottakere = database.nonTransactionalExecuteQuery("""
-            select * from mottaker_altinn_enkeltrettighet
+            select * from mottaker_altinn_tilgang
             where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'
         """
             ) {

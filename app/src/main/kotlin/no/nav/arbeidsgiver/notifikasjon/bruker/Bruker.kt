@@ -7,9 +7,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.Altinn
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerClient
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
@@ -41,7 +41,7 @@ object Bruker {
         authProviders: List<JWTAuthentication> = defaultAuthProviders,
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
-        altinn: Altinn = AltinnTilgangerImpl(AltinnTilgangerClient(
+        altinnTilgangerService: AltinnTilgangerService = AltinnTilgangerServiceImpl(AltinnTilgangerClient(
             observer = virksomhetsinfoService::cachePut,
         )),
         httpPort: Int = 8080
@@ -53,13 +53,10 @@ object Bruker {
             }
 
             val graphql = async {
-                val tilgangerService = TilgangerServiceImpl(
-                    altinn = altinn
-                )
                 BrukerAPI.createBrukerGraphQL(
                     brukerRepository = brukerRepositoryAsync.await(),
                     hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
-                    tilgangerService = tilgangerService,
+                    altinnTilgangerService = altinnTilgangerService,
                     virksomhetsinfoService = virksomhetsinfoService,
                 )
             }

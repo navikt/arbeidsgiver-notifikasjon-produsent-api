@@ -10,9 +10,8 @@ import java.util.*
 object BrukerModel {
     sealed interface Tilgang {
         data class Altinn(
-            val virksomhet: String,
-            val servicecode: String,
-            val serviceedition: String,
+            val virksomhetsnummer: String,
+            val tilgang: String,
         ) : Tilgang
     }
 
@@ -177,24 +176,6 @@ object BrukerModel {
         val overstyrtStatustekst: String?,
         val tidspunkt: OffsetDateTime
     )
-
-    data class Tilganger(
-        val tjenestetilganger: List<Tilgang.Altinn> = listOf(),
-        val harFeil: Boolean = false,
-    ) {
-
-        operator fun plus(other: Tilganger) = Tilganger(
-            tjenestetilganger = this.tjenestetilganger + other.tjenestetilganger,
-            harFeil = this.harFeil || other.harFeil,
-        )
-
-        companion object {
-            val EMPTY = Tilganger()
-            val FAILURE = Tilganger(harFeil = true)
-
-            fun List<Tilganger>.flatten() = this.fold(EMPTY, Tilganger::plus)
-        }
-    }
 
 
     data class SakMetadata(
