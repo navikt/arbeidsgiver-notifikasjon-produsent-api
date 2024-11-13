@@ -19,8 +19,8 @@ spec:
     path: /internal/ready
   replicas:
     disableAutoScaling: true
-    min: 4
-    max: 4
+    min: 10
+    max: 10
   prometheus:
     enabled: true
     path: /internal/metrics

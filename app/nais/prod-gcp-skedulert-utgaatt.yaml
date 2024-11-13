@@ -15,8 +15,8 @@ spec:
       memory: 1024Mi
   replicas:
     disableAutoScaling: true
-    min: 4
-    max: 4
+    min: 10
+    max: 10
   liveness:
     path: /internal/alive
   readiness:
