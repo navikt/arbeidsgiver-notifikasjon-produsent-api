@@ -1208,7 +1208,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private fun Transaction.storeAltinnMottaker(
+    private fun Transaction.storeAltinnMottakerGammelTabell(
         notifikasjonId: UUID?,
         sakId: UUID?,
         mottaker: AltinnMottaker
@@ -1226,6 +1226,31 @@ class BrukerRepositoryImpl(
             text(mottaker.virksomhetsnummer)
             text(mottaker.serviceCode)
             text(mottaker.serviceEdition)
+        }
+    }
+
+    fun Transaction.storeAltinnMottaker(
+        notifikasjonId: UUID?,
+        sakId: UUID?,
+        mottaker: AltinnMottaker
+    ) {
+        storeAltinnMottakerGammelTabell(
+            notifikasjonId,
+            sakId,
+            mottaker
+        ) //TODO: fjerne denne når man har skrevet seg ut av gammel tabell
+        executeUpdate(
+            """
+            insert into mottaker_altinn_tilgang
+                (notifikasjon_id, sak_id, virksomhet, altinn_tilgang)
+            values (?, ?, ?, ?)
+            on conflict do nothing
+        """
+        ) {
+            nullableUuid(notifikasjonId)
+            nullableUuid(sakId)
+            text(mottaker.virksomhetsnummer)
+            text("${mottaker.serviceCode}:${mottaker.serviceEdition}")
         }
     }
 
