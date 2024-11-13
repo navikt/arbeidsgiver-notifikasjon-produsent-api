@@ -5,7 +5,6 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Kalenderavtale.Tilsta
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnTilgangMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
@@ -1138,17 +1137,14 @@ class BrukerRepositoryImpl(
                 mottaker = mottaker
             )
 
-            is AltinnMottaker -> storeAltinnMottaker(
-                notifikasjonId = notifikasjonId,
-                sakId = sakId,
-                mottaker = mottaker
-            )
-
-            is AltinnTilgangMottaker -> storeAltinnTilgangMottaker(
-                notifikasjonId = notifikasjonId,
-                sakId = sakId,
-                mottaker = mottaker
-            )
+            is AltinnMottaker -> {
+                storeAltinnMottaker(
+                    notifikasjonId = notifikasjonId,
+                    sakId = sakId,
+                    orgNr = mottaker.virksomhetsnummer,
+                    altinnTilgang = "${mottaker.serviceCode}:${mottaker.serviceEdition}"
+                )
+            }
         }
     }
 
@@ -1175,7 +1171,8 @@ class BrukerRepositoryImpl(
     fun Transaction.storeAltinnMottaker(
         notifikasjonId: UUID?,
         sakId: UUID?,
-        mottaker: AltinnMottaker
+        orgNr: String,
+        altinnTilgang: String
     ) {
         executeUpdate(
             """
@@ -1187,28 +1184,8 @@ class BrukerRepositoryImpl(
         ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
-            text(mottaker.virksomhetsnummer)
-            text("${mottaker.serviceCode}:${mottaker.serviceEdition}")
-        }
-    }
-
-    fun Transaction.storeAltinnTilgangMottaker(
-        notifikasjonId: UUID?,
-        sakId: UUID?,
-        mottaker: AltinnTilgangMottaker
-    ) {
-        executeUpdate(
-            """
-            insert into mottaker_altinn_tilgang
-                (notifikasjon_id, sak_id, virksomhet, altinn_tilgang)
-            values (?, ?, ?, ?)
-            on conflict do nothing
-        """
-        ) {
-            nullableUuid(notifikasjonId)
-            nullableUuid(sakId)
-            text(mottaker.virksomhetsnummer)
-            text(mottaker.tilgang)
+            text(orgNr)
+            text(altinnTilgang)
         }
     }
 

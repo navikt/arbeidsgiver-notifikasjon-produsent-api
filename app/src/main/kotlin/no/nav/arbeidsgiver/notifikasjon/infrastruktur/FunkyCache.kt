@@ -32,6 +32,7 @@ class FunkyCache<K: Any, V>(maxCapacity : Int, val loader: suspend (K) -> V) {
     }
 }
 
+
 private class MutexMap<K> {
     private val mutexes: MutableMap<K, Mutex> = Collections.synchronizedMap(WeakHashMap())
 

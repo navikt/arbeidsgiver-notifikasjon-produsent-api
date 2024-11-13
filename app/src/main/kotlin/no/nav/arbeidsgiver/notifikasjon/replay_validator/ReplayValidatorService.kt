@@ -84,9 +84,7 @@ class ReplayValidatorService(
             is HendelseModel.TilleggsinformasjonSak,
             is HendelseModel.OppgavePåminnelseEndret,
             is HendelseModel.NyStatusSak -> Unit
-
         }
-
     }
 
     override suspend fun processingLoopStep() {}

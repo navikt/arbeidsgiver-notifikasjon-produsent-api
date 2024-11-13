@@ -724,12 +724,6 @@ object HendelseModel {
         val virksomhetsnummer: String,
     ) : Mottaker()
 
-    @JsonTypeName("altinnTilgang")
-    data class AltinnTilgangMottaker(
-        val tilgang: String, // TODO: hva er beste navngivning her? tilgang? ressurs?
-        val virksomhetsnummer: String,
-    ) : Mottaker()
-
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     sealed class EksterntVarsel {
         abstract val varselId: UUID
@@ -810,5 +804,4 @@ val HendelseModel.Mottaker.virksomhetsnummer: String
     get() = when (this) {
         is HendelseModel.NærmesteLederMottaker -> this.virksomhetsnummer
         is HendelseModel.AltinnMottaker -> this.virksomhetsnummer
-        is HendelseModel.AltinnTilgangMottaker -> this.virksomhetsnummer
     }

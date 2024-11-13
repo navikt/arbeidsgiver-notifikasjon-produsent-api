@@ -4,7 +4,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnTilgangMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
@@ -856,7 +855,6 @@ class ProdusentRepositoryImpl(
         when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
-            is AltinnTilgangMottaker -> TODO()
         }
     }
 

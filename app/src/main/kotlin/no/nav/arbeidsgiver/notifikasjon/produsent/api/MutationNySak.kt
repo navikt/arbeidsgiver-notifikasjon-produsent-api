@@ -227,7 +227,6 @@ private fun MottakerInput.sammeSom(mottaker: Mottaker): Boolean {
         is NærmesteLederMottaker ->
             mottaker.ansattFnr == this.naermesteLeder?.ansattFnr &&
                     mottaker.naermesteLederFnr == this.naermesteLeder.naermesteLederFnr
-        is HendelseModel.AltinnTilgangMottaker -> TODO()
     }
 }
 
