@@ -39,12 +39,14 @@ class KafkaReaperModelImpl(
             is SakOpprettet -> hendelse.grupperingsid
             is OppgaveOpprettet -> hendelse.grupperingsid
             is BeskjedOpprettet -> hendelse.grupperingsid
+            is KalenderavtaleOpprettet -> hendelse.grupperingsid
             else -> null
         }
         val merkelapp = when (hendelse) {
             is SakOpprettet -> hendelse.merkelapp
             is OppgaveOpprettet -> hendelse.merkelapp
             is BeskjedOpprettet -> hendelse.merkelapp
+            is KalenderavtaleOpprettet -> hendelse.merkelapp
             else -> null
         }
 
