@@ -1168,7 +1168,7 @@ class BrukerRepositoryImpl(
         }
     }
 
-    fun Transaction.storeAltinnMottaker(
+    private fun Transaction.storeAltinnMottaker(
         notifikasjonId: UUID?,
         sakId: UUID?,
         orgNr: String,

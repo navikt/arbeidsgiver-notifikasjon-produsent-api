@@ -1,0 +1,1 @@
+drop table mottaker_altinn_enkeltrettighet;
