@@ -266,6 +266,7 @@ internal class QueryNotifikasjoner(
                 return when (domene) {
                     is HendelseModel.AltinnMottaker -> AltinnMottaker.fraDomene(domene)
                     is HendelseModel.NærmesteLederMottaker -> NærmesteLederMottaker.fraDomene(domene)
+                    is HendelseModel.AltinnRessursMottaker -> AltinnRessursMottaker.fraDomene(domene)
                 }
             }
         }
@@ -299,6 +300,21 @@ internal class QueryNotifikasjoner(
                 return AltinnMottaker(
                     serviceCode = domene.serviceCode,
                     serviceEdition = domene.serviceEdition,
+                    virksomhetsnummer = domene.virksomhetsnummer
+                )
+            }
+        }
+    }
+
+    @JsonTypeName("AltinnRessursMottaker")
+    data class AltinnRessursMottaker(
+        val ressursId: String,
+        val virksomhetsnummer: String
+    ) : Mottaker(){
+        companion object {
+            fun fraDomene(domene: HendelseModel.AltinnRessursMottaker): AltinnRessursMottaker {
+                return AltinnRessursMottaker(
+                    ressursId = domene.ressursId,
                     virksomhetsnummer = domene.virksomhetsnummer
                 )
             }

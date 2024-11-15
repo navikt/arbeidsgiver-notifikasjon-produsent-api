@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
@@ -162,23 +163,35 @@ internal data class AltinnMottakerInput(
         )
 }
 
+internal data class AltinnRessursMottakerInput(
+    val ressursId: String,
+) {
+    fun tilDomene(virksomhetsnummer: String): Mottaker =
+        AltinnRessursMottaker(
+            ressursId = ressursId,
+            virksomhetsnummer = virksomhetsnummer
+        )
+}
+
 internal class UkjentRolleException(message: String) : RuntimeException(message)
 
 
 internal data class MottakerInput(
     val altinn: AltinnMottakerInput?,
     val naermesteLeder: NaermesteLederMottakerInput?,
+    val altinnRessurs: AltinnRessursMottakerInput?
 ) {
 
     fun tilHendelseModel(
         virksomhetsnummer: String,
     ): Mottaker {
-        check(listOfNotNull(altinn, naermesteLeder).size == 1) {
+        check(listOfNotNull(altinn, naermesteLeder, altinnRessurs).size == 1) {
             "Ugyldig mottaker"
         }
-        return altinn?.tilDomene(virksomhetsnummer)
-                ?: (naermesteLeder?.tilDomene(virksomhetsnummer)
-                        ?: throw IllegalArgumentException("Ugyldig mottaker"))
+        return altinnRessurs?.tilDomene(virksomhetsnummer)
+            ?: altinn?.tilDomene(virksomhetsnummer)
+            ?: naermesteLeder?.tilDomene(virksomhetsnummer)
+            ?: throw IllegalArgumentException("Ugyldig mottaker")
     }
 }
 
@@ -213,7 +226,6 @@ internal fun EksterntVarselInput.SendetidspunktInput.somVinduOgTidspunkt(): Pair
 }
 
 
-
 internal data class PaaminnelseInput(
     val tidspunkt: PaaminnelseTidspunktInput,
     val eksterneVarsler: List<PaaminnelseEksterntVarselInput>,
@@ -223,7 +235,7 @@ internal data class PaaminnelseInput(
         frist: LocalDate?,
         startTidspunkt: LocalDateTime?,
         virksomhetsnummer: String,
-    ) : HendelseModel.Påminnelse = HendelseModel.Påminnelse(
+    ): HendelseModel.Påminnelse = HendelseModel.Påminnelse(
         tidspunkt = tidspunkt.tilDomene(notifikasjonOpprettetTidspunkt, frist, startTidspunkt),
         eksterneVarsler = eksterneVarsler.map {
             it.tilDomene(virksomhetsnummer)
@@ -248,22 +260,26 @@ data class PaaminnelseTidspunktInput(
             frist,
             startTidspunkt,
         )
+
         etterOpprettelse != null -> HendelseModel.PåminnelseTidspunkt.createAndValidateEtterOpprettelse(
             etterOpprettelse,
             notifikasjonOpprettetTidspunkt,
             frist,
             startTidspunkt
         )
+
         foerFrist != null -> HendelseModel.PåminnelseTidspunkt.createAndValidateFørFrist(
             foerFrist,
             notifikasjonOpprettetTidspunkt,
             frist,
         )
+
         foerStartTidspunkt != null -> HendelseModel.PåminnelseTidspunkt.createAndValidateFørStartTidspunkt(
             foerStartTidspunkt,
             notifikasjonOpprettetTidspunkt,
             startTidspunkt,
         )
+
         else -> throw RuntimeException("Feil format")
     }
 }
@@ -300,6 +316,7 @@ internal class PaaminnelseEksterntVarselInput(
             throw RuntimeException("mottaker-felt mangler for sms")
         }
     }
+
     class Epost(
         val mottaker: EksterntVarselInput.Epost.Mottaker,
         val epostTittel: String,
@@ -321,6 +338,7 @@ internal class PaaminnelseEksterntVarselInput(
             throw RuntimeException("mottaker mangler for epost")
         }
     }
+
     data class Altinntjeneste(
         val mottaker: Mottaker,
         val tittel: String,

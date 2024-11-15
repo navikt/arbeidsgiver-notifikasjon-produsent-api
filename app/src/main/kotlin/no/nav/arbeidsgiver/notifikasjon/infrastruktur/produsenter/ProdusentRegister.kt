@@ -1,6 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AppName
@@ -51,6 +53,25 @@ data class ServicecodeDefinisjon(
     override fun hashCode(): Int = Objects.hash(code, version)
 }
 
+data class RessursIdDefinisjon(
+    val ressursId: String,
+) : MottakerDefinisjon() {
+    override fun akseptererMottaker(mottaker: Mottaker): Boolean =
+        when (mottaker) {
+            is AltinnRessursMottaker ->
+                mottaker.ressursId == ressursId
+            else -> false
+        }
+
+    override fun equals(other: Any?): Boolean = when {
+        this === other -> true
+        other is RessursIdDefinisjon -> this.ressursId == other.ressursId
+        else -> false
+    }
+
+    override fun hashCode(): Int = Objects.hash(ressursId)
+}
+
 object NærmesteLederDefinisjon : MottakerDefinisjon() {
     override fun akseptererMottaker(mottaker: Mottaker): Boolean =
         when (mottaker) {
@@ -65,10 +86,16 @@ object MottakerRegister {
             return MOTTAKER_REGISTER.filterIsInstance<ServicecodeDefinisjon>()
         }
 
+    val ressursIdDefinisjoner: List<RessursIdDefinisjon>
+        get() {
+            return MOTTAKER_REGISTER.filterIsInstance<RessursIdDefinisjon>()
+        }
+
     fun erDefinert(mottakerDefinisjon: MottakerDefinisjon): Boolean =
         when (mottakerDefinisjon) {
             is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
             is NærmesteLederDefinisjon -> true
+            is RessursIdDefinisjon -> ressursIdDefinisjoner.contains(mottakerDefinisjon)
         }
 }
 

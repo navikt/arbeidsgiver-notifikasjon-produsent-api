@@ -180,6 +180,7 @@ type Kalenderavtale {
 union Mottaker =
     | AltinnMottaker
     | NaermesteLederMottaker
+    | AltinnRessursMottaker
 
 type AltinnMottaker {
     serviceCode: String!
@@ -191,6 +192,11 @@ type NaermesteLederMottaker {
     naermesteLederFnr: String!
     ansattFnr: String!
     virksomhetsnummer: String!
+}
+
+type AltinnRessursMottaker {
+    virksomhetsnummer: String!
+    ressursId: String!
 }
 
 type OppgaveData {

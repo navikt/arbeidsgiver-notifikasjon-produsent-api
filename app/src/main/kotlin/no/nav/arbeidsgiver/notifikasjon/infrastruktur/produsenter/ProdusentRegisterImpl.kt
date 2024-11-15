@@ -25,6 +25,7 @@ val FAGER_TESTPRODUSENT = Produsent(
         "Inntektsmelding opplæringspenger",
     ),
     tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "test-fager"),
         ServicecodeDefinisjon(code = "4936", version = "1"),
         ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
         ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
