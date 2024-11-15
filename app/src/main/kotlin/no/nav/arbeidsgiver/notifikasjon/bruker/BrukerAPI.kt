@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
 import java.time.LocalDate
@@ -285,7 +286,7 @@ object BrukerAPI {
     fun createBrukerGraphQL(
         brukerRepository: BrukerRepository,
         hendelseProdusent: HendelseProdusent,
-        tilgangerService: TilgangerService,
+        altinnTilgangerService: AltinnTilgangerService,
         virksomhetsinfoService: VirksomhetsinfoService,
     ) = TypedGraphQL<Context>(
         createGraphQL("/bruker.graphql") {
@@ -301,30 +302,15 @@ object BrukerAPI {
                     it.notifikasjonContext<Context>().fnr
                 }
 
-                queryNotifikasjoner(
-                    brukerRepository = brukerRepository,
-                    tilgangerService = tilgangerService,
-                )
+                queryNotifikasjoner(brukerRepository, altinnTilgangerService)
 
-                querySaker(
-                    brukerRepository = brukerRepository,
-                    tilgangerService = tilgangerService,
-                )
+                querySaker(brukerRepository, altinnTilgangerService)
 
-                querySak(
-                    brukerRepository = brukerRepository,
-                    tilgangerService = tilgangerService,
-                )
+                querySak(brukerRepository, altinnTilgangerService)
 
-                querySakstyper(
-                    brukerRepository = brukerRepository,
-                    tilgangerService = tilgangerService,
-                )
+                querySakstyper(brukerRepository, altinnTilgangerService)
 
-                queryKommendeKalenderavtaler(
-                    brukerRepository = brukerRepository,
-                    tilgangerService = tilgangerService,
-                )
+                queryKommendeKalenderavtaler(brukerRepository, altinnTilgangerService)
 
                 wire("Oppgave") {
                     coDataFetcher("virksomhet") { env ->
@@ -352,27 +338,21 @@ object BrukerAPI {
             }
 
             wire("Mutation") {
-                mutationBrukerKlikketPa(
-                    brukerRepository = brukerRepository,
-                    hendelseProdusent = hendelseProdusent,
-                )
+                mutationBrukerKlikketPa(brukerRepository, hendelseProdusent)
             }
         }
     )
 
     private fun TypeRuntimeWiring.Builder.querySakstyper(
         brukerRepository: BrukerRepository,
-        tilgangerService: TilgangerService
+        altinnTilgangerService: AltinnTilgangerService
     ) {
         coDataFetcher("sakstyper") { env ->
             val context = env.notifikasjonContext<Context>()
-            val tilganger = tilgangerService.hentTilganger(context)
+            val tilganger = altinnTilgangerService.hentTilganger(context.fnr, context.token)
             (if (tilganger.harFeil) altinnFeilCounter else altinnSuccessCounter).increment()
 
-            val sakstyper = brukerRepository.hentSakstyper(
-                fnr = context.fnr,
-                tilganger = tilganger,
-            )
+            val sakstyper = brukerRepository.hentSakstyper(context.fnr, tilganger)
 
             /* TODO: rapportere om feil med altinn? Det vil jo påvirke * filteret ... */
             sakstyperCounter.increment(sakstyper.size.toDouble())
@@ -384,12 +364,15 @@ object BrukerAPI {
 
     private fun TypeRuntimeWiring.Builder.queryNotifikasjoner(
         brukerRepository: BrukerRepository,
-        tilgangerService: TilgangerService,
+        altinnTilgangerService: AltinnTilgangerService,
     ) {
         coDataFetcher("notifikasjoner") { env ->
 
             val context = env.notifikasjonContext<Context>()
-            val tilganger = tilgangerService.hentTilganger(context)
+            val tilganger = altinnTilgangerService.hentTilganger(
+                context.fnr,
+                context.token
+            )
 
             val notifikasjonerDb = brukerRepository.hentNotifikasjoner(context.fnr, tilganger)
             val sakstitler = brukerRepository.hentSakerForNotifikasjoner(
@@ -498,14 +481,14 @@ object BrukerAPI {
 
     private fun TypeRuntimeWiring.Builder.queryKommendeKalenderavtaler(
         brukerRepository: BrukerRepository,
-        tilgangerService: TilgangerService,
+        altinnTilgangerService: AltinnTilgangerService,
     ) {
         coDataFetcher("kommendeKalenderavtaler") { env ->
 
             val context = env.notifikasjonContext<Context>()
             val virksomhetsnumre = env.getTypedArgument<List<String>>("virksomhetsnumre")
 
-            val tilganger = tilgangerService.hentTilganger(context)
+            val tilganger = altinnTilgangerService.hentTilganger(context.fnr, context.token)
 
             val kalenderAvtalerDb: List<BrukerModel.Kalenderavtale> =
                 brukerRepository.hentKommendeKalenderavaler(context.fnr, virksomhetsnumre, tilganger)
@@ -561,7 +544,7 @@ object BrukerAPI {
 
     private fun TypeRuntimeWiring.Builder.querySaker(
         brukerRepository: BrukerRepository,
-        tilgangerService: TilgangerService,
+        altinnTilgangerService: AltinnTilgangerService,
     ) {
         coDataFetcher("saker") { env ->
             val context = env.notifikasjonContext<Context>()
@@ -571,11 +554,11 @@ object BrukerAPI {
                 listOf(env.getTypedArgument("virksomhetsnummer"))
             }
 
-            val tilganger = tilgangerService.hentTilganger(context)
+            val tilganger = altinnTilgangerService.hentTilganger(context.fnr, context.token)
             val sakerResultat = brukerRepository.hentSaker(
                 fnr = context.fnr,
                 virksomhetsnummer = virksomhetsnumre,
-                tilganger = tilganger,
+                altinnTilganger = tilganger,
                 sakstyper = env.getArgument("sakstyper"),
                 tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null),
                 sortering = env.getTypedArgument("sortering"),
@@ -620,8 +603,8 @@ object BrukerAPI {
                         }
                     },
                     frister = oppgaver
-                        .filter { it.tilstand == BrukerModel.Oppgave.Tilstand.NY }
-                        .map { it.frist },
+                        .filter { oppgave ->  oppgave.tilstand == BrukerModel.Oppgave.Tilstand.NY }
+                        .map { oppgave ->  oppgave.frist },
                     nesteSteg = it.nesteSteg,
                     tilleggsinformasjon = it.tilleggsinformasjon,
                     oppgaver = oppgaver.map { o ->
@@ -657,11 +640,11 @@ object BrukerAPI {
                                 avtaletilstand = element.avtaletilstand.tilBrukerAPI(),
                                 startTidspunkt = element.startTidspunkt.atOsloAsOffsetDateTime(),
                                 sluttTidspunkt = element.sluttTidspunkt?.atOsloAsOffsetDateTime(),
-                                lokasjon = element.lokasjon?.let {
+                                lokasjon = element.lokasjon?.let { loc ->
                                     Lokasjon(
-                                        adresse = it.adresse,
-                                        postnummer = it.postnummer,
-                                        poststed = it.poststed,
+                                        adresse = loc.adresse,
+                                        postnummer = loc.postnummer,
+                                        poststed = loc.poststed,
                                     )
                                 },
                                 digitalt = element.digitalt,
@@ -689,16 +672,16 @@ object BrukerAPI {
 
     private fun TypeRuntimeWiring.Builder.querySak(
         brukerRepository: BrukerRepository,
-        tilgangerService: TilgangerService,
+        altinnTilgangerService: AltinnTilgangerService,
     ) {
         coDataFetcher("sakById") { env ->
             val context = env.notifikasjonContext<Context>()
 
-            val tilganger = tilgangerService.hentTilganger(context)
+            val tilganger = altinnTilgangerService.hentTilganger(context.fnr, context.token)
 
             val sak = brukerRepository.hentSakById(
                 fnr = context.fnr,
-                tilganger = tilganger,
+                altinnTilganger = tilganger,
                 id = env.getTypedArgument("id"),
             ) ?: return@coDataFetcher SakResultat(
                 sak = null,
@@ -797,11 +780,11 @@ object BrukerAPI {
         coDataFetcher("sakByGrupperingsid") { env ->
             val context = env.notifikasjonContext<Context>()
 
-            val tilganger = tilgangerService.hentTilganger(context)
+            val tilganger = altinnTilgangerService.hentTilganger(context.fnr, context.token)
 
             val sak = brukerRepository.hentSakByGrupperingsid(
                 fnr = context.fnr,
-                tilganger = tilganger,
+                altinnTilganger = tilganger,
                 grupperingsid = env.getTypedArgument("grupperingsid"),
                 merkelapp = env.getTypedArgument("merkelapp"),
             ) ?: return@coDataFetcher SakResultat(

@@ -27,8 +27,8 @@ class AltinnTilgangerClientTest : DescribeSpec({
             client.hentTilganger("fake tolkien").also {
                 it.harFeil shouldBe true
                 it.tilganger shouldContainExactlyInAnyOrder listOf(
-                    AltinnTilgang.Altinn3("910825496", "test-fager"),
-                    AltinnTilgang.Altinn2("910825496", "4936", "1"),
+                    AltinnTilgang("910825496", "test-fager"),
+                    AltinnTilgang("910825496", "4936:1"),
                 )
             }
         }

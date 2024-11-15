@@ -11,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtført
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Påminnelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -44,10 +45,9 @@ val TEST_MOTTAKER_2 = HendelseModel.AltinnMottaker(
     serviceEdition = TEST_SERVICE_EDITION_2,
 )
 
-val TEST_TILGANG_1 = BrukerModel.Tilgang.Altinn(
-    virksomhet = TEST_VIRKSOMHET_1 ,
-    servicecode = TEST_SERVICE_CODE_1,
-    serviceedition = TEST_SERVICE_EDITION_1,
+val TEST_TILGANG_1 = AltinnTilgang(
+    orgNr = TEST_VIRKSOMHET_1 ,
+    tilgang = "$TEST_SERVICE_CODE_1:$TEST_SERVICE_EDITION_1",
 )
 
 val TEST_OPPRETTET_TIDSPUNKT_1 = OffsetDateTime.parse("2020-01-01T01:01:01+01")

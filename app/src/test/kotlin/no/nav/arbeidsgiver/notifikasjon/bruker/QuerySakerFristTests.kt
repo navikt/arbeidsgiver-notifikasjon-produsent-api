@@ -5,15 +5,15 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilgang
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnTilgangerServiceStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -38,13 +38,13 @@ class QuerySakerFristTests : DescribeSpec({
         val database = testDatabase(Bruker.databaseConfig)
         val brukerRepository = BrukerRepositoryImpl(database)
         val engine = ktorBrukerTestServer(
-            altinn = AltinnStub(
-                inloggetFnr to Tilganger(
-                    tjenestetilganger = listOf(
-                        Tilgang.Altinn(
+            altinnTilgangerService = AltinnTilgangerServiceStub(
+                inloggetFnr to AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf(
+                        AltinnTilgang(
                             altinnMottaker.virksomhetsnummer,
-                            altinnMottaker.serviceCode,
-                            altinnMottaker.serviceEdition
+                            "${altinnMottaker.serviceCode}:${altinnMottaker.serviceEdition}"
                         )
                     ),
                 )

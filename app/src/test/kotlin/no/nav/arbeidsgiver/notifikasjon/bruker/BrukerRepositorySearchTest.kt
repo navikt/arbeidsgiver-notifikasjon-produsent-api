@@ -4,6 +4,8 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -87,12 +89,12 @@ private suspend fun BrukerRepositoryImpl.search(query: String?): List<UUID> =
     hentSaker(
         fnr = "1",
         virksomhetsnummer = listOf("1"),
-        tilganger = BrukerModel.Tilganger(
-            tjenestetilganger = listOf(
-                BrukerModel.Tilgang.Altinn(
-                    virksomhet = "1",
-                    servicecode = "1",
-                    serviceedition = "1",
+        altinnTilganger = AltinnTilganger(
+            harFeil = false,
+            tilganger = listOf(
+                AltinnTilgang(
+                    orgNr = "1",
+                    tilgang = "1:1",
                 )
             )
         ),

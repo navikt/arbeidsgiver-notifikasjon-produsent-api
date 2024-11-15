@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.OffsetDateTime
 
@@ -13,8 +14,11 @@ class OppgaveUførtTests : DescribeSpec({
         val brukerRepository = BrukerRepositoryImpl(database)
         val engine = ktorBrukerTestServer(
             brukerRepository = brukerRepository,
-            altinn = AltinnStub { _, _ ->
-                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf(TEST_TILGANG_1)
+                )
             }
         )
         val oppgaveOpprettet = brukerRepository.oppgaveOpprettet(

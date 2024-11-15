@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
@@ -27,6 +26,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
@@ -39,7 +39,7 @@ import java.util.*
 interface BrukerRepository {
     suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Tilganger,
+        altinnTilganger: AltinnTilganger,
     ): List<BrukerModel.Notifikasjon>
 
     class HentSakerResultat(
@@ -62,7 +62,7 @@ interface BrukerRepository {
     suspend fun hentSaker(
         fnr: String,
         virksomhetsnummer: List<String>,
-        tilganger: Tilganger,
+        altinnTilganger: AltinnTilganger,
         tekstsoek: String?,
         sakstyper: List<String>?,
         offset: Int,
@@ -73,13 +73,13 @@ interface BrukerRepository {
 
     suspend fun hentSakById(
         fnr: String,
-        tilganger: Tilganger,
+        altinnTilganger: AltinnTilganger,
         id: UUID,
     ): BrukerModel.Sak?
 
     suspend fun hentSakByGrupperingsid(
         fnr: String,
-        tilganger: Tilganger,
+        altinnTilganger: AltinnTilganger,
         grupperingsid: String,
         merkelapp: String,
     ): BrukerModel.Sak?
@@ -95,7 +95,7 @@ interface BrukerRepository {
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata)
     suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String?
     suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah)
-    suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String>
+    suspend fun hentSakstyper(fnr: String, altinnTilganger: AltinnTilganger): List<String>
     suspend fun hentSakerForNotifikasjoner(
         grupperinger: List<BrukerModel.Gruppering>
     ): Map<String, BrukerModel.SakMetadata>
@@ -103,7 +103,7 @@ interface BrukerRepository {
     suspend fun hentKommendeKalenderavaler(
         fnr: String,
         virksomhetsnumre: List<String>,
-        tilganger: Tilganger
+        altinnTilganger: AltinnTilganger
     ): List<BrukerModel.Kalenderavtale>
 }
 
@@ -115,31 +115,22 @@ class BrukerRepositoryImpl(
 
     override suspend fun hentNotifikasjoner(
         fnr: String,
-        tilganger: Tilganger,
+        altinnTilganger: AltinnTilganger,
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
-        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
-            AltinnMottaker(
-                serviceCode = it.servicecode,
-                serviceEdition = it.serviceedition,
-                virksomhetsnummer = it.virksomhet
-            )
-        }
 
         database.nonTransactionalExecuteQuery(
-            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
             with 
                 mine_altinntilganger as (
                     select * from json_to_recordset(?::json) 
-                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                    as ("orgNr" text, tilgang text)
                 ),
                 mine_altinn_notifikasjoner as (
                     select er.notifikasjon_id
-                    from mottaker_altinn_enkeltrettighet er
+                    from mottaker_altinn_tilgang er
                     join mine_altinntilganger at on 
-                        er.virksomhet = at.virksomhetsnummer and
-                        er.service_code = at."serviceCode" and
-                        er.service_edition = at."serviceEdition"
+                        er.virksomhet = at."orgNr" and
+                        er.altinn_tilgang = at.tilgang
                     where
                         er.notifikasjon_id is not null
                 ),
@@ -166,7 +157,7 @@ class BrukerRepositoryImpl(
             limit 200
             """,
             {
-                jsonb(tilgangerAltinnMottaker)
+                jsonb(altinnTilganger.tilganger)
                 text(fnr)
                 text(fnr)
             }
@@ -230,7 +221,7 @@ class BrukerRepositoryImpl(
     override suspend fun hentSaker(
         fnr: String,
         virksomhetsnummer: List<String>,
-        tilganger: Tilganger,
+        altinnTilganger: AltinnTilganger,
         tekstsoek: String?,
         sakstyper: List<String>?,
         offset: Int,
@@ -239,13 +230,8 @@ class BrukerRepositoryImpl(
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): BrukerRepository.HentSakerResultat {
         return timer.coRecord {
-            val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
-                AltinnMottaker(
-                    serviceCode = it.servicecode,
-                    serviceEdition = it.serviceedition,
-                    virksomhetsnummer = it.virksomhet
-                )
-            }.filter { virksomhetsnummer.contains(it.virksomhetsnummer) }
+            val tilgangerAltinnMottaker = altinnTilganger.tilganger
+                .filter { virksomhetsnummer.contains(it.orgNr) }
 
             var tekstsoekElementer = (tekstsoek ?: "")
                 .trim()
@@ -267,20 +253,18 @@ class BrukerRepositoryImpl(
                 .ifNotBlank { "where $it" }
 
             val rows = database.nonTransactionalExecuteQuery(
-                /*  quotes are necessary for fields from json, otherwise they are lower-cased */
                 """
                     with 
                         mine_altinntilganger as (
-                            select
-                                virksomhetsnummer as virksomhet,
-                                "serviceCode" as service_code,
-                                "serviceEdition" as service_edition from json_to_recordset(?::json) 
-                            as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                            select * from json_to_recordset(?::json)  
+                            as ("orgNr" text, tilgang text)
                         ),
                         mine_altinn_saker as (
                             select er.sak_id
-                            from mottaker_altinn_enkeltrettighet er
-                            join mine_altinntilganger using (virksomhet, service_code, service_edition)
+                            from mottaker_altinn_tilgang er
+                            join mine_altinntilganger at on 
+                                er.virksomhet = at."orgNr" and
+                                er.altinn_tilgang = at.tilgang
                             where er.sak_id is not null
                         ),
                         mine_digisyfo_saker as (
@@ -457,33 +441,23 @@ class BrukerRepositoryImpl(
 
     override suspend fun hentSakById(
         fnr: String,
-        tilganger: Tilganger,
+        altinnTilganger: AltinnTilganger,
         id: UUID
     ): BrukerModel.Sak? {
         return timer.coRecord {
-            val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
-                AltinnMottaker(
-                    serviceCode = it.servicecode,
-                    serviceEdition = it.serviceedition,
-                    virksomhetsnummer = it.virksomhet
-                )
-            }
-
             val rows = database.nonTransactionalExecuteQuery(
-                /*  quotes are necessary for fields from json, otherwise they are lower-cased */
                 """
-                    with 
+                    with
                         mine_altinntilganger as (
-                            select
-                                virksomhetsnummer as virksomhet,
-                                "serviceCode" as service_code,
-                                "serviceEdition" as service_edition from json_to_recordset(?::json) 
-                            as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                            select * from json_to_recordset(?::json) 
+                            as ("orgNr" text, tilgang text)
                         ),
                         mine_altinn_saker as (
                             select er.sak_id
-                            from mottaker_altinn_enkeltrettighet er
-                            join mine_altinntilganger using (virksomhet, service_code, service_edition)
+                            from mottaker_altinn_tilgang er
+                            join mine_altinntilganger at on 
+                                er.virksomhet = at."orgNr" and
+                                er.altinn_tilgang = at.tilgang
                             where er.sak_id is not null
                         ),
                         mine_digisyfo_saker as (
@@ -517,7 +491,7 @@ class BrukerRepositoryImpl(
                             ), '[]'::jsonb) as sak from min_sak
                     """,
                 {
-                    jsonb(tilgangerAltinnMottaker)
+                    jsonb(altinnTilganger.tilganger)
                     text(fnr)
                     uuid(id)
                 }
@@ -530,34 +504,25 @@ class BrukerRepositoryImpl(
 
     override suspend fun hentSakByGrupperingsid(
         fnr: String,
-        tilganger: Tilganger,
+        altinnTilganger: AltinnTilganger,
         grupperingsid: String,
         merkelapp: String
     ): BrukerModel.Sak? {
         return timer.coRecord {
-            val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
-                AltinnMottaker(
-                    serviceCode = it.servicecode,
-                    serviceEdition = it.serviceedition,
-                    virksomhetsnummer = it.virksomhet
-                )
-            }
 
             val rows = database.nonTransactionalExecuteQuery(
-                /*  quotes are necessary for fields from json, otherwise they are lower-cased */
                 """
                     with 
                         mine_altinntilganger as (
-                            select
-                                virksomhetsnummer as virksomhet,
-                                "serviceCode" as service_code,
-                                "serviceEdition" as service_edition from json_to_recordset(?::json) 
-                            as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                            select * from json_to_recordset(?::json) 
+                            as ("orgNr" text, tilgang text)
                         ),
                         mine_altinn_saker as (
                             select er.sak_id
-                            from mottaker_altinn_enkeltrettighet er
-                            join mine_altinntilganger using (virksomhet, service_code, service_edition)
+                            from mottaker_altinn_tilgang er
+                            join mine_altinntilganger at on 
+                                er.virksomhet = at."orgNr" and
+                                er.altinn_tilgang = at.tilgang
                             where er.sak_id is not null
                         ),
                         mine_digisyfo_saker as (
@@ -591,7 +556,7 @@ class BrukerRepositoryImpl(
                             ), '[]'::jsonb) as sak from min_sak
                     """,
                 {
-                    jsonb(tilgangerAltinnMottaker)
+                    jsonb(altinnTilganger.tilganger)
                     text(fnr)
                     text(grupperingsid)
                     text(merkelapp)
@@ -788,31 +753,23 @@ class BrukerRepositoryImpl(
     override suspend fun hentKommendeKalenderavaler(
         fnr: String,
         virksomhetsnumre: List<String>,
-        tilganger: Tilganger
+        altinnTilganger: AltinnTilganger
     ): List<BrukerModel.Kalenderavtale> {
-        val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
-            AltinnMottaker(
-                serviceCode = it.servicecode,
-                serviceEdition = it.serviceedition,
-                virksomhetsnummer = it.virksomhet
-            )
-        }.filter { virksomhetsnumre.contains(it.virksomhetsnummer) }
+        val tilgangerAltinnMottaker = altinnTilganger.tilganger.filter { virksomhetsnumre.contains(it.orgNr) }
 
         return database.nonTransactionalExecuteQuery(
-            /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
             with 
                 mine_altinntilganger as (
                     select * from json_to_recordset(?::json) 
-                    as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                    as ("orgNr" text, tilgang text)
                 ),
                 mine_altinn_notifikasjoner as (
                     select er.notifikasjon_id
-                    from mottaker_altinn_enkeltrettighet er
+                    from mottaker_altinn_tilgang er
                     join mine_altinntilganger at on 
-                        er.virksomhet = at.virksomhetsnummer and
-                        er.service_code = at."serviceCode" and
-                        er.service_edition = at."serviceEdition"
+                        er.virksomhet = at."orgNr" and
+                        er.altinn_tilgang = at.tilgang
                     where
                         er.notifikasjon_id is not null
                 ),
@@ -1180,11 +1137,14 @@ class BrukerRepositoryImpl(
                 mottaker = mottaker
             )
 
-            is AltinnMottaker -> storeAltinnMottaker(
-                notifikasjonId = notifikasjonId,
-                sakId = sakId,
-                mottaker = mottaker
-            )
+            is AltinnMottaker -> {
+                storeAltinnMottaker(
+                    notifikasjonId = notifikasjonId,
+                    sakId = sakId,
+                    orgNr = mottaker.virksomhetsnummer,
+                    altinnTilgang = "${mottaker.serviceCode}:${mottaker.serviceEdition}"
+                )
+            }
         }
     }
 
@@ -1208,37 +1168,12 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private fun Transaction.storeAltinnMottakerGammelTabell(
-        notifikasjonId: UUID?,
-        sakId: UUID?,
-        mottaker: AltinnMottaker
-    ) {
-        executeUpdate(
-            """
-            insert into mottaker_altinn_enkeltrettighet
-                (notifikasjon_id, sak_id, virksomhet, service_code, service_edition)
-            values (?, ?, ?, ?, ?)
-            on conflict do nothing
-        """
-        ) {
-            nullableUuid(notifikasjonId)
-            nullableUuid(sakId)
-            text(mottaker.virksomhetsnummer)
-            text(mottaker.serviceCode)
-            text(mottaker.serviceEdition)
-        }
-    }
-
     fun Transaction.storeAltinnMottaker(
         notifikasjonId: UUID?,
         sakId: UUID?,
-        mottaker: AltinnMottaker
+        orgNr: String,
+        altinnTilgang: String
     ) {
-        storeAltinnMottakerGammelTabell(
-            notifikasjonId,
-            sakId,
-            mottaker
-        ) //TODO: fjerne denne når man har skrevet seg ut av gammel tabell
         executeUpdate(
             """
             insert into mottaker_altinn_tilgang
@@ -1249,8 +1184,8 @@ class BrukerRepositoryImpl(
         ) {
             nullableUuid(notifikasjonId)
             nullableUuid(sakId)
-            text(mottaker.virksomhetsnummer)
-            text("${mottaker.serviceCode}:${mottaker.serviceEdition}")
+            text(orgNr)
+            text(altinnTilgang)
         }
     }
 
@@ -1326,31 +1261,22 @@ class BrukerRepositoryImpl(
         }
     }
 
-    override suspend fun hentSakstyper(fnr: String, tilganger: Tilganger): List<String> {
+    override suspend fun hentSakstyper(fnr: String, altinnTilganger: AltinnTilganger): List<String> {
         return timer.coRecord {
-            val tilgangerAltinnMottaker = tilganger.tjenestetilganger.map {
-                AltinnMottaker(
-                    serviceCode = it.servicecode,
-                    serviceEdition = it.serviceedition,
-                    virksomhetsnummer = it.virksomhet
-                )
-            }
 
             val rows = database.nonTransactionalExecuteQuery(
-                /*  quotes are necessary for fields from json, otherwise they are lower-cased */
                 """
                     with 
                         mine_altinntilganger as (
-                            select * from json_to_recordset(?::json) 
-                            as (virksomhetsnummer text, "serviceCode" text, "serviceEdition" text)
+                            select * from json_to_recordset(?::json)  
+                            as ("orgNr" text, tilgang text)
                         ),
                         mine_altinn_saker as (
                             select er.sak_id
-                            from mottaker_altinn_enkeltrettighet er
+                            from mottaker_altinn_tilgang er
                             join mine_altinntilganger at on 
-                                er.virksomhet = at.virksomhetsnummer and
-                                er.service_code = at."serviceCode" and
-                                er.service_edition = at."serviceEdition"
+                                er.virksomhet = at."orgNr" and
+                                er.altinn_tilgang = at.tilgang
                             where
                                 er.sak_id is not null
                         ),
@@ -1369,7 +1295,7 @@ class BrukerRepositoryImpl(
                         join sak as s on s.id = ms.sak_id
                     """,
                 {
-                    jsonb(tilgangerAltinnMottaker)
+                    jsonb(altinnTilganger.tilganger)
                     text(fnr)
                 }
             ) {

@@ -6,9 +6,9 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -19,10 +19,10 @@ class SoftDeleteTests : DescribeSpec({
     val virksomhetsnummer = "1"
 
     val mottaker = NærmesteLederMottaker(
-    naermesteLederFnr = "314",
-    ansattFnr = "33314",
-    virksomhetsnummer = virksomhetsnummer
-)
+        naermesteLederFnr = "314",
+        ansattFnr = "33314",
+        virksomhetsnummer = virksomhetsnummer
+    )
 
 
     describe("SoftDelete av notifikasjon") {
@@ -53,7 +53,10 @@ class SoftDeleteTests : DescribeSpec({
             val notifikasjoner =
                 brukerRepository.hentNotifikasjoner(
                     mottaker.naermesteLederFnr,
-                    Tilganger.EMPTY,
+                    AltinnTilganger(
+                        harFeil = false,
+                        tilganger = listOf()
+                    ),
                 )
                     .map { it.id }
                     .sorted()
@@ -76,7 +79,10 @@ class SoftDeleteTests : DescribeSpec({
             )
             val notifikasjonerEtterSletting = brukerRepository.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                Tilganger.EMPTY,
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf()
+                ),
             )
                 .map { it.id }
 
@@ -85,7 +91,7 @@ class SoftDeleteTests : DescribeSpec({
     }
 
     describe("SoftDelete cascader på sak") {
-        it ("sletter alle notifikasjoner knyttet til en sak") {
+        it("sletter alle notifikasjoner knyttet til en sak") {
             val database = testDatabase(Bruker.databaseConfig)
             val brukerRepository = BrukerRepositoryImpl(database)
 
@@ -132,19 +138,28 @@ class SoftDeleteTests : DescribeSpec({
 
             val notifikasjoner = brukerRepository.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                Tilganger.EMPTY,
-            ).map{ it.id }
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf()
+                ),
+            ).map { it.id }
 
 
             val sak1EtterSletting = brukerRepository.hentSakById(
                 id = sak1.sakId,
                 fnr = mottaker.naermesteLederFnr,
-                tilganger = Tilganger.EMPTY,
+                altinnTilganger = AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf()
+                ),
             )
             val sak2EtterSletting = brukerRepository.hentSakById(
                 id = sak2.sakId,
                 fnr = mottaker.naermesteLederFnr,
-                tilganger = Tilganger.EMPTY,
+                altinnTilganger = AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf()
+                ),
             )
 
             sak1EtterSletting shouldBe null

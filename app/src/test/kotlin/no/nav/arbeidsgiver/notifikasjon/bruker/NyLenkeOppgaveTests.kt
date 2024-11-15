@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 
 
@@ -39,7 +40,10 @@ class NyLenkeOppgaveTests: DescribeSpec({
 private suspend fun BrukerRepository.hentLenke() =
     hentNotifikasjoner(
         fnr = "",
-        tilganger = BrukerModel.Tilganger(tjenestetilganger = listOf(TEST_TILGANG_1))
+        altinnTilganger = AltinnTilganger(
+            harFeil = false,
+            tilganger = listOf(TEST_TILGANG_1)
+        )
     )
         .filterIsInstance<BrukerModel.Oppgave>()
         .first()

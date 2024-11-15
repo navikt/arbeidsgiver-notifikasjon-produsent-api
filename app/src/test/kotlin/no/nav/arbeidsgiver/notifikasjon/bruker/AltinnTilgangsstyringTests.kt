@@ -3,8 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
@@ -39,12 +40,12 @@ class AltinnTilgangsstyringTests : DescribeSpec({
 
         val notifikasjoner = brukerRepository.hentNotifikasjoner(
             fnr = "",
-            tilganger = Tilganger(
-                tjenestetilganger = listOf("HarTilgang0", "HarTilgang1").map {
-                    BrukerModel.Tilgang.Altinn(
-                        virksomhet = "1",
-                        servicecode = it,
-                        serviceedition = "1",
+            altinnTilganger = AltinnTilganger(
+                harFeil = false,
+                tilganger = listOf("HarTilgang0", "HarTilgang1").map {
+                    AltinnTilgang(
+                        orgNr = "1",
+                        tilgang = "$it:1"
                     )
                 },
             )

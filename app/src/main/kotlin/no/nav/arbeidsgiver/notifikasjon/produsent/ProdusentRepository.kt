@@ -25,8 +25,11 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ParameterSetters
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository.AggregateType
 import java.time.LocalDate
 import java.time.LocalDateTime

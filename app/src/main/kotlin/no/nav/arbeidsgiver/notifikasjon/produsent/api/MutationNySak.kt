@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak

@@ -4,10 +4,10 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.should
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -61,7 +61,10 @@ class HardDeleteTests : DescribeSpec({
         val notifikasjoner =
             brukerRepository.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                Tilganger.EMPTY,
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = emptyList()
+                ),
             )
                 .map { it.id }
                 .sorted()
@@ -74,7 +77,10 @@ class HardDeleteTests : DescribeSpec({
             brukerRepository.oppdaterModellEtterHendelse(hardDeleteEvent)
             val notifikasjonerEtterSletting = brukerRepository.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                Tilganger.EMPTY,
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = emptyList()
+                ),
             )
                 .map { it.id }
 
@@ -147,7 +153,10 @@ class HardDeleteTests : DescribeSpec({
                 brukerRepository.hentSaker(
                     fnr = mottaker.naermesteLederFnr,
                     virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
-                    tilganger = Tilganger.EMPTY,
+                    altinnTilganger = AltinnTilganger(
+                        harFeil = false,
+                        tilganger = emptyList()
+                    ),
                     tekstsoek = null,
                     sakstyper = null,
                     offset = 0,
@@ -162,7 +171,10 @@ class HardDeleteTests : DescribeSpec({
 
             brukerRepository.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                Tilganger.EMPTY,
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = emptyList()
+                ),
             ).map { it.id } shouldContainExactly listOf(beskjed.aggregateId)
         }
 
@@ -171,7 +183,10 @@ class HardDeleteTests : DescribeSpec({
             val sakerEtterSletting = brukerRepository.hentSaker(
                 fnr = mottaker.naermesteLederFnr,
                 virksomhetsnummer = listOf(mottaker.virksomhetsnummer),
-                tilganger = Tilganger.EMPTY,
+                altinnTilganger = AltinnTilganger(
+                    harFeil = false,
+                    tilganger = emptyList()
+                ),
                 tekstsoek = null,
                 sakstyper = null,
                 offset = 0,
@@ -185,7 +200,10 @@ class HardDeleteTests : DescribeSpec({
 
             brukerRepository.hentNotifikasjoner(
                 mottaker.naermesteLederFnr,
-                Tilganger.EMPTY,
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = emptyList()
+                ),
             ) should beEmpty()
         }
     }

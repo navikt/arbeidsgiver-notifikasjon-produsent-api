@@ -7,8 +7,10 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Sakstype
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.MOTTATT
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnTilgangerServiceStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -23,13 +25,13 @@ class QuerySakerAntallMerkelapperTests : DescribeSpec({
         val database = testDatabase(Bruker.databaseConfig)
         val brukerRepository = BrukerRepositoryImpl(database)
         val engine = ktorBrukerTestServer(
-            altinn = AltinnStub(
-                "0".repeat(11) to BrukerModel.Tilganger(
-                    tjenestetilganger = listOf(tilgang1, tilgang2).map {
-                        BrukerModel.Tilgang.Altinn(
-                            virksomhet = it.virksomhetsnummer,
-                            servicecode = it.serviceCode,
-                            serviceedition = it.serviceEdition
+            altinnTilgangerService = AltinnTilgangerServiceStub(
+                "0".repeat(11) to AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf(tilgang1, tilgang2).map {
+                        AltinnTilgang(
+                            orgNr = it.virksomhetsnummer,
+                            tilgang = "${it.serviceCode}:${it.serviceEdition}",
                         )
                     },
                 )

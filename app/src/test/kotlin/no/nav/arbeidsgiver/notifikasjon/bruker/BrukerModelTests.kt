@@ -3,9 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSingleElement
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Tilganger
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
@@ -60,7 +60,10 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     brukerRepository.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        Tilganger.EMPTY,
+                        AltinnTilganger(
+                            harFeil = false,
+                            tilganger = emptyList()
+                        ),
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",
@@ -98,7 +101,10 @@ class BrukerModelTests : DescribeSpec({
                 val notifikasjoner =
                     brukerRepository.hentNotifikasjoner(
                         mottaker.naermesteLederFnr,
-                        Tilganger.EMPTY,
+                        AltinnTilganger(
+                            harFeil = false,
+                            tilganger = emptyList()
+                        ),
                     )
                 notifikasjoner shouldHaveSingleElement BrukerModel.Beskjed(
                     merkelapp = "foo",

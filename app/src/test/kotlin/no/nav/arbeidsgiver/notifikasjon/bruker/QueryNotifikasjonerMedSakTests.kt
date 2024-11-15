@@ -6,7 +6,8 @@ import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnTilgangerServiceStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -20,8 +21,11 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
         val brukerRepository = BrukerRepositoryImpl(database)
         val engine = ktorBrukerTestServer(
             brukerRepository = brukerRepository,
-            altinn = AltinnStub { _, _ ->
-                BrukerModel.Tilganger(listOf(TEST_TILGANG_1))
+            altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf(TEST_TILGANG_1)
+                )
             }
         )
         val opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00")
@@ -101,7 +105,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
                     it.id shouldBe oppgaveMedSakOpprettet.aggregateId
                     it.sak shouldNot beNull()
                     it.sak!!.tittel shouldBe "Sakstittel for oppgave"
-                    it.sak!!.tilleggsinformasjon shouldBe "Tilleggsinformasjon om saken"
+                    it.sak.tilleggsinformasjon shouldBe "Tilleggsinformasjon om saken"
                 }
                 (notifikasjoner[3] as BrukerAPI.Notifikasjon.Beskjed).let {
                     it.id shouldBe beskjedMedSakOpprettet.aggregateId

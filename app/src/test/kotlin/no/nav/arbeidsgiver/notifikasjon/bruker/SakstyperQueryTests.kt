@@ -6,8 +6,10 @@ import io.kotest.matchers.collections.shouldNotContainAnyOf
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.virksomhetsnummer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.AltinnStub
+import no.nav.arbeidsgiver.notifikasjon.util.AltinnTilgangerServiceStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -40,14 +42,13 @@ class SakstyperQueryTests : DescribeSpec({
         val brukerRepository = BrukerRepositoryImpl(database)
         val engine = ktorBrukerTestServer(
             brukerRepository = brukerRepository,
-            altinn = AltinnStub { _, _ ->
-                BrukerModel.Tilganger(tjenestetilganger = listOf(tilgang1, tilgang2).map {
-                    BrukerModel.Tilgang.Altinn(
-                        virksomhet = it.virksomhetsnummer,
-                        servicecode = it.serviceCode,
-                        serviceedition = it.serviceEdition,
-                    )
-                })
+            altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
+                AltinnTilganger(
+                    harFeil = false,
+                    tilganger = listOf(tilgang1, tilgang2).map {
+                        AltinnTilgang(it.virksomhetsnummer, it.serviceCode + ":" + it.serviceEdition)
+                    },
+                )
             }
         )
         val skalSe = mutableSetOf<String>()
