@@ -30,8 +30,7 @@ const val TEST_SERVICE_CODE_1 = "1234"
 const val TEST_SERVICE_EDITION_1 = "1"
 
 const val TEST_VIRKSOMHET_2 = "111111111"
-const val TEST_SERVICE_CODE_2 = "5678"
-const val TEST_SERVICE_EDITION_2 = "2"
+const val TEST_RESSURS_ID_1 = "nav_test_testressurs1"
 
 val TEST_MOTTAKER_1 = HendelseModel.AltinnMottaker(
     virksomhetsnummer = TEST_VIRKSOMHET_1,
@@ -39,15 +38,19 @@ val TEST_MOTTAKER_1 = HendelseModel.AltinnMottaker(
     serviceEdition = TEST_SERVICE_EDITION_1,
 )
 
-val TEST_MOTTAKER_2 = HendelseModel.AltinnMottaker(
+val TEST_MOTTAKER_2 = HendelseModel.AltinnRessursMottaker(
     virksomhetsnummer = TEST_VIRKSOMHET_2,
-    serviceCode = TEST_SERVICE_CODE_2,
-    serviceEdition = TEST_SERVICE_EDITION_2,
+    ressursId = TEST_RESSURS_ID_1,
 )
 
 val TEST_TILGANG_1 = AltinnTilgang(
     orgNr = TEST_VIRKSOMHET_1 ,
     tilgang = "$TEST_SERVICE_CODE_1:$TEST_SERVICE_EDITION_1",
+)
+
+val TEST_TILGANG_2 = AltinnTilgang(
+    orgNr = TEST_VIRKSOMHET_2 ,
+    tilgang = TEST_RESSURS_ID_1,
 )
 
 val TEST_OPPRETTET_TIDSPUNKT_1 = OffsetDateTime.parse("2020-01-01T01:01:01+01")

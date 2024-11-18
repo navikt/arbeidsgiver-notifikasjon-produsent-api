@@ -19,23 +19,32 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
                 AltinnTilganger(
                     harFeil = false,
-                    tilganger = listOf(TEST_TILGANG_1)
+                    tilganger = listOf(TEST_TILGANG_1, TEST_TILGANG_2)
                 )
             }
         )
         val grupperingsid = "42"
         val merkelapp = "tag"
-        brukerRepository.sakOpprettet(
+        val sak1 = brukerRepository.sakOpprettet(
             sakId = uuid("1"),
+            mottakere = listOf(TEST_MOTTAKER_1),
             virksomhetsnummer = TEST_VIRKSOMHET_1,
+            merkelapp = merkelapp,
+            grupperingsid = grupperingsid,
+        )
+        val sak2 = brukerRepository.sakOpprettet(
+            sakId = uuid("1"),
+            mottakere = listOf(TEST_MOTTAKER_2),
+            virksomhetsnummer = TEST_VIRKSOMHET_2,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
         )
 
         brukerRepository.kalenderavtaleOpprettet(
-            sakId = uuid("1"),
+            sakId = sak1.sakId,
+            virksomhetsnummer = sak1.virksomhetsnummer,
+            mottakere = sak1.mottakere,
             notifikasjonId = uuid("2"),
-            virksomhetsnummer = TEST_VIRKSOMHET_1,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
             startTidspunkt = now.plusDays(1),
@@ -43,9 +52,10 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             tekst = "2. plass"
         )
         brukerRepository.kalenderavtaleOpprettet(
-            sakId = uuid("1"),
+            sakId = sak2.sakId,
+            virksomhetsnummer = sak2.virksomhetsnummer,
+            mottakere = sak2.mottakere,
             notifikasjonId = uuid("3"),
-            virksomhetsnummer = TEST_VIRKSOMHET_1,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
             startTidspunkt = now.plusHours(1),
@@ -53,9 +63,10 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             tekst = "1. plass"
         )
         brukerRepository.kalenderavtaleOpprettet(
-            sakId = uuid("1"),
+            sakId = sak1.sakId,
+            virksomhetsnummer = sak1.virksomhetsnummer,
+            mottakere = sak1.mottakere,
             notifikasjonId = uuid("4"),
-            virksomhetsnummer = TEST_VIRKSOMHET_1,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
             startTidspunkt = now.minusHours(2),
@@ -63,9 +74,10 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             tekst = "DNF"
         )
         brukerRepository.kalenderavtaleOpprettet(
-            sakId = uuid("1"),
+            sakId = sak2.sakId,
+            virksomhetsnummer = sak2.virksomhetsnummer,
+            mottakere = sak2.mottakere,
             notifikasjonId = uuid("5"),
-            virksomhetsnummer = TEST_VIRKSOMHET_1,
             merkelapp = merkelapp,
             grupperingsid = grupperingsid,
             startTidspunkt = now.minusDays(2),
@@ -80,7 +92,7 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             tekst = "fra DNF til 3. plass"
         )
 
-        val response = engine.queryKommendeKalenderavtalerJson(listOf(TEST_VIRKSOMHET_1))
+        val response = engine.queryKommendeKalenderavtalerJson(listOf(TEST_VIRKSOMHET_1, TEST_VIRKSOMHET_2))
 
         it("returnerer kommende kalenderavtaler nærmest først") {
             val kalenderavtaler = response.getTypedContent<List<Kalenderavtale>>("kommendeKalenderavtaler/avtaler")
