@@ -8,6 +8,7 @@ import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {print} from "graphql/language";
 import {Button, TextField} from "@navikt/ds-react";
 import {EksternVarsel, formateEksternVarsel} from "./EksternVarsling.tsx";
+import {MottakerInput, MottakerRef} from "./MottakerInput.tsx";
 
 const NY_BESKJED = gql`
     mutation (
@@ -69,7 +70,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
     const lenkeRef = React.useRef<HTMLInputElement>(null);
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
     const eksternVarselRef = React.useRef<EksternVarsel>(null);
-
+    const mottakerRef = React.useRef<MottakerRef>(null);
 
     useEffect(() => {
         if (grupperingsidRef.current !== null) {
@@ -85,6 +86,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
             variables: {
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
                 virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
+                mottaker: mottakerRef.current?.hentMottaker(),
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
                 lenke: lenkeRef.current?.value ?? "",
@@ -108,6 +110,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
             <div>
                 <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
                 <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
+                <MottakerInput ref={mottakerRef}/>
                 <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en ny beskjed"/>
                 <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
                 <TextField label={"Lenke*"} ref={lenkeRef}/>

@@ -26,6 +26,7 @@ import {
   formateEksternVarsel,
   formaterPåminnelse,
 } from "./EksternVarsling.tsx";
+import {MottakerInput, MottakerRef} from "./MottakerInput.tsx";
 
 const NY_KALENDERAVTALE = gql`
   mutation (
@@ -40,9 +41,10 @@ const NY_KALENDERAVTALE = gql`
     $paaminnelse: PaaminnelseInput
     $lokasjon: LokasjonInput
     $erDigitalt: Boolean
+    $mottaker: MottakerInput!
   ) {
     nyKalenderavtale(
-      mottakere: [{ altinn: { serviceCode: "4936", serviceEdition: "1" } }]
+      mottakere: [$mottaker]
       virksomhetsnummer: $virksomhetsnummer
       grupperingsid: $grupperingsid
       eksternId: $eksternId
@@ -93,14 +95,15 @@ export const NyKalenderAvtale: FunctionComponent = () => {
   const lokasjonRef = React.useRef<Lokasjon>(null);
   const lenkeRef = React.useRef<HTMLInputElement>(null);
   const merkelappRef = React.useRef<HTMLInputElement>(null);
-
   const eksternVarselRef = React.useRef<EksternVarsel>(null);
+  const mottakerRef = React.useRef<MottakerRef>(null);
 
   const handleSend = () => {
     nyKalenderavtale({
       variables: {
         grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
         virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
+        mottaker: mottakerRef.current?.hentMottaker(),
         eksternId: nullIfEmpty(eksternIdRef.current?.value),
         lenke: nullIfEmpty(lenkeRef.current?.value),
         tekst: nullIfEmpty(tekstRef.current?.value),
@@ -142,6 +145,7 @@ export const NyKalenderAvtale: FunctionComponent = () => {
             ref={virksomhetsnummerRef}
             defaultValue="910825526"
           />
+          <MottakerInput ref={mottakerRef}/>
           <TextField
             label={"Tekst*"}
             ref={tekstRef}
@@ -162,7 +166,7 @@ export const NyKalenderAvtale: FunctionComponent = () => {
             ref={merkelappRef}
             defaultValue="fager"
           />
-          <TextField label={"Lenke"} ref={lenkeRef} />
+          <TextField label={"Lenke"} ref={lenkeRef} defaultValue="#foo" />
           <TextField
             label={"EksternId*"}
             ref={eksternIdRef}

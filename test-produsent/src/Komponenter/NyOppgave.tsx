@@ -8,6 +8,7 @@ import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {GrupperingsidContext} from "../App.tsx";
 import {EksternVarsel, formateEksternVarsel} from "./EksternVarsling.tsx";
+import {MottakerRef, MottakerInput} from "./MottakerInput.tsx";
 
 const NY_OPPGAVE = gql`
     mutation (
@@ -15,6 +16,8 @@ const NY_OPPGAVE = gql`
         $virksomhetsnummer: String!
         $lenke: String!
         $tekst: String!
+        $merkelapp: String!
+        $mottaker: MottakerInput!
         $frist: ISO8601Date
         $eksternId: String!
         $opprettetTidspunkt: ISO8601DateTime
@@ -23,15 +26,10 @@ const NY_OPPGAVE = gql`
     ) {
         nyOppgave(
             nyOppgave: {
-                mottakere: [{
-                    altinn: {
-                        serviceCode: "4936"
-                        serviceEdition: "1"
-                    }
-                }]
+                mottakere: [$mottaker]
                 frist: $frist
                 notifikasjon: {
-                    merkelapp: "fager"
+                    merkelapp: $merkelapp
                     lenke: $lenke
                     tekst: $tekst
                 }
@@ -74,6 +72,7 @@ export const NyOppgave: React.FunctionComponent = () => {
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
     const paaminnelseRef = React.useRef<HTMLInputElement>(null);
     const eksternVarselRef = React.useRef<EksternVarsel>(null);
+    const mottakerRef = React.useRef<MottakerRef>(null);
 
     const [harPaaminnelse, setHarPaaminnelse] = React.useState<boolean>(false);
 
@@ -91,6 +90,7 @@ export const NyOppgave: React.FunctionComponent = () => {
             variables: {
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
                 virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
+                mottaker: mottakerRef.current?.hentMottaker(),
                 lenke: lenkeRef.current?.value ?? "",
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
@@ -118,6 +118,7 @@ export const NyOppgave: React.FunctionComponent = () => {
             <div>
                 <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
                 <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
+                <MottakerInput ref={mottakerRef}/>
                 <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en oppgave"/>
                 <TextField label={"Frist*"} ref={fristRef} defaultValue={"2024-05-17"}/>
                 <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>

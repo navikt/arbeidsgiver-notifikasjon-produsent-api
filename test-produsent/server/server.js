@@ -7,7 +7,10 @@ import httpProxyMiddleware, {
 } from 'http-proxy-middleware';
 import {createLogger, format, transports} from 'winston';
 import {fetchAccessToken} from "./accessToken.js";
+import fs from "fs";
+import require from "./esm-require.js";
 
+const {ApolloServer, gql} = require('apollo-server-express');
 const {createProxyMiddleware} = httpProxyMiddleware;
 
 const {
@@ -77,13 +80,9 @@ const loggerPlugin = (proxyServer, options) => {
 log.info(`Frackend startup: ${JSON.stringify({NAIS_CLUSTER_NAME, GIT_COMMIT})}`);
 
 let BUILD_PATH = path.join(process.cwd(), '../build');
-let GRAPHQL_ENDPOINT = 'http://notifikasjon-produsent-api/api/graphql'
-if (NAIS_CLUSTER_NAME === 'local') {
-    GRAPHQL_ENDPOINT = 'https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/api/graphql'
-}
+const GRAPHQL_ENDPOINT = 'http://notifikasjon-produsent-api/api/graphql'
 
 const main = async () => {
-    let appReady = false;
     const app = express();
     app.disable('x-powered-by');
 
@@ -101,23 +100,37 @@ const main = async () => {
         ],
     };
 
-    app.use(
-        '/notifikasjon-produsent-api',
-        async (req, res, next) => {
-            try {
-                const accessToken = await fetchAccessToken();
-                req.headers.authorization = `Bearer ${accessToken}`;
-                next();
-            } catch (err) {
-                next(err);
-            }
-        },
-        createProxyMiddleware({
-            ...proxyOptions,
-            pathRewrite: {'^/': ''},
-            target: GRAPHQL_ENDPOINT,
-        })
-    );
+    if (NAIS_CLUSTER_NAME === 'local') {
+        const sdl = fs.readFileSync('../../app/src/main/resources/produsent.graphql');
+        const typeDefs = gql(sdl.toString());
+        const server = new ApolloServer({
+            typeDefs,
+            mocks: {
+                ISO8601DateTime: () => new Date().toISOString(),
+            },
+        });
+        await server.start();
+        log.info("🤖🤖 Started local mock ApolloServer, all responses are fake 🤖🤖");
+        server.applyMiddleware({app, path: '/notifikasjon-produsent-api'});
+    } else {
+        app.use(
+            '/notifikasjon-produsent-api',
+            async (req, res, next) => {
+                try {
+                    const accessToken = await fetchAccessToken();
+                    req.headers.authorization = `Bearer ${accessToken}`;
+                    next();
+                } catch (err) {
+                    next(err);
+                }
+            },
+            createProxyMiddleware({
+                ...proxyOptions,
+                pathRewrite: {'^/': ''},
+                target: GRAPHQL_ENDPOINT,
+            })
+        );
+    }
 
     app.get('/ok', (req, res) => res.sendStatus(200));
     app.use('/', express.static(BUILD_PATH, { maxAge: '1h' }));

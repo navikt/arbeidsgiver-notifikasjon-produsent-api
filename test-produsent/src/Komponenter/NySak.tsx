@@ -7,11 +7,13 @@ import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {GrupperingsidContext} from "../App.tsx";
+import {MottakerInput, MottakerRef} from "./MottakerInput.tsx";
 
 const NY_SAK = gql`
     mutation (
         $grupperingsid: String!
         $virksomhetsnummer: String!
+        $mottaker: MottakerInput!
         $lenke: String
         $tittel: String!
         $merkelapp: String!
@@ -20,12 +22,7 @@ const NY_SAK = gql`
         $tilleggsinformasjon: String
     ) {
         nySak(
-            mottakere: [{
-                altinn: {
-                    serviceCode: "4936"
-                    serviceEdition: "1"
-                }
-            }]
+            mottakere: [$mottaker]
             virksomhetsnummer: $virksomhetsnummer,
             grupperingsid: $grupperingsid
             lenke: $lenke
@@ -58,6 +55,7 @@ export const NySak: React.FunctionComponent = () => {
     const initiellStatusRef = React.useRef<HTMLInputElement>(null)
     const nesteStegRef = React.useRef<HTMLInputElement>(null)
     const tilleggsinformasjonRef = React.useRef<HTMLInputElement>(null)
+    const mottakerRef = React.useRef<MottakerRef>(null);
 
     const [nySak, {
         data,
@@ -80,6 +78,7 @@ export const NySak: React.FunctionComponent = () => {
             variables: {
                 grupperingsid: nullIfEmpty(grupperingsidRef.current?.value),
                 virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
+                mottaker: mottakerRef.current?.hentMottaker(),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 lenke: nullIfEmpty(lenkeRef.current?.value),
                 tittel: nullIfEmpty(tittelRef.current?.value),
@@ -100,6 +99,7 @@ export const NySak: React.FunctionComponent = () => {
         <div style={{maxWidth:"35rem"}}>
             <TextField label={"Grupperingsid*"}  ref={grupperingsidRef}/>
             <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
+            <MottakerInput ref={mottakerRef}/>
             <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
             <TextField label={"Lenke"} ref={lenkeRef} defaultValue={"https://foo.bar"}/>
             <TextField label={"Tittel*"} ref={tittelRef} defaultValue="Dette er en ny sak"/>

@@ -1,9 +1,9 @@
 import {ApolloClient, ApolloProvider, InMemoryCache} from '@apollo/client';
-import {Button, Heading, TextField} from "@navikt/ds-react";
+import {Box, Button, Heading, TextField, VStack} from "@navikt/ds-react";
 import "@navikt/ds-css";
 import "./App.css"
-import React, {ReactNode} from "react";
-import {alleKomponenter, komponenter} from "./Komponenter/Komponenter";
+import React from "react";
+import {alleKomponenter, komponenter, KomponentNavn} from "./Komponenter/Komponenter";
 import shipit from "./assets/shipit.png"
 
 const client = new ApolloClient({
@@ -14,7 +14,7 @@ const client = new ApolloClient({
 export const GrupperingsidContext = React.createContext("")
 
 function App() {
-    const [valgtKomponent, setValgtKomponent] = React.useState<ReactNode>(Object.values(komponenter)[0])
+    const [valgtKomponent, setValgtKomponent] = React.useState<KomponentNavn>(alleKomponenter[0])
 
     const [grupperingsid, setGrupperingsid] = React.useState<string>(() => crypto.randomUUID())
 
@@ -50,16 +50,24 @@ function App() {
                         <nav className="meny">
                             <Heading size={"medium"} level="2">Velg query</Heading>
                             <ul>
-                                {alleKomponenter.map((key) => (
-                                    <li key={key}>
+                                {alleKomponenter.map((komponentNavn) => (
+                                    <li key={komponentNavn}>
                                         <Button size="small"
                                                 variant="tertiary"
-                                                onClick={() => setValgtKomponent(komponenter[key])}>{key}</Button>
+                                                onClick={() => setValgtKomponent(komponentNavn)}>{komponentNavn}</Button>
                                     </li>))}
                             </ul>
                         </nav>
                         <div className="innhold">
-                            {valgtKomponent}
+                            <VStack gap="4">
+                                <Box padding="4" background="bg-subtle">
+                                    <Heading size="medium" level="2">{valgtKomponent}</Heading>
+                                </Box>
+                                <Box>
+
+                                {komponenter[valgtKomponent]}
+                                </Box>
+                            </VStack>
                         </div>
                     </main>
                 </div>
