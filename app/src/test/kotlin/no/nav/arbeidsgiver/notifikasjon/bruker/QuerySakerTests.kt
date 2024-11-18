@@ -9,6 +9,8 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.OPPRETTET
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus.FERDIG
@@ -230,8 +232,8 @@ class QuerySakerTests : DescribeSpec({
 
         context("søk på tvers av virksomheter") {
             val (brukerRepository, engine) = setupRepoOgEngine()
-            val sak1 = brukerRepository.opprettSak(uuid("1"), "42")
-            val sak2 = brukerRepository.opprettSak(uuid("2"), "43")
+            val sak1 = brukerRepository.opprettSak(uuid("1"), "42", AltinnMottaker("5441", "1", "42"))
+            val sak2 = brukerRepository.opprettSak(uuid("2"), "43", AltinnRessursMottaker("43", "nav_test_foo-ressursid"))
 
             it("hentSaker med tom liste av virksomhetsnumre gir tom liste") {
                 val response = engine.hentSaker(virksomhetsnumre = listOf())
@@ -262,10 +264,10 @@ class QuerySakerTests : DescribeSpec({
 
         context("søk på type sak") {
             val (brukerRepository, engine) = setupRepoOgEngine()
-            brukerRepository.opprettSak(uuid("1"), "42", "merkelapp1") // tilgang til 42
-            brukerRepository.opprettSak(uuid("2"), "43", "merkelapp2") // tilgang til 43
-            brukerRepository.opprettSak(uuid("3"), "44", "merkelapp3") // ikke tilgang til 44
-            brukerRepository.opprettSak(uuid("4"), "45", "merkelapp1") // ikke tilgang til 45
+            brukerRepository.opprettSak(uuid("1"), "42", AltinnMottaker("5441", "1", "42"), "merkelapp1") // tilgang til 42
+            brukerRepository.opprettSak(uuid("2"), "43", AltinnRessursMottaker("43", "nav_test_foo-ressursid"), "merkelapp2") // tilgang til 43
+            brukerRepository.opprettSak(uuid("3"), "44", AltinnMottaker("5441", "1", "44"), "merkelapp3") // ikke tilgang til 44
+            brukerRepository.opprettSak(uuid("4"), "45", AltinnMottaker("5441", "1", "45"), "merkelapp1") // ikke tilgang til 45
 
 
             it("søk på null sakstyper returnere alle") {
@@ -325,7 +327,7 @@ private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApp
                 harFeil = false,
                 tilganger = listOf(
                     AltinnTilgang("42", "5441:1"),
-                    AltinnTilgang("43", "5441:1")
+                    AltinnTilgang("43", "nav_test_foo-ressursid")
                 ),
             )
         ),
@@ -388,14 +390,15 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
 private suspend fun BrukerRepository.opprettSak(
     sakId: UUID,
     virksomhetsnummer: String,
-    merkelapp : String = "tag"
+    mottaker: Mottaker,
+    merkelapp: String = "tag",
 ): SakOpprettet {
     val oppgittTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
     val sak = sakOpprettet(
         sakId = sakId,
         virksomhetsnummer = virksomhetsnummer,
         merkelapp = merkelapp,
-        mottakere = listOf(AltinnMottaker("5441", "1", virksomhetsnummer)),
+        mottakere = listOf(mottaker),
         oppgittTidspunkt = oppgittTidspunkt,
         mottattTidspunkt = OffsetDateTime.now(),
     )
