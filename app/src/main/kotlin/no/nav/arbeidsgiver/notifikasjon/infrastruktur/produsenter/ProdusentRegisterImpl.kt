@@ -103,6 +103,7 @@ val PERMITTERING = Produsent(
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "5810", version = "1", description = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV"),
+        RessursIdDefinisjon(ressursId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
     )
 )
 
