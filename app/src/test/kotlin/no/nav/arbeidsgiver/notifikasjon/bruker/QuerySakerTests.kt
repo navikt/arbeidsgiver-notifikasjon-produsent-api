@@ -56,11 +56,11 @@ class QuerySakerTests : DescribeSpec({
         context("med sak og status") {
             val (brukerRepository, engine) = setupRepoOgEngine()
             val sakOpprettet = brukerRepository.sakOpprettet(
-                virksomhetsnummer = "42",
+                virksomhetsnummer = "43",
                 grupperingsid = "42",
                 merkelapp = "tag",
                 lenke = null,
-                mottakere = listOf(AltinnMottaker("5441", "1", "42")),
+                mottakere = listOf(AltinnRessursMottaker("43", "nav_test_foo-ressursid")),
                 oppgittTidspunkt = OffsetDateTime.parse("2021-01-01T13:37:00Z"),
                 mottattTidspunkt = OffsetDateTime.now(),
             )
@@ -73,7 +73,9 @@ class QuerySakerTests : DescribeSpec({
                 idempotensKey = IdempotenceKey.initial(),
             )
 
-            val response = engine.hentSaker()
+            val response = engine.hentSaker(
+                virksomhetsnumre = listOf("43"),
+            )
 
             it("response inneholder riktig data for sak") {
                 val sak = response.getTypedContent<BrukerAPI.Sak>("saker/saker/0")
