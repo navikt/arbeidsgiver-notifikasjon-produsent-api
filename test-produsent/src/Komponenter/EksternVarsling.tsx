@@ -104,7 +104,7 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
         </> : null}
         {eksternVarsel !== "Ingen" ?
             <TextField label={"Tidspunkt: \"YYYY-MM-DDThh:mm\""} ref={eksternVarselTidspunktRef}
-                       defaultValue={"2024-12-19T13:30"}/> : null}
+                       defaultValue={new Date().toISOString().replace(/\..+/, '')}/> : null}
     </div>
 });
 

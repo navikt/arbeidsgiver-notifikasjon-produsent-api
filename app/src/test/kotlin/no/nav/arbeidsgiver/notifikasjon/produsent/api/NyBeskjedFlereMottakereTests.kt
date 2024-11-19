@@ -5,16 +5,16 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
 
 class NyBeskjedFlereMottakereTests : DescribeSpec({
@@ -103,8 +103,9 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
             )
         }
     }
-    describe("sender 2 mottakere i 'mottakere'") {
-        val engine = setupEngine()
+    describe("sender 3 mottakere i 'mottakere'") {
+        val kafkaProducer = FakeHendelseProdusent()
+        val engine = setupEngine(kafkaProducer)
         val response = engine.produsentApi(
             nyBeskjed(
                 """
@@ -120,6 +121,11 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
                         naermesteLederFnr: "2"
                         ansattFnr: "3"
                     }
+                },
+                {
+                    altinnRessurs: {
+                        ressursId: "test-fager"
+                    }
                 }
             ]
         """
@@ -129,7 +135,7 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
             val errors = response.getGraphqlErrors()
             errors.shouldBeEmpty()
         }
-        it("en mottaker registrert") {
+        it("alle mottakere registreres") {
             val resultType = response.getTypedContent<String>("$.nyBeskjed.__typename")
             resultType shouldBe "NyBeskjedVellykket"
 
@@ -145,8 +151,20 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
                     ansattFnr = "3",
                     naermesteLederFnr = "2",
                     virksomhetsnummer = "0"
+                ),
+                QueryNotifikasjoner.AltinnRessursMottaker(
+                    ressursId = "test-fager",
+                    virksomhetsnummer = "0"
                 )
             )
+        }
+        it("sender hendelse med korrekt mottakere til kafka") {
+            kafkaProducer.hendelser.filterIsInstance<HendelseModel.BeskjedOpprettet>().first().let {
+                it.mottakere.size shouldBe  3
+                it.mottakere.filterIsInstance<HendelseModel.AltinnMottaker>().size shouldBe 1
+                it.mottakere.filterIsInstance<HendelseModel.NærmesteLederMottaker>().size shouldBe 1
+                it.mottakere.filterIsInstance<HendelseModel.AltinnRessursMottaker>().size shouldBe 1
+            }
         }
     }
 
@@ -198,10 +216,11 @@ class NyBeskjedFlereMottakereTests : DescribeSpec({
     }
 })
 
-private fun DescribeSpec.setupEngine(): TestApplicationEngine {
+private fun DescribeSpec.setupEngine(kafkaProducer: HendelseProdusent = NoopHendelseProdusent): TestApplicationEngine {
     val database = testDatabase(Produsent.databaseConfig)
     val produsentRepository = ProdusentRepositoryImpl(database)
     val engine = ktorProdusentTestServer(
+        kafkaProducer = kafkaProducer,
         produsentRepository = produsentRepository,
     )
     return engine
@@ -258,6 +277,10 @@ internal fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryNotifikasj
                                         naermesteLederFnr
                                         virksomhetsnummer
                                     }
+                                    ... on AltinnRessursMottaker {
+                                        ressursId
+                                        virksomhetsnummer
+                                    }
                                 }
                             }
                             ... on Oppgave {
@@ -274,6 +297,10 @@ internal fun TestApplicationEngine.hentMottakere(id: UUID): List<QueryNotifikasj
                                     ... on NaermesteLederMottaker {
                                         ansattFnr
                                         naermesteLederFnr
+                                        virksomhetsnummer
+                                    }
+                                    ... on AltinnRessursMottaker {
+                                        ressursId
                                         virksomhetsnummer
                                     }
                                 }

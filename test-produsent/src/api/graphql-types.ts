@@ -41,16 +41,38 @@ export type AltinnMottaker = {
 };
 
 /**
- * Spesifiser mottaker ved hjelp av tilganger i Altinn. Enhver som har den gitte tilgangen vil
+ * Spesifiser mottaker ved hjelp av tilganger i Altinn 2. Enhver som har den gitte tilgangen vil
  * kunne se notifikasjone.
  *
  * Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
- * bruker mister en Altinn-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn-tilgangen.
- * Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikasjoner for den Altinn-tilgangen.
+ * bruker mister en Altinn 2-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn 2-tilgangen.
+ * Og motsatt, hvis en bruker får en Altinn 2-tilgang, vil de se tidligere notifikasjoner for den Altinn2-tilgangen.
+ *
+ * Altinn 2 skal avvikles innen juni 2026, og denne mottakeren vil da også forsvinne. Vi anbefaler å migrere til Altinn 3, og ta i bruk
+ * AltinnRessursMottakerInput. Når dere migrerer til Altinn3 kan vi sørge for at brukere fortsatt får tilgang til gamle saker og notifikasjoner, så lenge vi blir informert
+ * om hvilke Altinn 3 ressurser som tilsvarer hvilke Altinn 2 tjenester. Ta gjerne kontakt med oss og gi beskjed.
  */
 export type AltinnMottakerInput = {
   serviceCode: Scalars['String']['input'];
   serviceEdition: Scalars['String']['input'];
+};
+
+export type AltinnRessursMottaker = {
+  __typename?: 'AltinnRessursMottaker';
+  ressursId: Scalars['String']['output'];
+  virksomhetsnummer: Scalars['String']['output'];
+};
+
+/**
+ * Spesifiser mottaker ved hjelp av tilganger i Altinn 3. Enhver som har den gitte tilgangen vil
+ * kunne se notifikasjone.
+ *
+ * Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
+ * bruker mister en Altinn 3-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn 3-tilgangen.
+ * Og motsatt, hvis en bruker får en Altinn 3-tilgang, vil de se tidligere notifikasjoner for den Altinn2-tilgangen.
+ */
+export type AltinnRessursMottakerInput = {
+  ressursId: Scalars['String']['input'];
 };
 
 export type AltinntjenesteMottakerInput = {
@@ -364,7 +386,7 @@ export type MetadataInput = {
 
 export type MineNotifikasjonerResultat = NotifikasjonConnection | UgyldigMerkelapp | UkjentProdusent;
 
-export type Mottaker = AltinnMottaker | NaermesteLederMottaker;
+export type Mottaker = AltinnMottaker | AltinnRessursMottaker | NaermesteLederMottaker;
 
 /**
  * Hvem som skal se notifikasjonen.
@@ -375,6 +397,7 @@ export type Mottaker = AltinnMottaker | NaermesteLederMottaker;
  */
 export type MottakerInput = {
   altinn?: InputMaybe<AltinnMottakerInput>;
+  altinnRessurs?: InputMaybe<AltinnRessursMottakerInput>;
   naermesteLeder?: InputMaybe<NaermesteLederMottakerInput>;
 };
 
@@ -437,22 +460,30 @@ export type Mutation = {
    * Dette gjelder også hvis dere gjør kallet uten å oppgi noen nye verdier.
    */
   oppdaterKalenderavtaleByEksternId: OppdaterKalenderavtaleResultat;
-  /** TODO: skriv beskrivelse */
-  oppgaveEndrePaaminnelse?: Maybe<OppgaveEndrePaaminnelseResultat>;
-  /** TODO: skriv beskrivelse */
-  oppgaveEndrePaaminnelseByExternId?: Maybe<OppgaveEndrePaaminnelseResultat>;
-  /** Marker en oppgave (identifisert ved id) som utført. */
+  /**
+   * Endre påminnelsen for en oppgave.
+   * Dersom oppgaven har en eksisterende påminnelse, vil denne bli overskrevet. Eksterne varsler blir også overskrevet
+   * For fjerning av påminnelse, kan man send inn null
+   */
+  oppgaveEndrePaaminnelse: OppgaveEndrePaaminnelseResultat;
+  /**
+   * Endre påminnelsen for en oppgave (identifisert ved ekstern id)
+   * Dersom oppgaven har en eksisterende påminnelse, vil denne bli overskrevet. Eksterne varsler blir også overskrevet
+   * For fjerning av påminnelse, kan man send inn null
+   */
+  oppgaveEndrePaaminnelseByEksternId: OppgaveEndrePaaminnelseResultat;
+  /** Marker en oppgave (identifisert ved id) som utført. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert. */
   oppgaveUtfoert: OppgaveUtfoertResultat;
   /**
-   * Marker en oppgave (identifisert ved ekstern id) som utført.
+   * Marker en oppgave (identifisert ved ekstern id) som utført. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert.
    * @deprecated Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead.
    */
   oppgaveUtfoertByEksternId: OppgaveUtfoertResultat;
-  /** Marker en oppgave (identifisert ved ekstern id) som utført. */
+  /** Marker en oppgave (identifisert ved ekstern id) som utført. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert. */
   oppgaveUtfoertByEksternId_V2: OppgaveUtfoertResultat;
-  /** Marker en oppgave (identifisert ved id) som utgått. */
+  /** Marker en oppgave (identifisert ved id) som utgått. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert. */
   oppgaveUtgaatt: OppgaveUtgaattResultat;
-  /** Marker en oppgave (identifisert ved ekstern id) som utgått. */
+  /** Marker en oppgave (identifisert ved ekstern id) som utgått. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert. */
   oppgaveUtgaattByEksternId: OppgaveUtgaattResultat;
   /**
    * Utsett frist på en oppgave.
@@ -711,6 +742,7 @@ export type MutationOppdaterKalenderavtaleByEksternIdArgs = {
  */
 export type MutationOppgaveEndrePaaminnelseArgs = {
   id: Scalars['ID']['input'];
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
   paaminnelse?: InputMaybe<PaaminnelseInput>;
 };
 
@@ -719,8 +751,9 @@ export type MutationOppgaveEndrePaaminnelseArgs = {
  * Dette er roten som alle endringer ("mutations") starter fra. Endringer inkluderer også
  * å opprette nye ting.
  */
-export type MutationOppgaveEndrePaaminnelseByExternIdArgs = {
+export type MutationOppgaveEndrePaaminnelseByEksternIdArgs = {
   eksternId: Scalars['String']['input'];
+  idempotencyKey?: InputMaybe<Scalars['String']['input']>;
   merkelapp: Scalars['String']['input'];
   paaminnelse?: InputMaybe<PaaminnelseInput>;
 };
@@ -1209,10 +1242,7 @@ export type PaaminnelseResultat = {
 };
 
 export type PaaminnelseTidspunktInput = {
-  /**
-   * Relativ til når oppgaven/kalenderavtalen er angitt som opprettet. Altså X duration etter opprettelse.
-   * Ved utsatt frist er den relativ til tidspunktet fristen ble utsatt.
-   */
+  /** Relativ til når oppgaven/kalenderavtalen er angitt som opprettet. Altså X duration etter opprettelse. */
   etterOpprettelse?: InputMaybe<Scalars['ISO8601Duration']['input']>;
   /** Relativ til oppgavens frist, altså X duration før frist. Anses som ugyldig dersom det ikke er en oppgave med frist. */
   foerFrist?: InputMaybe<Scalars['ISO8601Duration']['input']>;
@@ -1365,6 +1395,11 @@ export enum Sendevindu {
 export type SmsKontaktInfoInput = {
   /** deprecated. value is ignored.  */
   fnr?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Må være et gyldig norsk mobilnummer. Kan inneholde landkode på format +47 eller 0047.
+   * Nummeret må være gyldig iht norske mobilnummer-regler (40000000-49999999, 90000000-99999999)
+   * se https://nkom.no/telefoni-og-telefonnummer/telefonnummer-og-den-norske-nummerplan/alle-nummerserier-for-norske-telefonnumre
+   */
   tlf: Scalars['String']['input'];
 };
 

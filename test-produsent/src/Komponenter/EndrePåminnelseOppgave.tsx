@@ -68,7 +68,7 @@ export const EndrePåminnelseOppgave = () => {
         data,
         loading,
         error,
-    }] = useMutation<Pick<Mutation, 'oppgaveEndrePaaminnelse' | 'oppgaveEndrePaaminnelseByExternId'>>(queryType === 'Oppgave-id' ? ENDRE_PAAMINNELSE_OPPGAVE : ENDRE_PAAMINNELSE_OPPGAVE_EKSTERN_ID);
+    }] = useMutation<Pick<Mutation, 'oppgaveEndrePaaminnelse' | 'oppgaveEndrePaaminnelseByEksternId'>>(queryType === 'Oppgave-id' ? ENDRE_PAAMINNELSE_OPPGAVE : ENDRE_PAAMINNELSE_OPPGAVE_EKSTERN_ID);
 
 
     const handleSend = () => {

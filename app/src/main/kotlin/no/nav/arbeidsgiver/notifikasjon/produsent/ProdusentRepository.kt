@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
@@ -232,6 +233,13 @@ class ProdusentRepositoryImpl(
                         select md.mottakere::jsonb
                         from mottakere_digisyfo_json md
                         where md.notifikasjon_id = valgt_notifikasjon.id
+                    ),
+                    '[]'::jsonb)
+                || coalesce(
+                    (
+                        select mar.mottakere::jsonb
+                        from mottakere_altinn_ressurs_json mar
+                        where mar.notifikasjon_id = valgt_notifikasjon.id
                     ),
                     '[]'::jsonb)
                 ) as mottakere
@@ -855,6 +863,7 @@ class ProdusentRepositoryImpl(
         when (mottaker) {
             is NærmesteLederMottaker -> storeNærmesteLederMottaker(notifikasjonId, mottaker)
             is AltinnMottaker -> storeAltinnMottaker(notifikasjonId, mottaker)
+            is AltinnRessursMottaker -> storeAltinnRessursMottaker(notifikasjonId, mottaker)
         }
     }
 
@@ -886,6 +895,21 @@ class ProdusentRepositoryImpl(
             text(mottaker.virksomhetsnummer)
             text(mottaker.serviceCode)
             text(mottaker.serviceEdition)
+        }
+    }
+
+    private fun Transaction.storeAltinnRessursMottaker(notifikasjonId: UUID, mottaker: AltinnRessursMottaker) {
+        executeUpdate(
+            """
+            insert into mottaker_altinn_ressurs
+                (notifikasjon_id, virksomhet, ressursId)
+            values (?, ?, ?)
+            on conflict do nothing
+        """
+        ) {
+            uuid(notifikasjonId)
+            text(mottaker.virksomhetsnummer)
+            text(mottaker.ressursId)
         }
     }
 

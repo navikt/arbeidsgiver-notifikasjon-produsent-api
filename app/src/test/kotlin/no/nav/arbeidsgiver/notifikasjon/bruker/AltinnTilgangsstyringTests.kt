@@ -4,6 +4,8 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
@@ -15,11 +17,26 @@ class AltinnTilgangsstyringTests : DescribeSpec({
         val database = testDatabase(Bruker.databaseConfig)
         val brukerRepository = BrukerRepositoryImpl(database)
 
-        for ((id, serviceCode) in listOf(
-            "0" to  "HarTilgang0",
-            "1" to  "HarTilgang1",
-            "2" to  "IkkeTilgang2",
-            "3" to  "IkkeTilgang3",
+        for ((id, mottaker) in mapOf(
+            "0" to  AltinnMottaker(
+                virksomhetsnummer = "1",
+                serviceCode = "HarTilgang0",
+                serviceEdition = "serviceedition1",
+            ),
+            "1" to  AltinnRessursMottaker(
+                virksomhetsnummer = "1",
+                ressursId = "nav_test_HarTilgang1",
+            ),
+            "2" to  NærmesteLederMottaker(
+                virksomhetsnummer = "1",
+                ansattFnr = "IkkeTilgang2",
+                naermesteLederFnr = "1",
+            ),
+            "3" to  AltinnMottaker(
+                virksomhetsnummer = "1",
+                serviceCode = "IkkeTilgang3",
+                serviceEdition = "1",
+            ),
         )) {
             val uuid = uuid(id)
             brukerRepository.beskjedOpprettet(
@@ -27,13 +44,7 @@ class AltinnTilgangsstyringTests : DescribeSpec({
                 notifikasjonId = uuid,
                 merkelapp = "m",
                 eksternId = uuid.toString(),
-                mottakere = listOf(
-                    AltinnMottaker(
-                        virksomhetsnummer = "1",
-                        serviceCode = serviceCode,
-                        serviceEdition = "1",
-                    )
-                ),
+                mottakere = listOf(mottaker),
                 opprettetTidspunkt = OffsetDateTime.parse("2020-02-02T02:02:02+02"),
             )
         }
@@ -42,12 +53,16 @@ class AltinnTilgangsstyringTests : DescribeSpec({
             fnr = "",
             altinnTilganger = AltinnTilganger(
                 harFeil = false,
-                tilganger = listOf("HarTilgang0", "HarTilgang1").map {
+                tilganger = listOf(
                     AltinnTilgang(
                         orgNr = "1",
-                        tilgang = "$it:1"
+                        tilgang = "HarTilgang0:serviceedition1"
+                    ),
+                    AltinnTilgang(
+                        orgNr = "1",
+                        tilgang = "nav_test_HarTilgang1"
                     )
-                },
+                ),
             )
         )
 

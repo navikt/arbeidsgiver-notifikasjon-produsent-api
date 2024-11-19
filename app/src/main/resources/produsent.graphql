@@ -180,6 +180,7 @@ type Kalenderavtale {
 union Mottaker =
     | AltinnMottaker
     | NaermesteLederMottaker
+    | AltinnRessursMottaker
 
 type AltinnMottaker {
     serviceCode: String!
@@ -191,6 +192,11 @@ type NaermesteLederMottaker {
     naermesteLederFnr: String!
     ansattFnr: String!
     virksomhetsnummer: String!
+}
+
+type AltinnRessursMottaker {
+    virksomhetsnummer: String!
+    ressursId: String!
 }
 
 type OppgaveData {
@@ -1691,20 +1697,37 @@ Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer
 """
 input MottakerInput @ExactlyOneFieldGiven {
     altinn: AltinnMottakerInput
+    altinnRessurs: AltinnRessursMottakerInput
     naermesteLeder: NaermesteLederMottakerInput
 }
 
 """
-Spesifiser mottaker ved hjelp av tilganger i Altinn. Enhver som har den gitte tilgangen vil
+Spesifiser mottaker ved hjelp av tilganger i Altinn 2. Enhver som har den gitte tilgangen vil
 kunne se notifikasjone.
 
 Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
-bruker mister en Altinn-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn-tilgangen.
-Og motsatt, hvis en bruker får en Altinn-tilgang, vil de se tidligere notifikasjoner for den Altinn-tilgangen.
+bruker mister en Altinn 2-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn 2-tilgangen.
+Og motsatt, hvis en bruker får en Altinn 2-tilgang, vil de se tidligere notifikasjoner for den Altinn2-tilgangen.
+
+Altinn 2 skal avvikles innen juni 2026, og denne mottakeren vil da også forsvinne. Vi anbefaler å migrere til Altinn 3, og ta i bruk
+AltinnRessursMottakerInput. Når dere migrerer til Altinn3 kan vi sørge for at brukere fortsatt får tilgang til gamle saker og notifikasjoner, så lenge vi blir informert
+om hvilke Altinn 3 ressurser som tilsvarer hvilke Altinn 2 tjenester. Ta gjerne kontakt med oss og gi beskjed.
 """
 input AltinnMottakerInput {
     serviceCode: String!
     serviceEdition: String!
+}
+
+"""
+Spesifiser mottaker ved hjelp av tilganger i Altinn 3. Enhver som har den gitte tilgangen vil
+kunne se notifikasjone.
+
+Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en
+bruker mister en Altinn 3-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn 3-tilgangen.
+Og motsatt, hvis en bruker får en Altinn 3-tilgang, vil de se tidligere notifikasjoner for den Altinn2-tilgangen.
+"""
+input AltinnRessursMottakerInput {
+    ressursId: String!
 }
 
 """

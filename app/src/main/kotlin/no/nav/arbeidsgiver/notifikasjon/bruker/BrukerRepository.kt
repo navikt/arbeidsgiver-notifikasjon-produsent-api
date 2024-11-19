@@ -1145,6 +1145,15 @@ class BrukerRepositoryImpl(
                     altinnTilgang = "${mottaker.serviceCode}:${mottaker.serviceEdition}"
                 )
             }
+
+            is HendelseModel.AltinnRessursMottaker -> {
+                storeAltinnMottaker(
+                    notifikasjonId = notifikasjonId,
+                    sakId = sakId,
+                    orgNr = mottaker.virksomhetsnummer,
+                    altinnTilgang = mottaker.ressursId
+                )
+            }
         }
     }
 

@@ -24,7 +24,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
             altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
                 AltinnTilganger(
                     harFeil = false,
-                    tilganger = listOf(TEST_TILGANG_1)
+                    tilganger = listOf(TEST_TILGANG_1, TEST_TILGANG_2)
                 )
             }
         )
@@ -61,6 +61,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
         }
         
         val beskjedMedSakOpprettet = brukerRepository.beskjedOpprettet(
+            mottakere = listOf(TEST_MOTTAKER_2),
             grupperingsid = "3",
             opprettetTidspunkt = opprettetTidspunkt.minusHours(3),
             tekst = "beskjed med sak",
@@ -75,6 +76,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
         }
 
         val kalenderavtaleMedSak = brukerRepository.sakOpprettet(
+            mottakere = listOf(TEST_MOTTAKER_2),
             grupperingsid = "4",
             tittel = "Sakstittel for kalenderavtale",
             mottattTidspunkt = OffsetDateTime.now(),
@@ -83,6 +85,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
             brukerRepository.kalenderavtaleOpprettet(
                 opprettetTidspunkt = opprettetTidspunkt.minusHours(4),
                 grupperingsid = sak.grupperingsid,
+                mottakere = sak.mottakere,
                 merkelapp = sak.merkelapp,
                 tekst = "kalenderavtale med sak",
                 sakId = sak.sakId,
@@ -105,7 +108,7 @@ class QueryNotifikasjonerMedSakTests : DescribeSpec({
                     it.id shouldBe oppgaveMedSakOpprettet.aggregateId
                     it.sak shouldNot beNull()
                     it.sak!!.tittel shouldBe "Sakstittel for oppgave"
-                    it.sak.tilleggsinformasjon shouldBe "Tilleggsinformasjon om saken"
+                    it.sak!!.tilleggsinformasjon shouldBe "Tilleggsinformasjon om saken"
                 }
                 (notifikasjoner[3] as BrukerAPI.Notifikasjon.Beskjed).let {
                     it.id shouldBe beskjedMedSakOpprettet.aggregateId

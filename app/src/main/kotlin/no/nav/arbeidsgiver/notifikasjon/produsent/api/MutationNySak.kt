@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
@@ -227,6 +228,7 @@ private fun MottakerInput.sammeSom(mottaker: Mottaker): Boolean {
         is NærmesteLederMottaker ->
             mottaker.ansattFnr == this.naermesteLeder?.ansattFnr &&
                     mottaker.naermesteLederFnr == this.naermesteLeder.naermesteLederFnr
+        is AltinnRessursMottaker -> mottaker.ressursId == this.altinnRessurs?.ressursId
     }
 }
 
