@@ -8,9 +8,8 @@ import httpProxyMiddleware, {
 import {createLogger, format, transports} from 'winston';
 import {fetchAccessToken} from "./accessToken.js";
 import fs from "fs";
-import require from "./esm-require.js";
+import {ApolloServer, gql} from 'apollo-server-express';
 
-const {ApolloServer, gql} = require('apollo-server-express');
 const {createProxyMiddleware} = httpProxyMiddleware;
 
 const {

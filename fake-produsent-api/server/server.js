@@ -2,15 +2,14 @@ import fs from 'fs'
 import express from 'express';
 import casual from 'casual';
 import {createLogger, transports, format} from 'winston';
-import require from "./esm-require.js";
+import {ApolloServerPluginLandingPageGraphQLPlayground} from "apollo-server-core";
+import {ApolloServer, gql} from 'apollo-server-express';
 
 const {
     PORT = 8080,
     ALWAYS_SUCCESSFUL_RESPONSE = 'false',
 } = process.env;
 
-const {ApolloServerPluginLandingPageGraphQLPlayground} = require("apollo-server-core");
-const {ApolloServer, gql} = require('apollo-server-express');
 
 const successfulMocks = {
     HardDeleteNotifikasjonResultat: () => ({__typename: "HardDeleteNotifikasjonVellykket"}),
