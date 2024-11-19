@@ -32,6 +32,7 @@ const NY_KALENDERAVTALE = gql`
   mutation (
     $grupperingsid: String!
     $virksomhetsnummer: String!
+    $mottaker: MottakerInput!
     $eksternId: String!
     $lenke: String!
     $tekst: String!
@@ -41,7 +42,6 @@ const NY_KALENDERAVTALE = gql`
     $paaminnelse: PaaminnelseInput
     $lokasjon: LokasjonInput
     $erDigitalt: Boolean
-    $mottaker: MottakerInput!
   ) {
     nyKalenderavtale(
       mottakere: [$mottaker]

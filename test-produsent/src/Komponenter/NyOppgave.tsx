@@ -14,10 +14,10 @@ const NY_OPPGAVE = gql`
     mutation (
         $grupperingsid: String!
         $virksomhetsnummer: String!
+        $mottaker: MottakerInput!
         $lenke: String!
         $tekst: String!
         $merkelapp: String!
-        $mottaker: MottakerInput!
         $frist: ISO8601Date
         $eksternId: String!
         $opprettetTidspunkt: ISO8601DateTime

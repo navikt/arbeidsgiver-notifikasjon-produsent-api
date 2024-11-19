@@ -14,6 +14,7 @@ const NY_BESKJED = gql`
     mutation (
         $grupperingsid: String!
         $virksomhetsnummer: String!
+        $mottaker: MottakerInput!
         $lenke: String!
         $tekst: String!
         $eksternId: String!
@@ -23,12 +24,7 @@ const NY_BESKJED = gql`
     ) {
         nyBeskjed(
             nyBeskjed: {
-                mottakere: [{
-                    altinn: {
-                        serviceCode: "4936"
-                        serviceEdition: "1"
-                    }
-                }]
+                mottakere: [$mottaker]
                 notifikasjon: {
                     merkelapp: $merkelapp
                     lenke: $lenke
