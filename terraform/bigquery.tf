@@ -60,7 +60,7 @@ resource "google_bigquery_data_transfer_config" "notifikasjon" {
   data_source_id         = "scheduled_query"
   display_name           = "notifikasjon"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.notifikasjon.table_id
@@ -119,7 +119,7 @@ resource "google_bigquery_data_transfer_config" "aggregat_hendelse" {
   data_source_id         = "scheduled_query"
   display_name           = "aggregat_hendelse"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.aggregat_hendelse.table_id
@@ -160,7 +160,7 @@ resource "google_bigquery_data_transfer_config" "sak" {
   data_source_id         = "scheduled_query"
   display_name           = "sak"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.sak.table_id
@@ -205,7 +205,7 @@ resource "google_bigquery_data_transfer_config" "sak_status" {
   data_source_id         = "scheduled_query"
   display_name           = "sak_status"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.sak_status.table_id
@@ -248,7 +248,7 @@ resource "google_bigquery_data_transfer_config" "hard_delete_bestilling" {
   data_source_id         = "scheduled_query"
   display_name           = "hard_delete_bestilling"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.hard_delete_bestilling.table_id
@@ -287,7 +287,7 @@ resource "google_bigquery_data_transfer_config" "mottaker_naermeste_leder" {
   data_source_id         = "scheduled_query"
   display_name           = "mottaker_naermeste_leder"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.mottaker_naermeste_leder.table_id
@@ -324,7 +324,7 @@ resource "google_bigquery_data_transfer_config" "mottaker_enkeltrettighet" {
   data_source_id         = "scheduled_query"
   display_name           = "mottaker_enkeltrettighet"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.mottaker_enkeltrettighet.table_id
@@ -361,7 +361,7 @@ resource "google_bigquery_data_transfer_config" "notifikasjon_klikk" {
   data_source_id         = "scheduled_query"
   display_name           = "notifikasjon_klikk"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.notifikasjon_klikk.table_id
@@ -396,7 +396,7 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel" {
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.ekstern_varsel.table_id
@@ -455,7 +455,7 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_tlf" {
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel_mottaker_tlf"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.ekstern_varsel_mottaker_tlf.table_id
@@ -486,7 +486,7 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_epost" 
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel_mottaker_epost"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.ekstern_varsel_mottaker_epost.table_id
@@ -517,7 +517,7 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_resultat" {
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel_resultat"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.ekstern_varsel_resultat.table_id
@@ -552,7 +552,7 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel_mottaker_tjenest
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel_mottaker_tjeneste"
   location               = var.region
-  schedule               = "every day 00:00"
+  schedule               = "every 60 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.ekstern_varsel_mottaker_tjeneste.table_id
