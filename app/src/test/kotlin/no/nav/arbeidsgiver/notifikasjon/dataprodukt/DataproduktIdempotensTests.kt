@@ -2,12 +2,19 @@ package no.nav.arbeidsgiver.notifikasjon.dataprodukt
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.core.spec.style.scopes.DescribeSpecContainerScope
 import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.shouldBe
+import no.nav.arbeidsgiver.notifikasjon.bruker.TEST_MOTTAKER_1
+import no.nav.arbeidsgiver.notifikasjon.bruker.TEST_MOTTAKER_2
+import no.nav.arbeidsgiver.notifikasjon.bruker.TEST_VIRKSOMHET_1
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.typeNavn
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
+import no.nav.arbeidsgiver.notifikasjon.util.asMap
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.Instant
@@ -212,6 +219,123 @@ class DataproduktIdempotensTests : DescribeSpec({
             }
         }
     }
+    describe("hard delete på sak sletter alt og kan replayes") {
+        val database = testDatabase(Dataprodukt.databaseConfig)
+        val repository = DataproduktModel(database)
+        val merkelapp = "idempotenstest"
+        val grupperingsid = "gr-42"
+        val sakId = uuid("42")
+        val notifikasjonId = uuid("314")
+
+        val hendelsesforløp = listOf(
+            EksempelHendelse.SakOpprettet.copy(
+                hendelseId = sakId,
+                sakId = sakId,
+                virksomhetsnummer = TEST_VIRKSOMHET_1,
+                merkelapp = merkelapp,
+                grupperingsid = grupperingsid,
+                mottakere = listOf(TEST_MOTTAKER_1, TEST_MOTTAKER_2),
+            ).also {
+                repository.oppdaterModellEtterHendelse(it, metadata)
+            },
+            EksempelHendelse.BeskjedOpprettet.copy(
+                hendelseId = notifikasjonId,
+                notifikasjonId = notifikasjonId,
+                sakId = sakId,
+                virksomhetsnummer = TEST_VIRKSOMHET_1,
+                merkelapp = merkelapp,
+                grupperingsid = grupperingsid,
+                mottakere = listOf(TEST_MOTTAKER_1, TEST_MOTTAKER_2),
+            ).also {
+                repository.oppdaterModellEtterHendelse(it, metadata)
+            },
+            HendelseModel.HardDelete(
+                hendelseId = UUID.randomUUID(),
+                virksomhetsnummer = TEST_VIRKSOMHET_1,
+                aggregateId = sakId,
+                produsentId = "",
+                kildeAppNavn = "",
+                deletedAt = OffsetDateTime.now(),
+                grupperingsid = grupperingsid,
+                merkelapp = merkelapp,
+            ).also {
+                repository.oppdaterModellEtterHendelse(it, metadata)
+            }
+        )
+
+        assertDeleted(database, sakId, notifikasjonId, grupperingsid, merkelapp)
+
+        // replay events
+        hendelsesforløp.forEach {
+            repository.oppdaterModellEtterHendelse(it, metadata)
+        }
+
+        assertDeleted(database, sakId, notifikasjonId, grupperingsid, merkelapp)
+
+
+    }
 })
+
+private suspend fun DescribeSpecContainerScope.assertDeleted(
+    database: Database,
+    sakId: UUID,
+    notifikasjonId: UUID,
+    grupperingsid: String,
+    merkelapp: String
+) {
+    it("sak is deleted") {
+        database.nonTransactionalExecuteQuery(
+            """
+                select * from sak where sak_id = '${sakId}'
+            """
+        ) {
+            asMap()
+        }.size shouldBe 0
+    }
+
+    it("notifikasjon is deleted") {
+        database.nonTransactionalExecuteQuery(
+            """
+                select * from notifikasjon where grupperingsid = '${grupperingsid}' and merkelapp = '${merkelapp}'
+            """
+        ) {
+            asMap()
+        }.size shouldBe 0
+    }
+
+    it("mottaker sak is deleted") {
+        database.nonTransactionalExecuteQuery(
+            """
+                select * from mottaker_enkeltrettighet where notifikasjon_id = '${sakId}'
+            """
+        ) {
+            asMap()
+        }.size shouldBe 0
+        database.nonTransactionalExecuteQuery(
+            """
+                select * from mottaker_altinn_ressurs where notifikasjon_id = '${sakId}'
+            """
+        ) {
+            asMap()
+        }.size shouldBe 0
+    }
+
+    it("mottaker notifikasjon is deleted") {
+        database.nonTransactionalExecuteQuery(
+            """
+                select * from mottaker_enkeltrettighet where notifikasjon_id = '${notifikasjonId}'
+            """
+        ) {
+            asMap()
+        }.size shouldBe 0
+        database.nonTransactionalExecuteQuery(
+            """
+                select * from mottaker_altinn_ressurs where notifikasjon_id = '${notifikasjonId}'
+            """
+        ) {
+            asMap()
+        }.size shouldBe 0
+    }
+}
 
 

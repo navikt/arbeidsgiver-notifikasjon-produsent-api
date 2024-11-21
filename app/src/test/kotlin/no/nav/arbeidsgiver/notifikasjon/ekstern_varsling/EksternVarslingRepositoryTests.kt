@@ -13,6 +13,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
+import jakarta.xml.bind.JAXBElement
 import kotlinx.coroutines.delay
 import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -23,15 +24,14 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getUuid
+import no.nav.arbeidsgiver.notifikasjon.util.asMap
 import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import java.sql.ResultSet
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
-import jakarta.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 
 class EksternVarslingRepositoryTests : DescribeSpec({
@@ -735,7 +735,3 @@ class EksternVarslingRepositoryTests : DescribeSpec({
     }
 
 })
-
-private fun ResultSet.asMap() = (1..this.metaData.columnCount).associate {
-    this.metaData.getColumnName(it) to this.getObject(it)
-}
