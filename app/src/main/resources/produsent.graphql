@@ -512,7 +512,7 @@ type Mutation {
         mottakere: [MottakerInput!]! @Validate
 
         """En tittel på saken, som vises til brukeren."""
-        tittel: String!
+        tittel: String! @Validate @MaxLength(max: 140) @NonIdentifying
 
         """
         Dette feltet er frivillig.
