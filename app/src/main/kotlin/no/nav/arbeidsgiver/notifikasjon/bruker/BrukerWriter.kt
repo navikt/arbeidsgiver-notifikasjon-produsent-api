@@ -14,7 +14,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaL
 object BrukerWriter {
     val databaseConfig = Database.config(
         "bruker_model",
-        envPrefix = "DB_BRUKER_API_KAFKA_USER",
         jdbcOpts = mapOf(
             "socketFactory" to "com.google.cloud.sql.postgres.SocketFactory",
             "cloudSqlInstance" to System.getenv("CLOUD_SQL_INSTANCE")!!
