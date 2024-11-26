@@ -16,7 +16,7 @@ open class HardDeletedRepository(private val database: Database) {
         database.nonTransactionalExecuteQuery("""
             select * from hard_delete_sak_til_notifikasjon_kobling
              inner join hard_deleted_aggregates on hard_delete_sak_til_notifikasjon_kobling.sak_id = hard_deleted_aggregates.aggregate_id 
-            where hard_delete_sak_til_notifikasjon_kobling.aggregate_id = ?
+            where hard_delete_sak_til_notifikasjon_kobling.notifikasjon_id = ?
             """,
             { uuid(notifikasjonId) }
         ) {}.isNotEmpty()
@@ -30,7 +30,7 @@ open class HardDeletedRepository(private val database: Database) {
         // hopp over hvis sakId er null eller hvis det er opprettelse av sak
         if (sakId != null && sakId != hendelse.aggregateId) {
             database.nonTransactionalExecuteUpdate("""
-                insert into hard_delete_sak_til_notifikasjon_kobling(sak_id, aggregate_id) values (?, ?)
+                insert into hard_delete_sak_til_notifikasjon_kobling(sak_id, notifikasjon_id) values (?, ?)
                 on conflict do nothing
             """) {
                 uuid(sakId)

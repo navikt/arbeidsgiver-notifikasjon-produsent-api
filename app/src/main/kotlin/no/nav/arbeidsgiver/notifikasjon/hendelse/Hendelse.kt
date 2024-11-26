@@ -258,9 +258,9 @@ object HendelseModel {
         override val produsentId: String,
         override val kildeAppNavn: String,
         override val sakId: UUID,
+        override val grupperingsid: String,
+        override val merkelapp: String,
 
-        val grupperingsid: String,
-        val merkelapp: String,
         val mottakere: List<Mottaker>,
         val tittel: String,
         val tilleggsinformasjon: String?,
@@ -269,7 +269,7 @@ object HendelseModel {
         val mottattTidspunkt: OffsetDateTime?,
         val nesteSteg: String?,
         val hardDelete: LocalDateTimeOrDuration?,
-    ) : Hendelse(), Sak {
+    ) : AggregatOpprettet(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
 

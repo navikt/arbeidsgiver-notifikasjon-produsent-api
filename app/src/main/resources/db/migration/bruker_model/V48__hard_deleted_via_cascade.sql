@@ -4,9 +4,9 @@
 create table hard_delete_sak_til_notifikasjon_kobling
 (
     sak_id       uuid not null,
-    aggregate_id uuid not null
+    notifikasjon_id uuid not null
 );
 
 
 create unique index hard_delete_sak_til_notifikasjon_kobling_uniq
-    on hard_delete_sak_til_notifikasjon_kobling (sak_id, aggregate_id)
+    on hard_delete_sak_til_notifikasjon_kobling (sak_id, notifikasjon_id)
