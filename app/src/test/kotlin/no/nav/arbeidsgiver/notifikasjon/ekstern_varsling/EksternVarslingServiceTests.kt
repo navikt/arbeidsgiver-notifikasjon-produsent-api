@@ -19,11 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
-import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import no.nav.arbeidsgiver.notifikasjon.util.uuid
-import java.sql.ResultSet
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -575,6 +571,3 @@ fun mockOsloTid(mockNow: LocalDateTime) = object : OsloTid {
     override fun localDateNow() = mockNow.toLocalDate()
 }
 
-private fun ResultSet.asMap() = (1..this.metaData.columnCount).associate {
-    this.metaData.getColumnName(it) to this.getObject(it)
-}

@@ -307,6 +307,9 @@ class ProdusentRepositoryImpl(
         }
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
+        if (hendelse is HendelseModel.AggregatOpprettet) {
+            registrerKoblingForCascadeDelete(hendelse)
+        }
         if (erHardDeleted(hendelse.aggregateId)) {
             log.info("skipping harddeleted event {}", hendelse)
             return
