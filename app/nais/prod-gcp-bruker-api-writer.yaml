@@ -32,7 +32,7 @@ spec:
           kind: Project
         role: roles/cloudsql.client
   envFrom:
-    - secret: google-sql-notifikasjon-bruker-api-bruker-model-bruker-a319af7c
+    - secret: google-sql-notifikasjon-bruker-api
 
 ---
 # https://nav-it.slack.com/archives/C5KUST8N6/p1680085706741319
