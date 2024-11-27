@@ -57,6 +57,7 @@
 }
 .notifikasjon_bjelle-ikon__ulest-sirkel {
   position: absolute;
+  opacity: 1;
   z-index: 4;
   top: -10px;
   right: -5px;
@@ -68,7 +69,7 @@
   border-radius: 50%;
   background-color: var(--a-red-500);
   transform: translate(var(--ulest-left), var(--ulest-top));
-  transition: all 0.35s ease-in;
+  animation: synlig 1s;
 }
 
 .notifikasjon_bjelle-ikon__ulest-sirkel--hide {
@@ -92,3 +93,45 @@
 .notifikasjon_bjelle-understrek--closed {
   visibility: hidden;
 }
+
+.notifikasjon_bjelle-ikon-svinger > svg {
+  top: 100px;
+  animation: sving 1s;
+  transform-origin: center 5px;
+}
+
+@keyframes sving {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-25deg);
+  }
+  40% {
+    transform: rotate(25deg);
+  }
+  60% {
+    transform: rotate(-25deg);
+  }
+  80% {
+    transform: rotate(25deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+
+@keyframes synlig {
+  0% {
+    opacity: 0;
+  }
+  98% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
