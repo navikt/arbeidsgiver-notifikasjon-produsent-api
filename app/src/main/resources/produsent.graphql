@@ -511,7 +511,10 @@ type Mutation {
         """
         mottakere: [MottakerInput!]! @Validate
 
-        """En tittel på saken, som vises til brukeren."""
+        """
+        En tittel på saken, som vises til brukeren.
+        Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
+        """
         tittel: String! @Validate @MaxLength(max: 140) @NonIdentifying
 
         """

@@ -31,7 +31,7 @@ export const NotifikasjonBjelle = ({
         aria-live="polite"
         aria-atomic="true"
       >
-        <div className='notifikasjon_bjelle-ikon'>
+        <div className={`notifikasjon_bjelle-ikon ${antallUleste > 0 ? "notifikasjon_bjelle-ikon-svinger":""}`}>
           <Bell width="32px" height="32px" aria-hidden="true" />
 
           <div
