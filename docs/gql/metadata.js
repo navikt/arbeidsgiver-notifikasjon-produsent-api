@@ -13,6 +13,10 @@ module.exports = {
   SCALAR: {
     ID: {
       documentation: { example: "42c0ffee-1337-7331-babe-42c0ffeebabe" }
-    }
+    },
+    String: { documentation: { example: "foo123" } },
+    Int: { documentation: { example: 42 } },
+    Boolean: { documentation: { example: true } },
+    Float: { documentation: { example: 3.14 } },
   },
 }
