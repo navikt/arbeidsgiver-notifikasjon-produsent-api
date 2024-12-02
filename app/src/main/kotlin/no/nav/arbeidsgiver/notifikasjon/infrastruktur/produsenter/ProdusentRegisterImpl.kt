@@ -91,26 +91,9 @@ val ESYFO = Produsent(
 )
 
 val PERMITTERING = Produsent(
-    id = "permitteringsmelding-notifikasjon",
-    accessPolicy = basedOnEnv(
-        prod = { listOf("prod-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon") },
-        other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsmelding-notifikasjon") },
-    ),
-    tillatteMerkelapper = listOf(
-        "Permittering",
-        "Nedbemanning",
-        "Innskrenking av arbeidstid",
-    ),
-    tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "5810", version = "1", description = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV"),
-        RessursIdDefinisjon(ressursId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
-    )
-)
-
-val PERMITTERING_API = Produsent(
     id = "permitteringsskjema-api",
     accessPolicy = basedOnEnv(
-        prod = { listOf() },
+        prod = { listOf("prod-gcp:permittering-og-nedbemanning:permitteringsskjema-api") },
         other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsskjema-api") },
     ),
     tillatteMerkelapper = listOf(
@@ -267,7 +250,6 @@ val PRODUSENT_LIST =
         ARBEIDSGIVER_TILTAK,
         ESYFO,
         PERMITTERING,
-        PERMITTERING_API,
         FRITAKAGP,
         HELSEARBEIDSGIVER,
         TOI,
