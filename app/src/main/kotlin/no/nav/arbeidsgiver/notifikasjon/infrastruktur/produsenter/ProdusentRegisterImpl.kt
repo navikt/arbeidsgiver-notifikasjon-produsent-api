@@ -108,10 +108,10 @@ val PERMITTERING = Produsent(
 )
 
 val PERMITTERING_API = Produsent(
-    id = "permitteringsmelding-api",
+    id = "permitteringsskjema-api",
     accessPolicy = basedOnEnv(
         prod = { listOf() },
-        other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsmelding-api") },
+        other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsskjema-api") },
     ),
     tillatteMerkelapper = listOf(
         "Permittering",
