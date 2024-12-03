@@ -36,10 +36,6 @@ spec:
           namespace: team-tiltak
           cluster: prod-gcp
 
-        - application: permitteringsmelding-notifikasjon
-          namespace: permittering-og-nedbemanning
-          cluster: prod-gcp
-
         - application: permitteringsskjema-api
           namespace: permittering-og-nedbemanning
           cluster: prod-gcp
