@@ -40,6 +40,10 @@ spec:
           namespace: permittering-og-nedbemanning
           cluster: prod-gcp
 
+        - application: permitteringsskjema-api
+          namespace: permittering-og-nedbemanning
+          cluster: prod-gcp
+
         - application: esyfovarsel
           namespace: team-esyfo
           cluster: prod-fss
