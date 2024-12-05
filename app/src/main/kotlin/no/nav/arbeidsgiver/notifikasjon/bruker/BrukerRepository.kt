@@ -1024,7 +1024,18 @@ class BrukerRepositoryImpl(
                 insert into sak_status(
                     id, sak_id, status, overstyrt_statustekst, mottatt_tidspunkt, oppgitt_tidspunkt 
                 )
-                values (?, ?, ?, ?, ?, ?)
+                select ?, ?, ?, ?, ?, ?
+                where exists ( 
+                    -- ved en partial replay kan det hende at vi spiller av fra etter opprettelse
+                    -- dersom aggregatet er soft deleted så finnes ikke sak'en og det feiler
+                    -- enten kan vi holde styr på hva som er softdeleted, på samme måte som hard delete og aligne disse
+                    -- eller så kan vi droppe statusoppdatering dersom sak'en ikke finnes. 
+                    -- vi vet ikke her at saken ikke finnes pga softdelete, så det kan være en litt risky løsning
+                    -- soft og hard delete bør ikke oppføre seg forskjellig, med unntak av at hard delete faktisk sletter data fra kafka via tombstones
+                    -- vi bør også vurdere om vi faktisk trenger både soft og hard delete, det skaper i praksis forvirring både internt og ut mot produsenter
+                    -- TODO: når soft delete og hard delete er alignet kan denne sjekken fjernes
+                    select 1 from sak where sak.id = ?
+                )
                 on conflict (id) do update 
                 set 
                     status = excluded.status,
@@ -1039,6 +1050,7 @@ class BrukerRepositoryImpl(
                 nullableText(nyStatusSak.overstyrStatustekstMed)
                 timestamp_with_timezone(nyStatusSak.mottattTidspunkt)
                 nullableTimestamptz(nyStatusSak.oppgittTidspunkt)
+                uuid(nyStatusSak.sakId)
             }
 
             executeUpdate(

@@ -249,9 +249,9 @@ private suspend fun BrukerRepository.opprettSak(
         tilleggsinformasjon = null
     )
     nyStatusSak(
-        sak = sakOpprettet,
-        hendelseId = UUID.randomUUID(),
+        sakId = sakOpprettet.sakId,
         virksomhetsnummer = sakOpprettet.virksomhetsnummer,
+        hendelseId = UUID.randomUUID(),
         produsentId = sakOpprettet.produsentId,
         kildeAppNavn = sakOpprettet.kildeAppNavn,
         status = MOTTATT,

@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Påminnelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakStatus
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -416,12 +417,42 @@ suspend fun BrukerRepository.nyStatusSak(
     idempotensKey: String,
     hardDelete: HardDeleteUpdate? = null,
     nyLenkeTilSak: String? = null,
-) = NyStatusSak(
+) = nyStatusSak(
     hendelseId = hendelseId,
     virksomhetsnummer = virksomhetsnummer,
     produsentId = produsentId,
     kildeAppNavn = kildeAppNavn,
     sakId = sak.sakId,
+    status = status,
+    overstyrStatustekstMed = overstyrStatustekstMed,
+    oppgittTidspunkt = oppgittTidspunkt,
+    mottattTidspunkt = mottattTidspunkt,
+    idempotensKey = idempotensKey,
+    hardDelete = hardDelete,
+    nyLenkeTilSak = nyLenkeTilSak,
+).also {
+    oppdaterModellEtterHendelse(it)
+}
+
+suspend fun BrukerRepository.nyStatusSak(
+    sakId: UUID,
+    virksomhetsnummer: String,
+    hendelseId: UUID = UUID.randomUUID(),
+    produsentId: String = randomProdusentId(),
+    kildeAppNavn: String = randomKildeAppNavn(),
+    status: SakStatus = randomSakStatus(),
+    overstyrStatustekstMed: String? = null,
+    oppgittTidspunkt: OffsetDateTime? = null,
+    mottattTidspunkt: OffsetDateTime = OffsetDateTime.now(),
+    idempotensKey: String = IdempotenceKey.initial(),
+    hardDelete: HardDeleteUpdate? = null,
+    nyLenkeTilSak: String? = null,
+) = NyStatusSak(
+    hendelseId = hendelseId,
+    virksomhetsnummer = virksomhetsnummer,
+    produsentId = produsentId,
+    kildeAppNavn = kildeAppNavn,
+    sakId = sakId,
     status = status,
     overstyrStatustekstMed = overstyrStatustekstMed,
     oppgittTidspunkt = oppgittTidspunkt,

@@ -110,10 +110,10 @@ class HardDeleteTests : DescribeSpec({
             virksomhetsnummer = mottaker.virksomhetsnummer,
         )
         suspend fun opprettStatusEvent(sak: HendelseModel.SakOpprettet) = brukerRepository.nyStatusSak(
-            sak,
-            virksomhetsnummer = mottaker.virksomhetsnummer,
-            idempotensKey = IdempotenceKey.initial(),
+            sakId = sak.sakId,
+            virksomhetsnummer = sak.virksomhetsnummer,
             status = HendelseModel.SakStatus.MOTTATT,
+            idempotensKey = IdempotenceKey.initial(),
         )
 
         val hardDeleteEvent = HardDelete(

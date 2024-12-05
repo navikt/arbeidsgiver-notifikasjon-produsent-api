@@ -109,6 +109,45 @@ class BrukerModelIdempotensTests : DescribeSpec({
 
 
     }
+
+    describe("soft delete på sak kan partially replayes") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val merkelapp = "idempotenstest"
+        val grupperingsid = "gr-42"
+        val sakId = uuid("42")
+
+        val hendelsesforløp = listOf(
+            brukerRepository.sakOpprettet(
+                sakId = sakId,
+                virksomhetsnummer = TEST_VIRKSOMHET_1,
+                merkelapp = merkelapp,
+                grupperingsid = grupperingsid,
+                mottakere = listOf(TEST_MOTTAKER_1, TEST_MOTTAKER_2),
+            ),
+            brukerRepository.nyStatusSak(
+                sakId = sakId,
+                virksomhetsnummer = TEST_VIRKSOMHET_1,
+            ),
+            HendelseModel.SoftDelete(
+                hendelseId = UUID.randomUUID(),
+                virksomhetsnummer = TEST_VIRKSOMHET_1,
+                aggregateId = sakId,
+                produsentId = "",
+                kildeAppNavn = "",
+                deletedAt = OffsetDateTime.now(),
+                grupperingsid = grupperingsid,
+                merkelapp = merkelapp,
+            ).also {
+                brukerRepository.oppdaterModellEtterHendelse(it)
+            }
+        )
+
+        // replay events after create
+        hendelsesforløp.drop(1).forEach {
+            brukerRepository.oppdaterModellEtterHendelse(it)
+        }
+    }
 })
 
 private suspend fun DescribeSpecContainerScope.assertDeleted(

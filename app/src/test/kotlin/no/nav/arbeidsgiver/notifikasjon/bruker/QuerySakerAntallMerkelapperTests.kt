@@ -141,16 +141,16 @@ private suspend fun BrukerRepository.opprettSak(
         tilleggsinformasjon = null
     )
     nyStatusSak(
-        sak = sak,
-        hendelseId = UUID.randomUUID(),
+        sakId = sak.sakId,
         virksomhetsnummer = sak.virksomhetsnummer,
+        hendelseId = UUID.randomUUID(),
         produsentId = sak.produsentId,
         kildeAppNavn = sak.kildeAppNavn,
         status = MOTTATT,
         overstyrStatustekstMed = "noe",
+        oppgittTidspunkt = null,
         mottattTidspunkt = oppgittTidspunkt,
         idempotensKey = IdempotenceKey.initial(),
-        oppgittTidspunkt = null,
         hardDelete = null,
         nyLenkeTilSak = null,
     )

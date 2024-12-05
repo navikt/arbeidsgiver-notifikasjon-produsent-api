@@ -77,9 +77,9 @@ private suspend fun BrukerRepository.opprettSak(
         hardDelete = null,
     ).let { sakOpprettet ->
         nyStatusSak(
-            sakOpprettet,
+            sakOpprettet.sakId,
+            sakOpprettet.virksomhetsnummer,
             hendelseId = UUID.randomUUID(),
-            virksomhetsnummer = "1",
             produsentId = "1",
             kildeAppNavn = "1",
             status = HendelseModel.SakStatus.MOTTATT,
