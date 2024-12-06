@@ -42,7 +42,8 @@ class NyLenkeTilSakTests : DescribeSpec({
         )
 
         brukerRepository.nyStatusSak(
-            sak = sakOpprettet,
+            sakId = sakOpprettet.sakId,
+            virksomhetsnummer = sakOpprettet.virksomhetsnummer,
             idempotensKey = IdempotenceKey.initial(),
         )
 
@@ -51,7 +52,8 @@ class NyLenkeTilSakTests : DescribeSpec({
         }
 
         brukerRepository.nyStatusSak(
-            sak = sakOpprettet,
+            sakId = sakOpprettet.sakId,
+            virksomhetsnummer = sakOpprettet.virksomhetsnummer,
             idempotensKey = IdempotenceKey.userSupplied("20202021"),
             nyLenkeTilSak = "#bar",
             oppgittTidspunkt = OffsetDateTime.parse("2020-01-01T12:00:00Z"),
@@ -66,7 +68,8 @@ class NyLenkeTilSakTests : DescribeSpec({
         }
 
         brukerRepository.nyStatusSak(
-            sak = sakOpprettet,
+            sakId = sakOpprettet.sakId,
+            virksomhetsnummer = sakOpprettet.virksomhetsnummer,
             idempotensKey = IdempotenceKey.userSupplied("123"),
             nyLenkeTilSak = null,
         )
