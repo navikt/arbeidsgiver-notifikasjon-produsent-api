@@ -41,9 +41,9 @@ export const NotifikasjonBjelle = ({
                 : ''
             }`}
           >
-            <Label className='notifikasjon_bjelle-ikon__ulest-antall'>
+            <BodyShort className='notifikasjon_bjelle-ikon__ulest-antall'>
               {antallUleste < 10 ? antallUleste : '9+'}
-            </Label>
+            </BodyShort>
           </div>
         </div>
         <BodyShort size="small">Varsler</BodyShort>
