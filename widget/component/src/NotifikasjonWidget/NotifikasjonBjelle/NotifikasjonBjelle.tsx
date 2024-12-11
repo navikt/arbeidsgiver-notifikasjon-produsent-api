@@ -1,6 +1,6 @@
 import React, { Ref } from 'react'
 import './NotifikasjonBjelle.css'
-import {BodyShort, Label} from "@navikt/ds-react";
+import {BodyShort} from "@navikt/ds-react";
 import {Bell} from "@navikt/ds-icons";
 
 interface Props {
