@@ -181,9 +181,9 @@ private suspend fun BrukerRepository.opprettOppgave(
 )
 
 private suspend fun BrukerRepository.opprettStatus(sak: HendelseModel.SakOpprettet) = nyStatusSak(
-    sak = sak,
+    sakId = sak.sakId,
+    virksomhetsnummer = sak.virksomhetsnummer,
     hendelseId = UUID.randomUUID(),
-    virksomhetsnummer = "1",
     produsentId = "1",
     kildeAppNavn = "1",
     status = HendelseModel.SakStatus.MOTTATT,

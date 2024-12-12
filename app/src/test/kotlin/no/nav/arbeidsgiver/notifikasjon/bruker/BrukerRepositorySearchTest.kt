@@ -119,8 +119,8 @@ private suspend fun BrukerRepositoryImpl.insertSak(id: String, tekst: String) {
         mottattTidspunkt = OffsetDateTime.now(),
     )
     nyStatusSak(
-        sak = sak,
-        virksomhetsnummer = "1",
+        sakId = sak.sakId,
+        virksomhetsnummer = sak.virksomhetsnummer,
         status = HendelseModel.SakStatus.MOTTATT,
         overstyrStatustekstMed = null,
         mottattTidspunkt = OffsetDateTime.now(),
