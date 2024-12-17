@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Sak
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.time.LocalDate
@@ -96,11 +97,11 @@ internal class MutationNyOppgave(
         nyOppgave: NyOppgaveInput,
     ): NyOppgaveResultat {
         val produsent = hentProdusent(context) { error -> return error }
-        val sakId : UUID? = nyOppgave.metadata.grupperingsid?.let { grupperingsid ->
+        val sak : Sak? = nyOppgave.metadata.grupperingsid?.let { grupperingsid ->
             runCatching {
                 hentSak(produsentRepository, grupperingsid, nyOppgave.notifikasjon.merkelapp) {
                     TODO("make sak required by returning this error")
-                }.id
+                }
             }.getOrNull()
         }
         val id = UUID.randomUUID()
@@ -109,7 +110,7 @@ internal class MutationNyOppgave(
                 id = id,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
-                sakId = sakId,
+                sakId = sak?.id,
             )
         } catch (e: UkjentRolleException){
             return Error.UkjentRolle(e.message!!)
@@ -122,6 +123,10 @@ internal class MutationNyOppgave(
             domeneNyOppgave.mottakere,
             nyOppgave.notifikasjon.merkelapp,
         ) { error -> return error }
+
+        validerMottakereMotSak(sak, nyOppgave.mottakere) { error ->
+            return error
+        }
 
         val eksisterende = produsentRepository.hentNotifikasjon(
             eksternId = domeneNyOppgave.eksternId,

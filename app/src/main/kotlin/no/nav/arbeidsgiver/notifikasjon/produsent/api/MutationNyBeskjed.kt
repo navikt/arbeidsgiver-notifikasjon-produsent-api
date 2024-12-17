@@ -6,6 +6,7 @@ import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Sak
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
 import java.util.*
@@ -79,11 +80,11 @@ internal class MutationNyBeskjed(
         nyBeskjed: NyBeskjedInput,
     ): NyBeskjedResultat {
         val produsent = hentProdusent(context) { error -> return error }
-        val sakId : UUID? = nyBeskjed.metadata.grupperingsid?.let { grupperingsid ->
+        val sak : Sak? = nyBeskjed.metadata.grupperingsid?.let { grupperingsid ->
             runCatching {
                 hentSak(produsentRepository, grupperingsid, nyBeskjed.notifikasjon.merkelapp) {
                     TODO("make sak required by returning this error")
-                }.id
+                }
             }.getOrNull()
         }
         val id = UUID.randomUUID()
@@ -92,7 +93,7 @@ internal class MutationNyBeskjed(
                 id = id,
                 produsentId = produsent.id,
                 kildeAppNavn = context.appName,
-                sakId = sakId,
+                sakId = sak?.id,
             )
         } catch (e: UkjentRolleException) {
             return Error.UkjentRolle(e.message!!)
@@ -103,6 +104,10 @@ internal class MutationNyBeskjed(
             domeneNyBeskjed.mottakere,
             nyBeskjed.notifikasjon.merkelapp
         ) { error ->
+            return error
+        }
+
+        validerMottakereMotSak(sak, nyBeskjed.mottakere) { error ->
             return error
         }
 

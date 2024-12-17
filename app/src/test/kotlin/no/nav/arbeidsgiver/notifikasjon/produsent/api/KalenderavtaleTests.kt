@@ -30,7 +30,7 @@ class KalenderavtaleTests : DescribeSpec({
     describe("Kalenderavtale mutations") {
         val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val sakOpprettet = HendelseModel.SakOpprettet(
-            virksomhetsnummer = "1",
+            virksomhetsnummer = "42",
             merkelapp = "tag",
             grupperingsid = grupperingsid,
             mottakere = listOf(

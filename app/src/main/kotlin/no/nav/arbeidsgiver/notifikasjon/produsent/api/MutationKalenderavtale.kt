@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpp
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Sak
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.AVLYST
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
@@ -209,12 +210,12 @@ internal class MutationKalenderavtale(
         nyKalenderavtale: NyKalenderavtaleInput,
     ): NyKalenderavtaleResultat {
         val produsent = hentProdusent(context) { error -> return error }
-        val sakId: UUID = nyKalenderavtale.grupperingsid.let { grupperingsid ->
+        val sak: Sak = nyKalenderavtale.grupperingsid.let { grupperingsid ->
             hentSak(
                 produsentRepository = produsentRepository,
                 grupperingsid = grupperingsid,
                 merkelapp = nyKalenderavtale.merkelapp
-            ) { error -> return error }.id
+            ) { error -> return error }
         }
 
         val id = UUID.randomUUID()
@@ -222,7 +223,7 @@ internal class MutationKalenderavtale(
             id = id,
             produsentId = produsent.id,
             kildeAppNavn = context.appName,
-            sakId = sakId,
+            sakId = sak.id,
         ) { error -> return error }
 
         tilgangsstyrNyNotifikasjon(
@@ -230,6 +231,10 @@ internal class MutationKalenderavtale(
             nyKalenderavtaleHendelse.mottakere,
             nyKalenderavtale.merkelapp
         ) { error -> return error }
+
+        validerMottakereMotSak(sak, nyKalenderavtale.mottakere) { error ->
+            return error
+        }
 
         val eksisterende = produsentRepository.hentNotifikasjon(
             eksternId = nyKalenderavtaleHendelse.eksternId,

@@ -21,8 +21,8 @@ import java.util.*
 
 class IdempotensOppførselForProdusentApiTests : DescribeSpec({
 
-    val virksomhetsnummer = "1234"
-    val mottaker = AltinnMottaker(serviceCode = "5441", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
+    val virksomhetsnummer = "1"
+    val mottaker = AltinnMottaker(serviceCode = "1", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
     val eksternId = "42"
     val grupperingsid = "42"
 
