@@ -5,7 +5,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Sak
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
 
@@ -135,11 +134,11 @@ internal inline fun tilgangsstyrProdusent(
 }
 
 private inline fun validerMottakerMotSak(
-    sak: Sak,
+    sak: ProdusentModel.Sak,
     mottakerInput: MottakerInput,
     onError: (Error.UgyldigMottaker) -> Nothing
 ) {
-    var mottaker = mottakerInput.tilHendelseModel(sak.virksomhetsnummer);
+    var mottaker = mottakerInput.tilHendelseModel(sak.virksomhetsnummer)
     if (mottaker !in sak.mottakere) {
         onError(
             Error.UgyldigMottaker(
@@ -153,7 +152,7 @@ private inline fun validerMottakerMotSak(
 }
 
 internal inline fun validerMottakereMotSak(
-    sak: Sak?,
+    sak: ProdusentModel.Sak?,
     mottakere: List<MottakerInput>,
     onError: (Error.UgyldigMottaker) -> Nothing
 ) {
