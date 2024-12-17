@@ -5,6 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Sak
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*
 
@@ -131,6 +132,35 @@ internal inline fun tilgangsstyrProdusent(
     val produsent = hentProdusent(context) { error -> onError(error) }
     tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
     return produsent
+}
+
+private inline fun validerMottakerMotSak(
+    sak: Sak,
+    mottakerInput: MottakerInput,
+    onError: (Error.UgyldigMottaker) -> Nothing
+) {
+    var mottaker = mottakerInput.tilHendelseModel(sak.virksomhetsnummer);
+    if (mottaker !in sak.mottakere) {
+        onError(
+            Error.UgyldigMottaker(
+                """
+                    | Ugyldig mottaker '${mottakerInput}'. 
+                    | Mottaker må finnes på sak.
+                    """.trimMargin()
+            )
+        )
+    }
+}
+
+internal inline fun validerMottakereMotSak(
+    sak: Sak?,
+    mottakere: List<MottakerInput>,
+    onError: (Error.UgyldigMottaker) -> Nothing
+) {
+    if (sak == null) return
+    for (mottaker in mottakere) {
+        validerMottakerMotSak(sak, mottaker, onError)
+    }
 }
 
 fun String.ensurePrefix(prefix: String) =
