@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.writeValueAsStringSupportingTypeInfoInCollections
