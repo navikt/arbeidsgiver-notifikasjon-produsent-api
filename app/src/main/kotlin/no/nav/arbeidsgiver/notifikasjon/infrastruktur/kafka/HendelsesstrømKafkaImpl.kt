@@ -35,6 +35,10 @@ class HendelsesstrømKafkaImpl(
      */
     private val brokenHendelseId: Set<UUID> = setOf(
         UUID.fromString("75977ac3-5ccd-42d2-ada0-93482462b8a9"),
+
+        // soft delete rett etter opprettelse gjør at partisjon er stuck i prod.
+        // se også https://github.com/navikt/arbeidsgiver-notifikasjon-produsent-api/pull/800
+        UUID.fromString("34a375aa-d967-4327-911b-177afcce9d6e"),
     )
 
     override suspend fun forEach(

@@ -17,13 +17,16 @@ class ReplayValidatorService(
     private val processors: MutableList<ReplayValidatorService>
 ) : PartitionProcessor {
 
-    init {
-        processors.add(this)
-    }
-
     private val log = logger()
 
-    internal val repository = ReplayValidatorRepository()
+    internal val repository: ReplayValidatorRepository
+
+    init {
+        ReplayValidatorRepository().also {
+            repository = it
+        }
+        processors.add(this)
+    }
 
     override fun close() {
         processors.remove(this)

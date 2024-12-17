@@ -104,7 +104,7 @@ private constructor(
         consumer,
         isBigLeap = { t -> t.hour == 5 && t.minute == 0 },
         isSmallLeap = { t -> t.minute == 0 },
-        bigLeap = 10_000,
+        bigLeap = 4_000,
         smallLeap = 100,
         enabled = replayPeriodically,
     )
