@@ -58,7 +58,8 @@ class NyOppgaveTests : DescribeSpec({
 
     describe("produsent-api happy path med frist") {
         val (produsentRepository, kafkaProducer, engine) = setupEngine()
-        val nyOppgave = opprettOgTestNyOppgave<MutationNyOppgave.NyOppgaveVellykket>(engine, frist = """frist: "2020-01-02"  """)
+        val nyOppgave =
+            opprettOgTestNyOppgave<MutationNyOppgave.NyOppgaveVellykket>(engine, frist = """frist: "2020-01-02"  """)
 
         it("sends message to kafka") {
             kafkaProducer.hendelser.removeLast().also {
@@ -84,7 +85,8 @@ class NyOppgaveTests : DescribeSpec({
             produsentRepository.hentNotifikasjon(id) shouldNot beNull()
         }
 
-        val nyOppgave2 = opprettOgTestNyOppgave<MutationNyOppgave.NyOppgaveVellykket>(engine, frist = """frist: "2020-01-02"  """)
+        val nyOppgave2 =
+            opprettOgTestNyOppgave<MutationNyOppgave.NyOppgaveVellykket>(engine, frist = """frist: "2020-01-02"  """)
         it("idempotent oppførsel ved opprettelse av identisk sak") {
             nyOppgave2.id shouldBe nyOppgave.id
         }
@@ -150,7 +152,7 @@ class NyOppgaveTests : DescribeSpec({
         }
     }
 
-    describe("Feil i validering av mottaker"){
+    describe("Feil i validering av mottaker") {
         val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val sakOpprettet = HendelseModel.SakOpprettet(
             virksomhetsnummer = "42",
@@ -177,12 +179,52 @@ class NyOppgaveTests : DescribeSpec({
         ).also {
             produsentRepository.oppdaterModellEtterHendelse(it)
         }
-        val nyOppgave = opprettOgTestNyOppgave<MutationNyOppgave.NyOppgaveVellykket>(
+
+        val nyOppgave = opprettOppgaveMedMottaker(
             engine,
-            grupperingsid = """grupperingsid: "g42"  """
+            grupperingsId = "g42",
+            virksomhetsnummer = "41",
+            eksternId = "1",
+            mottaker =
+                """naermesteLeder: {
+                    naermesteLederFnr: "12345678910",
+                            ansattFnr: "321"
+                    }"""
+        )
+        it("Oppgave har feil virksomhetsnummer") {
+            nyOppgave shouldBe instanceOf<Error.UgyldigMottaker>()
+        }
+
+        val nyOppgave2 = opprettOppgaveMedMottaker(
+            engine,
+            grupperingsId = "g42",
+            virksomhetsnummer = "42",
+            eksternId = "2",
+            mottaker =
+                """altinn: {
+                        serviceCode: "1",
+                        serviceEdition: "1"
+                    }"""
         )
 
-        it("Mottaker på oppgave finnes ikke på sak"){
+        it("Oppgave har feil mottakerType") {
+            nyOppgave2 shouldBe instanceOf<Error.UgyldigMottaker>()
+        }
+
+        val nyOppgave3 = opprettOppgaveMedMottaker(
+            engine,
+            grupperingsId = "g41",
+            virksomhetsnummer = "41",
+            eksternId = "3",
+            mottaker =
+                """altinn: {
+                        serviceCode: "1",
+                        serviceEdition: "1"
+                    }"""
+        )
+
+        it("Oppgave har ikke grupperingsid, og er ikke koblet til sak") {
+            nyOppgave3 shouldBe instanceOf<MutationNyOppgave.NyOppgaveVellykket>()
         }
     }
 })
@@ -198,12 +240,12 @@ private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHend
     return Triple(produsentRepository, kafkaProducer, engine)
 }
 
-private suspend inline fun <reified T: MutationNyOppgave.NyOppgaveResultat> DescribeSpecContainerScope.opprettOgTestNyOppgave(
+private suspend inline fun <reified T : MutationNyOppgave.NyOppgaveResultat> DescribeSpecContainerScope.opprettOgTestNyOppgave(
     engine: TestApplicationEngine,
     frist: String = "",
     grupperingsid: String = "",
 
-): T {
+    ): T {
     val response = engine.produsentApi(
         """
         mutation {
@@ -241,7 +283,7 @@ private suspend inline fun <reified T: MutationNyOppgave.NyOppgaveResultat> Desc
                     feilmelding
                     idTilEksisterende
                 }
-                ... on Error {
+                ... on UgyldigMottaker {
                     feilmelding
                 }
             }
@@ -263,4 +305,55 @@ private suspend inline fun <reified T: MutationNyOppgave.NyOppgaveResultat> Desc
     }
     return nyOppgave as T
 }
+
+private fun DescribeSpecContainerScope.opprettOppgaveMedMottaker(
+    engine: TestApplicationEngine,
+    grupperingsId: String,
+    eksternId: String,
+    mottaker: String,
+    virksomhetsnummer: String,
+): MutationNyOppgave.NyOppgaveResultat {
+    val mutation =
+        """
+        mutation {
+            nyOppgave(nyOppgave: {
+                mottaker: {
+                    $mottaker 
+                }
+                notifikasjon: {
+                    lenke: "https://foo.bar",
+                    tekst: "hello world",
+                    merkelapp: "tag",
+                }
+                metadata: {
+                    eksternId: "$eksternId",
+                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                    virksomhetsnummer: "$virksomhetsnummer"
+                    hardDelete: {
+                      den: "2019-10-13T07:20:50.52"
+                    }
+                    grupperingsid: "$grupperingsId",
+                }
+            }) {
+                __typename
+                ... on NyOppgaveVellykket {
+                    id
+                    eksterneVarsler {
+                        id
+                    }
+                }
+                ... on Error {
+                    feilmelding
+                }
+            }
+        }
+    """.trimIndent()
+
+    val response = engine.produsentApi(mutation)
+    response.status() shouldBe HttpStatusCode.OK
+    response.getGraphqlErrors() should beEmpty()
+    return response.getTypedContent("nyOppgave")
+
+}
+
 
