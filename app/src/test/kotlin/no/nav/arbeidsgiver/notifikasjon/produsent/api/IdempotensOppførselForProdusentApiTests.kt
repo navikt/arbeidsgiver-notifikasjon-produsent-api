@@ -86,8 +86,8 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
         // language=GraphQL
         return """
             mutation NyKalenderavtale(
-                ${'$'}startTidspunkt: ISO8601LocalDateTime! = "2024-10-12T07:00:00.00"
-                ${'$'}sluttTidspunkt: ISO8601LocalDateTime
+                ${'$'}startTidspunkt: ISO8601DateTime! = "2024-10-12T07:00:00.00"
+                ${'$'}sluttTidspunkt: ISO8601DateTime
                 ${'$'}lokasjon: LokasjonInput
                 ${'$'}erDigitalt: Boolean
                 ${'$'}tilstand: KalenderavtaleTilstand

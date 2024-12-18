@@ -4,6 +4,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.*
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Notifikasjontilstand.*
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloLocalDateTime
 import java.sql.Connection
 import java.time.Instant
 import java.time.LocalDate
