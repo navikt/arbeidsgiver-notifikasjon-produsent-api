@@ -10,9 +10,8 @@ directive @MaxValue(upToIncluding: Int) on ARGUMENT_DEFINITION
 directive @NorwegianMobilePhoneNumber on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 
 """
-DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
-
-Er representert som String.
+DateTime etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
+Dersom tidssone/offset ikke er oppgitt, så antar vi at tidspunktet er Oslo-tid ('Europe/Oslo').
 """
 scalar ISO8601DateTime
 
@@ -254,12 +253,12 @@ type KalenderavtaleData {
     """
     Når avtalen starter.
     """
-    startTidspunkt: ISO8601LocalDateTime!
+    startTidspunkt: ISO8601DateTime!
 
     """
     Når avtalen slutter.
     """
-    sluttTidspunkt: ISO8601LocalDateTime
+    sluttTidspunkt: ISO8601DateTime
 
     """
     Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.
@@ -449,12 +448,12 @@ type Mutation {
         """
         Når avtalen starter.
         """
-        startTidspunkt: ISO8601LocalDateTime!
+        startTidspunkt: ISO8601DateTime!
 
         """
         Når avtalen slutter.
         """
-        sluttTidspunkt: ISO8601LocalDateTime
+        sluttTidspunkt: ISO8601DateTime
 
         """
         Her kan dere oppgi en fysisk adresse som brukeren kan møte opp på dersom dere har det.

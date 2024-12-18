@@ -13,8 +13,8 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.AVLYST
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.tid.inOsloLocalDateTime
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -40,10 +40,10 @@ internal class MutationKalenderavtale(
                         tekst = env.getTypedArgument<String>("tekst"),
                         lenke = env.getTypedArgument<String>("lenke"),
                         mottakere = env.getTypedArgument<List<MottakerInput>>("mottakere"),
-                        startTidspunkt = env.getTypedArgument<LocalDateTime>("startTidspunkt"),
-                        sluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("sluttTidspunkt"),
+                        startTidspunkt = env.getTypedArgument<OffsetDateTime>("startTidspunkt"),
+                        sluttTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("sluttTidspunkt"),
                         lokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("lokasjon"),
-                        erDigitalt = env.getTypedArgumentOrNull<Boolean>("erDigitalt") ?: false,
+                        erDigitalt = env.getTypedArgumentOrNull<Boolean>("erDigitalt") == true,
                         tilstand = env.getTypedArgumentOrDefault<KalenderavtaleTilstand>("tilstand") { VENTER_SVAR_FRA_ARBEIDSGIVER },
                         eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() },
                         paaminnelse = env.getTypedArgumentOrNull<PaaminnelseInput>("paaminnelse"),
@@ -60,8 +60,8 @@ internal class MutationKalenderavtale(
                         nyTilstand = env.getTypedArgumentOrNull<KalenderavtaleTilstand>("nyTilstand"),
                         nyTekst = env.getTypedArgumentOrNull<String>("nyTekst"),
                         nyLenke = env.getTypedArgumentOrNull<String>("nyLenke"),
-                        nyttStartTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttStartTidspunkt"),
-                        nyttSluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttSluttTidspunkt"),
+                        nyttStartTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("nyttStartTidspunkt"),
+                        nyttSluttTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("nyttSluttTidspunkt"),
                         nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
                         eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() }.ifEmpty { null },
@@ -81,8 +81,8 @@ internal class MutationKalenderavtale(
                         nyTilstand = env.getTypedArgumentOrNull<KalenderavtaleTilstand>("nyTilstand"),
                         nyTekst = env.getTypedArgumentOrNull<String>("nyTekst"),
                         nyLenke = env.getTypedArgumentOrNull<String>("nyLenke"),
-                        nyttStartTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttStartTidspunkt"),
-                        nyttSluttTidspunkt = env.getTypedArgumentOrNull<LocalDateTime>("nyttSluttTidspunkt"),
+                        nyttStartTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("nyttStartTidspunkt"),
+                        nyttSluttTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("nyttSluttTidspunkt"),
                         nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
                         eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() }.ifEmpty { null },
@@ -120,8 +120,8 @@ internal class MutationKalenderavtale(
         val tekst: String,
         val lenke: String,
         val mottakere: List<MottakerInput>,
-        val startTidspunkt: LocalDateTime,
-        val sluttTidspunkt: LocalDateTime?,
+        val startTidspunkt: OffsetDateTime,
+        val sluttTidspunkt: OffsetDateTime?,
         val lokasjon: LokasjonInput?,
         val erDigitalt: Boolean,
         val tilstand: KalenderavtaleTilstand,
@@ -157,8 +157,8 @@ internal class MutationKalenderavtale(
                 virksomhetsnummer = virksomhetsnummer,
                 produsentId = produsentId,
                 kildeAppNavn = kildeAppNavn,
-                startTidspunkt = startTidspunkt,
-                sluttTidspunkt = sluttTidspunkt,
+                startTidspunkt = startTidspunkt.inOsloLocalDateTime(),
+                sluttTidspunkt = sluttTidspunkt?.inOsloLocalDateTime(),
                 tilstand = tilstand.tilHendelseModel(),
                 lokasjon = lokasjon?.tilHendelseModel(),
                 erDigitalt = erDigitalt,
@@ -168,7 +168,7 @@ internal class MutationKalenderavtale(
                 påminnelse = paaminnelse?.tilDomene(
                     notifikasjonOpprettetTidspunkt = opprettetTidspunkt,
                     frist = null,
-                    startTidspunkt = startTidspunkt,
+                    startTidspunkt = startTidspunkt.inOsloLocalDateTime(),
                     virksomhetsnummer = virksomhetsnummer,
                 ),
             )
@@ -286,14 +286,14 @@ internal class MutationKalenderavtale(
                 )
             } else if (
                 nyttStartTidspunkt != null &&
-                nyttStartTidspunkt!!.isAfter(eksisterende.sluttTidspunkt)
+                nyttStartTidspunkt!!.inOsloLocalDateTime().isAfter(eksisterende.sluttTidspunkt)
             ) {
                 onValidationError(
                     Error.UgyldigKalenderavtale("startTidspunkt må være før sluttTidspunkt")
                 )
             } else if (
                 nyttSluttTidspunkt != null
-                && nyttSluttTidspunkt!!.isBefore(eksisterende.startTidspunkt)
+                && nyttSluttTidspunkt!!.inOsloLocalDateTime().isBefore(eksisterende.startTidspunkt)
             ) {
                 onValidationError(
                     Error.UgyldigKalenderavtale("startTidspunkt må være før sluttTidspunkt")
@@ -310,8 +310,8 @@ internal class MutationKalenderavtale(
                 tilstand = nyTilstand?.tilHendelseModel(),
                 lenke = nyLenke,
                 tekst = nyTekst,
-                startTidspunkt = nyttStartTidspunkt,
-                sluttTidspunkt = nyttSluttTidspunkt,
+                startTidspunkt = nyttStartTidspunkt?.inOsloLocalDateTime(),
+                sluttTidspunkt = nyttSluttTidspunkt?.inOsloLocalDateTime(),
                 lokasjon = nyLokasjon?.tilHendelseModel(),
                 erDigitalt = nyErDigitalt,
                 hardDelete = hardDelete?.tilHendelseModel(),
@@ -319,7 +319,7 @@ internal class MutationKalenderavtale(
                 påminnelse = if (nyTilstand == AVLYST) null else paaminnelse?.tilDomene(
                     notifikasjonOpprettetTidspunkt = eksisterende.opprettetTidspunkt,
                     frist = null,
-                    startTidspunkt = nyttStartTidspunkt ?: eksisterende.startTidspunkt,
+                    startTidspunkt = (nyttStartTidspunkt?.inOsloLocalDateTime() ?: eksisterende.startTidspunkt),
                     virksomhetsnummer = eksisterende.virksomhetsnummer,
                 ),
                 idempotenceKey = idempotenceKey,
@@ -332,8 +332,8 @@ internal class MutationKalenderavtale(
         abstract val nyTilstand: KalenderavtaleTilstand?
         abstract val nyTekst: String?
         abstract val nyLenke: String?
-        abstract val nyttStartTidspunkt: LocalDateTime?
-        abstract val nyttSluttTidspunkt: LocalDateTime?
+        abstract val nyttStartTidspunkt: OffsetDateTime?
+        abstract val nyttSluttTidspunkt: OffsetDateTime?
         abstract val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?
         abstract val nyErDigitalt: Boolean?
         abstract val hardDelete: HardDeleteUpdateInput?
@@ -365,8 +365,8 @@ internal class MutationKalenderavtale(
         override val nyTilstand: KalenderavtaleTilstand?,
         override val nyTekst: String?,
         override val nyLenke: String?,
-        override val nyttStartTidspunkt: LocalDateTime?,
-        override val nyttSluttTidspunkt: LocalDateTime?,
+        override val nyttStartTidspunkt: OffsetDateTime?,
+        override val nyttSluttTidspunkt: OffsetDateTime?,
         override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
         override val eksterneVarsler: List<EksterntVarselInput>?,
@@ -381,8 +381,8 @@ internal class MutationKalenderavtale(
         override val nyTilstand: KalenderavtaleTilstand?,
         override val nyTekst: String?,
         override val nyLenke: String?,
-        override val nyttStartTidspunkt: LocalDateTime?,
-        override val nyttSluttTidspunkt: LocalDateTime?,
+        override val nyttStartTidspunkt: OffsetDateTime?,
+        override val nyttSluttTidspunkt: OffsetDateTime?,
         override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
         override val eksterneVarsler: List<EksterntVarselInput>?,
