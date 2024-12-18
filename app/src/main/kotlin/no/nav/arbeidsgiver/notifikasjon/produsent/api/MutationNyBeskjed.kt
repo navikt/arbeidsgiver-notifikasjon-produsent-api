@@ -107,7 +107,7 @@ internal class MutationNyBeskjed(
             return error
         }
 
-        validerMottakereMotSak(sak, nyBeskjed.mottakere) { error ->
+        validerMottakereMotSak(sak, nyBeskjed.metadata.virksomhetsnummer, nyBeskjed.mottakere) { error ->
             return error
         }
 

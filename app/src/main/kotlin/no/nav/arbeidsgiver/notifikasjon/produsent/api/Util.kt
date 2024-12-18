@@ -135,10 +135,11 @@ internal inline fun tilgangsstyrProdusent(
 
 private inline fun validerMottakerMotSak(
     sak: ProdusentModel.Sak,
+    virksomhetsnummer: String,
     mottakerInput: MottakerInput,
     onError: (Error.UgyldigMottaker) -> Nothing
 ) {
-    var mottaker = mottakerInput.tilHendelseModel(sak.virksomhetsnummer)
+    var mottaker = mottakerInput.tilHendelseModel(virksomhetsnummer)
     if (mottaker !in sak.mottakere) {
         onError(
             Error.UgyldigMottaker(
@@ -153,12 +154,13 @@ private inline fun validerMottakerMotSak(
 
 internal inline fun validerMottakereMotSak(
     sak: ProdusentModel.Sak?,
+    virksomhetsnummer: String,
     mottakere: List<MottakerInput>,
     onError: (Error.UgyldigMottaker) -> Nothing
 ) {
     if (sak == null) return
     for (mottaker in mottakere) {
-        validerMottakerMotSak(sak, mottaker, onError)
+        validerMottakerMotSak(sak, virksomhetsnummer, mottaker, onError)
     }
 }
 

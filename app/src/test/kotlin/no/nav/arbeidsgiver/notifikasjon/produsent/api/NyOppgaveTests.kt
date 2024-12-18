@@ -149,6 +149,42 @@ class NyOppgaveTests : DescribeSpec({
             produsentRepository.hentNotifikasjon(id) shouldNot beNull()
         }
     }
+
+    describe("Feil i validering av mottaker"){
+        val (produsentRepository, kafkaProducer, engine) = setupEngine()
+        val sakOpprettet = HendelseModel.SakOpprettet(
+            virksomhetsnummer = "42",
+            merkelapp = "tag",
+            grupperingsid = "g42",
+            mottakere = listOf(
+                NærmesteLederMottaker(
+                    naermesteLederFnr = "12345678910",
+                    ansattFnr = "321",
+                    virksomhetsnummer = "42"
+                )
+            ),
+            hendelseId = uuid("11"),
+            sakId = uuid("11"),
+            tittel = "test",
+            lenke = "https://nav.no",
+            oppgittTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+            mottattTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+            kildeAppNavn = "",
+            produsentId = "",
+            nesteSteg = null,
+            hardDelete = null,
+            tilleggsinformasjon = null
+        ).also {
+            produsentRepository.oppdaterModellEtterHendelse(it)
+        }
+        val nyOppgave = opprettOgTestNyOppgave<MutationNyOppgave.NyOppgaveVellykket>(
+            engine,
+            grupperingsid = """grupperingsid: "g42"  """
+        )
+
+        it("Mottaker på oppgave finnes ikke på sak"){
+        }
+    }
 })
 
 private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
@@ -166,6 +202,7 @@ private suspend inline fun <reified T: MutationNyOppgave.NyOppgaveResultat> Desc
     engine: TestApplicationEngine,
     frist: String = "",
     grupperingsid: String = "",
+
 ): T {
     val response = engine.produsentApi(
         """

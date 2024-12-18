@@ -232,7 +232,7 @@ internal class MutationKalenderavtale(
             nyKalenderavtale.merkelapp
         ) { error -> return error }
 
-        validerMottakereMotSak(sak, nyKalenderavtale.mottakere) { error ->
+        validerMottakereMotSak(sak, nyKalenderavtale.virksomhetsnummer, nyKalenderavtale.mottakere) { error ->
             return error
         }
 
