@@ -40,16 +40,12 @@ open class HardDeletedRepository(private val database: Database) {
 
     }
 
-    fun registrerHardDelete(tx: Transaction, hendelse: HendelseModel.Hendelse) {
-        if (hendelse !is HendelseModel.HardDelete) {
-            return
-        }
-
+    fun registrerDelete(tx: Transaction, aggregateId: UUID) {
         tx.executeUpdate("""
             insert into hard_deleted_aggregates(aggregate_id) values (?)
             on conflict do nothing
         """) {
-            uuid(hendelse.aggregateId)
+            uuid(aggregateId)
         }
     }
 }

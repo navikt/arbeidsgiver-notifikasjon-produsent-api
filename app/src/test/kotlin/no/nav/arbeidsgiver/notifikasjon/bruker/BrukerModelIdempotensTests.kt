@@ -106,8 +106,57 @@ class BrukerModelIdempotensTests : DescribeSpec({
         }
 
         assertDeleted(database, sakId, notifikasjonId, grupperingsid, merkelapp)
+    }
 
+    describe("soft delete på sak sletter alt og kan replayes uten sakOpprettet") {
+        val database = testDatabase(Bruker.databaseConfig)
+        val brukerRepository = BrukerRepositoryImpl(database)
+        val merkelapp = "idempotenstest"
+        val grupperingsid = "gr-42"
+        val sakId = uuid("42")
+        val notifikasjonId = uuid("314")
 
+        val sakOpprettet = brukerRepository.sakOpprettet(
+            sakId = sakId,
+            virksomhetsnummer = TEST_VIRKSOMHET_1,
+            merkelapp = merkelapp,
+            grupperingsid = grupperingsid,
+            mottakere = listOf(TEST_MOTTAKER_1, TEST_MOTTAKER_2),
+        )
+
+        val hendelsesforløp = listOf(
+            sakOpprettet,
+            brukerRepository.nyStatusSak(sakOpprettet, idempotensKey = "idempotensKey"),
+            brukerRepository . beskjedOpprettet (
+            sakId = sakId,
+            notifikasjonId = notifikasjonId,
+            virksomhetsnummer = TEST_VIRKSOMHET_1,
+            merkelapp = merkelapp,
+            grupperingsid = grupperingsid,
+            mottakere = listOf(TEST_MOTTAKER_1, TEST_MOTTAKER_2),
+        ),
+        HendelseModel.SoftDelete(
+            hendelseId = UUID.randomUUID(),
+            virksomhetsnummer = TEST_VIRKSOMHET_1,
+            aggregateId = sakId,
+            produsentId = "",
+            kildeAppNavn = "",
+            deletedAt = OffsetDateTime.now(),
+            grupperingsid = grupperingsid,
+            merkelapp = merkelapp,
+        ).also {
+            brukerRepository.oppdaterModellEtterHendelse(it)
+        }
+        )
+
+        assertDeleted(database, sakId, notifikasjonId, grupperingsid, merkelapp)
+
+        // replay events utenom sakOpprettet
+        hendelsesforløp.drop(1).forEach {
+            brukerRepository.oppdaterModellEtterHendelse(it)
+        }
+
+        assertDeleted(database, sakId, notifikasjonId, grupperingsid, merkelapp)
     }
 })
 
@@ -152,6 +201,15 @@ private suspend fun DescribeSpecContainerScope.assertDeleted(
         database.nonTransactionalExecuteQuery(
             """
                 select * from mottaker_altinn_tilgang where notifikasjon_id = '${notifikasjonId}'
+            """
+        ) {
+            asMap()
+        }.size shouldBe 0
+    }
+    it("sak_status is deleted"){
+        database.nonTransactionalExecuteQuery(
+            """
+                select * from sak_status where sak_id = '${notifikasjonId}'
             """
         ) {
             asMap()
