@@ -706,14 +706,7 @@ class BrukerRepositoryImpl(
             is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
-            is HardDelete -> oppdaterModellEtterDelete(
-                hendelse.aggregateId,
-                hendelse.grupperingsid,
-                hendelse.merkelapp
-            ) { tx ->
-                registrerHardDelete(tx, hendelse)
-            }
-
+            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId,hendelse.grupperingsid,hendelse.merkelapp)
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
             is EksterntVarselKansellert -> Unit
@@ -834,8 +827,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterDelete(
         aggregateId: UUID,
         grupperingsid: String?,
-        merkelapp: String?,
-        callback: (tx: Transaction) -> Unit = {}
+        merkelapp: String?
     ) {
         database.transaction({
             throw RuntimeException("Delete", it)
@@ -859,7 +851,7 @@ class BrukerRepositoryImpl(
                 uuid(aggregateId)
             }
 
-            callback(this)
+            registrerDelete(this, aggregateId)
         }
     }
 
