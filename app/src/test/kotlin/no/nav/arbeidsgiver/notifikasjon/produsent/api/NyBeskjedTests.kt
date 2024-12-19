@@ -103,6 +103,82 @@ class NyBeskjedTests : DescribeSpec({
             produsentRepository.hentNotifikasjon(id) shouldNot beNull()
         }
     }
+
+    describe("Validering av mottaker mot sak") {
+        val (produsentRepository, _, engine) = setupEngine()
+        val sakOpprettet = HendelseModel.SakOpprettet(
+            virksomhetsnummer = "42",
+            merkelapp = "tag",
+            grupperingsid = "g42",
+            mottakere = listOf(
+                NærmesteLederMottaker(
+                    naermesteLederFnr = "12345678910",
+                    ansattFnr = "321",
+                    virksomhetsnummer = "42"
+                )
+            ),
+            hendelseId = uuid("11"),
+            sakId = uuid("11"),
+            tittel = "test",
+            lenke = "https://nav.no",
+            oppgittTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+            mottattTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+            kildeAppNavn = "",
+            produsentId = "",
+            nesteSteg = null,
+            hardDelete = null,
+            tilleggsinformasjon = null
+        ).also {
+            produsentRepository.oppdaterModellEtterHendelse(it)
+        }
+
+        val nyBeskjed = opprettBeskjedMedMottaker(
+            engine,
+            grupperingsId = "g42",
+            virksomhetsnummer = "41",
+            eksternId = "1",
+            mottaker =
+                """naermesteLeder: {
+                        naermesteLederFnr: "12345678910",
+                        ansattFnr: "321"
+                    }"""
+        )
+        it("Beskjed har feil virksomhetsnummer") {
+            nyBeskjed shouldBe instanceOf<Error.UgyldigMottaker>()
+        }
+
+        val nyBeskjed2 = opprettBeskjedMedMottaker(
+            engine,
+            grupperingsId = "g42",
+            virksomhetsnummer = "42",
+            eksternId = "2",
+            mottaker =
+                """altinn: {
+                        serviceCode: "1",
+                        serviceEdition: "1"
+                    }"""
+        )
+
+        it("Beskjed har feil mottakerType") {
+            nyBeskjed2 shouldBe instanceOf<Error.UgyldigMottaker>()
+        }
+
+        val nyBeskjed3 = opprettBeskjedMedMottaker(
+            engine,
+            grupperingsId = "g41",
+            virksomhetsnummer = "41",
+            eksternId = "3",
+            mottaker =
+                """altinn: {
+                        serviceCode: "1",
+                        serviceEdition: "1"
+                    }"""
+        )
+
+        it("Beskjed har ikke grupperingsid, og er ikke koblet til sak") {
+            nyBeskjed3 shouldBe instanceOf<MutationNyBeskjed.NyBeskjedVellykket>()
+        }
+    }
 })
 
 private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
@@ -173,3 +249,54 @@ private suspend inline fun DescribeSpecContainerScope.opprettOgTestNyBeskjed(
     return nyBeskjed as MutationNyBeskjed.NyBeskjedVellykket
 }
 
+
+private fun DescribeSpecContainerScope.opprettBeskjedMedMottaker(
+    engine: TestApplicationEngine,
+    grupperingsId: String,
+    eksternId: String,
+    mottaker: String,
+    virksomhetsnummer: String,
+): MutationNyBeskjed.NyBeskjedResultat {
+    val mutation =
+        """
+        mutation {
+            nyBeskjed(nyBeskjed: {
+                mottakere: [{
+                    $mottaker
+                    }
+                ]
+                
+                notifikasjon: {
+                    lenke: "https://foo.bar",
+                    tekst: "hello world",
+                    merkelapp: "tag",
+                }
+                metadata: {
+                    eksternId: "$eksternId",
+                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
+                    virksomhetsnummer: "$virksomhetsnummer"
+                    hardDelete: {
+                      den: "2019-10-13T07:20:50.52"
+                    }
+                    grupperingsid: "$grupperingsId",
+                }
+            }) {
+                __typename
+                ... on NyBeskjedVellykket {
+                    id
+                    eksterneVarsler {
+                        id
+                    }
+                }
+                ... on Error {
+                    feilmelding
+                }
+            }
+        }
+    """.trimIndent()
+
+    val response = engine.produsentApi(mutation)
+    response.status() shouldBe HttpStatusCode.OK
+    response.getGraphqlErrors() should beEmpty()
+    return response.getTypedContent("nyBeskjed")
+}

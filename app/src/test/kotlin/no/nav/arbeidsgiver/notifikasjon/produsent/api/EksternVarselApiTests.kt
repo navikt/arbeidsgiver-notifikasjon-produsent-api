@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
@@ -94,7 +95,7 @@ class EksternVarselApiTests: DescribeSpec({
                         }
                         mottaker: {
                             altinn: {
-                                serviceCode: "5441"
+                                serviceCode: "1"
                                 serviceEdition: "1"
                             }
                         }
@@ -124,7 +125,7 @@ class EksternVarselApiTests: DescribeSpec({
                 nyNotifikasjon: nyKalenderavtale(
                     mottakere: {
                         altinn: {
-                            serviceCode: "5441"
+                            serviceCode: "1"
                             serviceEdition: "1"
                         }
                     }
@@ -364,7 +365,14 @@ class EksternVarselApiTests: DescribeSpec({
         produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.SakOpprettet.copy(
             virksomhetsnummer = "0",
             merkelapp = "tag",
-            grupperingsid = "0"
+            grupperingsid = "0",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "0",
+                    serviceCode = "1",
+                    serviceEdition = "1"
+                ),
+            )
         ))
         val nyNotifikasjonResult = engine.produsentApi(GraphQLRequest(
             query = nyNotifikasjonMutation(nyKalenderavtale),

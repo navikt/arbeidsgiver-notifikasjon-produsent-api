@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.core.spec.style.scopes.DescribeSpecContainerScope
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
@@ -11,12 +12,12 @@ import io.kotest.matchers.types.instanceOf
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.MutationKalenderavtale.KalenderavtaleTilstand.*
 import no.nav.arbeidsgiver.notifikasjon.util.*
-import org.joda.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
@@ -30,7 +31,7 @@ class KalenderavtaleTests : DescribeSpec({
     describe("Kalenderavtale mutations") {
         val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val sakOpprettet = HendelseModel.SakOpprettet(
-            virksomhetsnummer = "1",
+            virksomhetsnummer = "42",
             merkelapp = "tag",
             grupperingsid = grupperingsid,
             mottakere = listOf(
@@ -311,6 +312,65 @@ class KalenderavtaleTests : DescribeSpec({
                 }
             }
         }
+        context("Validering av mottaker mot sak") {
+            val (produsentRepository, kafkaProducer, engine) = setupEngine()
+            val sakOpprettet = HendelseModel.SakOpprettet(
+                virksomhetsnummer = "42",
+                merkelapp = "tag",
+                grupperingsid = "g42",
+                mottakere = listOf(
+                    NærmesteLederMottaker(
+                        naermesteLederFnr = "12345678910",
+                        ansattFnr = "321",
+                        virksomhetsnummer = "42"
+                    )
+                ),
+                hendelseId = uuid("11"),
+                sakId = uuid("11"),
+                tittel = "test",
+                lenke = "https://nav.no",
+                oppgittTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+                mottattTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+                kildeAppNavn = "",
+                produsentId = "",
+                nesteSteg = null,
+                hardDelete = null,
+                tilleggsinformasjon = null
+            ).also {
+                produsentRepository.oppdaterModellEtterHendelse(it)
+            }
+
+            val nyKalenderavtale = opprettKalenderavtaleMedMottaker(
+                engine,
+                grupperingsId = "g42",
+                virksomhetsnummer = "41",
+                eksternId = "1",
+                mottaker =
+                    """naermesteLeder: {
+                        naermesteLederFnr: "12345678910",
+                        ansattFnr: "321"
+                    }"""
+            )
+            it("Kalenderavtale har feil virksomhetsnummer") {
+                nyKalenderavtale shouldBe instanceOf<Error.UgyldigMottaker>()
+            }
+
+            val nyKalenderavtale2 = opprettKalenderavtaleMedMottaker(
+                engine,
+                grupperingsId = "g42",
+                virksomhetsnummer = "42",
+                eksternId = "2",
+                mottaker =
+                    """altinn: {
+                        serviceCode: "1",
+                        serviceEdition: "1"
+                    }"""
+            )
+
+            it("Kalenderavtale har feil mottakerType") {
+                nyKalenderavtale2 shouldBe instanceOf<Error.UgyldigMottaker>()
+            }
+        }
     }
 })
 
@@ -539,3 +599,72 @@ private fun TestApplicationEngine.oppdaterKalenderavtaleByEksternId(
         }
     """.trimIndent()
 )
+
+private fun DescribeSpecContainerScope.opprettKalenderavtaleMedMottaker(
+    engine: TestApplicationEngine,
+    grupperingsId: String,
+    eksternId: String,
+    mottaker: String,
+    virksomhetsnummer: String,
+    startTidspunkt: String = "2024-10-12T07:20:50.52",
+    sluttTidspunkt: String = "2024-10-12T08:20:50.52",
+): MutationKalenderavtale.NyKalenderavtaleResultat {
+    val mutation =
+        """
+        mutation {
+            nyKalenderavtale(
+                mottakere: [{
+                    $mottaker
+                    }
+                ]
+               
+                lenke: "https://foo.bar"
+                tekst: "hello world"
+                merkelapp: "tag"
+                grupperingsid: "$grupperingsId"
+                eksternId: "$eksternId"
+                startTidspunkt: "$startTidspunkt"
+                sluttTidspunkt: "$sluttTidspunkt"
+                lokasjon: {
+                    postnummer: "1234"
+                    poststed: "Kneika"
+                    adresse: "rundt svingen og borti høgget"
+                }
+                erDigitalt: true
+                virksomhetsnummer: "$virksomhetsnummer"
+                eksterneVarsler: [{
+                    altinntjeneste: {
+                        sendetidspunkt: {
+                            sendevindu: LOEPENDE
+                        }
+                        mottaker: {
+                            serviceCode: "5441"
+                            serviceEdition: "1"
+                        }
+                        innhold: "foo"
+                        tittel: "bar"
+                    }
+                }]
+                hardDelete: {
+                  den: "2019-10-13T07:20:50.52"
+                }
+            ) {
+                __typename
+                ... on NyKalenderavtaleVellykket {
+                    id
+                    eksterneVarsler {
+                        id
+                    }
+                }
+                ... on Error {
+                    feilmelding
+                }
+            }
+        }
+    """.trimIndent()
+
+    val response = engine.produsentApi(mutation)
+    response.status() shouldBe HttpStatusCode.OK
+    response.getGraphqlErrors() should beEmpty()
+    return response.getTypedContent("nyKalenderavtale")
+}
