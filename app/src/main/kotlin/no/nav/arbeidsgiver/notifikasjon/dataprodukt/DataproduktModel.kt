@@ -425,7 +425,7 @@ class DataproduktModel(
                     ) {
                         uuid(hendelse.aggregateId)
                     }
-                    registrerHardDelete(this, hendelse)
+                    registrerDelete(this, hendelse.aggregateId)
                 }
             }
 

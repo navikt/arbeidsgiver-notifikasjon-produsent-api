@@ -3,10 +3,13 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 import graphql.language.StringValue
 import graphql.schema.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
+import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoField
 import java.time.temporal.TemporalAccessor
 import java.time.temporal.TemporalQuery
 
@@ -64,8 +67,14 @@ object Scalars {
     val ISO8601DateTime: GraphQLScalarType =
         dateTimeScalar(
             name = "ISO8601DateTime",
-            dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME,
-            temporalQuery = OffsetDateTime::from
+            dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME,
+            temporalQuery = {
+                if (it.isSupported(ChronoField.OFFSET_SECONDS)) {
+                    OffsetDateTime.from(it).withOffsetSameInstant(ZoneOffset.UTC)
+                } else {
+                    LocalDateTime.from(it).atOsloAsOffsetDateTime().withOffsetSameInstant(ZoneOffset.UTC)
+                }
+            }
         )
 
     val ISO8601LocalDateTime: GraphQLScalarType =
