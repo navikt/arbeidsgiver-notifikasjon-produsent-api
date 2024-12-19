@@ -152,7 +152,7 @@ class NyOppgaveTests : DescribeSpec({
         }
     }
 
-    describe("Feil i validering av mottaker") {
+    describe("Validering av mottaker mot sak") {
         val (produsentRepository, kafkaProducer, engine) = setupEngine()
         val sakOpprettet = HendelseModel.SakOpprettet(
             virksomhetsnummer = "42",
@@ -187,8 +187,8 @@ class NyOppgaveTests : DescribeSpec({
             eksternId = "1",
             mottaker =
                 """naermesteLeder: {
-                    naermesteLederFnr: "12345678910",
-                            ansattFnr: "321"
+                        naermesteLederFnr: "12345678910",
+                        ansattFnr: "321"
                     }"""
         )
         it("Oppgave har feil virksomhetsnummer") {
@@ -317,9 +317,11 @@ private fun DescribeSpecContainerScope.opprettOppgaveMedMottaker(
         """
         mutation {
             nyOppgave(nyOppgave: {
-                mottaker: {
-                    $mottaker 
-                }
+                mottakere: [{
+                    $mottaker
+                    }
+                ]
+                
                 notifikasjon: {
                     lenke: "https://foo.bar",
                     tekst: "hello world",
@@ -353,7 +355,4 @@ private fun DescribeSpecContainerScope.opprettOppgaveMedMottaker(
     response.status() shouldBe HttpStatusCode.OK
     response.getGraphqlErrors() should beEmpty()
     return response.getTypedContent("nyOppgave")
-
 }
-
-
