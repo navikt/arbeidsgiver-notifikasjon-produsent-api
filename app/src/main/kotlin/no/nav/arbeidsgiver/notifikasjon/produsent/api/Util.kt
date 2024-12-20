@@ -133,6 +133,37 @@ internal inline fun tilgangsstyrProdusent(
     return produsent
 }
 
+private inline fun validerMottakerMotSak(
+    sak: ProdusentModel.Sak,
+    virksomhetsnummer: String,
+    mottakerInput: MottakerInput,
+    onError: (Error.UgyldigMottaker) -> Nothing
+) {
+    var mottaker = mottakerInput.tilHendelseModel(virksomhetsnummer)
+    if (mottaker !in sak.mottakere) {
+        onError(
+            Error.UgyldigMottaker(
+                """
+                    | Ugyldig mottaker '${mottakerInput}'. 
+                    | Mottaker må finnes på sak.
+                    """.trimMargin()
+            )
+        )
+    }
+}
+
+internal inline fun validerMottakereMotSak(
+    sak: ProdusentModel.Sak?,
+    virksomhetsnummer: String,
+    mottakere: List<MottakerInput>,
+    onError: (Error.UgyldigMottaker) -> Nothing
+) {
+    if (sak == null) return
+    for (mottaker in mottakere) {
+        validerMottakerMotSak(sak, virksomhetsnummer, mottaker, onError)
+    }
+}
+
 fun String.ensurePrefix(prefix: String) =
     prefix + removePrefix(prefix)
 

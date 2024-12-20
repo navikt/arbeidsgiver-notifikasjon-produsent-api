@@ -493,7 +493,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
         database.transaction {
-            registrerHardDelete(this, hardDelete)
+            registrerDelete(this, hardDelete.aggregateId)
             executeQuery("""
                 select aggregate_type from (
                     select 'SAK' as aggregate_type from sak where id = ?
