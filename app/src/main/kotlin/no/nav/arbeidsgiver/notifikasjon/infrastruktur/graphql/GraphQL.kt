@@ -134,7 +134,8 @@ data class GraphQLRequest(
     val operationName: String? = null,
     val variables: Map<String, Any?>? = null,
 ) {
-    val queryNameRegex = Regex("\\b(mutation|query).*?\\{\\s*(\\w+)")
+    // Regex to match the first word inside the mutation or query block
+    val queryNameRegex = Regex("(mutation|query)\\b[\\s\\S]*?\\{\\s*(\\w+)", RegexOption.MULTILINE)
     val queryName: String
         get() {
             return queryNameRegex.find(query)?.groups?.get(2)?.value ?: "unknown"
