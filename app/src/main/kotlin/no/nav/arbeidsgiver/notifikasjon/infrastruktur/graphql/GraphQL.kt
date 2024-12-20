@@ -3,11 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation
-import graphql.ExecutionInput
-import graphql.GraphQL
+import graphql.*
 import graphql.GraphQL.newGraphQL
-import graphql.GraphQLError
-import graphql.GraphqlErrorException
 import graphql.execution.DataFetcherResult
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
@@ -21,8 +18,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getTimer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.intellij.lang.annotations.Language
 
 inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgument(name: String): T {
@@ -134,7 +133,13 @@ data class GraphQLRequest(
     @Language("GraphQL") val query: String,
     val operationName: String? = null,
     val variables: Map<String, Any?>? = null,
-)
+) {
+    val queryNameRegex = Regex("\\b(mutation|query).*\\{\\s*(\\w+)")
+    val queryName: String
+        get() {
+            return queryNameRegex.find(query)?.groups?.get(2)?.value ?: "unknown"
+        }
+}
 
 inline fun requireGraphql(check: Boolean, message: () -> String) {
     if (!check) {
@@ -151,10 +156,9 @@ fun <T> DataFetchingEnvironment.notifikasjonContext(): T =
 class TypedGraphQL<T : WithCoroutineScope>(
     private val graphQL: GraphQL
 ) {
-    fun execute(request: GraphQLRequest, context: T): Any {
+    fun execute(request: GraphQLRequest, context: T): ExecutionResult {
         val executionInput = executionInput(request, context)
-        val result = graphQL.execute(executionInput)
-        return result.toSpecification()
+        return graphQL.execute(executionInput)
     }
 
     private fun executionInput(
@@ -175,5 +179,22 @@ class TypedGraphQL<T : WithCoroutineScope>(
 
                 graphQLContext(mapOf("context" to context))
             }.build()
+    }
+}
+
+fun <T : WithCoroutineScope> TypedGraphQL<T>.timedExecute(
+    request: GraphQLRequest,
+    context: T
+): ExecutionResult = with(Timer.start(meterRegistry)) {
+    execute(request, context).also { result ->
+        if (result.errors.isNotEmpty()) {
+            GraphQLLogger.log.error("graphql request failed: {}", result.errors)
+        }
+        val tags = mutableSetOf(
+            "queryName" to (request.queryName),
+            "result" to if (result.errors.isEmpty()) "success" else "error"
+        )
+        if (context is ProdusentAPI.Context) tags.add("produsent" to context.appName)
+        stop(getTimer("graphql.timer", tags, "graphql request"))
     }
 }
