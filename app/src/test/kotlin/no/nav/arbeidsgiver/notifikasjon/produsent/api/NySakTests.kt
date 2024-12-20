@@ -154,6 +154,20 @@ class NySakTests : DescribeSpec({
             response13.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien inneholder uønsket data: personnummer (11 siffer)"
         }
 
+        val response14 = engine.nySak(tittel="Stor Lampe identifiserende data: 99999999999")
+
+        it("Should fail because of sensitive information in sakstittel") {
+            response14.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tittel': verdien inneholder uønsket data: personnummer (11 siffer)"
+        }
+
+        val response15 = engine.nySak(
+            tittel="A".repeat(141),
+        )
+
+        it("Should fail because of to long title. ") {
+            response15.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tittel': verdien overstiger maks antall tegn"
+        }
+
         engine.nySak(
             grupperingsid = "13",
             tilleggsinformasjon = "Dette er tilleggsinfo"

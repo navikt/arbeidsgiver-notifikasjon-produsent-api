@@ -25,17 +25,14 @@ import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.timedExecute
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produceMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
@@ -109,8 +106,8 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
                     withContext(this.coroutineContext + graphQLDispatcher) {
                         val context = extractContext()
                         val request = call.receive<GraphQLRequest>()
-                        val result = graphql.await().execute(request, context)
-                        call.respond(result)
+                        val result = graphql.await().timedExecute(request, context)
+                        call.respond(result.toSpecification())
                     }
                 }
             }
@@ -164,6 +161,10 @@ fun Application.baseSetup(
         }
 
         replyToHeader(HttpHeaders.XCorrelationId)
+    }
+
+    install(Authentication) {
+        configureProviders(authProviders)
     }
 
     install(CallLogging) {
@@ -222,10 +223,6 @@ fun Application.baseSetup(
 
     install(ContentNegotiation) {
         register(ContentType.Application.Json, TimedContentConverter(JacksonConverter(laxObjectMapper)))
-    }
-
-    install(Authentication) {
-        configureProviders(authProviders)
     }
 
     routing {
