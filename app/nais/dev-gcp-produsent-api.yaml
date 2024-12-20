@@ -64,7 +64,7 @@ spec:
           namespace: team-esyfo
           cluster: dev-gcp
 
-        - application: permitteringsmelding-notifikasjon
+        - application: permitteringsskjema-api
           namespace: permittering-og-nedbemanning
           cluster: dev-gcp
 

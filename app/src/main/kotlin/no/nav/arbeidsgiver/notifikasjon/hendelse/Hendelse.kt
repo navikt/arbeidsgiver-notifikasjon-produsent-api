@@ -28,6 +28,13 @@ object HendelseModel {
 
     }
 
+    sealed class AggregatOpprettet : Hendelse() {
+        abstract val sakId: UUID? // P.T. er sak ikke påkrevd, så denne må være nullable
+
+        abstract val grupperingsid: String?
+        abstract val merkelapp: String
+    }
+
     data class HendelseMetadata(
         val timestamp: Instant
     ) {
@@ -251,9 +258,9 @@ object HendelseModel {
         override val produsentId: String,
         override val kildeAppNavn: String,
         override val sakId: UUID,
+        override val grupperingsid: String,
+        override val merkelapp: String,
 
-        val grupperingsid: String,
-        val merkelapp: String,
         val mottakere: List<Mottaker>,
         val tittel: String,
         val tilleggsinformasjon: String?,
@@ -262,7 +269,7 @@ object HendelseModel {
         val mottattTidspunkt: OffsetDateTime?,
         val nesteSteg: String?,
         val hardDelete: LocalDateTimeOrDuration?,
-    ) : Hendelse(), Sak {
+    ) : AggregatOpprettet(), Sak {
         @JsonIgnore
         override val aggregateId: UUID = sakId
 
@@ -345,17 +352,17 @@ object HendelseModel {
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
-        val merkelapp: String,
+        override val merkelapp: String,
         val eksternId: String,
         val mottakere: List<Mottaker>,
         val tekst: String,
-        val grupperingsid: String?,
+        override val grupperingsid: String?,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
         val hardDelete: LocalDateTimeOrDuration?,
-        val sakId: UUID?,
-    ) : Hendelse(), Notifikasjon {
+        override val sakId: UUID?,
+    ) : AggregatOpprettet(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
@@ -417,19 +424,19 @@ object HendelseModel {
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
-        val merkelapp: String,
+        override val merkelapp: String,
         val eksternId: String,
         val mottakere: List<Mottaker>,
         val tekst: String,
-        val grupperingsid: String?,
+        override val grupperingsid: String?,
         val lenke: String,
         val opprettetTidspunkt: OffsetDateTime,
         val eksterneVarsler: List<EksterntVarsel>,
         val hardDelete: LocalDateTimeOrDuration?,
         val frist: LocalDate?,
         val påminnelse: Påminnelse?,
-        val sakId: UUID?,
-    ) : Hendelse(), Notifikasjon {
+        override val sakId: UUID?,
+    ) : AggregatOpprettet(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"
@@ -490,12 +497,12 @@ object HendelseModel {
         override val hendelseId: UUID,
         override val produsentId: String,
         override val kildeAppNavn: String,
-        val merkelapp: String,
-        val grupperingsid: String,
+        override val merkelapp: String,
+        override val grupperingsid: String,
         val eksternId: String,
         val mottakere: List<Mottaker>,
         val hardDelete: LocalDateTimeOrDuration?,
-        val sakId: UUID,
+        override val sakId: UUID,
         val lenke: String,
         val tekst: String,
         val opprettetTidspunkt: OffsetDateTime,
@@ -506,7 +513,7 @@ object HendelseModel {
         val erDigitalt: Boolean,
         val eksterneVarsler: List<EksterntVarsel>,
         val påminnelse: Påminnelse?,
-    ) : Hendelse(), Notifikasjon {
+    ) : AggregatOpprettet(), Notifikasjon {
         init {
             requireGraphql(mottakere.isNotEmpty()) {
                 "minst 1 mottaker må gis"

@@ -21,8 +21,8 @@ import java.util.*
 
 class IdempotensOppførselForProdusentApiTests : DescribeSpec({
 
-    val virksomhetsnummer = "1234"
-    val mottaker = AltinnMottaker(serviceCode = "5441", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
+    val virksomhetsnummer = "1"
+    val mottaker = AltinnMottaker(serviceCode = "1", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
     val eksternId = "42"
     val grupperingsid = "42"
 
@@ -86,8 +86,8 @@ class IdempotensOppførselForProdusentApiTests : DescribeSpec({
         // language=GraphQL
         return """
             mutation NyKalenderavtale(
-                ${'$'}startTidspunkt: ISO8601LocalDateTime! = "2024-10-12T07:00:00.00"
-                ${'$'}sluttTidspunkt: ISO8601LocalDateTime
+                ${'$'}startTidspunkt: ISO8601DateTime! = "2024-10-12T07:00:00.00"
+                ${'$'}sluttTidspunkt: ISO8601DateTime
                 ${'$'}lokasjon: LokasjonInput
                 ${'$'}erDigitalt: Boolean
                 ${'$'}tilstand: KalenderavtaleTilstand

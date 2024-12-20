@@ -42,11 +42,15 @@ class DataproduktModel(
     val log = logger()
 
     suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
+        if (hendelse is HendelseModel.AggregatOpprettet) {
+            registrerKoblingForCascadeDelete(hendelse)
+        }
         if (erHardDeleted(hendelse.aggregateId)) {
             log.info("skipping harddeleted event {}", hendelse)
             return
         }
-        database.nonTransactionalExecuteUpdate("""
+        database.nonTransactionalExecuteUpdate(
+            """
             insert into aggregat_hendelse(
                 hendelse_id,
                 hendelse_type,
@@ -57,7 +61,8 @@ class DataproduktModel(
                 kafka_timestamp 
             ) values (?, ?, ?, ?, ? ,?, ?)
             on conflict do nothing
-        """) {
+        """
+        ) {
             with(hendelse) {
                 uuid(hendelseId)
                 text(hendelse::class.simpleName!!)
@@ -130,6 +135,7 @@ class DataproduktModel(
                     statusUtsending = "UTSENDING_BESTILT",
                 )
             }
+
             is OppgaveOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -207,6 +213,7 @@ class DataproduktModel(
                     statusUtsending = "UTSENDING_BESTILT",
                 )
             }
+
             is OppgaveUtført -> {
                 with(hendelse) {
                     if (hardDelete != null) {
@@ -236,6 +243,7 @@ class DataproduktModel(
                     uuid(hendelse.notifikasjonId)
                 }
             }
+
             is OppgaveUtgått -> {
                 markerIngenUtsendingPåPåminnelseEksterneVarsler(hendelse.notifikasjonId)
 
@@ -247,7 +255,10 @@ class DataproduktModel(
                             bestillingType = "STATUSENDRING",
                             strategi = hardDelete.strategi.toString(),
                             spesifikasjon = hardDelete.nyTid,
-                            utregnetTidspunkt = ScheduledTime(hardDelete.nyTid, utgaattTidspunkt.toInstant()).happensAt(),
+                            utregnetTidspunkt = ScheduledTime(
+                                hardDelete.nyTid,
+                                utgaattTidspunkt.toInstant()
+                            ).happensAt(),
                         )
                     }
                 }
@@ -300,6 +311,7 @@ class DataproduktModel(
                 }
 
             }
+
             is EksterntVarselVellykket -> {
                 updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET", null, metadata.timestamp)
                 database.nonTransactionalExecuteBatch(
@@ -324,39 +336,52 @@ class DataproduktModel(
                     text(it["resultat_type"]!!)
                 }
             }
+
             is EksterntVarselFeilet -> {
-                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_FEILET", hendelse.altinnFeilkode,  metadata.timestamp)
+                updateEksternVarsel(
+                    listOf(hendelse.varselId),
+                    "UTSENDING_FEILET",
+                    hendelse.altinnFeilkode,
+                    metadata.timestamp
+                )
             }
+
             is HendelseModel.EksterntVarselKansellert -> {
-                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_KANSELLERT", null,  metadata.timestamp)
+                updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_KANSELLERT", null, metadata.timestamp)
             }
 
             is SoftDelete -> {
-                if (hendelse.grupperingsid != null && hendelse.merkelapp != null){
-                    database.nonTransactionalExecuteUpdate("""
+                if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
+                    database.nonTransactionalExecuteUpdate(
+                        """
                         update notifikasjon
                         set soft_deleted_tidspunkt = ?
                         where grupperingsid = ?
                         and merkelapp = ?
-                    """) {
+                    """
+                    ) {
                         instantAsText(metadata.timestamp)
                         text(hendelse.grupperingsid)
                         text(hendelse.merkelapp)
                     }
                 }
-                database.nonTransactionalExecuteUpdate("""
+                database.nonTransactionalExecuteUpdate(
+                    """
                     update notifikasjon
                     set soft_deleted_tidspunkt = ?
                     where notifikasjon_id = ?
-                """) {
+                """
+                ) {
                     instantAsText(metadata.timestamp)
                     uuid(hendelse.aggregateId)
                 }
-                database.nonTransactionalExecuteUpdate("""
+                database.nonTransactionalExecuteUpdate(
+                    """
                     update sak 
                     set soft_deleted_tidspunkt = ?
                     where sak_id = ?
-                """) {
+                """
+                ) {
                     instantAsText(metadata.timestamp)
                     uuid(hendelse.aggregateId)
                 }
@@ -364,35 +389,43 @@ class DataproduktModel(
 
             is HardDelete -> {
                 database.transaction {
-                    if (hendelse.grupperingsid != null && hendelse.merkelapp != null){
-                        executeUpdate("""
+                    if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
+                        executeUpdate(
+                            """
                             delete from notifikasjon
                             where grupperingsid = ?
                             and merkelapp = ?
-                        """) {
+                        """
+                        ) {
                             text(hendelse.grupperingsid)
                             text(hendelse.merkelapp)
                         }
                     }
-                    executeUpdate("""
+                    executeUpdate(
+                        """
                         delete from notifikasjon
                         where notifikasjon_id = ?
-                    """) {
+                    """
+                    ) {
                         uuid(hendelse.aggregateId)
                     }
-                    executeUpdate("""
+                    executeUpdate(
+                        """
                         delete from sak 
                         where sak_id = ?
-                    """) {
+                    """
+                    ) {
                         uuid(hendelse.aggregateId)
                     }
-                    executeUpdate("""
+                    executeUpdate(
+                        """
                         delete from aggregat_hendelse
                         where aggregat_id = ?
-                    """) {
+                    """
+                    ) {
                         uuid(hendelse.aggregateId)
                     }
-                    registrerHardDelete(this, hendelse)
+                    registrerDelete(this, hendelse.aggregateId)
                 }
             }
 
@@ -429,8 +462,14 @@ class DataproduktModel(
                             utregnetTidspunkt = ScheduledTime(hardDelete, metadata.timestamp).happensAt(),
                         )
                     }
+                    storeMottakere(
+                        notifikasjonId = null,
+                        sakId = sakId,
+                        mottakere = mottakere,
+                    )
                 }
             }
+
             is NyStatusSak -> {
                 database.nonTransactionalExecuteUpdate(
                     """
@@ -459,20 +498,26 @@ class DataproduktModel(
                             bestillingType = "STATUSENDRING",
                             strategi = hardDelete.strategi.toString(),
                             spesifikasjon = hardDelete.nyTid,
-                            utregnetTidspunkt = ScheduledTime(hardDelete.nyTid, opprettetTidspunkt.toInstant()).happensAt(),
+                            utregnetTidspunkt = ScheduledTime(
+                                hardDelete.nyTid,
+                                opprettetTidspunkt.toInstant()
+                            ).happensAt(),
                         )
                     }
                 }
             }
+
             is FristUtsatt -> {
-                database.nonTransactionalExecuteUpdate("""
+                database.nonTransactionalExecuteUpdate(
+                    """
                     update notifikasjon
                     set frist = ?,
                         paaminnelse_bestilling_spesifikasjon_type = ?,
                         paaminnelse_bestilling_spesifikasjon_tid = ?,
                         paaminnelse_bestilling_utregnet_tid = ?
                     where notifikasjon_id = ?
-                """) {
+                """
+                ) {
                     date(hendelse.frist)
                     setPåminnelseFelter(hendelse.påminnelse)
                     uuid(hendelse.notifikasjonId)
@@ -491,22 +536,26 @@ class DataproduktModel(
             }
 
             is TilleggsinformasjonSak -> {
-                database.nonTransactionalExecuteUpdate("""
+                database.nonTransactionalExecuteUpdate(
+                    """
                     update sak
                     set tilleggsinformasjon = ?
                     where sak_id = ?
-                """.trimIndent()) {
+                """.trimIndent()
+                ) {
                     nullableText(hendelse.tilleggsinformasjon)
                     uuid(hendelse.sakId)
                 }
             }
 
             is NesteStegSak -> {
-                database.nonTransactionalExecuteUpdate("""
+                database.nonTransactionalExecuteUpdate(
+                    """
                     update sak
                     set neste_steg = ?
                     where sak_id = ?
-                """.trimIndent()) {
+                """.trimIndent()
+                ) {
                     nullableText(hendelse.nesteSteg)
                     uuid(hendelse.sakId)
                 }
@@ -639,7 +688,8 @@ class DataproduktModel(
                     opprettVarselBestilling(
                         notifikasjonId = hendelse.notifikasjonId,
                         produsentId = hendelse.produsentId,
-                        merkelapp = hendelse.merkelapp ?: "?",  // bakoverkompabilitet, glemte å legge til merkelapp før hendelser ble registrert i dev
+                        merkelapp = hendelse.merkelapp
+                            ?: "?",  // bakoverkompabilitet, glemte å legge til merkelapp før hendelser ble registrert i dev
                         eksterneVarsler = hendelse.påminnelse.eksterneVarsler,
                         opprinnelse = "OppgavePåminnelseEndret.påminnelse",
                         statusUtsending = "UTSENDING_IKKE_AVGJORT",
@@ -727,7 +777,8 @@ class DataproduktModel(
         spesifikasjon: HendelseModel.LocalDateTimeOrDuration,
         utregnetTidspunkt: Instant,
     ) {
-        database.nonTransactionalExecuteUpdate("""
+        database.nonTransactionalExecuteUpdate(
+            """
             insert into hard_delete_bestilling
             (
                 aggregat_id,
@@ -739,7 +790,8 @@ class DataproduktModel(
             )
             values (?, ?, ?, ?, ?, ?)
             on conflict do nothing
-        """) {
+        """
+        ) {
             uuid(aggregatId)
             text(bestillingType)
             uuid(bestillingHendelsesid)
@@ -750,32 +802,55 @@ class DataproduktModel(
     }
 
     private suspend fun storeMottakere(notifikasjonId: UUID?, sakId: UUID?, mottakere: List<Mottaker>) {
-        database.nonTransactionalExecuteBatch("""
-            insert into mottaker_naermeste_leder (sak_id, notifikasjon_id, virksomhetsnummer, fnr_leder, fnr_ansatt)
-            values (?, ?, ?, ?, ?)
-            on conflict do nothing
-        """,
-            mottakere.filterIsInstance<NærmesteLederMottaker>()
-        ) {
-            nullableUuid(sakId)
-            nullableUuid(notifikasjonId)
-            text(it.virksomhetsnummer)
-            text(it.naermesteLederFnr)
-            text(it.ansattFnr)
-        }
+        mottakere.forEach {
+            when (it) {
+                is AltinnMottaker -> {
+                    database.nonTransactionalExecuteUpdate(
+                        """
+                            insert into mottaker_enkeltrettighet (sak_id, notifikasjon_id, virksomhetsnummer, service_code, service_edition)
+                            values (?, ?, ?, ?, ?)
+                            on conflict do nothing
+                        """
+                    ) {
+                        nullableUuid(sakId)
+                        nullableUuid(notifikasjonId)
+                        text(it.virksomhetsnummer)
+                        text(it.serviceCode)
+                        text(it.serviceEdition)
+                    }
+                }
 
-        database.nonTransactionalExecuteBatch("""
-            insert into mottaker_enkeltrettighet (sak_id, notifikasjon_id, virksomhetsnummer, service_code, service_edition)
-            values (?, ?, ?, ?, ?)
-            on conflict do nothing
-        """,
-            mottakere.filterIsInstance<AltinnMottaker>()
-        ) {
-            nullableUuid(sakId)
-            nullableUuid(notifikasjonId)
-            text(it.virksomhetsnummer)
-            text(it.serviceCode)
-            text(it.serviceEdition)
+                is NærmesteLederMottaker -> {
+                    database.nonTransactionalExecuteUpdate(
+                        """
+                            insert into mottaker_naermeste_leder (sak_id, notifikasjon_id, virksomhetsnummer, fnr_leder, fnr_ansatt)
+                            values (?, ?, ?, ?, ?)
+                            on conflict do nothing
+                        """
+                    ) {
+                        nullableUuid(sakId)
+                        nullableUuid(notifikasjonId)
+                        text(it.virksomhetsnummer)
+                        text(it.naermesteLederFnr)
+                        text(it.ansattFnr)
+                    }
+                }
+
+                is HendelseModel.AltinnRessursMottaker -> {
+                    database.nonTransactionalExecuteUpdate(
+                        """
+                            insert into mottaker_altinn_ressurs (sak_id, notifikasjon_id, virksomhetsnummer, ressursid)
+                            values (?, ?, ?, ?)
+                            on conflict do nothing
+                        """
+                    ) {
+                        nullableUuid(sakId)
+                        nullableUuid(notifikasjonId)
+                        text(it.virksomhetsnummer)
+                        text(it.ressursId)
+                    }
+                }
+            }
         }
     }
 
@@ -831,6 +906,7 @@ class DataproduktModel(
                         text(statusUtsending)
                     }
                 }
+
                 is SmsVarselKontaktinfo -> {
                     with(eksterntVarsel) {
                         uuid(varselId)
@@ -869,7 +945,8 @@ class DataproduktModel(
             }
         }
 
-        database.nonTransactionalExecuteBatch("""
+        database.nonTransactionalExecuteBatch(
+            """
             insert into ekstern_varsel_mottaker_tlf(varsel_id, tlf) 
             values (?, ?)
             on conflict do nothing
@@ -880,7 +957,8 @@ class DataproduktModel(
             text(it.tlfnr)
         }
 
-        database.nonTransactionalExecuteBatch("""
+        database.nonTransactionalExecuteBatch(
+            """
             insert into ekstern_varsel_mottaker_epost (varsel_id, epost) 
             values (?, ?)
             on conflict do nothing
@@ -891,7 +969,8 @@ class DataproduktModel(
             text(it.epostAddr)
         }
 
-        database.nonTransactionalExecuteBatch("""
+        database.nonTransactionalExecuteBatch(
+            """
             insert into ekstern_varsel_mottaker_tjeneste (varsel_id, tjenestekode, tjenesteversjon) 
             values (?, ?, ?)
             on conflict do nothing

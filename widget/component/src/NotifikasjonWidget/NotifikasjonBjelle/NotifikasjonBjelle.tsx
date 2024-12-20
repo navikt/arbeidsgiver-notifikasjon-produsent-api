@@ -1,6 +1,6 @@
 import React, { Ref } from 'react'
 import './NotifikasjonBjelle.css'
-import {BodyShort, Label} from "@navikt/ds-react";
+import {BodyShort} from "@navikt/ds-react";
 import {Bell} from "@navikt/ds-icons";
 
 interface Props {
@@ -31,7 +31,7 @@ export const NotifikasjonBjelle = ({
         aria-live="polite"
         aria-atomic="true"
       >
-        <div className='notifikasjon_bjelle-ikon'>
+        <div className={`notifikasjon_bjelle-ikon ${antallUleste > 0 ? "notifikasjon_bjelle-ikon-svinger":""}`}>
           <Bell width="32px" height="32px" aria-hidden="true" />
 
           <div
@@ -41,9 +41,9 @@ export const NotifikasjonBjelle = ({
                 : ''
             }`}
           >
-            <Label className='notifikasjon_bjelle-ikon__ulest-antall'>
+            <BodyShort className='notifikasjon_bjelle-ikon__ulest-antall'>
               {antallUleste < 10 ? antallUleste : '9+'}
-            </Label>
+            </BodyShort>
           </div>
         </div>
         <BodyShort size="small">Varsler</BodyShort>

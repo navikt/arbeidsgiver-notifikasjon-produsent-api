@@ -1,4 +1,4 @@
-const LIFE_THE_UNIVERSE_AND_EVERYTHING = 42
+
 const merkelapper = [
   "Tiltak",
   "Lønnstilskudd",
@@ -16,10 +16,9 @@ const merkelapper = [
   "Lønnstilskudd",
   "Kandidater"
 ]
-const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-  const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-  return v.toString(16);
-})
+const uuid = "42c0ffee-1337-7331-babe-42c0ffeebabe"
+let curr = 0;
+const nextMerkelapp = () => merkelapper[curr++ % merkelapper.length]
 
 // see: https://github.com/anvilco/spectaql/blob/main/examples/customizations/examples/index.js
 module.exports = function processor({
@@ -45,22 +44,22 @@ module.exports = function processor({
       return
     }
     if (arg.name === "merkelapper") {
-      return merkelapper.slice(0, Math.floor(Math.random() * merkelapper.length))
+      return nextMerkelapp()
     }
     if (arg.name === "merkelapp") {
-      return merkelapper[Math.floor(Math.random() * merkelapper.length)]
+      return nextMerkelapp()
     }
     if (arg.name === "grupperingsid") {
-      return uuid()
+      return uuid
     }
     if (arg.name === "eksternId") {
-      return uuid()
+      return uuid
     }
     if (arg.name === "after") {
-      return btoa(uuid())
+      return btoa(uuid)
     }
     if (arg.name === "virksomhetsnummer") {
-      return Math.floor(Math.random() * 1000000000).toString().padStart(9, '0')
+        return "123456789"
     }
   }
 }

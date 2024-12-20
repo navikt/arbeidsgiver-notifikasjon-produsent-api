@@ -36,8 +36,8 @@ const NY_KALENDERAVTALE = gql`
     $eksternId: String!
     $lenke: String!
     $tekst: String!
-    $startTidspunkt: ISO8601LocalDateTime!
-    $sluttTidspunkt: ISO8601LocalDateTime
+    $startTidspunkt: ISO8601DateTime!
+    $sluttTidspunkt: ISO8601DateTime
     $eksterneVarsler: [EksterntVarselInput!]!
     $paaminnelse: PaaminnelseInput
     $lokasjon: LokasjonInput
