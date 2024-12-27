@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import kotlinx.coroutines.*
+import kotlinx.coroutines.slf4j.MDCContext
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
@@ -103,7 +104,7 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
         authenticate(authProviders) {
             route("api") {
                 post("graphql") {
-                    withContext(this.coroutineContext + graphQLDispatcher) {
+                    withContext(this.coroutineContext + graphQLDispatcher + MDCContext()) {
                         val context = extractContext()
                         val request = call.receive<GraphQLRequest>()
                         val result = graphql.await().timedExecute(request, context)
