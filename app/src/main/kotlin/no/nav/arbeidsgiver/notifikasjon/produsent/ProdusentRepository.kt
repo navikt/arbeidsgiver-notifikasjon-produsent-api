@@ -43,6 +43,7 @@ interface ProdusentRepository {
         SAK,
         BESKJED,
         OPPGAVE,
+        KALENDERAVTALE
     }
 
     suspend fun hentNotifikasjon(id: UUID): ProdusentModel.Notifikasjon?
@@ -324,8 +325,8 @@ class ProdusentRepositoryImpl(
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is PåminnelseOpprettet -> /* Ignorer */ Unit
             is BrukerKlikket -> /* Ignorer */ Unit
-            is SoftDelete -> oppdaterModellEtterSoftDelete(hendelse)
-            is HardDelete -> oppdaterModellEtterHardDelete(hendelse)
+            is SoftDelete -> oppdaterModellEtterDelete(aggregateId = hendelse.aggregateId, merkelapp = hendelse.merkelapp, grupperingsid = hendelse.grupperingsid)
+            is HardDelete -> oppdaterModellEtterDelete(aggregateId = hendelse.aggregateId, merkelapp = hendelse.merkelapp, grupperingsid = hendelse.grupperingsid)
             is EksterntVarselVellykket -> oppdaterModellEtterEksterntVarselVellykket(hendelse)
             is EksterntVarselFeilet -> oppdaterModellEtterEksterntVarselFeilet(hendelse)
             is EksterntVarselKansellert -> oppdaterModellEtterEksterntVarselKansellert(hendelse)
@@ -460,7 +461,7 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterNesteStegSak(nesteStegSak: HendelseModel.NesteStegSak) {
+    private suspend fun oppdaterModellEtterNesteStegSak(nesteStegSak: NesteStegSak) {
         database.transaction {
             executeUpdate(
                 """
@@ -491,9 +492,9 @@ class ProdusentRepositoryImpl(
         }
     }
 
-    private suspend fun oppdaterModellEtterHardDelete(hardDelete: HardDelete) {
+    private suspend fun oppdaterModellEtterDelete(aggregateId: UUID, merkelapp: String?, grupperingsid: String?) {
         database.transaction {
-            registrerDelete(this, hardDelete.aggregateId)
+            registrerDelete(this, aggregateId)
             executeQuery("""
                 select aggregate_type from (
                     select 'SAK' as aggregate_type from sak where id = ?
@@ -501,11 +502,14 @@ class ProdusentRepositoryImpl(
                     select 'BESKJED' as aggregate_type from notifikasjon where id = ?
                     union
                     select 'OPPGAVE' as aggregate_type from notifikasjon where id = ?
+                    union
+                    select 'KALENDERAVTALE' as aggregate_type from notifikasjon where id = ?
                 ) as aggregate_type
             """, setup = {
-                uuid(hardDelete.aggregateId)
-                uuid(hardDelete.aggregateId)
-                uuid(hardDelete.aggregateId)
+                uuid(aggregateId)
+                uuid(aggregateId)
+                uuid(aggregateId)
+                uuid(aggregateId)
             }, transform = {
                 AggregateType.valueOf(getString("aggregate_type"))
             }).firstOrNull()?.let {
@@ -517,18 +521,18 @@ class ProdusentRepositoryImpl(
                 values (?, ?, ?, ?);
                 """
                 ) {
-                    uuid(hardDelete.aggregateId)
+                    uuid(aggregateId)
                     text(it.name)
-                    nullableText(hardDelete.merkelapp)
-                    nullableText(hardDelete.grupperingsid)
+                    nullableText(merkelapp)
+                    nullableText(grupperingsid)
                 }
             }
 
-            if (hardDelete.grupperingsid != null && hardDelete.merkelapp != null) {
+            if (grupperingsid != null && merkelapp != null) {
                 // cascade hard delete av sak med grupperingsid og merkelapp
                 executeUpdate("""delete from notifikasjon n where n.grupperingsid = ? and merkelapp = ?;""") {
-                    text(hardDelete.grupperingsid)
-                    text(hardDelete.merkelapp)
+                    text(grupperingsid)
+                    text(merkelapp)
                 }
             }
             executeUpdate(
@@ -537,7 +541,7 @@ class ProdusentRepositoryImpl(
                 where id = ?
                 """
             ) {
-                uuid(hardDelete.aggregateId)
+                uuid(aggregateId)
             }
             executeUpdate(
                 """
@@ -545,7 +549,7 @@ class ProdusentRepositoryImpl(
                 where id = ?
                 """
             ) {
-                uuid(hardDelete.aggregateId)
+                uuid(aggregateId)
             }
             executeUpdate(
                 """
@@ -553,7 +557,7 @@ class ProdusentRepositoryImpl(
                 where notifikasjon_id = ?
                 """
             ) {
-                uuid(hardDelete.aggregateId)
+                uuid(aggregateId)
             }
             executeUpdate(
                 """
@@ -561,45 +565,7 @@ class ProdusentRepositoryImpl(
                 where notifikasjon_id = ?
                 """
             ) {
-                uuid(hardDelete.aggregateId)
-            }
-        }
-    }
-
-    private suspend fun oppdaterModellEtterSoftDelete(softDelete: SoftDelete) {
-        database.transaction {
-            executeUpdate(
-                """
-                UPDATE notifikasjon
-                SET deleted_at = ?
-                WHERE id = ?
-                """
-            ) {
-                timestamp_with_timezone(softDelete.deletedAt)
-                uuid(softDelete.aggregateId)
-            }
-            if (softDelete.grupperingsid !== null && softDelete.merkelapp !== null) {
-                executeUpdate(
-                    """
-                        update notifikasjon
-                        SET deleted_at = ?
-                        WHERE grupperingsid = ? AND merkelapp = ?
-                    """.trimIndent()
-                ) {
-                    timestamp_with_timezone(softDelete.deletedAt)
-                    text(softDelete.grupperingsid)
-                    text(softDelete.merkelapp)
-                }
-            }
-            executeUpdate(
-                """
-                UPDATE sak
-                SET deleted_at = ?
-                WHERE id = ?
-                """
-            ) {
-                timestamp_with_timezone(softDelete.deletedAt)
-                uuid(softDelete.aggregateId)
+                uuid(aggregateId)
             }
         }
     }

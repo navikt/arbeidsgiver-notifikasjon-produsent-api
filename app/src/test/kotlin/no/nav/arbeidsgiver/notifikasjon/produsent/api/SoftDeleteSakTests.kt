@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -140,9 +139,9 @@ class SoftDeleteSakTests : DescribeSpec({
                 }
             }
 
-            it("har slettet-status i modellen") {
-                val notifikasjon = produsentModel.hentSak(uuid)!!
-                notifikasjon.deletedAt shouldNotBe null
+            it("har blitt slettet i modellen") {
+                val notifikasjon = produsentModel.hentSak(uuid)
+                notifikasjon shouldBe null
             }
             it("notifikasjon2 har ikke slettet-status i modellen") {
                 val notifikasjon = produsentModel.hentSak(uuid2)!!
@@ -193,7 +192,7 @@ class SoftDeleteSakTests : DescribeSpec({
         }
 
         context("SoftDelete cascader fra sak til notifikasjoner"){
-            val (produsentModel, kafkaProducer, engine) = setupEngine()
+            val (produsentModel, _, engine) = setupEngine()
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet)
             produsentModel.oppdaterModellEtterHendelse(sakOpprettet2)
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
@@ -224,8 +223,8 @@ class SoftDeleteSakTests : DescribeSpec({
             }
 
             it ("oppgave er slettet") {
-                val notifikasjon = produsentModel.hentNotifikasjon(uuid3)!!
-                notifikasjon.deletedAt shouldNotBe null
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid3)
+                notifikasjon shouldBe null
             }
 
             it ("oppgave 2 er ikke slettet") {
@@ -234,8 +233,8 @@ class SoftDeleteSakTests : DescribeSpec({
             }
 
             it ("beskjed er slettet") {
-                val notifikasjon = produsentModel.hentNotifikasjon(uuid5)!!
-                notifikasjon.deletedAt shouldNotBe null
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid5)
+                notifikasjon shouldBe null
             }
         }
     }
@@ -276,9 +275,9 @@ class SoftDeleteSakTests : DescribeSpec({
                 }
             }
 
-            it("har fått slettet tidspunkt") {
-                val notifikasjon = produsentModel.hentSak(uuid)!!
-                notifikasjon.deletedAt shouldNotBe null
+            it("har blitt slettet i modellen") {
+                val notifikasjon = produsentModel.hentSak(uuid)
+                notifikasjon shouldBe null
             }
             it("oppgave 2 har ikke fått slettet tidspunkt") {
                 val notifikasjon = produsentModel.hentSak(uuid2)!!
