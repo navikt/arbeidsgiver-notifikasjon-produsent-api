@@ -1,22 +1,21 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
 import com.auth0.jwk.JwkProviderBuilder
-import com.auth0.jwt.interfaces.Claim
-import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.Verification
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
-import io.ktor.client.call.body
+import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.serialization.jackson.jackson
+import io.ktor.serialization.jackson.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzurePreAuthorizedAppsImpl
+import org.slf4j.MDC
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -24,9 +23,11 @@ data class BrukerPrincipal(
     val fnr: String,
 ) : Principal
 
-data class ProdusentPrincipal(
-    val appName: String,
-) : Principal
+data class ProdusentPrincipal(val appName: String) : Principal {
+    init {
+        MDC.put("preAuthorizedAppName", appName)
+    }
+}
 
 data class JWTAuthentication(
     val name: String,

@@ -35,7 +35,7 @@ class KalenderavtaleTests : DescribeSpec({
             merkelapp = "tag",
             grupperingsid = grupperingsid,
             mottakere = listOf(
-                HendelseModel.NærmesteLederMottaker(
+                NærmesteLederMottaker(
                     naermesteLederFnr = "12345678910",
                     ansattFnr = "321",
                     virksomhetsnummer = "42"

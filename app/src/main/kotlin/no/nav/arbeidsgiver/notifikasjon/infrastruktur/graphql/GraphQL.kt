@@ -16,6 +16,7 @@ import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.slf4j.MDCContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getTimer
@@ -68,7 +69,7 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
         .register(meterRegistry)
     dataFetcher(fieldName) { env ->
         val ctx = env.notifikasjonContext<WithCoroutineScope>()
-        ctx.coroutineScope.future(Dispatchers.IO) {
+        ctx.coroutineScope.future(Dispatchers.IO + MDCContext()) {
             try {
                 timer.coRecord {
                     fetcher(env)
