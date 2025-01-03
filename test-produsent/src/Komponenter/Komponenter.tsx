@@ -1,5 +1,5 @@
 import {WhoAmI} from "./WhoAmI.tsx";
-import {AdHoc} from "./AdHoc.tsx";
+import { AdHocMutation, AdHocQuery } from './AdHoc.tsx';
 import {HentSak} from "./HentSak.tsx";
 import {NySak} from "./NySak.tsx";
 import {NyOppgave} from "./NyOppgave.tsx";
@@ -16,7 +16,8 @@ import { EndrePåminnelseOppgave } from './EndrePåminnelseOppgave.tsx';
 
 export const komponenter = {
     "Who am I": <WhoAmI/>,
-    "Ad hoc": <AdHoc/>,
+    "Ad hoc Qurey": <AdHocQuery/>,
+    "Ad hoc Mutation": <AdHocMutation/>,
     "Hent sak": <HentSak/>,
     "Ny sak": <NySak/>,
     "Ny beskjed": <NyBeskjed/>,
