@@ -4,7 +4,6 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.instanceOf
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
@@ -63,7 +62,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
     describe("SoftDelete-oppførsel") {
 
 
-        context("Eksisterende oppgave blir markert som slettet") {
+        context("Eksisterende oppgave blir slettet") {
             val (produsentModel, kafkaProducer, engine) = setupEngine()
 
 
@@ -98,9 +97,9 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                 }
             }
 
-            it("har slettet-status i modellen") {
-                val notifikasjon = produsentModel.hentNotifikasjon(uuid)!!
-                notifikasjon.deletedAt shouldNotBe null
+            it("har blitt slettet i modellen") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid)
+                notifikasjon shouldBe null
             }
             it("notifikasjon2 har ikke slettet-status i modellen") {
                 val notifikasjon = produsentModel.hentNotifikasjon(uuid2)!!
@@ -108,7 +107,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
             }
 
 
-            it("mineNotifikasjoner rapporterer som softDeleted") {
+            it("mineNotifikasjoner rapporterer ikke lenger notifikasjon") {
                 val response = engine.produsentApi(
                     """
                         query {
@@ -226,10 +225,9 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                     response.getTypedContent<QueryNotifikasjoner.NotifikasjonConnection>("mineNotifikasjoner")
                         .edges
                         .map { it.node }
-                        .find { it.id == uuid }!!
+                        .find { it.id == uuid }
 
-                slettetNotifikasjon.metadata.softDeleted shouldBe true
-                slettetNotifikasjon.metadata.softDeletedAt shouldNotBe null
+                slettetNotifikasjon shouldBe null
             }
         }
 
@@ -287,7 +285,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
             val response = engine.produsentApi(
                 """
                 mutation {
-                    softDeleteNotifikasjonByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
+                    softDeleteNotifikasjonByEksternId_V2(eksternId: "$eksternId", merkelapp: "$merkelapp") {
                         __typename
                         ... on SoftDeleteNotifikasjonVellykket {
                             id
@@ -302,7 +300,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
 
             it("returnerer tilbake id-en") {
                 val vellykket =
-                    response.getTypedContent<MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjonByEksternId")
+                    response.getTypedContent<MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjonByEksternId_V2")
                 vellykket.id shouldBe uuid
             }
 
@@ -312,9 +310,9 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                 }
             }
 
-            it("har fått slettet tidspunkt") {
-                val notifikasjon = produsentModel.hentNotifikasjon(uuid)!!
-                notifikasjon.deletedAt shouldNotBe null
+            it("har blitt slettet i modellen") {
+                val notifikasjon = produsentModel.hentNotifikasjon(uuid)
+                notifikasjon shouldBe null
             }
             it("oppgave 2 har ikke fått slettet tidspunkt") {
                 val notifikasjon = produsentModel.hentNotifikasjon(uuid2)!!
