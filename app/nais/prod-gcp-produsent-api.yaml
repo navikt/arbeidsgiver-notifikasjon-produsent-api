@@ -76,6 +76,10 @@ spec:
           namespace: yrkesskade
           cluster: prod-gcp
 
+        - application: yrkesskade-saksbehandling-backend
+          namespace: yrkesskade
+          cluster: prod-gcp
+
         - application: fpinntektsmelding
           namespace: teamforeldrepenger
           cluster: prod-gcp

@@ -192,9 +192,11 @@ val YRKESSKADE = Produsent(
     accessPolicy = basedOnEnv(
         prod = { listOf(
             "prod-gcp:yrkesskade:yrkesskade-melding-mottak",
+            "prod-gcp:yrkesskade:yrkesskade-saksbehandling-backend",
         )},
         other = { listOf(
             "dev-gcp:yrkesskade:yrkesskade-melding-mottak",
+            "dev-gcp:yrkesskade:yrkesskade-saksbehandling-backend",
         )},
     ),
     tillatteMerkelapper = listOf(
