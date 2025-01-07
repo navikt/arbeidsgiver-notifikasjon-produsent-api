@@ -4,7 +4,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
@@ -25,13 +24,6 @@ object SkedulertHardDelete {
         )
     }
 
-    private val rebuildHardDeleted by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "skedulert-harddelete-model-rebuild-07.01.2025",
-        )
-    }
-
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             val database = openDatabaseAsync(databaseConfig)
@@ -43,31 +35,6 @@ object SkedulertHardDelete {
                 val repo = repoAsync.await()
                 hendelsesstrøm.forEach { hendelse, metadata ->
                     repo.oppdaterModellEtterHendelse(hendelse, metadata.timestamp)
-                }
-            }
-            launch {
-                val repo = repoAsync.await()
-                rebuildHardDeleted.forEach { hendelse, metadata ->
-                    when (hendelse) {
-                        is HendelseModel.SoftDelete,
-                        is HendelseModel.HardDelete -> {
-                            repo.delete(
-                                aggregateId = hendelse.aggregateId,
-                                merkelapp = when (hendelse) {
-                                    is HendelseModel.HardDelete -> hendelse.merkelapp
-                                    is HendelseModel.SoftDelete -> hendelse.merkelapp
-                                    else -> throw IllegalStateException("unexpected event type")
-                                },
-                                grupperingsid = when (hendelse) {
-                                    is HendelseModel.HardDelete -> hendelse.grupperingsid
-                                    is HendelseModel.SoftDelete -> null
-                                    else -> throw IllegalStateException("unexpected event type")
-                                }
-                            )
-                        }
-
-                        else -> Unit
-                    }
                 }
             }
 
