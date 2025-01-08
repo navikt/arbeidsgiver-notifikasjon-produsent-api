@@ -1,9 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyTidStrategi.FORLENG
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.AggregateType.*
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDeleteRepository.SkedulertHardDelete
@@ -52,14 +54,16 @@ interface SkedulertHardDeleteRepository {
 
     suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant)
 
-    suspend fun hardDelete(hardDelete: HendelseModel.HardDelete)
+    suspend fun delete(aggregateId: UUID, merkelapp: String?, grupperingsid: String?)
 
     suspend fun hent(aggregateId: UUID): SkedulertHardDelete?
 }
 
 class SkedulertHardDeleteRepositoryImpl(
     private val database: Database
-) : SkedulertHardDeleteRepository {
+) : SkedulertHardDeleteRepository, HardDeletedRepository(database) {
+
+    private val log = logger()
 
     override suspend fun hentSkedulerteHardDeletes(
         tilOgMed: Instant,
@@ -93,6 +97,14 @@ class SkedulertHardDeleteRepositoryImpl(
     }
 
     override suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse, kafkaTimestamp: Instant) {
+        if (hendelse is HendelseModel.AggregatOpprettet) {
+            registrerKoblingForCascadeDelete(hendelse)
+        }
+        if (erHardDeleted(hendelse.aggregateId)) {
+            log.info("skipping harddeleted event {}", hendelse)
+            return
+        }
+
         when (hendelse) {
             is HendelseModel.BeskjedOpprettet -> {
                 saveAggregate(hendelse, Beskjed, hendelse.merkelapp, hendelse.grupperingsid)
@@ -166,7 +178,21 @@ class SkedulertHardDeleteRepositoryImpl(
                 )
             }
 
-            is HendelseModel.HardDelete -> hardDelete(hendelse)
+            is HendelseModel.HardDelete,
+            is HendelseModel.SoftDelete ->
+                delete(
+                    aggregateId = hendelse.aggregateId,
+                    merkelapp = when (hendelse) {
+                        is HendelseModel.HardDelete -> hendelse.merkelapp
+                        is HendelseModel.SoftDelete -> hendelse.merkelapp
+                        else -> throw IllegalStateException("unexpected event type")
+                    },
+                    grupperingsid = when (hendelse) {
+                        is HendelseModel.HardDelete -> hendelse.grupperingsid
+                        is HendelseModel.SoftDelete -> null
+                        else -> throw IllegalStateException("unexpected event type")
+                    }
+                )
 
             is HendelseModel.NesteStegSak,
             is HendelseModel.TilleggsinformasjonSak,
@@ -176,33 +202,42 @@ class SkedulertHardDeleteRepositoryImpl(
             is HendelseModel.BrukerKlikket,
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.FristUtsatt,
-            is HendelseModel.OppgavePåminnelseEndret,
-            is HendelseModel.SoftDelete -> Unit
+            is HendelseModel.OppgavePåminnelseEndret -> Unit
 
         }
     }
 
-    override suspend fun hardDelete(hardDelete: HendelseModel.HardDelete) {
+    override suspend fun delete(
+        aggregateId: UUID,
+        merkelapp: String?,
+        grupperingsid: String?
+    ) {
         database.transaction {
-            if (hardDelete.merkelapp != null && hardDelete.grupperingsid != null) {
-                executeUpdate("""
+            registrerDelete(this, aggregateId)
+            if (merkelapp != null && grupperingsid != null) {
+                executeUpdate(
+                    """
                     delete from aggregate where merkelapp = ? and grupperingsid = ?  
-                """) {
-                    text(hardDelete.merkelapp)
-                    text(hardDelete.grupperingsid)
+                """
+                ) {
+                    text(merkelapp)
+                    text(grupperingsid)
                 }
             }
 
-            executeUpdate("""
+            executeUpdate(
+                """
                 delete from aggregate where aggregate_id = ?  
-            """) {
-                uuid(hardDelete.aggregateId)
+            """
+            ) {
+                uuid(aggregateId)
             }
         }
     }
 
     override suspend fun hent(aggregateId: UUID): SkedulertHardDelete? {
-        return database.nonTransactionalExecuteQuery("""
+        return database.nonTransactionalExecuteQuery(
+            """
             select 
                 aggregate.aggregate_id,
                 aggregate.aggregate_type,
@@ -218,8 +253,8 @@ class SkedulertHardDeleteRepositoryImpl(
             join aggregate on aggregate.aggregate_id = skedulert_hard_delete.aggregate_id
             where skedulert_hard_delete.aggregate_id = ?
         """, {
-            uuid(aggregateId)
-        }) {
+                uuid(aggregateId)
+            }) {
             this.toSkedulertHardDelete()
         }.firstOrNull()
     }

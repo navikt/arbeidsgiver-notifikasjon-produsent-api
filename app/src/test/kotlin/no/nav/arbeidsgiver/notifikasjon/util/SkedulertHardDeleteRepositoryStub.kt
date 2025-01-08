@@ -14,7 +14,7 @@ open class SkedulertHardDeleteRepositoryStub : SkedulertHardDeleteRepository {
         TODO("Not yet implemented")
     }
 
-    override suspend fun hardDelete(hardDelete: HendelseModel.HardDelete) {
+    override suspend fun delete(aggregateId: UUID, merkelapp: String?, grupperingsid: String?) {
         TODO("Not yet implemented")
     }
 
