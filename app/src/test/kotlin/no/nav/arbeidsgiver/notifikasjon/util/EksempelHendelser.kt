@@ -8,6 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.AVHOLDT
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
@@ -790,7 +791,7 @@ object EksempelHendelse {
         ),
         lenke = "https://foo.no",
         tekst = "foo",
-        tilstand = VENTER_SVAR_FRA_ARBEIDSGIVER,
+        tilstand = AVHOLDT,
         startTidspunkt = LocalDateTime.now().plusHours(1),
         sluttTidspunkt = LocalDateTime.now().plusHours(2),
         lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz"),

@@ -7,15 +7,13 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
-class SkedulertUtgåttServiceTests : DescribeSpec({
-    val hendelseProdusent = FakeHendelseProdusent()
-    val service = SkedulertUtgåttService(hendelseProdusent)
+class OppgaveUtgåttTests : DescribeSpec({
     val oppgaveOpprettet = HendelseModel.OppgaveOpprettet(
         virksomhetsnummer = "1",
         merkelapp = "123",
@@ -43,26 +41,22 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
     )
     val fristSomHarPassert = LocalDate.now().minusDays(1)
     val fristSomIkkeHarPassert = LocalDate.now().plusDays(2)
-    val metadata = PartitionHendelseMetadata(0, 0)
 
     describe("Skedulerer utgått når frist har passert") {
-        hendelseProdusent.clear()
-        service.processHendelse(oppgaveOpprettet.copy(frist = fristSomHarPassert), metadata)
-        service.sendVedUtgåttFrist()
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettet.copy(frist = fristSomHarPassert))
+        service.settOppgaverUtgåttBasertPåFrist()
 
         hendelseProdusent.hendelser.first() should beInstanceOf<HendelseModel.OppgaveUtgått>()
     }
+
     describe("Skedulerer utgått når frist har passert og det finnes en frist på kø som ikke har passert") {
-        hendelseProdusent.clear()
-        service.processHendelse(
-            oppgaveOpprettet.copy(notifikasjonId = uuid("11"), frist = fristSomIkkeHarPassert),
-            metadata
-        )
-        service.processHendelse(
-            oppgaveOpprettet.copy(notifikasjonId = uuid("22"), frist = fristSomHarPassert),
-            metadata
-        )
-        service.sendVedUtgåttFrist()
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettet.copy(notifikasjonId = uuid("11"), frist = fristSomIkkeHarPassert))
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettet.copy(notifikasjonId = uuid("22"), frist = fristSomHarPassert))
+        service.settOppgaverUtgåttBasertPåFrist()
 
         hendelseProdusent.hendelser shouldHaveSize 1
         hendelseProdusent.hendelser.first() should beInstanceOf<HendelseModel.OppgaveUtgått>()
@@ -70,12 +64,10 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
     }
 
     describe("noop når frist ikke har passert enda") {
-        hendelseProdusent.clear()
-        service.processHendelse(
-            oppgaveOpprettet.copy(frist = fristSomIkkeHarPassert),
-            metadata
-        )
-        service.sendVedUtgåttFrist()
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettet.copy(frist = fristSomIkkeHarPassert))
+        service.settOppgaverUtgåttBasertPåFrist()
 
         hendelseProdusent.hendelser shouldBe emptyList()
     }
@@ -113,16 +105,23 @@ class SkedulertUtgåttServiceTests : DescribeSpec({
                 nyLenke = null,
             )
         )) { hendelse ->
-            hendelseProdusent.clear()
-            service.processHendelse(
-                oppgaveOpprettet.copy(frist = fristSomHarPassert),
-                metadata
-            )
-            service.processHendelse(hendelse, metadata)
-            service.sendVedUtgåttFrist()
+            val (repo, hendelseProdusent, service) = setupTestApp()
+
+            repo.oppdaterModellEtterHendelse(oppgaveOpprettet.copy(frist = fristSomHarPassert))
+            repo.oppdaterModellEtterHendelse(hendelse)
+
+            service.settOppgaverUtgåttBasertPåFrist()
 
             hendelseProdusent.hendelser shouldBe emptyList()
         }
     }
 
 })
+
+private fun DescribeSpec.setupTestApp(): Triple<SkedulertUtgåttRepository, FakeHendelseProdusent, SkedulertUtgåttService> {
+    val database = testDatabase(SkedulertUtgått.databaseConfig)
+    val repo = SkedulertUtgåttRepository(database)
+    val hendelseProdusent = FakeHendelseProdusent()
+    val service = SkedulertUtgåttService(repo, hendelseProdusent)
+    return Triple(repo, hendelseProdusent, service)
+}

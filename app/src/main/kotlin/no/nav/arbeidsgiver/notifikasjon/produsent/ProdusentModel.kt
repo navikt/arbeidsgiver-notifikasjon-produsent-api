@@ -194,6 +194,7 @@ object ProdusentModel {
             ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
             ARBEIDSGIVER_HAR_GODTATT,
             AVLYST,
+            AVHOLDT,
         }
 
         override fun erDuplikatAv(other: Notifikasjon): Boolean {
@@ -318,6 +319,7 @@ fun KalenderavtaleOpprettet.tilProdusentModel() =
             KalenderavtaleTilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED -> ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
             KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT -> ARBEIDSGIVER_HAR_GODTATT
             KalenderavtaleTilstand.AVLYST -> AVLYST
+            KalenderavtaleTilstand.AVHOLDT -> AVHOLDT
         },
         deletedAt = null,
         eksterneVarsler = eksterneVarsler.map(EksterntVarsel::tilProdusentModel),

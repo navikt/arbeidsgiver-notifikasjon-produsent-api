@@ -1,117 +1,227 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.*
-import java.sql.Connection
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.getLocalDate
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.getLocalDateTime
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.getUUID
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 
-class SkedulertUtgåttRepository : AutoCloseable {
-    private val database = EphemeralDatabase("skedulert_utgatt",
-        """
-        create table oppgaver (
-            oppgave_id text not null primary key,
-            frist text not null,
-            virksomhetsnummer text not null,
-            produsent_id text not null
-        );
-        
-        create index oppgaver_frist_idx on oppgaver(frist);
-        
-        create table oppgave_sak_kobling (
-            oppgave_id text not null primary key,
-            sak_id text not null
-        );
-        
-        create table slettede_oppgaver (
-            oppgave_id text not null primary key
-        );
-        
-        create table slettede_saker (
-            sak_id text not null,
-            grupperingsid text not null,
-            merkelapp text not null,
-            constraint slettede_saker_pk primary key (sak_id)
-        );
-        """.trimIndent()
-    )
-    override fun close() = database.close()
-
-    class SkedulertUtgått(
+class SkedulertUtgåttRepository(
+    private val database: Database
+) : HardDeletedRepository(database) {
+    class Oppgave(
         val oppgaveId: UUID,
         val frist: LocalDate,
         val virksomhetsnummer: String,
         val produsentId: String,
     )
 
-    fun hentOgFjernAlleMedFrist(localDateNow: LocalDate): Collection<SkedulertUtgått> {
-        return database.useTransaction {
-            executeQuery(
-                """
-                    delete from oppgaver
-                    where frist < ?
-                    returning *
-                """.trimIndent(),
-                setup = {
-                    setLocalDate(localDateNow)
-                },
-                result = {
-                    val alleUtgåtte = mutableListOf<SkedulertUtgått>()
-                    while (next()) {
-                        alleUtgåtte.add(
-                            SkedulertUtgått(
-                                oppgaveId = getUUID("oppgave_id"),
-                                frist = getLocalDate("frist"),
-                                virksomhetsnummer = getString("virksomhetsnummer"),
-                                produsentId = getString("produsent_id"),
-                            )
-                        )
-                    }
-                    alleUtgåtte
+    class Kalenderavtale(
+        val kalenderavtaleId: UUID,
+        val startTidspunkt: LocalDateTime,
+        val tilstand: KalenderavtaleTilstand,
+        val virksomhetsnummer: String,
+        val produsentId: String,
+        val merkelapp: String,
+        val grupperingsid: String,
+        val opprettetTidspunkt: Instant,
+    )
+
+    enum class AggregatType {
+        OPPGAVE,
+        KALENDERAVTALE,
+    }
+
+    private val log = logger()
+
+    suspend fun oppdaterModellEtterHendelse(hendelse: HendelseModel.Hendelse) {
+        if (hendelse is HendelseModel.AggregatOpprettet) {
+            registrerKoblingForCascadeDelete(hendelse)
+        }
+        if (erHardDeleted(hendelse.aggregateId)) {
+            log.info("skipping harddeleted event {}", hendelse)
+            return
+        }
+
+        when (hendelse) {
+            is HendelseModel.OppgaveOpprettet -> {
+                /* Vi må huske saks-id uavhengig av om det er frist på oppgaven, for
+                 * det kan komme en frist senere. */
+                if (hendelse.sakId != null) {
+                    huskSakOppgaveKobling(
+                        sakId = hendelse.sakId,
+                        oppgaveId = hendelse.aggregateId
+                    )
                 }
-            )
+
+                if (hendelse.frist != null) {
+                    upsertSkedulertUtgåttOppgave(
+                        Oppgave(
+                            oppgaveId = hendelse.notifikasjonId,
+                            frist = hendelse.frist,
+                            virksomhetsnummer = hendelse.virksomhetsnummer,
+                            produsentId = hendelse.produsentId,
+                        )
+                    )
+                }
+            }
+
+            is HendelseModel.KalenderavtaleOpprettet -> {
+                huskSakKalenderavtaleKobling(
+                    sakId = hendelse.sakId,
+                    kalenderavtaleId = hendelse.aggregateId
+                )
+
+                skedulerAvholdtKalenderavtale(
+                    Kalenderavtale(
+                        kalenderavtaleId = hendelse.notifikasjonId,
+                        startTidspunkt = hendelse.startTidspunkt,
+                        virksomhetsnummer = hendelse.virksomhetsnummer,
+                        produsentId = hendelse.produsentId,
+                        tilstand = hendelse.tilstand,
+                        merkelapp = hendelse.merkelapp,
+                        grupperingsid = hendelse.grupperingsid,
+                        opprettetTidspunkt = hendelse.opprettetTidspunkt.toInstant(),
+                    )
+                )
+            }
+
+            is HendelseModel.KalenderavtaleOppdatert -> {
+                when (hendelse.tilstand) {
+                    null -> {
+                        // tilstand er uendret, skedulering forblir som den er
+                        return
+                    }
+
+                    KalenderavtaleTilstand.AVLYST,
+                    KalenderavtaleTilstand.AVHOLDT -> {
+                        // kalenderavtale er avlyst eller avholdt, slett skedulering
+                        database.transaction {
+                            slettSkedulertUtgått(hendelse.notifikasjonId)
+                        }
+                    }
+
+                    else -> {
+                        // kalenderavtale er endret til en annen åpen tilstand, skeduler avholdt på nytt
+                        oppdaterSkedulerAvholdtKalenderavtale(hendelse.notifikasjonId)
+                    }
+                }
+            }
+
+            is HendelseModel.FristUtsatt -> {
+                upsertSkedulertUtgåttOppgave(
+                    Oppgave(
+                        oppgaveId = hendelse.notifikasjonId,
+                        frist = hendelse.frist,
+                        virksomhetsnummer = hendelse.virksomhetsnummer,
+                        produsentId = hendelse.produsentId,
+                    )
+                )
+            }
+
+            is HendelseModel.OppgaveUtgått ->
+                slettSkeduleringHvisOppgaveErEldre(
+                    oppgaveId = hendelse.aggregateId,
+                    utgaattTidspunkt = hendelse.utgaattTidspunkt.asOsloLocalDate()
+                )
+
+            is HendelseModel.OppgaveUtført ->
+                database.transaction {
+                    slettOppgave(aggregateId = hendelse.aggregateId)
+                }
+
+            is HendelseModel.SoftDelete,
+            is HendelseModel.HardDelete -> {
+                database.transaction {
+                    slett(
+                        aggregateId = hendelse.aggregateId,
+                        grupperingsid = when (hendelse) {
+                            is HendelseModel.SoftDelete -> hendelse.grupperingsid
+                            is HendelseModel.HardDelete -> hendelse.grupperingsid
+                            else -> throw IllegalStateException("Uventet hendelse $hendelse")
+                        },
+                        merkelapp = when (hendelse) {
+                            is HendelseModel.SoftDelete -> hendelse.merkelapp
+                            is HendelseModel.HardDelete -> hendelse.merkelapp
+                            else -> throw IllegalStateException("Uventet hendelse $hendelse")
+                        },
+                    )
+                    registrerDelete(this, hendelse.aggregateId)
+                }
+            }
+
+            is HendelseModel.BeskjedOpprettet,
+            is HendelseModel.BrukerKlikket,
+            is HendelseModel.PåminnelseOpprettet,
+            is HendelseModel.SakOpprettet,
+            is HendelseModel.NyStatusSak,
+            is HendelseModel.NesteStegSak,
+            is HendelseModel.TilleggsinformasjonSak,
+            is HendelseModel.EksterntVarselFeilet,
+            is HendelseModel.EksterntVarselKansellert,
+            is HendelseModel.OppgavePåminnelseEndret,
+            is HendelseModel.EksterntVarselVellykket -> Unit
         }
     }
 
-
-    private fun Connection.erOppgaveSlettet(oppgaveId: UUID): Boolean {
-        return executeQuery(
-            """
-                select true as slettet
-                from slettede_oppgaver
-                where oppgave_id = ?
-                limit 1
-            """.trimIndent(),
-            setup = {
-                setUUID(oppgaveId)
-            },
-            result = {
-                if (next()) getBoolean("slettet") else false
-            }
+    suspend fun hentOgFjernAlleUtgåtteOppgaver(localDateNow: LocalDate) = database.nonTransactionalExecuteQuery(
+        """
+                delete from skedulert_utgatt as s
+                    using oppgave as o
+                where o.oppgave_id = s.aggregat_id
+                    and s.aggregat_type = ? and o.frist < ?
+                returning *
+            """, {
+            text(AggregatType.OPPGAVE.name)
+            localDateAsText(localDateNow)
+        }) {
+        Oppgave(
+            oppgaveId = getUUID("oppgave_id"),
+            frist = getLocalDate("frist"),
+            virksomhetsnummer = getString("virksomhetsnummer"),
+            produsentId = getString("produsent_id"),
         )
     }
 
-    private fun Connection.erSakForOppgaveSlettet(oppgaveId: UUID): Boolean {
-        return executeQuery(
+    suspend fun hentOgFjernAlleAvholdteKalenderavtaler(localDateTimeNow: LocalDateTime) =
+        database.nonTransactionalExecuteQuery(
             """
-                select true as slettet
-                from oppgave_sak_kobling
-                join slettede_saker using (sak_id)
-                where oppgave_sak_kobling.oppgave_id = ?
-                limit 1
-            """.trimIndent(),
-            setup = {
-                setUUID(oppgaveId)
-            },
-            result = {
-                if (next()) getBoolean("slettet") else false
-            }
-        )
-    }
+                delete from skedulert_utgatt as s
+                    using kalenderavtale as k
+                where k.kalenderavtale_id = s.aggregat_id
+                    and s.aggregat_type = ? and k.start_tidspunkt < ?
+                returning *
+            """, {
+                text(AggregatType.KALENDERAVTALE.name)
+                localDateTimeAsText(localDateTimeNow)
+            }) {
+            Kalenderavtale(
+                kalenderavtaleId = getUUID("kalenderavtale_id"),
+                startTidspunkt = getLocalDateTime("start_tidspunkt"),
+                virksomhetsnummer = getString("virksomhetsnummer"),
+                tilstand = getString("tilstand").let { KalenderavtaleTilstand.valueOf(it) },
+                produsentId = getString("produsent_id"),
+                merkelapp = getString("merkelapp"),
+                grupperingsid = getString("grupperingsid"),
+                opprettetTidspunkt = Instant.parse(
+                    getString("opprettet_tidspunkt"),
+                )
+            )
+        }
 
-    private fun Connection.upsertOppgaveFrist(skedulertUtgått: SkedulertUtgått) {
+    private suspend fun upsertSkedulertUtgåttOppgave(oppgave: Oppgave) = database.transaction {
         executeUpdate(
             """
-                insert into oppgaver(oppgave_id, frist, virksomhetsnummer, produsent_id)
+                insert into oppgave(oppgave_id, frist, virksomhetsnummer, produsent_id)
                 values (?, ?, ?, ?)
                 on conflict (oppgave_id) do update set
                     frist = excluded.frist,
@@ -119,134 +229,237 @@ class SkedulertUtgåttRepository : AutoCloseable {
                     produsent_id = excluded.produsent_id
             """.trimIndent()
         ) {
-            setUUID(skedulertUtgått.oppgaveId)
-            setLocalDate(skedulertUtgått.frist)
-            setText(skedulertUtgått.virksomhetsnummer)
-            setText(skedulertUtgått.produsentId)
+            uuid(oppgave.oppgaveId)
+            localDateAsText(oppgave.frist)
+            text(oppgave.virksomhetsnummer)
+            text(oppgave.produsentId)
         }
-    }
-
-    fun skedulerUtgått(skedulertUtgått: SkedulertUtgått) {
-        database.useTransaction {
-            if (erOppgaveSlettet(oppgaveId = skedulertUtgått.oppgaveId)) {
-                return@useTransaction
-            }
-            if (erSakForOppgaveSlettet(oppgaveId = skedulertUtgått.oppgaveId)) {
-                return@useTransaction
-            }
-            upsertOppgaveFrist(skedulertUtgått)
-        }
-    }
-
-
-    fun slettOmEldre(oppgaveId: UUID, utgaattTidspunkt: LocalDate) {
-        database.useTransaction {
-            executeUpdate(
-                """
-                    delete from oppgaver
-                    where oppgave_id = ? and frist <= ?
-                """.trimIndent()
-            ) {
-                setUUID(oppgaveId)
-                setLocalDate(utgaattTidspunkt)
-            }
-        }
-    }
-
-    fun slettOppgave(aggregateId: UUID) {
-        database.useTransaction {
-            this@useTransaction.slettOppgave(aggregateId = aggregateId)
-        }
-    }
-
-    private fun Connection.slettOppgave(aggregateId: UUID) {
         executeUpdate(
             """
-                delete from oppgaver
-                where oppgave_id = ?
+                insert into skedulert_utgatt(aggregat_id, aggregat_type)
+                values (?, ?)
+                on conflict (aggregat_id) do nothing
             """.trimIndent()
         ) {
-            setUUID(aggregateId)
+            uuid(oppgave.oppgaveId)
+            text(AggregatType.OPPGAVE.name)
         }
     }
 
-    private fun Connection.huskSlettetOppgave(aggregateId: UUID) {
+    private suspend fun skedulerAvholdtKalenderavtale(
+        kalenderavtale: Kalenderavtale
+    ) = database.transaction {
         executeUpdate(
             """
-                insert into slettede_oppgaver(oppgave_id)
-                values (?)
-                on conflict (oppgave_id) do nothing
+                insert into kalenderavtale(
+                    kalenderavtale_id, start_tidspunkt, tilstand, virksomhetsnummer, produsent_id, merkelapp, grupperingsid, opprettet_tidspunkt
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?)
+                on conflict (kalenderavtale_id) do update set
+                    start_tidspunkt = excluded.start_tidspunkt,
+                    tilstand = excluded.tilstand,
+                    virksomhetsnummer = excluded.virksomhetsnummer,
+                    produsent_id = excluded.produsent_id,
+                    merkelapp = excluded.merkelapp,
+                    grupperingsid = excluded.grupperingsid,
+                    opprettet_tidspunkt = excluded.opprettet_tidspunkt
             """.trimIndent()
         ) {
-            setUUID(aggregateId)
+            uuid(kalenderavtale.kalenderavtaleId)
+            localDateTimeAsText(kalenderavtale.startTidspunkt)
+            text(kalenderavtale.tilstand.name)
+            text(kalenderavtale.virksomhetsnummer)
+            text(kalenderavtale.produsentId)
+            text(kalenderavtale.merkelapp)
+            text(kalenderavtale.grupperingsid)
+            text(kalenderavtale.opprettetTidspunkt.toString())
+        }
+        when (kalenderavtale.tilstand) {
+            KalenderavtaleTilstand.AVHOLDT,
+            KalenderavtaleTilstand.AVLYST -> {
+                // sluttilstand ingen behov for skedulert overgang
+            }
+
+            else -> {
+                executeUpdate(
+                    """
+                        insert into skedulert_utgatt(aggregat_id, aggregat_type)
+                        values (?, ?)
+                        on conflict (aggregat_id) do nothing
+                    """.trimIndent()
+                ) {
+                    uuid(kalenderavtale.kalenderavtaleId)
+                    text(AggregatType.KALENDERAVTALE.name)
+                }
+            }
         }
     }
 
-    private fun Connection.huskSlettetSak(
-        grupperingsid: String,
-        merkelapp: String,
-        sakId: UUID,
+    private suspend fun oppdaterSkedulerAvholdtKalenderavtale(
+        kalenderavtaleId: UUID
+    ) = database.transaction {
+
+        executeUpdate(
+            """
+                insert into skedulert_utgatt(aggregat_id, aggregat_type)
+                select ?, ?
+                where exists (
+                    select 1 from kalenderavtale
+                    where kalenderavtale_id = ?
+                )
+                on conflict (aggregat_id) do nothing
+            """.trimIndent()
+        ) {
+            uuid(kalenderavtaleId)
+            text(AggregatType.KALENDERAVTALE.name)
+            uuid(kalenderavtaleId)
+        }
+    }
+
+    suspend fun slettSkeduleringHvisOppgaveErEldre(oppgaveId: UUID, utgaattTidspunkt: LocalDate) =
+        database.nonTransactionalExecuteUpdate(
+            """
+                delete from skedulert_utgatt
+                    using skedulert_utgatt as s
+                left join oppgave as o on s.aggregat_id = o.oppgave_id
+                    where s.aggregat_type = ?
+                    and o.oppgave_id = ?
+                    and o.frist <= ?
+            """.trimIndent()
+        ) {
+            text(AggregatType.OPPGAVE.name)
+            uuid(oppgaveId)
+            localDateAsText(utgaattTidspunkt)
+        }
+
+    fun Transaction.slett(
+        aggregateId: UUID,
+        grupperingsid: String?,
+        merkelapp: String?,
     ) {
-        executeUpdate(
-            """
-                insert into slettede_saker(grupperingsid, merkelapp, sak_id)
-                values (?, ?, ?)
-                on conflict (sak_id) do nothing
-            """.trimIndent()
-        ) {
-            setText(grupperingsid)
-            setText(merkelapp)
-            setUUID(sakId)
+        if (grupperingsid != null && merkelapp != null) {
+            slettOppgaverKnyttetTilSak(sakId = aggregateId)
+            slettKalenderavtalerKnyttetTilSak(sakId = aggregateId)
+        } else {
+            slettOppgave(aggregateId = aggregateId)
+            slettKalenderavtale(aggregateId = aggregateId)
         }
     }
 
-    private fun Connection.slettOppgaverKnyttetTilSak(sakId: UUID) {
+    private fun Transaction.slettOppgaverKnyttetTilSak(sakId: UUID) {
         executeUpdate(
             """
-                delete from oppgaver
+                delete from oppgave
                 where oppgave_id in (
                     select oppgave_sak_kobling.oppgave_id
                     from oppgave_sak_kobling
                     where sak_id = ?
                 )
+            """
+        ) {
+            uuid(sakId)
+        }
+        executeUpdate(
+            """
+                delete from skedulert_utgatt
+                where aggregat_id in (
+                    select oppgave_sak_kobling.oppgave_id
+                    from oppgave_sak_kobling
+                    where sak_id = ?
+                )
+            """
+        ) {
+            uuid(sakId)
+        }
+    }
+
+    private fun Transaction.slettKalenderavtalerKnyttetTilSak(sakId: UUID) {
+        executeUpdate(
+            """
+                delete from kalenderavtale
+                where kalenderavtale_id in (
+                    select kalenderavtale_sak_kobling.kalenderavtale_id
+                    from kalenderavtale_sak_kobling
+                    where sak_id = ?
+                )
             """.trimIndent()
         ) {
-            setUUID(sakId)
+            uuid(sakId)
         }
-    }
 
-    fun huskSakOppgaveKobling(sakId: UUID, oppgaveId: UUID) {
-        database.useTransaction {
-            executeUpdate(
-                """
-                    insert into oppgave_sak_kobling (oppgave_id, sak_id) values (?, ?)
-                    on conflict (oppgave_id) do update
-                    set sak_id = excluded.sak_id
-                """.trimIndent()
-            ) {
-                setUUID(oppgaveId)
-                setUUID(sakId)
-            }
-        }
-    }
-
-    fun slettOgHuskSlett(
-        aggregateId: UUID,
-        grupperingsid: String?,
-        merkelapp: String?,
-    ) {
-        database.useTransaction {
-            if (grupperingsid != null && merkelapp != null) {
-                huskSlettetSak(
-                    grupperingsid = grupperingsid,
-                    merkelapp = merkelapp,
-                    sakId = aggregateId,
+        executeUpdate(
+            """
+                delete from skedulert_utgatt
+                where aggregat_id in (
+                    select kalenderavtale_sak_kobling.kalenderavtale_id
+                    from kalenderavtale_sak_kobling
+                    where sak_id = ?
                 )
-                slettOppgaverKnyttetTilSak(sakId = aggregateId)
-            } else {
-                huskSlettetOppgave(aggregateId = aggregateId)
-                slettOppgave(aggregateId = aggregateId)
-            }
+            """
+        ) {
+            uuid(sakId)
+        }
+    }
+
+    fun Transaction.slettOppgave(aggregateId: UUID) {
+        executeUpdate(
+            """
+                delete from oppgave
+                where oppgave_id = ?
+            """.trimIndent()
+        ) {
+            uuid(aggregateId)
+        }
+        slettSkedulertUtgått(aggregateId = aggregateId)
+    }
+
+    fun Transaction.slettKalenderavtale(aggregateId: UUID) {
+        executeUpdate(
+            """
+                delete from kalenderavtale
+                where kalenderavtale_id = ?
+            """.trimIndent()
+        ) {
+            uuid(aggregateId)
+        }
+        slettSkedulertUtgått(aggregateId = aggregateId)
+    }
+
+    fun Transaction.slettSkedulertUtgått(aggregateId: UUID) {
+        executeUpdate(
+            """
+                delete from skedulert_utgatt
+                where aggregat_id = ?
+            """.trimIndent()
+        ) {
+            uuid(aggregateId)
+        }
+    }
+
+    suspend fun huskSakOppgaveKobling(sakId: UUID, oppgaveId: UUID) {
+        database.nonTransactionalExecuteUpdate(
+            """
+                insert into oppgave_sak_kobling (oppgave_id, sak_id) values (?, ?)
+                on conflict (oppgave_id) do update
+                set sak_id = excluded.sak_id
+            """.trimIndent()
+        ) {
+            uuid(oppgaveId)
+            uuid(sakId)
+        }
+    }
+
+
+    suspend fun huskSakKalenderavtaleKobling(sakId: UUID, kalenderavtaleId: UUID) {
+        database.nonTransactionalExecuteUpdate(
+            """
+                        insert into kalenderavtale_sak_kobling (kalenderavtale_id, sak_id) values (?, ?)
+                        on conflict (kalenderavtale_id) do update
+                        set sak_id = excluded.sak_id
+                    """.trimIndent()
+        ) {
+            uuid(kalenderavtaleId)
+            uuid(sakId)
         }
     }
 }

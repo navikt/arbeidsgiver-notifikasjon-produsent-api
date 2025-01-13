@@ -1883,6 +1883,10 @@ enum KalenderavtaleTilstand {
     Avtalen er avlyst
     """
     AVLYST
+    """
+    Avtalen er avholdt, dette skjer automatisk når starttidspunkt har passert, men kan også settes manuelt
+    """
+    AVHOLDT
 }
 
 union NyOppgaveResultat =

@@ -22,7 +22,7 @@ import java.util.*
 class Database private constructor(
     private val config: Config,
     private val dataSource: NonBlockingDataSource<*>,
-): Closeable {
+) : Closeable {
     data class Config(
         val host: String,
         val port: String,
@@ -72,7 +72,7 @@ class Database private constructor(
 
         suspend fun openDatabase(
             config: Config,
-            flywayAction: Flyway.() -> Unit = { migrate () },
+            flywayAction: Flyway.() -> Unit = { migrate() },
         ): Database {
             val hikariConfig = config.asHikariConfig()
 
@@ -250,24 +250,37 @@ class ParameterSetters(
     private var index = 1
 
 
-    fun <T: Enum<T>>enumAsText(value: T) = text(value.toString())
+    fun <T : Enum<T>> enumAsText(value: T) = text(value.toString())
 
     fun text(value: String) = preparedStatement.setString(index++, value)
     fun nullableText(value: String?) = preparedStatement.setString(index++, value)
     fun integer(value: Int) = preparedStatement.setInt(index++, value)
     fun long(value: Long) = preparedStatement.setLong(index++, value)
     fun boolean(newState: Boolean) = preparedStatement.setBoolean(index++, newState)
-    fun nullableBoolean(value: Boolean?) = if (value == null) preparedStatement.setNull(index++, Types.BOOLEAN) else boolean(value)
+    fun nullableBoolean(value: Boolean?) =
+        if (value == null) preparedStatement.setNull(index++, Types.BOOLEAN) else boolean(value)
+
     fun uuid(value: UUID) = preparedStatement.setObject(index++, value)
     fun nullableUuid(value: UUID?) = preparedStatement.setObject(index++, value)
+
     /**
      * all timestamp values must be `truncatedTo` micros to avoid rounding/precision errors when writing and reading
      **/
-    fun nullableTimestamptz(value: OffsetDateTime?) = preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
-    fun timestamp_without_timezone_utc(value: OffsetDateTime) = timestamp_without_timezone(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
-    fun timestamp_without_timezone_utc(value: Instant) = timestamp_without_timezone(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
-    fun timestamp_without_timezone(value: LocalDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
-    fun timestamp_with_timezone(value: OffsetDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+    fun nullableTimestamptz(value: OffsetDateTime?) =
+        preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
+
+    fun timestamp_without_timezone_utc(value: OffsetDateTime) =
+        timestamp_without_timezone(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
+
+    fun timestamp_without_timezone_utc(value: Instant) =
+        timestamp_without_timezone(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
+
+    fun timestamp_without_timezone(value: LocalDateTime) =
+        preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+
+    fun timestamp_with_timezone(value: OffsetDateTime) =
+        preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+
     fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
     fun toInstantAsText(value: OffsetDateTime) = instantAsText(value.toInstant())
@@ -277,10 +290,13 @@ class ParameterSetters(
 
     fun nullableLocalDateTimeAsText(value: LocalDateTime?) = nullableText(value?.toString())
     fun localDateTimeAsText(value: LocalDateTime) = text(value.toString())
+    fun nullableLocalDateAsText(value: LocalDate?) = nullableText(value?.toString())
+    fun localDateAsText(value: LocalDate) = text(value.toString())
     fun periodAsText(value: ISO8601Period) = text(value.toString())
 
     fun nullableDate(value: LocalDate?) =
-        preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) } )
+        preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) })
+
     fun date(value: LocalDate) =
         preparedStatement.setDate(index++, value.let { java.sql.Date.valueOf(it) })
 
@@ -289,6 +305,7 @@ class ParameterSetters(
         nullableText(
             value?.let { laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value) }
         )
+
     inline fun <reified T> jsonb(value: T) =
         text(
             laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)
@@ -327,12 +344,15 @@ class ParameterSetters(
 fun ResultSet.getUuid(column: String): UUID =
     getObject(column, UUID::class.java)
 
-fun <T> measureSql(sql: String, action: () -> T): T {
+fun <T> measureSql(
+    sql: String,
+    action: () -> T
+): T {
     val timer = getTimer(
         name = "database.execution",
         tags = setOf("sql" to sql),
         description = "Execution time for sql query or update"
     )
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-    return timer.record(action)
+    return timer.recordCallable(action)
 }

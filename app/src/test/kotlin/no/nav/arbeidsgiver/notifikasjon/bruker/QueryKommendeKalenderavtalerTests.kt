@@ -33,7 +33,7 @@ class QueryKommendeKalenderavtalerTests: DescribeSpec({
             grupperingsid = grupperingsid,
         )
         val sak2 = brukerRepository.sakOpprettet(
-            sakId = uuid("1"),
+            sakId = uuid("2"),
             mottakere = listOf(TEST_MOTTAKER_2),
             virksomhetsnummer = TEST_VIRKSOMHET_2,
             merkelapp = merkelapp,

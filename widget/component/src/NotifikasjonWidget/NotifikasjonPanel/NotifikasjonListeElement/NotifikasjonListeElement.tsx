@@ -222,6 +222,26 @@ export const NotifikasjonListeElement = (props: Props) => {
               }
             />
           );
+        case KalenderavtaleTilstand.Avholdt:
+          return (
+            <NotifikasjonBeskjed
+              notifikasjon={notifikasjon}
+              props={props}
+              erTodo={false}
+              ikon={
+                <KalenderavtaleIkon
+                  variant="grå"
+                  title="Kalenderavtale som er avholdt."
+                />
+              }
+              tittel={kalenderavtaleTekst(notifikasjon)}
+              statuslinje={
+                <Tag size="small" variant="info">
+                  Avholdt
+                </Tag>
+              }
+            />
+          );
         default:
           console.error(`ukjent avtaletilstand ${avtaletilstand}: ignorerer`);
           return null;

@@ -130,6 +130,7 @@ fun ResultSet.getUUID(columnLabel: String): UUID = UUID.fromString(getString(col
 fun ResultSet.getInstant(columnLabel: String): Instant = Instant.parse(getString(columnLabel))
 fun ResultSet.getLocalDate(columnLabel: String): LocalDate = LocalDate.parse(getString(columnLabel))
 fun ResultSet.getLocalDateOrNull(columnLabel: String) = getString(columnLabel)?.let(LocalDate::parse)
+fun ResultSet.getLocalDateTime(columnLabel: String) = LocalDateTime.parse(getString(columnLabel))
 fun ResultSet.getLocalDateTimeOrNull(columnLabel: String) = getString(columnLabel)?.let(LocalDateTime::parse)
 inline fun <reified E: Enum<E>> ResultSet.getEnum(columnLabel: String): E = enumValueOf(getString(columnLabel))
 inline fun <reified A> ResultSet.getJson(columnLabel: String) = ephemeralDatabaseObjectMapper.readValue<A>(getString(columnLabel))
