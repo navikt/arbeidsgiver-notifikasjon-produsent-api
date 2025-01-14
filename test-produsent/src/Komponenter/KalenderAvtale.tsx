@@ -274,7 +274,7 @@ const Lokasjon = forwardRef((_props, ref) => {
           <TextField
             label={"Postnummer"}
             ref={postnummerRef}
-            defaultValue="$$$$"
+            defaultValue="1234"
           />
           <TextField
             label={"Poststed"}
