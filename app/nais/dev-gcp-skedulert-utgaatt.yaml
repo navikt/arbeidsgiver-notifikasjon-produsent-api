@@ -27,7 +27,7 @@ spec:
     pool: nav-dev
   gcp:
     sqlInstances:
-      - type: POSTGRES_17
+      - type: POSTGRES_12
         tier: db-f1-micro
         diskAutoresize: true
         highAvailability: false
