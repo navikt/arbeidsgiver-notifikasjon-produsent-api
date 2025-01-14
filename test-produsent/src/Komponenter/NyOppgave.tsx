@@ -117,7 +117,7 @@ export const NyOppgave: React.FunctionComponent = () => {
         <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", width: "70rem", gap: "16px"}}>
             <div>
                 <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
-                <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="910825526"/>
+                <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="211511052"/>
                 <MottakerInput ref={mottakerRef}/>
                 <TextField label={"Tekst*"} ref={tekstRef} defaultValue="Dette er en oppgave"/>
                 <TextField label={"Frist*"} ref={fristRef} defaultValue={"2024-05-17"}/>
