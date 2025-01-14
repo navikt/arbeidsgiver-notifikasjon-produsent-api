@@ -20,7 +20,7 @@ object SkedulertUtgått {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "skedulert-utgaat-model-builder-2",
+            groupId = "skedulert-utgatt-model-builder",
             replayPeriodically = true,
         )
     }
