@@ -178,20 +178,11 @@ class SkedulertHardDeleteRepositoryImpl(
                 )
             }
 
-            is HendelseModel.HardDelete,
-            is HendelseModel.SoftDelete ->
+            is HendelseModel.HardDelete ->
                 delete(
                     aggregateId = hendelse.aggregateId,
-                    merkelapp = when (hendelse) {
-                        is HendelseModel.HardDelete -> hendelse.merkelapp
-                        is HendelseModel.SoftDelete -> hendelse.merkelapp
-                        else -> throw IllegalStateException("unexpected event type")
-                    },
-                    grupperingsid = when (hendelse) {
-                        is HendelseModel.HardDelete -> hendelse.grupperingsid
-                        is HendelseModel.SoftDelete -> null
-                        else -> throw IllegalStateException("unexpected event type")
-                    }
+                    merkelapp = hendelse.merkelapp,
+                    grupperingsid = hendelse.grupperingsid,
                 )
 
             is HendelseModel.NesteStegSak,
@@ -202,6 +193,7 @@ class SkedulertHardDeleteRepositoryImpl(
             is HendelseModel.BrukerKlikket,
             is HendelseModel.PåminnelseOpprettet,
             is HendelseModel.FristUtsatt,
+            is HendelseModel.SoftDelete,
             is HendelseModel.OppgavePåminnelseEndret -> Unit
 
         }
