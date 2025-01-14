@@ -173,49 +173,64 @@ class SkedulertUtgåttRepository(
         }
     }
 
-    suspend fun hentOgFjernAlleUtgåtteOppgaver(localDateNow: LocalDate) = database.nonTransactionalExecuteQuery(
-        """
+    suspend fun hentOgFjernAlleUtgåtteOppgaver(
+        localDateNow: LocalDate,
+        action: suspend (Oppgave) -> Unit
+    ) = database.transaction {
+        executeQuery(
+            """
                 delete from skedulert_utgatt as s
                     using oppgave as o
                 where o.oppgave_id = s.aggregat_id
                     and s.aggregat_type = ? and o.frist < ?
                 returning *
             """, {
-            text(AggregatType.OPPGAVE.name)
-            localDateAsText(localDateNow)
-        }) {
-        Oppgave(
-            oppgaveId = getUUID("oppgave_id"),
-            frist = getLocalDate("frist"),
-            virksomhetsnummer = getString("virksomhetsnummer"),
-            produsentId = getString("produsent_id"),
-        )
+                text(AggregatType.OPPGAVE.name)
+                localDateAsText(localDateNow)
+            }) {
+            Oppgave(
+                oppgaveId = getUUID("oppgave_id"),
+                frist = getLocalDate("frist"),
+                virksomhetsnummer = getString("virksomhetsnummer"),
+                produsentId = getString("produsent_id"),
+            )
+        }.forEach {
+            action(it)
+        }
     }
 
-    suspend fun hentOgFjernAlleAvholdteKalenderavtaler(localDateTimeNow: LocalDateTime) =
-        database.nonTransactionalExecuteQuery(
-            """
+
+    suspend fun hentOgFjernAlleAvholdteKalenderavtaler(
+        localDateTimeNow: LocalDateTime,
+        action: suspend (Kalenderavtale) -> Unit
+    ) =
+        database.transaction {
+            executeQuery(
+                """
                 delete from skedulert_utgatt as s
                     using kalenderavtale as k
                 where k.kalenderavtale_id = s.aggregat_id
                     and s.aggregat_type = ? and k.start_tidspunkt < ?
                 returning *
             """, {
-                text(AggregatType.KALENDERAVTALE.name)
-                localDateTimeAsText(localDateTimeNow)
-            }) {
-            Kalenderavtale(
-                kalenderavtaleId = getUUID("kalenderavtale_id"),
-                startTidspunkt = getLocalDateTime("start_tidspunkt"),
-                virksomhetsnummer = getString("virksomhetsnummer"),
-                tilstand = getString("tilstand").let { KalenderavtaleTilstand.valueOf(it) },
-                produsentId = getString("produsent_id"),
-                merkelapp = getString("merkelapp"),
-                grupperingsid = getString("grupperingsid"),
-                opprettetTidspunkt = Instant.parse(
-                    getString("opprettet_tidspunkt"),
+                    text(AggregatType.KALENDERAVTALE.name)
+                    localDateTimeAsText(localDateTimeNow)
+                }) {
+                Kalenderavtale(
+                    kalenderavtaleId = getUUID("kalenderavtale_id"),
+                    startTidspunkt = getLocalDateTime("start_tidspunkt"),
+                    virksomhetsnummer = getString("virksomhetsnummer"),
+                    tilstand = getString("tilstand").let { KalenderavtaleTilstand.valueOf(it) },
+                    produsentId = getString("produsent_id"),
+                    merkelapp = getString("merkelapp"),
+                    grupperingsid = getString("grupperingsid"),
+                    opprettetTidspunkt = Instant.parse(
+                        getString("opprettet_tidspunkt"),
+                    )
                 )
-            )
+            }.forEach {
+                action(it)
+            }
         }
 
     private suspend fun upsertSkedulertUtgåttOppgave(oppgave: Oppgave) = database.transaction {

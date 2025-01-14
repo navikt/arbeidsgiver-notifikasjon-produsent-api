@@ -19,8 +19,7 @@ class SkedulertUtgåttService(
     private val osloTid: OsloTid = OsloTidImpl
 ) {
     suspend fun settOppgaverUtgåttBasertPåFrist(now: LocalDate = osloTid.localDateNow()) {
-        val utgåttFrist = repository.hentOgFjernAlleUtgåtteOppgaver(now)
-        utgåttFrist.forEach { utgått ->
+        repository.hentOgFjernAlleUtgåtteOppgaver(now) { utgått ->
             val fristLocalDateTime = LocalDateTime.of(utgått.frist, LocalTime.MAX)
             hendelseProdusent.send(HendelseModel.OppgaveUtgått(
                 virksomhetsnummer = utgått.virksomhetsnummer,
@@ -36,7 +35,7 @@ class SkedulertUtgåttService(
     }
 
     suspend fun settKalenderavtalerAvholdtBasertPåTidspunkt(now: LocalDateTime = osloTid.localDateTimeNow()) {
-        repository.hentOgFjernAlleAvholdteKalenderavtaler(now).forEach { avholdt ->
+        repository.hentOgFjernAlleAvholdteKalenderavtaler(now) { avholdt ->
             hendelseProdusent.send(HendelseModel.KalenderavtaleOppdatert(
                 virksomhetsnummer = avholdt.virksomhetsnummer,
                 notifikasjonId = avholdt.kalenderavtaleId,

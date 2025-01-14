@@ -158,7 +158,7 @@ class Database private constructor(
 
     suspend fun <T> transaction(
         rollback: (e: Exception) -> T = { throw it },
-        body: Transaction.() -> T,
+        body: suspend Transaction.() -> T,
     ): T =
         dataSource.withConnection { connection ->
             val savedAutoCommit = connection.autoCommit
