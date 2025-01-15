@@ -61,15 +61,3 @@ class MaskingAppenderTests: DescribeSpec({
         }
     }
 })
-
-/*
-Ikke-retryable feil fra altinn ved sending av notifikasjon: AltinnResponse.Feil(
-                    altinnErrorMessage=The ReceiverAddress/User profile must contain a valid emailaddress. Address: merete@appoint-.no, User: 995536021
-                    altinnExtendedErrorMessage=No information available
-                    altinnLocalizedErrorMessage=The ReceiverAddress/User profile must contain a valid emailaddress. Address: merete@appoint-.no, User: 995536021
-                    errorGuid=06722395-14dd-4fa3-a789-882553ded9aa
-                    errorID=30010
-                    userGuid=-no value-
-                    userId=0
-                ):
- */
