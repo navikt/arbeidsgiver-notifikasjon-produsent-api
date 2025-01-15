@@ -76,13 +76,27 @@ class NyStatusSakTests : DescribeSpec({
         val r6 = engine.nyStatusSak(
             id = sakId,
             SaksStatus.FERDIG,
-            hardDelete = LocalDateTime.MAX
+            hardDelete = LocalDateTime.MAX.minusDays(1)
         )
         it("vellyket oppdatering med harddelete satt i kafka") {
             r6.getTypedContent<String>("$.nyStatusSak.__typename") shouldBe "NyStatusSakVellykket"
             val hendelse = stubbedKafkaProducer.hendelser.last()
             hendelse should beInstanceOf<HendelseModel.NyStatusSak>()
             (hendelse as HendelseModel.NyStatusSak).hardDelete shouldNotBe null
+            hendelse.hardDelete!!.nyTid.denOrNull() shouldBe LocalDateTime.MAX.minusDays(1)
+        }
+
+        val r7 = engine.nyStatusSak(
+            id = sakId,
+            SaksStatus.FERDIG,
+            hardDelete = LocalDateTime.MAX
+        )
+        it("vellyket oppdatering med harddelete satt i kafka") {
+            r7.getTypedContent<String>("$.nyStatusSak.__typename") shouldBe "NyStatusSakVellykket"
+            val hendelse = stubbedKafkaProducer.hendelser.last()
+            hendelse should beInstanceOf<HendelseModel.NyStatusSak>()
+            (hendelse as HendelseModel.NyStatusSak).hardDelete shouldNotBe null
+            hendelse.hardDelete!!.nyTid.denOrNull() shouldBe LocalDateTime.MAX
         }
     }
 })

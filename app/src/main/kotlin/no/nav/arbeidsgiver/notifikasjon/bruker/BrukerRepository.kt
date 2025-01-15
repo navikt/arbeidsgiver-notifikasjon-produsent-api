@@ -786,6 +786,7 @@ class BrukerRepositoryImpl(
             where 
                 n.type = 'KALENDERAVTALE' and
                 n.tilstand != 'AVLYST' and
+                n.tilstand != 'AVHOLDT' and
                 n.start_tidspunkt::timestamp > now() and
                 n.virksomhetsnummer = any(?)
             order by 

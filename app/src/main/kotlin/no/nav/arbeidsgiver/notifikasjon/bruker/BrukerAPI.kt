@@ -108,7 +108,8 @@ object BrukerAPI {
                 ARBEIDSGIVER_VIL_AVLYSE,
                 ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
                 ARBEIDSGIVER_HAR_GODTATT,
-                AVLYST;
+                AVLYST,
+                AVHOLDT;
 
                 companion object {
                     fun BrukerModel.Kalenderavtale.Tilstand.tilBrukerAPI(): Tilstand = when (this) {
@@ -117,6 +118,7 @@ object BrukerAPI {
                         BrukerModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED -> ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
                         BrukerModel.Kalenderavtale.Tilstand.ARBEIDSGIVER_HAR_GODTATT -> ARBEIDSGIVER_HAR_GODTATT
                         BrukerModel.Kalenderavtale.Tilstand.AVLYST -> AVLYST
+                        BrukerModel.Kalenderavtale.Tilstand.AVHOLDT -> AVHOLDT
                     }
                 }
             }

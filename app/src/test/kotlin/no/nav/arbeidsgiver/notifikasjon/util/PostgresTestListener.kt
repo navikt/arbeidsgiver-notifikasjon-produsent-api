@@ -19,13 +19,14 @@ private suspend fun createDbFromTemplate(config: Database.Config): Database.Conf
     val database = mutex.withLock {
         "${config.database}_test-${ids.next()}"
     }
-    DriverManager.getConnection(config.jdbcUrl, config.username, config.password).use { conn ->
+
+    DriverManager.getConnection(config.url.toString(), config.username, config.password).use { conn ->
         conn.createStatement().use { stmt ->
             @Suppress("SqlSourceToSinkFlow")
             stmt.executeUpdate("""create database "$database" template "$templateDb"; """)
         }
     }
-    return config.copy(database = database)
+    return config.withDatabase(database)
 }
 
 /**
@@ -33,10 +34,10 @@ private suspend fun createDbFromTemplate(config: Database.Config): Database.Conf
  * template databasen brukes til å lage ferske databaser for hver test.
  */
 @Suppress("SqlSourceToSinkFlow")
-private suspend fun templateDb(config: Database.Config): String {
+private fun templateDb(config: Database.Config): String {
     val templateDb = templateDbs.computeIfAbsent(config) {
         "${config.database}_template".also { db ->
-            DriverManager.getConnection(config.jdbcUrl, config.username, config.password).use { conn ->
+            DriverManager.getConnection(config.url.toString(), config.username, config.password).use { conn ->
                 conn.createStatement().use { stmt ->
                     val resultSet =
                         stmt.executeQuery("SELECT datname FROM pg_database where datname like '${config.database}_test%';")
@@ -58,10 +59,7 @@ private suspend fun templateDb(config: Database.Config): String {
             }
             runBlocking {
                 Database.openDatabase(
-                    config = config.copy(
-                        port = "1337",
-                        database = db,
-                    ),
+                    config = config.withDatabase(db),
                     flywayAction = {
                         migrate()
                     }
@@ -74,13 +72,11 @@ private suspend fun templateDb(config: Database.Config): String {
 
 fun TestConfiguration.testDatabase(config: Database.Config): Database =
     runBlocking {
-        val database = createDbFromTemplate(config).database
+        val testConfig = createDbFromTemplate(config)
         Database.openDatabase(
-            config = config.copy(
+            config = testConfig.copy(
                 // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
-                jdbcOpts = mapOf("preparedStatementCacheQueries" to 0),
-                port = "1337",
-                database = database,
+                jdbcOpts = mapOf("preparedStatementCacheQueries" to "0"),
             ),
             flywayAction = {
                 /* noop. created from template. */

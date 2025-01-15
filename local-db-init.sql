@@ -21,6 +21,9 @@ GRANT ALL PRIVILEGES ON DATABASE "ekstern-varsling-model" TO postgres;
 CREATE DATABASE "skedulert-harddelete-model";
 GRANT ALL PRIVILEGES ON DATABASE "skedulert-harddelete-model" TO postgres;
 
+CREATE DATABASE "skedulert-utgatt-model";
+GRANT ALL PRIVILEGES ON DATABASE "skedulert-utgatt-model" TO postgres;
+
 CREATE DATABASE "kafka-backup-model";
 GRANT ALL PRIVILEGES ON DATABASE "kafka-backup-model" TO postgres;
 

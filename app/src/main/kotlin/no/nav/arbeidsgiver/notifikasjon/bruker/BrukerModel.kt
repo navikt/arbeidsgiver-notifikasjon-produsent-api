@@ -106,6 +106,7 @@ object BrukerModel {
             ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
             ARBEIDSGIVER_HAR_GODTATT,
             AVLYST,
+            AVHOLDT,
         }
     }
 

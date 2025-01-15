@@ -61,8 +61,6 @@ internal class MutationKalenderavtale(
                         nyTilstand = env.getTypedArgumentOrNull<KalenderavtaleTilstand>("nyTilstand"),
                         nyTekst = env.getTypedArgumentOrNull<String>("nyTekst"),
                         nyLenke = env.getTypedArgumentOrNull<String>("nyLenke"),
-                        nyttStartTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("nyttStartTidspunkt"),
-                        nyttSluttTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("nyttSluttTidspunkt"),
                         nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
                         eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() }.ifEmpty { null },
@@ -82,8 +80,6 @@ internal class MutationKalenderavtale(
                         nyTilstand = env.getTypedArgumentOrNull<KalenderavtaleTilstand>("nyTilstand"),
                         nyTekst = env.getTypedArgumentOrNull<String>("nyTekst"),
                         nyLenke = env.getTypedArgumentOrNull<String>("nyLenke"),
-                        nyttStartTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("nyttStartTidspunkt"),
-                        nyttSluttTidspunkt = env.getTypedArgumentOrNull<OffsetDateTime>("nyttSluttTidspunkt"),
                         nyLokasjon = env.getTypedArgumentOrNull<NyKalenderavtaleInput.LokasjonInput?>("nyLokasjon"),
                         nyErDigitalt = env.getTypedArgumentOrNull<Boolean>("nyErDigitalt"),
                         eksterneVarsler = env.getTypedArgumentOrDefault<List<EksterntVarselInput>>("eksterneVarsler") { emptyList() }.ifEmpty { null },
@@ -194,7 +190,8 @@ internal class MutationKalenderavtale(
         ARBEIDSGIVER_VIL_AVLYSE,
         ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
         ARBEIDSGIVER_HAR_GODTATT,
-        AVLYST;
+        AVLYST,
+        AVHOLDT;
 
         fun tilHendelseModel(): HendelseModel.KalenderavtaleTilstand = when (this) {
             VENTER_SVAR_FRA_ARBEIDSGIVER -> HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
@@ -202,6 +199,7 @@ internal class MutationKalenderavtale(
             ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED -> HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
             ARBEIDSGIVER_HAR_GODTATT -> HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT
             AVLYST -> HendelseModel.KalenderavtaleTilstand.AVLYST
+            AVHOLDT -> HendelseModel.KalenderavtaleTilstand.AVHOLDT
         }
     }
 
@@ -210,13 +208,11 @@ internal class MutationKalenderavtale(
         nyKalenderavtale: NyKalenderavtaleInput,
     ): NyKalenderavtaleResultat {
         val produsent = hentProdusent(context) { error -> return error }
-        val sak: Sak = nyKalenderavtale.grupperingsid.let { grupperingsid ->
-            hentSak(
-                produsentRepository = produsentRepository,
-                grupperingsid = grupperingsid,
-                merkelapp = nyKalenderavtale.merkelapp
-            ) { error -> return error }
-        }
+        val sak: Sak = hentSak(
+            produsentRepository = produsentRepository,
+            grupperingsid = nyKalenderavtale.grupperingsid,
+            merkelapp = nyKalenderavtale.merkelapp
+        ) { error -> return error }
 
         val id = UUID.randomUUID()
         val nyKalenderavtaleHendelse = nyKalenderavtale.somKalenderavtaleOpprettetHendelse(
@@ -281,29 +277,8 @@ internal class MutationKalenderavtale(
             onValidationError: (error: Error.UgyldigKalenderavtale) -> Nothing,
         ): KalenderavtaleOppdatert {
 
-            if (
-                nyttStartTidspunkt != null &&
-                nyttSluttTidspunkt != null &&
-                nyttStartTidspunkt!!.isAfter(nyttSluttTidspunkt)
-            ) {
-                onValidationError(
-                    Error.UgyldigKalenderavtale("startTidspunkt må være før sluttTidspunkt")
-                )
-            } else if (
-                nyttStartTidspunkt != null &&
-                nyttStartTidspunkt!!.inOsloLocalDateTime().isAfter(eksisterende.sluttTidspunkt)
-            ) {
-                onValidationError(
-                    Error.UgyldigKalenderavtale("startTidspunkt må være før sluttTidspunkt")
-                )
-            } else if (
-                nyttSluttTidspunkt != null
-                && nyttSluttTidspunkt!!.inOsloLocalDateTime().isBefore(eksisterende.startTidspunkt)
-            ) {
-                onValidationError(
-                    Error.UgyldigKalenderavtale("startTidspunkt må være før sluttTidspunkt")
-                )
-            }
+            // TODO: mulig vi skal hindre at man ved oppdater går fra lukket til åpen tilstand,
+            // men at man kan bevege seg mellom lukkede tilstander er ok.
 
             return KalenderavtaleOppdatert(
                 virksomhetsnummer = eksisterende.virksomhetsnummer,
@@ -315,8 +290,8 @@ internal class MutationKalenderavtale(
                 tilstand = nyTilstand?.tilHendelseModel(),
                 lenke = nyLenke,
                 tekst = nyTekst,
-                startTidspunkt = nyttStartTidspunkt?.inOsloLocalDateTime(),
-                sluttTidspunkt = nyttSluttTidspunkt?.inOsloLocalDateTime(),
+                startTidspunkt = null, // endring av tidspunkt er ikke støttet. disse er ment å representere evt ny tid
+                sluttTidspunkt = null, // endring av tidspunkt er ikke støttet. disse er ment å representere evt ny tid
                 lokasjon = nyLokasjon?.tilHendelseModel(),
                 erDigitalt = nyErDigitalt,
                 hardDelete = hardDelete?.tilHendelseModel(),
@@ -324,7 +299,7 @@ internal class MutationKalenderavtale(
                 påminnelse = if (nyTilstand == AVLYST) null else paaminnelse?.tilDomene(
                     notifikasjonOpprettetTidspunkt = eksisterende.opprettetTidspunkt,
                     frist = null,
-                    startTidspunkt = (nyttStartTidspunkt?.inOsloLocalDateTime() ?: eksisterende.startTidspunkt),
+                    startTidspunkt = eksisterende.startTidspunkt,
                     virksomhetsnummer = eksisterende.virksomhetsnummer,
                 ),
                 idempotenceKey = idempotenceKey,
@@ -337,8 +312,6 @@ internal class MutationKalenderavtale(
         abstract val nyTilstand: KalenderavtaleTilstand?
         abstract val nyTekst: String?
         abstract val nyLenke: String?
-        abstract val nyttStartTidspunkt: OffsetDateTime?
-        abstract val nyttSluttTidspunkt: OffsetDateTime?
         abstract val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?
         abstract val nyErDigitalt: Boolean?
         abstract val hardDelete: HardDeleteUpdateInput?
@@ -355,8 +328,6 @@ internal class MutationKalenderavtale(
                 nyTilstand,
                 nyTekst,
                 nyLenke,
-                nyttStartTidspunkt,
-                nyttSluttTidspunkt,
                 nyLokasjon,
                 nyErDigitalt,
                 hardDelete,
@@ -370,8 +341,6 @@ internal class MutationKalenderavtale(
         override val nyTilstand: KalenderavtaleTilstand?,
         override val nyTekst: String?,
         override val nyLenke: String?,
-        override val nyttStartTidspunkt: OffsetDateTime?,
-        override val nyttSluttTidspunkt: OffsetDateTime?,
         override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
         override val eksterneVarsler: List<EksterntVarselInput>?,
@@ -386,8 +355,6 @@ internal class MutationKalenderavtale(
         override val nyTilstand: KalenderavtaleTilstand?,
         override val nyTekst: String?,
         override val nyLenke: String?,
-        override val nyttStartTidspunkt: OffsetDateTime?,
-        override val nyttSluttTidspunkt: OffsetDateTime?,
         override val nyLokasjon: NyKalenderavtaleInput.LokasjonInput?,
         override val nyErDigitalt: Boolean?,
         override val eksterneVarsler: List<EksterntVarselInput>?,

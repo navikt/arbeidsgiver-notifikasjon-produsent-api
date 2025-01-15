@@ -76,6 +76,7 @@ export enum KalenderavtaleTilstand {
   ArbeidsgiverHarGodtatt = 'ARBEIDSGIVER_HAR_GODTATT',
   ArbeidsgiverVilAvlyse = 'ARBEIDSGIVER_VIL_AVLYSE',
   ArbeidsgiverVilEndreTidEllerSted = 'ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED',
+  Avholdt = 'AVHOLDT',
   Avlyst = 'AVLYST',
   VenterSvarFraArbeidsgiver = 'VENTER_SVAR_FRA_ARBEIDSGIVER'
 }
