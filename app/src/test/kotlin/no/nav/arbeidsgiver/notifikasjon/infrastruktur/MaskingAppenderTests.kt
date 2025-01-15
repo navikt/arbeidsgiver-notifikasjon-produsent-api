@@ -31,6 +31,14 @@ class MaskingAppenderTests: DescribeSpec({
 
         it("works fnr=") {
             mask("fnr=11223344556") shouldNot contain("11223344556")
+            mask("fnr=11223344556") shouldBe "fnr=***********"
+            mask("fnr=11223344556lolwat") shouldBe "fnr=***********lolwat"
+        }
+
+        it("works epost=") {
+            mask("wat=navn@domene.no") shouldNot contain("navn@domene.no")
+            mask("wat=navn12@domene.no") shouldNot contain("navn12@domene.no")
+            mask("wat=navn12@domene.no&noeannet") shouldBe "wat=********&noeannet"
         }
 
         it("works altinn error message") {
@@ -39,6 +47,17 @@ class MaskingAppenderTests: DescribeSpec({
             ) shouldBe """
                 The ReceiverAddress/User profile must contain a valid emailaddress. Address: ********, User: *********
             """.trimIndent()
+        }
+    }
+
+    describe("Masking password in connection strings") {
+        it("works for jdbc:url") {
+            mask(
+                "jdbc:postgresql://127.0.0.1:5432/bruker-model?user=notifikasjon-bruker-api&password=foobar&socketFactory=com.google.cloud.sql.postgres.SocketFactory&cloudSqlInstance=lol2%3Anorth-pole1%3Anotifikasjon-bruker-api"
+            ).let {
+                it shouldNot contain("foobar")
+                it shouldBe "jdbc:postgresql://127.0.0.1:5432/bruker-model?user=notifikasjon-bruker-api&password=********"
+            }
         }
     }
 })
