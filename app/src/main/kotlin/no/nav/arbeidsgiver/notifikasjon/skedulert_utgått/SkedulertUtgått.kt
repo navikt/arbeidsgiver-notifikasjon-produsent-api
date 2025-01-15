@@ -2,12 +2,13 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 
 object SkedulertUtgått {
-//    val databaseConfig = Database.config("skedulert_utgatt_model")
+    val databaseConfig = Database.config("skedulert_utgatt_model")
 //    private val hendelsesstrøm by lazy {
 //        HendelsesstrømKafkaImpl(
 //            topic = NOTIFIKASJON_TOPIC,
