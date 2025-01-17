@@ -96,7 +96,7 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         repo.opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
         repo.opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtgått(it) }
 
-        val sak2 = repo.opprettSak("2").also { sak ->
+        repo.opprettSak("2").also { sak ->
             repo.opprettOppgave(sak, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
             repo.opprettOppgave(sak, LocalDate.parse("2023-05-15")).also { repo.oppgaveTilstandUtført(it) }
             repo.opprettOppgave(sak, LocalDate.parse("2023-05-15")).also { repo.oppgaveTilstandUtgått(it) }
@@ -105,6 +105,7 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
                 HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED,
                 HendelseModel.KalenderavtaleTilstand.ARBEIDSGIVER_HAR_GODTATT,
                 HendelseModel.KalenderavtaleTilstand.AVLYST,
+                HendelseModel.KalenderavtaleTilstand.AVHOLDT,
             )) {
                 repo.kalenderavtaleOpprettet(
                     sakId = sak.sakId,

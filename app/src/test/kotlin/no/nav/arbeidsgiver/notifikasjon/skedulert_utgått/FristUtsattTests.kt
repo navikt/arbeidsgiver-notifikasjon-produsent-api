@@ -6,9 +6,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDate
 import java.time.LocalTime.MIDNIGHT
@@ -127,183 +127,203 @@ private val softDeleteSak = HendelseModel.SoftDelete(
 
 
 class FristUtsattTests: DescribeSpec({
-    val metadata = PartitionHendelseMetadata(0, 0)
     describe("Frist utsatt på oppgave uten frist") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetUtenFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetUtenFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
 
         it("Sender ett oppgaveUtgått-event basert på utsatt frist") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 1
-            hendelseProdusent.hendelser[0].shouldBeInstanceOf<OppgaveUtgått>().let {
+            hendelseProdusent.hendelser[0].shouldBeInstanceOf<OppgaveUtgått>().also {
                 it.utgaattTidspunkt.asOsloLocalDate() shouldBe fristUtsatt.frist
             }
         }
     }
 
     describe("Frist utsatt på oppgave med eksisterende frist") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
 
         it("Sender ett oppgaveUtgått-event basert på utsatt frist") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 1
-            hendelseProdusent.hendelser[0].shouldBeInstanceOf<OppgaveUtgått>().let {
+            hendelseProdusent.hendelser[0].shouldBeInstanceOf<OppgaveUtgått>().also {
                 it.utgaattTidspunkt.asOsloLocalDate() shouldBe fristUtsatt.frist
             }
         }
     }
 
     describe("Frist utsatt parallelt med oppgaveUtgått, hvor utsettelse kommer først") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
-        service.processHendelse(oppgaveUtgått, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+        repo.oppdaterModellEtterHendelse(oppgaveUtgått)
+
         it("Sender ett oppgaveUtgått-event for utsatt frist") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 1
-            hendelseProdusent.hendelser[0].shouldBeInstanceOf<OppgaveUtgått>().let {
+            hendelseProdusent.hendelser[0].shouldBeInstanceOf<OppgaveUtgått>().also {
                 it.utgaattTidspunkt.asOsloLocalDate() shouldBe fristUtsatt.frist
             }
         }
     }
 
     describe("Frist utsatt parallelt med oppgaveUtgått, hvor utgått kommer først") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(oppgaveUtgått, metadata)
-        service.processHendelse(fristUtsatt, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(oppgaveUtgått)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+
         it("Sender ett oppgaveUtgått-event for utsatt frist") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 1
-            hendelseProdusent.hendelser[0].shouldBeInstanceOf<OppgaveUtgått>().let {
+            hendelseProdusent.hendelser[0].shouldBeInstanceOf<OppgaveUtgått>().also {
                 it.utgaattTidspunkt.asOsloLocalDate() shouldBe fristUtsatt.frist
             }
         }
     }
 
     describe("Frist utsatt parallelt med oppgave utført, hvor utsettelse kommer først") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
-        service.processHendelse(oppgaveUtført, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+        repo.oppdaterModellEtterHendelse(oppgaveUtført)
+
         it("Skal ikke sende noen event, siden oppgaven er utført") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 
     describe("Frist utsatt parallelt med oppgave utført, hvor utført kommer først") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
-        service.processHendelse(oppgaveUtført, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+        repo.oppdaterModellEtterHendelse(oppgaveUtført)
+
         it("Skal ikke sende noen event, siden oppgaven er utført") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 
     describe("Softdelete på en oppgave med utsatt frist, soft-delete først") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(softDelete, metadata)
-        service.processHendelse(fristUtsatt, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(softDelete)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+
         it("Skal ikke sende noen event, siden oppgaven er soft-deleted") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
+
     describe("Softdelete på en oppgave med utsatt frist, soft-delete sist") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
-        service.processHendelse(softDelete, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+        repo.oppdaterModellEtterHendelse(softDelete)
+
         it("Skal ikke sende noen event, siden oppgaven er soft-deleted") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 
     describe("Harddelete på en oppgave med utsatt frist, hard-delete først") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(hardDelete, metadata)
-        service.processHendelse(fristUtsatt, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(hardDelete)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+
         it("Skal ikke sende noen event, siden oppgaven er hard-deleted") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 
     describe("Harddelete på en oppgave med utsatt frist, hard-delete sist") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
-        service.processHendelse(hardDelete, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+        repo.oppdaterModellEtterHendelse(hardDelete)
+
         it("Skal ikke sende noen event, siden oppgaven er hard-deleted") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 
     describe("Harddelete på grupperingsid")  {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
-        service.processHendelse(hardDeleteSak, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+        repo.oppdaterModellEtterHendelse(hardDeleteSak)
+
         it("Skal ikke sende noen event, siden saken er hard-deleted") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 
     describe("Harddelete på grupperingsid, mottatt før saken er opprettet")  {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(hardDeleteSak, metadata)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(hardDeleteSak)
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+
         it("Skal ikke sende noen event, siden saken er hard-deleted") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 
     describe("Softdelete på grupperingsid")  {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
-        service.processHendelse(softDeleteSak, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+        repo.oppdaterModellEtterHendelse(softDeleteSak)
+
         it("Skal ikke sende noen event, siden saken er soft-deleted") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 
     describe("Softdelete på grupperingsid, mottatt før saken er opprettet")  {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertUtgåttService(hendelseProdusent)
-        service.processHendelse(softDeleteSak, metadata)
-        service.processHendelse(oppgaveOpprettetMedFrist, metadata)
-        service.processHendelse(fristUtsatt, metadata)
+        val (repo, hendelseProdusent, service) = setupTestApp()
+
+        repo.oppdaterModellEtterHendelse(softDeleteSak)
+        repo.oppdaterModellEtterHendelse(oppgaveOpprettetMedFrist)
+        repo.oppdaterModellEtterHendelse(fristUtsatt)
+
         it("Skal ikke sende noen event, siden saken er soft-deleted") {
-            service.sendVedUtgåttFrist(now = utsattFrist.plusDays(1))
+            service.settOppgaverUtgåttBasertPåFrist(now = utsattFrist.plusDays(1))
             hendelseProdusent.hendelser shouldHaveSize 0
         }
     }
 })
+
+private fun DescribeSpec.setupTestApp(): Triple<SkedulertUtgåttRepository, FakeHendelseProdusent, SkedulertUtgåttService> {
+    val database = testDatabase(SkedulertUtgått.databaseConfig)
+    val repo = SkedulertUtgåttRepository(database)
+    val hendelseProdusent = FakeHendelseProdusent()
+    val service = SkedulertUtgåttService(repo, hendelseProdusent)
+    return Triple(repo, hendelseProdusent, service)
+}

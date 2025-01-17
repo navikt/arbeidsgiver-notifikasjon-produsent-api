@@ -143,7 +143,7 @@ export const NyKalenderAvtale: FunctionComponent = () => {
           <TextField
             label={"Virksomhetsnummer*"}
             ref={virksomhetsnummerRef}
-            defaultValue="910825526"
+            defaultValue="211511052"
           />
           <MottakerInput ref={mottakerRef}/>
           <TextField
@@ -274,7 +274,7 @@ const Lokasjon = forwardRef((_props, ref) => {
           <TextField
             label={"Postnummer"}
             ref={postnummerRef}
-            defaultValue="$$$$"
+            defaultValue="1234"
           />
           <TextField
             label={"Poststed"}

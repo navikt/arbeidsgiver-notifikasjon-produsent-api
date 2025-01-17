@@ -6,10 +6,13 @@ import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.writeValueAsStringSupportingTypeInfoInCollections
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
+import org.apache.http.client.utils.URIBuilder
+import org.apache.http.message.BasicNameValuePair
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.Closeable
+import java.net.URI
 import java.sql.*
 import java.time.*
 import java.time.temporal.ChronoUnit
@@ -22,18 +25,27 @@ import java.util.*
 class Database private constructor(
     private val config: Config,
     private val dataSource: NonBlockingDataSource<*>,
-): Closeable {
+) : Closeable {
     data class Config(
-        val host: String,
-        val port: String,
-        val database: String,
-        val username: String,
-        val password: String,
+        private val jdbcUrl: String,
         val migrationLocations: String,
-        val jdbcOpts: Map<String, Any> = mapOf()
+        val jdbcOpts: Map<String, String> = mapOf()
     ) {
-        val jdbcUrl: String
-            get() = "jdbc:postgresql://$host:$port/$database?${jdbcOpts.entries.joinToString("&")}"
+        val url: JdbcUrl = JdbcUrl(jdbcUrl, jdbcOpts)
+
+        val username: String
+            get() = url.username
+        val password: String
+            get() = url.password
+        val database: String
+            get() = url.database
+
+        /**
+         * make a copy but change the database name
+         */
+        fun withDatabase(database: String) = copy(
+            jdbcUrl =  url.withDatabase(database).toString()
+        )
     }
 
     override fun close() {
@@ -43,12 +55,13 @@ class Database private constructor(
     companion object {
         private val log = logger()
 
-        fun config(name: String, envPrefix: String = "DB", jdbcOpts: Map<String, Any> = mapOf()) = Config(
-            host = System.getenv("${envPrefix}_HOST") ?: "localhost",
-            port = System.getenv("${envPrefix}_PORT") ?: "1337",
-            username = System.getenv("${envPrefix}_USERNAME") ?: "postgres",
-            password = System.getenv("${envPrefix}_PASSWORD") ?: "postgres",
-            database = System.getenv("${envPrefix}_DATABASE") ?: name.replace('_', '-'),
+        fun config(name: String, envPrefix: String = "DB", jdbcOpts: Map<String, String> = emptyMap()) = Config(
+            jdbcUrl = System.getenv("${envPrefix}_JDBC_URL") ?: "jdbc:postgresql://localhost:1337/${
+                name.replace(
+                    '_',
+                    '-'
+                )
+            }?password=postgres&user=postgres",
             migrationLocations = "db/migration/$name",
             jdbcOpts = jdbcOpts,
         )
@@ -56,9 +69,7 @@ class Database private constructor(
         private fun Config.asHikariConfig(): HikariConfig {
             val config = this
             return HikariConfig().apply {
-                jdbcUrl = config.jdbcUrl
-                username = config.username
-                password = config.password
+                jdbcUrl = config.url.toString()
                 driverClassName = "org.postgresql.Driver"
                 metricRegistry = Metrics.meterRegistry
                 minimumIdle = 1
@@ -72,7 +83,7 @@ class Database private constructor(
 
         suspend fun openDatabase(
             config: Config,
-            flywayAction: Flyway.() -> Unit = { migrate () },
+            flywayAction: Flyway.() -> Unit = { migrate() },
         ): Database {
             val hikariConfig = config.asHikariConfig()
 
@@ -158,7 +169,7 @@ class Database private constructor(
 
     suspend fun <T> transaction(
         rollback: (e: Exception) -> T = { throw it },
-        body: Transaction.() -> T,
+        body: suspend Transaction.() -> T,
     ): T =
         dataSource.withConnection { connection ->
             val savedAutoCommit = connection.autoCommit
@@ -250,24 +261,37 @@ class ParameterSetters(
     private var index = 1
 
 
-    fun <T: Enum<T>>enumAsText(value: T) = text(value.toString())
+    fun <T : Enum<T>> enumAsText(value: T) = text(value.toString())
 
     fun text(value: String) = preparedStatement.setString(index++, value)
     fun nullableText(value: String?) = preparedStatement.setString(index++, value)
     fun integer(value: Int) = preparedStatement.setInt(index++, value)
     fun long(value: Long) = preparedStatement.setLong(index++, value)
     fun boolean(newState: Boolean) = preparedStatement.setBoolean(index++, newState)
-    fun nullableBoolean(value: Boolean?) = if (value == null) preparedStatement.setNull(index++, Types.BOOLEAN) else boolean(value)
+    fun nullableBoolean(value: Boolean?) =
+        if (value == null) preparedStatement.setNull(index++, Types.BOOLEAN) else boolean(value)
+
     fun uuid(value: UUID) = preparedStatement.setObject(index++, value)
     fun nullableUuid(value: UUID?) = preparedStatement.setObject(index++, value)
+
     /**
      * all timestamp values must be `truncatedTo` micros to avoid rounding/precision errors when writing and reading
      **/
-    fun nullableTimestamptz(value: OffsetDateTime?) = preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
-    fun timestamp_without_timezone_utc(value: OffsetDateTime) = timestamp_without_timezone(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
-    fun timestamp_without_timezone_utc(value: Instant) = timestamp_without_timezone(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
-    fun timestamp_without_timezone(value: LocalDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
-    fun timestamp_with_timezone(value: OffsetDateTime) = preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+    fun nullableTimestamptz(value: OffsetDateTime?) =
+        preparedStatement.setObject(index++, value?.truncatedTo(ChronoUnit.MICROS))
+
+    fun timestamp_without_timezone_utc(value: OffsetDateTime) =
+        timestamp_without_timezone(value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime())
+
+    fun timestamp_without_timezone_utc(value: Instant) =
+        timestamp_without_timezone(LocalDateTime.ofInstant(value, ZoneOffset.UTC))
+
+    fun timestamp_without_timezone(value: LocalDateTime) =
+        preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+
+    fun timestamp_with_timezone(value: OffsetDateTime) =
+        preparedStatement.setObject(index++, value.truncatedTo(ChronoUnit.MICROS))
+
     fun bytea(value: ByteArray) = preparedStatement.setBytes(index++, value)
     fun byteaOrNull(value: ByteArray?) = preparedStatement.setBytes(index++, value)
     fun toInstantAsText(value: OffsetDateTime) = instantAsText(value.toInstant())
@@ -277,10 +301,13 @@ class ParameterSetters(
 
     fun nullableLocalDateTimeAsText(value: LocalDateTime?) = nullableText(value?.toString())
     fun localDateTimeAsText(value: LocalDateTime) = text(value.toString())
+    fun nullableLocalDateAsText(value: LocalDate?) = nullableText(value?.toString())
+    fun localDateAsText(value: LocalDate) = text(value.toString())
     fun periodAsText(value: ISO8601Period) = text(value.toString())
 
     fun nullableDate(value: LocalDate?) =
-        preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) } )
+        preparedStatement.setDate(index++, value?.let { java.sql.Date.valueOf(it) })
+
     fun date(value: LocalDate) =
         preparedStatement.setDate(index++, value.let { java.sql.Date.valueOf(it) })
 
@@ -289,6 +316,7 @@ class ParameterSetters(
         nullableText(
             value?.let { laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value) }
         )
+
     inline fun <reified T> jsonb(value: T) =
         text(
             laxObjectMapper.writeValueAsStringSupportingTypeInfoInCollections(value)
@@ -327,12 +355,63 @@ class ParameterSetters(
 fun ResultSet.getUuid(column: String): UUID =
     getObject(column, UUID::class.java)
 
-fun <T> measureSql(sql: String, action: () -> T): T {
+fun <T> measureSql(
+    sql: String,
+    action: () -> T
+): T {
     val timer = getTimer(
         name = "database.execution",
         tags = setOf("sql" to sql),
         description = "Execution time for sql query or update"
     )
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-    return timer.record(action)
+    return timer.recordCallable(action)
+}
+
+/**
+ * Utility class to aid in constructing and manipulating a jdbc url.
+ */
+class JdbcUrl(
+    url: String,
+    additionalOptions: Map<String, String> = emptyMap()
+) {
+
+    /**
+     * we need to strip the jdbc: part by using schemeSpecificPart
+     * so that URI is able to parse correctly.
+     * the jdbc: prefix is added back in toString()
+     */
+    private val uri = URIBuilder(
+        URI(url).also {
+            require(it.scheme == "jdbc") { "not a jdbc url: $url" }
+        }.schemeSpecificPart
+    ).also {
+        if (additionalOptions.isNotEmpty()) {
+            it.addParameters(additionalOptions.map { (k, v) -> BasicNameValuePair(k, v) })
+        }
+    }.build()
+
+    private val urlParameters = uri.query.split('&').associate {
+        val parts = it.split('=')
+        val name = parts.firstOrNull() ?: ""
+        val value = parts.drop(1).firstOrNull() ?: ""
+        Pair(name, value)
+    }
+
+    val username: String
+        get() = urlParameters["user"]!!
+    val password: String
+        get() = urlParameters["password"]!!
+    val database: String
+        get() = uri.path.split('/').last()
+
+    override fun toString() = "jdbc:$uri"
+
+    /**
+     * make a copy but change the database name. used in tests
+     */
+    fun withDatabase(database: String): JdbcUrl {
+        val newUri = URIBuilder(uri).setPath("/$database").build()
+        return JdbcUrl("jdbc:$newUri")
+    }
 }

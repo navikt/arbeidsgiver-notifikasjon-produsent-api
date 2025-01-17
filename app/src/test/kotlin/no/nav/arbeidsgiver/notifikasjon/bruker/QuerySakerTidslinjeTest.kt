@@ -160,9 +160,9 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.startTidspunkt.toInstant() shouldBe kalenderavtale.startTidspunkt.atOslo().toInstant()
                 it.sluttTidspunkt?.toInstant() shouldBe kalenderavtale.sluttTidspunkt?.atOslo()?.toInstant()
                 it.lokasjon.shouldNotBeNull()
-                it.lokasjon.adresse shouldBe kalenderavtale.lokasjon!!.adresse
-                it.lokasjon.poststed shouldBe kalenderavtale.lokasjon.poststed
-                it.lokasjon.postnummer shouldBe kalenderavtale.lokasjon.postnummer
+                it.lokasjon!!.adresse shouldBe kalenderavtale.lokasjon!!.adresse
+                it.lokasjon!!.poststed shouldBe kalenderavtale.lokasjon!!.poststed
+                it.lokasjon!!.postnummer shouldBe kalenderavtale.lokasjon!!.postnummer
                 it.digitalt shouldBe kalenderavtale.erDigitalt
             }
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[1]) {

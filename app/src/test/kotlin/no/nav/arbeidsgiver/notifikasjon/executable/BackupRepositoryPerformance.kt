@@ -1,10 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.executable
 
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.BackupRepository
+import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import java.time.Duration
@@ -16,7 +16,7 @@ fun main() = runBlocking {
     Database.openDatabase(
         KafkaBackup.databaseConfig.copy(
             // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
-            jdbcOpts = mapOf("preparedStatementCacheQueries" to 0)
+            jdbcOpts = mapOf("preparedStatementCacheQueries" to "0")
 
         )
     ).use { database ->

@@ -15,9 +15,8 @@ export type Scalars = {
   /** Dato etter ISO8601-standaren. F.eks. `2020-01-02`, altså 2. mars 2020. */
   ISO8601Date: { input: any; output: any; }
   /**
-   * DateTime med offset etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
-   *
-   * Er representert som String.
+   * DateTime etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
+   * Dersom tidssone/offset ikke er oppgitt, så antar vi at tidspunktet er Oslo-tid ('Europe/Oslo').
    */
   ISO8601DateTime: { input: any; output: any; }
   /**
@@ -293,9 +292,9 @@ export type KalenderavtaleData = {
   /** Merkelapp for kalenderavtalen. Er typisk navnet på ytelse eller lignende. */
   merkelapp: Scalars['String']['output'];
   /** Når avtalen slutter. */
-  sluttTidspunkt?: Maybe<Scalars['ISO8601LocalDateTime']['output']>;
+  sluttTidspunkt?: Maybe<Scalars['ISO8601DateTime']['output']>;
   /** Når avtalen starter. */
-  startTidspunkt: Scalars['ISO8601LocalDateTime']['output'];
+  startTidspunkt: Scalars['ISO8601DateTime']['output'];
   /** Teksten som vises til brukeren. */
   tekst: Scalars['String']['output'];
   /**
@@ -316,6 +315,8 @@ export enum KalenderavtaleTilstand {
   ArbeidsgiverVilAvlyse = 'ARBEIDSGIVER_VIL_AVLYSE',
   /** Arbeidsgiver har svart at de ønsker å endre tid eller sted */
   ArbeidsgiverVilEndreTidEllerSted = 'ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED',
+  /** Avtalen er avholdt, dette skjer automatisk når starttidspunkt har passert, men kan også settes manuelt */
+  Avholdt = 'AVHOLDT',
   /** Avtalen er avlyst */
   Avlyst = 'AVLYST',
   /** Avtalen venter på at brukeren skal svare. Dette er standardtilstanden. */
@@ -631,8 +632,8 @@ export type MutationNyKalenderavtaleArgs = {
   merkelapp: Scalars['String']['input'];
   mottakere: Array<MottakerInput>;
   paaminnelse?: InputMaybe<PaaminnelseInput>;
-  sluttTidspunkt?: InputMaybe<Scalars['ISO8601LocalDateTime']['input']>;
-  startTidspunkt: Scalars['ISO8601LocalDateTime']['input'];
+  sluttTidspunkt?: InputMaybe<Scalars['ISO8601DateTime']['input']>;
+  startTidspunkt: Scalars['ISO8601DateTime']['input'];
   tekst: Scalars['String']['input'];
   tilstand?: InputMaybe<KalenderavtaleTilstand>;
   virksomhetsnummer: Scalars['String']['input'];
