@@ -140,8 +140,6 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                                             id
                                             eksternId
                                             grupperingsid
-                                            softDeleted
-                                            softDeletedAt
                                         }
                                         beskjed {
                                             __typename
@@ -171,9 +169,7 @@ class HardDeleteNotifikasjonTests : DescribeSpec({
                                             __typename
                                             id
                                             eksternId
-                                            grupperingsid
-                                            softDeleted
-                                            softDeletedAt
+                                            grupperingsid 
                                         }
                                         oppgave {
                                             __typename

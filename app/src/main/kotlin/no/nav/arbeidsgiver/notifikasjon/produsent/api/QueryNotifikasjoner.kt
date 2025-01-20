@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
@@ -29,8 +28,7 @@ internal class QueryNotifikasjoner(
                     inputMerkelapper = env.getArgument<List<String>?>("merkelapper"),
                     grupperingsid = env.getArgument<String>("grupperingsid"),
                     first = env.getArgumentOrDefault("first", 1000),
-                    after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value)),
-                    env,
+                    after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
                 )
             }
             coDataFetcher("hentNotifikasjon") { env ->
@@ -67,8 +65,7 @@ internal class QueryNotifikasjoner(
                             id = beskjed.id,
                             grupperingsid = beskjed.grupperingsid,
                             eksternId = beskjed.eksternId,
-                            opprettetTidspunkt = beskjed.opprettetTidspunkt,
-                            softDeletedAt = beskjed.deletedAt,
+                            opprettetTidspunkt = beskjed.opprettetTidspunkt
                         ),
                         mottaker = Mottaker.fraDomene(beskjed.mottakere.first()),
                         mottakere = beskjed.mottakere.map { Mottaker.fraDomene(it) },
@@ -103,8 +100,7 @@ internal class QueryNotifikasjoner(
                             id = oppgave.id,
                             grupperingsid = oppgave.grupperingsid,
                             eksternId = oppgave.eksternId,
-                            opprettetTidspunkt = oppgave.opprettetTidspunkt,
-                            softDeletedAt = oppgave.deletedAt
+                            opprettetTidspunkt = oppgave.opprettetTidspunkt
                         ),
                         mottaker = Mottaker.fraDomene(oppgave.mottakere.first()),
                         mottakere = oppgave.mottakere.map { Mottaker.fraDomene(it) },
@@ -144,7 +140,6 @@ internal class QueryNotifikasjoner(
                             grupperingsid = kalenderavtale.grupperingsid,
                             eksternId = kalenderavtale.eksternId,
                             opprettetTidspunkt = kalenderavtale.opprettetTidspunkt,
-                            softDeletedAt = kalenderavtale.deletedAt
                         ),
                         mottaker = Mottaker.fraDomene(kalenderavtale.mottakere.first()),
                         mottakere = kalenderavtale.mottakere.map { Mottaker.fraDomene(it) },
@@ -218,12 +213,8 @@ internal class QueryNotifikasjoner(
         val id: UUID,
         val grupperingsid: String?,
         val eksternId: String,
-        val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now(),
-        val softDeletedAt: OffsetDateTime?,
-    ) {
-        val softDeleted: Boolean
-            get() = softDeletedAt != null
-    }
+        val opprettetTidspunkt: OffsetDateTime = OffsetDateTime.now()
+    )
 
     @JsonTypeName("OppgaveData")
     data class OppgaveData(
@@ -332,7 +323,6 @@ internal class QueryNotifikasjoner(
         grupperingsid: String?,
         first: Int,
         after: Cursor,
-        env: DataFetchingEnvironment,
     ): MineNotifikasjonerResultat {
 
         val produsent = hentProdusent(context) { error -> return error }
