@@ -154,9 +154,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                                             __typename
                                             id
                                             eksternId
-                                            grupperingsid
-                                            softDeleted
-                                            softDeletedAt
+                                            grupperingsid 
                                         }
                                         beskjed {
                                             __typename
@@ -199,9 +197,7 @@ class SoftDeleteNotifikasjonTests : DescribeSpec({
                                             __typename
                                             id
                                             eksternId
-                                            grupperingsid
-                                            softDeleted
-                                            softDeletedAt
+                                            grupperingsid 
                                         }
                                         oppgave {
                                             __typename
