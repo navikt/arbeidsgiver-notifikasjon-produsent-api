@@ -293,10 +293,6 @@ type Metadata {
     """
     """
     grupperingsid: String
-
-    softDeleted: Boolean!
-
-    softDeletedAt: ISO8601DateTime
 }
 
 type EksterntVarsel {

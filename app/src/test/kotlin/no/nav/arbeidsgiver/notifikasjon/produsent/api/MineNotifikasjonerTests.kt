@@ -369,8 +369,6 @@ class MineNotifikasjonerTests : DescribeSpec({
                                             id
                                             eksternId
                                             grupperingsid
-                                            softDeleted
-                                            softDeletedAt
                                         }
                                         oppgave {
                                             __typename
