@@ -1685,6 +1685,11 @@ input EpostKontaktInfoInput {
     epostadresse: String!
 }
 
+"""
+Ekstern varsling på Altinn 2 tjeneste.
+Ekstern varsling på Altinn 3 ressurs er ikke implementert, men er i backloggen.
+Ta kontakt derssom dere ønsker at vi prioriterer dette.
+"""
 input AltinntjenesteMottakerInput {
     serviceCode: String!
     serviceEdition: String!
