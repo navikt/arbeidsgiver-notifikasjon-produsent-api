@@ -1627,7 +1627,9 @@ input EksterntVarselEpostInput {
 }
 
 """
-Med denne typen vil varsel sendes til virksomheten vha tjenesten i Altinn.
+Med denne typen vil varsel sendes til virksomheten vha tjenesten i Altinn 2.
+APIet i Altinn 2 som brukes er <a href="https://altinn.github.io/docs/api/tjenesteeiere/soap/endepunkt-liste/#notificationagencyexternal">NotificationAgencyExternal.SendStandaloneNotiuficationBasic</a>
+
 Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det mest sannsynlig blir sendt som epost, men i enkelte tilfeller
 vil bli sendt sms.
 
