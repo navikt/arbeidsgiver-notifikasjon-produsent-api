@@ -181,7 +181,7 @@ export const NotifikasjonListeElement = (props: Props) => {
               tittel={notifikasjon.tekst}
               undertittel={tidpunktFormatert}
               statuslinje={
-                <Tag size='small' variant='neutral'>
+                <Tag size='small' variant='info'>
                   Du ønsker endre tid eller sted
                 </Tag>
               }
@@ -202,7 +202,7 @@ export const NotifikasjonListeElement = (props: Props) => {
               tittel={notifikasjon.tekst}
               undertittel={tidpunktFormatert}
               statuslinje={
-                <Tag size='small' variant='neutral'>
+                <Tag size='small' variant='info'>
                   Du ønsker å avlyse
                 </Tag>
               }
@@ -223,7 +223,7 @@ export const NotifikasjonListeElement = (props: Props) => {
               tittel={notifikasjon.tekst}
               undertittel={tidpunktFormatert}
               statuslinje={
-                <Tag size='small' variant='info'>
+                <Tag size='small' variant='error'>
                   Avlyst
                 </Tag>
               }
@@ -244,7 +244,7 @@ export const NotifikasjonListeElement = (props: Props) => {
               tittel={notifikasjon.tekst}
               undertittel={tidpunktFormatert}
               statuslinje={
-                <Tag size='small' variant='info'>
+                <Tag size='small' variant='success'>
                   Avholdt
                 </Tag>
               }
