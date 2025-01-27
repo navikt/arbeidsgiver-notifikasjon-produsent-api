@@ -733,5 +733,4 @@ class EksternVarslingRepositoryTests : DescribeSpec({
             }
         }
     }
-
 })
