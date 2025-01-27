@@ -248,7 +248,7 @@ class EksternVarslingService(
                 is EksternVarselTilstand.Kansellert -> {
                     try {
                         hendelseProdusent.send(varsel.toHendelse())
-                        eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                        eksternVarslingRepository.deleteFromJobQueue(varselId)
                     } catch (e: RuntimeException) {
                         log.error("Exception producing kafka-kvittering", e)
                         eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
