@@ -6,15 +6,14 @@ import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionAwareHendelsesstrøm
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 
 object ReplayValidator {
-    private val services = mutableListOf<ReplayValidatorService>()
     private val hendelsesstrøm by lazy {
-        PartitionAwareHendelsesstrøm(
+        HendelsesstrømKafkaImpl(
             groupId = "replay-validator",
             replayPeriodically = true,
-            newPartitionProcessor = { ReplayValidatorService(services) },
+            seekToBeginning = true
         )
     }
 
@@ -23,7 +22,9 @@ object ReplayValidator {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {
-                hendelsesstrøm.start()
+                hendelsesstrøm.forEach { _ ->
+                    // noop. implicitly validated
+                }
             }
 
             launchHttpServer(httpPort = httpPort)
