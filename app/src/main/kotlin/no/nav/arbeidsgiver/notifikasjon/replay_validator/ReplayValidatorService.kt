@@ -1,23 +1,17 @@
 package no.nav.arbeidsgiver.notifikasjon.replay_validator
 
-import io.micrometer.core.instrument.Counter
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.EphemeralDatabase
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.executeQuery
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.executeUpdate
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.PRODUSENT_LIST
 import java.sql.ResultSet
 
 
 class ReplayValidatorService(
     private val processors: MutableList<ReplayValidatorService>
 ) : PartitionProcessor {
-
-    private val log = logger()
 
     internal val repository: ReplayValidatorRepository
 
@@ -91,35 +85,6 @@ class ReplayValidatorService(
     }
 
     override suspend fun processingLoopStep() {}
-
-    fun updateMetrics() {
-        val createsAfterHardDeleteSak = repository.findNotifikasjonCreatesAfterHardDeleteSak()
-
-        if (createsAfterHardDeleteSak.isNotEmpty()) {
-            createsAfterHardDeleteSak.forEach {
-                log.warn(
-                    "NotifikasjonCreateAfterHardDeleteSak: partition={} offset={}",
-                    it.createdPartition,
-                    it.createdOffset
-                )
-            }
-            createsAfterHardDeleteSak
-                .groupBy { it.produsentId }
-                .forEach { (key, value) ->
-                    Counter.builder("antall_notifikasjoner_opprettet_etter_delete")
-                        .tags("produsent_id", key)
-                        .register(Metrics.meterRegistry)
-                        .increment(value.size.toDouble())
-                }
-        } else {
-            PRODUSENT_LIST.forEach { produsent ->
-                Counter.builder("antall_notifikasjoner_opprettet_etter_delete")
-                    .tags("produsent_id", produsent.id)
-                    .register(Metrics.meterRegistry)
-                    .increment(0.0)
-            }
-        }
-    }
 }
 
 class ReplayValidatorRepository : AutoCloseable {
