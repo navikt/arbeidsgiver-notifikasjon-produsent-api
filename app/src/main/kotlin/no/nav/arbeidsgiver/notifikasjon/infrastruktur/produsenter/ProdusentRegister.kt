@@ -1,11 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AppName
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import java.util.*
 
@@ -41,6 +41,7 @@ data class ServicecodeDefinisjon(
         when (mottaker) {
             is AltinnMottaker ->
                 mottaker.serviceCode == code && mottaker.serviceEdition == version
+
             else -> false
         }
 
@@ -60,6 +61,7 @@ data class RessursIdDefinisjon(
         when (mottaker) {
             is AltinnRessursMottaker ->
                 mottaker.ressursId == ressursId
+
             else -> false
         }
 
@@ -139,3 +141,311 @@ class ProdusentRegisterImpl(
     }
 }
 
+
+val FAGER_TESTPRODUSENT = Produsent(
+    id = "fager",
+    accessPolicy = basedOnEnv(
+        prod = { listOf() },
+        other = {
+            listOf(
+                "dev-gcp:fager:notifikasjon-test-produsent",
+                "dev-gcp:fager:notifikasjon-test-produsent-v2",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "fager",
+        "fager2",
+        "fager3",
+        "Inntektsmelding",
+        "Inntektsmelding sykepenger",
+        "Inntektsmelding foreldrepenger",
+        "Inntektsmelding svangerskapspenger",
+        "Inntektsmelding omsorgspenger",
+        "Inntektsmelding pleiepenger sykt barn",
+        "Inntektsmelding pleiepenger i livets sluttfase",
+        "Inntektsmelding opplæringspenger",
+    ),
+    tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "test-fager"),
+        ServicecodeDefinisjon(code = "4936", version = "1"),
+        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
+        ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
+        ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
+        NærmesteLederDefinisjon,
+    )
+)
+
+val ARBEIDSGIVER_TILTAK = Produsent(
+    id = "arbeidsgiver-tiltak",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-fss:arbeidsgiver:tiltaksgjennomforing-api",
+                "prod-gcp:team-tiltak:tiltak-notifikasjon",
+            )
+        },
+        other = {
+            listOf(
+                "dev-fss:arbeidsgiver:tiltaksgjennomforing-api",
+                "dev-gcp:team-tiltak:tiltak-notifikasjon",
+            )
+        }
+    ),
+    tillatteMerkelapper = listOf(
+        "Tiltak",
+        "Lønnstilskudd",
+        "Mentor",
+        "Sommerjobb",
+        "Arbeidstrening",
+        "Inkluderingstilskudd",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+        ServicecodeDefinisjon(
+            code = "5332",
+            version = basedOnEnv(prod = { "2" }, other = { "1" }),
+            description = "Arbeidstrening"
+        ),
+        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
+        ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd"),
+        ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb"),
+        ServicecodeDefinisjon(code = "5516", version = "4", description = "Mentor"),
+        ServicecodeDefinisjon(code = "5516", version = "5", description = "Inkluderingstilskudd"),
+    )
+)
+
+val ESYFO = Produsent(
+    id = "esyfovarsel",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-gcp:team-esyfo:esyfovarsel",
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:team-esyfo:esyfovarsel",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Dialogmøte",
+        "Oppfølging",
+    ),
+    tillatteMottakere = listOf(NærmesteLederDefinisjon)
+)
+
+val PERMITTERING = Produsent(
+    id = "permitteringsskjema-api",
+    accessPolicy = basedOnEnv(
+        prod = { listOf("prod-gcp:permittering-og-nedbemanning:permitteringsskjema-api") },
+        other = { listOf("dev-gcp:permittering-og-nedbemanning:permitteringsskjema-api") },
+    ),
+    tillatteMerkelapper = listOf(
+        "Permittering",
+        "Nedbemanning",
+        "Innskrenking av arbeidstid",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(
+            code = "5810",
+            version = "1",
+            description = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV"
+        ),
+        RessursIdDefinisjon(ressursId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
+    )
+)
+
+val FRITAKAGP = Produsent(
+    id = "fritakagp",
+    accessPolicy = basedOnEnv(
+        prod = { listOf("prod-gcp:helsearbeidsgiver:fritakagp") },
+        other = { listOf("dev-gcp:helsearbeidsgiver:fritakagp") },
+    ),
+    tillatteMerkelapper = listOf("Fritak arbeidsgiverperiode"),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+    )
+)
+
+val HELSEARBEIDSGIVER = Produsent(
+    id = "helsearbeidsgiver",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-gcp:helsearbeidsgiver:im-notifikasjon",
+                "prod-gcp:helsearbeidsgiver:hag-admin"
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:helsearbeidsgiver:im-notifikasjon",
+                "dev-gcp:helsearbeidsgiver:hag-admin"
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Inntektsmelding",
+        "Inntektsmelding sykepenger"
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+    )
+)
+
+val TOI = Produsent(
+    id = "toi",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-gcp:toi:toi-arbeidsgiver-notifikasjon"
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:toi:toi-arbeidsgiver-notifikasjon",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Kandidater",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "5078", version = "1", description = "Rekruttering")
+    )
+)
+
+val ARBEIDSGIVERDIALOG = Produsent(
+    id = "arbeidsgiver-dialog",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-external:teamcrm:salesforce",
+                "prod-gcp:teamcrm:saas-proxy",
+            )
+        },
+        other = {
+            listOf(
+                "dev-external:teamcrm:salesforce",
+                "dev-gcp:teamcrm:saas-proxy",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Lønnstilskudd",
+        "Arbeidstrening",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig Lønnstilskudd"),
+        ServicecodeDefinisjon(
+            code = "5332",
+            version = basedOnEnv(
+                prod = { "2" },
+                other = { "1" }
+            ),
+            description = "Arbeidstrening"
+        )
+    )
+)
+
+val YRKESSKADE = Produsent(
+    id = "yrkesskade-notifikasjon",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-gcp:yrkesskade:yrkesskade-melding-mottak",
+                "prod-gcp:yrkesskade:yrkesskade-saksbehandling-backend",
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:yrkesskade:yrkesskade-melding-mottak",
+                "dev-gcp:yrkesskade:yrkesskade-saksbehandling-backend",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Skademelding",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(
+            code = "5902",
+            version = "1",
+            description = "Skademelding ved arbeidsulykke eller yrkessykdom"
+        )
+    )
+)
+
+val FORELDREPENGER = Produsent(
+    id = "fp-inntektsmelding-notifikasjon",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-gcp:teamforeldrepenger:fpinntektsmelding"
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:teamforeldrepenger:fpinntektsmelding",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Inntektsmelding foreldrepenger",
+        "Inntektsmelding svangerskapspenger",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+    )
+)
+
+val K9 = Produsent(
+    id = "k9-inntektsmelding-notifikasjon",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-gcp:k9saksbehandling:k9-inntektsmelding"
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:k9saksbehandling:k9-inntektsmelding",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Inntektsmelding omsorgspenger",
+        "Inntektsmelding pleiepenger sykt barn",
+        "Inntektsmelding pleiepenger i livets sluttfase",
+        "Inntektsmelding opplæringspenger",
+    ),
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+    )
+)
+
+
+val PRODUSENT_LIST =
+    listOf(
+        FAGER_TESTPRODUSENT,
+        ARBEIDSGIVER_TILTAK,
+        ESYFO,
+        PERMITTERING,
+        FRITAKAGP,
+        HELSEARBEIDSGIVER,
+        TOI,
+        ARBEIDSGIVERDIALOG,
+        YRKESSKADE,
+        FORELDREPENGER,
+        K9,
+    )
+        .filter { it.accessPolicy.isNotEmpty() }
+
+val PRODUSENT_REGISTER by lazy { ProdusentRegisterImpl(PRODUSENT_LIST) }
+
+val MOTTAKER_REGISTER: List<MottakerDefinisjon> by lazy {
+    PRODUSENT_LIST
+        .flatMap { it.tillatteMottakere }
+        .distinct()
+}
