@@ -596,6 +596,7 @@ class BrukerRepositoryImpl(
                     tekst = getString("tekst"),
                     grupperingsid = getString("grupperingsid"),
                     opprettetTidspunkt = getObject("opprettet_tidspunkt", OffsetDateTime::class.java).toInstant(),
+                    lenke = getString("lenke")
                 )
 
                 "OPPGAVE" -> BrukerModel.TidslinjeElement.Oppgave(
@@ -608,6 +609,7 @@ class BrukerRepositoryImpl(
                     utfoertTidspunkt = getObject("utfoert_tidspunkt", OffsetDateTime::class.java)?.toInstant(),
                     paaminnelseTidspunkt = getObject("paaminnelse_tidspunkt", OffsetDateTime::class.java)?.toInstant(),
                     frist = getObject("frist", LocalDate::class.java),
+                    lenke = getString("lenke")
                 )
 
                 "KALENDERAVTALE" -> BrukerModel.TidslinjeElement.Kalenderavtale(
@@ -619,7 +621,9 @@ class BrukerRepositoryImpl(
                     sluttTidspunkt = getString("slutt_tidspunkt")?.let { LocalDateTime.parse(it) },
                     avtaletilstand = BrukerModel.Kalenderavtale.Tilstand.valueOf(getString("tilstand")),
                     lokasjon = getString("lokasjon")?.let { laxObjectMapper.readValue(it) },
-                    digitalt = getBoolean("digitalt")
+                    digitalt = getBoolean("digitalt"),
+                    lenke = getString("lenke")
+
                 )
 
                 else ->

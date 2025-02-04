@@ -53,6 +53,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             grupperingsid = sak0.grupperingsid,
             merkelapp = sak0.merkelapp,
             opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01:01+00"),
+            lenke = "https://foo.bar"
         )
         it("første oppgave vises på riktig sak") {
             val tidslinje0 = engine.fetchTidslinje(sak0)
@@ -61,6 +62,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.tekst shouldBe oppgave0.tekst
                 it.tilstand shouldBe NY
                 it.id shouldNot beNull()
+                it.lenke shouldBe oppgave0.lenke
             }
 
             val tidslinje1 = engine.fetchTidslinje(sak1)
@@ -71,12 +73,14 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             grupperingsid = sak0.grupperingsid,
             merkelapp = sak0.merkelapp,
             opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(1),
+            lenke = "https://foo.bar"
         )
         it("andre beskjed på samme sak kommer i riktig rekkefølge") {
             val tidslinje0 = engine.fetchTidslinje(sak0)
             tidslinje0 should haveSize(2)
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
                 it.tekst shouldBe beskjed1.tekst
+                it.lenke shouldBe beskjed1.lenke
             }
             instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[1]) {
                 it.tekst shouldBe oppgave0.tekst
@@ -140,7 +144,8 @@ class QuerySakerTidslinjeTest: DescribeSpec({
             startTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(3),
             sluttTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(4),
             sakId = sak1.sakId,
-            lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz")
+            lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz"),
+            lenke = "https://foo.bar"
         )
         it("kalenderavtale på andre saken, vises kun der") {
             val tidslinje0 = engine.fetchTidslinje(sak0)
@@ -164,6 +169,7 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                 it.lokasjon!!.poststed shouldBe kalenderavtale.lokasjon!!.poststed
                 it.lokasjon!!.postnummer shouldBe kalenderavtale.lokasjon!!.postnummer
                 it.digitalt shouldBe kalenderavtale.erDigitalt
+                it.lenke shouldBe kalenderavtale.lenke
             }
             instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[1]) {
                 it.tekst shouldBe beskjed2.tekst
