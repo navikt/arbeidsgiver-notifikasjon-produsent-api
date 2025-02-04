@@ -106,14 +106,15 @@ type OppgaveTidslinjeElement {
     utgaattTidspunkt: ISO8601DateTime
     utfoertTidspunkt: ISO8601DateTime
     frist: ISO8601Date
+    lenke: String!
 }
 
 type BeskjedTidslinjeElement {
     id: ID!
     tekst: String!
     opprettetTidspunkt: ISO8601DateTime!
+    lenke: String!
 }
-
 
 type KalenderavtaleTidslinjeElement {
     id: ID!
@@ -123,6 +124,7 @@ type KalenderavtaleTidslinjeElement {
     sluttTidspunkt: ISO8601DateTime
     lokasjon: Lokasjon
     digitalt: Boolean
+    lenke: String!
 }
 
 enum SakStatusType {

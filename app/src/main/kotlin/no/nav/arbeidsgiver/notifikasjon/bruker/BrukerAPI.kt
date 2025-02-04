@@ -13,7 +13,17 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Scalars
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.coDataFetcher
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.createGraphQL
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgument
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrDefault
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.getTypedArgumentOrNull
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.notifikasjonContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.resolveSubtypes
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.wire
 import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -232,6 +242,7 @@ object BrukerAPI {
         val utgaattTidspunkt: OffsetDateTime?,
         val utfoertTidspunkt: OffsetDateTime?,
         val frist: LocalDate?,
+        val lenke: String
     ) : TidslinjeElement()
 
     @JsonTypeName("BeskjedTidslinjeElement")
@@ -239,6 +250,7 @@ object BrukerAPI {
         val id: UUID,
         val tekst: String,
         val opprettetTidspunkt: OffsetDateTime,
+        val lenke: String
     ) : TidslinjeElement()
 
     @JsonTypeName("KalenderavtaleTidslinjeElement")
@@ -250,6 +262,7 @@ object BrukerAPI {
         val sluttTidspunkt: OffsetDateTime?,
         val lokasjon: Lokasjon?,
         val digitalt: Boolean?,
+        val lenke: String
     ) : TidslinjeElement()
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -605,8 +618,8 @@ object BrukerAPI {
                         }
                     },
                     frister = oppgaver
-                        .filter { oppgave ->  oppgave.tilstand == BrukerModel.Oppgave.Tilstand.NY }
-                        .map { oppgave ->  oppgave.frist },
+                        .filter { oppgave -> oppgave.tilstand == BrukerModel.Oppgave.Tilstand.NY }
+                        .map { oppgave -> oppgave.frist },
                     nesteSteg = it.nesteSteg,
                     tilleggsinformasjon = it.tilleggsinformasjon,
                     oppgaver = oppgaver.map { o ->
@@ -627,12 +640,14 @@ object BrukerAPI {
                                 utgaattTidspunkt = element.utgaattTidspunkt?.atOffset(UTC),
                                 utfoertTidspunkt = element.utfoertTidspunkt?.atOffset(UTC),
                                 frist = element.frist,
+                                lenke = element.lenke,
                             )
 
                             is BrukerModel.TidslinjeElement.Beskjed -> BeskjedTidslinjeElement(
                                 id = element.id,
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                                lenke = element.lenke
                             )
 
                             is BrukerModel.TidslinjeElement.Kalenderavtale -> KalenderavtaleTidslinjeElement(
@@ -650,6 +665,7 @@ object BrukerAPI {
                                     )
                                 },
                                 digitalt = element.digitalt,
+                                lenke = element.lenke
                             )
                         }
                     }
@@ -749,12 +765,14 @@ object BrukerAPI {
                                 utgaattTidspunkt = element.utgaattTidspunkt?.atOffset(UTC),
                                 utfoertTidspunkt = element.utfoertTidspunkt?.atOffset(UTC),
                                 frist = element.frist,
+                                lenke = element.lenke,
                             )
 
                             is BrukerModel.TidslinjeElement.Beskjed -> BeskjedTidslinjeElement(
                                 id = element.id,
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                                lenke = element.lenke,
                             )
 
                             is BrukerModel.TidslinjeElement.Kalenderavtale -> KalenderavtaleTidslinjeElement(
@@ -771,6 +789,7 @@ object BrukerAPI {
                                     )
                                 },
                                 digitalt = element.digitalt,
+                                lenke = element.lenke,
                             )
                         }
                     }
@@ -853,12 +872,14 @@ object BrukerAPI {
                                 utgaattTidspunkt = element.utgaattTidspunkt?.atOffset(UTC),
                                 utfoertTidspunkt = element.utfoertTidspunkt?.atOffset(UTC),
                                 frist = element.frist,
+                                lenke = element.lenke,
                             )
 
                             is BrukerModel.TidslinjeElement.Beskjed -> BeskjedTidslinjeElement(
                                 id = element.id,
                                 tekst = element.tekst,
                                 opprettetTidspunkt = element.opprettetTidspunkt.atOffset(UTC),
+                                lenke = element.lenke,
                             )
 
                             is BrukerModel.TidslinjeElement.Kalenderavtale -> KalenderavtaleTidslinjeElement(
@@ -875,6 +896,7 @@ object BrukerAPI {
                                     )
                                 },
                                 digitalt = element.digitalt,
+                                lenke = element.lenke,
                             )
                         }
                     }

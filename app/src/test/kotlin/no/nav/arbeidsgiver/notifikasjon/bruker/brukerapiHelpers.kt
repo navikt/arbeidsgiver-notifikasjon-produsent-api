@@ -178,11 +178,13 @@ fun TestApplicationEngine.querySakerJson(
                         utgaattTidspunkt
                         utfoertTidspunkt
                         frist
+                        lenke
                     }
                     ...on BeskjedTidslinjeElement {
                         id
                         tekst
                         opprettetTidspunkt
+                        lenke
                     }
                     ... on KalenderavtaleTidslinjeElement {
                         id
@@ -190,6 +192,7 @@ fun TestApplicationEngine.querySakerJson(
                         avtaletilstand
                         startTidspunkt
                         sluttTidspunkt
+                        lenke
                         lokasjon {
                             adresse
                             postnummer

@@ -142,6 +142,7 @@ object BrukerModel {
         val id: UUID
         val grupperingsid: String
         val opprettetTidspunkt: Instant
+        val lenke: String
         data class Oppgave(
             override val id: UUID,
             val tekst: String,
@@ -152,12 +153,15 @@ object BrukerModel {
             val utgaattTidspunkt: Instant?,
             val utfoertTidspunkt:  Instant?,
             val frist: LocalDate?,
+            override val lenke: String
         ): TidslinjeElement
+
         data class Beskjed(
             override val id: UUID,
             val tekst: String,
             override val grupperingsid: String,
             override val opprettetTidspunkt: Instant,
+            override val lenke: String
         ): TidslinjeElement
         data class Kalenderavtale(
             override val id: UUID,
@@ -169,6 +173,7 @@ object BrukerModel {
             val avtaletilstand: BrukerModel.Kalenderavtale.Tilstand,
             val lokasjon: BrukerModel.Kalenderavtale.Lokasjon?,
             val digitalt: Boolean?,
+            override val lenke: String
         ): TidslinjeElement
     }
 
