@@ -113,6 +113,38 @@ class BrukerRepositoryImpl(
     private val log = logger()
     private val timer = Metrics.meterRegistry.timer("query_model_repository_hent_notifikasjoner")
 
+    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
+        if (hendelse is HendelseModel.AggregatOpprettet) {
+            registrerKoblingForCascadeDelete(hendelse)
+        }
+        if (erHardDeleted(hendelse.aggregateId)) {
+            log.info("skipping harddeleted event {}", hendelse)
+            return
+        }
+
+        when (hendelse) {
+            is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse, metadata)
+            is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
+            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
+            is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
+            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
+            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
+            is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
+            is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
+            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId,hendelse.grupperingsid,hendelse.merkelapp)
+            is EksterntVarselFeilet -> Unit
+            is EksterntVarselVellykket -> Unit
+            is EksterntVarselKansellert -> Unit
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
+            is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
+            is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
+            is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
+            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
+            is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
+            is HendelseModel.OppgavePåminnelseEndret -> Unit
+        }
+    }
+
     override suspend fun hentNotifikasjoner(
         fnr: String,
         altinnTilganger: AltinnTilganger,
@@ -692,37 +724,6 @@ class BrukerRepositoryImpl(
             getString("virksomhetsnummer")!!
         }.getOrNull(0)
 
-    override suspend fun oppdaterModellEtterHendelse(hendelse: Hendelse, metadata: HendelseMetadata) {
-        if (hendelse is HendelseModel.AggregatOpprettet) {
-            registrerKoblingForCascadeDelete(hendelse)
-        }
-        if (erHardDeleted(hendelse.aggregateId)) {
-            log.info("skipping harddeleted event {}", hendelse)
-            return
-        }
-
-        when (hendelse) {
-            is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse, metadata)
-            is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
-            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
-            is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
-            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
-            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
-            is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
-            is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
-            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId,hendelse.grupperingsid,hendelse.merkelapp)
-            is EksterntVarselFeilet -> Unit
-            is EksterntVarselVellykket -> Unit
-            is EksterntVarselKansellert -> Unit
-            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
-            is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
-            is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
-            is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
-            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
-            is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
-            is HendelseModel.OppgavePåminnelseEndret -> Unit
-        }
-    }
 
     override suspend fun hentSakerForNotifikasjoner(
         grupperinger: List<BrukerModel.Gruppering>,
