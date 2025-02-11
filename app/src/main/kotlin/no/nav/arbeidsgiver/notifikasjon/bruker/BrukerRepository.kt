@@ -30,6 +30,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -124,23 +125,23 @@ class BrukerRepositoryImpl(
 
         when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse, metadata)
-            is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
-            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
+            is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse) //TODO: GJORT
+            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)//TODO: GJORT
             is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
-            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
-            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
-            is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
+            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)//TODO GJORT
+            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)//TODO GJORT
+            is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)//TODO? GJORT
             is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
-            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId,hendelse.grupperingsid,hendelse.merkelapp)
+            is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
             is EksterntVarselKansellert -> Unit
-            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
-            is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
-            is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
-            is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
-            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
-            is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)//TODO GJORT
+            is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)//TODO GJORT
+            is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)//TODO GJORT
+            is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)//TODO GJORT
+            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)//TODO? GJORT
+            is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)//TODO?
             is HendelseModel.OppgavePåminnelseEndret -> Unit
         }
     }
@@ -675,7 +676,8 @@ class BrukerRepositoryImpl(
                 }
             }
 
-        val sisteStatuser = database.nonTransactionalExecuteQuery("""
+        val sisteStatuser = database.nonTransactionalExecuteQuery(
+            """
             with sak_status_med_rank as (
               select
                     sak_id,
@@ -862,35 +864,43 @@ class BrukerRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført, metdata: HendelseMetadata) {
-        database.nonTransactionalExecuteUpdate(
+        val utførtTidspunkt = utførtHendelse.utfoertTidspunkt ?: metdata.timestamp.atOffset(ZoneOffset.UTC)
+        database.transaction {
+            executeUpdate(
+                """
+                UPDATE notifikasjon
+                SET 
+                tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}',
+                utfoert_tidspunkt = ?,
+                lenke = coalesce(?, lenke)
+                WHERE id = ?
             """
-            UPDATE notifikasjon
-            SET 
-            tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}',
-            utfoert_tidspunkt = ?,
-            lenke = coalesce(?, lenke)
-            WHERE id = ?
-        """
-        ) {
-            timestamp_with_timezone(utførtHendelse.utfoertTidspunkt ?: metdata.timestamp.atOffset(ZoneOffset.UTC))
-            nullableText(utførtHendelse.nyLenke)
-            uuid(utførtHendelse.notifikasjonId)
+            ) {
+                timestamp_with_timezone(utførtTidspunkt)
+                nullableText(utførtHendelse.nyLenke)
+                uuid(utførtHendelse.notifikasjonId)
+            }
+            settSakOppdatert(hentSakIdByNotifikasjonsId(utførtHendelse.notifikasjonId), utførtTidspunkt)
         }
     }
 
     private suspend fun oppdaterModellEtterOppgaveUtgått(utgåttHendelse: OppgaveUtgått) {
-        database.nonTransactionalExecuteUpdate(
+        database.transaction {
+            executeUpdate(
+                """
+                UPDATE notifikasjon
+                SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}',
+                    utgaatt_tidspunkt = ?,
+                    lenke = coalesce(?, lenke)
+                WHERE id = ?
             """
-            UPDATE notifikasjon
-            SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}',
-                utgaatt_tidspunkt = ?,
-                lenke = coalesce(?, lenke)
-            WHERE id = ?
-        """
-        ) {
-            timestamp_with_timezone(utgåttHendelse.utgaattTidspunkt)
-            nullableText(utgåttHendelse.nyLenke)
-            uuid(utgåttHendelse.notifikasjonId)
+            ) {
+                timestamp_with_timezone(utgåttHendelse.utgaattTidspunkt)
+                nullableText(utgåttHendelse.nyLenke)
+                uuid(utgåttHendelse.notifikasjonId)
+            }
+
+            settSakOppdatert(hentSakIdByNotifikasjonsId(utgåttHendelse.notifikasjonId), utgåttHendelse.utgaattTidspunkt)
         }
     }
 
@@ -944,6 +954,7 @@ class BrukerRepositoryImpl(
                     mottaker
                 )
             }
+            settSakOppdatert(hentSakIdByNotifikasjonsId(beskjedOpprettet.notifikasjonId), beskjedOpprettet.opprettetTidspunkt)
         }
     }
 
@@ -1039,16 +1050,7 @@ class BrukerRepositoryImpl(
                 nullableTimestamptz(nyStatusSak.oppgittTidspunkt)
             }
 
-            executeUpdate(
-                """
-                update sak
-                set sist_endret_tidspunkt = greatest(sist_endret_tidspunkt, ?)
-                where id = ?
-            """
-            ) {
-                instantAsText((nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt).toInstant())
-                uuid(nyStatusSak.sakId)
-            }
+            settSakOppdatert(nyStatusSak.sakId, nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
 
             executeUpdate(
                 """
@@ -1094,6 +1096,7 @@ class BrukerRepositoryImpl(
                 nullableText(tilleggsinformasjonSak.tilleggsinformasjon)
                 uuid(tilleggsinformasjonSak.sakId)
             }
+            settSakOppdatert(tilleggsinformasjonSak.sakId, Instant.now())
         }
     }
 
@@ -1109,6 +1112,7 @@ class BrukerRepositoryImpl(
                 nullableText(nesteStegSak.nesteSteg)
                 uuid(nesteStegSak.sakId)
             }
+            settSakOppdatert(nesteStegSak.sakId, Instant.now())
         }
     }
 
@@ -1127,6 +1131,8 @@ class BrukerRepositoryImpl(
             executeUpdate("delete from brukerklikk where notifikasjonsid = ?;") {
                 uuid(påminnelseOpprettet.notifikasjonId)
             }
+
+            settSakOppdatert(hentSakIdByNotifikasjonsId(påminnelseOpprettet.notifikasjonId), påminnelseOpprettet.opprettetTidpunkt)
         }
     }
 
@@ -1231,6 +1237,8 @@ class BrukerRepositoryImpl(
                 nullableDate(oppgaveOpprettet.frist)
             }
 
+            settSakOppdatert(hentSakIdByNotifikasjonsId(oppgaveOpprettet.notifikasjonId), oppgaveOpprettet.opprettetTidspunkt)
+
             for (mottaker in oppgaveOpprettet.mottakere) {
                 storeMottaker(
                     notifikasjonId = oppgaveOpprettet.notifikasjonId,
@@ -1316,8 +1324,9 @@ class BrukerRepositoryImpl(
     }
 
     private suspend fun oppdaterModellEtterFristUtsatt(hendelse: FristUtsatt) {
-        database.nonTransactionalExecuteUpdate(
-            """
+        database.transaction {
+            executeUpdate(
+                """
             update notifikasjon
             set tilstand = '${BrukerModel.Oppgave.Tilstand.NY}',
                 frist = ?,
@@ -1326,9 +1335,11 @@ class BrukerRepositoryImpl(
             where
                 id = ? and tilstand <> '${BrukerModel.Oppgave.Tilstand.UTFOERT}'
         """
-        ) {
-            date(hendelse.frist)
-            uuid(hendelse.notifikasjonId)
+            ) {
+                date(hendelse.frist)
+                uuid(hendelse.notifikasjonId)
+            }
+            settSakOppdatert(hentSakIdByNotifikasjonsId(hendelse.notifikasjonId), hendelse.fristEndretTidspunkt)
         }
     }
 
@@ -1373,6 +1384,8 @@ class BrukerRepositoryImpl(
                 }
             }
 
+            settSakOppdatert(hendelse.sakId, hendelse.opprettetTidspunkt)
+
             for (mottaker in hendelse.mottakere) {
                 storeMottaker(
                     notifikasjonId = hendelse.notifikasjonId,
@@ -1409,6 +1422,44 @@ class BrukerRepositoryImpl(
                     uuid(notifikasjonId)
                 }
             }
+            settSakOppdatert(hentSakIdByNotifikasjonsId(hendelse.notifikasjonId), hendelse.oppdatertTidspunkt)
         }
+    }
+
+    private suspend fun hentSakIdByNotifikasjonsId(notifikasjonsId: UUID): UUID? {
+        val sakId = database.nonTransactionalExecuteQuery(
+            """
+                select s.id as id
+                from sak as s 
+                inner join notifikasjon as n on s.merkelapp = n.merkelapp and s.grupperingsid = n.grupperingsid 
+                where n.id = ?
+            """.trimMargin(),
+            {
+                uuid(notifikasjonsId)
+            }, {
+                laxObjectMapper.readValue<UUID?>(getString("id"))
+            }
+        )
+        return sakId.firstOrNull()
+    }
+
+    private fun Transaction.settSakOppdatert(sakId: UUID?, tidspunkt: OffsetDateTime) =
+        settSakOppdatert(sakId, tidspunkt.toInstant())
+
+    private fun Transaction.settSakOppdatert(sakId: UUID?, tidspunkt: Instant) {
+        if (sakId === null)
+            return
+
+        executeUpdate(
+            """
+                update sak set
+                sist_endret_tidspunkt = ?
+                where id = ?
+            """.trimIndent(),
+            {
+                instantAsText(tidspunkt)
+                uuid(sakId)
+            }
+        )
     }
 }
