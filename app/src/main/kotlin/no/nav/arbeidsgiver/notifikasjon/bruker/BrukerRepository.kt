@@ -129,19 +129,19 @@ class BrukerRepositoryImpl(
             is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)//TODO: GJORT
             is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
             is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)//TODO GJORT
-            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)//TODO GJORT
-            is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)//TODO? GJORT
+            is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
+            is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
             is HardDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
             is EksterntVarselKansellert -> Unit
             is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)//TODO GJORT
-            is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)//TODO GJORT
+            is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
             is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)//TODO GJORT
-            is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)//TODO GJORT
-            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)//TODO? GJORT
-            is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)//TODO?
+            is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
+            is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
+            is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
             is HendelseModel.OppgavePåminnelseEndret -> Unit
         }
     }
@@ -880,7 +880,6 @@ class BrukerRepositoryImpl(
                 nullableText(utførtHendelse.nyLenke)
                 uuid(utførtHendelse.notifikasjonId)
             }
-            settSakOppdatert(hentSakIdByNotifikasjonsId(utførtHendelse.notifikasjonId), utførtTidspunkt)
         }
     }
 
@@ -899,8 +898,6 @@ class BrukerRepositoryImpl(
                 nullableText(utgåttHendelse.nyLenke)
                 uuid(utgåttHendelse.notifikasjonId)
             }
-
-            settSakOppdatert(hentSakIdByNotifikasjonsId(utgåttHendelse.notifikasjonId), utgåttHendelse.utgaattTidspunkt)
         }
     }
 
@@ -1096,7 +1093,6 @@ class BrukerRepositoryImpl(
                 nullableText(tilleggsinformasjonSak.tilleggsinformasjon)
                 uuid(tilleggsinformasjonSak.sakId)
             }
-            settSakOppdatert(tilleggsinformasjonSak.sakId, Instant.now())
         }
     }
 
@@ -1112,7 +1108,6 @@ class BrukerRepositoryImpl(
                 nullableText(nesteStegSak.nesteSteg)
                 uuid(nesteStegSak.sakId)
             }
-            settSakOppdatert(nesteStegSak.sakId, Instant.now())
         }
     }
 
@@ -1339,7 +1334,6 @@ class BrukerRepositoryImpl(
                 date(hendelse.frist)
                 uuid(hendelse.notifikasjonId)
             }
-            settSakOppdatert(hentSakIdByNotifikasjonsId(hendelse.notifikasjonId), hendelse.fristEndretTidspunkt)
         }
     }
 
@@ -1422,7 +1416,6 @@ class BrukerRepositoryImpl(
                     uuid(notifikasjonId)
                 }
             }
-            settSakOppdatert(hentSakIdByNotifikasjonsId(hendelse.notifikasjonId), hendelse.oppdatertTidspunkt)
         }
     }
 
@@ -1437,7 +1430,7 @@ class BrukerRepositoryImpl(
             {
                 uuid(notifikasjonsId)
             }, {
-                laxObjectMapper.readValue<UUID?>(getString("id"))
+                getUuid("id")
             }
         )
         return sakId.firstOrNull()
