@@ -11,7 +11,6 @@ import '@navikt/ds-css';
 const App = () => {
   const [orgname, setOrgname] = useState("")
   return <div className={'bakgrunnsside'}>
-    {/*<NotifikasjonWidgetProvider miljo="local" apiUrl="/api/graphql">*/}
       <BrowserRouter>
         <Bedriftsmeny
           sidetittel={orgname}
@@ -20,7 +19,6 @@ const App = () => {
           <NotifikasjonWidget miljo="local" apiUrl="/api/graphql"/>
         </Bedriftsmeny>
       </BrowserRouter>
-    {/*</NotifikasjonWidgetProvider>*/}
   </div>
 }
 
