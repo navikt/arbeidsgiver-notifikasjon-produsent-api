@@ -8,7 +8,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 class SakOppdateresTests : DescribeSpec({
-    val database = testDatabase(Bruker.databaseConfig)
+    val database = testDatabase(Bruker.databaseConfig, SakOppdateresTests::class.simpleName)
     val brukerRepository = BrukerRepositoryImpl(database)
 
     suspend fun hentSakSisteEndretTidspunktById(sakId: UUID): OffsetDateTime {
