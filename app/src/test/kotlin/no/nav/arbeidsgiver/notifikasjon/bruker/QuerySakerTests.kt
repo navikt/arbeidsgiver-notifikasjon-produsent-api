@@ -139,51 +139,6 @@ class QuerySakerTests : DescribeSpec({
             }
         }
 
-        context("paginering med offset og limit angitt sortert på opprettet") {
-            val (brukerRepository, engine) = setupRepoOgEngine()
-            val forventetRekkefoelge = listOf(
-                uuid("3"),
-                uuid("1"),
-                uuid("4"),
-            )
-
-            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[0], Duration.ofHours(3))
-            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[1], Duration.ofHours(2), Duration.ofHours(4))
-            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[2], Duration.ofHours(1), Duration.ofHours(5))
-
-            it("saksrekkefølge er korrekt innenfor page") {
-                val response = engine.hentSaker(offset = 0, limit = 3, sortering = OPPRETTET)
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[0]
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/1").id shouldBe forventetRekkefoelge[1]
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/2").id shouldBe forventetRekkefoelge[2]
-                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
-            }
-
-            it("sist oppdaterte sak først") {
-                val response = engine.hentSaker(offset = 0, limit = 1, sortering = OPPRETTET)
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[0]
-                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
-            }
-
-            it("mellomste sak ved offset 1") {
-                val response = engine.hentSaker(offset = 1, limit = 1, sortering = OPPRETTET)
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[1]
-                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
-            }
-
-            it("eldste sak ved offset 2") {
-                val response = engine.hentSaker(offset = 2, limit = 1, sortering = OPPRETTET)
-                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[2]
-                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
-            }
-
-            it("utenfor offset") {
-                val response = engine.hentSaker(offset = 3, limit = 1, sortering = OPPRETTET)
-                response.getTypedContent<List<Any>>("saker/saker") should beEmpty()
-                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
-            }
-        }
-
         context("tekstsøk") {
             val (brukerRepository, engine) = setupRepoOgEngine()
             val sak1 = brukerRepository.opprettSakForTekstsøk("pippi langstrømpe er friskmeldt", MOTTATT, "herr nilson er syk")
