@@ -709,7 +709,6 @@ class BrukerRepositoryImpl(
             BrukerModel.Sakberikelse(
                 sisteStatus = sisteStatuser[it.sakId],
                 tidslinje = when (it.grupperingsid) {
-                    null -> listOf()
                     else -> tidslinjer[it.grupperingsid].orEmpty()
                 }
             )
@@ -1127,7 +1126,7 @@ class BrukerRepositoryImpl(
                 uuid(påminnelseOpprettet.notifikasjonId)
             }
 
-            settSakOppdatert(hentSakIdByNotifikasjonsId(påminnelseOpprettet.notifikasjonId), påminnelseOpprettet.opprettetTidpunkt)
+            settSakOppdatert(hentSakIdByNotifikasjonsId(påminnelseOpprettet.notifikasjonId), påminnelseOpprettet.tidspunkt.påminnelseTidspunkt)
         }
     }
 
@@ -1419,8 +1418,8 @@ class BrukerRepositoryImpl(
         }
     }
 
-    private suspend fun hentSakIdByNotifikasjonsId(notifikasjonsId: UUID): UUID? {
-        val sakId = database.nonTransactionalExecuteQuery(
+    private fun Transaction.hentSakIdByNotifikasjonsId(notifikasjonsId: UUID): UUID? {
+        val sakId = executeQuery(
             """
                 select s.id as id
                 from sak as s 
