@@ -566,7 +566,6 @@ object BrukerAPI {
                 altinnTilganger = tilganger,
                 sakstyper = env.getArgument("sakstyper"),
                 tekstsoek = env.getArgumentOrDefault<String>("tekstsoek", null),
-                sortering = env.getTypedArgument("sortering"),
                 offset = env.getArgumentOrDefault("offset", 0) ?: 0,
                 limit = env.getArgumentOrDefault("limit", 3) ?: 3,
                 oppgaveTilstand = env.getTypedArgumentOrNull("oppgaveTilstand"),

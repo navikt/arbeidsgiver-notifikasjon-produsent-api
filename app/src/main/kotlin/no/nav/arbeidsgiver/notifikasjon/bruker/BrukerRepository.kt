@@ -68,7 +68,6 @@ interface BrukerRepository {
         sakstyper: List<String>?,
         offset: Int,
         limit: Int,
-        sortering: BrukerAPI.SakSortering,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): HentSakerResultat
 
@@ -259,7 +258,6 @@ class BrukerRepositoryImpl(
         sakstyper: List<String>?,
         offset: Int,
         limit: Int,
-        sortering: BrukerAPI.SakSortering,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
     ): BrukerRepository.HentSakerResultat {
         return timer.coRecord {
@@ -405,18 +403,7 @@ class BrukerRepositoryImpl(
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
-                            order by ${
-                    when (sortering) {
-                        BrukerAPI.SakSortering.OPPDATERT -> "sak.sist_endret_tidspunkt desc"
-                        BrukerAPI.SakSortering.OPPRETTET -> """
-                                       sak.opprettet_tidspunkt desc 
-                                    """
-
-                        BrukerAPI.SakSortering.FRIST -> """
-                                        sak.tidligste_frist nulls last, sak.nye_oppgaver desc, sak.sist_endret_tidspunkt desc
-                                    """
-                    }
-                }
+                            order by sak.sist_endret_tidspunkt desc                        
                             limit ? offset ?
                         )
                     select
