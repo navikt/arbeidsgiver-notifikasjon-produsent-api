@@ -14,10 +14,10 @@ import java.util.concurrent.ConcurrentHashMap
 val templateDbs = ConcurrentHashMap<Database.Config, String>()
 val ids = generateSequence(0) { it + 1 }.iterator()
 val mutex = Mutex()
-private suspend fun createDbFromTemplate(config: Database.Config, dbPrefix: String): Database.Config {
-    val templateDb = templateDb(config, dbPrefix)
+private suspend fun createDbFromTemplate(config: Database.Config, dbName: String): Database.Config {
+    val templateDb = templateDb(config)
     val database = mutex.withLock {
-        "${dbPrefix}-${ids.next()}"
+        "${dbName}_test-${ids.next()}"
     }
 
     DriverManager.getConnection(config.url.toString(), config.username, config.password).use { conn ->
@@ -34,13 +34,13 @@ private suspend fun createDbFromTemplate(config: Database.Config, dbPrefix: Stri
  * template databasen brukes til å lage ferske databaser for hver test.
  */
 @Suppress("SqlSourceToSinkFlow")
-private fun templateDb(config: Database.Config, dbPrefix: String): String {
+private fun templateDb(config: Database.Config): String {
     val templateDb = templateDbs.computeIfAbsent(config) {
         "${config.database}_template".also { db ->
             DriverManager.getConnection(config.url.toString(), config.username, config.password).use { conn ->
                 conn.createStatement().use { stmt ->
                     val resultSet =
-                        stmt.executeQuery("SELECT datname FROM pg_database where datname like '${dbPrefix}%';")
+                        stmt.executeQuery("SELECT datname FROM pg_database where datname like '%${config.database}_test-%';")
                     val tables = resultSet.use {
                         generateSequence {
                             if (resultSet.next()) resultSet.getString(1) else null
@@ -72,7 +72,7 @@ private fun templateDb(config: Database.Config, dbPrefix: String): String {
 
 fun TestConfiguration.testDatabase(config: Database.Config, dbPrefix: String? = null): Database =
     runBlocking {
-        val testConfig = createDbFromTemplate(config, dbPrefix ?: "${config.database}_test")
+        val testConfig = createDbFromTemplate(config, if (dbPrefix !== null) "${dbPrefix}_${config.database}" else config.database)
         Database.openDatabase(
             config = testConfig.copy(
                 // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
