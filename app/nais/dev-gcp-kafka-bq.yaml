@@ -27,7 +27,7 @@ spec:
     pool: nav-dev
   gcp:
     bigQueryDatasets:
-      - name: fager-dev-24f2.notifikasjon_debug
+      - name: notifikasjon_debug
         permission: READWRITE
   env:
     - name: BIGQUERY_DATASET_ID
