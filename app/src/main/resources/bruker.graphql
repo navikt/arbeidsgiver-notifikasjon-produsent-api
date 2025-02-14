@@ -12,18 +12,11 @@ type Query {
         tekstsoek: String
         sakstyper: [String!]
         oppgaveTilstand: [OppgaveTilstand!]
-        sortering: SakSortering! = OPPDATERT
     ): SakerResultat!
     sakById(id: ID!): SakResultat!
     sakByGrupperingsid(merkelapp: String!, grupperingsid: String!): SakResultat!
     kommendeKalenderavtaler(virksomhetsnumre: [String!]!): KalenderavtalerResultat!
     whoami: String
-}
-
-enum SakSortering {
-    OPPDATERT
-    OPPRETTET
-    FRIST
 }
 
 type SakstypeOverordnet {
