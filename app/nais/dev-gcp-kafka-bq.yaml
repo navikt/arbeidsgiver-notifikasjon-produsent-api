@@ -27,10 +27,10 @@ spec:
     pool: nav-dev
   gcp:
     bigQueryDatasets:
-      - name: notifikasjon_debug
+      - name: notifikasjondebug
         permission: READWRITE
   env:
     - name: BIGQUERY_DATASET_ID
-      value: notifikasjon_debug
+      value: notifikasjondebug
     - name: BIGQUERY_TABLE_NAME
       value: notifikasjon
