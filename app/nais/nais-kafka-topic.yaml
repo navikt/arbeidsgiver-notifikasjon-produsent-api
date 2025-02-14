@@ -58,3 +58,6 @@ spec:
     - application: notifikasjon-dataprodukt
       team: fager
       access: read
+    - application: notifikasjon-kafka-bq
+      team: fager
+      access: read
