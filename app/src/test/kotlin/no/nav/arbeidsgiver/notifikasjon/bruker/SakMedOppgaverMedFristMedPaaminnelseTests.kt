@@ -95,7 +95,7 @@ private suspend fun BrukerRepository.opprettSak(
 private suspend fun BrukerRepository.opprettOppgave(
     grupperingsid: String,
     frist: LocalDate?,
-    paaminnelse: HendelseModel.Påminnelse,
+    paaminnelse: HendelseModel.Påminnelse?,
 ) {
     oppgaveOpprettet(
         notifikasjonId = UUID.randomUUID(),
@@ -120,12 +120,13 @@ private suspend fun BrukerRepository.opprettOppgave(
         frist = frist,
         påminnelse = paaminnelse,
     ).let { oppgaveOpprettet ->
-        påminnelseOpprettet(
-            oppgave = oppgaveOpprettet,
-            opprettetTidpunkt = Instant.now(),
-            frist = frist,
-            tidspunkt = paaminnelse.tidspunkt,
-        )
+        if (oppgaveOpprettet.påminnelse !== null)
+            påminnelseOpprettet(
+                oppgave = oppgaveOpprettet,
+                opprettetTidpunkt = Instant.now(),
+                frist = frist,
+                tidspunkt = paaminnelse!!.tidspunkt,
+            )
     }
 }
 

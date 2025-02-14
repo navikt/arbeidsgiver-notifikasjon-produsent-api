@@ -97,7 +97,7 @@ class QuerySakerTests : DescribeSpec({
 
             brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[0], Duration.ofHours(1), Duration.ofHours(5))
             brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[1], Duration.ofHours(2), Duration.ofHours(4))
-            brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[2], Duration.ofHours(3))
+            val sak = brukerRepository.opprettSakMedTidspunkt(forventetRekkefoelge[2], Duration.ofHours(3))
 
             it("saksrekkefølge er korrekt innenfor page") {
                 val response = engine.hentSaker(offset = 0, limit = 3)
@@ -135,6 +135,14 @@ class QuerySakerTests : DescribeSpec({
                 val response = engine.hentSaker(offset = 0, limit = 0)
                 response.getTypedContent<List<Any>>("saker/saker") should beEmpty()
                 response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
+            it("oppgaveOpprettet oppdaterer sorteringen") {
+                brukerRepository.oppgaveOpprettet(sak = sak, opprettetTidspunkt = OffsetDateTime.now())
+                val response = engine.hentSaker(offset = 0, limit = 3)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[2]
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/1").id shouldBe forventetRekkefoelge[0]
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/2").id shouldBe forventetRekkefoelge[1]
             }
         }
 
@@ -274,8 +282,8 @@ class QuerySakerTests : DescribeSpec({
     }
 })
 
-private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApplicationEngine> {
-    val database = testDatabase(Bruker.databaseConfig)
+private fun DescribeSpec.setupRepoOgEngine(dbPrefx: String? = null): Pair<BrukerRepositoryImpl, TestApplicationEngine> {
+    val database = testDatabase(Bruker.databaseConfig, dbPrefx)
     val brukerRepository = BrukerRepositoryImpl(database)
     val engine = ktorBrukerTestServer(
         altinnTilgangerService = AltinnTilgangerServiceStub(
@@ -320,7 +328,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
     sakId: UUID,
     opprettetShift: Duration,
     vararg restShift: Duration,
-) {
+) : SakOpprettet {
     val shift = listOf(opprettetShift) + restShift
     val mottattTidspunkt = OffsetDateTime.parse("2022-01-01T13:37:30+02:00")
     val sak = sakOpprettet(
@@ -341,6 +349,7 @@ private suspend fun BrukerRepository.opprettSakMedTidspunkt(
             idempotensKey = IdempotenceKey.initial(),
         )
     }
+    return sak
 }
 
 private suspend fun BrukerRepository.opprettSak(
