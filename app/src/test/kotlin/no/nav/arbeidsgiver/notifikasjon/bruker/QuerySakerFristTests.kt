@@ -153,78 +153,6 @@ class QuerySakerFristTests : DescribeSpec({
                 frister shouldBe listOf(frist)
             }
         }
-
-        context("sak med oppgaver er sortert på frist") {
-            val (brukerRepository, engine) = setupRepoOgEngine()
-            val mottaker = listOf(naermestelederMottaker)
-            val frist = LocalDate.now()
-            brukerRepository.opprettSak(
-                tilstander = listOf(
-                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
-                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(2) to mottaker,
-                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(1) to mottaker,
-                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(3) to mottaker,
-                ),
-                mottakerSak = mottaker
-            )
-
-            val response = engine.hentSaker()
-
-            it("response inneholder riktig data") {
-                val frister = response.getTypedContent<List<LocalDate?>>("$.saker.saker[0].frister")
-                frister shouldBe listOf(frist.plusDays(1), frist.plusDays(2), frist.plusDays(3), null)
-            }
-        }
-
-        context("saker er sortert på frist") {
-            val (brukerRepository, engine) = setupRepoOgEngine()
-            val mottaker = listOf(naermestelederMottaker)
-            val frist = LocalDate.now()
-            brukerRepository.opprettSak(
-                tilstander = listOf(
-                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
-                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(2) to mottaker,
-                ),
-                mottakerSak = mottaker
-            )
-            brukerRepository.opprettSak(
-                tilstander = emptyList(),
-                mottakerSak = mottaker
-            )
-            brukerRepository.opprettSak(
-                tilstander = listOf(
-                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(3) to mottaker,
-                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
-                ),
-                mottakerSak = mottaker
-            )
-            brukerRepository.opprettSak(
-                tilstander = listOf(
-                    BrukerModel.Oppgave.Tilstand.NY to frist.plusDays(1) to mottaker,
-                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
-                ),
-                mottakerSak = mottaker
-            )
-            brukerRepository.opprettSak(
-                tilstander = listOf(
-                    BrukerModel.Oppgave.Tilstand.NY to null to mottaker,
-                ),
-                mottakerSak = mottaker
-            )
-
-            val response = engine.hentSaker()
-
-            it("response inneholder riktig data") {
-                val saksfrister = response.getTypedContent<List<List<LocalDate?>>>("$.saker.saker[*].frister")
-                saksfrister shouldBe listOf(
-                    listOf(frist.plusDays(1), null),
-                    listOf(frist.plusDays(2), null),
-                    listOf(frist.plusDays(3), null),
-                    listOf(null),
-                    listOf(),
-                )
-            }
-        }
     }
 })
 
@@ -306,8 +234,7 @@ private suspend fun BrukerRepository.opprettSak(
 private fun TestApplicationEngine.hentSaker() =
     querySakerJson(
         virksomhetsnumre = listOf("42"),
-        limit = 10,
-        sortering = BrukerAPI.SakSortering.FRIST
+        limit = 10
     )
 
 private infix fun <A, B, C> Pair<A, B>.to(third: C) = Triple(this.first, this.second, third)

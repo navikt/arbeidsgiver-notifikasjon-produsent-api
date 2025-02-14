@@ -12,7 +12,7 @@ type Query {
         tekstsoek: String
         sakstyper: [String!]
         oppgaveTilstand: [OppgaveTilstand!]
-        sortering: SakSortering! = OPPDATERT
+        sortering: SakSortering! = NYESTE
     ): SakerResultat!
     sakById(id: ID!): SakResultat!
     sakByGrupperingsid(merkelapp: String!, grupperingsid: String!): SakResultat!
@@ -21,9 +21,8 @@ type Query {
 }
 
 enum SakSortering {
-    OPPDATERT
-    OPPRETTET
-    FRIST
+    NYESTE,
+    ELDSTE
 }
 
 type SakstypeOverordnet {

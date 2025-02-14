@@ -186,10 +186,6 @@ class Database private constructor(
                 connection.autoCommit = savedAutoCommit
             }
         }
-
-    suspend fun withFlyway(flywayConfig: FluentConfiguration.() -> Unit, body: Flyway.() -> Unit) {
-        dataSource.withFlyway(config.migrationLocations, flywayConfig, body)
-    }
 }
 
 
