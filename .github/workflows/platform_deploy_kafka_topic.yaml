@@ -2,7 +2,7 @@ name: "Platform: deploy kafka topic"
 on:
   push:
     branches: ['main']
-    paths: ['config/nais-kafka-topic.yaml', 'config/nais-kafka-topic-ekstern-varsling-status.yaml']
+    paths: ['app/nais/nais-kafka-topic.yaml', 'app/nais/nais-kafka-topic-ekstern-varsling-status.yaml']
   workflow_dispatch:
 
 jobs:
