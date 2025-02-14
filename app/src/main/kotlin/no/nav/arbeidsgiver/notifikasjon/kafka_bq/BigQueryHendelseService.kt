@@ -18,12 +18,16 @@ class BigQueryHendelseService(
 
     private val schema = Schema.of(
         Field.of("hendelseId", StandardSQLTypeName.STRING),
+        Field.of("aggregateId", StandardSQLTypeName.STRING),
+        Field.of("virksomhetsnummer", StandardSQLTypeName.STRING),
         Field.of("data", StandardSQLTypeName.JSON)
     )
 
     fun insertHendelse(hendelse: HendelseModel.Hendelse) {
         val row = mapOf(
             "hendelseId" to hendelse.hendelseId.toString(),
+            "aggregateId" to hendelse.aggregateId.toString(),
+            "virksomhetsnummer" to hendelse.virksomhetsnummer,
             "data" to laxObjectMapper.writeValueAsString(hendelse)
         )
         bigQueryClient.insert(tableId, hendelse.hendelseId.toString(), row)
