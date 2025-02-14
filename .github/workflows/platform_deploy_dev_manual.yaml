@@ -25,6 +25,7 @@ jobs:
           - skedulert-harddelete
           - skedulert-paaminnelse
           - dataprodukt
+          - kafka-bq
           #- manuelt-vedlikehold
     steps:
       - uses: actions/checkout@v4
