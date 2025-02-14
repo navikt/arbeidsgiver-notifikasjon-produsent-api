@@ -405,7 +405,12 @@ class BrukerRepositoryImpl(
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
-                            order by sak.sist_endret_tidspunkt ${if (sortering === BrukerAPI.SakSortering.NYESTE) "desc" else "asc"}                        
+                            order by sak.sist_endret_tidspunkt ${
+                                when (sortering){
+                                    BrukerAPI.SakSortering.NYESTE -> "desc"
+                                    BrukerAPI.SakSortering.ELDSTE -> "asc"
+                                }
+                            }                        
                             limit ? offset ?
                         )
                     select
