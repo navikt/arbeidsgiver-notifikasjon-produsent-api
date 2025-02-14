@@ -123,6 +123,7 @@ fun TestApplicationEngine.querySakerJson(
     offset: Int? = null,
     limit: Int? = null,
     tekstsoek: String? = null,
+    sortering: BrukerAPI.SakSortering = BrukerAPI.SakSortering.NYESTE,
     sakstyper: List<String>? = null,
     oppgaveTilstand: List<BrukerAPI.Notifikasjon.Oppgave.Tilstand>? = null
 ): TestApplicationResponse {
@@ -133,6 +134,7 @@ fun TestApplicationEngine.querySakerJson(
         Parameter("limit", "Int", limit),
         Parameter("tekstsoek", "String", tekstsoek),
         Parameter("sakstyper", "[String!]", sakstyper),
+        Parameter("sortering", "SakSortering!", sortering),
         Parameter("oppgaveTilstand", "[OppgaveTilstand!]", oppgaveTilstand)
     ).filter { (_, _, value) -> value != null }
     val queryParameters = parameters.joinToString(", ") { (navn, sort) -> "\$$navn: $sort" }

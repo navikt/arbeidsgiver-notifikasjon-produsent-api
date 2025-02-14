@@ -107,6 +107,14 @@ class QuerySakerTests : DescribeSpec({
                 response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
             }
 
+            it("Saksrekkefølge blir korrekt med eldste først sortering"){
+                val response = engine.hentSaker(offset = 0, limit = 3, sortering = BrukerAPI.SakSortering.ELDSTE)
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[2]
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/1").id shouldBe forventetRekkefoelge[1]
+                response.getTypedContent<BrukerAPI.Sak>("saker/saker/2").id shouldBe forventetRekkefoelge[0]
+                response.getTypedContent<Int>("saker/totaltAntallSaker") shouldBe 3
+            }
+
             it("sist oppdaterte sak først") {
                 val response = engine.hentSaker(offset = 0, limit = 1)
                 response.getTypedContent<BrukerAPI.Sak>("saker/saker/0").id shouldBe forventetRekkefoelge[0]
@@ -379,6 +387,7 @@ private suspend fun BrukerRepository.opprettSak(
 
 private fun TestApplicationEngine.hentSaker(
     virksomhetsnumre: List<String> = listOf("42"),
+    sortering: BrukerAPI.SakSortering = BrukerAPI.SakSortering.NYESTE,
     sakstyper: List<String>? = null,
     tekstsoek: String? = null,
     offset: Int? = null,
@@ -388,5 +397,6 @@ private fun TestApplicationEngine.hentSaker(
     sakstyper = sakstyper,
     tekstsoek = tekstsoek,
     offset = offset,
-    limit = limit
+    limit = limit,
+    sortering = sortering
 )
