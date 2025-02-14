@@ -234,8 +234,7 @@ private suspend fun BrukerRepository.opprettSak(
 private fun TestApplicationEngine.hentSaker() =
     querySakerJson(
         virksomhetsnumre = listOf("42"),
-        limit = 10,
-        sortering = BrukerAPI.SakSortering.FRIST
+        limit = 10
     )
 
 private infix fun <A, B, C> Pair<A, B>.to(third: C) = Triple(this.first, this.second, third)

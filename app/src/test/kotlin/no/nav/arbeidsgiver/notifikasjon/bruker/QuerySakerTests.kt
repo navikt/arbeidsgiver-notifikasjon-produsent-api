@@ -7,7 +7,6 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.OPPRETTET
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
@@ -375,12 +374,10 @@ private fun TestApplicationEngine.hentSaker(
     tekstsoek: String? = null,
     offset: Int? = null,
     limit: Int? = null,
-    sortering: BrukerAPI.SakSortering = BrukerAPI.SakSortering.OPPDATERT,
 ) = querySakerJson(
     virksomhetsnumre = virksomhetsnumre,
     sakstyper = sakstyper,
     tekstsoek = tekstsoek,
     offset = offset,
-    limit = limit,
-    sortering = sortering,
+    limit = limit
 )

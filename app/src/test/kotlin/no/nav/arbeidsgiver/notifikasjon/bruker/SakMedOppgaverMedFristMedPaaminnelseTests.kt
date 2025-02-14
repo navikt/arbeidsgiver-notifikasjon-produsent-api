@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.FRIST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
@@ -46,7 +45,7 @@ class SakMedOppgaverMedFristMedPaaminnelseTests : DescribeSpec({
         )
 
         val res =
-            engine.querySakerJson(virksomhetsnummer = "1", limit = 10, sortering = FRIST)
+            engine.querySakerJson(virksomhetsnummer = "1", limit = 10)
                 .getTypedContent<List<OffsetDateTime>>("$.saker.saker.*.oppgaver.*.paaminnelseTidspunkt")
 
         res.first().inOsloLocalDateTime() shouldBe påminnelsestidspunktLocalDateTime

@@ -124,8 +124,7 @@ fun TestApplicationEngine.querySakerJson(
     limit: Int? = null,
     tekstsoek: String? = null,
     sakstyper: List<String>? = null,
-    oppgaveTilstand: List<BrukerAPI.Notifikasjon.Oppgave.Tilstand>? = null,
-    sortering: BrukerAPI.SakSortering? = null,
+    oppgaveTilstand: List<BrukerAPI.Notifikasjon.Oppgave.Tilstand>? = null
 ): TestApplicationResponse {
     val parameters = listOf(
         Parameter("virksomhetsnumre", "[String!]", virksomhetsnumre),
@@ -134,8 +133,7 @@ fun TestApplicationEngine.querySakerJson(
         Parameter("limit", "Int", limit),
         Parameter("tekstsoek", "String", tekstsoek),
         Parameter("sakstyper", "[String!]", sakstyper),
-        Parameter("oppgaveTilstand", "[OppgaveTilstand!]", oppgaveTilstand),
-        Parameter("sortering", "SakSortering", sortering),
+        Parameter("oppgaveTilstand", "[OppgaveTilstand!]", oppgaveTilstand)
     ).filter { (_, _, value) -> value != null }
     val queryParameters = parameters.joinToString(", ") { (navn, sort) -> "\$$navn: $sort" }
         .ifNotBlank { "($it)" }

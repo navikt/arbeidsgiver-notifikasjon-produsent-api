@@ -138,12 +138,6 @@ object BrukerAPI {
         val tilleggsinformasjon: String?
     )
 
-    enum class SakSortering {
-        OPPDATERT,
-        OPPRETTET,
-        FRIST,
-    }
-
     @JsonTypeName("SakerResultat")
     data class SakerResultat(
         val saker: List<Sak>,
