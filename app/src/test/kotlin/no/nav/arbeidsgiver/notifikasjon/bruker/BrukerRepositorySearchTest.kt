@@ -103,6 +103,7 @@ private suspend fun BrukerRepositoryImpl.search(query: String?): List<UUID> =
         offset = 0,
         limit = 1000_000,
         oppgaveTilstand = null,
+        sortering = BrukerAPI.SakSortering.NYESTE
     )
         .saker
         .map { it.sakId }

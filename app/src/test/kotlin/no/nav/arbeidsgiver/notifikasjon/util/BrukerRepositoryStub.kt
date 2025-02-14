@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -19,6 +20,7 @@ open class BrukerRepositoryStub : BrukerRepository {
         altinnTilganger: AltinnTilganger,
         tekstsoek: String?,
         sakstyper: List<String>?,
+        sortering: BrukerAPI.SakSortering,
         offset: Int,
         limit: Int,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?

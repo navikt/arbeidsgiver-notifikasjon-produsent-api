@@ -66,6 +66,7 @@ interface BrukerRepository {
         altinnTilganger: AltinnTilganger,
         tekstsoek: String?,
         sakstyper: List<String>?,
+        sortering: BrukerAPI.SakSortering,
         offset: Int,
         limit: Int,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
@@ -256,6 +257,7 @@ class BrukerRepositoryImpl(
         altinnTilganger: AltinnTilganger,
         tekstsoek: String?,
         sakstyper: List<String>?,
+        sortering: BrukerAPI.SakSortering,
         offset: Int,
         limit: Int,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
@@ -403,7 +405,7 @@ class BrukerRepositoryImpl(
                                 sak.opprettet_tidspunkt,
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
-                            order by sak.sist_endret_tidspunkt desc                        
+                            order by sak.sist_endret_tidspunkt ${if (sortering === BrukerAPI.SakSortering.NYESTE) "desc" else "asc"}                        
                             limit ? offset ?
                         )
                     select
