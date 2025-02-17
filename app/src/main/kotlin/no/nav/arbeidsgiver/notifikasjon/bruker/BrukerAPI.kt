@@ -140,10 +140,7 @@ object BrukerAPI {
 
     enum class SakSortering {
         NYESTE,
-        ELDSTE,
-        OPPDATERT,
-        OPPRETTET,
-        FRIST,
+        ELDSTE
     }
 
     @JsonTypeName("SakerResultat")
