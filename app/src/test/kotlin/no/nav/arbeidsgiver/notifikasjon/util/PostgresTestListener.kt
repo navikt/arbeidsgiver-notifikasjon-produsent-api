@@ -14,10 +14,10 @@ import java.util.concurrent.ConcurrentHashMap
 val templateDbs = ConcurrentHashMap<Database.Config, String>()
 val ids = generateSequence(0) { it + 1 }.iterator()
 val mutex = Mutex()
-private suspend fun createDbFromTemplate(config: Database.Config): Database.Config {
+private suspend fun createDbFromTemplate(config: Database.Config, dbName: String): Database.Config {
     val templateDb = templateDb(config)
     val database = mutex.withLock {
-        "${config.database}_test-${ids.next()}"
+        "${dbName}_test-${ids.next()}"
     }
 
     DriverManager.getConnection(config.url.toString(), config.username, config.password).use { conn ->
@@ -40,7 +40,7 @@ private fun templateDb(config: Database.Config): String {
             DriverManager.getConnection(config.url.toString(), config.username, config.password).use { conn ->
                 conn.createStatement().use { stmt ->
                     val resultSet =
-                        stmt.executeQuery("SELECT datname FROM pg_database where datname like '${config.database}_test%';")
+                        stmt.executeQuery("SELECT datname FROM pg_database where datname like '%${config.database}_test-%';")
                     val tables = resultSet.use {
                         generateSequence {
                             if (resultSet.next()) resultSet.getString(1) else null
@@ -70,9 +70,9 @@ private fun templateDb(config: Database.Config): String {
     return templateDb
 }
 
-fun TestConfiguration.testDatabase(config: Database.Config): Database =
+fun TestConfiguration.testDatabase(config: Database.Config, dbPrefix: String? = null): Database =
     runBlocking {
-        val testConfig = createDbFromTemplate(config)
+        val testConfig = createDbFromTemplate(config, if (dbPrefix !== null) "${dbPrefix}_${config.database}" else config.database)
         Database.openDatabase(
             config = testConfig.copy(
                 // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
