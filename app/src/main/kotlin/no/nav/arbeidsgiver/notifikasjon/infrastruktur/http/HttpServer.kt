@@ -37,6 +37,8 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.timedExecute
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produceMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuth
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthPluginConfiguration
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.slf4j.event.Level
 import java.util.*
@@ -74,7 +76,7 @@ private val graphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1
 fun CoroutineScope.launchHttpServer(
     httpPort: Int,
     customRoute: Routing.() -> Unit = {},
-    application: Application.() -> Unit = { baseSetup(listOf(), customRoute) }
+    application: Application.() -> Unit = { baseSetup(customRoute) }
 ) {
     launch {
         embeddedServer(CIO, port = httpPort) {
@@ -86,30 +88,34 @@ fun CoroutineScope.launchHttpServer(
 
 fun <T : WithCoroutineScope> CoroutineScope.launchGraphqlServer(
     httpPort: Int,
-    authProviders: List<JWTAuthentication> = listOf(),
+    authPluginConfig: TexasAuthPluginConfiguration,
     extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
     graphql: Deferred<TypedGraphQL<T>>,
 ) {
     launchHttpServer(httpPort) {
-        graphqlSetup(authProviders, extractContext, graphql)
+        graphqlSetup(authPluginConfig, extractContext, graphql)
     }
 }
 
 fun <T : WithCoroutineScope> Application.graphqlSetup(
-    authProviders: List<JWTAuthentication>,
+    authPluginConfig: TexasAuthPluginConfiguration,
     extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
     graphql: Deferred<TypedGraphQL<T>>,
 ) {
-    baseSetup(authProviders = authProviders) {
-        authenticate(authProviders) {
-            route("api") {
-                post("graphql") {
-                    withContext(this.coroutineContext + graphQLDispatcher + MDCContext()) {
-                        val context = extractContext()
-                        val request = call.receive<GraphQLRequest>()
-                        val result = graphql.await().timedExecute(request, context)
-                        call.respond(result.toSpecification())
-                    }
+    baseSetup {
+        route("api") {
+
+            install(TexasAuth) {
+                client = authPluginConfig.client
+                validate = authPluginConfig.validate
+            }
+
+            post("graphql") {
+                withContext(this.coroutineContext + graphQLDispatcher + MDCContext()) {
+                    val context = extractContext()
+                    val request = call.receive<GraphQLRequest>()
+                    val result = graphql.await().timedExecute(request, context)
+                    call.respond(result.toSpecification())
                 }
             }
         }
@@ -117,7 +123,6 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
 }
 
 fun Application.baseSetup(
-    authProviders: List<JWTAuthentication>,
     customRoute: Routing.() -> Unit,
 ) {
     install(CORS) {
@@ -162,10 +167,6 @@ fun Application.baseSetup(
         }
 
         replyToHeader(HttpHeaders.XCorrelationId)
-    }
-
-    install(Authentication) {
-        configureProviders(authProviders)
     }
 
     install(CallLogging) {

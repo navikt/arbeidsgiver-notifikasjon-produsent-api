@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
 import io.ktor.http.*
@@ -15,14 +14,21 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.VirksomhetsinfoService
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzurePreAuthorizedApps
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.ClientId
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthPluginConfiguration
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TokenIntrospectionResponse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.stubProdusentRegister
 import org.intellij.lang.annotations.Language
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 fun Spec.ktorBrukerTestServer(
     enhetsregisteret: Enhetsregisteret = EnhetsregisteretStub(),
@@ -44,7 +50,7 @@ fun Spec.ktorBrukerTestServer(
     engine.start()
     engine.application.apply {
         graphqlSetup(
-            authProviders = listOf(LOCALHOST_BRUKER_AUTHENTICATION),
+            authPluginConfig = FAKE_BRUKER_AUTHENTICATION,
             extractContext = extractBrukerContext,
             graphql = CompletableDeferred(brukerGraphQL),
         )
@@ -66,7 +72,7 @@ fun Spec.ktorProdusentTestServer(
     engine.start()
     engine.application.apply {
         graphqlSetup(
-            authProviders = listOf(LOCALHOST_PRODUSENT_AUTHENTICATION),
+            authPluginConfig = FAKE_PRODUSENT_AUTHENTICATION,
             extractContext = extractProdusentContext(produsentRegister),
             graphql = CompletableDeferred(produsentGraphQL)
         )
@@ -89,78 +95,71 @@ class KtorTestListener(
 const val PRODUSENT_HOST = "ag-notifikasjon-produsent-api.invalid"
 const val BRUKER_HOST = "ag-notifikasjon-bruker-api.invalid"
 
-/* Issue tokens as localhost for unit testing */
-object LocalhostIssuer {
-    private const val issuer = "localhost"
-    val algorithm: Algorithm = Algorithm.none()
-    private const val brukerAudience = "localhost:bruker-api"
-    private const val produsentAudience = "localhost:bruker-api"
+val FAKE_PRODUSENT_AUTHENTICATION = TexasAuthPluginConfiguration(
+    client = object : AuthClient {
+        override suspend fun token(target: String) = TODO()
+        override suspend fun exchange(target: String, userToken: String) = TODO()
 
-    private fun issueToken(
-        sub: String,
-        audience: String,
-        azp: String? = null
-    ): String =
-        JWT.create().run {
-            withIssuer(issuer)
-            withSubject(sub)
-            withAudience(audience)
-            if (azp != null) {
-                withClaim("azp", azp)
-            }
-            sign(algorithm)
-        }
+        override suspend fun introspect(accessToken: String) = TokenIntrospectionResponse(
+            active = true,
+            error = null,
+            other = laxObjectMapper.readValue(FakeIssuer.decodeFake(accessToken))
+        )
+    },
+    validate = { token ->
+        ProdusentPrincipal.validate(FakeAzurePreAuthorizedApps, token)
+    }
+)
 
+val FAKE_BRUKER_AUTHENTICATION = TexasAuthPluginConfiguration(
+    client = object : AuthClient {
+        override suspend fun token(target: String) = TODO("not implemented")
+        override suspend fun exchange(target: String, userToken: String) = TODO("not implemented")
+
+        override suspend fun introspect(accessToken: String) = TokenIntrospectionResponse(
+            active = true,
+            error = null,
+            other = laxObjectMapper.readValue(FakeIssuer.decodeFake(accessToken))
+        )
+    },
+    validate = { token ->
+        BrukerPrincipal.validate(token)
+    }
+)
+
+val FakeAzurePreAuthorizedApps = object : AzurePreAuthorizedApps {
+    override fun lookup(clientId: ClientId) = clientId
+}
+
+object FakeIssuer {
     fun issueProdusentToken(sub: String = "someproducer") =
-        issueToken(
-            sub,
-            audience = produsentAudience,
-            azp = sub
+        encodeFake(
+            """
+            {
+              "azp": "$sub"
+            }
+        """
         )
 
     fun issueBrukerToken(sub: String = TEST_FNR_1) =
-        issueToken(sub, audience = brukerAudience)
-}
-
-val LOCALHOST_PRODUSENT_AUTHENTICATION = JWTAuthentication(
-    name = "localhost",
-    config = {
-        verifier(
-            JWT.require(LocalhostIssuer.algorithm)
-                .build()
+        encodeFake(
+            """
+            {
+              "pid": "$sub",
+              "acr": "idporten-loa-high"
+            }
+            """
         )
 
-        validate {
-            ProdusentPrincipal(
-                appName = it.payload.getClaim("azp").asString()
-            )
-        }
-    }
-)
+    @OptIn(ExperimentalEncodingApi::class)
+    fun encodeFake(str: String) = Base64.Default.encode(str.encodeToByteArray())
 
-val LOCALHOST_BRUKER_AUTHENTICATION = JWTAuthentication(
-    name = "localhost",
-    config = {
-        verifier(
-            JWT.require(LocalhostIssuer.algorithm)
-                .build()
-        )
-
-        validate {
-            BrukerPrincipal(
-                fnr = it.payload.subject
-            )
-        }
-    }
-)
-
-val SELVBETJENING_TOKEN = LocalhostIssuer.issueBrukerToken()
-val TOKENDINGS_TOKEN = LocalhostIssuer.issueProdusentToken()
-
-fun main() {
-    println(SELVBETJENING_TOKEN)
-    println(TOKENDINGS_TOKEN)
+    @OptIn(ExperimentalEncodingApi::class)
+    fun decodeFake(str: String) = Base64.Default.decode(str)
 }
+
+val BRUKERAPI_OBOTOKEN = FakeIssuer.issueBrukerToken()
+val PRODUSENTAPI_AZURETOKEN = FakeIssuer.issueProdusentToken()
 
 typealias RequestConfig = TestApplicationRequest.() -> Unit
 
@@ -234,7 +233,7 @@ fun TestApplicationEngine.brukerApi(req: GraphQLRequest): TestApplicationRespons
         host = BRUKER_HOST,
         jsonBody = req,
         accept = "application/json",
-        authorization = "Bearer $SELVBETJENING_TOKEN"
+        authorization = "Bearer $BRUKERAPI_OBOTOKEN"
     )
 }
 

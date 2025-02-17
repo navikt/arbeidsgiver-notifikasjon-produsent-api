@@ -5,6 +5,8 @@ metadata:
   namespace: fager
   labels:
     team: fager
+  annotations:
+    texas.nais.io/enabled: "true"
 spec:
   image: {{image}}
   resources:
@@ -28,6 +30,8 @@ spec:
   azure:
     application:
       enabled: true
+  texas:
+    enabled: true
   accessPolicy:
     outbound:
       rules:

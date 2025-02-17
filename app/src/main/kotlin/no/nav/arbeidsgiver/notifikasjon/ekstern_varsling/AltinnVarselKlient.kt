@@ -86,6 +86,7 @@ class AltinnVarselKlientImpl(
     ),
 ) : AltinnVarselKlient {
     val log = logger()
+
     private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java) {
         azureService.getAccessToken(azureTargetApp)
     }

@@ -1,18 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.network.sockets.*
-import io.ktor.serialization.jackson.*
-import org.apache.http.ConnectionClosedException
-import javax.net.ssl.SSLHandshakeException
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 
 interface Enhetsregisteret {
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -46,37 +40,18 @@ class EnhetsregisteretImpl(
 
     private val timer = Metrics.meterRegistry.timer("brreg_hent_organisasjon")
 
-    private val httpClient = HttpClient(Apache) {
+    private val httpClient = defaultHttpClient {
+        expectSuccess = false
         defaultRequest {
             url(baseUrl ?: basedOnEnv(
                 prod = { "https://ereg-services.prod-fss-pub.nais.io/" },
                 other = { "https://ereg-services-q1.dev-fss-pub.nais.io/" },
             ))
         }
-        install(ContentNegotiation) {
-            jackson()
-        }
-        install(PropagateFromMDCPlugin) {
-            propagate("x_correlation_id")
-        }
+
         install(HttpClientMetricsFeature) {
             registry = Metrics.meterRegistry
             staticPath = "/enhetsregisteret/api/underenheter/"
-        }
-        install(HttpRequestRetry) {
-            maxRetries = 2
-            retryOnExceptionIf { _, cause ->
-                cause is ConnectionClosedException ||
-                cause is SocketTimeoutException ||
-                cause is SSLHandshakeException
-            }
-            delayMillis { 100L }
-        }
-        expectSuccess = false
-        engine {
-            socketTimeout = 1000
-            connectTimeout = 1000
-            connectionRequestTimeout = 2000
         }
     }
 
