@@ -66,7 +66,6 @@ jobs:
         working-directory: app
 
       - uses: nais/docker-build-push@v0
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: gar-push
         with:
           team: fager
@@ -78,7 +77,7 @@ jobs:
           byosbom: app/target/bom.json
 
   deploy:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: github.ref == 'refs/heads/main'
     needs: [build]
     runs-on: ubuntu-latest
     permissions:
