@@ -5,7 +5,6 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.SakSortering.FRIST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
@@ -63,7 +62,6 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         val res = engine.querySakerJson(
             virksomhetsnummer = "1",
             limit = 10,
-            sortering = FRIST,
         )
 
         it("Teller kun saken en gang for hver tilstand") {
@@ -129,7 +127,6 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
             engine.querySakerJson(
                 virksomhetsnummer = "1",
                 limit = 10,
-                sortering = FRIST,
                 oppgaveTilstand = listOf(NY)
             ).getTypedContent<List<UUID>>("$.saker.saker.*.id")
 
@@ -146,7 +143,6 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         val res = engine.querySakerJson(
             virksomhetsnummer = "1",
             limit = 10,
-            sortering = FRIST,
         ).getTypedContent<List<UUID>>("$.saker.saker.*.id")
 
         it("skal returnere saker med og uten oppgaver") {
