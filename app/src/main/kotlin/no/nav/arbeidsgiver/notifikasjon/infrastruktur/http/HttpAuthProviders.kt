@@ -12,10 +12,9 @@ data class BrukerPrincipal(
 ) : Principal {
     companion object {
         fun validate(token: TokenIntrospectionResponse): BrukerPrincipal? = with(token) {
-            val acrValid = other["acr"].let {
+            val acrValid = acr.let {
                 it in listOf("idporten-loa-high", "Level4")
             }
-            val pid = other["pid"]
 
             if (acrValid && pid is String) {
                 return BrukerPrincipal(
@@ -42,7 +41,7 @@ data class ProdusentPrincipal(
             preAuthorizedApps: AzurePreAuthorizedApps,
             token: TokenIntrospectionResponse,
         ): ProdusentPrincipal? = with(token) {
-            val azp = other["azp"] as? String ?: run {
+            if (azp == null) {
                 log.error("AzureAD missing azp-claim")
                 return null
             }
