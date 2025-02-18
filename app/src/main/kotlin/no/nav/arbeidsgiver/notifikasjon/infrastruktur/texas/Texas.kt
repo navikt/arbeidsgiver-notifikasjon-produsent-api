@@ -1,9 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter
-import com.fasterxml.jackson.annotation.JsonAnySetter
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -81,10 +78,21 @@ data class TokenErrorResponse(
  *   val exp: Long,
  * )
  */
+
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class TokenIntrospectionResponse(
     val active: Boolean,
     @JsonInclude(JsonInclude.Include.NON_NULL)
     val error: String?,
+
+    val acr: String? = null,
+    val pid: String? = null,
+    val azp: String? = null,
+    /**
+     * mapet "other" er alltid tomt. Dette er pga @JsonAnySetter er broken i jackson 2.17.0+
+     * @JsonAnySetter er fikset i 2.18.1 https://github.com/FasterXML/jackson-databind/issues/4508
+     */
     @JsonAnySetter @get:JsonAnyGetter
     val other: Map<String, Any?> = mutableMapOf(),
 )
@@ -140,11 +148,11 @@ class AuthClientImpl(
         TokenResponse.Error(e.response.body<TokenErrorResponse>(), e.response.status)
     }
 
-    override suspend fun introspect(accessToken: String) = withTimer("texas_auth_introspect").coRecord {
+    override suspend fun introspect(accessToken: String) : TokenIntrospectionResponse = withTimer("texas_auth_introspect").coRecord {
         httpClient.submitForm(config.tokenIntrospectionEndpoint, parameters {
             set("token", accessToken)
             set("identity_provider", provider.alias)
-        }).body<TokenIntrospectionResponse>()
+        }).body()
     }
 }
 
