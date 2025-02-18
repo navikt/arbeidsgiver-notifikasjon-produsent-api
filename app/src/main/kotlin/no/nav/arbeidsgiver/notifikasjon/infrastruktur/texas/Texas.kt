@@ -1,6 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas
 
-import com.fasterxml.jackson.annotation.*
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -28,6 +30,7 @@ enum class IdentityProvider(val alias: String) {
     TOKEN_X("tokenx"),
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 sealed class TokenResponse {
     data class Success(
         @JsonProperty("access_token")
@@ -52,6 +55,7 @@ sealed class TokenResponse {
         }
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class TokenErrorResponse(
     val error: String,
     @JsonProperty("error_description")
@@ -93,8 +97,8 @@ data class TokenIntrospectionResponse(
      * mapet "other" er alltid tomt. Dette er pga @JsonAnySetter er broken i jackson 2.17.0+
      * @JsonAnySetter er fikset i 2.18.1 https://github.com/FasterXML/jackson-databind/issues/4508
      */
-    @JsonAnySetter @get:JsonAnyGetter
-    val other: Map<String, Any?> = mutableMapOf(),
+    //@JsonAnySetter @get:JsonAnyGetter
+    //val other: Map<String, Any?> = mutableMapOf(),
 )
 
 data class TexasAuthConfig(
