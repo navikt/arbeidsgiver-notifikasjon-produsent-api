@@ -30,8 +30,6 @@ spec:
   azure:
     application:
       enabled: true
-  texas:
-    enabled: true
   accessPolicy:
     outbound:
       rules:
