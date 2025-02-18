@@ -95,33 +95,25 @@ class KtorTestListener(
 const val PRODUSENT_HOST = "ag-notifikasjon-produsent-api.invalid"
 const val BRUKER_HOST = "ag-notifikasjon-bruker-api.invalid"
 
-val FAKE_PRODUSENT_AUTHENTICATION = TexasAuthPluginConfiguration(
-    client = object : AuthClient {
-        override suspend fun token(target: String) = TODO()
-        override suspend fun exchange(target: String, userToken: String) = TODO()
+/**
+ * fake auth client som returnerer samme token ved introspection.
+ */
+val fakeAuthClient = object : AuthClient {
+    override suspend fun token(target: String) = TODO("not implemented")
+    override suspend fun exchange(target: String, userToken: String) = TODO("not implemented")
 
-        override suspend fun introspect(accessToken: String) = TokenIntrospectionResponse(
-            active = true,
-            error = null,
-            other = laxObjectMapper.readValue(FakeIssuer.decodeFake(accessToken))
-        )
-    },
+    override suspend fun introspect(accessToken: String): TokenIntrospectionResponse =
+        laxObjectMapper.readValue(FakeIssuer.decodeFake(accessToken))
+}
+
+val FAKE_PRODUSENT_AUTHENTICATION = TexasAuthPluginConfiguration(
+    client = fakeAuthClient,
     validate = { token ->
         ProdusentPrincipal.validate(FakeAzurePreAuthorizedApps, token)
     }
 )
-
 val FAKE_BRUKER_AUTHENTICATION = TexasAuthPluginConfiguration(
-    client = object : AuthClient {
-        override suspend fun token(target: String) = TODO("not implemented")
-        override suspend fun exchange(target: String, userToken: String) = TODO("not implemented")
-
-        override suspend fun introspect(accessToken: String) = TokenIntrospectionResponse(
-            active = true,
-            error = null,
-            other = laxObjectMapper.readValue(FakeIssuer.decodeFake(accessToken))
-        )
-    },
+    client = fakeAuthClient,
     validate = { token ->
         BrukerPrincipal.validate(token)
     }
@@ -131,11 +123,16 @@ val FakeAzurePreAuthorizedApps = object : AzurePreAuthorizedApps {
     override fun lookup(clientId: ClientId) = clientId
 }
 
+/**
+ * Siden vi bruker texas som tar seg av jwt validering så lager vi fake tokens i testene som
+ * bare inneholder de claimene vi bryr oss om.
+ */
 object FakeIssuer {
     fun issueProdusentToken(sub: String = "someproducer") =
         encodeFake(
             """
             {
+              "active": true,
               "azp": "$sub"
             }
         """
@@ -145,6 +142,7 @@ object FakeIssuer {
         encodeFake(
             """
             {
+              "active": true,
               "pid": "$sub",
               "acr": "idporten-loa-high"
             }
