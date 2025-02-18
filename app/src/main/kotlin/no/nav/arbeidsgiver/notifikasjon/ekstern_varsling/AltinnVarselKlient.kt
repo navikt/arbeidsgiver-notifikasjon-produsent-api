@@ -79,16 +79,17 @@ class AltinnVarselKlientImpl(
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
     azureService: AzureService = AzureServiceImpl,
-    azureTargetApp: String = basedOnEnv(
-        prod = { "prod-gcp.fager.altinn-varsel-firewall" },
-        dev = { "dev-gcp.fager.altinn-varsel-firewall" },
-        other = { " " }
-    ),
 ) : AltinnVarselKlient {
     val log = logger()
 
+    private val azureTarget: String = basedOnEnv(
+        prod = { "api://prod-gcp.fager.altinn-varsel-firewall/.default" },
+        dev = { "api://dev-gcp.fager.altinn-varsel-firewall/.default" },
+        other = { " " }
+    )
+
     private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java) {
-        azureService.getAccessToken(azureTargetApp)
+        azureService.getAccessToken(azureTarget)
     }
 
     override suspend fun send(eksternVarsel: EksternVarsel) = when (eksternVarsel) {
