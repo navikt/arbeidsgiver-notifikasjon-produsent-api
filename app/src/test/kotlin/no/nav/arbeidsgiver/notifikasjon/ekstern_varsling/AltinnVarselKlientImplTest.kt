@@ -14,8 +14,9 @@ import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TokenResponse
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean
 
 class AltinnVarselKlientImplTest : DescribeSpec({
@@ -67,8 +68,10 @@ class AltinnVarselKlientImplTest : DescribeSpec({
 
     val klient = AltinnVarselKlientImpl(
         altinnEndPoint = altinnEndpoint,
-        azureService = object : AzureService {
-            override suspend fun getAccessToken(targetApp: String) = ""
+        authClient = object : AuthClient {
+            override suspend fun token(target: String) = TokenResponse.Success("", 3600)
+            override suspend fun exchange(target: String, userToken: String) = TODO("Not yet implemented")
+            override suspend fun introspect(accessToken: String) = TODO("Not yet implemented")
         }
     )
 

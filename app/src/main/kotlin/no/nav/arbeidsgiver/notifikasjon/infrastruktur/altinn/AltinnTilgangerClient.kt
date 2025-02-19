@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.*
-import io.ktor.client.engine.apache.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -21,7 +21,7 @@ class AltinnTilgangerClient(
     private val baseUrl: String? = null,
     private val tokenXClient: TokenXClient = TokenXClientImpl(),
     private val observer: (orgnr: String, navn: String) -> Unit,
-    engine: HttpClientEngine = Apache.create(),
+    engine: HttpClientEngine = CIO.create(),
 ) {
 
     private val log = logger()
