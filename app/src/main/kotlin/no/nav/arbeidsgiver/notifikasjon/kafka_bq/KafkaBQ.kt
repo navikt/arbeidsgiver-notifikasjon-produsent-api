@@ -1,7 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_bq
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.BigQueryClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
@@ -18,7 +20,6 @@ object KafkaBQ {
     private val tableName = System.getenv("BIGQUERY_TABLE_NAME")
         ?: error("Missing required environment variable: BIGQUERY_TABLE_NAME")
 
-    /*
     private val bigQueryHendelseService = BigQueryHendelseService(
         tableName = tableName,
         bigQueryClient = BigQueryClientImpl(
@@ -26,18 +27,16 @@ object KafkaBQ {
             datasetId = datasetId
         ),
     )
-     */
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
             Health.subsystemReady[Subsystem.DATABASE] = true
-            /*
+
             launch {
                 hendelsesstrøm.forEach { hendelse ->
                     bigQueryHendelseService.insertHendelse(hendelse)
                 }
             }
-             */
 
             launchHttpServer(httpPort = httpPort)
         }
