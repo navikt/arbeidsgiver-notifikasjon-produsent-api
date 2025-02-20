@@ -14,9 +14,11 @@ import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2015._
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasic
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureService
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzureServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.IdentityProvider
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthConfig
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.blockingIO
 import org.apache.cxf.ext.logging.LoggingInInterceptor
 import org.apache.cxf.ext.logging.LoggingOutInterceptor
@@ -78,16 +80,21 @@ class AltinnVarselKlientImpl(
     altinnEndPoint: String = "http://altinn-varsel-firewall.fager/ServiceEngineExternal/NotificationAgencyExternalBasic.svc",
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
-    azureService: AzureService = AzureServiceImpl,
-    azureTargetApp: String = basedOnEnv(
-        prod = { "prod-gcp.fager.altinn-varsel-firewall" },
-        dev = { "dev-gcp.fager.altinn-varsel-firewall" },
-        other = { " " }
-    ),
+    authClient: AuthClient = AuthClientImpl(TexasAuthConfig.nais(), IdentityProvider.AZURE_AD),
 ) : AltinnVarselKlient {
     val log = logger()
+
+    private val azureTarget: String = basedOnEnv(
+        prod = { "api://prod-gcp.fager.altinn-varsel-firewall/.default" },
+        dev = { "api://dev-gcp.fager.altinn-varsel-firewall/.default" },
+        other = { " " }
+    )
+
     private val wsclient = createServicePort(altinnEndPoint, INotificationAgencyExternalBasic::class.java) {
-        azureService.getAccessToken(azureTargetApp)
+        authClient.token(azureTarget).fold(
+            onSuccess = { it.accessToken },
+            onError = { throw Exception("Failed to fetch token: ${it.error}") }
+        )
     }
 
     override suspend fun send(eksternVarsel: EksternVarsel) = when (eksternVarsel) {

@@ -10,7 +10,7 @@
 
     <properties>
         <kotlin.version>2.0.0</kotlin.version>
-        <ktor.version>2.3.12</ktor.version>
+        <ktor.version>2.3.13</ktor.version>
         <kotest.version>5.9.1</kotest.version>
         <cxf.version>4.0.5</cxf.version>
         <!-- <kotlin.compiler.incremental>true</kotlin.compiler.incremental> -->
@@ -98,7 +98,7 @@
         </dependency>
         <dependency>
             <groupId>io.ktor</groupId>
-            <artifactId>ktor-server-auth-jwt-jvm</artifactId>
+            <artifactId>ktor-server-auth-jvm</artifactId>
             <version>${ktor.version}</version>
         </dependency>
         <dependency>
@@ -113,7 +113,7 @@
         </dependency>
         <dependency>
             <groupId>io.ktor</groupId>
-            <artifactId>ktor-client-apache-jvm</artifactId>
+            <artifactId>ktor-client-cio-jvm</artifactId>
             <version>${ktor.version}</version>
         </dependency>
         <dependency>
@@ -234,12 +234,6 @@
             <version>1.19.0</version>
         </dependency>
 
-        <!-- auth -->
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <version>9.40</version>
-        </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>

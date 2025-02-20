@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.*
-import io.ktor.client.engine.apache.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -12,16 +12,18 @@ import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClient
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.IdentityProvider
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthConfig
 import org.apache.http.ConnectionClosedException
 import javax.net.ssl.SSLHandshakeException
 
 class AltinnTilgangerClient(
     private val baseUrl: String? = null,
-    private val tokenXClient: TokenXClient = TokenXClientImpl(),
+    private val authClient: AuthClient = AuthClientImpl(TexasAuthConfig.nais(), IdentityProvider.TOKEN_X),
     private val observer: (orgnr: String, navn: String) -> Unit,
-    engine: HttpClientEngine = Apache.create(),
+    engine: HttpClientEngine = CIO.create(),
 ) {
 
     private val log = logger()
@@ -54,18 +56,10 @@ class AltinnTilgangerClient(
     private val targetAudience = "${NaisEnvironment.clusterName}:fager:arbeidsgiver-altinn-tilganger"
 
     suspend fun hentTilganger(subjectToken: String): AltinnTilganger {
-        val token = try {
-            tokenXClient.exchange(
-                subjectToken,
-                targetAudience
-            )
-        } catch (e: RuntimeException) {
-            log.error("Failed to exchange token", e)
-            return AltinnTilganger(
-                harFeil = true,
-                tilganger = listOf()
-            )
-        }
+        val token = authClient.exchange(
+            target = targetAudience,
+            userToken = subjectToken,
+        )
 
         val dto = try {
             httpClient.post {
@@ -73,7 +67,7 @@ class AltinnTilgangerClient(
                     path("/altinn-tilganger")
                 }
                 accept(ContentType.Application.Json)
-                bearerAuth(token)
+                bearerAuth(token.fold({ it.accessToken }, { throw Exception("Failed to exchange token: ${it.error}") }))
             }.body<AltinnTilgangerClientResponse>()
         } catch (e: Exception) {
             log.error("Failed to fetch tilganger", e)

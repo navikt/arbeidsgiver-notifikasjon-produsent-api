@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerClie
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerServiceImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.JWTAuthentication
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchGraphqlServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
@@ -22,23 +21,7 @@ object Bruker {
     private val log = logger()
     val databaseConfig = Database.config("bruker_model")
 
-    private val defaultAuthProviders = when (val name = System.getenv("NAIS_CLUSTER_NAME")) {
-        "prod-gcp" -> listOf(
-            HttpAuthProviders.TOKEN_X,
-        )
-        null, "dev-gcp" -> listOf(
-            HttpAuthProviders.TOKEN_X,
-            HttpAuthProviders.FAKEDINGS_BRUKER
-        )
-        else -> {
-            val msg = "ukjent NAIS_CLUSTER_NAME '$name'"
-            log.error(msg)
-            throw Error(msg)
-        }
-    }
-
     fun main(
-        authProviders: List<JWTAuthentication> = defaultAuthProviders,
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
         altinnTilgangerService: AltinnTilgangerService = AltinnTilgangerServiceImpl(AltinnTilgangerClient(
@@ -63,7 +46,7 @@ object Bruker {
 
             launchGraphqlServer(
                 httpPort = httpPort,
-                authProviders = authProviders,
+                authPluginConfig = HttpAuthProviders.BRUKER_API_AUTH,
                 extractContext = extractBrukerContext,
                 graphql = graphql,
             )

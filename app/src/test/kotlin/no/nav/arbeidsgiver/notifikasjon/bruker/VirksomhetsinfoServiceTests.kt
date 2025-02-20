@@ -7,7 +7,7 @@ import io.ktor.http.*
 import io.ktor.utils.io.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerClient
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientStub
 
 class VirksomhetsinfoServiceTests: DescribeSpec({
     val enhetsregisteret = object: Enhetsregisteret {
@@ -22,7 +22,7 @@ class VirksomhetsinfoServiceTests: DescribeSpec({
 
     val altinn = AltinnTilgangerClient(
         observer = virksomhetsinfoService::cachePut,
-        tokenXClient = TokenXClientStub(),
+        authClient = AuthClientStub(),
         engine = MockEngine { _ ->
             respond(
                 content = ByteReadChannel(//language=JSON

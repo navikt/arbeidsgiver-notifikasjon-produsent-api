@@ -55,7 +55,7 @@ class KlikkPåNotifikasjonGraphQLTests : DescribeSpec({
                     """.trimIndent()
                 ),
                 accept = "application/json",
-                authorization = "Bearer $SELVBETJENING_TOKEN"
+                authorization = "Bearer $BRUKERAPI_OBOTOKEN"
             )
 
             it("ingen http/graphql-feil") {
