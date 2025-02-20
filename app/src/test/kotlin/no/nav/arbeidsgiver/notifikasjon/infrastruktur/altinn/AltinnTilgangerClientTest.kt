@@ -7,12 +7,18 @@ import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientStub
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TokenResponse
 
 class AltinnTilgangerClientTest : DescribeSpec({
     describe("AltinnTilgangerClient") {
-
+        val authClientCapture = mutableMapOf<String, String>()
         val client = AltinnTilgangerClient(
-            authClient = AuthClientStub(),
+            authClient = object : AuthClientStub() {
+                override suspend fun exchange(target: String, userToken: String): TokenResponse {
+                    authClientCapture[target] = userToken
+                    return TokenResponse.Success("foo", 42)
+                }
+            },
             observer = { _, _ -> },
             engine = MockEngine { _ ->
                 respond(
@@ -30,6 +36,7 @@ class AltinnTilgangerClientTest : DescribeSpec({
                     AltinnTilgang("910825496", "test-fager"),
                     AltinnTilgang("910825496", "4936:1"),
                 )
+                authClientCapture[":fager:arbeidsgiver-altinn-tilganger"] shouldBe "fake tolkien"
             }
         }
     }

@@ -57,8 +57,8 @@ class AltinnTilgangerClient(
 
     suspend fun hentTilganger(subjectToken: String): AltinnTilganger {
         val token = authClient.exchange(
-            subjectToken,
-            targetAudience
+            target = targetAudience,
+            userToken = subjectToken,
         )
 
         val dto = try {
