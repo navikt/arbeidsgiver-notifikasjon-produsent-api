@@ -6,13 +6,13 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.tokenx.TokenXClientStub
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientStub
 
 class AltinnTilgangerClientTest : DescribeSpec({
     describe("AltinnTilgangerClient") {
 
         val client = AltinnTilgangerClient(
-            tokenXClient = TokenXClientStub(),
+            authClient = AuthClientStub(),
             observer = { _, _ -> },
             engine = MockEngine { _ ->
                 respond(

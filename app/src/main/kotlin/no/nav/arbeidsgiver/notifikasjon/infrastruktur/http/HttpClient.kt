@@ -7,6 +7,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
+import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
@@ -60,10 +61,14 @@ fun defaultHttpClient(
 
 val httpClientTaggedTimerTimer = ConcurrentHashMap<String, Timer>()
 
-fun withTimer(name: String): Timer =
+fun withTimer(
+    name: String,
+    additionalTags: Tags = Tags.empty()
+): Timer =
     httpClientTaggedTimerTimer.computeIfAbsent(name) {
         Timer.builder("http_client")
             .tag("name", it)
+            .tags(additionalTags)
             .publishPercentileHistogram()
             .register(Metrics.meterRegistry)
     }

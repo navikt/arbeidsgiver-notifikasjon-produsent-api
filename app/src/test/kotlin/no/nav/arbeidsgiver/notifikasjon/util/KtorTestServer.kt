@@ -20,7 +20,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientStub
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthPluginConfiguration
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TokenIntrospectionResponse
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
@@ -98,10 +98,7 @@ const val BRUKER_HOST = "ag-notifikasjon-bruker-api.invalid"
 /**
  * fake auth client som returnerer samme token ved introspection.
  */
-val fakeAuthClient = object : AuthClient {
-    override suspend fun token(target: String) = TODO("not implemented")
-    override suspend fun exchange(target: String, userToken: String) = TODO("not implemented")
-
+val fakeAuthClient = object : AuthClientStub() {
     override suspend fun introspect(accessToken: String): TokenIntrospectionResponse =
         laxObjectMapper.readValue(FakeIssuer.decodeFake(accessToken))
 }

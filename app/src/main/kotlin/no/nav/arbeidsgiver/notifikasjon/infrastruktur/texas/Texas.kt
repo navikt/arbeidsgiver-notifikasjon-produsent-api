@@ -14,6 +14,7 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
+import io.micrometer.core.instrument.Tags
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.withTimer
@@ -108,7 +109,7 @@ class AuthClientImpl(
 ) : AuthClient {
 
     override suspend fun token(target: String): TokenResponse = try {
-        withTimer("texas_auth_token").coRecord {
+        withTimer("texas_auth_token", Tags.of("provider", provider.name)).coRecord {
             httpClient.submitForm(config.tokenEndpoint, parameters {
                 set("target", target)
                 set("identity_provider", provider.alias)
@@ -119,7 +120,7 @@ class AuthClientImpl(
     }
 
     override suspend fun exchange(target: String, userToken: String): TokenResponse = try {
-        withTimer("texas_auth_exchange").coRecord {
+        withTimer("texas_auth_exchange", Tags.of("provider", provider.name)).coRecord {
             httpClient.submitForm(config.tokenExchangeEndpoint, parameters {
                 set("target", target)
                 set("user_token", userToken)
@@ -130,7 +131,10 @@ class AuthClientImpl(
         TokenResponse.Error(e.response.body<TokenErrorResponse>(), e.response.status)
     }
 
-    override suspend fun introspect(accessToken: String) : TokenIntrospectionResponse = withTimer("texas_auth_introspect").coRecord {
+    override suspend fun introspect(accessToken: String) : TokenIntrospectionResponse = withTimer(
+        "texas_auth_introspect",
+        Tags.of("provider", provider.name)
+    ).coRecord {
         httpClient.submitForm(config.tokenIntrospectionEndpoint, parameters {
             set("token", accessToken)
             set("identity_provider", provider.alias)
