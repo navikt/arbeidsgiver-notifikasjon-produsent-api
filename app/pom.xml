@@ -200,6 +200,13 @@
             <version>3.7.1</version>
         </dependency>
 
+        <!-- big query -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-bigquery</artifactId>
+            <version>2.47.0</version>
+        </dependency>
+
         <!-- db -->
         <dependency>
             <groupId>org.postgresql</groupId>
