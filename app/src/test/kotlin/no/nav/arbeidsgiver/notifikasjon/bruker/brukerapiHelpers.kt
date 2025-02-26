@@ -209,6 +209,10 @@ fun TestApplicationEngine.querySakerJson(
             oppgaveTilstandInfo {
                 tilstand
                 antall
+            }            
+            oppgaveFilterInfo {
+                filterType
+                antall
             }
             feilAltinn
             totaltAntallSaker
