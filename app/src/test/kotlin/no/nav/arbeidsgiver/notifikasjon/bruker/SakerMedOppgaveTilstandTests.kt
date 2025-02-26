@@ -6,11 +6,13 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Påminnelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -19,17 +21,25 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
     describe("Sak med oppgave med frist og påminnelse") {
         val (repo, engine) = setupRepoOgEngine()
         val sak1 = repo.opprettSak("1")
-        repo.opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
+        val date = LocalDate.parse("2023-01-15")
+
+        repo.opprettOppgave(sak1, date).also { repo.oppgaveTilstandUtført(it) }
+        repo.opprettOppgave(sak1, LocalDate.parse("2023-05-22"))
+            .also { repo.påminnelseOpprettet(it, date.plusDays(7).atTime(LocalTime.MAX)) }
         repo.opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
-        repo.opprettOppgave(sak1, LocalDate.parse("2023-05-15"))
-        repo.opprettOppgave(sak1, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtgått(it) }
+            .also { repo.påminnelseOpprettet(it, date.plusDays(7).atTime(LocalTime.MAX)) }
+        repo.opprettOppgave(sak1, date).also { repo.oppgaveTilstandUtgått(it) }
+            .also { repo.påminnelseOpprettet(it, date.minusDays(7).atTime(LocalTime.MAX)) }
+
 
         val sak2 = repo.opprettSak("2")
-        repo.opprettOppgave(sak2, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
+        repo.opprettOppgave(sak2, date).also { repo.oppgaveTilstandUtført(it) }
+            .also { repo.påminnelseOpprettet(it, date.minusDays(7).atTime(LocalTime.MAX)) }
         repo.opprettOppgave(sak2, LocalDate.parse("2023-05-15"))
 
+
         val sak3 = repo.opprettSak("3")
-        repo.opprettOppgave(sak3, LocalDate.parse("2023-01-15")).also { repo.oppgaveTilstandUtført(it) }
+        repo.opprettOppgave(sak3, date).also { repo.oppgaveTilstandUtført(it) }
 
         val sak4 = repo.opprettSak("4").also { sak ->
             repo.kalenderavtaleOpprettet(
@@ -77,6 +87,28 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
                 mapOf(
                     "tilstand" to "UTFOERT",
                     "antall" to 3
+                )
+            )
+        }
+
+
+        it("Teller kun saken en gang for hver filterInfo") {
+            res.getTypedContent<List<Any>>("$.saker.oppgaveFilterInfo") shouldContainExactlyInAnyOrder listOf(
+                mapOf(
+                    "filterType" to "NY",
+                    "antall" to 4
+                ),
+                mapOf(
+                    "filterType" to "UTGAATT",
+                    "antall" to 1
+                ),
+                mapOf(
+                    "filterType" to "UTFOERT",
+                    "antall" to 3
+                ),
+                mapOf(
+                    "filterType" to "NY_MED_PÅMINNELSE_UTLØST",
+                    "antall" to 1
                 )
             )
         }
@@ -154,6 +186,7 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
 private suspend fun BrukerRepository.opprettOppgave(
     sak: HendelseModel.SakOpprettet,
     frist: LocalDate?,
+    påminnelse: Påminnelse? = null
 ) = oppgaveOpprettet(
     virksomhetsnummer = "1",
     produsentId = "1",
@@ -174,7 +207,7 @@ private suspend fun BrukerRepository.opprettOppgave(
     lenke = "#foo",
     hardDelete = null,
     frist = frist,
-    påminnelse = null,
+    påminnelse = påminnelse,
 )
 
 private suspend fun BrukerRepository.opprettStatus(sak: HendelseModel.SakOpprettet) = nyStatusSak(

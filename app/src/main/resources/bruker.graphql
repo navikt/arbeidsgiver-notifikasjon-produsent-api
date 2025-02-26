@@ -49,11 +49,18 @@ type SakerResultat {
 
     oppgaveTilstandInfo: [OppgaveTilstandInfo!]!
 
+    oppgaveFilterInfo: [OppgaveFilterInfo!]!
+
     feilAltinn: Boolean!
 }
 
 type OppgaveTilstandInfo {
     tilstand: OppgaveTilstand!
+    antall: Int!
+}
+
+type OppgaveFilterInfo {
+    filterType: String!
     antall: Int!
 }
 
