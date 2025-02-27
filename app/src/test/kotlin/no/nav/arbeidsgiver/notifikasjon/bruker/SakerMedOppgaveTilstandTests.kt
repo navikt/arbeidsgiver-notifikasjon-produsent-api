@@ -4,9 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Påminnelse
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
@@ -159,7 +157,7 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
             engine.querySakerJson(
                 virksomhetsnummer = "1",
                 limit = 10,
-                oppgaveTilstand = listOf(NY)
+                oppgaveTilstand = listOf(BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY)
             ).getTypedContent<List<UUID>>("$.saker.saker.*.id")
 
 
@@ -181,12 +179,55 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
             res shouldContainExactlyInAnyOrder listOf(sak1.sakId, sak2.sakId)
         }
     }
+
+    describe("Saker med merkelapp filter og oppgaveFilter") {
+        val (repo, engine) = setupRepoOgEngine()
+        val sak1 = repo.opprettSak("1", merkelapp = "merkelapp1")
+        val sak2 = repo.opprettSak("2", merkelapp = "merkelapp1")
+        val sak3 = repo.opprettSak("3", merkelapp = "merkelapp2")
+        repo.opprettOppgave(sak1, null)
+            .also { repo.påminnelseOpprettet(it, LocalDate.parse("2023-01-15").plusDays(7).atTime(LocalTime.MAX)) }
+        repo.opprettOppgave(sak1, null)
+        repo.opprettOppgave(sak2, null)
+        repo.opprettOppgave(sak2, null)
+        repo.opprettOppgave(sak3, null)
+            .also { repo.påminnelseOpprettet(it, LocalDate.parse("2023-01-15").plusDays(7).atTime(LocalTime.MAX)) }
+        repo.opprettOppgave(sak3, null).also { repo.oppgaveTilstandUtført(it) }
+
+        it("skal returnere saker med merkelapp1, utløst påminnelse og riktig antall") {
+            val res = engine.querySakerJson(
+                virksomhetsnummer = "1",
+                limit = 10,
+                sakstyper = listOf("merkelapp1"),
+                oppgaveFilter = listOf("NY_MED_PÅMINNELSE_UTLØST")
+            ).getTypedContent<List<BrukerAPI.OppgaveFilterInfo>>("$.saker.oppgaveFilterInfo")
+
+            res shouldContainExactlyInAnyOrder listOf(
+                BrukerAPI.OppgaveFilterInfo("NY_MED_PÅMINNELSE_UTLØST", 1),
+                BrukerAPI.OppgaveFilterInfo(BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY.name, 2),
+            )
+        }
+
+        it("skal returnere saker med merkelapp 1 og merkelapp2, utløst påminnelse og riktig antall") {
+            val res = engine.querySakerJson(
+                virksomhetsnummer = "1",
+                limit = 10,
+                oppgaveFilter = listOf("NY_MED_PÅMINNELSE_UTLØST"),
+            sakstyper = listOf("merkelapp1", "merkelapp2")
+            ).getTypedContent<List<BrukerAPI.OppgaveFilterInfo>>("$.saker.oppgaveFilterInfo")
+
+            res shouldContainExactlyInAnyOrder listOf(
+                BrukerAPI.OppgaveFilterInfo("NY_MED_PÅMINNELSE_UTLØST", 2),
+                BrukerAPI.OppgaveFilterInfo(BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY.name, 3),
+                BrukerAPI.OppgaveFilterInfo(BrukerAPI.Notifikasjon.Oppgave.Tilstand.UTFOERT.name, 1),
+            )
+        }
+    }
 })
 
 private suspend fun BrukerRepository.opprettOppgave(
     sak: HendelseModel.SakOpprettet,
     frist: LocalDate?,
-    påminnelse: Påminnelse? = null
 ) = oppgaveOpprettet(
     virksomhetsnummer = "1",
     produsentId = "1",
@@ -195,7 +236,7 @@ private suspend fun BrukerRepository.opprettOppgave(
     eksternId = "1",
     eksterneVarsler = listOf(),
     opprettetTidspunkt = OffsetDateTime.parse("2017-12-03T10:15:30+01:00"),
-    merkelapp = "tag",
+    merkelapp = sak.merkelapp,
     tekst = "tjohei",
     mottakere = listOf(
         HendelseModel.AltinnMottaker(
@@ -207,7 +248,7 @@ private suspend fun BrukerRepository.opprettOppgave(
     lenke = "#foo",
     hardDelete = null,
     frist = frist,
-    påminnelse = påminnelse,
+    påminnelse = null,
 )
 
 private suspend fun BrukerRepository.opprettStatus(sak: HendelseModel.SakOpprettet) = nyStatusSak(
@@ -227,6 +268,7 @@ private suspend fun BrukerRepository.opprettStatus(sak: HendelseModel.SakOpprett
 
 private suspend fun BrukerRepository.opprettSak(
     id: String,
+    merkelapp: String = "tag",
 ): HendelseModel.SakOpprettet {
     val uuid = uuid(id)
     val sakOpprettet = sakOpprettet(
@@ -235,7 +277,7 @@ private suspend fun BrukerRepository.opprettSak(
         kildeAppNavn = "1",
         sakId = uuid,
         grupperingsid = uuid.toString(),
-        merkelapp = "tag",
+        merkelapp = merkelapp,
         mottakere = listOf(
             HendelseModel.AltinnMottaker(
                 virksomhetsnummer = "1",
@@ -271,7 +313,7 @@ private suspend fun BrukerRepository.oppgaveTilstandUtgått(oppgaveOpprettet: He
     )
 
 private fun DescribeSpec.setupRepoOgEngine(): Pair<BrukerRepositoryImpl, TestApplicationEngine> {
-    val database = testDatabase(Bruker.databaseConfig)
+    val database = testDatabase(Bruker.databaseConfig, "SakerMedOppgaveTilstandTest")
     val brukerRepository = BrukerRepositoryImpl(database)
     val engine = ktorBrukerTestServer(
         brukerRepository = brukerRepository,

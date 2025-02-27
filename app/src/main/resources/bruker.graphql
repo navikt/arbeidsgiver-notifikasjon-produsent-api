@@ -12,6 +12,7 @@ type Query {
         tekstsoek: String
         sakstyper: [String!]
         oppgaveTilstand: [OppgaveTilstand!]
+        oppgaveFilter: [String!]
         sortering: SakSortering! = NYESTE
     ): SakerResultat!
     sakById(id: ID!): SakResultat!

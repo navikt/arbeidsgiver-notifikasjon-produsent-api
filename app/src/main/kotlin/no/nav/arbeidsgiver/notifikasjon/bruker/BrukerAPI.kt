@@ -578,6 +578,7 @@ object BrukerAPI {
                 offset = env.getArgumentOrDefault("offset", 0) ?: 0,
                 limit = env.getArgumentOrDefault("limit", 3) ?: 3,
                 oppgaveTilstand = env.getTypedArgumentOrNull("oppgaveTilstand"),
+                oppgaveFilter = env.getTypedArgumentOrNull("oppgaveFilter"),
             )
             val berikelser = brukerRepository.berikSaker(sakerResultat.saker)
             val saker = sakerResultat.saker.map {
