@@ -57,6 +57,7 @@ class AltinnVarselKlientMedFilter(
             is EksternVarsel.Sms -> eksternVarsel.mobilnummer
             is EksternVarsel.Epost -> eksternVarsel.epostadresse
             is EksternVarsel.Altinntjeneste -> "${eksternVarsel.serviceCode}:${eksternVarsel.serviceEdition}"
+            is EksternVarsel.Altinnressurs -> eksternVarsel.resourceId
         }
         return if (repository.mottakerErPåAllowList(mottaker)) {
             altinnVarselKlient.send(eksternVarsel)
@@ -118,6 +119,8 @@ class AltinnVarselKlientImpl(
             tittel = eksternVarsel.tittel,
             innhold = eksternVarsel.innhold,
         )
+
+        is EksternVarsel.Altinnressurs -> throw UnsupportedOperationException("Unsupported varseltype: $eksternVarsel")
     }
 
     suspend fun sendSms(

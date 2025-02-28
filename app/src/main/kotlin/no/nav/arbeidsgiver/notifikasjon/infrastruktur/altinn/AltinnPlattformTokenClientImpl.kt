@@ -19,6 +19,10 @@ import java.time.Duration
 import java.time.Instant.now
 
 
+interface AltinnPlattformTokenClient {
+    suspend fun token(scope: String): String
+}
+
 /**
  * klient for å utveksle en maskinporten token til en altinn plattform token,
  * slik det er beskrevet i dokumentasjonen til Altinn:
@@ -26,11 +30,11 @@ import java.time.Instant.now
  *
  * /authentication/api/v1/exchange/maskinporten
  */
-class AltinnPlattformTokenClient(
-   private val altinnBaseUrl: String = System.getenv("ALTINN_3_API_BASE_URL"),
-   private val authClient: AuthClient = AuthClientImpl(TexasAuthConfig.nais(), IdentityProvider.MASKINPORTEN),
-   private val httpClient: HttpClient = defaultHttpClient()
-) {
+class AltinnPlattformTokenClientImpl(
+   val altinnBaseUrl: String = System.getenv("ALTINN_3_API_BASE_URL"),
+   val authClient: AuthClient = AuthClientImpl(TexasAuthConfig.nais(), IdentityProvider.MASKINPORTEN),
+   val httpClient: HttpClient = defaultHttpClient()
+) : AltinnPlattformTokenClient {
 
 
     private val expiryBuffer = Duration.ofSeconds(60)
@@ -54,7 +58,7 @@ class AltinnPlattformTokenClient(
             ).bindTo(Metrics.meterRegistry)
         }
 
-    suspend fun token(scope: String): String = plattformTokenCache.getAsync(scope) {
+    override suspend fun token(scope: String): String = plattformTokenCache.getAsync(scope) {
         val maskinportenToken = authClient.token(scope).fold(
             onSuccess = { it.accessToken },
             onError = { throw RuntimeException("Failed to get token: $it") }

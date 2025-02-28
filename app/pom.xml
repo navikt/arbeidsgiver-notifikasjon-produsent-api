@@ -267,6 +267,12 @@
         </dependency>
         <dependency>
             <groupId>io.kotest</groupId>
+            <artifactId>kotest-assertions-json</artifactId>
+            <version>${kotest.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.kotest</groupId>
             <artifactId>kotest-framework-datatest-jvm</artifactId>
             <version>${kotest.version}</version>
             <scope>test</scope>
