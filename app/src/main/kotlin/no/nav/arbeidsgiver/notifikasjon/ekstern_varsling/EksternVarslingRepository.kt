@@ -757,6 +757,41 @@ class EksternVarslingRepository(
         }
     }
 
+    suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: Altinn3VarselKlient.NotificationsResponse) {
+        database.transaction {
+            executeUpdate(
+                """ 
+                update ekstern_varsel_kontaktinfo
+                set 
+                    state = '${EksterntVarselTilstand.SENDT}',
+                    altinn_response = ?::jsonb,
+                    sende_status = ?::status,
+                    feilmelding = ?,
+                    altinn_feilkode = ?
+                where varsel_id = ?
+            """
+            ) {
+                jsonb(response)
+                when (response) {
+                    is Altinn3VarselKlient.ErrorResponse -> {
+                        text("FEIL")
+                        nullableText(response.message)
+                        nullableText(response.code)
+                    }
+                    is Altinn3VarselKlient.NotificationsResponse.Success -> {
+                        text("OK")
+                        nullableText(null)
+                        nullableText(null)
+                    }
+
+                }
+                uuid(varselId)
+            }
+
+            returnToJobQueue(varselId)
+        }
+    }
+
     suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime) {
         database.transaction {
             executeUpdate(
