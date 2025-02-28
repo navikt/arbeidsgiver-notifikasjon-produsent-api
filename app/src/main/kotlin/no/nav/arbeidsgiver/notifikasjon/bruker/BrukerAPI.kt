@@ -149,7 +149,9 @@ object BrukerAPI {
         val sakstyper: List<Sakstype>,
         val feilAltinn: Boolean,
         val totaltAntallSaker: Int,
-        val oppgaveTilstandInfo: List<OppgaveTilstandInfo>
+        @Deprecated("erstattes av oppgaveFilterInfo")
+        val oppgaveTilstandInfo: List<OppgaveTilstandInfo>,
+        val oppgaveFilterInfo: List<OppgaveFilterInfo>
     )
 
     @JsonTypeName("SakResultat")
@@ -159,8 +161,15 @@ object BrukerAPI {
     )
 
     @JsonTypeName("OppgaveTilstandInfo")
+    @Deprecated("erstattes av OppgaveFilterInfo")
     data class OppgaveTilstandInfo(
         val tilstand: Notifikasjon.Oppgave.Tilstand,
+        val antall: Int,
+    )
+
+    @JsonTypeName("OppgaveFilterInfo")
+    data class OppgaveFilterInfo(
+        val filterType: String,
         val antall: Int,
     )
 
@@ -592,8 +601,8 @@ object BrukerAPI {
                     ),
                     sisteStatus = when (val sisteStatus = berikelse?.sisteStatus) {
                         null -> SakStatus(
-                            type = BrukerAPI.SakStatusType.MOTTATT,
-                            tekst = BrukerAPI.SakStatusType.MOTTATT.visningsTekst,
+                            type = SakStatusType.MOTTATT,
+                            tekst = SakStatusType.MOTTATT.visningsTekst,
                             tidspunkt = it.opprettetTidspunkt.atOffset(UTC),
                         )
 
@@ -672,6 +681,12 @@ object BrukerAPI {
                         tilstand.navn.tilBrukerAPI(),
                         tilstand.antall
                     )
+                },
+                oppgaveFilterInfo = sakerResultat.oppgaveFilterMedAntall.map { filter ->
+                    OppgaveFilterInfo(
+                        filterType = filter.filterType,
+                        antall = filter.antall
+                    )
                 }
             )
         }
@@ -717,8 +732,8 @@ object BrukerAPI {
                     ),
                     sisteStatus = when (val sisteStatus = berikelse?.sisteStatus) {
                         null -> SakStatus(
-                            type = BrukerAPI.SakStatusType.MOTTATT,
-                            tekst = BrukerAPI.SakStatusType.MOTTATT.visningsTekst,
+                            type = SakStatusType.MOTTATT,
+                            tekst = SakStatusType.MOTTATT.visningsTekst,
                             tidspunkt = sak.opprettetTidspunkt.atOffset(UTC),
                         )
 
@@ -824,8 +839,8 @@ object BrukerAPI {
                     ),
                     sisteStatus = when (val sisteStatus = berikelse?.sisteStatus) {
                         null -> SakStatus(
-                            type = BrukerAPI.SakStatusType.MOTTATT,
-                            tekst = BrukerAPI.SakStatusType.MOTTATT.visningsTekst,
+                            type = SakStatusType.MOTTATT,
+                            tekst = SakStatusType.MOTTATT.visningsTekst,
                             tidspunkt = sak.opprettetTidspunkt.atOffset(UTC),
                         )
 

@@ -48,6 +48,12 @@ interface BrukerRepository {
         val saker: List<BrukerModel.Sak>,
         val sakstyper: List<Sakstype>,
         val oppgaveTilstanderMedAntall: List<Oppgavetilstand>,
+        val oppgaveFilterMedAntall: List<OppgaveFilterInfo>,
+    )
+
+    class OppgaveFilterInfo (
+        val filterType: String,
+        val antall: Int
     )
 
     class Oppgavetilstand(
@@ -369,6 +375,22 @@ class BrukerRepositoryImpl(
                             where oppgave_tilstand is not null
                             group by tilstand
                         ),
+                                                                        
+                        mine_oppgavefilter as (
+                            select 
+                                oppgave_tilstand as filtertype,
+                                count(distinct id) as antall
+                            from mine_saker_sakstypefiltrert
+                            where oppgave_tilstand is not null
+                            group by filterType
+                            union
+                            select 
+                                'NY_MED_PÅMINNELSE_UTLØST' as filtertype,
+                                count(distinct id) as antall
+                            from mine_saker_sakstypefiltrert
+                            where oppgave_tilstand = 'NY' and oppgave_paaminnelse_tidspunkt is not null
+                            group by filterType
+                        ),                                          
                         
                         mine_saker_filtrert as (
                             select * 
@@ -425,6 +447,10 @@ class BrukerRepositoryImpl(
                         (select coalesce(jsonb_agg( jsonb_build_object('navn', tilstand, 'antall', antall)), '[]'::jsonb)
                             from mine_oppgavetilstander
                         ) as oppgavetilstander,
+                        
+                        (select coalesce(jsonb_agg( jsonb_build_object('filterType', filterType, 'antall', antall)), '[]'::jsonb)
+                            from mine_oppgavefilter
+                        ) as oppgavefilter,
                             
                         (select 
                             coalesce(jsonb_agg(jsonb_build_object(
@@ -459,7 +485,8 @@ class BrukerRepositoryImpl(
                     totaltAntallSaker = getInt("totalt_antall_saker"),
                     saker = laxObjectMapper.readValue(getString("saker")),
                     sakstyper = laxObjectMapper.readValue(getString("sakstyper")),
-                    oppgaveTilstanderMedAntall = laxObjectMapper.readValue(getString("oppgavetilstander"))
+                    oppgaveTilstanderMedAntall = laxObjectMapper.readValue(getString("oppgavetilstander")),
+                    oppgaveFilterMedAntall = laxObjectMapper.readValue(getString("oppgavefilter")),
                 )
             }
             return@coRecord rows.first()
