@@ -59,13 +59,25 @@ class EksternVarslingServiceTests : DescribeSpec({
             åpningstider = åpningstider,
             osloTid = osloTid,
             eksternVarslingRepository = repository,
-            altinnVarselKlient = object : AltinnVarselKlient {
+            altinn2VarselKlient = object : Altinn2VarselKlient {
                 override suspend fun send(
                     eksternVarsel: EksternVarsel
                 ): AltinnVarselKlientResponseOrException {
                     meldingSendt.set(true)
                     return AltinnVarselKlientResponse.Ok(rå = NullNode.instance)
                 }
+            },
+            altinn3VarselKlient = object : Altinn3VarselKlient {
+                override suspend fun send(eksternVarsel: EksternVarsel): Altinn3VarselKlient.NotificationsResponse {
+                    meldingSendt.set(true)
+                    return Altinn3VarselKlient.NotificationsResponse.Success(
+                        orderId = "1",
+                        generated = 0,
+                        succeeded = 0,
+                        notifications = emptyList(),
+                    )
+                }
+
             },
             hendelseProdusent = hendelseProdusent,
             idleSleepDelay = Duration.ZERO,
@@ -563,6 +575,7 @@ class EksternVarslingServiceTests : DescribeSpec({
 
             serviceJob.cancel()
         }
+
     }
 })
 

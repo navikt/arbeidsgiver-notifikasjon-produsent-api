@@ -5,14 +5,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.delay
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderResponse
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -32,26 +33,43 @@ class Altinn3VarselKlientImpl(
                 delay(500.milliseconds)
                 notifications(orderResponse.orderId)
             }
-            is OrderResponse.Error -> NotificationsResponse.Error(orderResponse.message)
+
+            is ErrorResponse -> orderResponse
         }
 
-    override suspend fun order(eksternVarsel: EksternVarsel) = try {
+    suspend fun order(eksternVarsel: EksternVarsel) = try {
         httpClient.post {
             url("$altinnBaseUrl/notifications/api/v1/orders")
             plattformTokenBearerAuth()
             contentType(ContentType.Application.Json)
-            setBody(Altinn3VarselKlient.OrderRequest.from(eksternVarsel))
+            setBody(OrderRequest.from(eksternVarsel))
         }.body<OrderResponse.Success>()
+    } catch (e: ResponseException) {
+        ErrorResponse(
+            message = e.response.status.description,
+            code = e.response.status.value.toString()
+        )
     } catch (e: Exception) {
-        OrderResponse.Error(e.message ?: "Ukjent feil")
+        ErrorResponse(
+            message = e.message ?: "",
+            code = e::class.java.simpleName ?: ""
+        )
     }
 
-    override suspend fun notifications(orderId: String): NotificationsResponse = try {
+    suspend fun notifications(orderId: String): NotificationsResponse = try {
         val sms = smsNotifications(orderId)
         val email = emailNotifications(orderId)
         sms + email
+    } catch (e: ResponseException) {
+        ErrorResponse(
+            message = e.response.status.description,
+            code = e.response.status.value.toString()
+        )
     } catch (e: Exception) {
-        NotificationsResponse.Error(e.message ?: "Ukjent feil")
+        ErrorResponse(
+            message = e.message ?: "",
+            code = e::class.java.simpleName ?: ""
+        )
     }
 
     private suspend fun emailNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
@@ -75,8 +93,8 @@ class Altinn3VarselKlientImpl(
 
 
 interface Altinn3VarselKlient {
-    suspend fun order(eksternVarsel: EksternVarsel): OrderResponse
-    suspend fun notifications(orderId: String): NotificationsResponse
+    //suspend fun order(eksternVarsel: EksternVarsel): OrderResponse
+    //suspend fun notifications(orderId: String): NotificationsResponse
     suspend fun send(eksternVarsel: EksternVarsel): NotificationsResponse
 
 
@@ -172,27 +190,28 @@ interface Altinn3VarselKlient {
         }
     }
 
-    sealed class OrderResponse {
+    data class ErrorResponse(
+        val message: String,
+        val code: String,
+    ) : OrderResponse, NotificationsResponse
+
+    sealed interface OrderResponse {
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Success(
             val orderId: String,
-        ) : OrderResponse()
-
-        data class Error(
-            val message: String,
-        ) : OrderResponse()
+        ) : OrderResponse
     }
 
     @Suppress("unused")
-    sealed class NotificationsResponse {
+    sealed interface NotificationsResponse {
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Success(
             val orderId: String,
-            val sendersReference: String?,
+            val sendersReference: String? = null,
             val generated: Int,
             val succeeded: Int,
             val notifications: List<Notification>,
-        ) : NotificationsResponse() {
+        ) : NotificationsResponse {
             operator fun plus(other: Success) = Success(
                 orderId = orderId,
                 sendersReference = sendersReference ?: other.sendersReference,
@@ -216,28 +235,68 @@ interface Altinn3VarselKlient {
                 )
 
                 data class SendStatus(
-                    val status: Status,
+                    /**
+                     * status should be enum but is string in api. prevent breakage by using string
+                     * https://docs.altinn.studio/notifications/reference/api/endpoints/get-email-notifications/
+                     *
+                     * enum class Status {
+                     *     New, // The email has been created but has not yet been picked up for processing.
+                     *     Sending, //	The email is being processed and will be sent shortly.
+                     *     Succeeded, // The email has been accepted by the third-party service and will be sent soon.
+                     *     Delivered, // The email was successfully delivered to the recipient. No errors were reported, indicating successful delivery.
+                     *     Failed, // The email was not sent due to an unspecified failure.
+                     *     Failed_RecipientNotIdentified, // The email was not sent because the recipient’s email address could not be found.
+                     *     Failed_InvalidEmailFormat, // The email was not sent due to an invalid email address format.
+                     *     Failed_Bounced, // The email bounced due to issues like a non-existent email address or invalid domain.
+                     *     Failed_FilteredSpam, //	The email was identified as spam and rejected or blocked (not quarantined).
+                     *     Failed_Quarantined, // The email was quarantined due to being flagged as spam, bulk mail, or phishing.
+                     * }
+                     */
+
+                    val status: String,
                     val description: String,
                     val lastUpdate: String,
                 )
 
-                enum class Status {
-                    New, // The email has been created but has not yet been picked up for processing.
-                    Sending, //	The email is being processed and will be sent shortly.
-                    Succeeded, // The email has been accepted by the third-party service and will be sent soon.
-                    Delivered, // The email was successfully delivered to the recipient. No errors were reported, indicating successful delivery.
-                    Failed, // The email was not sent due to an unspecified failure.
-                    Failed_RecipientNotIdentified, // The email was not sent because the recipient’s email address could not be found.
-                    Failed_InvalidEmailFormat, // The email was not sent due to an invalid email address format.
-                    Failed_Bounced, // The email bounced due to issues like a non-existent email address or invalid domain.
-                    Failed_FilteredSpam, //	The email was identified as spam and rejected or blocked (not quarantined).
-                    Failed_Quarantined, // The email was quarantined due to being flagged as spam, bulk mail, or phishing.
-                }
+
             }
         }
+    }
+}
 
-        data class Error(
-            val message: String,
-        ) : NotificationsResponse()
+
+class Altinn3VarselKlientMedFilter(
+    private val repository: EksternVarslingRepository,
+    private val varselKlient: Altinn3VarselKlient,
+    private val loggingKlient: Altinn3VarselKlientLogging
+) : Altinn3VarselKlient {
+
+    override suspend fun send(eksternVarsel: EksternVarsel): NotificationsResponse {
+        val mottaker = when (eksternVarsel) {
+            is EksternVarsel.Sms -> eksternVarsel.mobilnummer
+            is EksternVarsel.Epost -> eksternVarsel.epostadresse
+            is EksternVarsel.Altinnressurs -> eksternVarsel.resourceId
+            is EksternVarsel.Altinntjeneste -> throw UnsupportedOperationException("Altinntjeneste er ikke støttet")
+        }
+        return if (repository.mottakerErPåAllowList(mottaker)) {
+            varselKlient.send(eksternVarsel)
+        } else {
+            loggingKlient.send(eksternVarsel)
+        }
+    }
+}
+
+class Altinn3VarselKlientLogging : Altinn3VarselKlient {
+    private val log = logger()
+
+    override suspend fun send(eksternVarsel: EksternVarsel): NotificationsResponse {
+        log.info("send($eksternVarsel)")
+        return NotificationsResponse.Success(
+            orderId = "",
+            sendersReference = null,
+            generated = 0,
+            succeeded = 0,
+            notifications = listOf()
+        )
     }
 }

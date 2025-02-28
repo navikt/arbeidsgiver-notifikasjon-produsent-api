@@ -158,6 +158,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
             val client = Altinn3VarselKlientImpl(
                 altinnBaseUrl = "http://altinn",
                 httpClient = HttpClient(mockEngine) {
+                    expectSuccess = true
                     install(ContentNegotiation) {
                         jackson()
                     }
@@ -191,6 +192,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
             val client = Altinn3VarselKlientImpl(
                 altinnBaseUrl = "http://altinn",
                 httpClient = HttpClient(mockEngine) {
+                    expectSuccess = true
                     install(ContentNegotiation) {
                         jackson()
                     }
@@ -200,13 +202,16 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 },
             )
 
-            client.order(eksternVarsel) shouldBe Altinn3VarselKlient.OrderResponse.Error("Failed to get token")
+            client.order(eksternVarsel) shouldBe Altinn3VarselKlient.ErrorResponse("Failed to get token", "RuntimeException")
         }
 
         it("returns error when http call fails") {
             val client = Altinn3VarselKlientImpl(
                 altinnBaseUrl = "http://altinn",
-                httpClient = HttpClient(MockEngine { throw RuntimeException("woopsies") }) {
+                httpClient = HttpClient(MockEngine {
+                    respondError(HttpStatusCode.BadRequest)
+                }) {
+                    expectSuccess = true
                     install(ContentNegotiation) {
                         jackson()
                     }
@@ -216,7 +221,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 },
             )
 
-            client.order(eksternVarsel) shouldBe Altinn3VarselKlient.OrderResponse.Error("woopsies")
+            client.order(eksternVarsel) shouldBe Altinn3VarselKlient.ErrorResponse("Bad Request", "400")
         }
     }
 
@@ -307,6 +312,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                     else -> error("unexpected request: ${req.url}")
                 }
             }) {
+                expectSuccess = true
                 install(ContentNegotiation) {
                     jackson()
                 }
@@ -332,7 +338,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                                 mobileNumber = "+4799999999"
                             ),
                             sendStatus = Notification.SendStatus(
-                                status = Notification.Status.New,
+                                status = "New",
                                 description = "The sms has been created, but has not been picked up for processing yet.",
                                 lastUpdate = "2023-11-14T16:06:02.877361Z"
                             )
@@ -344,7 +350,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                                 emailAddress = "recipient@domain.com"
                             ),
                             sendStatus = Notification.SendStatus(
-                                status = Notification.Status.New,
+                                status = "New",
                                 description = "The email has been created, but has not been picked up for processing yet.",
                                 lastUpdate = "2023-11-14T16:06:02.877361Z"
                             )
