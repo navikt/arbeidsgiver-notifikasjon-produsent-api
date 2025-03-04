@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.OppgaveFilterInfo.OppgaveFilterType
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -30,11 +31,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.*
 import java.util.*
 
 interface BrukerRepository {
@@ -76,7 +73,7 @@ interface BrukerRepository {
         offset: Int,
         limit: Int,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
-        oppgaveFilter: List<String>?
+        oppgaveFilter: List<OppgaveFilterType>?
     ): HentSakerResultat
 
     suspend fun hentSakById(
@@ -258,6 +255,23 @@ class BrukerRepositoryImpl(
 
     private val searchQuerySplit = Regex("""[ \t\n\r.,:;]""")
 
+    private fun OppgaveFilterType.toOppgaveTilstand(): BrukerModel.Oppgave.Tilstand? {
+        return when (this) {
+            OppgaveFilterType.TILSTAND_NY -> BrukerModel.Oppgave.Tilstand.NY
+            OppgaveFilterType.TILSTAND_UTFOERT -> BrukerModel.Oppgave.Tilstand.UTFOERT
+            OppgaveFilterType.TILSTAND_UTGAATT -> BrukerModel.Oppgave.Tilstand.UTGAATT
+            OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST -> null
+        }
+    }
+
+    private fun BrukerModel.Oppgave.Tilstand.toOppgaveFilterType(): OppgaveFilterType {
+        return when (this) {
+            BrukerModel.Oppgave.Tilstand.NY -> OppgaveFilterType.TILSTAND_NY
+            BrukerModel.Oppgave.Tilstand.UTFOERT -> OppgaveFilterType.TILSTAND_UTFOERT
+            BrukerModel.Oppgave.Tilstand.UTGAATT -> OppgaveFilterType.TILSTAND_UTGAATT
+        }
+    }
+
     override suspend fun hentSaker(
         fnr: String,
         virksomhetsnummer: List<String>,
@@ -267,17 +281,17 @@ class BrukerRepositoryImpl(
         sortering: BrukerAPI.SakSortering,
         offset: Int,
         limit: Int,
-        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?, //TODO: Fjern denne når vi er rimelig sikre på at nettlesere ikke sender inn dette
-        oppgaveFilter: List<String>?
+        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?, //TODO: Fjern denne etter deploy av frontend
+        oppgaveFilter: List<OppgaveFilterType>?
     ): BrukerRepository.HentSakerResultat {
         return timer.coRecord {
 
-            //TODO: fjerne dette etter en stund, når vi er rimelig sikre på at nettlesere ikke lenger sender inn OppgaveTilstand
-            val oppgaveFilter = oppgaveFilter ?: oppgaveTilstand?.map { it.name }
-            val oppgaveTilstand =
-                oppgaveFilter?.mapNotNull { BrukerModel.Oppgave.Tilstand.values().find { enum -> enum.name == it } }
+            //TODO: fjerne dette etter deploy av frontend
+            val oppgaveFilter = oppgaveFilter ?: oppgaveTilstand?.map { it.toOppgaveFilterType() }
+            val oppgaveTilstand = oppgaveFilter?.mapNotNull { it.toOppgaveTilstand() }
 
-            val harPåminnelse = oppgaveFilter?.find { it == "NY_MED_PÅMINNELSE_UTLØST" } !== null
+            val harPåminnelse =
+                oppgaveFilter?.any { it == OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST } == true
 
             val tilgangerAltinnMottaker = altinnTilganger.tilganger
                 .filter { virksomhetsnummer.contains(it.orgNr) }
@@ -399,7 +413,7 @@ class BrukerRepositoryImpl(
                             group by filterType
                             union
                             select 
-                                'NY_MED_PÅMINNELSE_UTLØST' as filtertype,
+                                '${OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST.name}' as filtertype,
                                 count(distinct id) as antall
                             from mine_saker_sakstypefiltrert
                             where oppgave_tilstand = 'NY' and oppgave_paaminnelse_tidspunkt is not null
@@ -504,7 +518,7 @@ class BrukerRepositoryImpl(
                     saker = laxObjectMapper.readValue(getString("saker")),
                     sakstyper = laxObjectMapper.readValue(getString("sakstyper")),
                     oppgaveTilstanderMedAntall = laxObjectMapper.readValue(getString("oppgavetilstander")),
-                    oppgaveFilterMedAntall = laxObjectMapper.readValue(getString("oppgavefilter")),
+                    oppgaveFilterMedAntall = laxObjectMapper.readValue(getString("oppgavefilter"))
                 )
             }
             return@coRecord rows.first()

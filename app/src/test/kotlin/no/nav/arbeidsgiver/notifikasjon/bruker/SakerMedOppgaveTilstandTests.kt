@@ -93,19 +93,19 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
         it("Teller kun saken en gang for hver filterInfo") {
             res.getTypedContent<List<Any>>("$.saker.oppgaveFilterInfo") shouldContainExactlyInAnyOrder listOf(
                 mapOf(
-                    "filterType" to "NY",
+                    "filterType" to BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY.name,
                     "antall" to 4
                 ),
                 mapOf(
-                    "filterType" to "UTGAATT",
+                    "filterType" to BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_UTGAATT.name,
                     "antall" to 1
                 ),
                 mapOf(
-                    "filterType" to "UTFOERT",
+                    "filterType" to BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_UTFOERT.name,
                     "antall" to 3
                 ),
                 mapOf(
-                    "filterType" to "NY_MED_PÅMINNELSE_UTLØST",
+                    "filterType" to BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST.name,
                     "antall" to 1
                 )
             )
@@ -199,12 +199,12 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
                 virksomhetsnummer = "1",
                 limit = 10,
                 sakstyper = listOf("merkelapp1"),
-                oppgaveFilter = listOf("NY_MED_PÅMINNELSE_UTLØST")
+                oppgaveFilter = listOf(BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST)
             ).getTypedContent<List<BrukerAPI.OppgaveFilterInfo>>("$.saker.oppgaveFilterInfo")
 
             res shouldContainExactlyInAnyOrder listOf(
-                BrukerAPI.OppgaveFilterInfo("NY_MED_PÅMINNELSE_UTLØST", 1),
-                BrukerAPI.OppgaveFilterInfo(BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY.name, 2),
+                BrukerAPI.OppgaveFilterInfo(BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST, 1),
+                BrukerAPI.OppgaveFilterInfo(BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY, 2),
             )
         }
 
@@ -212,14 +212,14 @@ class SakerMedOppgaveTilstandTests : DescribeSpec({
             val res = engine.querySakerJson(
                 virksomhetsnummer = "1",
                 limit = 10,
-                oppgaveFilter = listOf("NY_MED_PÅMINNELSE_UTLØST"),
+                oppgaveFilter = listOf(BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST),
             sakstyper = listOf("merkelapp1", "merkelapp2")
             ).getTypedContent<List<BrukerAPI.OppgaveFilterInfo>>("$.saker.oppgaveFilterInfo")
 
             res shouldContainExactlyInAnyOrder listOf(
-                BrukerAPI.OppgaveFilterInfo("NY_MED_PÅMINNELSE_UTLØST", 2),
-                BrukerAPI.OppgaveFilterInfo(BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY.name, 3),
-                BrukerAPI.OppgaveFilterInfo(BrukerAPI.Notifikasjon.Oppgave.Tilstand.UTFOERT.name, 1),
+                BrukerAPI.OppgaveFilterInfo(BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST, 2),
+                BrukerAPI.OppgaveFilterInfo(BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY, 3),
+                BrukerAPI.OppgaveFilterInfo(BrukerAPI.OppgaveFilterInfo.OppgaveFilterType.TILSTAND_UTFOERT, 1),
             )
         }
     }

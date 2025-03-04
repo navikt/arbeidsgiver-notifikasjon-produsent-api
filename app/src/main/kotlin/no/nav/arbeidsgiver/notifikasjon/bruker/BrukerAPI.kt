@@ -6,6 +6,7 @@ import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.TypeRuntimeWiring
 import kotlinx.coroutines.CoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Kalenderavtale.Tilstand.Companion.tilBrukerAPI
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.Companion.tilBrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -14,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -163,19 +165,26 @@ object BrukerAPI {
     @JsonTypeName("OppgaveTilstandInfo")
     @Deprecated("erstattes av OppgaveFilterInfo")
     data class OppgaveTilstandInfo(
-        val tilstand: Notifikasjon.Oppgave.Tilstand,
+        val tilstand: Oppgave.Tilstand,
         val antall: Int,
     )
 
     @JsonTypeName("OppgaveFilterInfo")
     data class OppgaveFilterInfo(
-        val filterType: String,
+        val filterType: OppgaveFilterType,
         val antall: Int,
-    )
+    ) {
+        enum class OppgaveFilterType {
+            TILSTAND_NY,
+            TILSTAND_UTFOERT,
+            TILSTAND_UTGAATT,
+            TILSTAND_NY_MED_PAAMINNELSE_UTLOEST
+        }
+    }
 
     @JsonTypeName("OppgaveMetadata")
     data class OppgaveMetadata(
-        val tilstand: Notifikasjon.Oppgave.Tilstand,
+        val tilstand: Oppgave.Tilstand,
         val frist: LocalDate?,
         val paaminnelseTidspunkt: OffsetDateTime?,
     )
@@ -235,7 +244,7 @@ object BrukerAPI {
         val id: UUID,
         val tekst: String,
         val opprettetTidspunkt: OffsetDateTime,
-        val tilstand: Notifikasjon.Oppgave.Tilstand,
+        val tilstand: Oppgave.Tilstand,
         val paaminnelseTidspunkt: OffsetDateTime?,
         val utgaattTidspunkt: OffsetDateTime?,
         val utfoertTidspunkt: OffsetDateTime?,
@@ -327,7 +336,7 @@ object BrukerAPI {
 
                 wire("Oppgave") {
                     coDataFetcher("virksomhet") { env ->
-                        fetchVirksomhet<Notifikasjon.Oppgave>(virksomhetsinfoService, env)
+                        fetchVirksomhet<Oppgave>(virksomhetsinfoService, env)
                     }
                 }
 
@@ -418,7 +427,7 @@ object BrukerAPI {
                             )
 
                         is BrukerModel.Oppgave ->
-                            Notifikasjon.Oppgave(
+                            Oppgave(
                                 merkelapp = notifikasjon.merkelapp,
                                 tekst = notifikasjon.tekst,
                                 lenke = notifikasjon.lenke,
@@ -683,11 +692,14 @@ object BrukerAPI {
                         tilstand.antall
                     )
                 },
-                oppgaveFilterInfo = sakerResultat.oppgaveFilterMedAntall.map { filter ->
-                    OppgaveFilterInfo(
-                        filterType = filter.filterType,
-                        antall = filter.antall
-                    )
+                oppgaveFilterInfo = sakerResultat.oppgaveFilterMedAntall.mapNotNull { filter ->
+                    val filterType = filter.filterType.tilBrukerApi()
+                    if (filterType !== null)
+                        OppgaveFilterInfo(
+                            filterType = filterType,
+                            antall = filter.antall
+                        )
+                    else null
                 }
             )
         }
@@ -956,4 +968,22 @@ object BrukerAPI {
             source?.virksomhet
         }
     }
+
+    private val log = logger()
+
+    // Parser kolonnenavn fra sql spørringen i hentSaker
+    private fun String.tilBrukerApi(): OppgaveFilterInfo.OppgaveFilterType? {
+        return when (this) {
+            Oppgave.Tilstand.NY.name -> OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY
+            Oppgave.Tilstand.UTGAATT.name -> OppgaveFilterInfo.OppgaveFilterType.TILSTAND_UTGAATT
+            Oppgave.Tilstand.UTFOERT.name -> OppgaveFilterInfo.OppgaveFilterType.TILSTAND_UTFOERT
+            OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST.name -> OppgaveFilterInfo.OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST
+            else -> {
+                log.warn("Ukjent oppgavefiltertype: $this")
+                null
+            }
+
+        }
+    }
 }
+
