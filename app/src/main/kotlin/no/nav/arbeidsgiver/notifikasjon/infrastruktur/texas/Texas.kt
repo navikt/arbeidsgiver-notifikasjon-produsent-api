@@ -47,8 +47,6 @@ sealed class TokenResponse {
         val status: HttpStatusCode,
     ) : TokenResponse()
 
-    fun isSuccess() = this is Success
-    fun isError() = this is Error
     fun <R> fold(onSuccess: (Success) -> R, onError: (Error) -> R): R =
         when (this) {
             is Success -> onSuccess(this)
