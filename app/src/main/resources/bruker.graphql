@@ -12,6 +12,7 @@ type Query {
         tekstsoek: String
         sakstyper: [String!]
         oppgaveTilstand: [OppgaveTilstand!]
+        oppgaveFilter: [OppgaveFilterType!]
         sortering: SakSortering! = NYESTE
     ): SakerResultat!
     sakById(id: ID!): SakResultat!
@@ -60,7 +61,7 @@ type OppgaveTilstandInfo {
 }
 
 type OppgaveFilterInfo {
-    filterType: String!
+    filterType: OppgaveFilterType!
     antall: Int!
 }
 
@@ -182,6 +183,13 @@ enum OppgaveTilstand {
     NY
     UTFOERT
     UTGAATT
+}
+
+enum OppgaveFilterType {
+    TILSTAND_NY
+    TILSTAND_UTFOERT
+    TILSTAND_UTGAATT
+    TILSTAND_NY_MED_PAAMINNELSE_UTLOEST
 }
 
 type Beskjed {
