@@ -34,5 +34,3 @@ spec:
           - name: dataprodukt-model
             envVarPrefix: DB
         autoBackupHour: 1
-        maintenance:
-          hour: 3
