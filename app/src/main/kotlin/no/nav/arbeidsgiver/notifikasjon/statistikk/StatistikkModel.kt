@@ -511,6 +511,16 @@ class StatistikkModel(
                     text("${eksterntVarsel.serviceCode}:${eksterntVarsel.serviceEdition}")
                     text((eksterntVarsel.tittel + eksterntVarsel.innhold).toHash())
                 }
+
+                is HendelseModel.AltinnressursVarselKontaktinfo -> {
+                    uuid(eksterntVarsel.varselId)
+                    text("altinnressurs_kontaktinfo")
+                    uuid(notifikasjonId)
+                    text(produsentId)
+                    text(merkelapp)
+                    text(eksterntVarsel.ressursId)
+                    text((eksterntVarsel.epostTittel + eksterntVarsel.epostInnhold + eksterntVarsel.smsInnhold).toHash())
+                }
             }
         }
     }

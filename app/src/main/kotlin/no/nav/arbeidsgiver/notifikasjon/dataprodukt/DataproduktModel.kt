@@ -942,6 +942,23 @@ class DataproduktModel(
                     text(opprinnelse)
                     text(statusUtsending)
                 }
+
+                is HendelseModel.AltinnressursVarselKontaktinfo -> with(eksterntVarsel) {
+                    uuid(varselId)
+                    text("ALTINN_RESSURS") //varsel_type
+                    uuid(notifikasjonId)
+                    text(merkelapp)
+                    enumAsText(sendevindu)
+                    nullableLocalDateTimeAsText(sendeTidspunkt)
+                    text(produsentId)
+                    nullableText(smsInnhold)
+                    nullableText(epostTittel)
+                    nullableText(epostInnhold)
+                    nullableText(null)
+                    nullableText(null)
+                    text(opprinnelse)
+                    text(statusUtsending)
+                }
             }
         }
 

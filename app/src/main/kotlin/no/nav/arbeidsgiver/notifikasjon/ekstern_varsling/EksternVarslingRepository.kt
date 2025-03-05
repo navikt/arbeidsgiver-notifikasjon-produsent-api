@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BrukerKlikket
@@ -322,6 +323,13 @@ class EksternVarslingRepository(
                     notifikasjonsId = notifikasjonsId,
                     notifikasjonOpprettet = notifikasjonOpprettet,
                 )
+
+                is AltinnressursVarselKontaktinfo -> insertAltinnressursVarsel(
+                    varsel = varsel,
+                    produsentId = produsentId,
+                    notifikasjonsId = notifikasjonsId,
+                    notifikasjonOpprettet = notifikasjonOpprettet,
+                )
             }
         }
 
@@ -501,6 +509,63 @@ class EksternVarslingRepository(
         }
     }
 
+    private fun Transaction.insertAltinnressursVarsel(
+        varsel: AltinnressursVarselKontaktinfo,
+        notifikasjonsId: UUID,
+        produsentId: String,
+        notifikasjonOpprettet: OffsetDateTime,
+    ) {
+        executeUpdate(
+            """
+            INSERT INTO ekstern_varsel_kontaktinfo
+            (
+                varsel_id,
+                notifikasjon_id,
+                notifikasjon_opprettet,
+                produsent_id,
+                varsel_type,
+                ressursid,
+                fnr_eller_orgnr,
+                ressurs_eposttittel,
+                ressurs_epostinnhold,
+                ressurs_smsinnhold,
+                sendevindu,
+                sendetidspunkt,
+                state
+            )
+            VALUES 
+            (
+                ?, /* varsel_id */
+                ?, /* notifikasjon_id */
+                ?, /* notifikasjon_opprettet */
+                ?, /* produsent_id */
+                'ALTINNRESSURS',
+                ?, /* ressursid */
+                ?, /* fnr_eller_orgnr */
+                ?, /* ressurs_eposttittel */
+                ?, /* ressurs_epostinnhold */
+                ?, /* ressurs_smsinnhold */
+                ?, /* sendevindu */
+                ?, /* sendetidspunkt */
+                'NY' /* tilstand */
+            )
+            ON CONFLICT DO NOTHING;
+        """
+        ) {
+            uuid(varsel.varselId)
+            uuid(notifikasjonsId)
+            timestamp_without_timezone_utc(notifikasjonOpprettet)
+            text(produsentId)
+            text(varsel.ressursId)
+            text(varsel.virksomhetsnummer)
+            text(varsel.epostTittel)
+            text(varsel.epostInnhold)
+            text(varsel.smsInnhold)
+            text(varsel.sendevindu.toString())
+            nullableText(varsel.sendeTidspunkt?.toString())
+        }
+    }
+
     data class ReleasedResource(
         val varselId: UUID,
         val lockedAt: LocalDateTime,
@@ -639,6 +704,16 @@ class EksternVarslingRepository(
                             serviceEdition = getString("service_edition"),
                             tittel = getString("tjeneste_tittel"),
                             innhold = getString("tjeneste_innhold")
+                        )
+
+                        "ALTINNRESSURS" -> EksternVarsel.Altinnressurs(
+                            fnrEllerOrgnr = getString("fnr_eller_orgnr"),
+                            sendeVindu = EksterntVarselSendingsvindu.valueOf(getString("sendevindu")),
+                            sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
+                            resourceId = getString("ressursid"),
+                            epostTittel = getString("ressurs_eposttittel"),
+                            epostInnhold = getString("ressurs_epostinnhold"),
+                            smsInnhold = getString("ressurs_smsinnhold")
                         )
 
                         else -> throw Error("Ukjent varsel_type '$varselType'")
