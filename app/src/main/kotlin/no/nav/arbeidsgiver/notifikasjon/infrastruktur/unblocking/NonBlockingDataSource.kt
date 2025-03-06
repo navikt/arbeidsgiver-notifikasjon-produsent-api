@@ -31,13 +31,12 @@ class NonBlockingDataSource<T>(
         action: Flyway.() -> Unit
     ) {
         blockingIO {
-            val fluentConfig = Flyway.configure()
+            Flyway.configure()
                 .locations(locations)
                 .dataSource(dataSource)
                 .apply(config)
-
-            val flyway = fluentConfig.load()
-            flyway.action()
+                .load()
+                .action()
         }
     }
 }
