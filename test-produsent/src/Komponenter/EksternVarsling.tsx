@@ -2,9 +2,9 @@ import React from "react";
 import {Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
 import {Sendevindu} from "../api/graphql-types.ts";
 
-type EksternVarselValg = "Ingen" | "SMS" | "EPOST" | "Altinntjeneste"
+type EksternVarselValg = "Ingen" | "SMS" | "EPOST" | "Altinntjeneste" | "Altinnressurs"
 
-export type EksternVarsel = { hentEksternVarsel: () => SMS | Epost | Altinntjeneste | null }
+export type EksternVarsel = { hentEksternVarsel: () => SMS | Epost | Altinntjeneste | Altinnressurs | null }
 
 
 export type SMS = {
@@ -28,6 +28,14 @@ export type Altinntjeneste = {
     tidspunkt: string
 }
 
+export type Altinnressurs = {
+    ressursId: string,
+    epostTittel: string,
+    epostHtmlBody: string,
+    smsTekst: string,
+    tidspunkt: string
+}
+
 const nullIfEmpty = (s: string | undefined) => s === "" || s === undefined ? null : s
 
 export const EksternVarsel = React.forwardRef((_props, ref) => {
@@ -42,7 +50,11 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
         eksternVarselAltinnServiceCodeRef = React.useRef<HTMLInputElement>(null),
         eksternVarselAltinnServiceEditionRef = React.useRef<HTMLInputElement>(null),
         eksternVarselAltinnTittelRef = React.useRef<HTMLInputElement>(null),
-        eksternVarselAltinnInnholdRef = React.useRef<HTMLTextAreaElement>(null);
+        eksternVarselAltinnInnholdRef = React.useRef<HTMLTextAreaElement>(null),
+        eksternVarselAltinnRessursIdRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselAltinnRessursEpostTittelRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselAltinnRessursEpostHtmlBodyRef = React.useRef<HTMLInputElement>(null),
+        eksternVarselAltinnRessursSmsTekstRef = React.useRef<HTMLInputElement>(null);
 
     React.useImperativeHandle(ref, () => ({
         hentEksternVarsel: () => {
@@ -68,6 +80,14 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
                         innhold: eksternVarselAltinnInnholdRef.current?.value,
                         tidspunkt: eksternVarselTidspunktRef.current?.value
                     }
+                case "Altinnressurs":
+                    return {
+                        ressursId: eksternVarselAltinnRessursIdRef.current?.value,
+                        epostTittel: eksternVarselAltinnRessursEpostTittelRef.current?.value,
+                        epostHtmlBody: eksternVarselAltinnRessursEpostHtmlBodyRef.current?.value,
+                        smsTekst: eksternVarselAltinnRessursSmsTekstRef.current?.value,
+                        tidspunkt: eksternVarselTidspunktRef.current?.value
+                    }
                 default:
                     return null
             }
@@ -83,6 +103,7 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
             <ToggleGroup.Item value="SMS">SMS</ToggleGroup.Item>
             <ToggleGroup.Item value="EPOST">Epost</ToggleGroup.Item>
             <ToggleGroup.Item value="Altinntjeneste">Altinntjeneste</ToggleGroup.Item>
+            <ToggleGroup.Item value="Altinnressurs">Altinnressurs</ToggleGroup.Item>
         </ToggleGroup>
         {eksternVarsel === "SMS" ?
             <>
@@ -101,6 +122,12 @@ export const EksternVarsel = React.forwardRef((_props, ref) => {
             <TextField label={"Service edition"} ref={eksternVarselAltinnServiceEditionRef}/>
             <TextField label="Tittel" ref={eksternVarselAltinnTittelRef}/>
             <Textarea label="Innhold" ref={eksternVarselAltinnInnholdRef}/>
+        </> : null}
+        {eksternVarsel === "Altinnressurs" ? <>
+            <TextField label={"RessursId"} ref={eksternVarselAltinnRessursIdRef}/>
+            <TextField label="Epost tittel" ref={eksternVarselAltinnRessursEpostTittelRef}/>
+            <TextField label="Epost body" ref={eksternVarselAltinnRessursEpostHtmlBodyRef}/>
+            <TextField label="Sms tekst" ref={eksternVarselAltinnRessursSmsTekstRef}/>
         </> : null}
         {eksternVarsel !== "Ingen" ?
             <TextField label={"Tidspunkt: \"YYYY-MM-DDThh:mm\""} ref={eksternVarselTidspunktRef}
@@ -167,6 +194,27 @@ export function formateEksternVarsel(eksternVarselRef: React.MutableRefObject<Ek
                 },
                 tittel: tittel,
                 innhold: innhold,
+                sendetidspunkt: {
+                    tidspunkt: tidspunkt
+                }
+            }
+        }
+    } else if ("ressursId" in varselfraref) {
+        const {ressursId, epostTittel, epostHtmlBody, smsTekst, tidspunkt} = varselfraref as Altinnressurs
+        if (nullIfEmpty(ressursId) === null ||
+            nullIfEmpty(epostTittel) === null ||
+            nullIfEmpty(epostHtmlBody) === null ||
+            nullIfEmpty(smsTekst) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return null
+        return {
+            altinnressurs: {
+                mottaker: {
+                    ressursId: ressursId
+                },
+                epostTittel: epostTittel,
+                epostHtmlBody: epostHtmlBody,
+                smsTekst: smsTekst,
                 sendetidspunkt: {
                     tidspunkt: tidspunkt
                 }
