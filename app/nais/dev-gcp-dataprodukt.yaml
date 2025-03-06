@@ -23,6 +23,8 @@ spec:
   prometheus:
     enabled: true
     path: /internal/metrics
+  envFrom:
+    - secret: notifikasjon-dataprodukt
   kafka:
     pool: nav-dev
   gcp:
