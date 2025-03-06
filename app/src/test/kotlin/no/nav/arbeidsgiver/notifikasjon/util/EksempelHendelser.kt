@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.node.NullNode
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
@@ -65,13 +67,23 @@ object EksempelHendelse {
                     sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                     sendeTidspunkt = null
                 ),
-                HendelseModel.AltinntjenesteVarselKontaktinfo(
+                AltinntjenesteVarselKontaktinfo(
                     varselId = uuid("5"),
                     virksomhetsnummer = "1",
                     serviceCode = "1",
                     serviceEdition = "1",
                     tittel = "hey",
                     innhold = "body",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null
+                ),
+                AltinnressursVarselKontaktinfo(
+                    varselId = uuid("5"),
+                    virksomhetsnummer = "1",
+                    ressursId = "1",
+                    epostTittel = "hey",
+                    epostHtmlBody = "body",
+                    smsTekst = "tazte priv?",
                     sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                     sendeTidspunkt = null
                 )
@@ -741,7 +753,7 @@ object EksempelHendelse {
                     sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                     sendeTidspunkt = null
                 ),
-                HendelseModel.AltinntjenesteVarselKontaktinfo(
+                AltinntjenesteVarselKontaktinfo(
                     varselId = uuid("5"),
                     virksomhetsnummer = "1",
                     serviceCode = "1",
@@ -814,7 +826,7 @@ object EksempelHendelse {
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             ),
-            HendelseModel.AltinntjenesteVarselKontaktinfo(
+            AltinntjenesteVarselKontaktinfo(
                 varselId = uuid("5"),
                 virksomhetsnummer = "1",
                 serviceCode = "1",

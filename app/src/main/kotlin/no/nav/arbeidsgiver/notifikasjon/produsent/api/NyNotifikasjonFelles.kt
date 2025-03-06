@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
@@ -20,6 +21,7 @@ internal data class EksterntVarselInput(
     val sms: Sms?,
     val epost: Epost?,
     val altinntjeneste: Altinntjeneste?,
+    val altinnressurs: Altinnressurs?,
 ) {
 
     fun tilHendelseModel(virksomhetsnummer: String): EksterntVarsel {
@@ -31,6 +33,9 @@ internal data class EksterntVarselInput(
         }
         if (altinntjeneste != null) {
             return altinntjeneste.tilHendelseModel(virksomhetsnummer)
+        }
+        if (altinnressurs != null) {
+            return altinnressurs.tilHendelseModel(virksomhetsnummer)
         }
         throw RuntimeException("Feil format")
     }
@@ -135,6 +140,32 @@ internal data class EksterntVarselInput(
         data class Mottaker(
             val serviceCode: String,
             val serviceEdition: String,
+        )
+    }
+
+    data class Altinnressurs(
+        val mottaker: Mottaker,
+        val epostTittel: String,
+        val epostHtmlBody: String,
+        val smsTekst: String,
+        val sendetidspunkt: SendetidspunktInput,
+    ) {
+        fun tilHendelseModel(virksomhetsnummer: String): AltinnressursVarselKontaktinfo {
+            val (sendevindu, sendeTidspunkt) = sendetidspunkt.somVinduOgTidspunkt()
+            return AltinnressursVarselKontaktinfo(
+                varselId = UUID.randomUUID(),
+                ressursId = mottaker.ressursId,
+                virksomhetsnummer = virksomhetsnummer,
+                epostTittel = epostTittel.ensureSuffix(". "),
+                epostHtmlBody = epostHtmlBody,
+                smsTekst = smsTekst,
+                sendevindu = sendevindu,
+                sendeTidspunkt = sendeTidspunkt
+            )
+        }
+
+        data class Mottaker(
+            val ressursId: String,
         )
     }
 }

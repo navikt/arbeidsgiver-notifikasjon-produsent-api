@@ -559,8 +559,8 @@ class EksternVarslingRepository(
             text(varsel.ressursId)
             text(varsel.virksomhetsnummer)
             text(varsel.epostTittel)
-            text(varsel.epostInnhold)
-            text(varsel.smsInnhold)
+            text(varsel.epostHtmlBody)
+            text(varsel.smsTekst)
             text(varsel.sendevindu.toString())
             nullableText(varsel.sendeTidspunkt?.toString())
         }

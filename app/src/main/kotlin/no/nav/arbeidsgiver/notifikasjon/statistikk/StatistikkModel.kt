@@ -519,7 +519,7 @@ class StatistikkModel(
                     text(produsentId)
                     text(merkelapp)
                     text(eksterntVarsel.ressursId)
-                    text((eksterntVarsel.epostTittel + eksterntVarsel.epostInnhold + eksterntVarsel.smsInnhold).toHash())
+                    text((eksterntVarsel.epostTittel + eksterntVarsel.epostHtmlBody + eksterntVarsel.smsTekst).toHash())
                 }
             }
         }

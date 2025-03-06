@@ -785,8 +785,8 @@ object HendelseModel {
         val ressursId: String,
         val virksomhetsnummer: String,
         val epostTittel: String,
-        val epostInnhold: String,
-        val smsInnhold: String,
+        val epostHtmlBody: String,
+        val smsTekst: String,
         val sendevindu: EksterntVarselSendingsvindu,
         /* Kun gyldig hvis sendevindu er "SPESIFISERT" */
         val sendeTidspunkt: LocalDateTime?,
