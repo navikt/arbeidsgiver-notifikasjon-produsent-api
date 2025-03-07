@@ -12,13 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
 
 object BrukerWriter {
-    val databaseConfig = Database.config(
-        "bruker_model",
-        jdbcOpts = mapOf(
-            "socketFactory" to "com.google.cloud.sql.postgres.SocketFactory",
-            "cloudSqlInstance" to System.getenv("CLOUD_SQL_INSTANCE")!!
-        )
-    )
+    val databaseConfig = Database.config("bruker_model")
 
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(

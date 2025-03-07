@@ -33,9 +33,9 @@ spec:
         role: roles/cloudsql.client
   envFrom:
     - secret: google-sql-notifikasjon-bruker-api
-  env:
-    - name: CLOUD_SQL_INSTANCE
-      value: fager-dev-24f2:europe-north1:notifikasjon-bruker-api-v2
+  filesFrom:
+    - secret: sqeletor-notifikasjon-bruker-api-v2-1136d046
+      mountPath: /var/run/secrets/nais.io/sqlcertificate
 
 ---
 # https://nav-it.slack.com/archives/C5KUST8N6/p1680085706741319
@@ -48,7 +48,7 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: 34.88.10.36/32
+            cidr: 100.71.2.153/32
   podSelector:
     matchLabels:
       app: notifikasjon-bruker-api-writer
