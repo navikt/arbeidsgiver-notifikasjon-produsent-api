@@ -21,6 +21,7 @@ object Dataprodukt {
     }
 
     private val saltVerdi = System.getenv("SALT_VERDI")
+        ?: error("Missing required environment variable: SALT_VERDI")
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
