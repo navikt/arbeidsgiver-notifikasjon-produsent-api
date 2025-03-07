@@ -48,7 +48,7 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: 34.88.62.19/32
+            cidr: 34.88.10.36/32
   podSelector:
     matchLabels:
       app: notifikasjon-bruker-api-writer
