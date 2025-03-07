@@ -33,6 +33,9 @@ spec:
         role: roles/cloudsql.client
   envFrom:
     - secret: google-sql-notifikasjon-bruker-api
+  filesFrom:
+    - secret: sqeletor-notifikasjon-bruker-api-v2-1136d046
+      mountPath: /var/run/secrets/nais.io/sqlcertificate
   env:
     - name: CLOUD_SQL_INSTANCE
       value: fager-dev-24f2:europe-north1:notifikasjon-bruker-api-v2
