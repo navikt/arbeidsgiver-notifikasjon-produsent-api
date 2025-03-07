@@ -36,6 +36,9 @@ spec:
   env:
     - name: CLOUD_SQL_INSTANCE
       value: fager-dev-24f2:europe-north1:notifikasjon-bruker-api-v2
+  filesFrom:
+    - secret: sqlcertificate
+      mountPath: /var/run/secrets/nais.io/sqlcertificate
 
 ---
 # https://nav-it.slack.com/archives/C5KUST8N6/p1680085706741319
