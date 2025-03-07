@@ -19,18 +19,7 @@ import java.time.Duration
 
 object Bruker {
     private val log = logger()
-    val databaseConfig = Database.config(
-        "bruker_model",
-        jdbcOpts = basedOnEnv(
-            prod = {
-                mapOf(
-                    "socketFactory" to "com.google.cloud.sql.postgres.SocketFactory",
-                    "cloudSqlInstance" to System.getenv("CLOUD_SQL_INSTANCE")!!
-                )
-            },
-            other = { emptyMap() }
-        )
-    )
+    val databaseConfig = Database.config("bruker_model")
 
     fun main(
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
