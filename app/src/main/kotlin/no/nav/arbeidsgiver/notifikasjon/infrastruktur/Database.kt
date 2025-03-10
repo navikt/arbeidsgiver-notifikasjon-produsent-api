@@ -44,7 +44,7 @@ class Database private constructor(
          * make a copy but change the database name
          */
         fun withDatabase(database: String) = copy(
-            jdbcUrl =  url.withDatabase(database).toString()
+            jdbcUrl = url.withDatabase(database).toString()
         )
     }
 
@@ -84,6 +84,7 @@ class Database private constructor(
         suspend fun openDatabase(
             config: Config,
             flywayAction: Flyway.() -> Unit = { migrate() },
+            fluentConfig: FluentConfiguration.() -> Unit = {}
         ): Database {
             val hikariConfig = config.asHikariConfig()
 
@@ -104,7 +105,7 @@ class Database private constructor(
             }
 
             val dataSource = NonBlockingDataSource(HikariDataSource(hikariConfig))
-            dataSource.withFlyway(config.migrationLocations) {
+            dataSource.withFlyway(config.migrationLocations, fluentConfig) {
                 flywayAction()
             }
 
@@ -129,10 +130,13 @@ class Database private constructor(
             }
         }
 
-        fun CoroutineScope.openDatabaseAsync(config: Config): Deferred<Database> {
+        fun CoroutineScope.openDatabaseAsync(
+            config: Config,
+            fluentConfig: FluentConfiguration.() -> Unit = {},
+        ): Deferred<Database> {
             return async {
                 try {
-                    openDatabase(config).also {
+                    openDatabase(config, fluentConfig = fluentConfig).also {
                         Health.subsystemReady[Subsystem.DATABASE] = true
                     }
                 } catch (e: Exception) {

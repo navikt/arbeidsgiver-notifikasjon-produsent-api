@@ -62,6 +62,9 @@ private fun templateDb(config: Database.Config): String {
                     config = config.withDatabase(db),
                     flywayAction = {
                         migrate()
+                    },
+                    fluentConfig = {
+                        placeholders(mapOf("SALT_VERDI" to "test"))
                     }
                 ).close()
             }
@@ -72,13 +75,17 @@ private fun templateDb(config: Database.Config): String {
 
 fun TestConfiguration.testDatabase(config: Database.Config, dbPrefix: String? = null): Database =
     runBlocking {
-        val testConfig = createDbFromTemplate(config, if (dbPrefix !== null) "${dbPrefix}_${config.database}" else config.database)
+        val testConfig =
+            createDbFromTemplate(config, if (dbPrefix !== null) "${dbPrefix}_${config.database}" else config.database)
         Database.openDatabase(
             config = testConfig.copy(
                 // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
                 jdbcOpts = mapOf("preparedStatementCacheQueries" to "0"),
             ),
             flywayAction = {
+                /* noop. created from template. */
+            },
+            fluentConfig = {
                 /* noop. created from template. */
             }
         )

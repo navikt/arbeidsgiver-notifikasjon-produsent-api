@@ -20,9 +20,16 @@ object Dataprodukt {
         )
     }
 
+    private val saltVerdi = System.getenv("SALT_VERDI")
+        ?: error("Missing required environment variable: SALT_VERDI")
+
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
-            val database = openDatabaseAsync(databaseConfig)
+            val database = openDatabaseAsync(databaseConfig) {
+                placeholders(
+                    mapOf("SALT_VERDI" to saltVerdi),
+                )
+            }
 
             launch {
                 val dataproduktModel = DataproduktModel(database.await())
