@@ -31,11 +31,11 @@ import javax.xml.namespace.QName
 import kotlin.time.Duration.Companion.milliseconds
 
 
-interface AltinnVarselKlient {
+interface Altinn2VarselKlient {
     suspend fun send(eksternVarsel: EksternVarsel): AltinnVarselKlientResponseOrException
 }
 
-class AltinnVarselKlientLogging : AltinnVarselKlient {
+class Altinn2VarselKlientLogging : Altinn2VarselKlient {
     private val log = logger()
 
     override suspend fun send(eksternVarsel: EksternVarsel): AltinnVarselKlientResponseOrException {
@@ -46,17 +46,18 @@ class AltinnVarselKlientLogging : AltinnVarselKlient {
     }
 }
 
-class AltinnVarselKlientMedFilter(
+class Altinn2VarselKlientMedFilter(
     private val repository: EksternVarslingRepository,
-    private val altinnVarselKlient: AltinnVarselKlientImpl,
-    private val loggingKlient: AltinnVarselKlientLogging,
-) : AltinnVarselKlient {
+    private val altinnVarselKlient: Altinn2VarselKlientImpl,
+    private val loggingKlient: Altinn2VarselKlientLogging,
+) : Altinn2VarselKlient {
 
     override suspend fun send(eksternVarsel: EksternVarsel): AltinnVarselKlientResponseOrException {
         val mottaker = when (eksternVarsel) {
-            is EksternVarsel.Sms -> eksternVarsel.mobilnummer
-            is EksternVarsel.Epost -> eksternVarsel.epostadresse
             is EksternVarsel.Altinntjeneste -> "${eksternVarsel.serviceCode}:${eksternVarsel.serviceEdition}"
+
+            // kun tjeneste varsling som bruker soap klienten
+            else -> throw UnsupportedOperationException("Unsupported varseltype: $eksternVarsel")
         }
         return if (repository.mottakerErPåAllowList(mottaker)) {
             altinnVarselKlient.send(eksternVarsel)
@@ -76,12 +77,12 @@ class AltinnVarselKlientMedFilter(
  *
  * [TransportType.EMAIL] støtter også html, det gjør ikke [TransportType.SMS]
  */
-class AltinnVarselKlientImpl(
+class Altinn2VarselKlientImpl(
     altinnEndPoint: String = "http://altinn-varsel-firewall.fager/ServiceEngineExternal/NotificationAgencyExternalBasic.svc",
     private val altinnBrukernavn: String = System.getenv("ALTINN_BASIC_WS_BRUKERNAVN") ?: "",
     private val altinnPassord: String = System.getenv("ALTINN_BASIC_WS_PASSORD") ?: "",
     authClient: AuthClient = AuthClientImpl(TexasAuthConfig.nais(), IdentityProvider.AZURE_AD),
-) : AltinnVarselKlient {
+) : Altinn2VarselKlient {
     val log = logger()
 
     private val azureTarget: String = basedOnEnv(
@@ -118,6 +119,8 @@ class AltinnVarselKlientImpl(
             tittel = eksternVarsel.tittel,
             innhold = eksternVarsel.innhold,
         )
+
+        is EksternVarsel.Altinnressurs -> throw UnsupportedOperationException("Unsupported varseltype: $eksternVarsel")
     }
 
     suspend fun sendSms(

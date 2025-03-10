@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarsel
@@ -79,6 +80,7 @@ object ProdusentModel {
                                         is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is AltinnressursVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                     },
                                 )
                             }
@@ -132,6 +134,7 @@ object ProdusentModel {
                                         is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is AltinnressursVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                     },
                                 )
                             }
@@ -149,6 +152,7 @@ object ProdusentModel {
                                         is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is AltinnressursVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                     },
                                 )
                             }
@@ -216,6 +220,7 @@ object ProdusentModel {
                                         is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is AltinnressursVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                     },
                                 )
                             }
@@ -233,6 +238,7 @@ object ProdusentModel {
                                         is AltinntjenesteVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is EpostVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                         is SmsVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
+                                        is AltinnressursVarselKontaktinfo -> otherVarsel.kildeHendelse.copy(varselId = thisVarsel.kildeHendelse.varselId)
                                     },
                                 )
                             }
@@ -353,6 +359,14 @@ fun EksterntVarsel.tilProdusentModel(): ProdusentModel.EksterntVarsel {
                 kildeHendelse = this,
             )
         is AltinntjenesteVarselKontaktinfo ->
+            ProdusentModel.EksterntVarsel(
+                varselId = this.varselId,
+                status = ProdusentModel.EksterntVarsel.Status.NY,
+                feilmelding = null,
+                kildeHendelse = this,
+            )
+
+        is AltinnressursVarselKontaktinfo ->
             ProdusentModel.EksterntVarsel(
                 varselId = this.varselId,
                 status = ProdusentModel.EksterntVarsel.Status.NY,

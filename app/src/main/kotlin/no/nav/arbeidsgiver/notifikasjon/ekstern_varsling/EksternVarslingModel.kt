@@ -13,6 +13,15 @@ import java.util.*
 sealed interface EksternVarsel {
     val fnrEllerOrgnr: String
     val sendeVindu: EksterntVarselSendingsvindu
+
+    /**
+     * kun satt for [EksterntVarselSendingsvindu.SPESIFISERT]
+     * vi venter med å bestille varsling i altinn til vi vet varselet skal sendes.
+     * det vil si vi bruker ikke sendeTidspunkt til å bestille varsler frem i tid i altinn.
+     *
+     * @see no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarselTilstand.kalkuertSendetidspunkt
+     * @see no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarslingService.workOnEksternVarsel
+     */
     val sendeTidspunkt: LocalDateTime?
 
     data class Sms(
@@ -40,6 +49,16 @@ sealed interface EksternVarsel {
         val serviceEdition: String,
         val tittel: String,
         val innhold: String
+    ): EksternVarsel
+
+    data class Altinnressurs(
+        override val fnrEllerOrgnr: String,
+        override val sendeVindu: EksterntVarselSendingsvindu,
+        override val sendeTidspunkt: LocalDateTime?,
+        val resourceId: String,
+        val epostTittel: String,
+        val epostInnhold: String,
+        val smsInnhold: String,
     ): EksternVarsel
 }
 

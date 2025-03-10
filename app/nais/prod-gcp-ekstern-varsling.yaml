@@ -45,5 +45,8 @@ spec:
           - name: ekstern-varsling-model
             envVarPrefix: DB
         autoBackupHour: 1
+  env:
+    - name: ALTINN_3_API_BASE_URL
+      value: https://platform.altinn.no
   envFrom:
     - secret: altinn-basic-ws

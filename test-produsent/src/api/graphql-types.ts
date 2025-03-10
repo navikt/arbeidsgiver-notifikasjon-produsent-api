@@ -74,6 +74,11 @@ export type AltinnRessursMottakerInput = {
   ressursId: Scalars['String']['input'];
 };
 
+/**
+ * Ekstern varsling på Altinn 2 tjeneste.
+ * Ekstern varsling på Altinn 3 ressurs er ikke implementert, men er i backloggen.
+ * Ta kontakt derssom dere ønsker at vi prioriterer dette.
+ */
 export type AltinntjenesteMottakerInput = {
   serviceCode: Scalars['String']['input'];
   serviceEdition: Scalars['String']['input'];
@@ -131,7 +136,39 @@ export type EksterntVarsel = {
 };
 
 /**
- * Med denne typen vil varsel sendes til virksomheten vha tjenesten i Altinn.
+ * Med denne typen vil varsel sendes til virksomheten vha ressursen i Altinn 3.
+ * APIet i Altinn 3 som brukes er <a href="https://docs.altinn.studio/notifications/reference/api/">Altinn Notifications API</a>
+ *
+ * Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det mest sannsynlig blir sendt som epost, men i enkelte tilfeller
+ * vil bli sendt sms.
+ *
+ * De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med ressursen som oppgis) vil bli varslet.
+ * Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
+ */
+export type EksterntVarselAltinnressursInput = {
+  /**
+   * Kroppen til e-posten. Kan inneholde HTML.
+   * OBS: Det er ikke lov med personopplysninger i teksten.
+   */
+  epostHtmlBody: Scalars['String']['input'];
+  /**
+   * Subject/emne til e-posten
+   * OBS: Det er ikke lov med personopplysninger i teksten.
+   */
+  epostTittel: Scalars['String']['input'];
+  mottaker: AltinnRessursMottakerInput;
+  sendetidspunkt: SendetidspunktInput;
+  /**
+   * Teksten som sendes i SMS-en.
+   * OBS: Det er ikke lov med personopplysninger i teksten.
+   */
+  smsTekst: Scalars['String']['input'];
+};
+
+/**
+ * Med denne typen vil varsel sendes til virksomheten vha tjenesten i Altinn 2.
+ * APIet i Altinn 2 som brukes er <a href="https://altinn.github.io/docs/api/tjenesteeiere/soap/endepunkt-liste/#notificationagencyexternal">NotificationAgencyExternal.SendStandaloneNotiuficationBasic</a>
+ *
  * Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det mest sannsynlig blir sendt som epost, men i enkelte tilfeller
  * vil bli sendt sms.
  *
@@ -176,6 +213,7 @@ export type EksterntVarselEpostInput = {
 };
 
 export type EksterntVarselInput = {
+  altinnressurs?: InputMaybe<EksterntVarselAltinnressursInput>;
   altinntjeneste?: InputMaybe<EksterntVarselAltinntjenesteInput>;
   epost?: InputMaybe<EksterntVarselEpostInput>;
   sms?: InputMaybe<EksterntVarselSmsInput>;
@@ -348,8 +386,6 @@ export type Metadata = {
   grupperingsid?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   opprettetTidspunkt?: Maybe<Scalars['ISO8601DateTime']['output']>;
-  softDeleted: Scalars['Boolean']['output'];
-  softDeletedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
 };
 
 export type MetadataInput = {
