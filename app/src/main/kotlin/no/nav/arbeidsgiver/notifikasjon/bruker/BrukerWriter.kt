@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
@@ -14,9 +15,14 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaL
 object BrukerWriter {
     val databaseConfig = Database.config(
         "bruker_model",
-        jdbcOpts = mapOf(
-            "socketFactory" to "com.google.cloud.sql.postgres.SocketFactory",
-            "cloudSqlInstance" to System.getenv("CLOUD_SQL_INSTANCE")!!
+        jdbcOpts = basedOnEnv(
+            prod = {
+                mapOf(
+                    "socketFactory" to "com.google.cloud.sql.postgres.SocketFactory",
+                    "cloudSqlInstance" to System.getenv("CLOUD_SQL_INSTANCE")!!
+                )
+            },
+            other = { emptyMap() }
         )
     )
 

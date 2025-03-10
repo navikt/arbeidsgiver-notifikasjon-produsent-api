@@ -42,8 +42,6 @@ spec:
             users:
               - name: bruker-api-kafka-user
         autoBackupHour: 1
-        maintenance:
-          hour: 3
   accessPolicy:
     inbound:
       rules:

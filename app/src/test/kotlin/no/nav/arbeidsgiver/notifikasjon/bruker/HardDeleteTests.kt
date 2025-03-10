@@ -162,6 +162,7 @@ class HardDeleteTests : DescribeSpec({
                     offset = 0,
                     limit = Integer.MAX_VALUE,
                     oppgaveTilstand = null,
+                    oppgaveFilter = null,
                     sortering = BrukerAPI.SakSortering.NYESTE
                 ).saker
                     .map { it.sakId }
@@ -192,6 +193,7 @@ class HardDeleteTests : DescribeSpec({
                 offset = 0,
                 limit = Integer.MAX_VALUE,
                 oppgaveTilstand = null,
+                oppgaveFilter = null,
                 sortering = BrukerAPI.SakSortering.NYESTE
             ).saker
                 .map { it.sakId }

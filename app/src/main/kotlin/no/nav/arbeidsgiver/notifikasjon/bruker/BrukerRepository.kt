@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.OppgaveFilterInfo.OppgaveFilterType
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerModel.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
@@ -30,11 +31,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.*
 import java.util.*
 
 interface BrukerRepository {
@@ -51,7 +48,7 @@ interface BrukerRepository {
         val oppgaveFilterMedAntall: List<OppgaveFilterInfo>,
     )
 
-    class OppgaveFilterInfo (
+    class OppgaveFilterInfo(
         val filterType: String,
         val antall: Int
     )
@@ -76,6 +73,7 @@ interface BrukerRepository {
         offset: Int,
         limit: Int,
         oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
+        oppgaveFilter: List<OppgaveFilterType>?
     ): HentSakerResultat
 
     suspend fun hentSakById(
@@ -257,6 +255,23 @@ class BrukerRepositoryImpl(
 
     private val searchQuerySplit = Regex("""[ \t\n\r.,:;]""")
 
+    private fun OppgaveFilterType.toOppgaveTilstand(): BrukerModel.Oppgave.Tilstand? {
+        return when (this) {
+            OppgaveFilterType.TILSTAND_NY -> BrukerModel.Oppgave.Tilstand.NY
+            OppgaveFilterType.TILSTAND_UTFOERT -> BrukerModel.Oppgave.Tilstand.UTFOERT
+            OppgaveFilterType.TILSTAND_UTGAATT -> BrukerModel.Oppgave.Tilstand.UTGAATT
+            OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST -> null
+        }
+    }
+
+    private fun BrukerModel.Oppgave.Tilstand.toOppgaveFilterType(): OppgaveFilterType {
+        return when (this) {
+            BrukerModel.Oppgave.Tilstand.NY -> OppgaveFilterType.TILSTAND_NY
+            BrukerModel.Oppgave.Tilstand.UTFOERT -> OppgaveFilterType.TILSTAND_UTFOERT
+            BrukerModel.Oppgave.Tilstand.UTGAATT -> OppgaveFilterType.TILSTAND_UTGAATT
+        }
+    }
+
     override suspend fun hentSaker(
         fnr: String,
         virksomhetsnummer: List<String>,
@@ -266,9 +281,18 @@ class BrukerRepositoryImpl(
         sortering: BrukerAPI.SakSortering,
         offset: Int,
         limit: Int,
-        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
+        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?, //TODO: Fjern denne etter deploy av frontend
+        oppgaveFilter: List<OppgaveFilterType>?
     ): BrukerRepository.HentSakerResultat {
         return timer.coRecord {
+
+            //TODO: fjerne dette etter deploy av frontend
+            val oppgaveFilter = oppgaveFilter ?: oppgaveTilstand?.map { it.toOppgaveFilterType() }
+            val oppgaveTilstand = oppgaveFilter?.mapNotNull { it.toOppgaveTilstand() }
+
+            val harPåminnelse =
+                oppgaveFilter?.any { it == OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST } == true
+
             val tilgangerAltinnMottaker = altinnTilganger.tilganger
                 .filter { virksomhetsnummer.contains(it.orgNr) }
 
@@ -347,17 +371,21 @@ class BrukerRepositoryImpl(
                                     )
                         ),
                         
-                        -- Beregn antall saker pr. merkelap med filter på oppgave_tilstand
-                        mine_saker_oppgave_tilstandfiltrert as (
+                        -- Beregn antall saker pr. merkelap med filter på oppgave_tilstand og påminnelse utløst
+                        mine_saker_oppgave_filtrert as (
                             select * 
                             from mine_saker_med_oppgaver
                             where coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
+                            ${if (harPåminnelse)
+                                //language=SQL
+                                "and oppgave_paaminnelse_tidspunkt is not null" 
+                            else ""}
                         ),
                         mine_merkelapper as (
                             select 
                                 merkelapp as sakstype,
                                 count(distinct id) as antall
-                            from mine_saker_oppgave_tilstandfiltrert
+                            from mine_saker_oppgave_filtrert
                             group by merkelapp
                         ),
                         
@@ -385,7 +413,7 @@ class BrukerRepositoryImpl(
                             group by filterType
                             union
                             select 
-                                'NY_MED_PÅMINNELSE_UTLØST' as filtertype,
+                                '${OppgaveFilterType.TILSTAND_NY_MED_PAAMINNELSE_UTLOEST.name}' as filtertype,
                                 count(distinct id) as antall
                             from mine_saker_sakstypefiltrert
                             where oppgave_tilstand = 'NY' and oppgave_paaminnelse_tidspunkt is not null
@@ -397,6 +425,10 @@ class BrukerRepositoryImpl(
                             from mine_saker_med_oppgaver
                             where coalesce(merkelapp = any(?), true)
                             and coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
+                            ${if (harPåminnelse)
+                            //language=SQL
+                                "and oppgave_paaminnelse_tidspunkt is not null"
+                            else ""}
                         ),
                         mine_saker_aggregerte_oppgaver_uten_statuser as (
                            select 
@@ -428,11 +460,11 @@ class BrukerRepositoryImpl(
                                 sak.grupperingsid
                             from mine_saker_aggregerte_oppgaver_uten_statuser sak
                             order by sak.sist_endret_tidspunkt ${
-                                when (sortering){
-                                    BrukerAPI.SakSortering.NYESTE -> "desc"
-                                    BrukerAPI.SakSortering.ELDSTE -> "asc"
-                                }
-                            }                        
+                    when (sortering) {
+                        BrukerAPI.SakSortering.NYESTE -> "desc"
+                        BrukerAPI.SakSortering.ELDSTE -> "asc"
+                    }
+                }                        
                             limit ? offset ?
                         )
                     select
@@ -486,7 +518,7 @@ class BrukerRepositoryImpl(
                     saker = laxObjectMapper.readValue(getString("saker")),
                     sakstyper = laxObjectMapper.readValue(getString("sakstyper")),
                     oppgaveTilstanderMedAntall = laxObjectMapper.readValue(getString("oppgavetilstander")),
-                    oppgaveFilterMedAntall = laxObjectMapper.readValue(getString("oppgavefilter")),
+                    oppgaveFilterMedAntall = laxObjectMapper.readValue(getString("oppgavefilter"))
                 )
             }
             return@coRecord rows.first()
@@ -971,7 +1003,10 @@ class BrukerRepositoryImpl(
                     mottaker
                 )
             }
-            settSakOppdatert(hentSakIdByNotifikasjonsId(beskjedOpprettet.notifikasjonId), beskjedOpprettet.opprettetTidspunkt)
+            settSakOppdatert(
+                hentSakIdByNotifikasjonsId(beskjedOpprettet.notifikasjonId),
+                beskjedOpprettet.opprettetTidspunkt
+            )
         }
     }
 
@@ -1147,7 +1182,10 @@ class BrukerRepositoryImpl(
                 uuid(påminnelseOpprettet.notifikasjonId)
             }
 
-            settSakOppdatert(hentSakIdByNotifikasjonsId(påminnelseOpprettet.notifikasjonId), påminnelseOpprettet.tidspunkt.påminnelseTidspunkt)
+            settSakOppdatert(
+                hentSakIdByNotifikasjonsId(påminnelseOpprettet.notifikasjonId),
+                påminnelseOpprettet.tidspunkt.påminnelseTidspunkt
+            )
         }
     }
 
@@ -1252,7 +1290,10 @@ class BrukerRepositoryImpl(
                 nullableDate(oppgaveOpprettet.frist)
             }
 
-            settSakOppdatert(hentSakIdByNotifikasjonsId(oppgaveOpprettet.notifikasjonId), oppgaveOpprettet.opprettetTidspunkt)
+            settSakOppdatert(
+                hentSakIdByNotifikasjonsId(oppgaveOpprettet.notifikasjonId),
+                oppgaveOpprettet.opprettetTidspunkt
+            )
 
             for (mottaker in oppgaveOpprettet.mottakere) {
                 storeMottaker(

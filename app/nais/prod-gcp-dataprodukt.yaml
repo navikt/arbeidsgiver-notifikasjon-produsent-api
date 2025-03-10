@@ -23,6 +23,8 @@ spec:
   prometheus:
     enabled: true
     path: /internal/metrics
+  envFrom:
+    - secret: notifikasjon-dataprodukt
   kafka:
     pool: nav-prod
   gcp:
@@ -34,5 +36,3 @@ spec:
           - name: dataprodukt-model
             envVarPrefix: DB
         autoBackupHour: 1
-        maintenance:
-          hour: 3

@@ -23,7 +23,8 @@ open class BrukerRepositoryStub : BrukerRepository {
         sortering: BrukerAPI.SakSortering,
         offset: Int,
         limit: Int,
-        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?
+        oppgaveTilstand: List<BrukerModel.Oppgave.Tilstand>?,
+        oppgaveFilter: List<BrukerAPI.OppgaveFilterInfo.OppgaveFilterType>?
     ): BrukerRepository.HentSakerResultat = TODO("Not yet implemented")
 
     override suspend fun hentSakById(fnr: String, altinnTilganger: AltinnTilganger, id: UUID): BrukerModel.Sak? =
