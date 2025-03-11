@@ -22,6 +22,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformToke
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -208,11 +209,34 @@ interface Altinn3VarselKlient {
                 )
 
                 is EksternVarsel.Sms -> Sms(
-                    reciever = eksternVarsel.mobilnummer,
+                    reciever = fiksGyldigMobilnummer(eksternVarsel.mobilnummer),
                     body = eksternVarsel.tekst,
                 )
 
                 is EksternVarsel.Altinntjeneste -> throw UnsupportedOperationException("Altinntjeneste er ikke støttet")
+            }
+
+            /**
+             * På grunn av en endring i altinn 3 apiet i forhold til soap api, så støttes ikke lenger mobilnummer uten
+             * landkode: https://docs.altinn.studio/nb/notifications/what-do-you-get/#supported-recipient-numbers
+             *
+             * I produsent-api tillatter vi kun norske mobilnummer, men krever ikke landkode. Vi antar norge på samme måte
+             * som det gamle altinn apiet.
+             * Dersom vi åpner opp for andre land, må vi også endre valideringen i graphql apiet slik at landkode må angis.
+             * Dersom dette gjøres kan denne mapping koden fjernes i sin helhet.
+             */
+            private fun fiksGyldigMobilnummer(mobilnummer: String): String {
+                return when {
+                    mobilnummer.startsWith("0047") -> {
+                        mobilnummer
+                    }
+                    mobilnummer.startsWith("+47") -> {
+                        mobilnummer
+                    }
+                    else -> {
+                        mobilnummer.ensurePrefix("+47")
+                    }
+                }
             }
         }
     }

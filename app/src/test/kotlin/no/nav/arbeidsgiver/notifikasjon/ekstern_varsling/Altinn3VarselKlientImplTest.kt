@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.client.*
@@ -24,10 +25,10 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
     describe("DTO mapping") {
         it("EksternVarsel.Sms -> NotificationDTO.Sms") {
             EksternVarsel.Sms(
-                fnrEllerOrgnr = "12345678901",
+                fnrEllerOrgnr = "99999999901",
                 sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null,
-                mobilnummer = "12345678",
+                mobilnummer = "99999999",
                 tekst = "Hei, dette er en test",
             ).let { dto ->
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
@@ -36,7 +37,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                         {
                           "notificationChannel" : "Sms",
                           "recipients" : [ {
-                            "mobileNumber" : "12345678"
+                            "mobileNumber" : "+4799999999"
                           } ],
                           "smsTemplate" : {
                             "body" : "Hei, dette er en test"
@@ -46,9 +47,38 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
             }
         }
 
+        context("NotificationDTO.Sms fikser mobilnummer til gyldig format") {
+            withData(
+                "99999999" to "+4799999999",
+                "004799999999" to "004799999999",
+                "+4799999999" to "+4799999999",
+            ) { (input, output) ->
+                val dto = EksternVarsel.Sms(
+                    fnrEllerOrgnr = "99999999901",
+                    sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null,
+                    mobilnummer = input,
+                    tekst = "Hei, dette er en test",
+                )
+                val json = Altinn3VarselKlient.OrderRequest.from(dto)
+                laxObjectMapper.writeValueAsString(json) shouldEqualJson //language=json
+                        """
+                            {
+                              "notificationChannel" : "Sms",
+                              "recipients" : [ {
+                                "mobileNumber" : "$output"
+                              } ],
+                              "smsTemplate" : {
+                                "body" : "Hei, dette er en test"
+                              }
+                            }
+                          """
+            }
+        }
+
         it("EksternVarsel.Epost -> NotificationDTO.Email") {
             EksternVarsel.Epost(
-                fnrEllerOrgnr = "12345678901",
+                fnrEllerOrgnr = "99999999901",
                 sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null,
                 epostadresse = "foo@bar.baz",
@@ -109,7 +139,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
 
         it("EksternVarsel.Altinntjeneste -> UnsupportedOperationException") {
             val eksternVarsel = EksternVarsel.Altinntjeneste(
-                fnrEllerOrgnr = "12345678901",
+                fnrEllerOrgnr = "99999999901",
                 sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null,
                 serviceCode = "123",
@@ -147,10 +177,10 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
             )
         }
         val eksternVarsel = EksternVarsel.Sms(
-            fnrEllerOrgnr = "12345678901",
+            fnrEllerOrgnr = "99999999901",
             sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
             sendeTidspunkt = null,
-            mobilnummer = "12345678",
+            mobilnummer = "99999999",
             tekst = "Hei, dette er en test",
         )
 
@@ -182,7 +212,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                     {
                       "notificationChannel" : "Sms",
                       "recipients" : [ {
-                        "mobileNumber" : "12345678"
+                        "mobileNumber" : "+4799999999"
                       } ],
                       "smsTemplate" : {
                         "body" : "Hei, dette er en test"
