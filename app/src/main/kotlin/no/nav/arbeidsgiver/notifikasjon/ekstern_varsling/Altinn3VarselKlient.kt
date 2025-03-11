@@ -60,7 +60,11 @@ class Altinn3VarselKlientImpl(
             setBody(OrderRequest.from(eksternVarsel))
         }.bodyAsText().let { r ->
             laxObjectMapper.readTree(r).let {
+                log.info(it.toPrettyString())
                 log.info("order: ${it::class.java} $it")
+                log.info("Keys: " + it.fieldNames().asSequence().toList())
+                log.info("Order ID: " + it["orderId"])
+                log.info("Order ID as text: " + it["orderId"]?.asText())
                 OrderResponse.Success(it)
             }
         }
@@ -104,6 +108,10 @@ class Altinn3VarselKlientImpl(
     }.bodyAsText().let { r ->
         laxObjectMapper.readTree(r).let {
             log.info("emailNotifications: ${it::class.java} $it")
+            log.info(it.toPrettyString())
+            log.info("Keys: " + it.fieldNames().asSequence().toList())
+            log.info("Order ID: " + it["orderId"])
+            log.info("Order ID as text: " + it["orderId"]?.asText())
             NotificationsResponse.Success.fromJson(it)
         }
     }
@@ -114,6 +122,10 @@ class Altinn3VarselKlientImpl(
     }.bodyAsText().let { r ->
         laxObjectMapper.readTree(r).let {
             log.info("smsNotifications: ${it::class.java} $it")
+            log.info(it.toPrettyString())
+            log.info("Keys: " + it.fieldNames().asSequence().toList())
+            log.info("Order ID: " + it["orderId"])
+            log.info("Order ID as text: " + it["orderId"]?.asText())
 
             NotificationsResponse.Success.fromJson(it)
         }
