@@ -11,6 +11,7 @@ import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.cache.getAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.IdentityProvider
@@ -68,6 +69,7 @@ class AltinnPlattformTokenClientImpl(
             url("$altinnBaseUrl/authentication/api/v1/exchange/maskinporten")
             header("Authorization", "Bearer $maskinportenToken")
         }.body<String>().let {
+            logger().info("altinn plattform token response: {}", it)
             JWT.decode(it)
         }
 
