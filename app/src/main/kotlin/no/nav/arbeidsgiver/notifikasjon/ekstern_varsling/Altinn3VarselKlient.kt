@@ -98,16 +98,20 @@ class Altinn3VarselKlientImpl(
     private suspend fun emailNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
         url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/notifications/email")
         contentType(ContentType.Application.Json)
+        accept(ContentType.Application.Json)
         plattformTokenBearerAuth()
     }.body<JsonNode>().let {
+        log.info("emailNotifications: $it")
         NotificationsResponse.Success.fromJson(it)
     }
 
     private suspend fun smsNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
         url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/notifications/sms")
         contentType(ContentType.Application.Json)
+        accept(ContentType.Application.Json)
         plattformTokenBearerAuth()
     }.body<JsonNode>().let {
+        log.info("smsNotifications: $it")
         NotificationsResponse.Success.fromJson(it)
     }
 
