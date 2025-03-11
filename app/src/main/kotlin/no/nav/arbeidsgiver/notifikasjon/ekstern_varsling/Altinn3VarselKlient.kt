@@ -59,6 +59,7 @@ class Altinn3VarselKlientImpl(
             contentType(ContentType.Application.Json)
             setBody(OrderRequest.from(eksternVarsel))
         }.body<JsonNode>().let {
+            log.info("order: ${it::class.java} $it")
             OrderResponse.Success(it)
         }
     } catch (e: ResponseException) {
@@ -101,7 +102,7 @@ class Altinn3VarselKlientImpl(
         accept(ContentType.Application.Json)
         plattformTokenBearerAuth()
     }.body<JsonNode>().let {
-        log.info("emailNotifications: $it")
+        log.info("emailNotifications: ${it::class.java} $it")
         NotificationsResponse.Success.fromJson(it)
     }
 
@@ -111,7 +112,7 @@ class Altinn3VarselKlientImpl(
         accept(ContentType.Application.Json)
         plattformTokenBearerAuth()
     }.body<JsonNode>().let {
-        log.info("smsNotifications: $it")
+        log.info("smsNotifications: ${it::class.java} $it")
         NotificationsResponse.Success.fromJson(it)
     }
 
