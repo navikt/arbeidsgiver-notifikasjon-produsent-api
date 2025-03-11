@@ -40,6 +40,8 @@ class Altinn3VarselKlientImpl(
     },
 ) : Altinn3VarselKlient {
 
+    private val log = logger()
+
     override suspend fun send(eksternVarsel: EksternVarsel) =
         when (val orderResponse = order(eksternVarsel)) {
             is OrderResponse.Success -> {
@@ -66,6 +68,7 @@ class Altinn3VarselKlientImpl(
             rå = e.response.body()
         )
     } catch (e: Exception) {
+        log.error("Unexpected error", e)
         ErrorResponse(
             message = e.message ?: "",
             code = e::class.java.simpleName ?: "",
@@ -84,6 +87,7 @@ class Altinn3VarselKlientImpl(
             rå = e.response.body()
         )
     } catch (e: Exception) {
+        log.error("Unexpected error", e)
         ErrorResponse(
             message = e.message ?: "",
             code = e::class.java.simpleName ?: "",
