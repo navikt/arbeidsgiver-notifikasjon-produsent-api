@@ -3,16 +3,23 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -43,16 +50,20 @@ class Altinn3VarselKlientImpl(
             plattformTokenBearerAuth()
             contentType(ContentType.Application.Json)
             setBody(OrderRequest.from(eksternVarsel))
-        }.body<OrderResponse.Success>()
+        }.body<JsonNode>().let {
+            OrderResponse.Success(it)
+        }
     } catch (e: ResponseException) {
         ErrorResponse(
-            message = e.response.status.description,
-            code = e.response.status.value.toString()
+            message = """${e.response.status.description}: ${e.response.bodyAsText()}""",
+            code = e.response.status.value.toString(),
+            rå = e.response.body()
         )
     } catch (e: Exception) {
         ErrorResponse(
             message = e.message ?: "",
-            code = e::class.java.simpleName ?: ""
+            code = e::class.java.simpleName ?: "",
+            rå = TextNode.valueOf(e.toString())
         )
     }
 
@@ -63,24 +74,30 @@ class Altinn3VarselKlientImpl(
     } catch (e: ResponseException) {
         ErrorResponse(
             message = e.response.status.description,
-            code = e.response.status.value.toString()
+            code = e.response.status.value.toString(),
+            rå = e.response.body()
         )
     } catch (e: Exception) {
         ErrorResponse(
             message = e.message ?: "",
-            code = e::class.java.simpleName ?: ""
+            code = e::class.java.simpleName ?: "",
+            rå = TextNode.valueOf(e.toString())
         )
     }
 
     private suspend fun emailNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
         url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/notifications/email")
         plattformTokenBearerAuth()
-    }.body()
+    }.body<JsonNode>().let {
+        NotificationsResponse.Success.fromJson(it)
+    }
 
     private suspend fun smsNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
         url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/notifications/sms")
         plattformTokenBearerAuth()
-    }.body()
+    }.body<JsonNode>().let {
+        NotificationsResponse.Success.fromJson(it)
+    }
 
     private suspend fun HttpMessageBuilder.plattformTokenBearerAuth() {
         altinnPlattformTokenClient.token("altinn:serviceowner/notifications.create").let {
@@ -191,33 +208,58 @@ interface Altinn3VarselKlient {
     }
 
     data class ErrorResponse(
+        override val rå: JsonNode,
         val message: String,
         val code: String,
     ) : OrderResponse, NotificationsResponse
 
     sealed interface OrderResponse {
-        @JsonIgnoreProperties(ignoreUnknown = true)
+        val rå: JsonNode
+
         data class Success(
-            val orderId: String,
-        ) : OrderResponse
+            override val rå: JsonNode
+        ) : OrderResponse {
+
+            val orderId: String
+                get() = rå["orderId"].asText()
+        }
     }
 
     @Suppress("unused")
     sealed interface NotificationsResponse {
+        val rå: JsonNode
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Success(
+            override val rå: JsonNode,
             val orderId: String,
             val sendersReference: String? = null,
             val generated: Int,
             val succeeded: Int,
             val notifications: List<Notification>,
         ) : NotificationsResponse {
+            companion object {
+                fun fromJson(rawJson: JsonNode): Success {
+                    return Success(
+                        rå = rawJson,
+                        orderId = rawJson["orderId"].asText(),
+                        sendersReference = rawJson["sendersReference"].asText(null),
+                        generated = rawJson["generated"].asInt(),
+                        succeeded = rawJson["succeeded"].asInt(),
+                        notifications = laxObjectMapper.readValue(rawJson["notifications"].toString())
+                    )
+                }
+            }
+
             operator fun plus(other: Success) = Success(
                 orderId = orderId,
                 sendersReference = sendersReference ?: other.sendersReference,
                 generated = generated + other.generated,
                 succeeded = succeeded + other.succeeded,
                 notifications = notifications + other.notifications,
+                rå = JsonNodeFactory.instance.arrayNode().apply {
+                    add(rå)
+                    add(other.rå)
+                }
             )
 
             data class Notification(
@@ -296,7 +338,8 @@ class Altinn3VarselKlientLogging : Altinn3VarselKlient {
             sendersReference = null,
             generated = 0,
             succeeded = 0,
-            notifications = listOf()
+            notifications = listOf(),
+            rå = NullNode.instance,
         )
     }
 }

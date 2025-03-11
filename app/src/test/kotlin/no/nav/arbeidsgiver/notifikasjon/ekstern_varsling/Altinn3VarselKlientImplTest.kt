@@ -4,6 +4,7 @@ import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -167,7 +168,10 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                     override suspend fun token(scope: String) = "fake-token"
                 },
             )
-            client.order(eksternVarsel) shouldBe Altinn3VarselKlient.OrderResponse.Success("42")
+            client.order(eksternVarsel).let {
+                it as Altinn3VarselKlient.OrderResponse.Success
+                it.orderId shouldBe "42"
+            }
             mockEngine.requestHistory.size shouldBe 1
             mockEngine.requestHistory.first().let { req ->
                 req.url.toString() shouldBe "http://altinn/notifications/api/v1/orders"
@@ -202,14 +206,44 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 },
             )
 
-            client.order(eksternVarsel) shouldBe Altinn3VarselKlient.ErrorResponse("Failed to get token", "RuntimeException")
+            client.order(eksternVarsel).let {
+                it as Altinn3VarselKlient.ErrorResponse
+                it.code shouldBe "RuntimeException"
+                it.message shouldBe "Failed to get token"
+            }
         }
 
         it("returns error when http call fails") {
             val client = Altinn3VarselKlientImpl(
                 altinnBaseUrl = "http://altinn",
                 httpClient = HttpClient(MockEngine {
-                    respondError(HttpStatusCode.BadRequest)
+                    respondError(
+                        status = HttpStatusCode.BadRequest,
+                        content = """
+                                                {
+                                                  "type": "string",
+                                                  "title": "string",
+                                                  "status": 0,
+                                                  "detail": "string",
+                                                  "instance": "string",
+                                                  "errors": {
+                                                    "additionalProp1": [
+                                                      "string"
+                                                    ],
+                                                    "additionalProp2": [
+                                                      "string"
+                                                    ],
+                                                    "additionalProp3": [
+                                                      "string"
+                                                    ]
+                                                  },
+                                                  "additionalProp1": "string",
+                                                  "additionalProp2": "string",
+                                                  "additionalProp3": "string"
+                                                }
+                                            """.trimIndent(),
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
                 }) {
                     expectSuccess = true
                     install(ContentNegotiation) {
@@ -221,7 +255,11 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 },
             )
 
-            client.order(eksternVarsel) shouldBe Altinn3VarselKlient.ErrorResponse("Bad Request", "400")
+            client.order(eksternVarsel).let {
+                it as Altinn3VarselKlient.ErrorResponse
+                it.code shouldBe "400"
+                it.message shouldContain "Bad Request"
+            }
         }
     }
 
@@ -325,38 +363,38 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
         it("gets sms and email notifications for a given order id") {
             val client = newClient()
             val result = client.notifications(orderId)
-            result shouldBe Success(
-                    orderId = orderId,
-                    sendersReference = null,
-                    generated = 2,
-                    succeeded = 2,
-                    notifications = listOf(
-                        Notification(
-                            id = "4321",
-                            succeeded = false,
-                            recipient = Notification.Recipient(
-                                mobileNumber = "+4799999999"
-                            ),
-                            sendStatus = Notification.SendStatus(
-                                status = "New",
-                                description = "The sms has been created, but has not been picked up for processing yet.",
-                                lastUpdate = "2023-11-14T16:06:02.877361Z"
-                            )
-                        ),
-                        Notification(
-                            id = "1234",
-                            succeeded = false,
-                            recipient = Notification.Recipient(
-                                emailAddress = "recipient@domain.com"
-                            ),
-                            sendStatus = Notification.SendStatus(
-                                status = "New",
-                                description = "The email has been created, but has not been picked up for processing yet.",
-                                lastUpdate = "2023-11-14T16:06:02.877361Z"
-                            )
-                        ),
+            result as Success
+            result.orderId shouldBe orderId
+            result.sendersReference shouldBe null
+            result.generated shouldBe 2
+            result.succeeded shouldBe 2
+            result.notifications.size shouldBe 2
+            result.notifications shouldBe listOf(
+                Notification(
+                    id = "4321",
+                    succeeded = false,
+                    recipient = Notification.Recipient(
+                        mobileNumber = "+4799999999"
+                    ),
+                    sendStatus = Notification.SendStatus(
+                        status = "New",
+                        description = "The sms has been created, but has not been picked up for processing yet.",
+                        lastUpdate = "2023-11-14T16:06:02.877361Z"
                     )
-                )
+                ),
+                Notification(
+                    id = "1234",
+                    succeeded = false,
+                    recipient = Notification.Recipient(
+                        emailAddress = "recipient@domain.com"
+                    ),
+                    sendStatus = Notification.SendStatus(
+                        status = "New",
+                        description = "The email has been created, but has not been picked up for processing yet.",
+                        lastUpdate = "2023-11-14T16:06:02.877361Z"
+                    )
+                ),
+            )
             (client.httpClient.engine as MockEngine).requestHistory.size shouldBe 2
             (client.httpClient.engine as MockEngine).requestHistory.first().let { req ->
                 req.url.toString() shouldBe "http://altinn/notifications/api/v1/orders/$orderId/notifications/sms"

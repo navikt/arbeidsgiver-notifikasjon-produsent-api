@@ -846,7 +846,7 @@ class EksternVarslingRepository(
                 where varsel_id = ?
             """
             ) {
-                jsonb(response)
+                jsonb(response.rå)
                 when (response) {
                     is Altinn3VarselKlient.ErrorResponse -> {
                         text("FEIL")

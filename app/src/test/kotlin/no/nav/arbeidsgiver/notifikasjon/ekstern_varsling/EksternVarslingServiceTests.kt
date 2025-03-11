@@ -80,6 +80,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 override suspend fun send(eksternVarsel: EksternVarsel): Altinn3VarselKlient.NotificationsResponse {
                     meldingSendt.set(MeldingsType.Altinn3)
                     return Altinn3VarselKlient.NotificationsResponse.Success(
+                        rå = NullNode.instance,
                         orderId = "1",
                         generated = 0,
                         succeeded = 0,
