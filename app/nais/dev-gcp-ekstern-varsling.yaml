@@ -53,6 +53,6 @@ spec:
             envVarPrefix: DB
   env:
     - name: ALTINN_3_API_BASE_URL
-      value: https://platform.tt02.altinn.no
+      value: platform.tt02.altinn.no
   envFrom:
     - secret: altinn-basic-ws
