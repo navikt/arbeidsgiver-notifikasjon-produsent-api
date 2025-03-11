@@ -11,6 +11,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -23,7 +24,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import kotlin.time.Duration.Companion.milliseconds
 
-
 /**
  * Klient for å sende varsler til Altinn 3
  * https://docs.altinn.studio/notifications/reference/api/openapi/#/Orders/post_orders
@@ -31,7 +31,13 @@ import kotlin.time.Duration.Companion.milliseconds
 class Altinn3VarselKlientImpl(
     val altinnBaseUrl: String = System.getenv("ALTINN_3_API_BASE_URL"),
     val altinnPlattformTokenClient: AltinnPlattformTokenClient = AltinnPlattformTokenClientImpl(),
-    val httpClient: HttpClient = defaultHttpClient(),
+    val httpClient: HttpClient = defaultHttpClient() {
+        install(Logging) {
+            logger = Logger.DEFAULT
+            level = LogLevel.BODY
+            sanitizeHeader { header -> header == HttpHeaders.Authorization }
+        }
+    },
 ) : Altinn3VarselKlient {
 
     override suspend fun send(eksternVarsel: EksternVarsel) =
