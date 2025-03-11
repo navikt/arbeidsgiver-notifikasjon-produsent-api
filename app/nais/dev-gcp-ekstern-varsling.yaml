@@ -40,7 +40,7 @@ spec:
       rules:
         - application: altinn-varsel-firewall
       external:
-        - host: https://platform.tt02.altinn.no
+        - host: platform.tt02.altinn.no
   gcp:
     sqlInstances:
       - name: notifikasjon-ekstern-varsling-v2
@@ -53,6 +53,6 @@ spec:
             envVarPrefix: DB
   env:
     - name: ALTINN_3_API_BASE_URL
-      value: platform.tt02.altinn.no
+      value: https://platform.tt02.altinn.no
   envFrom:
     - secret: altinn-basic-ws
