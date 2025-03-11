@@ -6,8 +6,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
-import io.ktor.http.*
-import io.ktor.utils.io.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientStub
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TokenResponse
 import java.time.Instant
@@ -26,11 +24,7 @@ class AltinnPlattformTokenClientTest : DescribeSpec({
             altinnBaseUrl = "http://altinn",
             authClient = authClientStub,
             httpClient = HttpClient(MockEngine { _ ->
-                respond(
-                    content = ByteReadChannel(altinnToken),
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, "application/json")
-                )
+                respondOk("\"$altinnToken\"")
             })
         )
 
