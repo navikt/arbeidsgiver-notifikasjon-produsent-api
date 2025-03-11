@@ -58,15 +58,8 @@ class Altinn3VarselKlientImpl(
             plattformTokenBearerAuth()
             contentType(ContentType.Application.Json)
             setBody(OrderRequest.from(eksternVarsel))
-        }.bodyAsText().let { r ->
-            laxObjectMapper.readTree(r).let {
-                log.info(it.toPrettyString())
-                log.info("order: ${it::class.java} $it")
-                log.info("Keys: " + it.fieldNames().asSequence().toList())
-                log.info("Order ID: " + it["orderId"])
-                log.info("Order ID as text: " + it["orderId"]?.asText())
-                OrderResponse.Success(it)
-            }
+        }.body<JsonNode>().let {
+            OrderResponse.Success(it)
         }
     } catch (e: ResponseException) {
         ErrorResponse(
@@ -105,30 +98,15 @@ class Altinn3VarselKlientImpl(
     private suspend fun emailNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
         url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/notifications/email")
         plattformTokenBearerAuth()
-    }.bodyAsText().let { r ->
-        laxObjectMapper.readTree(r).let {
-            log.info("emailNotifications: ${it::class.java} $it")
-            log.info(it.toPrettyString())
-            log.info("Keys: " + it.fieldNames().asSequence().toList())
-            log.info("Order ID: " + it["orderId"])
-            log.info("Order ID as text: " + it["orderId"]?.asText())
-            NotificationsResponse.Success.fromJson(it)
-        }
+    }.body<JsonNode>().let {
+        NotificationsResponse.Success.fromJson(it)
     }
 
     private suspend fun smsNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
         url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/notifications/sms")
         plattformTokenBearerAuth()
-    }.bodyAsText().let { r ->
-        laxObjectMapper.readTree(r).let {
-            log.info("smsNotifications: ${it::class.java} $it")
-            log.info(it.toPrettyString())
-            log.info("Keys: " + it.fieldNames().asSequence().toList())
-            log.info("Order ID: " + it["orderId"])
-            log.info("Order ID as text: " + it["orderId"]?.asText())
-
-            NotificationsResponse.Success.fromJson(it)
-        }
+    }.body<JsonNode>().let {
+        NotificationsResponse.Success.fromJson(it)
     }
 
     private suspend fun HttpMessageBuilder.plattformTokenBearerAuth() {
@@ -274,7 +252,7 @@ interface Altinn3VarselKlient {
                     return Success(
                         rå = rawJson,
                         orderId = rawJson["orderId"].asText(),
-                        sendersReference = rawJson["sendersReference"].asText(null),
+                        sendersReference = rawJson["sendersReference"]?.asText(null),
                         generated = rawJson["generated"].asInt(),
                         succeeded = rawJson["succeeded"].asInt(),
                         notifications = laxObjectMapper.readValue(rawJson["notifications"].toString())

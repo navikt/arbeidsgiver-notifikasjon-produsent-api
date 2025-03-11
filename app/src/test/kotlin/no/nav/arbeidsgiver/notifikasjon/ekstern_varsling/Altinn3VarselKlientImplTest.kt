@@ -292,7 +292,6 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
         val mockEmailResponse = """
             {
                 "orderId": "42",
-                "sendersReference": null,
                 "generated": 1,
                 "succeeded": 1,
                 "notifications": [
