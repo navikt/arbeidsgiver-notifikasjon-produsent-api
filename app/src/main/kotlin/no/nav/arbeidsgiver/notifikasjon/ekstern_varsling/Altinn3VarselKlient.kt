@@ -33,6 +33,7 @@ class Altinn3VarselKlientImpl(
     val altinnBaseUrl: String = System.getenv("ALTINN_3_API_BASE_URL"),
     val altinnPlattformTokenClient: AltinnPlattformTokenClient = AltinnPlattformTokenClientImpl(),
     val httpClient: HttpClient = defaultHttpClient() {
+        // TODO: remove after testing
         install(Logging) {
             logger = Logger.DEFAULT
             level = LogLevel.BODY
