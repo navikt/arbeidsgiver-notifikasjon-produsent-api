@@ -36,8 +36,8 @@ spec:
     outbound:
       rules:
         - application: altinn-varsel-firewall
-    external:
-      - host: platform.altinn.no
+      external:
+        - host: platform.altinn.no
   gcp:
     sqlInstances:
       - name: notifikasjon-ekstern-varsling-v2
