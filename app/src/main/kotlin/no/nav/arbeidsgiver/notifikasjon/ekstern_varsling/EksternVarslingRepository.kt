@@ -832,7 +832,7 @@ class EksternVarslingRepository(
         }
     }
 
-    suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: Altinn3VarselKlient.NotificationsResponse) {
+    suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: Altinn3VarselKlient.OrderResponse) {
         database.transaction {
             executeUpdate(
                 """ 
@@ -853,7 +853,7 @@ class EksternVarslingRepository(
                         nullableText(response.message)
                         nullableText(response.code)
                     }
-                    is Altinn3VarselKlient.NotificationsResponse.Success -> {
+                    is Altinn3VarselKlient.OrderResponse.Success -> {
                         text("OK")
                         nullableText(null)
                         nullableText(null)

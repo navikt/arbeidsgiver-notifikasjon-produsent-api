@@ -36,7 +36,7 @@ class AltinnPlattformTokenClientTest : DescribeSpec({
             val fakeAltinnToken = JWT.create().withExpiresAt(Instant.now().plusSeconds(1200)).sign(Algorithm.none())
             val client = newClient(fakeAltinnToken)
 
-            client.token("foo:bar").let {  token ->
+            client.token("foo:bar").let { token ->
                 token shouldBe fakeAltinnToken
                 authClientReqs shouldBe listOf("foo:bar")
                 client.mock().requestHistory.map { it.url.toString() } shouldBe listOf("http://altinn/authentication/api/v1/exchange/maskinporten")

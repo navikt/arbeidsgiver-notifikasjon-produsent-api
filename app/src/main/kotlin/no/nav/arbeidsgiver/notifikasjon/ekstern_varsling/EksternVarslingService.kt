@@ -238,8 +238,8 @@ class EksternVarslingService(
                                 }
                             }
                         } else {
-                            when (val response = altinn3VarselKlient.send(varsel.data.eksternVarsel)) {
-                                is Altinn3VarselKlient.NotificationsResponse.Success ->
+                            when (val response = altinn3VarselKlient.order(varsel.data.eksternVarsel)) {
+                                is Altinn3VarselKlient.OrderResponse.Success ->
                                     eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
 
                                 is Altinn3VarselKlient.ErrorResponse -> {

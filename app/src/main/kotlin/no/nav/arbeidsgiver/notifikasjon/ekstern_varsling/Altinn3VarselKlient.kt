@@ -15,7 +15,6 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.coroutines.delay
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClientImpl
@@ -23,11 +22,15 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
-import kotlin.time.Duration.Companion.milliseconds
+import java.util.*
 
 /**
  * Klient for å sende varsler til Altinn 3
  * https://docs.altinn.studio/notifications/reference/api/openapi/#/Orders/post_orders
+ *
+ * Her skal det komme et bedre API etterhvert.
+ * ref: https://altinn.slack.com/archives/C069J71UQCQ/p1740582966140809?thread_ts=1740580333.657779&cid=C069J71UQCQ
+ * https://github.com/Altinn/altinn-notifications/tree/feature/api-v2/src/Altinn.Notifications.NewApiDemo
  */
 class Altinn3VarselKlientImpl(
     val altinnBaseUrl: String = System.getenv("ALTINN_3_API_BASE_URL"),
@@ -44,24 +47,14 @@ class Altinn3VarselKlientImpl(
 
     private val log = logger()
 
-    override suspend fun send(eksternVarsel: EksternVarsel) =
-        when (val orderResponse = order(eksternVarsel)) {
-            is OrderResponse.Success -> {
-                delay(500.milliseconds)
-                notifications(orderResponse.orderId)
-            }
-
-            is ErrorResponse -> orderResponse
-        }
-
-    suspend fun order(eksternVarsel: EksternVarsel) = try {
+    override suspend fun order(eksternVarsel: EksternVarsel) = try {
         httpClient.post {
             url("$altinnBaseUrl/notifications/api/v1/orders")
             plattformTokenBearerAuth()
             contentType(ContentType.Application.Json)
             setBody(OrderRequest.from(eksternVarsel))
         }.body<JsonNode>().let {
-            OrderResponse.Success(it)
+            OrderResponse.Success.fromJson(it)
         }
     } catch (e: ResponseException) {
         ErrorResponse(
@@ -78,7 +71,7 @@ class Altinn3VarselKlientImpl(
         )
     }
 
-    suspend fun notifications(orderId: String): NotificationsResponse = try {
+    override suspend fun notifications(orderId: String): NotificationsResponse = try {
         val sms = smsNotifications(orderId)
         val email = emailNotifications(orderId)
         sms + email
@@ -122,9 +115,8 @@ class Altinn3VarselKlientImpl(
 
 
 interface Altinn3VarselKlient {
-    //suspend fun order(eksternVarsel: EksternVarsel): OrderResponse
-    //suspend fun notifications(orderId: String): NotificationsResponse
-    suspend fun send(eksternVarsel: EksternVarsel): NotificationsResponse
+    suspend fun order(eksternVarsel: EksternVarsel): OrderResponse
+    suspend fun notifications(orderId: String): NotificationsResponse
 
 
     /**
@@ -252,11 +244,18 @@ interface Altinn3VarselKlient {
         val rå: JsonNode
 
         data class Success(
-            override val rå: JsonNode
+            override val rå: JsonNode,
+            val orderId: String,
         ) : OrderResponse {
 
-            val orderId: String
-                get() = rå["orderId"].asText()
+            companion object {
+                fun fromJson(rawJson: JsonNode): Success {
+                    return Success(
+                        rawJson,
+                        orderId = rawJson["orderId"].asText()
+                    )
+                }
+            }
         }
     }
 
@@ -348,7 +347,7 @@ class Altinn3VarselKlientMedFilter(
     private val loggingKlient: Altinn3VarselKlientLogging
 ) : Altinn3VarselKlient {
 
-    override suspend fun send(eksternVarsel: EksternVarsel): NotificationsResponse {
+    override suspend fun order(eksternVarsel: EksternVarsel): OrderResponse {
         val mottaker = when (eksternVarsel) {
             is EksternVarsel.Sms -> eksternVarsel.mobilnummer
             is EksternVarsel.Epost -> eksternVarsel.epostadresse
@@ -356,20 +355,33 @@ class Altinn3VarselKlientMedFilter(
             is EksternVarsel.Altinntjeneste -> throw UnsupportedOperationException("Altinntjeneste er ikke støttet")
         }
         return if (repository.mottakerErPåAllowList(mottaker)) {
-            varselKlient.send(eksternVarsel)
+            varselKlient.order(eksternVarsel)
         } else {
-            loggingKlient.send(eksternVarsel)
+            loggingKlient.order(eksternVarsel)
         }
+    }
+
+    override suspend fun notifications(orderId: String): NotificationsResponse {
+        return varselKlient.notifications(orderId)
     }
 }
 
 class Altinn3VarselKlientLogging : Altinn3VarselKlient {
     private val log = logger()
 
-    override suspend fun send(eksternVarsel: EksternVarsel): NotificationsResponse {
-        log.info("send($eksternVarsel)")
+    override suspend fun order(eksternVarsel: EksternVarsel): OrderResponse {
+        log.info("order($eksternVarsel)")
+        return OrderResponse.Success.fromJson(
+            JsonNodeFactory.instance.objectNode().apply {
+                put("orderId", "fake-${UUID.randomUUID()}")
+            }
+        )
+    }
+
+    override suspend fun notifications(orderId: String): NotificationsResponse {
+        log.info("notifications($orderId)")
         return NotificationsResponse.Success(
-            orderId = "",
+            orderId = orderId,
             sendersReference = null,
             generated = 0,
             succeeded = 0,

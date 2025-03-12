@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.DescribeSpec
@@ -27,6 +28,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -77,15 +79,17 @@ class EksternVarslingServiceTests : DescribeSpec({
                 }
             },
             altinn3VarselKlient = object : Altinn3VarselKlient {
-                override suspend fun send(eksternVarsel: EksternVarsel): Altinn3VarselKlient.NotificationsResponse {
+                override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
                     meldingSendt.set(MeldingsType.Altinn3)
-                    return Altinn3VarselKlient.NotificationsResponse.Success(
-                        rå = NullNode.instance,
-                        orderId = "1",
-                        generated = 0,
-                        succeeded = 0,
-                        notifications = emptyList(),
+                    return Altinn3VarselKlient.OrderResponse.Success.fromJson(
+                        JsonNodeFactory.instance.objectNode().apply {
+                            put("orderId", "fake-${UUID.randomUUID()}")
+                        }
                     )
+                }
+
+                override suspend fun notifications(orderId: String): Altinn3VarselKlient.NotificationsResponse {
+                    TODO("Not yet implemented")
                 }
 
             },
