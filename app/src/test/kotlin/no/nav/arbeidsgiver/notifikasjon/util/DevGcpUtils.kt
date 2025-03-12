@@ -1,6 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import io.ktor.util.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 import no.nav.arbeidsgiver.notifikasjon.util.App.`bruker-api`
 import no.nav.arbeidsgiver.notifikasjon.util.App.`ekstern-varsling`
@@ -38,6 +42,31 @@ class DevGcpEnv(
     val secretResourceNames = findSecretResourceNames(app)
     fun getEnvVars(envVarPrefix: String) = getEnvVars(app, envVarPrefix)
     fun findResourceName(prefix: String) = findResourceName(app, prefix)
+    fun getPods() = getPods(app)
+
+    fun portForward(port: Int, isReady: () -> Boolean) {
+        try {
+            execBg(
+                *kubectl,
+                "port-forward", getPods().first(), "$port:$port",
+            ).let {
+                Runtime.getRuntime().addShutdownHook(object : Thread() {
+                    override fun run() {
+                        it.destroy()
+                    }
+                })
+            }
+            var attempts = 0
+            while (!isReady() && attempts <= 5) {
+                println("waiting for port forwarding to be available")
+                attempts += 1
+                Thread.sleep(200)
+            }
+        } catch (e: Exception) {
+            println("Error running process: ${e.message}")
+            e.printStackTrace()
+        }
+    }
 
     companion object {
         fun using(app: App) = DevGcpEnv(app)
@@ -73,6 +102,23 @@ class DevGcpEnv(
             } finally {
                 process.destroy()
             }
+        }
+
+        @OptIn(DelicateCoroutinesApi::class)
+        private fun execBg(vararg cmd: String): Process {
+            println(cmd.joinToString(" "))
+            val process = Runtime.getRuntime().exec(cmd.toList().toTypedArray<String>())
+            GlobalScope.launch(Dispatchers.IO) {
+                process.inputStream.bufferedReader().useLines { lines ->
+                    lines.forEach { println(it) }
+                }
+            }
+            GlobalScope.launch(Dispatchers.IO) {
+                process.errorStream.bufferedReader().useLines { lines ->
+                    lines.forEach { println(it) }
+                }
+            }
+            return process
         }
 
         fun findSecretResourceNames(app: App) = exec(
@@ -120,6 +166,12 @@ class DevGcpEnv(
                 Json.decodeFromString<Map<String, String>>(it)
                     .mapValues { e -> e.value.decodeBase64String() }
             }
+
+        fun getPods(app: App) = exec(
+            *kubectl,
+            "get", "pods", "-l", "app=$app",
+            "-o", "jsonpath={.items[*].metadata.name}"
+        ).split(" ")
     }
 }
 
@@ -132,7 +184,6 @@ fun main() {
     val texas = eksternVarslingEnv.getEnvVars("NAIS_TOKEN_")
     println("texas: ")
     println("  $texas")
-
 
 
     val brukerSecrets = getSecrets(findResourceName(`bruker-api`, "notifikasjon-bruker-api-secrets"))

@@ -8,28 +8,41 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthConfig
 import no.nav.arbeidsgiver.notifikasjon.util.App.`ekstern-varsling`
 import no.nav.arbeidsgiver.notifikasjon.util.DevGcpEnv
 import java.net.URI
-import kotlin.system.exitProcess
 
-fun main() {
+fun main() = runBlocking {
     val app = `ekstern-varsling`
     val eksternVarslingEnv = DevGcpEnv.using(app)
     val texasEnv = eksternVarslingEnv.getEnvVars("NAIS_TOKEN_")
     URI(texasEnv["NAIS_TOKEN_ENDPOINT"]!!).let { uri ->
         try {
             uri.toURL().openConnection().connect()
+            println("""texas is available at $uri""")
         } catch (e: Exception) {
             println("")
 
-            println("""
+            println(
+                """
         ######
         # Failed to connect to $uri - ${e.message}
         # 
-        # Connecting to altinn 3 via devgcp requires port forwarding for texas:
+        # Connecting to altinn 3 via devgcp requires port forwarding for texas.
         #
-        # E.g: kubectl port-forward $app-xxxx ${uri.port}
-        ######""".trimIndent()
+        # E.g: kubectl port-forward ${eksternVarslingEnv.getPods().first()} ${uri.port}
+        ######
+        
+        An attempt at port forward will be made for you now:
+        
+            """.trimIndent()
             )
-            exitProcess(1)
+
+            eksternVarslingEnv.portForward(uri.port) {
+                try {
+                    uri.toURL().openConnection().connect()
+                    true
+                } catch (e: Exception) {
+                    false
+                }
+            }
         }
     }
     val altinnEnv = eksternVarslingEnv.getEnvVars("ALTINN_3")
