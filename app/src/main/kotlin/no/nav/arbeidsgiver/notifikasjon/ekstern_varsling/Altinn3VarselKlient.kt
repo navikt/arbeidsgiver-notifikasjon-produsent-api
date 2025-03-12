@@ -11,7 +11,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -35,14 +34,7 @@ import java.util.*
 class Altinn3VarselKlientImpl(
     val altinnBaseUrl: String = System.getenv("ALTINN_3_API_BASE_URL"),
     val altinnPlattformTokenClient: AltinnPlattformTokenClient = AltinnPlattformTokenClientImpl(),
-    val httpClient: HttpClient = defaultHttpClient() {
-        // TODO: remove after testing
-        install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.BODY
-            sanitizeHeader { header -> header == HttpHeaders.Authorization }
-        }
-    },
+    val httpClient: HttpClient = defaultHttpClient(),
 ) : Altinn3VarselKlient {
 
     private val log = logger()

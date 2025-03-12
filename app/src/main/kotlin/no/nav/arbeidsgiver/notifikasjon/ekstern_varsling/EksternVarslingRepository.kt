@@ -839,6 +839,7 @@ class EksternVarslingRepository(
                 update ekstern_varsel_kontaktinfo
                 set 
                     state = '${EksterntVarselTilstand.SENDT}',
+                    altinn_order_id = ?,
                     altinn_response = ?::jsonb,
                     sende_status = ?::status,
                     feilmelding = ?,
@@ -846,6 +847,10 @@ class EksternVarslingRepository(
                 where varsel_id = ?
             """
             ) {
+                nullableText(when (response) {
+                    is Altinn3VarselKlient.OrderResponse.Success -> response.orderId
+                    is Altinn3VarselKlient.ErrorResponse -> null
+                })
                 jsonb(response.rå)
                 when (response) {
                     is Altinn3VarselKlient.ErrorResponse -> {
