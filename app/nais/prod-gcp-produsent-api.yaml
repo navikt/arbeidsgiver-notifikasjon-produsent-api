@@ -100,10 +100,9 @@ spec:
         type: POSTGRES_17
         tier: db-custom-1-3840
         diskAutoresize: true
-        highAvailability: true
+        highAvailability: false
         databases:
           - name: produsent-model
             envVarPrefix: DB
-        autoBackupHour: 1
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
