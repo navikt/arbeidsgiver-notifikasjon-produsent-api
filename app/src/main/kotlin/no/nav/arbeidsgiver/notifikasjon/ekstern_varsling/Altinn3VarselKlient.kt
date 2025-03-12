@@ -27,7 +27,7 @@ import java.util.*
  * Klient for å sende varsler til Altinn 3
  * https://docs.altinn.studio/notifications/reference/api/openapi/#/Orders/post_orders
  *
- * Her skal det komme et bedre API etterhvert.
+ * Her skal det komme et bedre API etterhvert. Apiet skal støtte idempotens og enklere kunne hente ut alle varsler.
  * ref: https://altinn.slack.com/archives/C069J71UQCQ/p1740582966140809?thread_ts=1740580333.657779&cid=C069J71UQCQ
  * https://github.com/Altinn/altinn-notifications/tree/feature/api-v2/src/Altinn.Notifications.NewApiDemo
  */
@@ -215,9 +215,11 @@ interface Altinn3VarselKlient {
                     mobilnummer.startsWith("0047") -> {
                         mobilnummer
                     }
+
                     mobilnummer.startsWith("+47") -> {
                         mobilnummer
                     }
+
                     else -> {
                         mobilnummer.ensurePrefix("+47")
                     }
@@ -230,7 +232,20 @@ interface Altinn3VarselKlient {
         override val rå: JsonNode,
         val message: String,
         val code: String,
-    ) : OrderResponse, NotificationsResponse
+    ) : OrderResponse, NotificationsResponse {
+        fun isRetryable() =
+            when (code) {
+                "502",
+                "503",
+                "504" -> true
+
+                else -> false
+            }
+
+        override fun toString(): String {
+            return "ErrorResponse(message='$message', code='$code')"
+        }
+    }
 
     sealed interface OrderResponse {
         val rå: JsonNode
@@ -254,6 +269,7 @@ interface Altinn3VarselKlient {
     @Suppress("unused")
     sealed interface NotificationsResponse {
         val rå: JsonNode
+
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Success(
             override val rå: JsonNode,
