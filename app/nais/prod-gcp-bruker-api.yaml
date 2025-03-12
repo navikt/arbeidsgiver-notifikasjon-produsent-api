@@ -33,15 +33,12 @@ spec:
   gcp:
     sqlInstances:
       - type: POSTGRES_12
-        tier: db-custom-1-3840
+        tier: db-custom-2-7680
         diskAutoresize: true
-        highAvailability: true
+        highAvailability: false
         databases:
           - name: bruker-model
             envVarPrefix: DB
-            users:
-              - name: bruker-api-kafka-user
-        autoBackupHour: 1
   accessPolicy:
     inbound:
       rules:

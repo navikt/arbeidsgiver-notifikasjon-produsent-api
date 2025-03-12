@@ -33,4 +33,3 @@ spec:
         databases:
           - name: kafka-backup-model
             envVarPrefix: DB
-        autoBackupHour: 1

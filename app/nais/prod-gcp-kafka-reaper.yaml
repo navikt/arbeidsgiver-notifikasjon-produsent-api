@@ -33,4 +33,3 @@ spec:
         databases:
           - name: kafka-reaper-model
             envVarPrefix: DB
-        autoBackupHour: 1

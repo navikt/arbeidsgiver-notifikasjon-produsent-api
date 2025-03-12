@@ -45,6 +45,5 @@ spec:
         databases:
           - name: ekstern-varsling-model
             envVarPrefix: DB
-        autoBackupHour: 1
   envFrom:
     - secret: altinn-basic-ws
