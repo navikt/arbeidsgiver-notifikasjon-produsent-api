@@ -47,7 +47,7 @@ kafka-cli kan man laste ned med `./download_kafka_cli.sh` nais aiven [installere
 Det er opprettet en `notifikasjon-devops` applikasjon med read access til topic i dev og prod.
 Etter nais aiven er installert kan man opprette applikasjonen. husk å ha valgt riktig context i k8s først:
 `nais login`
-`nais aiven create kafka notifikasjon-devops fager`
+`nais aiven create --pool nav-prod kafka notifikasjon-devops fager`
 
 Kommandoen over vil gi deg instruks for å generere klienter når du kjører den.
 Kopier siste linje fra output og kjør den. F.eks:
@@ -94,6 +94,12 @@ kubectl scale --replicas=0 deployment/notifikasjon-dataprodukt
 Sett til et bestemt offset på en gitt partisjon for en consumer group:
 ```
 .kafka-cli/bin/kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group dataprodukt-model-builder-3 --topic fager.notifikasjon:12 --reset-offsets --to-offset 94700 --execute
+```
+
+Sett til et bestemt tidspunkt på alle partisjoner for en consumer group:
+```
+.kafka-cli/bin/kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group bruker-model-builder-2 --topic fager.notifikasjon --reset-offsets --all-topics --to-datetime 2025-03-13T05:00:00.000 --execute
+
 ```
 
 Deretter skalerer man opp igjen til antall replicas som er definert i nais deployment descriptoren (yml):
