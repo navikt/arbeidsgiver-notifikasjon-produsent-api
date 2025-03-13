@@ -22,9 +22,6 @@ spec:
     path: /internal/metrics
   kafka:
     pool: nav-prod
-  env:
-    - name: CLOUD_SQL_INSTANCE
-      value: fager-prod-dd77:europe-north1:notifikasjon-bruker-api
   gcp:
     permissions:
       - resource:
@@ -33,6 +30,9 @@ spec:
         role: roles/cloudsql.client
   envFrom:
     - secret: google-sql-notifikasjon-bruker-api
+  filesFrom:
+    - secret: sqeletor-notifikasjon-bruker-api-v2-1136d046
+      mountPath: /var/run/secrets/nais.io/sqlcertificate
 
 ---
 # https://nav-it.slack.com/archives/C5KUST8N6/p1680085706741319
@@ -45,7 +45,7 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: 34.88.142.171/32
+            cidr: 100.71.17.40/32
   podSelector:
     matchLabels:
       app: notifikasjon-bruker-api-writer
