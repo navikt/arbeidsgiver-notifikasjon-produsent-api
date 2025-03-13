@@ -32,7 +32,8 @@ spec:
     pool: nav-prod
   gcp:
     sqlInstances:
-      - type: POSTGRES_12
+      - name: notifikasjon-bruker-api-v2
+        type: POSTGRES_17
         tier: db-custom-2-7680
         diskAutoresize: true
         highAvailability: false
