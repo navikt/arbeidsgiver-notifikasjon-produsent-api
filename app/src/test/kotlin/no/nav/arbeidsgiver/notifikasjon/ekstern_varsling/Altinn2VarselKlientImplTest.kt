@@ -19,7 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TokenResponse
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean
 
-class AltinnVarselKlientImplTest : DescribeSpec({
+class Altinn2VarselKlientImplTest : DescribeSpec({
     val altinnEndpoint = "http://localhost:9999/NotificationAgencyExternalBasic.svc"
     val answers: MutableList<() -> SendNotificationResultList> = mutableListOf()
     val calls: MutableList<StandaloneNotificationBEList> = mutableListOf()
@@ -66,7 +66,7 @@ class AltinnVarselKlientImplTest : DescribeSpec({
         }
     }.create()
 
-    val klient = AltinnVarselKlientImpl(
+    val klient = Altinn2VarselKlientImpl(
         altinnEndPoint = altinnEndpoint,
         authClient = object : AuthClient {
             override suspend fun token(target: String) = TokenResponse.Success("", 3600)

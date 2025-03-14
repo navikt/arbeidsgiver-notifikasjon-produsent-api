@@ -1,5 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.NullNode
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.DescribeSpec
@@ -9,9 +10,12 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselKansellert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
@@ -24,7 +28,8 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -35,6 +40,12 @@ private class ÅpningstiderMock : Åpningstider {
     override fun nesteDagtidIkkeSøndag(start: LocalDateTime) = nesteDagtidIkkeSøndag.removeLast()
 }
 
+private enum class MeldingsType {
+    None,
+    Altinn2,
+    Altinn3,
+}
+
 class EksternVarslingServiceTests : DescribeSpec({
     val nå = LocalDateTime.parse("2020-01-01T01:01")
 
@@ -43,14 +54,14 @@ class EksternVarslingServiceTests : DescribeSpec({
         val repository: EksternVarslingRepository,
         val service: EksternVarslingService,
         val hendelseProdusent: FakeHendelseProdusent,
-        val meldingSendt: AtomicBoolean,
+        val meldingSendt: AtomicReference<MeldingsType>,
         val åpningstider: ÅpningstiderMock,
     )
 
     fun DescribeSpec.setupService(
         osloTid: OsloTid = mockOsloTid(nå)
     ): Services {
-        val meldingSendt = AtomicBoolean(false)
+        val meldingSendt = AtomicReference(MeldingsType.None)
         val hendelseProdusent = FakeHendelseProdusent()
         val database = testDatabase(EksternVarsling.databaseConfig)
         val repository = EksternVarslingRepository(database)
@@ -59,13 +70,28 @@ class EksternVarslingServiceTests : DescribeSpec({
             åpningstider = åpningstider,
             osloTid = osloTid,
             eksternVarslingRepository = repository,
-            altinnVarselKlient = object : AltinnVarselKlient {
+            altinn2VarselKlient = object : Altinn2VarselKlient {
                 override suspend fun send(
                     eksternVarsel: EksternVarsel
                 ): AltinnVarselKlientResponseOrException {
-                    meldingSendt.set(true)
+                    meldingSendt.set(MeldingsType.Altinn2)
                     return AltinnVarselKlientResponse.Ok(rå = NullNode.instance)
                 }
+            },
+            altinn3VarselKlient = object : Altinn3VarselKlient {
+                override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
+                    meldingSendt.set(MeldingsType.Altinn3)
+                    return Altinn3VarselKlient.OrderResponse.Success.fromJson(
+                        JsonNodeFactory.instance.objectNode().apply {
+                            put("orderId", "fake-${UUID.randomUUID()}")
+                        }
+                    )
+                }
+
+                override suspend fun notifications(orderId: String): Altinn3VarselKlient.NotificationsResponse {
+                    TODO("Not yet implemented")
+                }
+
             },
             hendelseProdusent = hendelseProdusent,
             idleSleepDelay = Duration.ZERO,
@@ -118,7 +144,7 @@ class EksternVarslingServiceTests : DescribeSpec({
 
             it("sends message eventually") {
                 eventually(5.seconds) {
-                    meldingSendt.get() shouldBe true
+                    meldingSendt.get() shouldBe MeldingsType.Altinn3
                 }
             }
 
@@ -151,14 +177,16 @@ class EksternVarslingServiceTests : DescribeSpec({
                 grupperingsid = "",
                 lenke = "",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                eksterneVarsler = listOf(EpostVarselKontaktinfo(
                     varselId = uuid("2"),
-                    tlfnr = "",
+                    epostAddr = "",
                     fnrEllerOrgnr = "",
-                    smsTekst = "",
+                    tittel = "",
+                    htmlBody = "",
                     sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
                     sendeTidspunkt = null,
-                )),
+                )
+                ),
                 hardDelete = null,
                 frist = null,
                 påminnelse = null,
@@ -173,7 +201,7 @@ class EksternVarslingServiceTests : DescribeSpec({
 
             it("sends message eventually") {
                 eventually(5.seconds) {
-                    meldingSendt.get() shouldBe true
+                    meldingSendt.get() shouldBe MeldingsType.Altinn3
                 }
             }
 
@@ -199,11 +227,13 @@ class EksternVarslingServiceTests : DescribeSpec({
                 grupperingsid = "",
                 lenke = "",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                eksterneVarsler = listOf(AltinntjenesteVarselKontaktinfo(
                     varselId = uuid("2"),
-                    tlfnr = "",
-                    fnrEllerOrgnr = "",
-                    smsTekst = "",
+                    serviceCode = "1337",
+                    serviceEdition = "1",
+                    virksomhetsnummer = "",
+                    tittel = "",
+                    innhold = "",
                     sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
                     sendeTidspunkt = null,
                 )),
@@ -256,11 +286,13 @@ class EksternVarslingServiceTests : DescribeSpec({
                 grupperingsid = "",
                 lenke = "",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                eksterneVarsler = listOf(AltinntjenesteVarselKontaktinfo(
                     varselId = uuid("2"),
-                    tlfnr = "",
-                    fnrEllerOrgnr = "",
-                    smsTekst = "",
+                    serviceCode = "1337",
+                    serviceEdition = "1",
+                    virksomhetsnummer = "",
+                    tittel = "",
+                    innhold = "",
                     sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
                     sendeTidspunkt = null,
                 )),
@@ -279,7 +311,7 @@ class EksternVarslingServiceTests : DescribeSpec({
 
             it("sends message eventually") {
                 eventually(10.seconds) {
-                    meldingSendt.get() shouldBe true
+                    meldingSendt.get() shouldBe MeldingsType.Altinn2
                 }
             }
 
@@ -353,10 +385,12 @@ class EksternVarslingServiceTests : DescribeSpec({
                 grupperingsid = "",
                 lenke = "",
                 opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(SmsVarselKontaktinfo(
+                eksterneVarsler = listOf(AltinnressursVarselKontaktinfo(
                     varselId = uuid("2"),
-                    tlfnr = "",
-                    fnrEllerOrgnr = "",
+                    ressursId = "",
+                    virksomhetsnummer = "",
+                    epostTittel = "",
+                    epostHtmlBody = "",
                     smsTekst = "",
                     sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
                     sendeTidspunkt = nå.minusMinutes(1),
@@ -375,7 +409,7 @@ class EksternVarslingServiceTests : DescribeSpec({
 
             it("sends message eventually") {
                 eventually(5.seconds) {
-                    meldingSendt.get() shouldBe true
+                    meldingSendt.get() shouldBe MeldingsType.Altinn3
                 }
             }
 
@@ -526,7 +560,7 @@ class EksternVarslingServiceTests : DescribeSpec({
 
             it("melding sendes til kafka") {
                 eventually(5.seconds) {
-                    meldingSendt.get() shouldBe true
+                    meldingSendt.get() shouldBe MeldingsType.Altinn3
                 }
             }
 

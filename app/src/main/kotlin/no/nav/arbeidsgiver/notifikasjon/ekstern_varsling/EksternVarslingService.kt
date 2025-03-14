@@ -102,7 +102,8 @@ class EksternVarslingService(
     private val åpningstider: Åpningstider = ÅpningstiderImpl,
     private val osloTid: OsloTid = OsloTidImpl,
     private val eksternVarslingRepository: EksternVarslingRepository,
-    private val altinnVarselKlient: AltinnVarselKlient,
+    private val altinn2VarselKlient: Altinn2VarselKlient,
+    private val altinn3VarselKlient: Altinn3VarselKlient,
     private val hendelseProdusent: HendelseProdusent,
     private val recheckEmergencyBrakeDelay: Duration = Duration.ofMinutes(1),
     private val idleSleepDelay: Duration = Duration.ofSeconds(10),
@@ -209,26 +210,49 @@ class EksternVarslingService(
                 is EksternVarselTilstand.Ny -> {
                     val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
                     if (kalkulertSendeTidspunkt <= osloTid.localDateTimeNow()) {
-                        when (val response = altinnVarselKlient.send(varsel.data.eksternVarsel)) {
-                            is AltinnVarselKlientResponse.Ok -> {
-                                eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                            }
-                            is AltinnVarselKlientResponse.Feil -> {
-                                if (response.isRetryable()) {
-                                    log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
-                                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                                } else {
-                                    log.atLevel(
-                                        if (response.isSupressable()) WARN
-                                        else ERROR
-                                    ).log("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
+                        if (varsel.data.eksternVarsel is EksternVarsel.Altinntjeneste) {
+                            /**
+                             * Bruker kun altinn 2 klient for varsel på serviceCode:serviceEdition
+                             * Alle andre varsler sendes med altinn 3 klient.
+                             * Når Altinn 2 fases ut kan denne if-sjekken fjernes, og altinn 2 klient kan fjernes.
+                             */
+                            when (val response = altinn2VarselKlient.send(varsel.data.eksternVarsel)) {
+                                is AltinnVarselKlientResponse.Ok -> {
                                     eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                                 }
+                                is AltinnVarselKlientResponse.Feil -> {
+                                    if (response.isRetryable()) {
+                                        log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
+                                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                                    } else {
+                                        log.atLevel(
+                                            if (response.isSupressable()) WARN
+                                            else ERROR
+                                        ).log("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
+                                        eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                                    }
+                                }
+                                is UkjentException -> {
+                                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                                    throw response.exception
+                                }
                             }
-                            is UkjentException -> {
-                                eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                                throw response.exception
+                        } else {
+                            when (val response = altinn3VarselKlient.order(varsel.data.eksternVarsel)) {
+                                is Altinn3VarselKlient.OrderResponse.Success ->
+                                    eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+
+                                is Altinn3VarselKlient.ErrorResponse -> {
+                                    if (response.isRetryable()) {
+                                        log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
+                                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                                    } else {
+                                        log.error("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
+                                        eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                                    }
+                                }
                             }
+
                         }
                     } else {
                         eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)

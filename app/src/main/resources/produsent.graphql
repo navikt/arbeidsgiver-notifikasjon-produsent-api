@@ -1544,10 +1544,15 @@ input PaaminnelseEksterntVarselAltinntjenesteInput {
     sendevindu: Sendevindu!
 }
 
+"""
+Input som definerer hvordan et eksternt varsel skal sendes.
+Kun ett av feltene i inputen kan være satt.
+"""
 input EksterntVarselInput @ExactlyOneFieldGiven {
     sms: EksterntVarselSmsInput
     epost: EksterntVarselEpostInput
     altinntjeneste: EksterntVarselAltinntjenesteInput
+    altinnressurs: EksterntVarselAltinnressursInput
 }
 
 """
@@ -1655,6 +1660,36 @@ input EksterntVarselAltinntjenesteInput {
     OBS: Det er ikke lov med personopplysninger i teksten.
     """
     innhold: String!
+    sendetidspunkt: SendetidspunktInput!
+}
+
+"""
+Med denne typen vil varsel sendes til virksomheten vha ressursen i Altinn 3.
+APIet i Altinn 3 som brukes er <a href="https://docs.altinn.studio/notifications/reference/api/">Altinn Notifications API</a>
+
+Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det mest sannsynlig blir sendt som epost, men i enkelte tilfeller
+vil bli sendt sms.
+
+De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med ressursen som oppgis) vil bli varslet.
+Den offisielle kontaktinformasjonen til overenheten vil bli varslet.
+"""
+input EksterntVarselAltinnressursInput {
+    mottaker: AltinnRessursMottakerInput!
+    """
+    Subject/emne til e-posten
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    epostTittel: String!
+    """
+    Kroppen til e-posten. Kan inneholde HTML.
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    epostHtmlBody: String!
+    """
+    Teksten som sendes i SMS-en.
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    smsTekst: String!
     sendetidspunkt: SendetidspunktInput!
 }
 

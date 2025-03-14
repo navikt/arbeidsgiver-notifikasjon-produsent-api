@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EpostVarselKontaktinfo
@@ -78,6 +79,16 @@ class EksternVarslingRepositoryTests : DescribeSpec({
                 serviceEdition = "1",
                 tittel = "hey",
                 innhold = "body",
+                sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null
+            ),
+            AltinnressursVarselKontaktinfo(
+                varselId = uuid("5"),
+                virksomhetsnummer = "1",
+                ressursId = "foo",
+                epostTittel = "hey",
+                epostHtmlBody = "body",
+                smsTekst = "sms",
                 sendevindu = EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null
             )
@@ -335,6 +346,59 @@ class EksternVarslingRepositoryTests : DescribeSpec({
             response as AltinnResponse.Feil
             response.feilkode shouldBe "1"
             response.feilmelding shouldBe "hallo"
+        }
+    }
+
+    describe("Kan gå gjennom tilstandene altinn-feil altinn 3") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+
+        repository.oppdaterModellEtterHendelse(
+            oppgaveOpprettet.copy(
+                eksterneVarsler = oppgaveOpprettet.eksterneVarsler.takeLast(1)
+            )
+        )
+
+        val id1 = repository.findJob(lockTimeout = Duration.ofDays(10))!!
+        val varsel1 = repository.findVarsel(id1)!!
+
+        it("should be Ny") {
+            varsel1 shouldBe instanceOf(EksternVarselTilstand.Ny::class)
+        }
+
+        repository.markerSomSendtAndReleaseJob(
+            id1,
+            Altinn3VarselKlient.ErrorResponse(
+                rå = NullNode.instance,
+                message = "woopsies",
+                code = "400"
+            )
+        )
+
+        val id2 = repository.findJob(lockTimeout = Duration.ofDays(1))!!
+        val varsel2 = repository.findVarsel(id2)
+
+        it("should be utført") {
+            varsel2 shouldBe instanceOf(EksternVarselTilstand.Sendt::class)
+        }
+
+        repository.markerSomKvittertAndDeleteJob(id2)
+
+        val id3 = repository.findJob(lockTimeout = Duration.ofDays(1))
+
+        it("no more work") {
+            id3 should beNull()
+        }
+
+        val varsel3 = repository.findVarsel(id2)!!
+        it("should be failed") {
+            varsel3 shouldBe instanceOf(EksternVarselTilstand.Kvittert::class)
+            varsel3 as EksternVarselTilstand.Kvittert
+            val response = varsel3.response
+            response shouldBe instanceOf(AltinnResponse.Feil::class)
+            response as AltinnResponse.Feil
+            response.feilkode shouldBe "400"
+            response.feilmelding shouldBe "woopsies"
         }
     }
 

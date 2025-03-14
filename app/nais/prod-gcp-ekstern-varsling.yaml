@@ -36,6 +36,8 @@ spec:
     outbound:
       rules:
         - application: altinn-varsel-firewall
+      external:
+        - host: platform.altinn.no
   gcp:
     sqlInstances:
       - name: notifikasjon-ekstern-varsling-v2
@@ -45,5 +47,8 @@ spec:
         databases:
           - name: ekstern-varsling-model
             envVarPrefix: DB
+  env:
+    - name: ALTINN_3_API_BASE_URL
+      value: https://platform.altinn.no
   envFrom:
     - secret: altinn-basic-ws
