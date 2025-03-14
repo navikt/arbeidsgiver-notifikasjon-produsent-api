@@ -64,11 +64,13 @@ fun main() = runBlocking {
     val smsTest = "ee9e6dd5-64e1-4e2d-a71b-35623979e20f"
     val resourceIdTest = "7a9b8646-cbb7-4f98-b026-869fa4f0cbd8"
     val emailTest = "64bd510b-28f8-40d9-9f24-d26952e75840"
+    val resourceIdTest2 = "95fb37bd-cbff-4a9d-84e1-b5bdd9a8981c"
     runBlocking {
         listOf(
             smsTest,
             resourceIdTest,
             emailTest,
+            resourceIdTest2,
         ).forEach { orderId ->
 
             devGcpClient.notifications(orderId).also {

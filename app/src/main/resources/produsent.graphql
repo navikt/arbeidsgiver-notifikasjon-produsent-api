@@ -1544,6 +1544,10 @@ input PaaminnelseEksterntVarselAltinntjenesteInput {
     sendevindu: Sendevindu!
 }
 
+"""
+Input som definerer hvordan et eksternt varsel skal sendes.
+Kun ett av feltene i inputen kan være satt.
+"""
 input EksterntVarselInput @ExactlyOneFieldGiven {
     sms: EksterntVarselSmsInput
     epost: EksterntVarselEpostInput
