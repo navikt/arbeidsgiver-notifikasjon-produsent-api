@@ -15,7 +15,6 @@ import no.nav.arbeidsgiver.notifikasjon.kafka_bq.KafkaBQ
 import no.nav.arbeidsgiver.notifikasjon.replay_validator.ReplayValidator
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.SkedulertPåminnelse
 import no.nav.arbeidsgiver.notifikasjon.skedulert_utgått.SkedulertUtgått
-import no.nav.arbeidsgiver.notifikasjon.statistikk.Statistikk
 import kotlin.system.exitProcess
 
 private object Main {
@@ -29,7 +28,6 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-bruker-api" -> Bruker.main()
             "notifikasjon-bruker-api-writer" -> BrukerWriter.main()
             "notifikasjon-kafka-reaper" -> KafkaReaper.main()
-            "notifikasjon-statistikk" -> Statistikk.main()
             "notifikasjon-ekstern-varsling" -> EksternVarsling.main()
             "notifikasjon-replay-validator" -> ReplayValidator.main()
             "notifikasjon-kafka-backup" -> KafkaBackup.main()
