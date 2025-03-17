@@ -103,6 +103,7 @@
               <li><a href="#definition-DuplikatGrupperingsid">DuplikatGrupperingsid</a></li>
               <li><a href="#definition-DuplikatGrupperingsidEtterDelete">DuplikatGrupperingsidEtterDelete</a></li>
               <li><a href="#definition-EksterntVarsel">EksterntVarsel</a></li>
+              <li><a href="#definition-EksterntVarselAltinnressursInput">EksterntVarselAltinnressursInput</a></li>
               <li><a href="#definition-EksterntVarselAltinntjenesteInput">EksterntVarselAltinntjenesteInput</a></li>
               <li><a href="#definition-EksterntVarselEpostInput">EksterntVarselEpostInput</a></li>
               <li><a href="#definition-EksterntVarselInput">EksterntVarselInput</a></li>
@@ -5416,6 +5417,84 @@
               </div>
             </div>
           </section>
+          <section id="definition-EksterntVarselAltinnressursInput" class="definition definition-input-object" data-traverse-target="definition-EksterntVarselAltinnressursInput">
+            <div class="definition-group-name">
+              <a href="#group-Types">Types</a>
+            </div>
+            <h2 class="definition-heading">EksterntVarselAltinnressursInput</h2>
+            <div class="doc-row">
+              <div class="doc-copy">
+                <div class="definition-description doc-copy-section">
+                  <h5>Description</h5>
+                  <p>Med denne typen vil varsel sendes til virksomheten vha ressursen i Altinn 3. APIet i Altinn 3 som brukes er <a href="https://docs.altinn.studio/notifications/reference/api/">Altinn Notifications API</a></p>
+                  <p>Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det mest sannsynlig blir sendt som epost, men i enkelte tilfeller vil bli sendt sms.</p>
+                  <p>De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med ressursen som oppgis) vil bli varslet. Den offisielle kontaktinformasjonen til overenheten vil bli varslet.</p>
+                </div>
+                <div class="definition-properties doc-copy-section">
+                  <h5>Fields</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Input Field</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>mottaker</code></span> - <span class="property-type"><a href="#definition-AltinnRessursMottakerInput"><code>AltinnRessursMottakerInput!</code></a></span>
+                        </td>
+                        <td>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>epostTittel</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
+                        </td>
+                        <td> Subject/emne til e-posten OBS: Det er ikke lov med personopplysninger i teksten. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>epostHtmlBody</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
+                        </td>
+                        <td> Kroppen til e-posten. Kan inneholde HTML. OBS: Det er ikke lov med personopplysninger i teksten. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>smsTekst</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
+                        </td>
+                        <td> Teksten som sendes i SMS-en. OBS: Det er ikke lov med personopplysninger i teksten. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>sendetidspunkt</code></span> - <span class="property-type"><a href="#definition-SendetidspunktInput"><code>SendetidspunktInput!</code></a></span>
+                        </td>
+                        <td>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="doc-examples">
+                <div class="example-section example-section-is-code">
+                  <h5>Example</h5>
+                  <html>
+                    <head></head>
+                    <body><pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"mottaker"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">AltinnRessursMottakerInput</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"epostTittel"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"foo123"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"epostHtmlBody"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"foo123"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"smsTekst"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"foo123"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"sendetidspunkt"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">SendetidspunktInput</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+                    </body>
+                  </html>
+                </div>
+              </div>
+            </div>
+          </section>
           <section id="definition-EksterntVarselAltinntjenesteInput" class="definition definition-input-object" data-traverse-target="definition-EksterntVarselAltinntjenesteInput">
             <div class="definition-group-name">
               <a href="#group-Types">Types</a>
@@ -5565,6 +5644,10 @@
             <h2 class="definition-heading">EksterntVarselInput</h2>
             <div class="doc-row">
               <div class="doc-copy">
+                <div class="definition-description doc-copy-section">
+                  <h5>Description</h5>
+                  <p>Input som definerer hvordan et eksternt varsel skal sendes. Kun ett av feltene i inputen kan være satt.</p>
+                </div>
                 <div class="definition-properties doc-copy-section">
                   <h5>Fields</h5>
                   <table>
@@ -5596,6 +5679,13 @@
                         <td>
                         </td>
                       </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>altinnressurs</code></span> - <span class="property-type"><a href="#definition-EksterntVarselAltinnressursInput"><code>EksterntVarselAltinnressursInput</code></a></span>
+                        </td>
+                        <td>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -5608,7 +5698,8 @@
                     <body><pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
   <span class="hljs-attr">"sms"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">EksterntVarselSmsInput</span><span class="hljs-punctuation">,</span>
   <span class="hljs-attr">"epost"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">EksterntVarselEpostInput</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"altinntjeneste"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">EksterntVarselAltinntjenesteInput</span>
+  <span class="hljs-attr">"altinntjeneste"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">EksterntVarselAltinntjenesteInput</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"altinnressurs"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">EksterntVarselAltinnressursInput</span>
 <span class="hljs-punctuation">}</span>
 </code></pre>
                     </body>
