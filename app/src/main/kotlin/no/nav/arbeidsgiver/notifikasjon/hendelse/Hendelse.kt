@@ -779,6 +779,19 @@ object HendelseModel {
         val sendeTidspunkt: LocalDateTime?,
     ) : EksterntVarsel()
 
+    @JsonTypeName("altinnressursVarselKontaktinfo")
+    data class AltinnressursVarselKontaktinfo(
+        override val varselId: UUID,
+        val ressursId: String,
+        val virksomhetsnummer: String,
+        val epostTittel: String,
+        val epostHtmlBody: String,
+        val smsTekst: String,
+        val sendevindu: EksterntVarselSendingsvindu,
+        /* Kun gyldig hvis sendevindu er "SPESIFISERT" */
+        val sendeTidspunkt: LocalDateTime?,
+    ) : EksterntVarsel()
+
     data class HardDeleteUpdate(
         val nyTid: LocalDateTimeOrDuration,
         val strategi: NyTidStrategi,
