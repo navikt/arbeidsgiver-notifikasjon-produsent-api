@@ -235,11 +235,9 @@ interface Altinn3VarselKlient {
     ) : OrderResponse, NotificationsResponse {
         fun isRetryable() =
             when (code) {
-                "502",
-                "503",
-                "504" -> true
+                "400" -> false
 
-                else -> false
+                else -> true
             }
 
         override fun toString(): String {
