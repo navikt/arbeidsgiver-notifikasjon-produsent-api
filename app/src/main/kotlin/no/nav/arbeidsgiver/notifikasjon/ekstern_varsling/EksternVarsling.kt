@@ -49,16 +49,27 @@ object EksternVarsling {
                 val eksternVarslingRepository = eksternVarslingModelAsync.await()
                 val service = EksternVarslingService(
                     eksternVarslingRepository = eksternVarslingRepository,
-                    altinnVarselKlient = basedOnEnv(
-                        prod = { AltinnVarselKlientImpl() },
+                    altinn2VarselKlient = basedOnEnv(
+                        prod = { Altinn2VarselKlientImpl() },
                         dev = {
-                            AltinnVarselKlientMedFilter(
+                            Altinn2VarselKlientMedFilter(
                                 eksternVarslingRepository,
-                                AltinnVarselKlientImpl(),
-                                AltinnVarselKlientLogging()
+                                Altinn2VarselKlientImpl(),
+                                Altinn2VarselKlientLogging()
                             )
                         },
-                        other = { AltinnVarselKlientLogging() },
+                        other = { Altinn2VarselKlientLogging() },
+                    ),
+                    altinn3VarselKlient = basedOnEnv(
+                        prod = { Altinn3VarselKlientImpl() },
+                        dev = {
+                            Altinn3VarselKlientMedFilter(
+                                eksternVarslingRepository,
+                                Altinn3VarselKlientImpl(),
+                                Altinn3VarselKlientLogging()
+                            )
+                        },
+                        other = { Altinn3VarselKlientLogging() },
                     ),
                     hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
                 )
@@ -82,9 +93,9 @@ object EksternVarsling {
                 httpPort = httpPort,
                 customRoute = {
                     val internalTestClient = basedOnEnv(
-                        prod = { AltinnVarselKlientImpl() },
-                        dev = { AltinnVarselKlientImpl() },
-                        other = { AltinnVarselKlientLogging() }
+                        prod = { Altinn2VarselKlientImpl() },
+                        dev = { Altinn2VarselKlientImpl() },
+                        other = { Altinn2VarselKlientLogging() }
                     )
                     get("/internal/send_sms") {
                         testSms(internalTestClient)
@@ -107,7 +118,7 @@ data class TestSmsRequestBody(
     val tekst: String,
 )
 
-suspend fun PipelineContext<Unit, ApplicationCall>.testSms(altinnVarselKlient: AltinnVarselKlient) {
+suspend fun PipelineContext<Unit, ApplicationCall>.testSms(altinnVarselKlient: Altinn2VarselKlient) {
     val varselRequest = call.receive<TestSmsRequestBody>()
     testSend(altinnVarselKlient) {
         sendSms(
@@ -125,7 +136,7 @@ data class TestEpostRequestBody(
     val body: String,
 )
 
-suspend fun PipelineContext<Unit, ApplicationCall>.testEpost(altinnVarselKlient: AltinnVarselKlient) {
+suspend fun PipelineContext<Unit, ApplicationCall>.testEpost(altinnVarselKlient: Altinn2VarselKlient) {
     val varselRequest = call.receive<TestEpostRequestBody>()
     this.testSend(altinnVarselKlient) {
         sendEpost(
@@ -138,10 +149,10 @@ suspend fun PipelineContext<Unit, ApplicationCall>.testEpost(altinnVarselKlient:
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.testSend(
-    client: AltinnVarselKlient,
-    action: suspend AltinnVarselKlientImpl.() -> AltinnVarselKlientResponseOrException
+    client: Altinn2VarselKlient,
+    action: suspend Altinn2VarselKlientImpl.() -> AltinnVarselKlientResponseOrException
 ) {
-    if (client is AltinnVarselKlientImpl) {
+    if (client is Altinn2VarselKlientImpl) {
         when (val response = client.action()) {
             is AltinnVarselKlientResponse.Ok ->
                 call.respond(HttpStatusCode.OK, laxObjectMapper.writeValueAsString(response.rå))
