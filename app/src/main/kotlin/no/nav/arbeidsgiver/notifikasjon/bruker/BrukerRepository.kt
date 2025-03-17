@@ -129,10 +129,10 @@ class BrukerRepositoryImpl(
 
         when (hendelse) {
             is SakOpprettet -> oppdaterModellEtterSakOpprettet(hendelse, metadata)
-            is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse) //TODO: GJORT
-            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)//TODO: GJORT
+            is NyStatusSak -> oppdaterModellEtterNyStatusSak(hendelse)
+            is BeskjedOpprettet -> oppdaterModellEtterBeskjedOpprettet(hendelse)
             is BrukerKlikket -> oppdaterModellEtterBrukerKlikket(hendelse)
-            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)//TODO GJORT
+            is OppgaveOpprettet -> oppdaterModellEtterOppgaveOpprettet(hendelse)
             is OppgaveUtført -> oppdaterModellEtterOppgaveUtført(hendelse, metadata)
             is OppgaveUtgått -> oppdaterModellEtterOppgaveUtgått(hendelse)
             is SoftDelete -> oppdaterModellEtterDelete(hendelse.aggregateId, hendelse.grupperingsid, hendelse.merkelapp)
@@ -140,9 +140,9 @@ class BrukerRepositoryImpl(
             is EksterntVarselFeilet -> Unit
             is EksterntVarselVellykket -> Unit
             is EksterntVarselKansellert -> Unit
-            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)//TODO GJORT
+            is PåminnelseOpprettet -> oppdaterModellEtterPåminnelseOpprettet(hendelse)
             is FristUtsatt -> oppdaterModellEtterFristUtsatt(hendelse)
-            is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)//TODO GJORT
+            is HendelseModel.KalenderavtaleOpprettet -> oppdaterModellEtterKalenderavtaleOpprettet(hendelse)
             is HendelseModel.KalenderavtaleOppdatert -> oppdaterModellEtterKalenderavtaleOppdatert(hendelse)
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
             is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
@@ -1509,10 +1509,12 @@ class BrukerRepositoryImpl(
                 update sak set
                 sist_endret_tidspunkt = ?
                 where id = ?
+                and sist_endret_tidspunkt < ?
             """.trimIndent(),
             {
                 instantAsText(tidspunkt)
                 uuid(sakId)
+                instantAsText(tidspunkt)
             }
         )
     }
