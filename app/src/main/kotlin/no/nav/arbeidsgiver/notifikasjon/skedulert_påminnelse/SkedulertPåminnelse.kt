@@ -19,7 +19,7 @@ object SkedulertPåminnelse {
     private val hendelsesstrøm by lazy {
         HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
-            groupId = "skedulert-paaminnelse-1",
+            groupId = "skedulert-paaminnelse-2",
         )
     }
 
@@ -38,10 +38,11 @@ object SkedulertPåminnelse {
                     service.processHendelse(hendelse)
                 }
             }
-            launch {
-                service.sendAktuellePåminnelser()
-                delay(Duration.ofSeconds(1))
-            }
+
+//            launch {
+//                service.sendAktuellePåminnelser()
+//                delay(Duration.ofMinutes(1))
+//            }
 
             launchHttpServer(httpPort = httpPort)
         }
