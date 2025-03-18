@@ -9,8 +9,6 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.AVLYST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 
@@ -73,7 +71,7 @@ class KalenderavtaleTests : DescribeSpec({
         )
 
         it("Sender kun nyeste påminnelse") {
-            service.sendAktuellePåminnelser(now = kalenderavtaleOpprettet.påminnelse!!.tidspunkt.påminnelseTidspunkt)
+            service.sendAktuellePåminnelser(now = kalenderavtaleOpprettet.påminnelse.tidspunkt.påminnelseTidspunkt)
             hendelseProdusent.hendelser shouldHaveSize 1
             hendelseProdusent.hendelser.first().let {
                 it should beOfType<HendelseModel.PåminnelseOpprettet>()

@@ -9,9 +9,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -47,7 +45,6 @@ class SkedulertPåminnelseServiceTests : DescribeSpec({
         påminnelse = null,
         sakId = null,
     )
-    val metadata = PartitionHendelseMetadata(0, 0)
     val tidspunktSomHarPassert = LocalDate.now().minusDays(1).atTime(LocalTime.MAX)
     val tidspunktSomIkkeHarPassert = LocalDate.now().plusDays(2).atTime(LocalTime.MAX)
 

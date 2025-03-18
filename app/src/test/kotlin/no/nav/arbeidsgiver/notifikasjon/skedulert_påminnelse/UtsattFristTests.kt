@@ -6,10 +6,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -40,7 +38,6 @@ import java.time.ZoneOffset.UTC
  */
 
 class UtsattFristTests : DescribeSpec({
-    val metadata = PartitionHendelseMetadata(0, 0)
     describe("Ingen påminnelse når oppgave er utført") {
         val (service, hendelseProdusent) = setupEngine()
         service.processHendelse(oppgaveOpprettet)
@@ -256,8 +253,8 @@ private val påminnelseOpprettet = HendelseModel.PåminnelseOpprettet(
     opprettetTidpunkt = oppgaveOpprettet.påminnelse!!.tidspunkt.påminnelseTidspunkt,
     fristOpprettetTidspunkt = oppgaveOpprettet.opprettetTidspunkt.toInstant(),
     frist = oppgaveOpprettet.frist,
-    tidspunkt = oppgaveOpprettet.påminnelse!!.tidspunkt,
-    eksterneVarsler = oppgaveOpprettet.påminnelse!!.eksterneVarsler,
+    tidspunkt = oppgaveOpprettet.påminnelse.tidspunkt,
+    eksterneVarsler = oppgaveOpprettet.påminnelse.eksterneVarsler,
 )
 
 private val softDelete = HendelseModel.SoftDelete(
