@@ -7,12 +7,12 @@ import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.NoopHendelseProdusent
 
 class SkedulertPåminnelseIdempotensTests : DescribeSpec({
-    val service = SkedulertPåminnelseService(NoopHendelseProdusent)
+    val (service, _) = setupEngine()
 
     describe("SkedulertPåminnelse Idempotent oppførsel") {
         withData(EksempelHendelse.Alle) { hendelse ->
-            service.processHendelse(hendelse, PartitionHendelseMetadata(0, 0))
-            service.processHendelse(hendelse, PartitionHendelseMetadata(0, 0))
+            service.processHendelse(hendelse)
+            service.processHendelse(hendelse)
         }
     }
 })

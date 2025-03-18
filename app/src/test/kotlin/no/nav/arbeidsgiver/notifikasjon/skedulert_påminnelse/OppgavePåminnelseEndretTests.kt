@@ -18,11 +18,9 @@ import java.time.ZoneOffset.UTC
 import java.util.*
 
 class OppgavePåminnelseEndretTests : DescribeSpec({
-    val metadata = PartitionHendelseMetadata(0, 0)
     describe("Påminnelse blir opprettet når oppgave uten påminnelse får lagt til påminnelse ") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveUtenPaminnelseOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(oppgaveUtenPaminnelseOpprettet)
         service.processHendelse(
             HendelseModel.OppgavePåminnelseEndret(
                 virksomhetsnummer = oppgaveUtenPaminnelseOpprettet.virksomhetsnummer,
@@ -35,7 +33,7 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 påminnelse = førstePåminnelse,
                 merkelapp = "merkelapp",
                 idempotenceKey = null
-            ), metadata
+            )
         )
 
         it("Sender påminnelse opprettet") {
@@ -45,9 +43,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
     }
 
     describe("Påminnelse blir ikke opprettet når oppgave med påminnelse får påminnelse fjernet") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveMedPaminnelseOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(oppgaveMedPaminnelseOpprettet)
         service.processHendelse(
             HendelseModel.OppgavePåminnelseEndret(
                 virksomhetsnummer = oppgaveUtenPaminnelseOpprettet.virksomhetsnummer,
@@ -60,7 +57,7 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 påminnelse = null,
                 merkelapp = "merkelapp",
                 idempotenceKey = null
-            ), metadata
+            )
         )
 
         it("Sender ikke påminnelse opprettet") {
@@ -70,9 +67,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
     }
 
     describe("Påminnelse blir opprettet når oppgave med påminneølse får påminnelse sin endret") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveMedPaminnelseOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(oppgaveMedPaminnelseOpprettet)
         service.processHendelse(
             HendelseModel.OppgavePåminnelseEndret(
                 virksomhetsnummer = oppgaveUtenPaminnelseOpprettet.virksomhetsnummer,
@@ -85,7 +81,7 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 påminnelse = andrePåminnelse,
                 merkelapp = "merkelapp",
                 idempotenceKey = null
-            ), metadata
+            )
         )
 
         it("Sender ikke påminnelse opprettet før ny påmminelse skal opprettes") {

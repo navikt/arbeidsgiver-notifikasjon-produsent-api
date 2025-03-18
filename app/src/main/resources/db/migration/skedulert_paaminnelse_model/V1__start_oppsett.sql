@@ -1,6 +1,6 @@
 create table notifikasjoner
 (
-    notifikasjon_id text not null primary key,
+    notifikasjon_id uuid not null primary key,
     tilstand        text not null,
     merkelapp       text not null,
     grupperingsid   text
@@ -23,9 +23,9 @@ create table utforte_bestillinger
 
 create table bestillinger
 (
-    bestilling_id             text not null primary key,
+    bestilling_id             uuid not null primary key,
     paaminnelsestidspunkt     text not null,
-    notifikasjon_id           text references notifikasjoner (notifikasjon_id),
+    notifikasjon_id           uuid references notifikasjoner (notifikasjon_id),
     frist_opprettet_tidspunkt text not null,
     frist                     text null,
     start_tidspunkt           text null,
