@@ -6,9 +6,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
-import no.nav.arbeidsgiver.notifikasjon.util.App.`bruker-api`
-import no.nav.arbeidsgiver.notifikasjon.util.App.`ekstern-varsling`
-import no.nav.arbeidsgiver.notifikasjon.util.NaisAivenKafka.Cmd.`kafka-topics`
+import no.nav.arbeidsgiver.notifikasjon.util.App.*
+import no.nav.arbeidsgiver.notifikasjon.util.ConsumerGroupId.*
+import no.nav.arbeidsgiver.notifikasjon.util.NaisAivenKafka.Cmd.*
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
@@ -82,9 +82,12 @@ class Proc {
         }
 
         @OptIn(DelicateCoroutinesApi::class)
-        fun execBg(cmd: Array<String>): Process {
+        fun execBg(
+            cmd: Array<String>,
+            envp: Array<String>? = null,
+        ): Process {
             println(cmd.joinToString(" "))
-            val process = Runtime.getRuntime().exec(cmd.toList().toTypedArray<String>())
+            val process = Runtime.getRuntime().exec(cmd.toList().toTypedArray<String>(), envp)
             GlobalScope.launch(Dispatchers.IO) {
                 process.inputStream.bufferedReader().useLines { lines ->
                     lines.forEach { println(it) }
@@ -145,6 +148,10 @@ class Kubectl(
             println(it)
         }
     }
+
+    fun getReplicas(app: App) = sexec(
+        "get", "deployment", app.id, "-o", "jsonpath={@.spec.replicas}"
+    ).toInt()
 
     fun findSecret(prefix: String) = sexec(
         "get", "secrets", "-o", "jsonpath={@.items[*].metadata.name}"
@@ -209,21 +216,21 @@ enum class ConsumerGroupId {
     `skedulert-harddelete-model-builder-1`,
     `skedulert-utgatt-model-builder-0`;
 
-    fun App.consumerGroupId(): ConsumerGroupId {
-        return when (this) {
-            `bruker-api` -> `bruker-model-builder-2`
-            App.`bruker-api-writer` -> `bruker-model-builder-2`
-            App.dataprodukt -> `dataprodukt-model-builder-3`
-            `ekstern-varsling` -> `ekstern-varsling-model-builder`
-            App.`kafka-backup` -> `kafka-backup-model-builder`
-            App.`kafka-bq` -> `kafka-bq-v1`
-            App.`kafka-reaper` -> `reaper-model-builder`
-            App.`produsent-api` -> `produsent-model-builder`
-            App.`skedulert-harddelete` -> `skedulert-harddelete-model-builder-1`
-            App.`skedulert-utgaatt` -> `skedulert-utgatt-model-builder-0`
-            App.`replay-validator` -> TODO()
-            App.`skedulert-paaminnelse` -> TODO("ephemeral consumer group")
-        }
+}
+fun App.consumerGroupId(): ConsumerGroupId {
+    return when (this) {
+        `bruker-api` -> `bruker-model-builder-2`
+        `bruker-api-writer` -> `bruker-model-builder-2`
+        dataprodukt -> `dataprodukt-model-builder-3`
+        `ekstern-varsling` -> `ekstern-varsling-model-builder`
+        `kafka-backup` -> `kafka-backup-model-builder`
+        `kafka-bq` -> `kafka-bq-v1`
+        `kafka-reaper` -> `reaper-model-builder`
+        `produsent-api` -> `produsent-model-builder`
+        `skedulert-harddelete` -> `skedulert-harddelete-model-builder-1`
+        `skedulert-utgaatt` -> `skedulert-utgatt-model-builder-0`
+        `replay-validator` -> TODO()
+        `skedulert-paaminnelse` -> TODO("ephemeral consumer group")
     }
 }
 
@@ -242,6 +249,7 @@ class NaisAivenKafka(
     enum class Cmd {
         `kafka-consumer-groups`,
         `kafka-topics`,
+        `kafka-console-consumer`,
     }
 
     val secretName = "notifikasjon-devops-fager"
@@ -280,13 +288,115 @@ class NaisAivenKafka(
     fun describeTopic() = Proc.exec(
         `kafka-topics`.sh(
             "--bootstrap-server", kafkaEnv["KAFKA_BROKERS"],
-            "--command-config", kafkaProperties.toString(),
+            "--command-config", "$kafkaProperties",
             "--topic", topic,
             "--describe",
         ),
-        envp = kafkaEnv.envp()
+        envp = kafkaEnv.envp(),
+        silent = false,
     ).let { println(it) }
 
+    fun describeConsumerGroup(silent: Boolean = false) = Proc.exec(
+        `kafka-consumer-groups`.sh(
+            "--bootstrap-server", kafkaEnv["KAFKA_BROKERS"],
+            "--command-config", "$kafkaProperties",
+            "--group", app.consumerGroupId().name,
+            "--describe",
+            "--state",
+        ),
+        envp = kafkaEnv.envp(),
+        silent = silent,
+    ).let {
+        if (!silent) {
+            println(it)
+        }
+        it
+    }
+
+    fun consume(
+        partition: Int? = null,
+        offset: Int? = null,
+        fromBeginning: Boolean = false,
+        maxMessages: Int? = null,
+    ) {
+        val positionArgs = if (fromBeginning) {
+            arrayOf("--from-beginning")
+        } else if (offset != null) {
+            arrayOf("--offset", "$offset")
+        } else {
+            arrayOf()
+        }
+        val maxMessagesArgs = if (maxMessages != null) {
+            arrayOf("--max-messages", "$maxMessages")
+        } else {
+            arrayOf()
+        }
+        val partitionArgs = if (partition != null) {
+            arrayOf("--partition", "$partition")
+        } else {
+            arrayOf()
+        }
+        Proc.execBg(
+            `kafka-console-consumer`.sh(
+                "--bootstrap-server", kafkaEnv["KAFKA_BROKERS"],
+                "--consumer.config", "$kafkaProperties",
+                "--topic", topic,
+                "--formatter", "kafka.tools.DefaultMessageFormatter",
+                "--property", "print.key=true",
+                "--property", "print.value=true",
+                "--property", "print.offset=true",
+                "--property", "print.timestamp=true",
+                "--timeout-ms", "30000",
+                *partitionArgs,
+                *positionArgs,
+                *maxMessagesArgs,
+            ),
+            envp = kafkaEnv.envp(),
+        ).waitFor()
+    }
+
+    fun resetOffsets(
+        dryRun: Boolean = true,
+        partition: Int? = null,
+        vararg adjustmentArgs: String,
+    ) {
+        val topicArgs = if (partition != null) {
+            arrayOf("--topic", "$topic:$partition")
+        } else {
+            arrayOf("--topic", topic)
+        }
+        val executeArgs = if (dryRun) {
+            arrayOf("--dry-run")
+        } else {
+            arrayOf("--execute")
+        }
+        Proc.exec(
+            `kafka-consumer-groups`.sh(
+                "--bootstrap-server", kafkaEnv["KAFKA_BROKERS"],
+                "--command-config", "$kafkaProperties",
+                "--group", "${app.consumerGroupId()}",
+                *topicArgs,
+                "--reset-offsets",
+                *adjustmentArgs,
+                *executeArgs,
+            ),
+            envp = kafkaEnv.envp(),
+            silent = false,
+        ).let { println(it) }
+    }
+
+    fun waitForInactiveConsumerGroup() {
+        println("waiting for consumer group to become inactive")
+        var consumerGroupActive = true
+        while (consumerGroupActive) {
+            Thread.sleep(2000)
+            print(".")
+            if (describeConsumerGroup(true).contains("Empty")) {
+                println("consumer group inactive")
+                consumerGroupActive = false
+            }
+        }
+    }
 }
 
 class KafkaDotEnv(
@@ -323,6 +433,8 @@ abstract class GcpEnv(
 
     fun portForward(port: Int, isReady: () -> Boolean) = kubectl.portForward(app, port, isReady)
     fun getPods() = kubectl.getPods(app)
+    fun scale(replicas: Int) = kubectl.scale(app, replicas)
+    fun getReplicas() = kubectl.getReplicas(app)
 
     fun getEnvVars(envVarPrefix: String) = kubectl.getEnvVars(app, envVarPrefix)
     fun getSecrets(secretName: String) = kubectl.getSecrets(secretName)
@@ -341,20 +453,43 @@ class ProdGcpEnv(
  * noen eksempler på bruk
  */
 fun main() {
-    NaisAivenKafka(
-        pool = KafkaPool.`nav-dev`,
-        app = `ekstern-varsling`
-    ).describeTopic()
+//    val kafka = NaisAivenKafka(
+//        pool = KafkaPool.`nav-dev`,
+//        app = `ekstern-varsling`
+//    )
+//    kafka.describeTopic()
+//    kafka.describeConsumerGroup()
+//    kafka.consume()
+//    kafka.consume(fromBeginning = true)
+//    kafka.consume(fromBeginning = true, partition = 10)
+//    kafka.consume(fromBeginning = true, partition = 10, maxMessages = 100)
+//    kafka.consume(offset = 100, partition = 1, maxMessages = 1)
+//    kafka.describeConsumerGroup()
+//
+//    val replicas = kafka.gcpEnv.getReplicas()
+//    println("scaling down ${kafka.app} from $replicas to 0")
+//    kafka.gcpEnv.scale(0)
+//
+//    kafka.waitForInactiveConsumerGroup()
+//
+//    kafka.resetOffsets(
+//        dryRun = true, // set to false to execute
+//        partition = 1,
+//        "--shift-by", "-1"
+//    )
+//    println("scaling back up ${kafka.app} to $replicas")
+//    kafka.gcpEnv.scale(replicas)
 
-    val devGcp = DevGcpEnv(`ekstern-varsling`)
-    val texas = devGcp.getEnvVars("NAIS_TOKEN_")
-    println("texas: ")
-    println("  $texas")
 
-
-    val brukerSecrets = DevGcpEnv(`bruker-api`).getSecrets("notifikasjon-bruker-api-secrets")
-    println("notifikasjon-bruker-api-secrets: ")
-    println("   $brukerSecrets")
+//    val devGcp = DevGcpEnv(`ekstern-varsling`)
+//    val texas = devGcp.getEnvVars("NAIS_TOKEN_")
+//    println("texas: ")
+//    println("  $texas")
+//
+//
+//    val brukerSecrets = DevGcpEnv(`bruker-api`).getSecrets("notifikasjon-bruker-api-secrets")
+//    println("notifikasjon-bruker-api-secrets: ")
+//    println("   $brukerSecrets")
 
 }
 
