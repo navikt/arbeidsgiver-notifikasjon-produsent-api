@@ -30,7 +30,7 @@ spec:
     sqlInstances:
       - name: notifikasjon-skedulert-paaminnelse
         type: POSTGRES_17
-        tier: db-custom-1-3840
+        tier: db-custom-2-7680
         diskAutoresize: true
         highAvailability: false
         databases:
