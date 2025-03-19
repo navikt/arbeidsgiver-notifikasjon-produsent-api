@@ -284,13 +284,18 @@ class NaisAivenKafka(
         silent = false,
     ).let { println(it) }
 
-    fun describeConsumerGroup(silent: Boolean = false) = Proc.exec(
+    fun describeConsumerGroup(
+        state: Boolean = true,
+        silent: Boolean = false
+    ) = Proc.exec(
         `kafka-consumer-groups`.sh(
             "--bootstrap-server", kafkaEnv["KAFKA_BROKERS"],
             "--command-config", "$kafkaProperties",
             "--group", app.consumerGroupId().name,
             "--describe",
-            "--state",
+            if (state) {
+                "--state"
+            } else { "" },
         ),
         envp = kafkaEnv.envp(),
         silent = silent,
@@ -379,7 +384,7 @@ class NaisAivenKafka(
         while (consumerGroupActive) {
             Thread.sleep(2000)
             print(".")
-            if (describeConsumerGroup(true).contains("Empty")) {
+            if (describeConsumerGroup(state = true, silent = true).contains("Empty")) {
                 println("consumer group inactive")
                 consumerGroupActive = false
             }
@@ -441,10 +446,11 @@ class ProdGcpEnv(
  * noen eksempler på bruk
  */
 fun main() {
-//    val kafka = NaisAivenKafka(
-//        pool = KafkaPool.`nav-dev`,
-//        app = `ekstern-varsling`
-//    )
+    val kafka = NaisAivenKafka(
+        pool = KafkaPool.`nav-dev`,
+        app = `ekstern-varsling`
+    )
+
 //    kafka.describeTopic()
 //    kafka.describeConsumerGroup()
 //    kafka.consume()
@@ -452,21 +458,20 @@ fun main() {
 //    kafka.consume(fromBeginning = true, partition = 10)
 //    kafka.consume(fromBeginning = true, partition = 10, maxMessages = 100)
 //    kafka.consume(offset = 100, partition = 1, maxMessages = 1)
-//    kafka.describeConsumerGroup()
 //
-//    val replicas = kafka.gcpEnv.getReplicas()
-//    println("scaling down ${kafka.app} from $replicas to 0")
-//    kafka.gcpEnv.scale(0)
-//
-//    kafka.waitForInactiveConsumerGroup()
-//
-//    kafka.resetOffsets(
-//        dryRun = true, // set to false to execute
-//        partition = 1,
-//        "--shift-by", "-1"
-//    )
-//    println("scaling back up ${kafka.app} to $replicas")
-//    kafka.gcpEnv.scale(replicas)
+    val replicas = kafka.gcpEnv.getReplicas()
+    println("scaling down ${kafka.app} from $replicas to 0")
+    kafka.gcpEnv.scale(0)
+
+    kafka.waitForInactiveConsumerGroup()
+
+    kafka.resetOffsets(
+        dryRun = true, // set to false to execute
+        partition = 1,
+        "--shift-by", "-1"
+    )
+    println("scaling back up ${kafka.app} to $replicas")
+    kafka.gcpEnv.scale(replicas)
 
 
 //    val devGcp = DevGcpEnv(`ekstern-varsling`)
