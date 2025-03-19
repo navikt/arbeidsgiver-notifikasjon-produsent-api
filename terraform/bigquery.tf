@@ -6,7 +6,7 @@ resource "google_bigquery_dataset" "this" {
 }
 
 data "google_sql_database_instance" "this" {
-  name    = "notifikasjon-dataprodukt"
+  name    = "notifikasjon-dataprodukt-v2"
   project = var.project
 }
 
