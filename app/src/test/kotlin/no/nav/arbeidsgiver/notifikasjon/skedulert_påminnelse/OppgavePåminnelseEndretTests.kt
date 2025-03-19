@@ -2,12 +2,9 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
-import kotlinx.coroutines.flow.merge
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -18,11 +15,9 @@ import java.time.ZoneOffset.UTC
 import java.util.*
 
 class OppgavePåminnelseEndretTests : DescribeSpec({
-    val metadata = PartitionHendelseMetadata(0, 0)
     describe("Påminnelse blir opprettet når oppgave uten påminnelse får lagt til påminnelse ") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveUtenPaminnelseOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(oppgaveUtenPaminnelseOpprettet)
         service.processHendelse(
             HendelseModel.OppgavePåminnelseEndret(
                 virksomhetsnummer = oppgaveUtenPaminnelseOpprettet.virksomhetsnummer,
@@ -35,7 +30,7 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 påminnelse = førstePåminnelse,
                 merkelapp = "merkelapp",
                 idempotenceKey = null
-            ), metadata
+            )
         )
 
         it("Sender påminnelse opprettet") {
@@ -45,9 +40,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
     }
 
     describe("Påminnelse blir ikke opprettet når oppgave med påminnelse får påminnelse fjernet") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveMedPaminnelseOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(oppgaveMedPaminnelseOpprettet)
         service.processHendelse(
             HendelseModel.OppgavePåminnelseEndret(
                 virksomhetsnummer = oppgaveUtenPaminnelseOpprettet.virksomhetsnummer,
@@ -60,7 +54,7 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 påminnelse = null,
                 merkelapp = "merkelapp",
                 idempotenceKey = null
-            ), metadata
+            )
         )
 
         it("Sender ikke påminnelse opprettet") {
@@ -70,9 +64,8 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
     }
 
     describe("Påminnelse blir opprettet når oppgave med påminneølse får påminnelse sin endret") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(oppgaveMedPaminnelseOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(oppgaveMedPaminnelseOpprettet)
         service.processHendelse(
             HendelseModel.OppgavePåminnelseEndret(
                 virksomhetsnummer = oppgaveUtenPaminnelseOpprettet.virksomhetsnummer,
@@ -85,7 +78,7 @@ class OppgavePåminnelseEndretTests : DescribeSpec({
                 påminnelse = andrePåminnelse,
                 merkelapp = "merkelapp",
                 idempotenceKey = null
-            ), metadata
+            )
         )
 
         it("Sender ikke påminnelse opprettet før ny påmminelse skal opprettes") {
