@@ -25,3 +25,13 @@ spec:
     path: /internal/metrics
   kafka:
     pool: nav-dev
+  gcp:
+    sqlInstances:
+      - name: notifikasjon-skedulert-paaminnelse
+        type: POSTGRES_17
+        tier: db-f1-micro
+        diskAutoresize: true
+        highAvailability: false
+        databases:
+          - name: skedulert-paaminnelse-model
+            envVarPrefix: DB

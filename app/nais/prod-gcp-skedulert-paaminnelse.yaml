@@ -19,10 +19,20 @@ spec:
     path: /internal/ready
   replicas:
     disableAutoScaling: true
-    min: 10
-    max: 10
+    min: 1
+    max: 1
   prometheus:
     enabled: true
     path: /internal/metrics
   kafka:
     pool: nav-prod
+  gcp:
+    sqlInstances:
+      - name: notifikasjon-skedulert-paaminnelse
+        type: POSTGRES_17
+        tier: db-custom-1-3840
+        diskAutoresize: true
+        highAvailability: false
+        databases:
+          - name: skedulert-paaminnelse-model
+            envVarPrefix: DB

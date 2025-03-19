@@ -9,18 +9,14 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.AVLYST
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 
 
 class KalenderavtaleTests : DescribeSpec({
-    val metadata = PartitionHendelseMetadata(0, 0)
     describe("kalenderavtale med påminnelse sendes") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(kalenderavtaleOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(kalenderavtaleOpprettet)
 
         it("Sender påminnelse") {
             service.sendAktuellePåminnelser(now = kalenderavtaleOpprettet.påminnelse!!.tidspunkt.påminnelseTidspunkt)
@@ -29,13 +25,12 @@ class KalenderavtaleTests : DescribeSpec({
     }
 
     describe("kalenderavtale med påminnelse markeres som avlyst") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(kalenderavtaleOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(kalenderavtaleOpprettet)
         service.processHendelse(
             kalenderavtaleOppdatert.copy(
                 tilstand = AVLYST,
-            ), metadata
+            )
         )
 
         it("Sender ikke påminnelse") {
@@ -45,13 +40,12 @@ class KalenderavtaleTests : DescribeSpec({
     }
 
     describe("kalenderavtale med påminnelse hvor starttidspunkt endres") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(kalenderavtaleOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(kalenderavtaleOpprettet)
         service.processHendelse(
             kalenderavtaleOppdatert.copy(
                 startTidspunkt = startTidspunkt.minusMinutes(1),
-            ), metadata
+            )
         )
 
         it("Sender ikke påminnelse") {
@@ -61,9 +55,8 @@ class KalenderavtaleTests : DescribeSpec({
     }
 
     describe("kalenderavtale med påminnelse hvor påminnelse endres") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(kalenderavtaleOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(kalenderavtaleOpprettet)
         val nyttTidspunkt = HendelseModel.PåminnelseTidspunkt.createAndValidateFørStartTidspunkt(
             førStartTidpunkt = ISO8601Period.parse("P2D"),
             notifikasjonOpprettetTidspunkt = opprettetTidspunkt,
@@ -74,11 +67,11 @@ class KalenderavtaleTests : DescribeSpec({
                 påminnelse = kalenderavtaleOpprettet.påminnelse!!.copy(
                     tidspunkt = nyttTidspunkt
                 ),
-            ), metadata
+            )
         )
 
         it("Sender kun nyeste påminnelse") {
-            service.sendAktuellePåminnelser(now = kalenderavtaleOpprettet.påminnelse!!.tidspunkt.påminnelseTidspunkt)
+            service.sendAktuellePåminnelser(now = kalenderavtaleOpprettet.påminnelse.tidspunkt.påminnelseTidspunkt)
             hendelseProdusent.hendelser shouldHaveSize 1
             hendelseProdusent.hendelser.first().let {
                 it should beOfType<HendelseModel.PåminnelseOpprettet>()
@@ -89,9 +82,8 @@ class KalenderavtaleTests : DescribeSpec({
     }
 
     describe("kalenderavtale med påminnelse som blir hard deleted") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(kalenderavtaleOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(kalenderavtaleOpprettet)
         service.processHendelse(HendelseModel.HardDelete(
             aggregateId = kalenderavtaleOpprettet.aggregateId,
             virksomhetsnummer = kalenderavtaleOpprettet.virksomhetsnummer,
@@ -101,7 +93,7 @@ class KalenderavtaleTests : DescribeSpec({
             deletedAt = OffsetDateTime.now(),
             grupperingsid = null,
             merkelapp = null,
-        ), metadata)
+        ))
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = kalenderavtaleOpprettet.påminnelse!!.tidspunkt.påminnelseTidspunkt)
@@ -110,9 +102,8 @@ class KalenderavtaleTests : DescribeSpec({
     }
 
     describe("kalenderavtale med påminnelse som blir soft deleted") {
-        val hendelseProdusent = FakeHendelseProdusent()
-        val service = SkedulertPåminnelseService(hendelseProdusent)
-        service.processHendelse(kalenderavtaleOpprettet, metadata)
+        val (service, hendelseProdusent) = setupEngine()
+        service.processHendelse(kalenderavtaleOpprettet)
         service.processHendelse(HendelseModel.SoftDelete(
             aggregateId = kalenderavtaleOpprettet.aggregateId,
             virksomhetsnummer = kalenderavtaleOpprettet.virksomhetsnummer,
@@ -122,7 +113,7 @@ class KalenderavtaleTests : DescribeSpec({
             deletedAt = OffsetDateTime.now(),
             grupperingsid = null,
             merkelapp = null,
-        ), metadata)
+        ))
 
         it("Sender ikke påminnelse") {
             service.sendAktuellePåminnelser(now = kalenderavtaleOpprettet.påminnelse!!.tidspunkt.påminnelseTidspunkt)
