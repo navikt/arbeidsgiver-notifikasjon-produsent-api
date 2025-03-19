@@ -39,10 +39,10 @@ object SkedulertPåminnelse {
                 }
             }
 
-//            launch {
-//                service.sendAktuellePåminnelser()
-//                delay(Duration.ofMinutes(1))
-//            }
+            launch {
+                service.sendAktuellePåminnelser()
+                delay(Duration.ofMinutes(1))
+            }
 
             launchHttpServer(httpPort = httpPort)
         }
