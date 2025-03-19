@@ -75,12 +75,6 @@ se at $KAFKA_BROKERS er satt fra secrets:
 echo $KAFKA_BROKERS
 ```
 
-List alle consumer groups på fager.notifikasjon topic: 
-```
-# TODO: funker dette??
-./kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --all-groups count_errors --describe
-```
-
 List offsets for en consumer group (fra listen over consumer groups):
 ```
 .kafka-cli/bin/kafka-consumer-groups.sh --bootstrap-server $KAFKA_BROKERS --command-config $KAFKA_CONFIG/kafka.properties --group bruker-model-builder --describe
@@ -125,8 +119,7 @@ kafka-cli/bin/./kafka-topics.sh --bootstrap-server $KAFKA_BROKERS --command-conf
 
 Konsumer topic fra starten, pipe til fil og koble fra når ferdig:
 ```
-.kafka-cli/bin/./kafka-console-consumer.sh --bootstrap-server $KAFKA_BROKERS --consumer.config $KAFKA_CONFIG/kafka.properties --topic fager.notifikasjon --formatter kafka.to
-ols.DefaultMessageFormatter --property print.key=true --property print.value=true --property print.offset=true --property print.timestamp=true --timeout-ms 30000 --from-beginning > dev.fager.notifikasjon.topic
+.kafka-cli/bin/./kafka-console-consumer.sh --bootstrap-server $KAFKA_BROKERS --consumer.config $KAFKA_CONFIG/kafka.properties --topic fager.notifikasjon --formatter kafka.tools.DefaultMessageFormatter --property print.key=true --property print.value=true --property print.offset=true --property print.timestamp=true --timeout-ms 30000 --from-beginning > dev.fager.notifikasjon.topic
 ```
 
 ## Ticks n' Trips
