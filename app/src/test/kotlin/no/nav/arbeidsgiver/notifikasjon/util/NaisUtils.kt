@@ -5,7 +5,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonPrimitive
 import no.nav.arbeidsgiver.notifikasjon.util.App.*
 import no.nav.arbeidsgiver.notifikasjon.util.ConsumerGroupId.*
 import no.nav.arbeidsgiver.notifikasjon.util.NaisAivenKafka.Cmd.*
@@ -164,20 +166,6 @@ class Kubectl(
             Json.decodeFromString<Map<String, String>>(it)
                 .mapValues { e -> e.value.decodeBase64String() }
         }
-
-    fun findSecretResourceNames(app: App) = sexec(
-        "get", "pods", "-l", "app=$app",
-        "-o", """jsonpath=
-        {'{'}
-            "envFrom": { .items[0].spec.containers[?(@.name=="$app")].envFrom },
-            "env": { .items[0].spec.containers[?(@.name=="$app")].env }
-        {'}'}
-        """.trimMargin()
-    ).let { json ->
-        Json.decodeFromString<JsonElement>(json).jsonObject.let {
-            it["envFrom"]!!.jsonArray.map { envFrom -> envFrom.jsonObject["secretRef"]!!.jsonObject["name"]!!.jsonPrimitive.content }
-        }
-    }
 
     fun getEnvVars(app: App, envVarPrefix: String) =
         sexec(
