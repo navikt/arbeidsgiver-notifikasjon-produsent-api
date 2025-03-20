@@ -99,19 +99,6 @@ class Altinn2VarselKlientImpl(
     }
 
     override suspend fun send(eksternVarsel: EksternVarsel) = when (eksternVarsel) {
-        is EksternVarsel.Epost -> sendEpost(
-            reporteeNumber = eksternVarsel.fnrEllerOrgnr,
-            epostadresse = eksternVarsel.epostadresse,
-            tittel = eksternVarsel.tittel,
-            tekst = eksternVarsel.body,
-        )
-
-        is EksternVarsel.Sms -> sendSms(
-            reporteeNumber = eksternVarsel.fnrEllerOrgnr,
-            mobilnummer = eksternVarsel.mobilnummer,
-            tekst = eksternVarsel.tekst,
-        )
-
         is EksternVarsel.Altinntjeneste -> sendAltinntjeneste(
             virksomhetsnummer = eksternVarsel.fnrEllerOrgnr,
             serviceCode = eksternVarsel.serviceCode,
@@ -120,6 +107,8 @@ class Altinn2VarselKlientImpl(
             innhold = eksternVarsel.innhold,
         )
 
+        is EksternVarsel.Epost,
+        is EksternVarsel.Sms,
         is EksternVarsel.Altinnressurs -> throw UnsupportedOperationException("Unsupported varseltype: $eksternVarsel")
     }
 

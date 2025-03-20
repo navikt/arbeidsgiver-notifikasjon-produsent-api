@@ -239,8 +239,10 @@ class EksternVarslingService(
                             }
                         } else {
                             when (val response = altinn3VarselKlient.order(varsel.data.eksternVarsel)) {
-                                is Altinn3VarselKlient.OrderResponse.Success ->
+                                is Altinn3VarselKlient.OrderResponse.Success -> {
                                     eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                                    // sett inn altinn status på utsending
+                                }
 
                                 is Altinn3VarselKlient.ErrorResponse -> {
                                     if (response.isRetryable()) {
