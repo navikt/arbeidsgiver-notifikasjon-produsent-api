@@ -249,7 +249,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 it.orderId shouldBe "42"
             }
 //            mockEngine.requestHistory.size shouldBe 1
-            mockEngine.requestHistory.first().let { req ->
+            mockEngine.requestHistory.last().let { req ->
                 req.url.toString() shouldBe "http://altinn/notifications/api/v1/orders"
                 req.method shouldBe HttpMethod.Post
                 req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
