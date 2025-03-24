@@ -21,6 +21,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
+import java.time.OffsetDateTime
 import java.util.*
 
 /**
@@ -82,6 +83,28 @@ class Altinn3VarselKlientImpl(
         )
     }
 
+    override suspend fun orderStatus(orderId: String): OrderStatusResponse = try {
+        httpClient.get {
+            url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/status")
+            plattformTokenBearerAuth()
+        }.body<JsonNode>().let {
+            OrderStatusResponse.Success.fromJson(it)
+        }
+    } catch (e: ResponseException) {
+        ErrorResponse(
+            message = e.response.status.description,
+            code = e.response.status.value.toString(),
+            rå = e.response.body()
+        )
+    } catch (e: Exception){
+        ErrorResponse(
+            message = e.message ?: "",
+            code = e::class.java.simpleName ?: "",
+            rå = TextNode.valueOf(e.toString())
+        )
+    }
+
+
     private suspend fun emailNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
         url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/notifications/email")
         plattformTokenBearerAuth()
@@ -109,6 +132,7 @@ class Altinn3VarselKlientImpl(
 interface Altinn3VarselKlient {
     suspend fun order(eksternVarsel: EksternVarsel): OrderResponse
     suspend fun notifications(orderId: String): NotificationsResponse
+    suspend fun orderStatus(orderId: String): OrderStatusResponse
 
 
     /**
@@ -232,7 +256,7 @@ interface Altinn3VarselKlient {
         override val rå: JsonNode,
         val message: String,
         val code: String,
-    ) : OrderResponse, NotificationsResponse {
+    ) : OrderResponse, NotificationsResponse, OrderStatusResponse {
         fun isRetryable() =
             when (code) {
                 "400" -> false
@@ -263,6 +287,71 @@ interface Altinn3VarselKlient {
             }
         }
     }
+
+    @Suppress("unused")
+    sealed interface OrderStatusResponse {
+        val rå: JsonNode
+
+        enum class ProcessingStatusValue {
+            Registered,
+            Processing,
+            Completed,
+            Cancelled
+        }
+
+        data class ProcessingStatus(
+            /**
+             * status should be enum but is string in api. prevent breakage by using string
+             * https://docs.altinn.studio/notifications/reference/api/endpoints/get-email-notifications/
+             *
+             * enum class ProcessingStatusValue {
+             *     Registered,
+             *     Processing,
+             *     Completed,
+             *     Cancelled
+             * }
+             *
+             */
+            val status: String,
+            val description: String?,
+            val lastUpdate: OffsetDateTime?,
+        ) {
+            companion object {
+                const val Processing = "Processing"
+                const val Registered = "Registered"
+                const val Completed = "Completed"
+                const val Cancelled = "Cancelled"
+            }
+        }
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        data class NotificationStatusSummary(
+            val generated: Int,
+            val succeeded: Int,
+        )
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        data class Success(
+            override val rå: JsonNode,
+            val orderId: String,
+            val sendersReference: String,
+            val processingStatus: ProcessingStatus,
+            val notificationStatusSummary: NotificationStatusSummary,
+        ) : OrderStatusResponse {
+            companion object {
+                fun fromJson(rawJson: JsonNode): Success {
+                    return Success(
+                        rå = rawJson,
+                        orderId = rawJson["orderId"].asText(),
+                        sendersReference = rawJson["sendersReference"].asText(),
+                        processingStatus = laxObjectMapper.readValue(rawJson["processingStatus"].toString()),
+                        notificationStatusSummary = laxObjectMapper.readValue(rawJson["notificationStatusSummary"].toString())
+                    )
+                }
+            }
+        }
+    }
+
 
     @Suppress("unused")
     sealed interface NotificationsResponse {
@@ -339,8 +428,6 @@ interface Altinn3VarselKlient {
                     val description: String,
                     val lastUpdate: String,
                 )
-
-
             }
         }
     }
@@ -370,6 +457,10 @@ class Altinn3VarselKlientMedFilter(
     override suspend fun notifications(orderId: String): NotificationsResponse {
         return varselKlient.notifications(orderId)
     }
+
+    override suspend fun orderStatus(orderId: String): OrderStatusResponse {
+        return varselKlient.orderStatus(orderId)
+    }
 }
 
 class Altinn3VarselKlientLogging : Altinn3VarselKlient {
@@ -393,6 +484,15 @@ class Altinn3VarselKlientLogging : Altinn3VarselKlient {
             succeeded = 0,
             notifications = listOf(),
             rå = NullNode.instance,
+        )
+    }
+
+    override suspend fun orderStatus(orderId: String): OrderStatusResponse {
+        log.info("orderStatus($orderId)")
+        return OrderStatusResponse.Success.fromJson(
+            JsonNodeFactory.instance.objectNode().apply {
+                put("orderId", "fake-${UUID.randomUUID()}")
+            }
         )
     }
 }

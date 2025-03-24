@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
@@ -250,7 +251,8 @@ class EksternVarslingService(
 
             is EksternVarselTilstand.Sendt -> {
                 try {
-                    if (varsel.response is AltinnResponse.Ok && varsel.data.eksternVarsel !is EksternVarsel.Altinntjeneste) {
+                    if (varsel.response is AltinnResponse.Ok) {
+                        val ordreStatus = sjekkVarselOrdreStatus(varsel.data.resourceId)
                         // kall ordrestatus
                         /*
                         if ordrestatus == "completed" {
@@ -286,6 +288,44 @@ class EksternVarslingService(
 
             is EksternVarselTilstand.Kvittert -> {
                 eksternVarslingRepository.deleteFromJobQueue(varselId)
+            }
+        }
+    }
+
+    enum class Altinn3VarselStatus {
+        Prosesserer,
+        Kvittert,
+        Kansellert
+    }
+
+    private suspend fun sjekkVarselOrdreStatus(orderId: String): Altinn3VarselStatus {
+        var ordreStatus = altinn3VarselKlient.orderStatus(orderId)
+        if (!(ordreStatus is Altinn3VarselKlient.OrderStatusResponse.Success)) {
+            log.error("Feil ved henting av ordrestatus")
+            return Altinn3VarselStatus.Prosesserer
+        }
+
+        return when (ordreStatus.processingStatus.status) {
+            ProcessingStatus.Registered,
+            ProcessingStatus.Processing -> Altinn3VarselStatus.Prosesserer
+            ProcessingStatus.Cancelled -> Altinn3VarselStatus.Kansellert
+            ProcessingStatus.Completed -> {
+                // Orderen er ferdig prosessert og alle notifikasjoner er blitt generert. Sjekker om notifikasjoner alle notifikasjoner er blitt sendt ut
+                altinn3VarselKlient.notifications(orderId).let {
+                    if (!(it is Altinn3VarselKlient.NotificationsResponse.Success)) {
+                        log.error("Feil ved henting av notifikasjoner")
+                        return Altinn3VarselStatus.Prosesserer
+                    }
+                    return if (it.generated == it.succeeded) {
+                        Altinn3VarselStatus.Kvittert
+                    } else {
+                        Altinn3VarselStatus.Prosesserer
+                    }
+                }
+            }
+
+            else -> {
+                throw RuntimeException("Fikk ${it.processingStatus.status} fra Altinn, denne blir ikke håndtert")
             }
         }
     }
