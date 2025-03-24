@@ -92,6 +92,9 @@ class EksternVarslingServiceTests : DescribeSpec({
                     TODO("Not yet implemented")
                 }
 
+                override suspend fun orderStatus(orderId: String): Altinn3VarselKlient.OrderStatusResponse {
+                    TODO("Not yet implemented")
+                }
             },
             hendelseProdusent = hendelseProdusent,
             idleSleepDelay = Duration.ZERO,

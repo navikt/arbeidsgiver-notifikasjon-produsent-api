@@ -30,6 +30,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 sendeTidspunkt = null,
                 mobilnummer = "99999999",
                 tekst = "Hei, dette er en test",
+                ordreId = "123"
             ).let { dto ->
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
                 laxObjectMapper.writeValueAsString(json) shouldEqualJson //language=json
@@ -59,6 +60,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                     sendeTidspunkt = null,
                     mobilnummer = input,
                     tekst = "Hei, dette er en test",
+                    ordreId = "123"
                 )
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
                 laxObjectMapper.writeValueAsString(json) shouldEqualJson //language=json
@@ -84,6 +86,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 epostadresse = "foo@bar.baz",
                 tittel = "Test",
                 body = "Hei, dette er en test",
+                ordreId = "123"
             ).let { dto ->
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
                 laxObjectMapper.writeValueAsString(json) shouldEqualJson
@@ -113,6 +116,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 epostTittel = "Test",
                 epostInnhold = "Hei, epost",
                 smsInnhold = "Hei, sms",
+                ordreId = "123"
             ).let { dto ->
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
                 laxObjectMapper.writeValueAsString(json) shouldEqualJson
@@ -183,6 +187,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
             sendeTidspunkt = null,
             mobilnummer = "99999999",
             tekst = "Hei, dette er en test",
+            ordreId = "123"
         )
 
         val eksternVarselEpost = EksternVarsel.Epost(
@@ -192,6 +197,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
             epostadresse = "adresse@epost.com",
             tittel = "Hei, dette er en tittel",
             body = "Hei, dette er en test",
+            ordreId = "123"
         )
 
         it("success for sms returnerer order id") {

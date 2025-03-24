@@ -428,6 +428,20 @@ interface Altinn3VarselKlient {
                     val description: String,
                     val lastUpdate: String,
                 )
+                {
+                    companion object {
+                        val New = "New"
+                        val Sending = "Sending"
+                        val Succeeded = "Succeeded"
+                        val Delivered = "Delivered"
+                        val Failed = "Failed"
+                        val Failed_RecipientNotIdentified = "Failed_RecipientNotIdentified"
+                        val Failed_InvalidEmailFormat = "Failed_InvalidEmailFormat"
+                        val Failed_Bounced = "Failed_Bounced"
+                        val Failed_FilteredSpam = "Failed_FilteredSpam"
+                        val Failed_Quarantined = "Failed_Quarantined"
+                    }
+                }
             }
         }
     }

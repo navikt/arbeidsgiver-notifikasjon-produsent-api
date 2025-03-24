@@ -179,7 +179,8 @@ private fun varselTilstand(
             sendeVindu = sendeVindu,
             sendeTidspunkt = sendeTidspunkt,
             mobilnummer = "",
-            tekst = ""
+            tekst = "",
+            ordreId = "123"
         )
     ),
     response = AltinnResponse.Feil(rå = NullNode.instance, feilkode = "", feilmelding = ""),

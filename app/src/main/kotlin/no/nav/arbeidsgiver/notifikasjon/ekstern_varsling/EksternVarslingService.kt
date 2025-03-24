@@ -1,7 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import com.fasterxml.jackson.databind.JsonNode
+import io.ktor.http.cio.Response
 import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
@@ -252,24 +255,20 @@ class EksternVarslingService(
             is EksternVarselTilstand.Sendt -> {
                 try {
                     if (varsel.response is AltinnResponse.Ok) {
-                        val ordreStatus = sjekkVarselOrdreStatus(varsel.data.resourceId)
-                        // kall ordrestatus
-                        /*
-                        if ordrestatus == "completed" {
-                            // sjekk notifikasjoner
-                            if alle notifikasjoner != ok{
-                                log at noe feilet, send til dataprodukt?
+                        val ordreId = varsel.response.rå["orderId"].asText()
+                        if (ordreId.isEmpty())
+                            throw kotlin.RuntimeException("Ordre er markert som sendt, men mangler orderId")
+                        val (ordreStatus, altinnResponse) = sjekkVarselOrdreStatus(ordreId)
+                        when (ordreStatus) {
+                            Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                            Altinn3VarselStatus.Kansellert,
+                            Altinn3VarselStatus.Kvittert,
+                            Altinn3VarselStatus.KvittertMedFeil -> {
+                                eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                                hendelseProdusent.send(varsel.copy(response = AltinnResponse.Ok(altinnResponse)).toHendelse())
                             }
-                            hendelseProdusent.send(varsel.toHendelse())
-                            eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
                         }
-                        */
-                    } else {
-                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                     }
-
-                    hendelseProdusent.send(varsel.toHendelse())
-                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
                 } catch (e: RuntimeException) {
                     log.error("Exception producing kafka-kvittering", e)
                     eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
@@ -295,37 +294,52 @@ class EksternVarslingService(
     enum class Altinn3VarselStatus {
         Prosesserer,
         Kvittert,
+        KvittertMedFeil,
         Kansellert
     }
 
-    private suspend fun sjekkVarselOrdreStatus(orderId: String): Altinn3VarselStatus {
-        var ordreStatus = altinn3VarselKlient.orderStatus(orderId)
+    private suspend fun sjekkVarselOrdreStatus(ordreId: String): Pair<Altinn3VarselStatus, JsonNode> {
+        var ordreStatus = altinn3VarselKlient.orderStatus(ordreId)
         if (!(ordreStatus is Altinn3VarselKlient.OrderStatusResponse.Success)) {
             log.error("Feil ved henting av ordrestatus")
-            return Altinn3VarselStatus.Prosesserer
+            return Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)
         }
 
         return when (ordreStatus.processingStatus.status) {
             ProcessingStatus.Registered,
-            ProcessingStatus.Processing -> Altinn3VarselStatus.Prosesserer
-            ProcessingStatus.Cancelled -> Altinn3VarselStatus.Kansellert
+            ProcessingStatus.Processing -> Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)
+            ProcessingStatus.Cancelled -> Pair(Altinn3VarselStatus.Kansellert, ordreStatus.rå)
             ProcessingStatus.Completed -> {
                 // Orderen er ferdig prosessert og alle notifikasjoner er blitt generert. Sjekker om notifikasjoner alle notifikasjoner er blitt sendt ut
-                altinn3VarselKlient.notifications(orderId).let {
+                altinn3VarselKlient.notifications(ordreId).let {
                     if (!(it is Altinn3VarselKlient.NotificationsResponse.Success)) {
                         log.error("Feil ved henting av notifikasjoner")
-                        return Altinn3VarselStatus.Prosesserer
+                        return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
                     }
-                    return if (it.generated == it.succeeded) {
-                        Altinn3VarselStatus.Kvittert
-                    } else {
-                        Altinn3VarselStatus.Prosesserer
+
+                    if (it.notifications.any { notification ->
+                            (notification.sendStatus.status === SendStatus.New
+                                    || notification.sendStatus.status === SendStatus.Sending
+                                    || notification.sendStatus.status === SendStatus.Succeeded)
+                        }) {
+                        return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
                     }
+
+                    val failed = it.notifications.filter { notification ->
+                        notification.sendStatus.status.startsWith(SendStatus.Failed)
+                    }
+                    if (failed.count() > 0) {
+                        log.warn("Eksternt varsel med altinn ordre id $ordreId er fullført, men har ikke klart å sende ut alle notifikasjoner. antall feilet: ${failed.count()}. succedded: ${it.succeeded}, generated: ${it.generated}")
+                    }
+                    if (it.generated == it.succeeded)
+                        return Pair(Altinn3VarselStatus.Kvittert, it.rå)
+
+                    return Pair(Altinn3VarselStatus.KvittertMedFeil, it.rå)
                 }
             }
 
             else -> {
-                throw RuntimeException("Fikk ${it.processingStatus.status} fra Altinn, denne blir ikke håndtert")
+                throw RuntimeException("Fikk ${ordreStatus.processingStatus.status} fra Altinn, denne blir ikke håndtert")
             }
         }
     }

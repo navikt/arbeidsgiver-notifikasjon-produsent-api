@@ -685,6 +685,7 @@ class EksternVarslingRepository(
                             sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
                             mobilnummer = getString("tlfnr"),
                             tekst = getString("sms_tekst"),
+                            ordreId = getString("altinn_ordre_id"),
                         )
 
                         "EMAIL" -> EksternVarsel.Epost(
@@ -693,7 +694,8 @@ class EksternVarslingRepository(
                             sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
                             epostadresse = getString("epost_adresse"),
                             tittel = getString("tittel"),
-                            body = getString("html_body")
+                            body = getString("html_body"),
+                            ordreId = getString("altinn_ordre_id"),
                         )
 
                         "ALTINNTJENESTE" -> EksternVarsel.Altinntjeneste(
@@ -713,7 +715,8 @@ class EksternVarslingRepository(
                             resourceId = getString("ressursid"),
                             epostTittel = getString("ressurs_eposttittel"),
                             epostInnhold = getString("ressurs_epostinnhold"),
-                            smsInnhold = getString("ressurs_smsinnhold")
+                            smsInnhold = getString("ressurs_smsinnhold"),
+                            ordreId = getString("altinn_order_id")
                         )
 
                         else -> throw Error("Ukjent varsel_type '$varselType'")

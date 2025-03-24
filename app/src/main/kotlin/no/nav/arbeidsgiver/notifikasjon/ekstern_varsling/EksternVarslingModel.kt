@@ -30,6 +30,7 @@ sealed interface EksternVarsel {
         override val sendeTidspunkt: LocalDateTime?,
         val mobilnummer: String,
         val tekst: String,
+        val ordreId: String?
     ): EksternVarsel
 
     data class Epost(
@@ -38,7 +39,8 @@ sealed interface EksternVarsel {
         override val sendeTidspunkt: LocalDateTime?,
         val epostadresse: String,
         val tittel: String,
-        val body: String
+        val body: String,
+        val ordreId: String?
     ): EksternVarsel
 
     data class Altinntjeneste(
@@ -59,6 +61,7 @@ sealed interface EksternVarsel {
         val epostTittel: String,
         val epostInnhold: String,
         val smsInnhold: String,
+        val ordreId: String?
     ): EksternVarsel
 }
 
