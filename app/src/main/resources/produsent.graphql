@@ -429,7 +429,7 @@ type Mutation {
         """
         Teksten som vises til brukeren.
         """
-        tekst: String!
+        tekst: String! @MaxLength(max: 300) @NonIdentifying @Validate
 
         """
         Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
@@ -469,13 +469,13 @@ type Mutation {
         """
         tilstand: KalenderavtaleTilstand
 
-        eksterneVarsler: [EksterntVarselInput!]! = []
+        eksterneVarsler: [EksterntVarselInput!]! = [] @Validate
 
         """
         Her kan du spesifisere en påminnelse for kalenderavtalen.
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput
+        paaminnelse: PaaminnelseInput @Validate
 
         """
         Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
@@ -700,7 +700,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput
+        hardDelete: HardDeleteUpdateInput @Validate
 
         """
         Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
@@ -735,7 +735,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput
+        hardDelete: HardDeleteUpdateInput @Validate
     ): OppgaveUtfoertResultat!
     @deprecated(reason:
     "Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead."
@@ -758,7 +758,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput
+        hardDelete: HardDeleteUpdateInput @Validate
 
         """
         Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
@@ -788,7 +788,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput
+        hardDelete: HardDeleteUpdateInput @Validate
 
         """
         Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
@@ -824,7 +824,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput
+        hardDelete: HardDeleteUpdateInput @Validate
 
         """
         Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
@@ -868,7 +868,7 @@ type Mutation {
         Her kan du spesifisere en påminnelse for oppgaven.
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput
+        paaminnelse: PaaminnelseInput @Validate
     ): OppgaveUtsettFristResultat!
 
 
@@ -903,7 +903,7 @@ type Mutation {
         Her kan du spesifisere en påminnelse for oppgaven.
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput
+        paaminnelse: PaaminnelseInput @Validate
     ): OppgaveUtsettFristResultat!
 
     """
@@ -928,7 +928,7 @@ type Mutation {
         Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput
+        paaminnelse: PaaminnelseInput @Validate
     ) : OppgaveEndrePaaminnelseResultat!
 
     """
@@ -958,7 +958,7 @@ type Mutation {
         Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput
+        paaminnelse: PaaminnelseInput @Validate
     ) : OppgaveEndrePaaminnelseResultat!
 
 
@@ -985,7 +985,7 @@ type Mutation {
         """
         Teksten som vises til brukeren.
         """
-        nyTekst: String
+        nyTekst: String @MaxLength(max: 300) @NonIdentifying @Validate
 
         """
         Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
@@ -1007,7 +1007,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput
+        hardDelete: HardDeleteUpdateInput @Validate
 
         """
         Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
@@ -1020,7 +1020,7 @@ type Mutation {
         Disse varslene vil erstatte tidligere bestilte varsler som ikke er sendt enda.
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey for å unngå å sende samme varsel flere ganger.
         """
-        eksterneVarsler: [EksterntVarselInput!]! = []
+        eksterneVarsler: [EksterntVarselInput!]! = [] @Validate
 
         """
         Her kan du spesifisere en påminnelse for kalenderavtalen.
@@ -1028,7 +1028,7 @@ type Mutation {
         Dersom dere senere oppdaterer kalenderavtalen og setter den til AVLYST, vil vi kansellere registrerte påminnelser.
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
         """
-        paaminnelse: PaaminnelseInput
+        paaminnelse: PaaminnelseInput @Validate
     ): OppdaterKalenderavtaleResultat!
 
 
@@ -1060,7 +1060,7 @@ type Mutation {
         """
         Teksten som vises til brukeren.
         """
-        nyTekst: String
+        nyTekst: String @MaxLength(max: 300) @NonIdentifying @Validate
 
         """
         Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
@@ -1082,7 +1082,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput
+        hardDelete: HardDeleteUpdateInput @Validate
 
         """
         Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
@@ -1095,7 +1095,7 @@ type Mutation {
         Disse varslene vil erstatte tidligere bestilte varsler som ikke er sendt enda.
         Vi anbefaler dere å bruke denn i kombinasjon med idempoencyKey for å unngå å sende samme varsel flere ganger.
         """
-        eksterneVarsler: [EksterntVarselInput!]! = []
+        eksterneVarsler: [EksterntVarselInput!]! = [] @Validate
 
         """
         Her kan du spesifisere en påminnelse for kalenderavtalen.
@@ -1103,7 +1103,7 @@ type Mutation {
         Dersom dere senere oppdaterer kalenderavtalen og setter den til AVLYST, vil vi kansellere registrerte påminnelser.
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
         """
-        paaminnelse: PaaminnelseInput
+        paaminnelse: PaaminnelseInput @Validate
     ): OppdaterKalenderavtaleResultat!
 
     """
