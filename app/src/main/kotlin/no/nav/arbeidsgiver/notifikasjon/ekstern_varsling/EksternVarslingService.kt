@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
-import io.ktor.http.cio.Response
 import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus
@@ -241,11 +240,6 @@ class EksternVarslingService(
                                 eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                             }
                         }
-
-                        is UkjentException -> {
-                            eksternVarslingRepository.returnToJobQueue(varselId)
-                            throw response.exception
-                        }
                     }
                 } else {
                     eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
@@ -299,7 +293,7 @@ class EksternVarslingService(
     }
 
     private suspend fun sjekkVarselOrdreStatus(ordreId: String): Pair<Altinn3VarselStatus, JsonNode> {
-        var ordreStatus = altinn3VarselKlient.orderStatus(ordreId)
+        val ordreStatus = altinn3VarselKlient.orderStatus(ordreId)
         if (!(ordreStatus is Altinn3VarselKlient.OrderStatusResponse.Success)) {
             log.error("Feil ved henting av ordrestatus")
             return Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)

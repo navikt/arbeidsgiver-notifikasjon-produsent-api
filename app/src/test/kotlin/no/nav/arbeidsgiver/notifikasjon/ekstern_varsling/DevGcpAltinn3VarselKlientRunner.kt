@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.kotest.common.runBlocking
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.IdentityProvider
@@ -55,25 +56,48 @@ fun main() = runBlocking {
                     tokenEndpoint = texasEnv["NAIS_TOKEN_ENDPOINT"]!!,
                     tokenExchangeEndpoint = texasEnv["NAIS_TOKEN_EXCHANGE_ENDPOINT"]!!,
                     tokenIntrospectionEndpoint = texasEnv["NAIS_TOKEN_INTROSPECTION_ENDPOINT"]!!,
-                ),
-                IdentityProvider.MASKINPORTEN
+                ), IdentityProvider.MASKINPORTEN
             ),
         )
     )
 
     runBlocking {
+        val varsel = EksternVarsel.Epost(
+            "01019012345",
+            HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+            sendeTidspunkt = null,
+            epostadresse = "epost-som-ikke-finnes@nav.no",
+            tittel = "Test",
+            body = "Dette er en test",
+            ordreId = null,
+        )
+        val orderId = devGcpClient.order(varsel).let {
+            println("orderrespons:")
+            println(it)
+            println("")
+            (it as Altinn3VarselKlient.OrderResponse.Success).orderId
+        }
+
+        devGcpClient.orderStatus(orderId).also {
+            println("")
+            println("ordreStatus orderId $orderId:")
+            println(it)
+            println("")
+        }
+
+        devGcpClient.notifications(orderId).also {
+            println("")
+            println("notifications orderId $orderId:")
+            println(it)
+            println("")
+        }
+
         listOf(
-            "43719cae-cdcf-4dd1-9e30-8926612dde22"
+//            "43719cae-cdcf-4dd1-9e30-8926612dde22"
 //            "de3e866c-f88c-4f93-bf48-f349f01a375f"
+            "3a0b6758-b9d6-450f-9267-62bbacdcdd1c"
         ).forEach { orderId ->
 
-            devGcpClient.notifications(orderId).also {
-                println("")
-                println("notifications orderId $orderId:")
-                println(it)
-                println("")
-            }
         }
     }
-
 }

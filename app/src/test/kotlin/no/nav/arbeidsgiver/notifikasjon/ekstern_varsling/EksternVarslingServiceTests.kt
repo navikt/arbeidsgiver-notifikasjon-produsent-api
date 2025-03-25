@@ -125,7 +125,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                             put("orderId", orderId)
                         },
                         sendersReference = "fake-${UUID.randomUUID()}",
-                        notificationStatusSummary = NotificationStatusSummary(
+                        notificationsStatusSummary = NotificationStatusSummary(
                             generated = 3, succeeded = 3,
                         )
 

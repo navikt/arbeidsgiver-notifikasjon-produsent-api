@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.convertValue
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -96,14 +96,13 @@ class Altinn3VarselKlientImpl(
             code = e.response.status.value.toString(),
             rå = e.response.body()
         )
-    } catch (e: Exception){
+    } catch (e: Exception) {
         ErrorResponse(
             message = e.message ?: "",
             code = e::class.java.simpleName ?: "",
             rå = TextNode.valueOf(e.toString())
         )
     }
-
 
     private suspend fun emailNotifications(orderId: String): NotificationsResponse.Success = httpClient.get {
         url("$altinnBaseUrl/notifications/api/v1/orders/$orderId/notifications/email")
@@ -334,18 +333,20 @@ interface Altinn3VarselKlient {
         data class Success(
             override val rå: JsonNode,
             val orderId: String,
-            val sendersReference: String,
+            val sendersReference: String?,
             val processingStatus: ProcessingStatus,
-            val notificationStatusSummary: NotificationStatusSummary,
+            val notificationsStatusSummary: NotificationStatusSummary?,
         ) : OrderStatusResponse {
             companion object {
                 fun fromJson(rawJson: JsonNode): Success {
                     return Success(
                         rå = rawJson,
-                        orderId = rawJson["orderId"].asText(),
-                        sendersReference = rawJson["sendersReference"].asText(),
-                        processingStatus = laxObjectMapper.readValue(rawJson["processingStatus"].toString()),
-                        notificationStatusSummary = laxObjectMapper.readValue(rawJson["notificationStatusSummary"].toString())
+                        orderId = rawJson["id"].asText(),
+                        sendersReference = rawJson["sendersReference"]?.asText(null),
+                        processingStatus = laxObjectMapper.convertValue(rawJson["processingStatus"]),
+                        notificationsStatusSummary = laxObjectMapper.convertValue(
+                            rawJson["notificationsStatusSummary"] ?: NullNode.instance
+                        )
                     )
                 }
             }
@@ -374,7 +375,7 @@ interface Altinn3VarselKlient {
                         sendersReference = rawJson["sendersReference"]?.asText(null),
                         generated = rawJson["generated"].asInt(),
                         succeeded = rawJson["succeeded"].asInt(),
-                        notifications = laxObjectMapper.readValue(rawJson["notifications"].toString())
+                        notifications = laxObjectMapper.convertValue(rawJson["notifications"])
                     )
                 }
             }
@@ -427,8 +428,7 @@ interface Altinn3VarselKlient {
                     val status: String,
                     val description: String,
                     val lastUpdate: String,
-                )
-                {
+                ) {
                     companion object {
                         val New = "New"
                         val Sending = "Sending"
