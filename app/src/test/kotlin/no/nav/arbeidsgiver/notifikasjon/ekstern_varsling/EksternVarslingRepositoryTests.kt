@@ -547,7 +547,7 @@ class EksternVarslingRepositoryTests : DescribeSpec({
                         sendeTidspunkt = null,
                         mobilnummer = "1234",
                         tekst = "tekst",
-                        ordreId = "123"
+                        ordreId = null
                     ),
                 )
             )

@@ -685,7 +685,7 @@ class EksternVarslingRepository(
                             sendeTidspunkt = getString("sendetidspunkt")?.let { LocalDateTime.parse(it) },
                             mobilnummer = getString("tlfnr"),
                             tekst = getString("sms_tekst"),
-                            ordreId = getString("altinn_ordre_id"),
+                            ordreId = getString("altinn_order_id"),
                         )
 
                         "EMAIL" -> EksternVarsel.Epost(
@@ -695,7 +695,7 @@ class EksternVarslingRepository(
                             epostadresse = getString("epost_adresse"),
                             tittel = getString("tittel"),
                             body = getString("html_body"),
-                            ordreId = getString("altinn_ordre_id"),
+                            ordreId = getString("altinn_order_id"),
                         )
 
                         "ALTINNTJENESTE" -> EksternVarsel.Altinntjeneste(

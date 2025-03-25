@@ -260,7 +260,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 req.method shouldBe HttpMethod.Post
                 req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
                 req.bodyAsString() shouldEqualJson //language=json
-                        """
+                    """
                     {
                       "notificationChannel": "Email",
                       "emailTemplate": {
