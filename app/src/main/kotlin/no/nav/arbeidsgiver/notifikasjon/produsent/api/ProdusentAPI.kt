@@ -30,6 +30,7 @@ object ProdusentAPI {
         return TypedGraphQL(
             createGraphQL("/produsent.graphql") {
                 directive("Validate", ValidateDirective)
+//                directiveWiring(ValidateDirective) // this eliminates the need for @Validate on every field
 
                 scalar(Scalars.ISO8601DateTime)
                 scalar(Scalars.ISO8601LocalDateTime)

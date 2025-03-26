@@ -1,274 +1,1756 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldContainIgnoringCase
+import io.ktor.server.testing.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
+import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import org.intellij.lang.annotations.Language
 
 class InputValideringTests : DescribeSpec({
     val engine = ktorProdusentTestServer()
 
     describe("input-validering av produsent-api") {
-        context("når tekst er over 300 tegn") {
-            val msg = "x".repeat(301)
-            val response = engine.produsentApi(
-                """
-                        mutation {
-                            nyBeskjed(nyBeskjed: {
-                                mottaker: {
-                                    naermesteLeder: {
-                                        naermesteLederFnr: "12345678910",
-                                        ansattFnr: "3213"
-                                    } 
+        context("mutation.nyBeskjed") {
+            context("norsk mobilnummer") {
+                withData(
+                    listOf(
+                        "40000000",
+                        "004740000000",
+                        "+4740000000",
+                        "49999999",
+                        "004749999999",
+                        "+4749999999",
+                        "90000000",
+                        "004790000000",
+                        "+4790000000",
+                        "99999999",
+                        "004799999999",
+                        "+4799999999",
+                    )
+                ) { tlf ->
+                    engine.nyBeskjed(
+                        eksterneVarsler = """
+                        [
+                            {
+                                "sms": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "tlf": "$tlf"  
+                                       }
+                                    },
+                                    "smsTekst": "test",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
                                 }
-                                notifikasjon: {
-                                    lenke: "https://foo.bar"
-                                    tekst: "$msg"
-                                    merkelapp: "tag"
+                            }
+                        ]
+                        """.trimIndent()
+                    ).let {
+                        it.getGraphqlErrors() shouldHaveSize 0
+                    }
+                }
+
+                withData(
+                    listOf(
+                        "39999999",
+                        "004739999999",
+                        "+4739999999",
+                        "50000000",
+                        "004750000000",
+                        "+4750000000",
+                        "89999999",
+                        "004789999999",
+                        "+4789999999",
+                    )
+                ) { tlf ->
+                    engine.nyBeskjed(
+                        eksterneVarsler = """
+                        [
+                            {
+                                "sms": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "tlf": "$tlf"  
+                                       }
+                                    },
+                                    "smsTekst": "test",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
                                 }
-                                metadata: {
-                                    eksternId: "heu"
-                                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
-                                    virksomhetsnummer: "42"
+                            }
+                        ]
+                        """.trimIndent()
+                    ).let {
+                        it.getGraphqlErrors()[0].message shouldContainIgnoringCase "ikke et gyldig norsk mobilnummer"
+                    }
+                }
+            }
+
+            it("tekst maks lengde") {
+                engine.nyBeskjed(
+                    tekst = "x".repeat(301),
+                ).let { response ->
+                    response.getGraphqlErrors().let { errors ->
+                        errors shouldHaveSize 1
+                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
+                    }
+                }
+            }
+
+            it("ingen mottaker") {
+                engine.nyBeskjed(
+                    mottakere = """[{}]"""
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                }
+            }
+
+            it("to mottaker-felt oppgitt på en mottaker") {
+                engine.nyBeskjed(
+                    mottakere = """
+                        [{
+                            "altinn": {
+                                "serviceCode": "1234",
+                                "serviceEdition": "321"
+                            },
+                            "naermesteLeder": {
+                                "naermesteLederFnr": "00112233344",
+                                "ansattFnr": "11223344455"
+                            }
+                        }]
+                    """.trimIndent()
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+            }
+
+            it("tekst med identifiserende data") {
+                engine.nyBeskjed(
+                    tekst = "1".repeat(11)
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+            }
+
+            it("harddelete nøyaktig ett felt") {
+                engine.nyBeskjed(
+                    hardDelete = """
+                        {
+                            "den": "2001-12-24T10:44:01",
+                            "om": "P2DT3H4M"
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+
+            it("eksterneVarsler nøyaktig ett felt") {
+                engine.nyBeskjed(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "sms": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "tlf": "40000000"  
+                                       }
+                                    },
+                                    "smsTekst": "test",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                },
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
                                 }
-                            }) {
-                                __typename
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+
+            it("sendetidspunkt nøyaktig ett felt") {
+                engine.nyBeskjed(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE",
+                                        "tidspunkt": "2001-12-24T10:44:01"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.nyOppgave") {
+            it("tekst maks lengde") {
+                engine.nyOppgave(
+                    tekst = "x".repeat(301),
+                ).let { response ->
+                    response.getGraphqlErrors().let { errors ->
+                        errors shouldHaveSize 1
+                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
+                    }
+                }
+            }
+
+            it("ingen mottaker") {
+                engine.nyOppgave(
+                    mottakere = """[{}]"""
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                }
+            }
+
+            it("to mottaker-felt oppgitt på en mottaker") {
+                engine.nyOppgave(
+                    mottakere = """
+                        [{
+                            "altinn": {
+                                "serviceCode": "1234",
+                                "serviceEdition": "321"
+                            },
+                            "naermesteLeder": {
+                                "naermesteLederFnr": "00112233344",
+                                "ansattFnr": "11223344455"
+                            }
+                        }]
+                    """.trimIndent()
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+            }
+
+            it("tekst med identifiserende data") {
+                engine.nyOppgave(
+                    tekst = "1".repeat(11)
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+            }
+
+            it("harddelete nøyaktig ett felt") {
+                engine.nyOppgave(
+                    hardDelete = """
+                        {
+                            "den": "2001-12-24T10:44:01",
+                            "om": "P2DT3H4M"
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+
+            it("eksterneVarsler nøyaktig ett felt") {
+                engine.nyOppgave(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "sms": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "tlf": "40000000"  
+                                       }
+                                    },
+                                    "smsTekst": "test",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                },
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+
+            it("sendetidspunkt nøyaktig ett felt") {
+                engine.nyOppgave(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE",
+                                        "tidspunkt": "2001-12-24T10:44:01"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
+                }
+            }
+
+            it("paaminnelse.tidspunkt nøyaktig ett felt") {
+                engine.nyOppgave(
+                    paaminnelse = """
+                        {
+                            "tidspunkt": {
+                                "konkret": "2001-12-24T10:44:01",
+                                "etterOpprettelse": "P2DT3H4M"
                             }
                         }
                     """.trimIndent()
-            )
-            it("errors har forklarende feilmelding") {
-                val errors = response.getGraphqlErrors()
-                errors shouldHaveSize 1
-                errors.first().message shouldContain "maks antall tegn"
-                errors.first().message shouldContain "antall=301, maks=300"
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
+                }
             }
-        }
 
-        context("Mutation.nyBeskjed med ingen mottaker") {
-            val response = engine.produsentApi(
-                """
-                    mutation {
-                        nyBeskjed(nyBeskjed: {
-                            mottaker: {
-                            }
-                            notifikasjon: {
-                                lenke: "https://foo.bar"
-                                tekst: "hello world"
-                                merkelapp: "tag"
-                            }
-                            metadata: {
-                                eksternId: "heu"
-                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
-                                virksomhetsnummer: "42"
-                            }
-                        }) {
-                            __typename
+            it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
+                engine.nyOppgave(
+                    paaminnelse = """
+                        {
+                            "tidspunkt": {
+                                "etterOpprettelse": "P2DT3H4M"
+                            },
+                            "eksterneVarsler": [
+                                {
+                                    "sms": {
+                                        "mottaker": {
+                                           "kontaktinfo": {
+                                              "tlf": "40000000"  
+                                           }
+                                        },
+                                        "smsTekst": "test",
+                                        "sendevindu": "LOEPENDE"
+                                    },
+                                    "epost": {
+                                        "mottaker": {
+                                           "kontaktinfo": {
+                                              "epostadresse": "foo@bar.baz"
+                                           }
+                                        },
+                                        "epostTittel": "tittel",
+                                        "epostHtmlBody": "html",
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            ]
                         }
-                    }
-                """.trimIndent()
-            )
-
-            it("Feil pga ingen mottaker-felt oppgitt") {
-                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
             }
         }
 
-        context("Mutation.nyBeskjed med to mottakere") {
-            val response = engine.produsentApi(
-                """
+        context("Mutation.nyKalenderavtale") {
+            it("tekst maks lengde") {
+                engine.nyKalenderavtale(
+                    tekst = "x".repeat(301),
+                ).let { response ->
+                    response.getGraphqlErrors().let { errors ->
+                        errors shouldHaveSize 1
+                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
+                    }
+                }
+            }
+
+            it("ingen mottaker") {
+                engine.nyKalenderavtale(
+                    mottakere = """[{}]"""
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                }
+            }
+
+            it("to mottaker-felt oppgitt på en mottaker") {
+                engine.nyKalenderavtale(
+                    mottakere = """
+                        [{
+                            "altinn": {
+                                "serviceCode": "1234",
+                                "serviceEdition": "321"
+                            },
+                            "naermesteLeder": {
+                                "naermesteLederFnr": "00112233344",
+                                "ansattFnr": "11223344455"
+                            }
+                        }]
+                    """.trimIndent()
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+            }
+
+            it("tekst med identifiserende data") {
+                engine.nyKalenderavtale(
+                    tekst = "1".repeat(11)
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+            }
+
+            it("harddelete nøyaktig ett felt") {
+                engine.nyKalenderavtale(
+                    hardDelete = """
+                        {
+                            "den": "2001-12-24T10:44:01",
+                            "om": "P2DT3H4M"
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+
+            it("eksterneVarsler nøyaktig ett felt") {
+                engine.nyKalenderavtale(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "sms": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "tlf": "40000000"  
+                                       }
+                                    },
+                                    "smsTekst": "test",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                },
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+
+            it("sendetidspunkt nøyaktig ett felt") {
+                engine.nyKalenderavtale(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE",
+                                        "tidspunkt": "2001-12-24T10:44:01"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
+                }
+            }
+
+            it("paaminnelse.tidspunkt nøyaktig ett felt") {
+                engine.nyKalenderavtale(
+                    paaminnelse = """
+                        {
+                            "tidspunkt": {
+                                "konkret": "2001-12-24T10:44:01",
+                                "etterOpprettelse": "P2DT3H4M"
+                            }
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
+                }
+            }
+
+            it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
+                engine.nyKalenderavtale(
+                    paaminnelse = """
+                        {
+                            "tidspunkt": {
+                                "etterOpprettelse": "P2DT3H4M"
+                            },
+                            "eksterneVarsler": [
+                                {
+                                    "sms": {
+                                        "mottaker": {
+                                           "kontaktinfo": {
+                                              "tlf": "40000000"  
+                                           }
+                                        },
+                                        "smsTekst": "test",
+                                        "sendevindu": "LOEPENDE"
+                                    },
+                                    "epost": {
+                                        "mottaker": {
+                                           "kontaktinfo": {
+                                              "epostadresse": "foo@bar.baz"
+                                           }
+                                        },
+                                        "epostTittel": "tittel",
+                                        "epostHtmlBody": "html",
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            ]
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.nySak") {
+            it("tittel maks lengde") {
+                engine.nySak(
+                    tittel = "A".repeat(141),
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tittel': verdien overstiger maks antall tegn"
+                }
+            }
+
+            it("tittel med identifiserende data") {
+                engine.nySak(
+                    tittel = "Stor Lampe identifiserende data: 99999999999"
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tittel': verdien inneholder uønsket data: personnummer (11 siffer)"
+                }
+            }
+
+            it("tilleggsinformasjon maks lengde") {
+                engine.nySak(
+                    tilleggsinformasjon = "A".repeat(141)
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien overstiger maks antall tegn"
+                }
+            }
+
+            it("tilleggsinformasjon med identifiserende data") {
+                engine.nySak(
+                    tilleggsinformasjon = "Stor Lampe identifiserende data: 99999999999"
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien inneholder uønsket data: personnummer (11 siffer)"
+                }
+            }
+
+            it("ingen mottaker") {
+                engine.nySak(
+                    mottakere = """[{}]"""
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                }
+            }
+
+            it("to mottaker-felt oppgitt på en mottaker") {
+                engine.nySak(
+                    mottakere = """
+                        [{
+                            "altinn": {
+                                "serviceCode": "1234",
+                                "serviceEdition": "321"
+                            },
+                            "naermesteLeder": {
+                                "naermesteLederFnr": "00112233344",
+                                "ansattFnr": "11223344455"
+                            }
+                        }]
+                    """.trimIndent()
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+            }
+
+            it("harddelete nøyaktig ett felt") {
+                engine.nySak(
+                    hardDelete = """
+                        {
+                            "den": "2001-12-24T10:44:01",
+                            "om": "P2DT3H4M"
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.tilleggsinformasjonSak") {
+            it("tilleggsinformasjon maks lengde") {
+                engine.produsentApi("""
                     mutation {
-                        nyBeskjed(nyBeskjed: {
-                            mottaker: {
-                                altinn: {
-                                    serviceCode: "1234"
-                                    serviceEdition: "321"
-                                }
-                                naermesteLeder: {
-                                    naermesteLederFnr: "00112233344"
-                                    ansattFnr: "11223344455"
-                                }
-                            }
-                            notifikasjon: {
-                                lenke: "https://foo.bar"
-                                tekst: "hello world"
-                                merkelapp: "tag"
-                            }
-                            metadata: {
-                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
-                                eksternId: "heu"
-                                virksomhetsnummer: "123456789"
-                            }
-                        }) {
+                        tilleggsinformasjonSak(
+                            id: "42"
+                            tilleggsinformasjon: "${"A".repeat(141)}"
+                        ) {
                             __typename
-                            ... on NyBeskjedVellykket {
+                            ... on TilleggsinformasjonSakVellykket {
                                 id
                             }
                         }
-                    }
-                """.trimIndent()
-            )
-
-            it("Feil pga to mottaker-felt oppgitt") {
-                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien overstiger maks antall tegn"
+                }
             }
-        }
 
-        context("når tekst inneholder fødselsnummer") {
-            val fnr = "1".repeat(11)
-            val response = engine.produsentApi(
-                """
+            it("tilleggsinformasjon med identifiserende data") {
+                engine.produsentApi("""
                     mutation {
-                        nyBeskjed(nyBeskjed: {
-                            notifikasjon: {
-                                lenke: "https://foo.bar",
-                                tekst: "$fnr",
-                                merkelapp: "tag",
-                            }
-                            mottaker: {
-                                naermesteLeder: {
-                                    naermesteLederFnr: "12345678910",
-                                    ansattFnr: "3213"
-                                } 
-                            }
-                            metadata: {
-                                eksternId: "heuer",
-                                opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
-                                virksomhetsnummer: "42"
-                            }
-                        }) {
+                        tilleggsinformasjonSak(
+                            id: "42"
+                            tilleggsinformasjon: "Stor Lampe identifiserende data: 99999999999"
+                        ) {
                             __typename
+                            ... on TilleggsinformasjonSakVellykket {
+                                id
+                            }
                         }
-                    }
-                """.trimIndent()
-            )
-
-            it("feil pga identifiserende data i tekst") {
-                response.getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien inneholder uønsket data: personnummer (11 siffer)"
+                }
             }
         }
 
-        context("når ekstern varsling er mot telefonnummer") {
-            withData(listOf(
-                "40000000",
-                "004740000000",
-                "+4740000000",
-                "49999999",
-                "004749999999",
-                "+4749999999",
-                "90000000",
-                "004790000000",
-                "+4790000000",
-                "99999999",
-                "004799999999",
-                "+4799999999",
-            )) { tlf ->
-                engine.produsentApi(
-                    """
-                        mutation {
-                            nyBeskjed(nyBeskjed: {
-                                notifikasjon: {
-                                    lenke: "https://foo.bar",
-                                    tekst: "teste teste",
-                                    merkelapp: "tag",
-                                }
-                                mottaker: {
-                                    naermesteLeder: {
-                                        naermesteLederFnr: "12345678910",
-                                        ansattFnr: "3213"
-                                    } 
-                                }
-                                metadata: {
-                                    eksternId: "heuer",
-                                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
-                                    virksomhetsnummer: "42"
-                                }
-                                eksterneVarsler: [
-                                    {
-                                        sms: {
-                                            mottaker: {
-                                               kontaktinfo: {
-                                                  tlf: "$tlf"  
-                                               }
-                                            }
-                                            smsTekst: "test"
-                                            sendetidspunkt: {
-                                                sendevindu: LOEPENDE
-                                            }
-                                        }
-                                    }
-                                ]
-                            }) {
-                                __typename
+        context("Mutation.tilleggsinformasjonSakByGrupperingsid") {
+            it("tilleggsinformasjon maks lengde") {
+                engine.produsentApi("""
+                    mutation {
+                        tilleggsinformasjonSakByGrupperingsid(
+                            grupperingsid: "42"
+                            merkelapp: "tag"
+                            tilleggsinformasjon: "${"A".repeat(141)}"
+                        ) {
+                            __typename
+                            ... on TilleggsinformasjonSakVellykket {
+                                id
                             }
                         }
-                    """
+                    }""".trimIndent()
                 ).let {
-                    it.getGraphqlErrors() shouldHaveSize 0
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien overstiger maks antall tegn"
                 }
             }
 
-            withData(listOf(
-                "39999999",
-                "004739999999",
-                "+4739999999",
-                "50000000",
-                "004750000000",
-                "+4750000000",
-                "89999999",
-                "004789999999",
-                "+4789999999",
-            )) { tlf ->
-                engine.produsentApi(
-                    """
-                        mutation {
-                            nyBeskjed(nyBeskjed: {
-                                notifikasjon: {
-                                    lenke: "https://foo.bar",
-                                    tekst: "teste teste",
-                                    merkelapp: "tag",
-                                }
-                                mottaker: {
-                                    naermesteLeder: {
-                                        naermesteLederFnr: "12345678910",
-                                        ansattFnr: "3213"
-                                    } 
-                                }
-                                metadata: {
-                                    eksternId: "heuer",
-                                    opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
-                                    virksomhetsnummer: "42"
-                                }
-                                eksterneVarsler: [
-                                    {
-                                        sms: {
-                                            mottaker: {
-                                               kontaktinfo: {
-                                                  tlf: "$tlf"  
-                                               }
-                                            }
-                                            smsTekst: "test"
-                                            sendetidspunkt: {
-                                                sendevindu: LOEPENDE
-                                            }
-                                        }
-                                    }
-                                ]
-                            }) {
-                                __typename
+            it("tilleggsinformasjon med identifiserende data") {
+                engine.produsentApi("""
+                    mutation {
+                        tilleggsinformasjonSakByGrupperingsid(
+                            grupperingsid: "42"
+                            merkelapp: "tag"
+                            tilleggsinformasjon: "Stor Lampe identifiserende data: 99999999999"
+                        ) {
+                            __typename
+                            ... on TilleggsinformasjonSakVellykket {
+                                id
                             }
                         }
-                    """
+                    }""".trimIndent()
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "ikke et gyldig norsk mobilnummer"
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien inneholder uønsket data: personnummer (11 siffer)"
+                }
+            }
+        }
+
+        context("Mutation.oppgaveUtfoert") {
+            it("harddelete nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveUtfoert(
+                            id: "${uuid("42")}"
+                            hardDelete: {
+                                nyTid: {
+                                    den: "2001-12-24T10:44:01",
+                                    om: "P2DT3H4M"
+                                },
+                                strategi: OVERSKRIV
+                            }
+                        ) {
+                            __typename
+                            ... on OppgaveUtfoertVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.oppgaveUtfoertByEksternId") {
+            it("harddelete nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveUtfoertByEksternId(
+                            merkelapp: "tag"
+                            eksternId: "42"
+                            hardDelete: {
+                                nyTid: {
+                                    den: "2001-12-24T10:44:01",
+                                    om: "P2DT3H4M"
+                                },
+                                strategi: OVERSKRIV
+                            }
+                        ) {
+                            __typename
+                            ... on OppgaveUtfoertVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.oppgaveUtfoertByEksternId_V2") {
+            it("harddelete nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveUtfoertByEksternId_V2(
+                            merkelapp: "tag"
+                            eksternId: "42"
+                            hardDelete: {
+                                nyTid: {
+                                    den: "2001-12-24T10:44:01",
+                                    om: "P2DT3H4M"
+                                },
+                                strategi: OVERSKRIV
+                            }
+                        ) {
+                            __typename
+                            ... on OppgaveUtfoertVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.oppgaveUtgaatt") {
+            engine.produsentApi(
+                """
+                mutation {
+                    oppgaveUtgaatt(
+                        id: "${uuid("42")}"
+                        hardDelete: {
+                            nyTid: {
+                                den: "2001-12-24T10:44:01",
+                                om: "P2DT3H4M"
+                            },
+                            strategi: OVERSKRIV
+                        }
+                    ) {
+                        __typename
+                        ... on OppgaveUtgaattVellykket {
+                            id
+                        }
+                    }
+                }""".trimIndent()
+            ).let {
+                it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+            }
+        }
+
+        context("Mutation.oppgaveUtgaattByEksternId") {
+            engine.produsentApi(
+                """
+                mutation {
+                    oppgaveUtgaattByEksternId(
+                        merkelapp: "tag"
+                        eksternId: "42"
+                        hardDelete: {
+                            nyTid: {
+                                den: "2001-12-24T10:44:01",
+                                om: "P2DT3H4M"
+                            },
+                            strategi: OVERSKRIV
+                        }
+                    ) {
+                        __typename
+                        ... on OppgaveUtgaattVellykket {
+                            id
+                        }
+                    }
+                }""".trimIndent()
+            ).let {
+                it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+            }
+        }
+
+        context("Mutation.oppgaveUtsettFrist") {
+            it("paaminnelse.tidspunkt nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveUtsettFrist(
+                            id: "${uuid("42")}"
+                            nyFrist: "2020-01-02"
+                            paaminnelse: {
+                                tidspunkt: {
+                                    konkret: "2001-12-24T10:44:01",
+                                    etterOpprettelse: "P2DT3H4M"
+                                }
+                            }
+                        ) {
+                            __typename
+                            ... on OppgaveUtsettFristVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
                 }
             }
 
+            it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveUtsettFrist(
+                            id: "${uuid("42")}"
+                            nyFrist: "2020-01-02"
+                            paaminnelse: {
+                                tidspunkt: {
+                                    etterOpprettelse: "P2DT3H4M"
+                                },
+                                eksterneVarsler: [
+                                {
+                                    sms: {
+                                        mottaker: {
+                                           kontaktinfo: {
+                                              tlf: "40000000"  
+                                           }
+                                        },
+                                        smsTekst: "test",
+                                        sendevindu: LOEPENDE
+                                    },
+                                    epost: {
+                                        mottaker: {
+                                           kontaktinfo: {
+                                              epostadresse: "foo@bar.baz"
+                                           }
+                                        },
+                                        epostTittel: "tittel",
+                                        epostHtmlBody: "html",
+                                        sendevindu: LOEPENDE
+                                    }
+                                }
+                            ]
+                          }
+                        ) {
+                            __typename
+                            ... on OppgaveUtsettFristVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+        }
 
+        context("Mutation.oppgaveUtsettFristByEksternId") {
+            it("paaminnelse.tidspunkt nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveUtsettFristByEksternId(
+                            eksternId: "42"
+                            merkelapp: "tag"
+                            nyFrist: "2020-01-02"
+                            paaminnelse: {
+                                tidspunkt: {
+                                    konkret: "2001-12-24T10:44:01",
+                                    etterOpprettelse: "P2DT3H4M"
+                                }
+                            }
+                        ) {
+                            __typename
+                            ... on OppgaveUtsettFristVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
+                }
+            }
+
+            it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveUtsettFristByEksternId(
+                            eksternId: "42"
+                            merkelapp: "tag"
+                            nyFrist: "2020-01-02"
+                            paaminnelse: {
+                                tidspunkt: {
+                                    etterOpprettelse: "P2DT3H4M"
+                                },
+                                eksterneVarsler: [
+                                {
+                                    sms: {
+                                        mottaker: {
+                                           kontaktinfo: {
+                                              tlf: "40000000"  
+                                           }
+                                        },
+                                        smsTekst: "test",
+                                        sendevindu: LOEPENDE
+                                    },
+                                    epost: {
+                                        mottaker: {
+                                           kontaktinfo: {
+                                              epostadresse: "foo@bar.baz"
+                                           }
+                                        },
+                                        epostTittel: "tittel",
+                                        epostHtmlBody: "html",
+                                        sendevindu: LOEPENDE
+                                    }
+                                }
+                            ]
+                          }
+                        ) {
+                            __typename
+                            ... on OppgaveUtsettFristVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.oppgaveEndrePaaminnelse") {
+            it("paaminnelse.tidspunkt nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveEndrePaaminnelse(
+                            id: "${uuid("42")}"
+                            paaminnelse: {
+                                tidspunkt: {
+                                    konkret: "2001-12-24T10:44:01",
+                                    etterOpprettelse: "P2DT3H4M"
+                                }
+                            }
+                        ) {
+                            __typename
+                            ... on OppgaveEndrePaaminnelseVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
+                }
+            }
+
+            it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveEndrePaaminnelse(
+                            id: "${uuid("42")}"
+                            paaminnelse: {
+                                tidspunkt: {
+                                    etterOpprettelse: "P2DT3H4M"
+                                },
+                                eksterneVarsler: [
+                                {
+                                    sms: {
+                                        mottaker: {
+                                           kontaktinfo: {
+                                              tlf: "40000000"  
+                                           }
+                                        },
+                                        smsTekst: "test",
+                                        sendevindu: LOEPENDE
+                                    },
+                                    epost: {
+                                        mottaker: {
+                                           kontaktinfo: {
+                                              epostadresse: "foo@bar.baz"
+                                           }
+                                        },
+                                        epostTittel: "tittel",
+                                        epostHtmlBody: "html",
+                                        sendevindu: LOEPENDE
+                                    }
+                                }
+                            ]
+                          }
+                        ) {
+                            __typename
+                            ... on OppgaveEndrePaaminnelseVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.oppgaveEndrePaaminnelseByEksternId") {
+            it("paaminnelse.tidspunkt nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveEndrePaaminnelseByEksternId(
+                            eksternId: "42"
+                            merkelapp: "tag"
+                            paaminnelse: {
+                                tidspunkt: {
+                                    konkret: "2001-12-24T10:44:01",
+                                    etterOpprettelse: "P2DT3H4M"
+                                }
+                            }
+                        ) {
+                            __typename
+                            ... on OppgaveEndrePaaminnelseVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
+                }
+            }
+
+            it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
+                engine.produsentApi(
+                    """
+                    mutation {
+                        oppgaveEndrePaaminnelseByEksternId(
+                            eksternId: "42"
+                            merkelapp: "tag"
+                            paaminnelse: {
+                                tidspunkt: {
+                                    etterOpprettelse: "P2DT3H4M"
+                                },
+                                eksterneVarsler: [
+                                {
+                                    sms: {
+                                        mottaker: {
+                                           kontaktinfo: {
+                                              tlf: "40000000"  
+                                           }
+                                        },
+                                        smsTekst: "test",
+                                        sendevindu: LOEPENDE
+                                    },
+                                    epost: {
+                                        mottaker: {
+                                           kontaktinfo: {
+                                              epostadresse: "foo@bar.baz"
+                                           }
+                                        },
+                                        epostTittel: "tittel",
+                                        epostHtmlBody: "html",
+                                        sendevindu: LOEPENDE
+                                    }
+                                }
+                            ]
+                          }
+                        ) {
+                            __typename
+                            ... on OppgaveEndrePaaminnelseVellykket {
+                                id
+                            }
+                        }
+                    }""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.oppdaterKalenderavtale") {
+            it("tekst maks lengde") {
+                engine.oppdaterKalenderavtale(
+                    tekst = "x".repeat(301),
+                ).let { response ->
+                    response.getGraphqlErrors().let { errors ->
+                        errors shouldHaveSize 1
+                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
+                    }
+                }
+            }
+
+            it("tekst med identifiserende data") {
+                engine.oppdaterKalenderavtale(
+                    tekst = "1".repeat(11)
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+            }
+
+            it("harddelete nøyaktig ett felt") {
+                engine.oppdaterKalenderavtale(
+                    hardDelete = """
+                        {
+                            "nyTid": {
+                                "den": "2001-12-24T10:44:01",
+                                "om": "P2DT3H4M"
+                            },
+                            "strategi": "OVERSKRIV"
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+
+            it("eksterneVarsler nøyaktig ett felt") {
+                engine.oppdaterKalenderavtale(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "sms": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "tlf": "40000000"  
+                                       }
+                                    },
+                                    "smsTekst": "test",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                },
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+
+            it("sendetidspunkt nøyaktig ett felt") {
+                engine.oppdaterKalenderavtale(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE",
+                                        "tidspunkt": "2001-12-24T10:44:01"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
+                }
+            }
+
+            it("paaminnelse.tidspunkt nøyaktig ett felt") {
+                engine.oppdaterKalenderavtale(
+                    paaminnelse = """
+                        {
+                            "tidspunkt": {
+                                "konkret": "2001-12-24T10:44:01",
+                                "etterOpprettelse": "P2DT3H4M"
+                            }
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
+                }
+            }
+
+            it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
+                engine.oppdaterKalenderavtale(
+                    paaminnelse = """
+                        {
+                            "tidspunkt": {
+                                "etterOpprettelse": "P2DT3H4M"
+                            },
+                            "eksterneVarsler": [
+                                {
+                                    "sms": {
+                                        "mottaker": {
+                                           "kontaktinfo": {
+                                              "tlf": "40000000"  
+                                           }
+                                        },
+                                        "smsTekst": "test",
+                                        "sendevindu": "LOEPENDE"
+                                    },
+                                    "epost": {
+                                        "mottaker": {
+                                           "kontaktinfo": {
+                                              "epostadresse": "foo@bar.baz"
+                                           }
+                                        },
+                                        "epostTittel": "tittel",
+                                        "epostHtmlBody": "html",
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            ]
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+        }
+
+        context("Mutation.oppdaterKalenderavtaleByEksternId") {
+            it("tekst maks lengde") {
+                engine.oppdaterKalenderavtaleByEksternId(
+                    tekst = "x".repeat(301),
+                ).let { response ->
+                    response.getGraphqlErrors().let { errors ->
+                        errors shouldHaveSize 1
+                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
+                    }
+                }
+            }
+
+            it("tekst med identifiserende data") {
+                engine.oppdaterKalenderavtaleByEksternId(
+                    tekst = "1".repeat(11)
+                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+            }
+
+            it("harddelete nøyaktig ett felt") {
+                engine.oppdaterKalenderavtaleByEksternId(
+                    hardDelete = """
+                        {
+                            "nyTid": {
+                                "den": "2001-12-24T10:44:01",
+                                "om": "P2DT3H4M"
+                            },
+                            "strategi": "OVERSKRIV"
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
+                }
+            }
+
+            it("eksterneVarsler nøyaktig ett felt") {
+                engine.oppdaterKalenderavtaleByEksternId(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "sms": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "tlf": "40000000"  
+                                       }
+                                    },
+                                    "smsTekst": "test",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                },
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
+
+            it("sendetidspunkt nøyaktig ett felt") {
+                engine.oppdaterKalenderavtaleByEksternId(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "epost": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "epostadresse": "foo@bar.baz"
+                                       }
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE",
+                                        "tidspunkt": "2001-12-24T10:44:01"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
+                }
+            }
+
+            it("paaminnelse.tidspunkt nøyaktig ett felt") {
+                engine.oppdaterKalenderavtaleByEksternId(
+                    paaminnelse = """
+                        {
+                            "tidspunkt": {
+                                "konkret": "2001-12-24T10:44:01",
+                                "etterOpprettelse": "P2DT3H4M"
+                            }
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
+                }
+            }
+
+            it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
+                engine.oppdaterKalenderavtaleByEksternId(
+                    paaminnelse = """
+                        {
+                            "tidspunkt": {
+                                "etterOpprettelse": "P2DT3H4M"
+                            },
+                            "eksterneVarsler": [
+                                {
+                                    "sms": {
+                                        "mottaker": {
+                                           "kontaktinfo": {
+                                              "tlf": "40000000"  
+                                           }
+                                        },
+                                        "smsTekst": "test",
+                                        "sendevindu": "LOEPENDE"
+                                    },
+                                    "epost": {
+                                        "mottaker": {
+                                           "kontaktinfo": {
+                                              "epostadresse": "foo@bar.baz"
+                                           }
+                                        },
+                                        "epostTittel": "tittel",
+                                        "epostHtmlBody": "html",
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            ]
+                        }
+                    """.trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+            }
         }
     }
 })
 
+private fun TestApplicationEngine.nySak(
+    tittel: String = "tittel",
+    tilleggsinformasjon: String = "her er noe tilleggsinformasjon",
+    @Language("JSON") mottakere: String = """
+        [{
+            "altinn": {
+                "serviceCode": "5441",
+                "serviceEdition": "1"
+            }
+        }]
+    """.trimIndent(),
+    @Language("JSON") hardDelete: String? = null,
+) = produsentApi(
+    GraphQLRequest(
+        query = """
+            mutation NySak( 
+                ${'$'}tittel: String!
+                ${'$'}tilleggsinformasjon: String!
+                ${'$'}mottakere: [MottakerInput!]!
+                ${'$'}hardDelete: FutureTemporalInput
+            ) {
+                nySak(
+                    virksomhetsnummer: "1"
+                    merkelapp: "tag"
+                    grupperingsid: "gr1"
+                    mottakere: ${'$'}mottakere
+                    tilleggsinformasjon: ${'$'}tilleggsinformasjon
+                    initiellStatus: MOTTATT
+                    tidspunkt: "2020-01-01T01:01Z"
+                    tittel: ${'$'}tittel
+                    lenke: "#foo"
+                    hardDelete: ${'$'}hardDelete
+                ) {
+                    __typename
+                    ... on NySakVellykket {
+                        id
+                    }
+                }
+            }
+        """,
+        variables = mapOf(
+            "tittel" to tittel,
+            "tilleggsinformasjon" to tilleggsinformasjon,
+            "mottakere" to mottakere.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            },
+            "hardDelete" to hardDelete?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            },
+        ),
+    )
+)
+
+private fun TestApplicationEngine.nyBeskjed(
+    tekst: String = "tittel",
+    @Language("JSON") mottakere: String = """
+        [{
+            "altinn": {
+                "serviceCode": "5441",
+                "serviceEdition": "1"
+            }
+        }]
+    """.trimIndent(),
+    @Language("JSON") hardDelete: String? = null,
+    @Language("JSON") eksterneVarsler: String? = null,
+) = produsentApi(
+    GraphQLRequest(
+        query = """
+            mutation NyBeskjed( 
+                ${'$'}tekst: String! 
+                ${'$'}mottakere: [MottakerInput!]!
+                ${'$'}hardDelete: FutureTemporalInput
+                ${'$'}eksterneVarsler: [EksterntVarselInput!]!
+            ) {
+                nyBeskjed(
+                    nyBeskjed: {
+                        mottakere: ${'$'}mottakere
+                        notifikasjon: {
+                            merkelapp: "tag"
+                            tekst: ${'$'}tekst
+                            lenke: "#foo"
+                        }
+                        metadata: {
+                            virksomhetsnummer: "1"
+                            eksternId: "42"
+                            opprettetTidspunkt: "2011-12-03T10:15:30+01:00"
+                            grupperingsid: "gr1"
+                            hardDelete: ${'$'}hardDelete
+                        }
+                        eksterneVarsler: ${'$'}eksterneVarsler
+                    }
+                ) {
+                    __typename
+                    ... on NyBeskjedVellykket {
+                        id
+                    }
+                }
+            }
+        """,
+        variables = mapOf(
+            "tekst" to tekst,
+            "mottakere" to mottakere.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            },
+            "hardDelete" to hardDelete?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            },
+            "eksterneVarsler" to (eksterneVarsler?.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            } ?: emptyList()),
+        ),
+    )
+)
+
+private fun TestApplicationEngine.nyOppgave(
+    tekst: String = "tittel",
+    @Language("JSON") mottakere: String = """
+        [{
+            "altinn": {
+                "serviceCode": "5441",
+                "serviceEdition": "1"
+            }
+        }]
+    """.trimIndent(),
+    @Language("JSON") hardDelete: String? = null,
+    @Language("JSON") eksterneVarsler: String? = null,
+    @Language("JSON") paaminnelse: String? = null,
+) = produsentApi(
+    GraphQLRequest(
+        query = """
+            mutation NyOppgave( 
+                ${'$'}tekst: String! 
+                ${'$'}mottakere: [MottakerInput!]!
+                ${'$'}hardDelete: FutureTemporalInput
+                ${'$'}eksterneVarsler: [EksterntVarselInput!]!
+                ${'$'}paaminnelse: PaaminnelseInput
+            )  {
+                nyOppgave(
+                    nyOppgave: {
+                        mottakere: ${'$'}mottakere
+                        notifikasjon: {
+                            merkelapp: "tag"
+                            tekst: ${'$'}tekst
+                            lenke: "#foo"
+                        }
+                        metadata: {
+                            virksomhetsnummer: "1"
+                            eksternId: "42"
+                            opprettetTidspunkt: "2011-12-03T10:15:30+01:00"
+                            grupperingsid: "gr1"
+                            hardDelete: ${'$'}hardDelete
+                        }
+                        eksterneVarsler: ${'$'}eksterneVarsler
+                        paaminnelse: ${'$'}paaminnelse
+                    }
+                ) {
+                    __typename
+                    ... on NyOppgaveVellykket {
+                        id
+                    }
+                }
+            }
+        """,
+        variables = mapOf(
+            "tekst" to tekst,
+            "mottakere" to mottakere.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            },
+            "hardDelete" to hardDelete?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            },
+            "eksterneVarsler" to (eksterneVarsler?.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            } ?: emptyList()),
+            "paaminnelse" to paaminnelse?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            }
+        ),
+    )
+)
+
+private fun TestApplicationEngine.nyKalenderavtale(
+    tekst: String = "tekst",
+    @Language("JSON") mottakere: String = """
+        [{
+            "altinn": {
+                "serviceCode": "5441",
+                "serviceEdition": "1"
+            }
+        }]
+    """.trimIndent(),
+    @Language("JSON") hardDelete: String? = null,
+    @Language("JSON") eksterneVarsler: String? = null,
+    @Language("JSON") paaminnelse: String? = null,
+) = produsentApi(
+    GraphQLRequest(
+        query = """
+            mutation NyKalenderavtale( 
+                ${'$'}tekst: String! 
+                ${'$'}mottakere: [MottakerInput!]!
+                ${'$'}hardDelete: FutureTemporalInput
+                ${'$'}eksterneVarsler: [EksterntVarselInput!]!
+                ${'$'}paaminnelse: PaaminnelseInput
+            )  {
+                nyKalenderavtale(
+                    virksomhetsnummer: "1"
+                    grupperingsid: "gr1"
+                    merkelapp: "tag"
+                    eksternId: "42"
+                    tekst: ${'$'}tekst
+                    lenke: "#foo"
+                    mottakere: ${'$'}mottakere
+                    startTidspunkt: "2011-12-03T10:15:30"
+                    eksterneVarsler: ${'$'}eksterneVarsler
+                    paaminnelse: ${'$'}paaminnelse
+                    hardDelete: ${'$'}hardDelete
+                ) {
+                    __typename
+                    ... on NyKalenderavtaleVellykket {
+                        id
+                    }
+                }
+            }
+        """,
+        variables = mapOf(
+            "tekst" to tekst,
+            "mottakere" to mottakere.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            },
+            "hardDelete" to hardDelete?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            },
+            "eksterneVarsler" to (eksterneVarsler?.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            } ?: emptyList()),
+            "paaminnelse" to paaminnelse?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            }
+        ),
+    )
+)
+
+private fun TestApplicationEngine.oppdaterKalenderavtale(
+    tekst: String = "tekst",
+    @Language("JSON") hardDelete: String? = null,
+    @Language("JSON") eksterneVarsler: String? = null,
+    @Language("JSON") paaminnelse: String? = null,
+) = produsentApi(
+    GraphQLRequest(
+        query = """
+            mutation OppdaterKalenderavtale( 
+                ${'$'}tekst: String! 
+                ${'$'}hardDelete: HardDeleteUpdateInput
+                ${'$'}eksterneVarsler: [EksterntVarselInput!]!
+                ${'$'}paaminnelse: PaaminnelseInput
+            ) {
+                oppdaterKalenderavtale(
+                    id: "${uuid("42")}" 
+                    nyTekst: ${'$'}tekst
+                    eksterneVarsler: ${'$'}eksterneVarsler
+                    paaminnelse: ${'$'}paaminnelse
+                    hardDelete: ${'$'}hardDelete
+                ) {
+                    __typename
+                    ... on OppdaterKalenderavtaleVellykket {
+                        id
+                    }
+                }
+            }
+        """,
+        variables = mapOf(
+            "tekst" to tekst,
+            "hardDelete" to hardDelete?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            },
+            "eksterneVarsler" to (eksterneVarsler?.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            } ?: emptyList()),
+            "paaminnelse" to paaminnelse?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            }
+        ),
+    )
+)
+
+private fun TestApplicationEngine.oppdaterKalenderavtaleByEksternId(
+    tekst: String = "tekst",
+    @Language("JSON") hardDelete: String? = null,
+    @Language("JSON") eksterneVarsler: String? = null,
+    @Language("JSON") paaminnelse: String? = null,
+) = produsentApi(
+    GraphQLRequest(
+        query = """
+            mutation OppdaterKalenderavtale( 
+                ${'$'}tekst: String! 
+                ${'$'}hardDelete: HardDeleteUpdateInput
+                ${'$'}eksterneVarsler: [EksterntVarselInput!]!
+                ${'$'}paaminnelse: PaaminnelseInput
+            ) {
+                oppdaterKalenderavtaleByEksternId(
+                    merkelapp: "tag" 
+                    eksternId: "42" 
+                    nyTekst: ${'$'}tekst
+                    eksterneVarsler: ${'$'}eksterneVarsler
+                    paaminnelse: ${'$'}paaminnelse
+                    hardDelete: ${'$'}hardDelete
+                ) {
+                    __typename
+                    ... on OppdaterKalenderavtaleVellykket {
+                        id
+                    }
+                }
+            }
+        """,
+        variables = mapOf(
+            "tekst" to tekst,
+            "hardDelete" to hardDelete?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            },
+            "eksterneVarsler" to (eksterneVarsler?.let {
+                laxObjectMapper.readValue<List<Map<String, Any?>>>(it)
+            } ?: emptyList()),
+            "paaminnelse" to paaminnelse?.let {
+                laxObjectMapper.readValue<Map<String, Any?>>(it)
+            }
+        ),
+    )
+)
