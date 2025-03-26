@@ -419,6 +419,7 @@ val K9 = Produsent(
         "Inntektsmelding pleiepenger sykt barn",
         "Inntektsmelding pleiepenger i livets sluttfase",
         "Inntektsmelding opplæringspenger",
+        "Refusjonskrav for omsorgspenger",
     ),
     tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
