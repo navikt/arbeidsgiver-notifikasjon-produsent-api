@@ -205,7 +205,6 @@ class EksternVarslingService(
             }
 
         withContext(varsel.asMDCContext()) {
-            //
             when (varsel) {
                 is EksternVarselTilstand.Ny -> {
                     val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
