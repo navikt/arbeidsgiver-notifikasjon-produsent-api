@@ -67,6 +67,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
     const eksternVarselRef = React.useRef<EksternVarsel>(null);
     const mottakerRef = React.useRef<MottakerRef>(null);
+    const tidspunktIdRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (grupperingsidRef.current !== null) {
@@ -86,7 +87,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
                 lenke: lenkeRef.current?.value ?? "",
-                opprettetTidspunkt: new Date().toISOString(),
+                opprettetTidspunkt: nullIfEmpty(tidspunktIdRef.current?.value) ?? new Date().toISOString(),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 eksterneVarsler: formateEksternVarsel(eksternVarselRef)
             }
@@ -111,6 +112,7 @@ export const NyBeskjed: React.FunctionComponent = () => {
                 <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
                 <TextField label={"Lenke*"} ref={lenkeRef}/>
                 <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
+                <TextField label={`Opprettet (${new Date().toISOString()})`} ref={tidspunktIdRef} />
             </div>
             <EksternVarsel ref={eksternVarselRef}/>
         </div>
