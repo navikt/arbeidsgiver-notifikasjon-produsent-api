@@ -100,7 +100,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                             Altinn3VarselKlient.NotificationsResponse.Success.Notification(
                                 id = "fake-${UUID.randomUUID()}",
                                 succeeded = true,
-                                sendStatus = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus(status = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus.Delivered, description = "", lastUpdate = ""),
+                                sendStatus = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus(
+                                    status = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus.Delivered,
+                                    description = "",
+                                    lastUpdate = ""
+                                ),
                                 recipient = Altinn3VarselKlient.NotificationsResponse.Success.Notification.Recipient(
                                     null,
                                     null,
@@ -704,6 +708,184 @@ class EksternVarslingServiceTests : DescribeSpec({
             }
 
             serviceJob.cancel()
+        }
+    }
+
+    describe("Altinn3 varsel oppførsel") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+        val hendelseProdusent = FakeHendelseProdusent()
+        val oppgave = OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = uuid("1"),
+            hendelseId = uuid("1"),
+            produsentId = "",
+            kildeAppNavn = "",
+            merkelapp = "",
+            eksternId = "",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                )
+            ),
+            tekst = "",
+            grupperingsid = "",
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null,
+                )
+            ),
+            hardDelete = null,
+            frist = null,
+            påminnelse = null,
+            sakId = null,
+        )
+        repository.oppdaterModellEtterHendelse(oppgave)
+
+        fun eksternVarslingService(altinn3VarselKlient: Altinn3VarselKlient): EksternVarslingService {
+            return EksternVarslingService(
+                åpningstider = ÅpningstiderMock(),
+                osloTid = mockOsloTid(nå),
+                eksternVarslingRepository = repository,
+                altinn2VarselKlient = object : Altinn2VarselKlient {
+                    override suspend fun send(
+                        eksternVarsel: EksternVarsel
+                    ): AltinnVarselKlientResponseOrException {
+                        TODO("Not yet implemented")
+                    }
+                },
+                altinn3VarselKlient = altinn3VarselKlient,
+                hendelseProdusent = hendelseProdusent,
+                idleSleepDelay = Duration.ZERO,
+                recheckEmergencyBrakeDelay = Duration.ZERO,
+            )
+        }
+
+        it("Altinn 3 varsel status simulering") {
+            val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+                val orderStatusResolvers = mutableListOf(
+                    { orderId: String ->
+                        Altinn3VarselKlient.OrderStatusResponse.Success(
+                            rå = JsonNodeFactory.instance.objectNode(),
+                            orderId = orderId,
+                            sendersReference = null,
+                            Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
+                                Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Processing,
+                                null,
+                                null
+                            ),
+                            NotificationStatusSummary(0, 0)
+                        )
+                    },
+                    { orderId: String ->
+                        Altinn3VarselKlient.OrderStatusResponse.Success(
+                            rå = JsonNodeFactory.instance.objectNode(),
+                            orderId = orderId,
+                            sendersReference = null,
+                            Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
+                                Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
+                                null,
+                                null
+                            ),
+                            NotificationStatusSummary(0, 0)
+                        )
+                    },
+                )
+
+                val notificationResolvers = mutableListOf(
+                    { orderId: String ->
+                        Altinn3VarselKlient.NotificationsResponse.Success(
+                            rå = JsonNodeFactory.instance.objectNode(),
+                            orderId = orderId,
+                            sendersReference = null,
+                            generated = 1,
+                            succeeded = 0,
+                            notifications = listOf(
+                                Altinn3VarselKlient.NotificationsResponse.Success.Notification(
+                                    id = "1",
+                                    succeeded = false,
+                                    sendStatus = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus(
+                                        status = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus.New,
+                                        description = "",
+                                        lastUpdate = ""
+                                    ),
+                                    recipient = Altinn3VarselKlient.NotificationsResponse.Success.Notification.Recipient(
+                                        null,
+                                        null,
+                                        null,
+                                        null
+                                    )
+                                )
+                            )
+                        )
+                    },
+                    { orderId: String ->
+                        Altinn3VarselKlient.NotificationsResponse.Success(
+                            rå = JsonNodeFactory.instance.objectNode(),
+                            orderId = orderId,
+                            sendersReference = null,
+                            generated = 1,
+                            succeeded = 1,
+                            notifications = listOf(
+                                Altinn3VarselKlient.NotificationsResponse.Success.Notification(
+                                    id = "1",
+                                    succeeded = false,
+                                    sendStatus = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus(
+                                        status = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus.Delivered,
+                                        description = "",
+                                        lastUpdate = ""
+                                    ),
+                                    recipient = Altinn3VarselKlient.NotificationsResponse.Success.Notification.Recipient(
+                                        null,
+                                        null,
+                                        null,
+                                        null
+                                    )
+                                )
+                            )
+                        )
+                    },
+                )
+
+
+                override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
+                    val ordreId = UUID.randomUUID()
+                    return Altinn3VarselKlient.OrderResponse.Success(
+                        orderId = "${ordreId}",
+                        rå = JsonNodeFactory.instance.objectNode().put("orderId", ordreId.toString())
+                    )
+                }
+
+                override suspend fun notifications(orderId: String): Altinn3VarselKlient.NotificationsResponse {
+                    return if (notificationResolvers.size > 1) notificationResolvers.removeAt(0).invoke(orderId) else notificationResolvers.first().invoke(orderId)
+                }
+
+                override suspend fun orderStatus(orderId: String): Altinn3VarselKlient.OrderStatusResponse {
+                    return if (orderStatusResolvers.size > 1) orderStatusResolvers.removeAt(0).invoke(orderId) else orderStatusResolvers.first().invoke(orderId)
+                }
+            }
+
+            repository.jobQueueCount() shouldBe 1
+            database.nonTransactionalExecuteUpdate(
+                """
+                update emergency_break set stop_processing = false where id = 0
+            """
+            )
+            val service = eksternVarslingService(altinn3VarselKlient).start(this)
+            eventually(5.seconds) {
+                val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                vellykket.size shouldBe 1
+            }
+            service.cancel()
         }
     }
 })

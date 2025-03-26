@@ -252,7 +252,7 @@ class EksternVarslingService(
                         val ordreId = varsel.response.rå["orderId"].asText()
                         if (ordreId.isEmpty())
                             throw kotlin.RuntimeException("Ordre er markert som sendt, men mangler orderId")
-                        val (ordreStatus, altinnResponse) = sjekkVarselOrdreStatus(ordreId)
+                        val (ordreStatus, altinnResponse) = hentVarselOrdreStatus(ordreId)
                         when (ordreStatus) {
                             Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                             Altinn3VarselStatus.Kansellert,
@@ -292,7 +292,7 @@ class EksternVarslingService(
         Kansellert
     }
 
-    private suspend fun sjekkVarselOrdreStatus(ordreId: String): Pair<Altinn3VarselStatus, JsonNode> {
+    private suspend fun hentVarselOrdreStatus(ordreId: String): Pair<Altinn3VarselStatus, JsonNode> {
         val ordreStatus = altinn3VarselKlient.orderStatus(ordreId)
         if (!(ordreStatus is Altinn3VarselKlient.OrderStatusResponse.Success)) {
             log.error("Feil ved henting av ordrestatus")
