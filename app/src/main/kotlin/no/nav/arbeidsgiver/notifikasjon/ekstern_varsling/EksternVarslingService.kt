@@ -307,7 +307,7 @@ class EksternVarslingService(
                 // Orderen er ferdig prosessert og alle notifikasjoner er blitt generert. Sjekker om notifikasjoner alle notifikasjoner er blitt sendt ut
                 altinn3VarselKlient.notifications(ordreId).let {
                     if (!(it is Altinn3VarselKlient.NotificationsResponse.Success)) {
-                        log.error("Feil ved henting av notifikasjoner")
+                        log.error("Feil ved henting av notifikasjoner: ${it.rå}")
                         return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
                     }
 
