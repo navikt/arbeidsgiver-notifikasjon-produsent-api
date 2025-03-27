@@ -73,6 +73,7 @@ export const NyOppgave: React.FunctionComponent = () => {
     const paaminnelseRef = React.useRef<HTMLInputElement>(null);
     const eksternVarselRef = React.useRef<EksternVarsel>(null);
     const mottakerRef = React.useRef<MottakerRef>(null);
+    const tidspunktIdRef = React.useRef<HTMLInputElement>(null);
 
     const [harPaaminnelse, setHarPaaminnelse] = React.useState<boolean>(false);
 
@@ -95,7 +96,7 @@ export const NyOppgave: React.FunctionComponent = () => {
                 tekst: nullIfEmpty(tekstRef.current?.value),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
-                opprettetTidspunkt: new Date().toISOString(),
+                opprettetTidspunkt: nullIfEmpty(tidspunktIdRef.current?.value) ?? new Date().toISOString(),
                 ... harPaaminnelse ? {
                     paaminnelse: {
                         tidspunkt: {etterOpprettelse: nullIfEmpty(paaminnelseRef.current?.value ?? "")},
@@ -125,7 +126,8 @@ export const NyOppgave: React.FunctionComponent = () => {
                 <TextField label={"Lenke"} ref={lenkeRef}/>
                 <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
                 <Checkbox onChange={() => setHarPaaminnelse(!harPaaminnelse)} checked={harPaaminnelse}>Påminnelse</Checkbox>
-                {harPaaminnelse && <TextField label="Tidspunkt" ref={paaminnelseRef} defaultValue="PT3M"/>}
+                {harPaaminnelse && <TextField label="Påminnelse" ref={paaminnelseRef} defaultValue="PT3M"/>}
+                <TextField label={`Opprettet (${new Date().toISOString()})`} ref={tidspunktIdRef} />
             </div>
             <EksternVarsel ref={eksternVarselRef}/>
         </div>

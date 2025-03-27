@@ -20,6 +20,7 @@ const NY_SAK = gql`
         $initiellStatus: SaksStatus!
         $nesteSteg: String
         $tilleggsinformasjon: String
+        $tidspunkt: ISO8601DateTime
     ) {
         nySak(
             mottakere: [$mottaker]
@@ -31,6 +32,7 @@ const NY_SAK = gql`
             initiellStatus: $initiellStatus
             nesteSteg: $nesteSteg
             tilleggsinformasjon: $tilleggsinformasjon 
+            tidspunkt: $tidspunkt
         ) {
             __typename
             ... on NySakVellykket {
@@ -56,6 +58,7 @@ export const NySak: React.FunctionComponent = () => {
     const nesteStegRef = React.useRef<HTMLInputElement>(null)
     const tilleggsinformasjonRef = React.useRef<HTMLInputElement>(null)
     const mottakerRef = React.useRef<MottakerRef>(null);
+    const tidspunktIdRef = React.useRef<HTMLInputElement>(null);
 
     const [nySak, {
         data,
@@ -80,6 +83,7 @@ export const NySak: React.FunctionComponent = () => {
                 virksomhetsnummer: nullIfEmpty(virksomhetsnummerRef.current?.value),
                 mottaker: mottakerRef.current?.hentMottaker(),
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
+                tidspunkt: nullIfEmpty(tidspunktIdRef.current?.value),
                 lenke: nullIfEmpty(lenkeRef.current?.value),
                 tittel: nullIfEmpty(tittelRef.current?.value),
                 tilleggsinformasjon: nullIfEmpty(tilleggsinformasjonRef.current?.value),
@@ -107,7 +111,7 @@ export const NySak: React.FunctionComponent = () => {
             <TextField label={"Merkelapp*"} ref={merkelapp} defaultValue="fager"/>
             <TextField label={"Initiell status*"} ref={initiellStatusRef} defaultValue="MOTTATT"/>
             <TextField label={"Neste steg"} ref={nesteStegRef} defaultValue="Saken er ventet ferdig behandlet Januar 2050" />
-
+            <TextField label={`Opprettet (${new Date().toISOString()})`} ref={tidspunktIdRef} />
         </div>
         <Button variant="primary"
                 onClick={handleSend}>Opprett en ny sak</Button>
