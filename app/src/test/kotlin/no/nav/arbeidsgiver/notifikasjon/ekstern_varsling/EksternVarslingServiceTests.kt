@@ -9,6 +9,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse.NotificationStatusSummary
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
@@ -89,9 +90,51 @@ class EksternVarslingServiceTests : DescribeSpec({
                 }
 
                 override suspend fun notifications(orderId: String): Altinn3VarselKlient.NotificationsResponse {
-                    TODO("Not yet implemented")
+                    return Altinn3VarselKlient.NotificationsResponse.Success(
+                        orderId = orderId,
+                        generated = 3,
+                        succeeded = 3,
+                        sendersReference = "fake-${UUID.randomUUID()}",
+                        rå = JsonNodeFactory.instance.nullNode(),
+                        notifications = listOf(
+                            Altinn3VarselKlient.NotificationsResponse.Success.Notification(
+                                id = "fake-${UUID.randomUUID()}",
+                                succeeded = true,
+                                sendStatus = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus(
+                                    status = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus.Delivered,
+                                    description = "",
+                                    lastUpdate = ""
+                                ),
+                                recipient = Altinn3VarselKlient.NotificationsResponse.Success.Notification.Recipient(
+                                    null,
+                                    null,
+                                    null,
+                                    null
+                                )
+                            )
+                        )
+
+                    )
                 }
 
+                override suspend fun orderStatus(orderId: String): Altinn3VarselKlient.OrderStatusResponse {
+                    return Altinn3VarselKlient.OrderStatusResponse.Success(
+                        orderId = orderId,
+                        processingStatus = Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
+                            status = Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
+                            description = null,
+                            lastUpdate = null,
+                        ),
+                        rå = JsonNodeFactory.instance.objectNode().apply {
+                            put("orderId", orderId)
+                        },
+                        sendersReference = "fake-${UUID.randomUUID()}",
+                        notificationsStatusSummary = NotificationStatusSummary(
+                            generated = 3, succeeded = 3,
+                        )
+
+                    )
+                }
             },
             hendelseProdusent = hendelseProdusent,
             idleSleepDelay = Duration.ZERO,
@@ -105,40 +148,48 @@ class EksternVarslingServiceTests : DescribeSpec({
         context("LØPENDE sendingsvindu") {
             val (database, repository, service, hendelseProdusent, meldingSendt) = setupService()
 
-            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
-                virksomhetsnummer = "1",
-                notifikasjonId = uuid("1"),
-                hendelseId = uuid("1"),
-                produsentId = "",
-                kildeAppNavn = "",
-                merkelapp = "",
-                eksternId = "",
-                mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "",
-                    serviceCode = "",
-                    serviceEdition = "",
-                )),
-                tekst = "",
-                grupperingsid = "",
-                lenke = "",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(SmsVarselKontaktinfo(
-                    varselId = uuid("2"),
-                    tlfnr = "",
-                    fnrEllerOrgnr = "",
-                    smsTekst = "",
-                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                    sendeTidspunkt = null,
-                )),
-                hardDelete = null,
-                frist = null,
-                påminnelse = null,
-                sakId = null,
-            ))
+            repository.oppdaterModellEtterHendelse(
+                OppgaveOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(
+                        SmsVarselKontaktinfo(
+                            varselId = uuid("2"),
+                            tlfnr = "",
+                            fnrEllerOrgnr = "",
+                            smsTekst = "",
+                            sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                            sendeTidspunkt = null,
+                        )
+                    ),
+                    hardDelete = null,
+                    frist = null,
+                    påminnelse = null,
+                    sakId = null,
+                )
+            )
 
-            database.nonTransactionalExecuteUpdate("""
+            database.nonTransactionalExecuteUpdate(
+                """
                 update emergency_break set stop_processing = false where id = 0
-            """)
+            """
+            )
 
             val serviceJob = service.start(this)
 
@@ -160,42 +211,49 @@ class EksternVarslingServiceTests : DescribeSpec({
 
         context("NKS_ÅPNINGSTID sendingsvindu innenfor nks åpningstid sendes med en gang") {
             val (database, repository, service, _, meldingSendt, åpningstider) = setupService()
-            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
-                virksomhetsnummer = "1",
-                notifikasjonId = uuid("1"),
-                hendelseId = uuid("1"),
-                produsentId = "",
-                kildeAppNavn = "",
-                merkelapp = "",
-                eksternId = "",
-                mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "",
-                    serviceCode = "",
-                    serviceEdition = "",
-                )),
-                tekst = "",
-                grupperingsid = "",
-                lenke = "",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(EpostVarselKontaktinfo(
-                    varselId = uuid("2"),
-                    epostAddr = "",
-                    fnrEllerOrgnr = "",
-                    tittel = "",
-                    htmlBody = "",
-                    sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
-                    sendeTidspunkt = null,
+            repository.oppdaterModellEtterHendelse(
+                OppgaveOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(
+                        EpostVarselKontaktinfo(
+                            varselId = uuid("2"),
+                            epostAddr = "",
+                            fnrEllerOrgnr = "",
+                            tittel = "",
+                            htmlBody = "",
+                            sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                            sendeTidspunkt = null,
+                        )
+                    ),
+                    hardDelete = null,
+                    frist = null,
+                    påminnelse = null,
+                    sakId = null,
                 )
-                ),
-                hardDelete = null,
-                frist = null,
-                påminnelse = null,
-                sakId = null,
-            ))
+            )
 
-            database.nonTransactionalExecuteUpdate("""
+            database.nonTransactionalExecuteUpdate(
+                """
                 update emergency_break set stop_processing = false where id = 0
-            """)
+            """
+            )
             åpningstider.nesteNksÅpningstid.add(nå.minusMinutes(5))
             val serviceJob = service.start(this)
 
@@ -210,51 +268,61 @@ class EksternVarslingServiceTests : DescribeSpec({
 
         context("NKS_ÅPNINGSTID sendingsvindu utenfor nks åpningstid reskjeddullerres") {
             val (database, repository, service, _, _, åpningstider) = setupService()
-            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
-                virksomhetsnummer = "1",
-                notifikasjonId = uuid("1"),
-                hendelseId = uuid("1"),
-                produsentId = "",
-                kildeAppNavn = "",
-                merkelapp = "",
-                eksternId = "",
-                mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "",
-                    serviceCode = "",
-                    serviceEdition = "",
-                )),
-                tekst = "",
-                grupperingsid = "",
-                lenke = "",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(AltinntjenesteVarselKontaktinfo(
-                    varselId = uuid("2"),
-                    serviceCode = "1337",
-                    serviceEdition = "1",
-                    virksomhetsnummer = "",
-                    tittel = "",
-                    innhold = "",
-                    sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
-                    sendeTidspunkt = null,
-                )),
-                hardDelete = null,
-                frist = null,
-                påminnelse = null,
-                sakId = null,
-            ))
+            repository.oppdaterModellEtterHendelse(
+                OppgaveOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(
+                        AltinntjenesteVarselKontaktinfo(
+                            varselId = uuid("2"),
+                            serviceCode = "1337",
+                            serviceEdition = "1",
+                            virksomhetsnummer = "",
+                            tittel = "",
+                            innhold = "",
+                            sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                            sendeTidspunkt = null,
+                        )
+                    ),
+                    hardDelete = null,
+                    frist = null,
+                    påminnelse = null,
+                    sakId = null,
+                )
+            )
 
-            database.nonTransactionalExecuteUpdate("""
+            database.nonTransactionalExecuteUpdate(
+                """
                 update emergency_break set stop_processing = false where id = 0
-            """)
+            """
+            )
             åpningstider.nesteNksÅpningstid.add(nå.plusMinutes(5))
             val serviceJob = service.start(this)
 
             it("reschedules") {
                 eventually(20.seconds) {
                     repository.waitQueueCount() shouldNotBe (0 to 0)
-                    database.nonTransactionalExecuteQuery("""
+                    database.nonTransactionalExecuteQuery(
+                        """
                         select * from wait_queue where varsel_id = '${uuid("2")}'
-                    """) { asMap() } shouldNot beEmpty()
+                    """
+                    ) { asMap() } shouldNot beEmpty()
                     database.nonTransactionalExecuteQuery(
                         """
                         select * from job_queue where varsel_id = '${uuid("2")}'
@@ -269,42 +337,50 @@ class EksternVarslingServiceTests : DescribeSpec({
 
         context("DAGTID_IKKE_SØNDAG sendingsvindu innenfor sendes med en gang") {
             val (database, repository, service, _, meldingSendt, åpningstider) = setupService()
-            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
-                virksomhetsnummer = "1",
-                notifikasjonId = uuid("1"),
-                hendelseId = uuid("1"),
-                produsentId = "",
-                kildeAppNavn = "",
-                merkelapp = "",
-                eksternId = "",
-                mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "",
-                    serviceCode = "",
-                    serviceEdition = "",
-                )),
-                tekst = "",
-                grupperingsid = "",
-                lenke = "",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(AltinntjenesteVarselKontaktinfo(
-                    varselId = uuid("2"),
-                    serviceCode = "1337",
-                    serviceEdition = "1",
-                    virksomhetsnummer = "",
-                    tittel = "",
-                    innhold = "",
-                    sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
-                    sendeTidspunkt = null,
-                )),
-                hardDelete = null,
-                frist = null,
-                påminnelse = null,
-                sakId = null,
-            ))
+            repository.oppdaterModellEtterHendelse(
+                OppgaveOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(
+                        AltinntjenesteVarselKontaktinfo(
+                            varselId = uuid("2"),
+                            serviceCode = "1337",
+                            serviceEdition = "1",
+                            virksomhetsnummer = "",
+                            tittel = "",
+                            innhold = "",
+                            sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
+                            sendeTidspunkt = null,
+                        )
+                    ),
+                    hardDelete = null,
+                    frist = null,
+                    påminnelse = null,
+                    sakId = null,
+                )
+            )
 
-            database.nonTransactionalExecuteUpdate("""
+            database.nonTransactionalExecuteUpdate(
+                """
                 update emergency_break set stop_processing = false where id = 0
-            """)
+            """
+            )
 
             åpningstider.nesteDagtidIkkeSøndag.add(nå.minusMinutes(5))
             val serviceJob = service.start(this)
@@ -320,40 +396,48 @@ class EksternVarslingServiceTests : DescribeSpec({
 
         context("DAGTID_IKKE_SØNDAG sendingsvindu utenfor reskjedduleres") {
             val (database, repository, service, _, _, åpningstider) = setupService()
-            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
-                virksomhetsnummer = "1",
-                notifikasjonId = uuid("1"),
-                hendelseId = uuid("1"),
-                produsentId = "",
-                kildeAppNavn = "",
-                merkelapp = "",
-                eksternId = "",
-                mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "",
-                    serviceCode = "",
-                    serviceEdition = "",
-                )),
-                tekst = "",
-                grupperingsid = "",
-                lenke = "",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(SmsVarselKontaktinfo(
-                    varselId = uuid("2"),
-                    tlfnr = "",
-                    fnrEllerOrgnr = "",
-                    smsTekst = "",
-                    sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
-                    sendeTidspunkt = null,
-                )),
-                hardDelete = null,
-                frist = null,
-                påminnelse = null,
-                sakId = null,
-            ))
+            repository.oppdaterModellEtterHendelse(
+                OppgaveOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(
+                        SmsVarselKontaktinfo(
+                            varselId = uuid("2"),
+                            tlfnr = "",
+                            fnrEllerOrgnr = "",
+                            smsTekst = "",
+                            sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
+                            sendeTidspunkt = null,
+                        )
+                    ),
+                    hardDelete = null,
+                    frist = null,
+                    påminnelse = null,
+                    sakId = null,
+                )
+            )
 
-            database.nonTransactionalExecuteUpdate("""
+            database.nonTransactionalExecuteUpdate(
+                """
                 update emergency_break set stop_processing = false where id = 0
-            """)
+            """
+            )
             åpningstider.nesteDagtidIkkeSøndag.add(nå.plusMinutes(5))
             val serviceJob = service.start(this)
 
@@ -368,42 +452,50 @@ class EksternVarslingServiceTests : DescribeSpec({
 
         context("SPESIFISERT sendingsvindu som har passert sendes med en gang") {
             val (database, repository, service, _, meldingSendt) = setupService()
-            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
-                virksomhetsnummer = "1",
-                notifikasjonId = uuid("1"),
-                hendelseId = uuid("1"),
-                produsentId = "",
-                kildeAppNavn = "",
-                merkelapp = "",
-                eksternId = "",
-                mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "",
-                    serviceCode = "",
-                    serviceEdition = "",
-                )),
-                tekst = "",
-                grupperingsid = "",
-                lenke = "",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(AltinnressursVarselKontaktinfo(
-                    varselId = uuid("2"),
-                    ressursId = "",
-                    virksomhetsnummer = "",
-                    epostTittel = "",
-                    epostHtmlBody = "",
-                    smsTekst = "",
-                    sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
-                    sendeTidspunkt = nå.minusMinutes(1),
-                )),
-                hardDelete = null,
-                frist = null,
-                påminnelse = null,
-                sakId = null,
-            ))
+            repository.oppdaterModellEtterHendelse(
+                OppgaveOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(
+                        AltinnressursVarselKontaktinfo(
+                            varselId = uuid("2"),
+                            ressursId = "",
+                            virksomhetsnummer = "",
+                            epostTittel = "",
+                            epostHtmlBody = "",
+                            smsTekst = "",
+                            sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
+                            sendeTidspunkt = nå.minusMinutes(1),
+                        )
+                    ),
+                    hardDelete = null,
+                    frist = null,
+                    påminnelse = null,
+                    sakId = null,
+                )
+            )
 
-            database.nonTransactionalExecuteUpdate("""
+            database.nonTransactionalExecuteUpdate(
+                """
                 update emergency_break set stop_processing = false where id = 0
-            """)
+            """
+            )
 
             val serviceJob = service.start(this)
 
@@ -418,40 +510,48 @@ class EksternVarslingServiceTests : DescribeSpec({
 
         context("SPESIFISERT sendingsvindu som er i fremtid reskjedduleres") {
             val (database, repository, service) = setupService()
-            repository.oppdaterModellEtterHendelse(OppgaveOpprettet(
-                virksomhetsnummer = "1",
-                notifikasjonId = uuid("1"),
-                hendelseId = uuid("1"),
-                produsentId = "",
-                kildeAppNavn = "",
-                merkelapp = "",
-                eksternId = "",
-                mottakere = listOf(AltinnMottaker(
-                    virksomhetsnummer = "",
-                    serviceCode = "",
-                    serviceEdition = "",
-                )),
-                tekst = "",
-                grupperingsid = "",
-                lenke = "",
-                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                eksterneVarsler = listOf(SmsVarselKontaktinfo(
-                    varselId = uuid("2"),
-                    tlfnr = "",
-                    fnrEllerOrgnr = "",
-                    smsTekst = "",
-                    sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
-                    sendeTidspunkt = LocalDateTime.now().plusMinutes(5),
-                )),
-                hardDelete = null,
-                frist = null,
-                påminnelse = null,
-                sakId = null,
-            ))
+            repository.oppdaterModellEtterHendelse(
+                OppgaveOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(
+                        SmsVarselKontaktinfo(
+                            varselId = uuid("2"),
+                            tlfnr = "",
+                            fnrEllerOrgnr = "",
+                            smsTekst = "",
+                            sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
+                            sendeTidspunkt = LocalDateTime.now().plusMinutes(5),
+                        )
+                    ),
+                    hardDelete = null,
+                    frist = null,
+                    påminnelse = null,
+                    sakId = null,
+                )
+            )
 
-            database.nonTransactionalExecuteUpdate("""
+            database.nonTransactionalExecuteUpdate(
+                """
                 update emergency_break set stop_processing = false where id = 0
-            """)
+            """
+            )
 
             val serviceJob = service.start(this)
 
@@ -485,23 +585,27 @@ class EksternVarslingServiceTests : DescribeSpec({
                     kildeAppNavn = "",
                     merkelapp = "",
                     eksternId = "",
-                    mottakere = listOf(AltinnMottaker(
-                        virksomhetsnummer = "",
-                        serviceCode = "",
-                        serviceEdition = "",
-                    )),
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
                     tekst = "",
                     grupperingsid = "",
                     lenke = "",
                     opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
-                    eksterneVarsler = listOf(SmsVarselKontaktinfo(
-                        varselId = gammelVarselId,
-                        tlfnr = "",
-                        fnrEllerOrgnr = "",
-                        smsTekst = "",
-                        sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
-                        sendeTidspunkt = mockNow.plusHours(1),
-                    )),
+                    eksterneVarsler = listOf(
+                        SmsVarselKontaktinfo(
+                            varselId = gammelVarselId,
+                            tlfnr = "",
+                            fnrEllerOrgnr = "",
+                            smsTekst = "",
+                            sendevindu = EksterntVarselSendingsvindu.SPESIFISERT,
+                            sendeTidspunkt = mockNow.plusHours(1),
+                        )
+                    ),
                     hardDelete = null,
                     påminnelse = null,
                     sakId = EksempelHendelse.SakOpprettet.sakId,
@@ -513,22 +617,27 @@ class EksternVarslingServiceTests : DescribeSpec({
                 )
             )
 
-            database.nonTransactionalExecuteUpdate("""
+            database.nonTransactionalExecuteUpdate(
+                """
                 update emergency_break set stop_processing = false where id = 0
-            """)
+            """
+            )
 
             var serviceJob = service.start(this)
 
             it("sending av varsel skeduleres") {
                 eventually(5.seconds) {
                     repository.waitQueueCount() shouldNotBe (0 to 0)
-                    database.nonTransactionalExecuteQuery("""
+                    database.nonTransactionalExecuteQuery(
+                        """
                         select * from wait_queue where varsel_id = '$gammelVarselId'
-                    """) { asMap() } shouldNot beEmpty()
+                    """
+                    ) { asMap() } shouldNot beEmpty()
                 }
             }
 
-            repository.oppdaterModellEtterHendelse(KalenderavtaleOppdatert(
+            repository.oppdaterModellEtterHendelse(
+                KalenderavtaleOppdatert(
                     virksomhetsnummer = "1",
                     notifikasjonId = uuid("1"),
                     hendelseId = uuid("1"),
@@ -538,14 +647,16 @@ class EksternVarslingServiceTests : DescribeSpec({
                     grupperingsid = "",
                     tekst = "",
                     lenke = "",
-                    eksterneVarsler = listOf(SmsVarselKontaktinfo(
-                        varselId = nyVarselId,
-                        tlfnr = "",
-                        fnrEllerOrgnr = "",
-                        smsTekst = "",
-                        sendevindu = EksterntVarselSendingsvindu.LØPENDE,
-                        sendeTidspunkt = null,
-                    )),
+                    eksterneVarsler = listOf(
+                        SmsVarselKontaktinfo(
+                            varselId = nyVarselId,
+                            tlfnr = "",
+                            fnrEllerOrgnr = "",
+                            smsTekst = "",
+                            sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                            sendeTidspunkt = null,
+                        )
+                    ),
                     hardDelete = null,
                     påminnelse = null,
                     erDigitalt = false,
@@ -556,7 +667,8 @@ class EksternVarslingServiceTests : DescribeSpec({
                     idempotenceKey = null,
                     oppdatertTidspunkt = Instant.parse("2020-01-01T10:15:30.00Z"),
                     opprettetTidspunkt = Instant.parse("2020-01-01T00:01:00.00Z"),
-            ))
+                )
+            )
 
             it("melding sendes til kafka") {
                 eventually(5.seconds) {
@@ -596,6 +708,184 @@ class EksternVarslingServiceTests : DescribeSpec({
             }
 
             serviceJob.cancel()
+        }
+    }
+
+    describe("Altinn3 varsel oppførsel") {
+        val database = testDatabase(EksternVarsling.databaseConfig)
+        val repository = EksternVarslingRepository(database)
+        val hendelseProdusent = FakeHendelseProdusent()
+        val oppgave = OppgaveOpprettet(
+            virksomhetsnummer = "1",
+            notifikasjonId = uuid("1"),
+            hendelseId = uuid("1"),
+            produsentId = "",
+            kildeAppNavn = "",
+            merkelapp = "",
+            eksternId = "",
+            mottakere = listOf(
+                AltinnMottaker(
+                    virksomhetsnummer = "",
+                    serviceCode = "",
+                    serviceEdition = "",
+                )
+            ),
+            tekst = "",
+            grupperingsid = "",
+            lenke = "",
+            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+            eksterneVarsler = listOf(
+                SmsVarselKontaktinfo(
+                    varselId = uuid("2"),
+                    tlfnr = "",
+                    fnrEllerOrgnr = "",
+                    smsTekst = "",
+                    sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                    sendeTidspunkt = null,
+                )
+            ),
+            hardDelete = null,
+            frist = null,
+            påminnelse = null,
+            sakId = null,
+        )
+        repository.oppdaterModellEtterHendelse(oppgave)
+
+        fun eksternVarslingService(altinn3VarselKlient: Altinn3VarselKlient): EksternVarslingService {
+            return EksternVarslingService(
+                åpningstider = ÅpningstiderMock(),
+                osloTid = mockOsloTid(nå),
+                eksternVarslingRepository = repository,
+                altinn2VarselKlient = object : Altinn2VarselKlient {
+                    override suspend fun send(
+                        eksternVarsel: EksternVarsel
+                    ): AltinnVarselKlientResponseOrException {
+                        TODO("Not yet implemented")
+                    }
+                },
+                altinn3VarselKlient = altinn3VarselKlient,
+                hendelseProdusent = hendelseProdusent,
+                idleSleepDelay = Duration.ZERO,
+                recheckEmergencyBrakeDelay = Duration.ZERO,
+            )
+        }
+
+        it("Altinn 3 varsel status simulering") {
+            val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+                val orderStatusResolvers = mutableListOf(
+                    { orderId: String ->
+                        Altinn3VarselKlient.OrderStatusResponse.Success(
+                            rå = JsonNodeFactory.instance.objectNode(),
+                            orderId = orderId,
+                            sendersReference = null,
+                            Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
+                                Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Processing,
+                                null,
+                                null
+                            ),
+                            NotificationStatusSummary(0, 0)
+                        )
+                    },
+                    { orderId: String ->
+                        Altinn3VarselKlient.OrderStatusResponse.Success(
+                            rå = JsonNodeFactory.instance.objectNode(),
+                            orderId = orderId,
+                            sendersReference = null,
+                            Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
+                                Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
+                                null,
+                                null
+                            ),
+                            NotificationStatusSummary(0, 0)
+                        )
+                    },
+                )
+
+                val notificationResolvers = mutableListOf(
+                    { orderId: String ->
+                        Altinn3VarselKlient.NotificationsResponse.Success(
+                            rå = JsonNodeFactory.instance.objectNode(),
+                            orderId = orderId,
+                            sendersReference = null,
+                            generated = 1,
+                            succeeded = 0,
+                            notifications = listOf(
+                                Altinn3VarselKlient.NotificationsResponse.Success.Notification(
+                                    id = "1",
+                                    succeeded = false,
+                                    sendStatus = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus(
+                                        status = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus.New,
+                                        description = "",
+                                        lastUpdate = ""
+                                    ),
+                                    recipient = Altinn3VarselKlient.NotificationsResponse.Success.Notification.Recipient(
+                                        null,
+                                        null,
+                                        null,
+                                        null
+                                    )
+                                )
+                            )
+                        )
+                    },
+                    { orderId: String ->
+                        Altinn3VarselKlient.NotificationsResponse.Success(
+                            rå = JsonNodeFactory.instance.objectNode(),
+                            orderId = orderId,
+                            sendersReference = null,
+                            generated = 1,
+                            succeeded = 1,
+                            notifications = listOf(
+                                Altinn3VarselKlient.NotificationsResponse.Success.Notification(
+                                    id = "1",
+                                    succeeded = false,
+                                    sendStatus = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus(
+                                        status = Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus.Delivered,
+                                        description = "",
+                                        lastUpdate = ""
+                                    ),
+                                    recipient = Altinn3VarselKlient.NotificationsResponse.Success.Notification.Recipient(
+                                        null,
+                                        null,
+                                        null,
+                                        null
+                                    )
+                                )
+                            )
+                        )
+                    },
+                )
+
+
+                override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
+                    val ordreId = UUID.randomUUID()
+                    return Altinn3VarselKlient.OrderResponse.Success(
+                        orderId = "${ordreId}",
+                        rå = JsonNodeFactory.instance.objectNode().put("orderId", ordreId.toString())
+                    )
+                }
+
+                override suspend fun notifications(orderId: String): Altinn3VarselKlient.NotificationsResponse {
+                    return if (notificationResolvers.size > 1) notificationResolvers.removeAt(0).invoke(orderId) else notificationResolvers.first().invoke(orderId)
+                }
+
+                override suspend fun orderStatus(orderId: String): Altinn3VarselKlient.OrderStatusResponse {
+                    return if (orderStatusResolvers.size > 1) orderStatusResolvers.removeAt(0).invoke(orderId) else orderStatusResolvers.first().invoke(orderId)
+                }
+            }
+
+            repository.jobQueueCount() shouldBe 1
+            database.nonTransactionalExecuteUpdate(
+                """
+                update emergency_break set stop_processing = false where id = 0
+            """
+            )
+            val service = eksternVarslingService(altinn3VarselKlient).start(this)
+            eventually(5.seconds) {
+                val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                vellykket.size shouldBe 1
+            }
+            service.cancel()
         }
     }
 })

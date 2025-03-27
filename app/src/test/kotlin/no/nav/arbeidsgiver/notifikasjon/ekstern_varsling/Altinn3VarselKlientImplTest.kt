@@ -30,6 +30,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 sendeTidspunkt = null,
                 mobilnummer = "99999999",
                 tekst = "Hei, dette er en test",
+                ordreId = "123"
             ).let { dto ->
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
                 laxObjectMapper.writeValueAsString(json) shouldEqualJson //language=json
@@ -68,6 +69,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                     sendeTidspunkt = null,
                     mobilnummer = input,
                     tekst = "Hei, dette er en test",
+                    ordreId = "123"
                 )
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
                 laxObjectMapper.writeValueAsString(json) shouldEqualJson //language=json
@@ -93,6 +95,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 epostadresse = "foo@bar.baz",
                 tittel = "Test",
                 body = "Hei, dette er en test",
+                ordreId = "123"
             ).let { dto ->
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
                 laxObjectMapper.writeValueAsString(json) shouldEqualJson
@@ -122,6 +125,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 epostTittel = "Test",
                 epostInnhold = "Hei, epost",
                 smsInnhold = "Hei, sms",
+                ordreId = "123"
             ).let { dto ->
                 val json = Altinn3VarselKlient.OrderRequest.from(dto)
                 laxObjectMapper.writeValueAsString(json) shouldEqualJson
@@ -185,16 +189,27 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
-        val eksternVarsel = EksternVarsel.Sms(
+
+        val eksternVarselSms = EksternVarsel.Sms(
             fnrEllerOrgnr = "99999999901",
             sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
             sendeTidspunkt = null,
             mobilnummer = "99999999",
             tekst = "Hei, dette er en test",
+            ordreId = "123"
         )
 
+        val eksternVarselEpost = EksternVarsel.Epost(
+            fnrEllerOrgnr = "99999999901",
+            sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+            sendeTidspunkt = null,
+            epostadresse = "adresse@epost.com",
+            tittel = "Hei, dette er en tittel",
+            body = "Hei, dette er en test",
+            ordreId = "123"
+        )
 
-        it("success returnerer order id") {
+        it("success for sms returnerer order id") {
             val client = Altinn3VarselKlientImpl(
                 altinnBaseUrl = "http://altinn",
                 httpClient = HttpClient(mockEngine) {
@@ -207,7 +222,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                     override suspend fun token(scope: String) = "fake-token"
                 },
             )
-            client.order(eksternVarsel).let {
+            client.order(eksternVarselSms).let {
                 it as Altinn3VarselKlient.OrderResponse.Success
                 it.orderId shouldBe "42"
             }
@@ -217,7 +232,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 req.method shouldBe HttpMethod.Post
                 req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
                 req.bodyAsString() shouldEqualJson //language=json
-                    """
+                        """
                     {
                       "notificationChannel" : "Sms",
                       "recipients" : [ {
@@ -226,6 +241,47 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                       "smsTemplate" : {
                         "body" : "Hei, dette er en test"
                       }
+                    }
+                    """
+            }
+        }
+
+        it("success for email returnerer order id") {
+            val client = Altinn3VarselKlientImpl(
+                altinnBaseUrl = "http://altinn",
+                httpClient = HttpClient(mockEngine) {
+                    expectSuccess = true
+                    install(ContentNegotiation) {
+                        jackson()
+                    }
+                },
+                altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
+                    override suspend fun token(scope: String) = "fake-token"
+                },
+            )
+            client.order(eksternVarselEpost).let {
+                it as Altinn3VarselKlient.OrderResponse.Success
+                it.orderId shouldBe "42"
+            }
+//            mockEngine.requestHistory.size shouldBe 1
+            mockEngine.requestHistory.last().let { req ->
+                req.url.toString() shouldBe "http://altinn/notifications/api/v1/orders"
+                req.method shouldBe HttpMethod.Post
+                req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
+                req.bodyAsString() shouldEqualJson //language=json
+                    """
+                    {
+                      "notificationChannel": "Email",
+                      "emailTemplate": {
+                        "subject": "Hei, dette er en tittel",
+                        "body": "Hei, dette er en test",
+                        "contentType": "Html"
+                      },
+                      "recipients": [
+                        {
+                          "emailAddress": "adresse@epost.com"
+                        }
+                      ]
                     }
                     """
             }
@@ -245,7 +301,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 },
             )
 
-            client.order(eksternVarsel).let {
+            client.order(eksternVarselSms).let {
                 it as Altinn3VarselKlient.ErrorResponse
                 it.code shouldBe "RuntimeException"
                 it.message shouldBe "Failed to get token"
@@ -293,8 +349,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                     override suspend fun token(scope: String) = "fake-token"
                 },
             )
-
-            client.order(eksternVarsel).let {
+            client.order(eksternVarselSms).let {
                 it as Altinn3VarselKlient.ErrorResponse
                 it.code shouldBe "400"
                 it.message shouldContain "Bad Request"

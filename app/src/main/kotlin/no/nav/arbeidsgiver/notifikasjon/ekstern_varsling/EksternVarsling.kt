@@ -65,7 +65,6 @@ object EksternVarsling {
                         dev = {
                             Altinn3VarselKlientMedFilter(
                                 eksternVarslingRepository,
-                                Altinn3VarselKlientImpl(),
                                 Altinn3VarselKlientLogging()
                             )
                         },

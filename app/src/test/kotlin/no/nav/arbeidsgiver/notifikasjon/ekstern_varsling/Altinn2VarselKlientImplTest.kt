@@ -83,73 +83,6 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
         server.stop()
     }
 
-    describe("returnerer ok for vellykket sms kall") {
-        val withNotificationResult = SendNotificationResultList().apply {
-            notificationResult.add(NotificationResult())
-        }
-        answers.add { withNotificationResult }
-
-        val response = klient.send(
-            EksternVarsel.Sms(
-                fnrEllerOrgnr = "9876543210",
-                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null,
-                mobilnummer = "12341234",
-                tekst = "foo",
-            )
-        )
-
-        response shouldBe instanceOf<AltinnVarselKlientResponse.Ok>()
-        response as AltinnVarselKlientResponse.Ok
-        response.rå shouldBe laxObjectMapper.valueToTree(withNotificationResult)
-        calls.removeLast().let {
-            it shouldBe instanceOf<StandaloneNotificationBEList>()
-            it.standaloneNotification.size shouldBe 1
-            it.standaloneNotification[0].languageID shouldBe 1044
-            it.standaloneNotification[0].notificationType.value shouldBe "TokenTextOnly"
-            it.standaloneNotification[0].reporteeNumber.value shouldBe "9876543210"
-            it.standaloneNotification[0].receiverEndPoints.value.receiverEndPoint[0].transportType.value shouldBe SMS
-            it.standaloneNotification[0].receiverEndPoints.value.receiverEndPoint[0].receiverAddress.value shouldBe "12341234"
-            it.standaloneNotification[0].textTokens.value.textToken[0].tokenValue.value shouldBe "foo"
-            it.standaloneNotification[0].textTokens.value.textToken[1].tokenValue.value shouldBe ""
-            it.standaloneNotification[0].useServiceOwnerShortNameAsSenderOfSms.value shouldBe true
-        }
-    }
-
-    describe("returnerer ok for vellykket epost kall") {
-        val withNotificationResult = SendNotificationResultList().apply {
-            notificationResult.add(NotificationResult())
-        }
-        answers.add { withNotificationResult }
-
-        val response = klient.send(
-            EksternVarsel.Epost(
-                fnrEllerOrgnr = "9876543210",
-                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null,
-                epostadresse = "donald@duck.co",
-                tittel = "foo",
-                body = "bar",
-            )
-        )
-
-        response shouldBe instanceOf<AltinnVarselKlientResponse.Ok>()
-        response as AltinnVarselKlientResponse.Ok
-        response.rå shouldBe laxObjectMapper.valueToTree(withNotificationResult)
-        calls.removeLast().let {
-            it shouldBe instanceOf<StandaloneNotificationBEList>()
-            it.standaloneNotification.size shouldBe 1
-            it.standaloneNotification[0].languageID shouldBe 1044
-            it.standaloneNotification[0].notificationType.value shouldBe "TokenTextOnly"
-            it.standaloneNotification[0].reporteeNumber.value shouldBe "9876543210"
-            it.standaloneNotification[0].receiverEndPoints.value.receiverEndPoint[0].transportType.value shouldBe EMAIL
-            it.standaloneNotification[0].receiverEndPoints.value.receiverEndPoint[0].receiverAddress.value shouldBe "donald@duck.co"
-            it.standaloneNotification[0].textTokens.value.textToken[0].tokenValue.value shouldBe "foo"
-            it.standaloneNotification[0].textTokens.value.textToken[1].tokenValue.value shouldBe "bar"
-            it.standaloneNotification[0].fromAddress.value shouldBe "ikke-svar@nav.no"
-        }
-    }
-
     describe("returnerer ok for vellykket altinntjeneste kall") {
         val withNotificationResult = SendNotificationResultList().apply {
             notificationResult.add(NotificationResult())
@@ -204,12 +137,14 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
         answers.add { throw ex }
 
         val response = klient.send(
-            EksternVarsel.Sms(
-                fnrEllerOrgnr = "",
+            EksternVarsel.Altinntjeneste(
+                fnrEllerOrgnr = "9876543210",
                 sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null,
-                mobilnummer = "",
-                tekst = "",
+                serviceCode = "1337",
+                serviceEdition = "42",
+                tittel = "foo",
+                innhold = "bar",
             )
         )
 
@@ -226,12 +161,14 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
         answers.add { throw Exception("oof") }
 
         val response = klient.send(
-            EksternVarsel.Sms(
-                fnrEllerOrgnr = "",
+            EksternVarsel.Altinntjeneste(
+                fnrEllerOrgnr = "9876543210",
                 sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null,
-                mobilnummer = "",
-                tekst = "",
+                serviceCode = "1337",
+                serviceEdition = "42",
+                tittel = "foo",
+                innhold = "bar",
             )
         )
 
@@ -260,12 +197,14 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
         answers.add { throw ex }
 
         val response = klient.send(
-            EksternVarsel.Sms(
-                fnrEllerOrgnr = "",
+            EksternVarsel.Altinntjeneste(
+                fnrEllerOrgnr = "9876543210",
                 sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
                 sendeTidspunkt = null,
-                mobilnummer = "",
-                tekst = "",
+                serviceCode = "1337",
+                serviceEdition = "42",
+                tittel = "foo",
+                innhold = "bar",
             )
         )
 

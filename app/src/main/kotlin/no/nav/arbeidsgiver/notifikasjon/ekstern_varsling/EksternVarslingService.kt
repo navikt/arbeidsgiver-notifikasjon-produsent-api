@@ -1,7 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import com.fasterxml.jackson.databind.JsonNode
 import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
@@ -111,8 +114,10 @@ class EksternVarslingService(
     private val log = logger()
     private val emergencyBreakGauge = Metrics.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
     private val jobQueueSizeGauge = Metrics.meterRegistry.gauge("jobqueue.size", AtomicInteger(0))!!
-    private val waitQueuePastSizeGauge = Metrics.meterRegistry.gauge("waitqueue.size", Tags.of("resume_job_at", "past"), AtomicInteger(0))!!
-    private val waitQueueFutureSizeGauge = Metrics.meterRegistry.gauge("waitqueue.size", Tags.of("resume_job_at", "future"), AtomicInteger(0))!!
+    private val waitQueuePastSizeGauge =
+        Metrics.meterRegistry.gauge("waitqueue.size", Tags.of("resume_job_at", "past"), AtomicInteger(0))!!
+    private val waitQueueFutureSizeGauge =
+        Metrics.meterRegistry.gauge("waitqueue.size", Tags.of("resume_job_at", "future"), AtomicInteger(0))!!
 
     fun start(coroutineScope: CoroutineScope): Job {
         return coroutineScope.launch {
@@ -205,82 +210,196 @@ class EksternVarslingService(
             }
 
         withContext(varsel.asMDCContext()) {
-            when (varsel) {
-                is EksternVarselTilstand.Ny -> {
-                    val kalkulertSendeTidspunkt = varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
-                    if (kalkulertSendeTidspunkt <= osloTid.localDateTimeNow()) {
-                        if (varsel.data.eksternVarsel is EksternVarsel.Altinntjeneste) {
-                            /**
-                             * Bruker kun altinn 2 klient for varsel på serviceCode:serviceEdition
-                             * Alle andre varsler sendes med altinn 3 klient.
-                             * Når Altinn 2 fases ut kan denne if-sjekken fjernes, og altinn 2 klient kan fjernes.
-                             */
-                            when (val response = altinn2VarselKlient.send(varsel.data.eksternVarsel)) {
-                                is AltinnVarselKlientResponse.Ok -> {
-                                    eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                                }
-                                is AltinnVarselKlientResponse.Feil -> {
-                                    if (response.isRetryable()) {
-                                        log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
-                                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                                    } else {
-                                        log.atLevel(
-                                            if (response.isSupressable()) WARN
-                                            else ERROR
-                                        ).log("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
-                                        eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                                    }
-                                }
-                                is UkjentException -> {
-                                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                                    throw response.exception
-                                }
-                            }
-                        } else {
-                            when (val response = altinn3VarselKlient.order(varsel.data.eksternVarsel)) {
-                                is Altinn3VarselKlient.OrderResponse.Success ->
-                                    eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+            when (varsel.data.eksternVarsel) {
+                is EksternVarsel.Altinntjeneste -> altinn2VarselHandler(varsel)
+                is EksternVarsel.Sms,
+                is EksternVarsel.Epost,
+                is EksternVarsel.Altinnressurs -> altinn3VarselHandler(varsel)
+            }
+        }
+    }
 
-                                is Altinn3VarselKlient.ErrorResponse -> {
-                                    if (response.isRetryable()) {
-                                        log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
-                                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                                    } else {
-                                        log.error("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
-                                        eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                                    }
-                                }
-                            }
-
+    private suspend fun altinn3VarselHandler(varsel: EksternVarselTilstand) {
+        val varselId = varsel.data.varselId
+        when (varsel) {
+            is EksternVarselTilstand.Ny -> {
+                val kalkulertSendeTidspunkt =
+                    varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
+                if (kalkulertSendeTidspunkt <= osloTid.localDateTimeNow()) {
+                    when (val response = altinn3VarselKlient.order(varsel.data.eksternVarsel)) {
+                        is Altinn3VarselKlient.OrderResponse.Success -> {
+                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                         }
-                    } else {
-                        eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
-                    }
-                }
 
-                is EksternVarselTilstand.Sendt -> {
-                    try {
-                        hendelseProdusent.send(varsel.copy().toHendelse())
-                        eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
-                    } catch (e: RuntimeException) {
-                        log.error("Exception producing kafka-kvittering", e)
-                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                        is Altinn3VarselKlient.ErrorResponse -> {
+                            if (response.isRetryable()) {
+                                log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
+                                eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                            } else {
+                                log.error("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
+                                eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                            }
+                        }
                     }
+                } else {
+                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
                 }
+            }
 
-                is EksternVarselTilstand.Kansellert -> {
-                    try {
-                        hendelseProdusent.send(varsel.toHendelse())
-                        eksternVarslingRepository.deleteFromJobQueue(varselId)
-                    } catch (e: RuntimeException) {
-                        log.error("Exception producing kafka-kvittering", e)
-                        eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+            is EksternVarselTilstand.Sendt -> {
+                try {
+                    if (varsel.response is AltinnResponse.Ok) {
+                        val ordreId = varsel.response.rå["orderId"].asText()
+                        if (ordreId.isEmpty())
+                            throw kotlin.RuntimeException("Ordre er markert som sendt, men mangler orderId")
+                        val (ordreStatus, altinnResponse) = hentVarselOrdreStatus(ordreId)
+                        when (ordreStatus) {
+                            Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                            Altinn3VarselStatus.Kansellert,
+                            Altinn3VarselStatus.Kvittert,
+                            Altinn3VarselStatus.KvittertMedFeil -> {
+                                eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                                hendelseProdusent.send(varsel.copy(response = AltinnResponse.Ok(altinnResponse)).toHendelse())
+                            }
+                        }
                     }
+                } catch (e: RuntimeException) {
+                    log.error("Exception producing kafka-kvittering", e)
+                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                 }
+            }
 
-                is EksternVarselTilstand.Kvittert -> {
+            is EksternVarselTilstand.Kansellert -> {
+                try {
+                    hendelseProdusent.send(varsel.toHendelse())
                     eksternVarslingRepository.deleteFromJobQueue(varselId)
+                } catch (e: RuntimeException) {
+                    log.error("Exception producing kafka-kvittering", e)
+                    eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                 }
+            }
+
+            is EksternVarselTilstand.Kvittert -> {
+                eksternVarslingRepository.deleteFromJobQueue(varselId)
+            }
+        }
+    }
+
+    enum class Altinn3VarselStatus {
+        Prosesserer,
+        Kvittert,
+        KvittertMedFeil,
+        Kansellert
+    }
+
+
+    private suspend fun hentVarselOrdreStatus(ordreId: String): Pair<Altinn3VarselStatus, JsonNode> {
+        val ordreStatus = altinn3VarselKlient.orderStatus(ordreId)
+        if (!(ordreStatus is Altinn3VarselKlient.OrderStatusResponse.Success)) {
+            log.error("Feil ved henting av ordrestatus ${ordreStatus.rå}")
+            return Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)
+        }
+
+        return when (ordreStatus.processingStatus.status) {
+            ProcessingStatus.Registered,
+            ProcessingStatus.Processing -> Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)
+            ProcessingStatus.Cancelled -> Pair(Altinn3VarselStatus.Kansellert, ordreStatus.rå)
+            ProcessingStatus.Completed -> {
+                // Orderen er ferdig prosessert og alle notifikasjoner er blitt generert. Sjekker om notifikasjoner alle notifikasjoner er blitt sendt ut
+                altinn3VarselKlient.notifications(ordreId).let {
+                    if (!(it is Altinn3VarselKlient.NotificationsResponse.Success)) {
+                        log.error("Feil ved henting av notifikasjoner: ${it.rå}")
+                        return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
+                    }
+
+                    if (it.notifications.any { notification ->
+                            (notification.sendStatus.status === SendStatus.New
+                                    || notification.sendStatus.status === SendStatus.Sending
+                                    || notification.sendStatus.status === SendStatus.Succeeded)
+                        }) {
+                        return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
+                    }
+
+                    val failed = it.notifications.filter { notification ->
+                        notification.sendStatus.status.startsWith(SendStatus.Failed)
+                    }
+                    if (failed.count() > 0) {
+                        log.warn("Eksternt varsel med altinn ordre id $ordreId er fullført, men har ikke klart å sende ut alle notifikasjoner. antall feilet: ${failed.count()}. succedded: ${it.succeeded}, generated: ${it.generated}")
+                    }
+                    if (it.generated == it.succeeded)
+                        return Pair(Altinn3VarselStatus.Kvittert, it.rå)
+
+                    return Pair(Altinn3VarselStatus.KvittertMedFeil, it.rå)
+                }
+            }
+
+            else -> {
+                throw RuntimeException("Fikk ${ordreStatus.processingStatus.status} fra Altinn, denne blir ikke håndtert")
+            }
+        }
+    }
+
+
+    private suspend fun altinn2VarselHandler(varsel: EksternVarselTilstand) {
+        val varselId = varsel.data.varselId
+        when (varsel) {
+            is EksternVarselTilstand.Ny -> {
+                val kalkulertSendeTidspunkt =
+                    varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
+                if (kalkulertSendeTidspunkt <= osloTid.localDateTimeNow()) {
+                    when (val response = altinn2VarselKlient.send(varsel.data.eksternVarsel)) {
+                        is AltinnVarselKlientResponse.Ok -> {
+                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
+                        }
+
+                        is AltinnVarselKlientResponse.Feil -> {
+                            if (response.isRetryable()) {
+                                log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
+                                eksternVarslingRepository.returnToJobQueue(varselId)
+                            } else {
+                                log.atLevel(
+                                    if (response.isSupressable()) WARN
+                                    else ERROR
+                                ).log("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
+                                eksternVarslingRepository.markerSomSendtAndReleaseJob(
+                                    varselId,
+                                    response
+                                )
+                            }
+                        }
+
+                        is UkjentException -> {
+                            eksternVarslingRepository.returnToJobQueue(varselId)
+                            throw response.exception
+                        }
+                    }
+                } else {
+                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
+                }
+            }
+
+            is EksternVarselTilstand.Sendt -> {
+                try {
+                    hendelseProdusent.send(varsel.toHendelse())
+                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                } catch (e: RuntimeException) {
+                    log.error("Exception producing kafka-kvittering", e)
+                    eksternVarslingRepository.returnToJobQueue(varselId)
+                }
+            }
+
+            is EksternVarselTilstand.Kansellert -> {
+                try {
+                    hendelseProdusent.send(varsel.toHendelse())
+                    eksternVarslingRepository.deleteFromJobQueue(varselId)
+                } catch (e: RuntimeException) {
+                    log.error("Exception producing kafka-kvittering", e)
+                    eksternVarslingRepository.returnToJobQueue(varselId)
+                }
+            }
+
+            is EksternVarselTilstand.Kvittert -> {
+                eksternVarslingRepository.deleteFromJobQueue(varselId)
             }
         }
     }
