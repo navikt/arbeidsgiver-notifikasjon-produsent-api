@@ -510,10 +510,16 @@ class Altinn3VarselKlientLogging : Altinn3VarselKlient {
 
     override suspend fun orderStatus(orderId: String): OrderStatusResponse {
         log.info("orderStatus($orderId)")
-        return OrderStatusResponse.Success.fromJson(
-            JsonNodeFactory.instance.objectNode().apply {
-                put("orderId", "fake-${UUID.randomUUID()}")
-            }
+        return OrderStatusResponse.Success(
+            orderId = orderId,
+            sendersReference = null,
+            rå = NullNode.instance,
+            processingStatus = OrderStatusResponse.ProcessingStatus(
+                status = OrderStatusResponse.ProcessingStatus.Completed,
+                description = null,
+                lastUpdate = null,
+            ),
+            notificationsStatusSummary = null,
         )
     }
 }
