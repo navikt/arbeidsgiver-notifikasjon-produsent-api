@@ -150,12 +150,14 @@ class EksternVarslingRepository(
     private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(hendelse: KalenderavtaleOppdatert) {
         if (hendelse.eksterneVarsler.isNotEmpty() || hendelse.tilstand == AVLYST) {
             database.transaction {
-                executeUpdate("""
+                executeUpdate(
+                    """
                     update ekstern_varsel_kontaktinfo
                     set state = '${EksterntVarselTilstand.KANSELLERT}'
                     where notifikasjon_id = ?
                     and state = '${EksterntVarselTilstand.NY}'
-                """) {
+                """
+                ) {
                     uuid(hendelse.notifikasjonId)
                 }
 
@@ -184,7 +186,8 @@ class EksternVarslingRepository(
     private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
         /* Rewrite to batch insert? */
         database.transaction {
-            insertVarsler(notifikasjonsId = påminnelseOpprettet.notifikasjonId,
+            insertVarsler(
+                notifikasjonsId = påminnelseOpprettet.notifikasjonId,
                 varsler = påminnelseOpprettet.eksterneVarsler,
                 produsentId = påminnelseOpprettet.produsentId,
                 notifikasjonOpprettet = påminnelseOpprettet.opprettetTidpunkt.atOffset(ZoneOffset.UTC),
@@ -637,7 +640,8 @@ class EksternVarslingRepository(
     }
 
     suspend fun findJob(lockTimeout: Duration): UUID? =
-        database.nonTransactionalExecuteQuery("""
+        database.nonTransactionalExecuteQuery(
+            """
             UPDATE job_queue
             SET locked = true,
                 locked_by = ?,
@@ -850,10 +854,12 @@ class EksternVarslingRepository(
                 where varsel_id = ?
             """
             ) {
-                nullableText(when (response) {
-                    is Altinn3VarselKlient.OrderResponse.Success -> response.orderId
-                    is Altinn3VarselKlient.ErrorResponse -> null
-                })
+                nullableText(
+                    when (response) {
+                        is Altinn3VarselKlient.OrderResponse.Success -> response.orderId
+                        is Altinn3VarselKlient.ErrorResponse -> null
+                    }
+                )
                 jsonb(response.rå)
                 when (response) {
                     is Altinn3VarselKlient.ErrorResponse -> {
@@ -861,6 +867,7 @@ class EksternVarslingRepository(
                         nullableText(response.message)
                         nullableText(response.code)
                     }
+
                     is Altinn3VarselKlient.OrderResponse.Success -> {
                         text("OK")
                         nullableText(null)
@@ -937,13 +944,14 @@ class EksternVarslingRepository(
     }
 
     suspend fun mottakerErPåAllowList(mottaker: String): Boolean {
-        return database.nonTransactionalExecuteQuery("""
+        return database.nonTransactionalExecuteQuery(
+            """
             select mottaker from allow_list 
             where mottaker = ?
             and skal_sendes = true
         """, {
-            text(mottaker)
-        }) {
+                text(mottaker)
+            }) {
             this.getString("mottaker")
         }.isNotEmpty()
     }
@@ -962,6 +970,19 @@ class EksternVarslingRepository(
             boolean(newState)
             boolean(newState)
         }
+    }
+
+    suspend fun ordreHarMottakerPåAllowlist(orderId: String): Boolean {
+        return database.nonTransactionalExecuteQuery(
+            """
+            select coalesce(epost_adresse, tlfnr, ressursId, concat(service_code, ':', service_edition)) as mottaker from ekstern_varsel_kontaktinfo
+            inner join allow_list al on al.mottaker == mottaker
+            where altinn_order_id = ?
+        """.trimIndent(), {
+                text(orderId)
+            }) {
+            this.getString("mottaker")
+        }.isNotEmpty()
     }
 }
 

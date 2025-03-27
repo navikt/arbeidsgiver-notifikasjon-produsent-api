@@ -32,7 +32,7 @@ import java.util.*
  * ref: https://altinn.slack.com/archives/C069J71UQCQ/p1740582966140809?thread_ts=1740580333.657779&cid=C069J71UQCQ
  * https://github.com/Altinn/altinn-notifications/tree/feature/api-v2/src/Altinn.Notifications.NewApiDemo
  */
-class Altinn3VarselKlientImpl(
+open class Altinn3VarselKlientImpl(
     val altinnBaseUrl: String = System.getenv("ALTINN_3_API_BASE_URL"),
     val altinnPlattformTokenClient: AltinnPlattformTokenClient = AltinnPlattformTokenClientImpl(),
     val httpClient: HttpClient = defaultHttpClient(),
@@ -450,9 +450,8 @@ interface Altinn3VarselKlient {
 
 class Altinn3VarselKlientMedFilter(
     private val repository: EksternVarslingRepository,
-    private val varselKlient: Altinn3VarselKlient,
     private val loggingKlient: Altinn3VarselKlientLogging
-) : Altinn3VarselKlient {
+) : Altinn3VarselKlientImpl() {
 
     override suspend fun order(eksternVarsel: EksternVarsel): OrderResponse {
         val mottaker = when (eksternVarsel) {
@@ -462,18 +461,26 @@ class Altinn3VarselKlientMedFilter(
             is EksternVarsel.Altinntjeneste -> throw UnsupportedOperationException("Altinntjeneste er ikke støttet")
         }
         return if (repository.mottakerErPåAllowList(mottaker)) {
-            varselKlient.order(eksternVarsel)
+            super.order(eksternVarsel)
         } else {
             loggingKlient.order(eksternVarsel)
         }
     }
 
     override suspend fun notifications(orderId: String): NotificationsResponse {
-        return varselKlient.notifications(orderId)
+        return if (repository.ordreHarMottakerPåAllowlist(orderId)){
+            super.notifications(orderId)
+        } else {
+            loggingKlient.notifications(orderId)
+        }
     }
 
     override suspend fun orderStatus(orderId: String): OrderStatusResponse {
-        return varselKlient.orderStatus(orderId)
+        return if (repository.ordreHarMottakerPåAllowlist(orderId)){
+            super.orderStatus(orderId)
+        } else {
+            loggingKlient.orderStatus(orderId)
+        }
     }
 }
 
