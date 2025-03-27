@@ -292,6 +292,7 @@ class EksternVarslingService(
         Kansellert
     }
 
+
     private suspend fun hentVarselOrdreStatus(ordreId: String): Pair<Altinn3VarselStatus, JsonNode> {
         val ordreStatus = altinn3VarselKlient.orderStatus(ordreId)
         if (!(ordreStatus is Altinn3VarselKlient.OrderStatusResponse.Success)) {
