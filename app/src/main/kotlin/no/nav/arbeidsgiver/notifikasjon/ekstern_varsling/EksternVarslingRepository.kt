@@ -975,8 +975,8 @@ class EksternVarslingRepository(
     suspend fun ordreHarMottakerPåAllowlist(orderId: String): Boolean {
         return database.nonTransactionalExecuteQuery(
             """
-            select coalesce(epost_adresse, tlfnr, ressursId, concat(service_code, ':', service_edition)) as mottaker from ekstern_varsel_kontaktinfo
-            inner join allow_list al on al.mottaker == mottaker
+            select 1 from ekstern_varsel_kontaktinfo
+            inner join allow_list on mottaker = coalesce(epost_adresse, tlfnr, ressursId, concat(service_code, ':', service_edition))
             where altinn_order_id = ?
         """.trimIndent(), {
                 text(orderId)
