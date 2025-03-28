@@ -25,13 +25,7 @@ object Dataprodukt {
 
     fun main(httpPort: Int = 8080) {
         runBlocking(Dispatchers.Default) {
-            val database = openDatabaseAsync(config = databaseConfig, flywayAction = {
-                // en migrering feiler i testene etter oppgradering til postgres 17.4
-                //  midlertidig kjør repair og migrate for å oppdatere checksums databasen
-                // kan fjernes etter merge
-                repair()
-                migrate()
-            }) {
+            val database = openDatabaseAsync(databaseConfig) {
                 placeholders(
                     mapOf("SALT_VERDI" to saltVerdi),
                 )
