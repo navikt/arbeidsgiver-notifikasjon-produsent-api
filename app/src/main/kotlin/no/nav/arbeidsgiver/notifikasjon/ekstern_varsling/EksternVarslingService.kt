@@ -248,19 +248,27 @@ class EksternVarslingService(
 
             is EksternVarselTilstand.Sendt -> {
                 try {
-                    if (varsel.response is AltinnResponse.Ok) {
-                        val ordreId = varsel.response.rå["orderId"].asText()
-                        if (ordreId.isEmpty())
-                            throw kotlin.RuntimeException("Ordre er markert som sendt, men mangler orderId")
-                        val (ordreStatus, altinnResponse) = hentVarselOrdreStatus(ordreId)
-                        when (ordreStatus) {
-                            Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
-                            Altinn3VarselStatus.Kansellert,
-                            Altinn3VarselStatus.Kvittert,
-                            Altinn3VarselStatus.KvittertMedFeil -> {
-                                eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
-                                hendelseProdusent.send(varsel.copy(response = AltinnResponse.Ok(altinnResponse)).toHendelse())
+                    when (varsel.response) {
+                        is AltinnResponse.Ok -> {
+                            val ordreId = varsel.response.rå["orderId"].asText()
+                            if (ordreId.isEmpty())
+                                throw RuntimeException("Ordre er markert som sendt, men mangler orderId")
+                            val (ordreStatus, altinnResponse) = hentVarselOrdreStatus(ordreId)
+                            when (ordreStatus) {
+                                Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+
+                                Altinn3VarselStatus.Kansellert,
+                                Altinn3VarselStatus.Kvittert,
+                                Altinn3VarselStatus.KvittertMedFeil -> {
+                                    hendelseProdusent.send(varsel.copy(response = AltinnResponse.Ok(altinnResponse)).toHendelse())
+                                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                                }
                             }
+                        }
+
+                        is AltinnResponse.Feil -> {
+                            eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                            hendelseProdusent.send(varsel.toHendelse())
                         }
                     }
                 } catch (e: RuntimeException) {
@@ -303,7 +311,9 @@ class EksternVarslingService(
         return when (ordreStatus.processingStatus.status) {
             ProcessingStatus.Registered,
             ProcessingStatus.Processing -> Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)
+
             ProcessingStatus.Cancelled -> Pair(Altinn3VarselStatus.Kansellert, ordreStatus.rå)
+
             ProcessingStatus.Completed -> {
                 // Orderen er ferdig prosessert og alle notifikasjoner er blitt generert. Sjekker om notifikasjoner alle notifikasjoner er blitt sendt ut
                 altinn3VarselKlient.notifications(ordreId).let {
@@ -323,7 +333,7 @@ class EksternVarslingService(
                     val failed = it.notifications.filter { notification ->
                         notification.sendStatus.status.startsWith(SendStatus.Failed)
                     }
-                    if (failed.count() > 0) {
+                    if (failed.isNotEmpty()) {
                         log.warn("Eksternt varsel med altinn ordre id $ordreId er fullført, men har ikke klart å sende ut alle notifikasjoner. antall feilet: ${failed.count()}. succedded: ${it.succeeded}, generated: ${it.generated}")
                     }
                     if (it.generated == it.succeeded)
