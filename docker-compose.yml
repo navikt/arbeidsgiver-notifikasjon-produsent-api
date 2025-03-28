@@ -21,7 +21,7 @@ services:
       - BITNAMI_DEBUG=true
 
   postgres:
-    image: "postgres:12.11"
+    image: "postgres:17.4"
     ports:
       - "1337:5432"
     environment:

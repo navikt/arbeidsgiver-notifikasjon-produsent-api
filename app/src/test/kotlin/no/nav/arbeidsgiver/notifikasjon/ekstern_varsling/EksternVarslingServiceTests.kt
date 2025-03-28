@@ -2,6 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
@@ -13,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.Ord
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselFeilet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselKansellert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselVellykket
@@ -23,6 +25,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTil
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.time.Duration
@@ -60,7 +63,8 @@ class EksternVarslingServiceTests : DescribeSpec({
     )
 
     fun DescribeSpec.setupService(
-        osloTid: OsloTid = mockOsloTid(nå)
+        osloTid: OsloTid = mockOsloTid(nå),
+        altinn3VarselKlient: Altinn3VarselKlient? = null,
     ): Services {
         val meldingSendt = AtomicReference(MeldingsType.None)
         val hendelseProdusent = FakeHendelseProdusent()
@@ -79,7 +83,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     return AltinnVarselKlientResponse.Ok(rå = NullNode.instance)
                 }
             },
-            altinn3VarselKlient = object : Altinn3VarselKlient {
+            altinn3VarselKlient = altinn3VarselKlient ?: object : Altinn3VarselKlient {
                 override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
                     meldingSendt.set(MeldingsType.Altinn3)
                     return Altinn3VarselKlient.OrderResponse.Success.fromJson(
@@ -712,9 +716,6 @@ class EksternVarslingServiceTests : DescribeSpec({
     }
 
     describe("Altinn3 varsel oppførsel") {
-        val database = testDatabase(EksternVarsling.databaseConfig)
-        val repository = EksternVarslingRepository(database)
-        val hendelseProdusent = FakeHendelseProdusent()
         val oppgave = OppgaveOpprettet(
             virksomhetsnummer = "1",
             notifikasjonId = uuid("1"),
@@ -749,26 +750,6 @@ class EksternVarslingServiceTests : DescribeSpec({
             påminnelse = null,
             sakId = null,
         )
-        repository.oppdaterModellEtterHendelse(oppgave)
-
-        fun eksternVarslingService(altinn3VarselKlient: Altinn3VarselKlient): EksternVarslingService {
-            return EksternVarslingService(
-                åpningstider = ÅpningstiderMock(),
-                osloTid = mockOsloTid(nå),
-                eksternVarslingRepository = repository,
-                altinn2VarselKlient = object : Altinn2VarselKlient {
-                    override suspend fun send(
-                        eksternVarsel: EksternVarsel
-                    ): AltinnVarselKlientResponseOrException {
-                        TODO("Not yet implemented")
-                    }
-                },
-                altinn3VarselKlient = altinn3VarselKlient,
-                hendelseProdusent = hendelseProdusent,
-                idleSleepDelay = Duration.ZERO,
-                recheckEmergencyBrakeDelay = Duration.ZERO,
-            )
-        }
 
         it("Altinn 3 varsel status simulering") {
             val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
@@ -860,7 +841,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                 override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
                     val ordreId = UUID.randomUUID()
                     return Altinn3VarselKlient.OrderResponse.Success(
-                        orderId = "${ordreId}",
+                        orderId = "$ordreId",
                         rå = JsonNodeFactory.instance.objectNode().put("orderId", ordreId.toString())
                     )
                 }
@@ -873,19 +854,76 @@ class EksternVarslingServiceTests : DescribeSpec({
                     return if (orderStatusResolvers.size > 1) orderStatusResolvers.removeAt(0).invoke(orderId) else orderStatusResolvers.first().invoke(orderId)
                 }
             }
+            val (database, repository, service, hendelseProdusent, meldingSendt) = setupService(altinn3VarselKlient = altinn3VarselKlient)
+            repository.oppdaterModellEtterHendelse(oppgave)
 
             repository.jobQueueCount() shouldBe 1
             database.nonTransactionalExecuteUpdate(
                 """
                 update emergency_break set stop_processing = false where id = 0
-            """
+                """
             )
-            val service = eksternVarslingService(altinn3VarselKlient).start(this)
+            val job = service.start(this)
             eventually(5.seconds) {
                 val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
                 vellykket.size shouldBe 1
             }
-            service.cancel()
+            job.cancel()
+        }
+
+        it("Altinn 3 varsel status simulering (synkron feil)") {
+            val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+                override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
+                    return Altinn3VarselKlient.ErrorResponse(
+                        message= """
+                            Bad Request: {
+                              "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                              "title": "One or more validation errors occurred.",
+                              "status": 400,
+                              "errors": {
+                                "Recipients[0].EmailAddress": [
+                                  "Invalid email address format."
+                                ]
+                              },
+                              "traceId": "00-75d1ef6967946ee897e3370f30d9eec0-92e66f45cf453857-01"
+                            }
+                        """.trimIndent(),
+                        code = "400",
+                        rå = laxObjectMapper.readValue("""
+                            {
+                              "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                              "title": "One or more validation errors occurred.",
+                              "errors": {
+                                "Recipients[0].EmailAddress": [
+                                  "Invalid email address format."
+                                ]
+                              },
+                              "status": 400,
+                              "traceId": "00-75d1ef6967946ee897e3370f30d9eec0-92e66f45cf453857-01"
+                            }
+                        """.trimIndent())
+                    )
+                }
+
+                override suspend fun notifications(orderId: String) = TODO("Not yet implemented")
+                override suspend fun orderStatus(orderId: String) = TODO("Not yet implemented")
+            }
+            val (database, repository, service, hendelseProdusent, meldingSendt) = setupService(altinn3VarselKlient = altinn3VarselKlient)
+            repository.oppdaterModellEtterHendelse(oppgave)
+
+            repository.jobQueueCount() shouldBe 1
+            database.nonTransactionalExecuteUpdate(
+                """
+                update emergency_break set stop_processing = false where id = 0
+                """
+            )
+            val job = service.start(this)
+            eventually(5.seconds) {
+                hendelseProdusent.hendelser.size shouldBe 1
+                val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselFeilet>()
+                vellykket.size shouldBe 1
+            }
+            job.cancel()
         }
     }
 })
