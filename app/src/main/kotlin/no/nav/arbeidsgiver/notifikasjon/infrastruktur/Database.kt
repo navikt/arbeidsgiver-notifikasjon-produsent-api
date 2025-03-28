@@ -132,11 +132,12 @@ class Database private constructor(
 
         fun CoroutineScope.openDatabaseAsync(
             config: Config,
+            flywayAction: Flyway.() -> Unit = { migrate() },
             fluentConfig: FluentConfiguration.() -> Unit = {},
         ): Deferred<Database> {
             return async {
                 try {
-                    openDatabase(config, fluentConfig = fluentConfig).also {
+                    openDatabase(config, flywayAction, fluentConfig = fluentConfig).also {
                         Health.subsystemReady[Subsystem.DATABASE] = true
                     }
                 } catch (e: Exception) {
