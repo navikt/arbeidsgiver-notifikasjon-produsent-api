@@ -981,7 +981,7 @@ class EksternVarslingRepository(
         """.trimIndent(), {
                 text(orderId)
             }) {
-            this.getString("mottaker")
+            this.getInt(1)
         }.isNotEmpty()
     }
 }
