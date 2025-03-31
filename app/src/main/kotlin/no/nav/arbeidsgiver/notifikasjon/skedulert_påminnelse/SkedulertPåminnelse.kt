@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import java.time.Duration
 
 object SkedulertPåminnelse {
@@ -39,7 +40,10 @@ object SkedulertPåminnelse {
                 }
             }
 
-            launch {
+            launchProcessingLoop(
+                "sendAktuellePåminnelser",
+                pauseAfterEach = Duration.ofMinutes(10)
+            ) {
                 service.sendAktuellePåminnelser()
                 delay(Duration.ofMinutes(1))
             }
