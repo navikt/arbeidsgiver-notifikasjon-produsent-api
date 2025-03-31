@@ -299,6 +299,32 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
                 }
             }]
         }
+    } else if ("ressursId" in varselfraref) {
+        const {ressursId, epostTittel, epostHtmlBody, smsTekst, tidspunkt} = varselfraref as Altinnressurs
+        if (nullIfEmpty(ressursId) === null ||
+            nullIfEmpty(epostTittel) === null ||
+            nullIfEmpty(epostHtmlBody) === null ||
+            nullIfEmpty(smsTekst) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return null
+        return {
+            tidspunkt: {
+                etterOpprettelse: "PT1M"
+            },
+            eksterneVarsler: [{
+                altinnressurs: {
+                    mottaker: {
+                        ressursId: ressursId
+                    },
+                    epostTittel: epostTittel,
+                    epostHtmlBody: epostHtmlBody,
+                    smsTekst: smsTekst,
+                    sendevindu: Sendevindu.NksAapningstid
+                }
+            }]
+
+        }
+    } else {
+        return null
     }
-    return null
 }
