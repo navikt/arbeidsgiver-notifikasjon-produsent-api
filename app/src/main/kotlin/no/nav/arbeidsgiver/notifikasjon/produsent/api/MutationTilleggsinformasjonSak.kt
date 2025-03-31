@@ -45,10 +45,19 @@ internal class MutationTilleggsinformasjonSak(
     }
 
 
-    data class TilleggsinformasjonSakInput(
+    data class  TilleggsinformasjonSakInput(
         val tilleggsinformasjon: String?,
         val idempotencyKey: String?,
     ) {
+        init {
+            if(tilleggsinformasjon != null) {
+                Validators.compose(
+                    Validators.MaxLength("tilleggsinformasjon", 140),
+                    Validators.NonIdentifying("tilleggsinformasjon"),
+                )(tilleggsinformasjon)
+            }
+        }
+
         fun tilleggsinformasjonSakHendelse(
             kildeAppNavn: String,
             produsentId: String,

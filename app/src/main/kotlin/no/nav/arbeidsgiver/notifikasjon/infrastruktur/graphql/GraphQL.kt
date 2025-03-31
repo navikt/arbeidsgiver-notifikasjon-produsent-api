@@ -19,6 +19,7 @@ import kotlinx.coroutines.future.future
 import kotlinx.coroutines.slf4j.MDCContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.findCause
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getTimer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
@@ -77,7 +78,12 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
             } catch (e: GraphqlErrorException) {
                 handleUnexpectedError(e, e)
             } catch (e: RuntimeException) {
-                handleUnexpectedError(e, UnhandledGraphQLExceptionError(e, fieldName))
+                val valideringsFeil = e.findCause<ValideringsFeil>()
+                if (valideringsFeil != null) {
+                    handleUnexpectedError(valideringsFeil, valideringsFeil)
+                } else {
+                    handleUnexpectedError(e, UnhandledGraphQLExceptionError(e, fieldName))
+                }
             }
         }
     }
