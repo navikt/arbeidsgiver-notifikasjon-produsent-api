@@ -246,7 +246,7 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
                         }
                     },
                     smsTekst: smsTekst,
-                    sendevindu: Sendevindu.NksAapningstid
+                    sendevindu: Sendevindu.Loepende
                 }
             }]
         }
@@ -270,7 +270,7 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
                     },
                     epostTittel: epostTittel,
                     epostHtmlBody: epostHtmlBody,
-                    sendevindu: Sendevindu.NksAapningstid
+                    sendevindu: Sendevindu.Loepende
 
                 }
             }]
@@ -295,7 +295,7 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
                     },
                     tittel: tittel,
                     innhold: innhold,
-                    sendevindu: Sendevindu.NksAapningstid
+                    sendevindu: Sendevindu.Loepende
                 }
             }]
         }
@@ -319,7 +319,7 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
                     epostTittel: epostTittel,
                     epostHtmlBody: epostHtmlBody,
                     smsTekst: smsTekst,
-                    sendevindu: Sendevindu.NksAapningstid
+                    sendevindu: Sendevindu.Loepende
                 }
             }]
 
