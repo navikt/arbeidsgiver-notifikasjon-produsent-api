@@ -317,16 +317,12 @@ class EksternVarslingService(
             ProcessingStatus.Completed -> {
                 // Orderen er ferdig prosessert og alle notifikasjoner er blitt generert. Sjekker om notifikasjoner alle notifikasjoner er blitt sendt ut
                 altinn3VarselKlient.notifications(ordreId).let {
-                    if (!(it is Altinn3VarselKlient.NotificationsResponse.Success)) {
+                    if (it !is Altinn3VarselKlient.NotificationsResponse.Success) {
                         log.error("Feil ved henting av notifikasjoner: ${it.rå}")
                         return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
                     }
 
-                    if (it.notifications.any { notification ->
-                            (notification.sendStatus.status === SendStatus.New
-                                    || notification.sendStatus.status === SendStatus.Sending
-                                    || notification.sendStatus.status === SendStatus.Succeeded)
-                        }) {
+                    if (it.isProcessing) {
                         return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
                     }
 
