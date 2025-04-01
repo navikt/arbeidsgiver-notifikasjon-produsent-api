@@ -162,6 +162,7 @@ class EksternVarslingService(
                 log.info("gauge-oppdatering vellykket")
             }
 
+            // wait queue
             launchProcessingLoop(
                 "resume-scheduled-work",
                 pauseAfterEach = Duration.ofMinutes(5)
@@ -172,6 +173,7 @@ class EksternVarslingService(
                 }
             }
 
+            // job queue
             launchProcessingLoop(
                 "ekstern-varsel",
                 init = { eksternVarslingRepository.detectEmptyDatabase() }
@@ -211,7 +213,9 @@ class EksternVarslingService(
 
         withContext(varsel.asMDCContext()) {
             when (varsel.data.eksternVarsel) {
+
                 is EksternVarsel.Altinntjeneste -> altinn2VarselHandler(varsel)
+
                 is EksternVarsel.Sms,
                 is EksternVarsel.Epost,
                 is EksternVarsel.Altinnressurs -> altinn3VarselHandler(varsel)
@@ -255,7 +259,12 @@ class EksternVarslingService(
                                 throw RuntimeException("Ordre er markert som sendt, men mangler orderId")
                             val (ordreStatus, altinnResponse) = hentVarselOrdreStatus(ordreId)
                             when (ordreStatus) {
-                                Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                                Altinn3VarselStatus.Prosesserer -> {
+                                    eksternVarslingRepository.scheduleJob(
+                                        varsel.data.varselId,
+                                        osloTid.localDateTimeNow().plusMinutes(1)
+                                    )
+                                }
 
                                 Altinn3VarselStatus.Kansellert,
                                 Altinn3VarselStatus.Kvittert,

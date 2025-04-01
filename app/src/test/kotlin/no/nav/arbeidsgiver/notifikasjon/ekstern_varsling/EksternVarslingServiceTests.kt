@@ -7,13 +7,17 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.beOfType
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse.NotificationStatusSummary
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
@@ -125,11 +129,11 @@ class EksternVarslingServiceTests : DescribeSpec({
                     )
                 }
 
-                override suspend fun orderStatus(orderId: String): Altinn3VarselKlient.OrderStatusResponse {
-                    return Altinn3VarselKlient.OrderStatusResponse.Success(
+                override suspend fun orderStatus(orderId: String): OrderStatusResponse {
+                    return OrderStatusResponse.Success(
                         orderId = orderId,
-                        processingStatus = Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
-                            status = Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
+                        processingStatus = OrderStatusResponse.ProcessingStatus(
+                            status = OrderStatusResponse.ProcessingStatus.Completed,
                             description = null,
                             lastUpdate = null,
                         ),
@@ -756,6 +760,35 @@ class EksternVarslingServiceTests : DescribeSpec({
         )
 
         it("Altinn 3 varsel status simulering") {
+            val orderId = "42"
+            val orderResponse = Altinn3VarselKlient.OrderResponse.Success(
+                orderId = orderId,
+                rå = JsonNodeFactory.instance.objectNode().put("orderId", orderId)
+            )
+            val ordreStatusProcessingRå = laxObjectMapper.readValue<JsonNode>("""
+                {
+                    "generated": 2,
+                    "id": "$orderId",
+                    "processingStatus": {
+                      "status": "Processing",
+                      "description": null,
+                      "lastUpdate": null
+                    },
+                    "sendersReference": null
+                  }
+            """.trimIndent())
+            val orderStatusCompletedRå = laxObjectMapper.readValue<JsonNode>("""
+                {
+                "generated": 2,
+                "id": "$orderId",
+                "processingStatus": {
+                  "status": "Completed",
+                  "description": null,
+                  "lastUpdate": null
+                },
+                "sendersReference": null
+              }
+            """.trimIndent())
             val notificationsNewRå = laxObjectMapper.readValue<JsonNode>("""
                 {
                 "generated": 2,
@@ -787,7 +820,7 @@ class EksternVarslingServiceTests : DescribeSpec({
                     "succeeded": false
                   }
                 ],
-                "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
+                "orderId": "$orderId",
                 "succeeded": 1
               }
             """.trimIndent())
@@ -822,66 +855,45 @@ class EksternVarslingServiceTests : DescribeSpec({
                     "succeeded": true
                   }
                 ],
-                "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
+                "orderId": "$orderId",
                 "succeeded": 2
               }
             """.trimIndent())
             val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
-                val orderStatusResolvers = mutableListOf(
-                    { orderId: String ->
-                        Altinn3VarselKlient.OrderStatusResponse.Success(
-                            rå = JsonNodeFactory.instance.objectNode(),
-                            orderId = orderId,
-                            sendersReference = null,
-                            Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
-                                Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Processing,
-                                null,
-                                null
-                            ),
-                            NotificationStatusSummary(0, 0)
-                        )
-                    },
-                    { orderId: String ->
-                        Altinn3VarselKlient.OrderStatusResponse.Success(
-                            rå = JsonNodeFactory.instance.objectNode(),
-                            orderId = orderId,
-                            sendersReference = null,
-                            Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
-                                Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
-                                null,
-                                null
-                            ),
-                            NotificationStatusSummary(0, 0)
-                        )
-                    },
+                val orderStatusResponses = mutableListOf(
+                    OrderStatusResponse.Success.fromJson(ordreStatusProcessingRå),
+                    OrderStatusResponse.Success.fromJson(orderStatusCompletedRå),
                 )
-                val notificationResolvers = mutableListOf(
-                    {
-                        NotificationsResponse.Success.fromJson(notificationsNewRå)
-                    },
-                    {
-                        NotificationsResponse.Success.fromJson(notificationsDeliveredRå)
-                    },
+                val notificationResponses = mutableListOf(
+                    NotificationsResponse.Success.fromJson(notificationsNewRå),
+                    NotificationsResponse.Success.fromJson(notificationsDeliveredRå),
                 )
 
 
-                override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
-                    val ordreId = UUID.randomUUID()
-                    return Altinn3VarselKlient.OrderResponse.Success(
-                        orderId = "$ordreId",
-                        rå = JsonNodeFactory.instance.objectNode().put("orderId", ordreId.toString())
-                    )
-                }
+                override suspend fun order(eksternVarsel: EksternVarsel) = orderResponse
 
-                override suspend fun notifications(orderId: String): NotificationsResponse {
-                    return if (notificationResolvers.size > 1) notificationResolvers.removeAt(0).invoke() else notificationResolvers.first().invoke()
-                }
+                override suspend fun orderStatus(orderId: String) =
+                    if (orderStatusResponses.size > 1) {
+                        orderStatusResponses.removeFirst()
+                    } else {
+                        orderStatusResponses.first()
+                    }
 
-                override suspend fun orderStatus(orderId: String): Altinn3VarselKlient.OrderStatusResponse {
-                    return if (orderStatusResolvers.size > 1) orderStatusResolvers.removeAt(0).invoke(orderId) else orderStatusResolvers.first().invoke(orderId)
-                }
+                override suspend fun notifications(orderId: String) =
+                    if (notificationResponses.size > 1) {
+                        notificationResponses.removeFirst()
+                    } else {
+                        notificationResponses.first()
+                    }
             }
-            val (database, repository, service, hendelseProdusent) = setupService(altinn3VarselKlient = altinn3VarselKlient)
+            var mockNow = LocalDateTime.now()
+            val (database, repository, service, hendelseProdusent) = setupService(
+                osloTid = object : OsloTid {
+                    override fun localDateTimeNow() = mockNow
+                    override fun localDateNow() = TODO()
+                },
+                altinn3VarselKlient = altinn3VarselKlient
+            )
             repository.oppdaterModellEtterHendelse(oppgave)
 
             repository.jobQueueCount() shouldBe 1
@@ -890,13 +902,81 @@ class EksternVarslingServiceTests : DescribeSpec({
                 update emergency_break set stop_processing = false where id = 0
                 """
             )
-            val job = service.start(this)
-            eventually(5.seconds) {
+
+            val varselId = oppgave.eksterneVarsler.first().varselId
+
+            val duration = 500.seconds
+            var serviceJob = service.start(this)
+
+            // start job, order is sent
+            eventually(duration) {
+                val varsel = repository.findVarsel(varselId)
+                varsel should beOfType<EksternVarselTilstand.Sendt>()
+                varsel as EksternVarselTilstand.Sendt
+                varsel.response.rå shouldBe orderResponse.rå
+            }
+
+            // first loop, orderStatus == processing from orderStatus
+            eventually(duration) {
+                val varsel = repository.findVarsel(varselId)
+                varsel should beOfType<EksternVarselTilstand.Sendt>()
+                varsel as EksternVarselTilstand.Sendt
+
+                //if we update the response in the service loop, we could assert that here
+                //varsel.response.rå shouldBe orderStatusCompletedRå
+
+                // leaves job queue
+                database.jobQueue() shouldNotContain varselId
+
+                // and goes to wait queue
+                database.waitQueue() shouldContain varselId
+            }
+
+            // wait queue is processed after som time, simulate time passes
+            serviceJob.cancel()
+            mockNow = mockNow.plusMinutes(6)
+            serviceJob = service.start(this)
+
+            // second loop, orderStatus == completed, but notifications == new
+            eventually(duration) {
+                val varsel = repository.findVarsel(varselId)
+                varsel should beOfType<EksternVarselTilstand.Sendt>()
+                varsel as EksternVarselTilstand.Sendt
+
+                //if we update the response in the service loop, we could assert that here
+                //varsel.response.rå shouldBe notificationsNewRå
+
+                // leaves job queue
+                database.jobQueue() shouldNotContain varselId
+                // and goes to wait queue
+                database.waitQueue() shouldContain varselId
+            }
+
+            // wait queue is processed after som time, simulate time passes
+            serviceJob.cancel()
+            mockNow = mockNow.plusMinutes(6)
+            serviceJob = service.start(this)
+
+            // final step, notifications == delivered
+            eventually(duration) {
+                val varsel = repository.findVarsel(varselId)
+                varsel should beOfType<EksternVarselTilstand.Sendt>()
+                varsel as EksternVarselTilstand.Sendt
+
+                //if we update the response in the service loop, we could assert that here
+                //varsel.response.rå shouldBe notificationsDeliveredRå
+            }
+
+            // is published to kafka with correct rå payload
+            eventually(duration) {
+                val varsel = repository.findVarsel(varselId)
+                varsel should beOfType<EksternVarselTilstand.Kvittert>()
+
                 val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
                 vellykket.size shouldBe 1
                 vellykket.first().råRespons shouldBe notificationsDeliveredRå
             }
-            job.cancel()
+            serviceJob.cancel()
         }
 
         it("Altinn 3 varsel status simulering (synkron feil)") {
@@ -960,4 +1040,3 @@ fun mockOsloTid(mockNow: LocalDateTime) = object : OsloTid {
     override fun localDateTimeNow() = mockNow
     override fun localDateNow() = mockNow.toLocalDate()
 }
-
