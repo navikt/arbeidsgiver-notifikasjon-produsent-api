@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.time.delay
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
@@ -12,6 +11,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import java.time.Duration
 
 object SkedulertPåminnelse {
@@ -39,9 +39,11 @@ object SkedulertPåminnelse {
                 }
             }
 
-            launch {
+            launchProcessingLoop(
+                "sendAktuellePåminnelser",
+                pauseAfterEach = Duration.ofMinutes(10)
+            ) {
                 service.sendAktuellePåminnelser()
-                delay(Duration.ofMinutes(1))
             }
 
             launchHttpServer(httpPort = httpPort)

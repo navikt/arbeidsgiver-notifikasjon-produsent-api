@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Validators
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -23,6 +24,16 @@ internal data class EksterntVarselInput(
     val altinntjeneste: Altinntjeneste?,
     val altinnressurs: Altinnressurs?,
 ) {
+    init {
+        Validators.ExactlyOneFieldGiven("EksterntVarselInput")(
+            mapOf(
+                "sms" to sms,
+                "epost" to epost,
+                "altinntjeneste" to altinntjeneste,
+                "altinnressurs" to altinnressurs
+            )
+        )
+    }
 
     fun tilHendelseModel(virksomhetsnummer: String): EksterntVarsel {
         if (sms != null) {
@@ -63,18 +74,39 @@ internal data class EksterntVarselInput(
 
         data class Mottaker(
             val kontaktinfo: Kontaktinfo?,
-        )
+        ) {
+            init {
+                Validators.ExactlyOneFieldGiven("sms.mottaker")(
+                    mapOf(
+                        "kontaktinfo" to kontaktinfo,
+                    )
+                )
+            }
+        }
 
         data class Kontaktinfo(
             val fnr: String?,
             val tlf: String,
-        )
+        ) {
+            init {
+                Validators.NorwegianMobilePhoneNumber("Kontaktinfo.tlf")(tlf)
+            }
+        }
     }
 
     data class SendetidspunktInput(
         val tidspunkt: LocalDateTime?,
         val sendevindu: Sendevindu?,
-    )
+    ) {
+        init {
+            Validators.ExactlyOneFieldGiven("SendetidspunktInput")(
+                mapOf(
+                    "tidspunkt" to tidspunkt,
+                    "sendevindu" to sendevindu,
+                )
+            )
+        }
+    }
 
     @Suppress("unused") // kommer som graphql input
     enum class Sendevindu(
@@ -109,7 +141,15 @@ internal data class EksterntVarselInput(
 
         data class Mottaker(
             val kontaktinfo: Kontaktinfo?,
-        )
+        ) {
+            init {
+                Validators.ExactlyOneFieldGiven("epost.mottaker")(
+                    mapOf(
+                        "kontaktinfo" to kontaktinfo,
+                    )
+                )
+            }
+        }
 
         data class Kontaktinfo(
             val fnr: String?,
@@ -166,7 +206,15 @@ internal data class EksterntVarselInput(
 
         data class Mottaker(
             val ressursId: String,
-        )
+        ) {
+            init {
+                Validators.ExactlyOneFieldGiven("altinnressurs.mottaker")(
+                    mapOf(
+                        "ressursId" to ressursId,
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -212,6 +260,15 @@ internal data class MottakerInput(
     val naermesteLeder: NaermesteLederMottakerInput?,
     val altinnRessurs: AltinnRessursMottakerInput?
 ) {
+    init {
+        Validators.ExactlyOneFieldGiven("MottakerInput")(
+            mapOf(
+                "altinn" to altinn,
+                "naermesteLeder" to naermesteLeder,
+                "altinnRessurs" to altinnRessurs,
+            )
+        )
+    }
 
     fun tilHendelseModel(
         virksomhetsnummer: String,
@@ -280,6 +337,16 @@ data class PaaminnelseTidspunktInput(
     val foerFrist: ISO8601Period?,
     val foerStartTidspunkt: ISO8601Period?,
 ) {
+    init {
+        Validators.ExactlyOneFieldGiven("PaaminnelseTidspunktInput")(
+            mapOf(
+                "konkret" to konkret,
+                "etterOpprettelse" to etterOpprettelse,
+                "foerFrist" to foerFrist,
+                "foerStartTidspunkt" to foerStartTidspunkt,
+            )
+        )
+    }
     fun tilDomene(
         notifikasjonOpprettetTidspunkt: OffsetDateTime,
         frist: LocalDate?,
@@ -319,12 +386,25 @@ internal class PaaminnelseEksterntVarselInput(
     val sms: Sms?,
     val epost: Epost?,
     val altinntjeneste: Altinntjeneste?,
+    val altinnressurs: Altinnressurs?,
 ) {
+    init {
+        Validators.ExactlyOneFieldGiven("PaaminnelseEksterntVarselInput")(
+            mapOf(
+                "sms" to sms,
+                "epost" to epost,
+                "altinntjeneste" to altinntjeneste,
+                "altinnressurs" to altinnressurs,
+            )
+        )
+    }
+
     fun tilDomene(virksomhetsnummer: String): EksterntVarsel =
         when {
             sms != null -> sms.tilDomene(virksomhetsnummer)
             epost != null -> epost.tilDomene(virksomhetsnummer)
             altinntjeneste != null -> altinntjeneste.tilDomene(virksomhetsnummer)
+            altinnressurs != null -> altinnressurs.tilDomene(virksomhetsnummer)
             else -> error("graphql-validation failed, neither sms nor epost nor altinntjeneste defined")
         }
 
@@ -392,6 +472,31 @@ internal class PaaminnelseEksterntVarselInput(
         data class Mottaker(
             val serviceCode: String,
             val serviceEdition: String,
+        )
+    }
+
+    data class Altinnressurs(
+        val mottaker: Mottaker,
+        val epostTittel: String,
+        val epostHtmlBody: String,
+        val smsTekst: String,
+        val sendevindu: EksterntVarselInput.Sendevindu,
+    ) {
+        fun tilDomene(virksomhetsnummer: String): AltinnressursVarselKontaktinfo {
+            return AltinnressursVarselKontaktinfo(
+                varselId = UUID.randomUUID(),
+                ressursId = mottaker.ressursId,
+                virksomhetsnummer = virksomhetsnummer,
+                epostTittel = epostTittel.ensureSuffix(". "),
+                epostHtmlBody = epostHtmlBody,
+                smsTekst = smsTekst,
+                sendevindu = sendevindu.somDomene,
+                sendeTidspunkt = null
+            )
+        }
+
+        data class Mottaker(
+            val ressursId: String,
         )
     }
 }

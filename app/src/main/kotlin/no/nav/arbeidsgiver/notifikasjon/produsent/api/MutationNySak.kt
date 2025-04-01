@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
@@ -149,6 +148,19 @@ internal class MutationNySak(
         val nesteSteg: String?,
         val hardDelete: FutureTemporalInput?,
     ) {
+        init {
+            Validators.compose(
+                Validators.MaxLength("sak.tittel", 140),
+                Validators.NonIdentifying("sak.tittel")
+            )(tittel)
+            tilleggsinformasjon?.let {
+                Validators.compose(
+                    Validators.MaxLength("sak.tilleggsinformasjon", 140),
+                    Validators.NonIdentifying("sak.tilleggsinformasjon")
+                )(it)
+            }
+        }
+
         fun somSakOpprettetHendelse(
             id: UUID,
             produsentId: String,

@@ -246,7 +246,7 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
                         }
                     },
                     smsTekst: smsTekst,
-                    sendevindu: Sendevindu.NksAapningstid
+                    sendevindu: Sendevindu.Loepende
                 }
             }]
         }
@@ -270,7 +270,7 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
                     },
                     epostTittel: epostTittel,
                     epostHtmlBody: epostHtmlBody,
-                    sendevindu: Sendevindu.NksAapningstid
+                    sendevindu: Sendevindu.Loepende
 
                 }
             }]
@@ -295,10 +295,36 @@ export const formaterPåminnelse = (påminnelseRef: React.MutableRefObject<Ekste
                     },
                     tittel: tittel,
                     innhold: innhold,
-                    sendevindu: Sendevindu.NksAapningstid
+                    sendevindu: Sendevindu.Loepende
                 }
             }]
         }
+    } else if ("ressursId" in varselfraref) {
+        const {ressursId, epostTittel, epostHtmlBody, smsTekst, tidspunkt} = varselfraref as Altinnressurs
+        if (nullIfEmpty(ressursId) === null ||
+            nullIfEmpty(epostTittel) === null ||
+            nullIfEmpty(epostHtmlBody) === null ||
+            nullIfEmpty(smsTekst) === null ||
+            nullIfEmpty(tidspunkt) === null
+        ) return null
+        return {
+            tidspunkt: {
+                etterOpprettelse: "PT1M"
+            },
+            eksterneVarsler: [{
+                altinnressurs: {
+                    mottaker: {
+                        ressursId: ressursId
+                    },
+                    epostTittel: epostTittel,
+                    epostHtmlBody: epostHtmlBody,
+                    smsTekst: smsTekst,
+                    sendevindu: Sendevindu.Loepende
+                }
+            }]
+
+        }
+    } else {
+        return null
     }
-    return null
 }

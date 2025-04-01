@@ -367,6 +367,10 @@ interface Altinn3VarselKlient {
             val succeeded: Int,
             val notifications: List<Notification>,
         ) : NotificationsResponse {
+
+            val isProcessing
+                get() = notifications.any { it.sendStatus.isProcessing }
+
             companion object {
                 fun fromJson(rawJson: JsonNode): Success {
                     return Success(
@@ -429,6 +433,13 @@ interface Altinn3VarselKlient {
                     val description: String,
                     val lastUpdate: String,
                 ) {
+                    val isProcessing
+                        get() = status in listOf(
+                            New,
+                            Sending,
+                            Succeeded
+                        )
+
                     companion object {
                         val New = "New"
                         val Sending = "Sending"

@@ -126,6 +126,13 @@ internal class MutationKalenderavtale(
         val paaminnelse: PaaminnelseInput?,
         val hardDelete: FutureTemporalInput?,
     ) {
+        init {
+            Validators.compose(
+                Validators.MaxLength("kalenderavtale.tekst", 300),
+                Validators.NonIdentifying("kalenderavtale.tekst")
+            )(tekst)
+        }
+
         inline fun somKalenderavtaleOpprettetHendelse(
             id: UUID,
             produsentId: String,
@@ -347,7 +354,16 @@ internal class MutationKalenderavtale(
         override val paaminnelse: PaaminnelseInput?,
         override val hardDelete: HardDeleteUpdateInput?,
         override val idempotenceKey: String?,
-    ) : OppdaterKalenderavtaleInput()
+    ) : OppdaterKalenderavtaleInput() {
+        init {
+            if (nyTekst != null) {
+                Validators.compose(
+                    Validators.MaxLength("kalenderavtale.tekst", 300),
+                    Validators.NonIdentifying("kalenderavtale.tekst")
+                )(nyTekst)
+            }
+        }
+    }
 
     data class OppdaterByEksternIdKalenderavtaleInput(
         val eksternId: String,
@@ -361,7 +377,16 @@ internal class MutationKalenderavtale(
         override val paaminnelse: PaaminnelseInput?,
         override val hardDelete: HardDeleteUpdateInput?,
         override val idempotenceKey: String?,
-    ) : OppdaterKalenderavtaleInput()
+    ) : OppdaterKalenderavtaleInput() {
+        init {
+            if (nyTekst != null) {
+                Validators.compose(
+                    Validators.MaxLength("kalenderavtale.tekst", 300),
+                    Validators.NonIdentifying("kalenderavtale.tekst")
+                )(nyTekst)
+            }
+        }
+    }
 
     private suspend fun kalenderavtaleOppdaterById(
         context: ProdusentAPI.Context,
