@@ -176,6 +176,7 @@
               <li><a href="#definition-OppgaveUtsettFristResultat">OppgaveUtsettFristResultat</a></li>
               <li><a href="#definition-OppgaveUtsettFristVellykket">OppgaveUtsettFristVellykket</a></li>
               <li><a href="#definition-OppgavenErAlleredeUtfoert">OppgavenErAlleredeUtfoert</a></li>
+              <li><a href="#definition-PaaminnelseEksterntVarselAltinnressursInput">PaaminnelseEksterntVarselAltinnressursInput</a></li>
               <li><a href="#definition-PaaminnelseEksterntVarselAltinntjenesteInput">PaaminnelseEksterntVarselAltinntjenesteInput</a></li>
               <li><a href="#definition-PaaminnelseEksterntVarselEpostInput">PaaminnelseEksterntVarselEpostInput</a></li>
               <li><a href="#definition-PaaminnelseEksterntVarselInput">PaaminnelseEksterntVarselInput</a></li>
@@ -8608,6 +8609,73 @@
               </div>
             </div>
           </section>
+          <section id="definition-PaaminnelseEksterntVarselAltinnressursInput" class="definition definition-input-object" data-traverse-target="definition-PaaminnelseEksterntVarselAltinnressursInput">
+            <div class="definition-group-name">
+              <a href="#group-Types">Types</a>
+            </div>
+            <h2 class="definition-heading">PaaminnelseEksterntVarselAltinnressursInput</h2>
+            <div class="doc-row">
+              <div class="doc-copy">
+                <div class="definition-properties doc-copy-section">
+                  <h5>Fields</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Input Field</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>mottaker</code></span> - <span class="property-type"><a href="#definition-AltinnRessursMottakerInput"><code>AltinnRessursMottakerInput!</code></a></span>
+                        </td>
+                        <td>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>epostTittel</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
+                        </td>
+                        <td> Subject/emne til e-posten OBS: Det er ikke lov med personopplysninger i teksten. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>epostHtmlBody</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
+                        </td>
+                        <td> Kroppen til e-posten. Kan inneholde HTML. OBS: Det er ikke lov med personopplysninger i teksten. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>smsTekst</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
+                        </td>
+                        <td> Teksten som sendes i SMS-en. OBS: Det er ikke lov med personopplysninger i teksten. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>sendevindu</code></span> - <span class="property-type"><a href="#definition-Sendevindu"><code>Sendevindu!</code></a></span>
+                        </td>
+                        <td> Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi det ved første mulighet. </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="doc-examples">
+                <div class="example-section example-section-is-code">
+                  <h5>Example</h5>
+                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"mottaker"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">AltinnRessursMottakerInput</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"epostTittel"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"foo123"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"epostHtmlBody"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"foo123"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"smsTekst"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"foo123"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"sendevindu"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"NKS_AAPNINGSTID"</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
           <section id="definition-PaaminnelseEksterntVarselAltinntjenesteInput" class="definition definition-input-object" data-traverse-target="definition-PaaminnelseEksterntVarselAltinntjenesteInput">
             <div class="definition-group-name">
               <a href="#group-Types">Types</a>
@@ -8766,6 +8834,13 @@
                         <td>
                         </td>
                       </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>altinnressurs</code></span> - <span class="property-type"><a href="#definition-PaaminnelseEksterntVarselAltinnressursInput"><code>PaaminnelseEksterntVarselAltinnressursInput</code></a></span>
+                        </td>
+                        <td>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -8776,7 +8851,8 @@
                   <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
   <span class="hljs-attr">"sms"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PaaminnelseEksterntVarselSmsInput</span><span class="hljs-punctuation">,</span>
   <span class="hljs-attr">"epost"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PaaminnelseEksterntVarselEpostInput</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"altinntjeneste"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PaaminnelseEksterntVarselAltinntjenesteInput</span>
+  <span class="hljs-attr">"altinntjeneste"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PaaminnelseEksterntVarselAltinntjenesteInput</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"altinnressurs"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PaaminnelseEksterntVarselAltinnressursInput</span>
 <span class="hljs-punctuation">}</span>
 </code></pre>
                 </div>
