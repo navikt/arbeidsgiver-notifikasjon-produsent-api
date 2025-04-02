@@ -1,14 +1,6 @@
 # Denne dokumentasjonen er skrev i "du/dere"-form, hvor du/dere er produsenter, og "vi" er
 # notifikasjons-plattformen.
 
-
-directive @Validate on ARGUMENT_DEFINITION
-directive @MaxLength(max: Int) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
-directive @NonIdentifying on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
-directive @ExactlyOneFieldGiven on INPUT_OBJECT
-directive @MaxValue(upToIncluding: Int) on ARGUMENT_DEFINITION
-directive @NorwegianMobilePhoneNumber on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
-
 """
 DateTime etter ISO8601-standaren. F.eks. '2011-12-03T10:15:30+01:00'.
 Dersom tidssone/offset ikke er oppgitt, så antar vi at tidspunktet er Oslo-tid ('Europe/Oslo').
@@ -74,7 +66,7 @@ type Query {
     """
     mineNotifikasjoner(
         "antall notifikasjoner du ønsker å hente"
-        first: Int @Validate @MaxValue(upToIncluding: 10000)
+        first: Int
 
         """Cursor til notifikasjonen du henter fra. Cursor får du fra [NotifikasjonEdge](#notifikasjonedge)."""
         after: String
@@ -429,7 +421,7 @@ type Mutation {
         """
         Teksten som vises til brukeren.
         """
-        tekst: String! @MaxLength(max: 300) @NonIdentifying @Validate
+        tekst: String!
 
         """
         Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
@@ -439,7 +431,7 @@ type Mutation {
         """
         Her bestemmer dere hvem som skal få se kalenderavtalen.
         """
-        mottakere: [MottakerInput!]! @Validate
+        mottakere: [MottakerInput!]!
 
         """
         Når avtalen starter.
@@ -469,19 +461,19 @@ type Mutation {
         """
         tilstand: KalenderavtaleTilstand
 
-        eksterneVarsler: [EksterntVarselInput!]! = [] @Validate
+        eksterneVarsler: [EksterntVarselInput!]! = []
 
         """
         Her kan du spesifisere en påminnelse for kalenderavtalen.
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput @Validate
+        paaminnelse: PaaminnelseInput
 
         """
         Oppgi dersom dere ønsker at hard delete skal skeduleres. Vi
         tolker relative datoer basert på når vi mottok kallet.
         """
-        hardDelete: FutureTemporalInput @Validate
+        hardDelete: FutureTemporalInput
     ): NyKalenderavtaleResultat!
 
     nySak(
@@ -504,20 +496,20 @@ type Mutation {
         NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
         til en notifikasjon. De tilgangsstyres hver for seg.
         """
-        mottakere: [MottakerInput!]! @Validate
+        mottakere: [MottakerInput!]!
 
         """
         En tittel på saken, som vises til brukeren.
         Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
         """
-        tittel: String! @Validate @MaxLength(max: 140) @NonIdentifying
+        tittel: String!
 
         """
         Dette feltet er frivillig.
         Tilleggssinformasjon som vises under tittelen på en sak.
         Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
         """
-        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
+        tilleggsinformasjon: String
 
         """
         Her oppgir dere en lenke som brukeren kan klikke på for å komme rett til saken.
@@ -555,7 +547,7 @@ type Mutation {
         tolker relative datoer basert på `opprettetTidspunkt` (eller
         når vi mottok kallet hvis dere ikke har oppgitt `opprettetTidspunkt`).
         """
-        hardDelete: FutureTemporalInput @Validate
+        hardDelete: FutureTemporalInput
     ): NySakResultat!
 
     nyStatusSak(
@@ -632,7 +624,7 @@ type Mutation {
         Her har dere mulighet til å vise virksomheten mer informasjon om saken.
         Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
         """
-        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
+        tilleggsinformasjon: String
     ): TilleggsinformasjonSakResultat!
 
     tilleggsinformasjonSakByGrupperingsid(
@@ -645,7 +637,7 @@ type Mutation {
         Her har dere mulighet til å vise virksomheten mer informasjon om saken.
         Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
         """
-        tilleggsinformasjon: String @Validate @MaxLength(max: 140) @NonIdentifying
+        tilleggsinformasjon: String
     ): TilleggsinformasjonSakResultat!
 
 
@@ -681,12 +673,12 @@ type Mutation {
     """
     Opprett en ny beskjed.
     """
-    nyBeskjed(nyBeskjed: NyBeskjedInput! @Validate): NyBeskjedResultat!
+    nyBeskjed(nyBeskjed: NyBeskjedInput!): NyBeskjedResultat!
 
     """
     Opprett en ny oppgave.
     """
-    nyOppgave(nyOppgave: NyOppgaveInput! @Validate): NyOppgaveResultat!
+    nyOppgave(nyOppgave: NyOppgaveInput!): NyOppgaveResultat!
 
     """
     Marker en oppgave (identifisert ved id) som utført. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert.
@@ -700,7 +692,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput @Validate
+        hardDelete: HardDeleteUpdateInput
 
         """
         Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
@@ -735,7 +727,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput @Validate
+        hardDelete: HardDeleteUpdateInput
     ): OppgaveUtfoertResultat!
     @deprecated(reason:
     "Using the type ID for `eksternId` can lead to unexpected behaviour. Use oppgaveUtfoertByEksternId_V2 instead."
@@ -758,7 +750,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput @Validate
+        hardDelete: HardDeleteUpdateInput
 
         """
         Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
@@ -788,7 +780,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput @Validate
+        hardDelete: HardDeleteUpdateInput
 
         """
         Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
@@ -824,7 +816,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput @Validate
+        hardDelete: HardDeleteUpdateInput
 
         """
         Ny lenke som oppgaven peker på: overskriver lenken som ble gitt ved
@@ -868,7 +860,7 @@ type Mutation {
         Her kan du spesifisere en påminnelse for oppgaven.
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput @Validate
+        paaminnelse: PaaminnelseInput
     ): OppgaveUtsettFristResultat!
 
 
@@ -903,7 +895,7 @@ type Mutation {
         Her kan du spesifisere en påminnelse for oppgaven.
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput @Validate
+        paaminnelse: PaaminnelseInput
     ): OppgaveUtsettFristResultat!
 
     """
@@ -928,7 +920,7 @@ type Mutation {
         Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput @Validate
+        paaminnelse: PaaminnelseInput
     ) : OppgaveEndrePaaminnelseResultat!
 
     """
@@ -958,7 +950,7 @@ type Mutation {
         Dersom eksisterende påminnelse skal fjernes, spesifiser null
         Brukeren vil bli gjort oppmerksom via bjellen og evt ekstern varsling dersom du oppgir det.
         """
-        paaminnelse: PaaminnelseInput @Validate
+        paaminnelse: PaaminnelseInput
     ) : OppgaveEndrePaaminnelseResultat!
 
 
@@ -985,7 +977,7 @@ type Mutation {
         """
         Teksten som vises til brukeren.
         """
-        nyTekst: String @MaxLength(max: 300) @NonIdentifying @Validate
+        nyTekst: String
 
         """
         Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
@@ -1007,7 +999,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput @Validate
+        hardDelete: HardDeleteUpdateInput
 
         """
         Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
@@ -1020,7 +1012,7 @@ type Mutation {
         Disse varslene vil erstatte tidligere bestilte varsler som ikke er sendt enda.
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey for å unngå å sende samme varsel flere ganger.
         """
-        eksterneVarsler: [EksterntVarselInput!]! = [] @Validate
+        eksterneVarsler: [EksterntVarselInput!]! = []
 
         """
         Her kan du spesifisere en påminnelse for kalenderavtalen.
@@ -1028,7 +1020,7 @@ type Mutation {
         Dersom dere senere oppdaterer kalenderavtalen og setter den til AVLYST, vil vi kansellere registrerte påminnelser.
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
         """
-        paaminnelse: PaaminnelseInput @Validate
+        paaminnelse: PaaminnelseInput
     ): OppdaterKalenderavtaleResultat!
 
 
@@ -1060,7 +1052,7 @@ type Mutation {
         """
         Teksten som vises til brukeren.
         """
-        nyTekst: String @MaxLength(max: 300) @NonIdentifying @Validate
+        nyTekst: String
 
         """
         Lenken som brukeren føres til hvis de klikker på kalenderavtalen. Typisk en side i deres system som viser detaljer om avtalen.
@@ -1082,7 +1074,7 @@ type Mutation {
         """
         Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
         """
-        hardDelete: HardDeleteUpdateInput @Validate
+        hardDelete: HardDeleteUpdateInput
 
         """
         Dersom dere angir idempotenceKey så vil konsekvente kall med samme idempotenceKey gi samme resultat.
@@ -1095,7 +1087,7 @@ type Mutation {
         Disse varslene vil erstatte tidligere bestilte varsler som ikke er sendt enda.
         Vi anbefaler dere å bruke denn i kombinasjon med idempoencyKey for å unngå å sende samme varsel flere ganger.
         """
-        eksterneVarsler: [EksterntVarselInput!]! = [] @Validate
+        eksterneVarsler: [EksterntVarselInput!]! = []
 
         """
         Her kan du spesifisere en påminnelse for kalenderavtalen.
@@ -1103,7 +1095,7 @@ type Mutation {
         Dersom dere senere oppdaterer kalenderavtalen og setter den til AVLYST, vil vi kansellere registrerte påminnelser.
         Vi anbefaler dere å bruke denne i kombinasjon med idempotencyKey.
         """
-        paaminnelse: PaaminnelseInput @Validate
+        paaminnelse: PaaminnelseInput
     ): OppdaterKalenderavtaleResultat!
 
     """
@@ -1459,7 +1451,7 @@ input PaaminnelseInput {
     eksterneVarsler: [PaaminnelseEksterntVarselInput!]! = []
 }
 
-input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
+input PaaminnelseTidspunktInput {
     """
     Konkret tidspunkt
     """
@@ -1480,10 +1472,11 @@ input PaaminnelseTidspunktInput @ExactlyOneFieldGiven {
     foerStartTidspunkt: ISO8601Duration
 }
 
-input PaaminnelseEksterntVarselInput @ExactlyOneFieldGiven {
+input PaaminnelseEksterntVarselInput {
     sms: PaaminnelseEksterntVarselSmsInput
     epost: PaaminnelseEksterntVarselEpostInput
     altinntjeneste: PaaminnelseEksterntVarselAltinntjenesteInput
+    altinnressurs: PaaminnelseEksterntVarselAltinnressursInput
 }
 
 input PaaminnelseEksterntVarselSmsInput {
@@ -1544,11 +1537,36 @@ input PaaminnelseEksterntVarselAltinntjenesteInput {
     sendevindu: Sendevindu!
 }
 
+input PaaminnelseEksterntVarselAltinnressursInput {
+    mottaker: AltinnRessursMottakerInput!
+    """
+    Subject/emne til e-posten
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    epostTittel: String!
+    """
+    Kroppen til e-posten. Kan inneholde HTML.
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    epostHtmlBody: String!
+    """
+    Teksten som sendes i SMS-en.
+    OBS: Det er ikke lov med personopplysninger i teksten.
+    """
+    smsTekst: String!
+    """
+    Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+    til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+    det ved første mulighet.
+    """
+    sendevindu: Sendevindu!
+}
+
 """
 Input som definerer hvordan et eksternt varsel skal sendes.
 Kun ett av feltene i inputen kan være satt.
 """
-input EksterntVarselInput @ExactlyOneFieldGiven {
+input EksterntVarselInput {
     sms: EksterntVarselSmsInput
     epost: EksterntVarselEpostInput
     altinntjeneste: EksterntVarselAltinntjenesteInput
@@ -1592,7 +1610,7 @@ Med denne typen velger du når du ønsker at det eksterne varselet blir sendt.
 Du skal velge en (og kun en) av feltene, ellers blir forespørselen din avvist
 med en feil.
 """
-input SendetidspunktInput @ExactlyOneFieldGiven {
+input SendetidspunktInput {
     """
     Hvis du spesifiserer et tidspunkt på formen "YYYY-MM-DDThh:mm", så sender
     vi notifikasjonen på det tidspunktet. Oppgir du et tidspunkt i fortiden,
@@ -1693,7 +1711,7 @@ input EksterntVarselAltinnressursInput {
     sendetidspunkt: SendetidspunktInput!
 }
 
-input SmsMottakerInput @ExactlyOneFieldGiven {
+input SmsMottakerInput {
     kontaktinfo: SmsKontaktInfoInput
 }
 
@@ -1705,10 +1723,10 @@ input SmsKontaktInfoInput {
     Nummeret må være gyldig iht norske mobilnummer-regler (40000000-49999999, 90000000-99999999)
     se https://nkom.no/telefoni-og-telefonnummer/telefonnummer-og-den-norske-nummerplan/alle-nummerserier-for-norske-telefonnumre
     """
-    tlf: String! @NorwegianMobilePhoneNumber
+    tlf: String!
 }
 
-input EpostMottakerInput @ExactlyOneFieldGiven {
+input EpostMottakerInput {
     kontaktinfo: EpostKontaktInfoInput
 }
 
@@ -1735,7 +1753,7 @@ Du kan spesifisere mottaker av notifikasjoner på forskjellige måter. Du skal b
 
 Vi har implementert det på denne måten fordi GraphQL ikke støtter union-typer som input.
 """
-input MottakerInput @ExactlyOneFieldGiven {
+input MottakerInput {
     altinn: AltinnMottakerInput
     altinnRessurs: AltinnRessursMottakerInput
     naermesteLeder: NaermesteLederMottakerInput
@@ -1796,7 +1814,7 @@ input NotifikasjonInput {
     """
     Teksten som vises til brukeren. Feltet er begrenset til 300 tegn og kan ikke inneholde fødselsnummer.
     """
-    tekst: String! @MaxLength(max: 300) @NonIdentifying
+    tekst: String!
 
     """
     Lenken som brukeren føres til hvis de klikker på beskjeden.
@@ -1846,7 +1864,7 @@ input MetadataInput {
 """
 Med denne kan dere spesifiserer et konkret tidspunkt.
 """
-input FutureTemporalInput @ExactlyOneFieldGiven {
+input FutureTemporalInput {
     """
     En konkret dato. I Europe/Oslo-tidssone.
     """

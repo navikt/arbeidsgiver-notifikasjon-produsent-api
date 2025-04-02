@@ -4,8 +4,10 @@ import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.beOfType
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -19,6 +21,7 @@ import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.Not
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import org.intellij.lang.annotations.Language
 
 class Altinn3VarselKlientImplTest : DescribeSpec({
 
@@ -269,7 +272,7 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 req.method shouldBe HttpMethod.Post
                 req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
                 req.bodyAsString() shouldEqualJson //language=json
-                    """
+                        """
                     {
                       "notificationChannel": "Email",
                       "emailTemplate": {
@@ -404,57 +407,8 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 ]
             }"""
 
-
-        fun newClient() = Altinn3VarselKlientImpl(
-            altinnBaseUrl = "http://altinn",
-            httpClient = HttpClient(MockEngine { req ->
-                when (req.url.encodedPath) {
-                    "/notifications/api/v1/orders/$orderId/notifications/sms" -> respond(
-                        content = mockSmsResponse,
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-
-                    "/notifications/api/v1/orders/$orderId/notifications/email" -> respond(
-                        content = mockEmailResponse,
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-
-                    "/notifications/api/v1/orders" -> respond(
-                        //language=json
-                        content = """
-                            {
-                              "orderId": "42",
-                              "recipientLookup": {
-                                "status": "Success",
-                                "isReserved": [
-                                  "string"
-                                ],
-                                "missingContact": [
-                                  "string"
-                                ]
-                              }
-                            }""",
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-
-                    else -> error("unexpected request: ${req.url}")
-                }
-            }) {
-                expectSuccess = true
-                install(ContentNegotiation) {
-                    jackson()
-                }
-            },
-            altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
-                override suspend fun token(scope: String) = "fake-token"
-            },
-        )
-
         it("gets sms and email notifications for a given order id") {
-            val client = newClient()
+            val client = newClient(orderId, mockSmsResponse, mockEmailResponse)
             val result = client.notifications(orderId)
             result as Success
             result.orderId shouldBe orderId
@@ -501,6 +455,65 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
             }
         }
     }
+
+    describe("Altinn3VarselKlientImpl#notifications no sms only email") {
+        it("gets sms and email notifications for a given order id") {
+            val client = newClient(
+                "43",
+                smsResponse = """
+                {
+                  "generated": 0,
+                  "notifications": [],
+                  "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
+                  "succeeded": 0
+                }""",
+                emailResponse = """
+                {
+                  "generated": 2,
+                  "notifications": [
+                    {
+                      "id": "042f1a8a-fe29-47c9-a992-433399563c12",
+                      "recipient": {
+                        "emailAddress": "abc@a.no",
+                        "organizationNumber": "211511052"
+                      },
+                      "sendStatus": {
+                        "description": "The email has been created, but has not been picked up for processing yet.",
+                        "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                        "status": "New"
+                      },
+                      "succeeded": false
+                    },
+                    {
+                      "id": "6b3bfbc4-a092-4df7-8f38-e43171df49a9",
+                      "recipient": {
+                        "emailAddress": "sss.sss@ssss.no",
+                        "organizationNumber": "211511052"
+                      },
+                      "sendStatus": {
+                        "description": "The email has been created, but has not been picked up for processing yet.",
+                        "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                        "status": "New"
+                      },
+                      "succeeded": false
+                    }
+                  ],
+                  "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
+                  "succeeded": 0
+                }"""
+            )
+            client.notifications("43").let {
+                it should beOfType<Success>()
+                it as Success
+                it.generated shouldBe 2
+                it.succeeded shouldBe 0
+                it.notifications.size shouldBe 2
+                it.notifications.any { notification ->
+                    notification.sendStatus.isProcessing
+                } shouldBe true
+            }
+        }
+    }
 })
 
 /**
@@ -512,3 +525,55 @@ private suspend fun HttpRequestData.bodyAsString(): String {
     channel.close()
     return channel.readRemaining().readText()
 }
+
+private fun newClient(
+    orderId: String,
+    @Language("JSON") smsResponse: String,
+    @Language("JSON") emailResponse: String
+) = Altinn3VarselKlientImpl(
+    altinnBaseUrl = "http://altinn",
+    httpClient = HttpClient(MockEngine { req ->
+        when (req.url.encodedPath) {
+            "/notifications/api/v1/orders/$orderId/notifications/sms" -> respond(
+                content = smsResponse,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+
+            "/notifications/api/v1/orders/$orderId/notifications/email" -> respond(
+                content = emailResponse,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+
+            "/notifications/api/v1/orders" -> respond(
+                //language=json
+                content = """
+                            {
+                              "orderId": "42",
+                              "recipientLookup": {
+                                "status": "Success",
+                                "isReserved": [
+                                  "string"
+                                ],
+                                "missingContact": [
+                                  "string"
+                                ]
+                              }
+                            }""",
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+
+            else -> error("unexpected request: ${req.url}")
+        }
+    }) {
+        expectSuccess = true
+        install(ContentNegotiation) {
+            jackson()
+        }
+    },
+    altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
+        override suspend fun token(scope: String) = "fake-token"
+    },
+)

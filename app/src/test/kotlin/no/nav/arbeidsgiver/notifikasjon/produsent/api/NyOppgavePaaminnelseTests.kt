@@ -400,7 +400,53 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
         }
     }
 
-    describe("ekstern varlser med epost og sms og tjeneste") {
+    describe("ekstern varlser med 1 ressurs") {
+        val (stubbedKafkaProducer, engine) = setupEngine()
+        val response = engine.produsentApi(
+            nyOppgave(
+                "2020-01-01T00:00:00Z",
+                """
+                    frist: "2021-01-01"
+                    paaminnelse: {
+                        tidspunkt: {
+                            foerFrist: "P2DT3H4M"
+                        }
+                        eksterneVarsler: [
+                            { 
+                                altinnressurs: {
+                                    mottaker: {
+                                        ressursId: "nav_foo"
+                                    }
+                                    epostTittel: "hei"
+                                    epostHtmlBody: "body"
+                                    smsTekst: "tazte priv?"
+                                    sendevindu: NKS_AAPNINGSTID
+                                }
+                            }
+                        ]
+                    }
+                """,
+            )
+        )
+        it("opprettelse ok, med en ressurs") {
+            val r = response.getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
+            val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
+            hendelse.påminnelse?.eksterneVarsler?.size shouldBe 1
+            val varsel = hendelse.påminnelse!!.eksterneVarsler[0]
+            varsel shouldBe HendelseModel.AltinnressursVarselKontaktinfo(
+                varselId = r.paaminnelse!!.eksterneVarsler[0].id,
+                virksomhetsnummer = "0",
+                ressursId = "nav_foo",
+                epostTittel = "hei. ",
+                epostHtmlBody = "body",
+                smsTekst = "tazte priv?",
+                sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                sendeTidspunkt = null,
+            )
+        }
+    }
+
+    describe("ekstern varlser med epost og sms og tjeneste og ressurs") {
         val (stubbedKafkaProducer, engine) = setupEngine()
         val response = engine.produsentApi(
             nyOppgave(
@@ -446,6 +492,17 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
                                     sendevindu: NKS_AAPNINGSTID
                                 }
                             }
+                            { 
+                                altinnressurs: {
+                                    mottaker: {
+                                        ressursId: "nav_foo"
+                                    }
+                                    epostTittel: "hei"
+                                    epostHtmlBody: "body"
+                                    smsTekst: "tazte priv?"
+                                    sendevindu: NKS_AAPNINGSTID
+                                }
+                            }
                         ]
                     }
                 """,
@@ -456,7 +513,7 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
                 .paaminnelse!!
                 .eksterneVarsler
             val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
-            hendelse.påminnelse?.eksterneVarsler?.size shouldBe 3
+            hendelse.påminnelse?.eksterneVarsler?.size shouldBe 4
 
             hendelse.påminnelse!!.eksterneVarsler.toSet() shouldBe setOf(
                 HendelseModel.EpostVarselKontaktinfo(
@@ -483,6 +540,16 @@ class NyOppgavePaaminnelseTests : DescribeSpec({
                     serviceEdition = "1",
                     tittel = "hei. ",
                     innhold = "body",
+                    sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
+                    sendeTidspunkt = null,
+                ),
+                HendelseModel.AltinnressursVarselKontaktinfo(
+                    varselId = varsler[3].id,
+                    virksomhetsnummer = "0",
+                    ressursId = "nav_foo",
+                    epostTittel = "hei. ",
+                    epostHtmlBody = "body",
+                    smsTekst = "tazte priv?",
                     sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
                     sendeTidspunkt = null,
                 )

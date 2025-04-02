@@ -27,7 +27,7 @@ internal class QueryNotifikasjoner(
                     inputMerkelapp = env.getArgument<String?>("merkelapp"),
                     inputMerkelapper = env.getArgument<List<String>?>("merkelapper"),
                     grupperingsid = env.getArgument<String>("grupperingsid"),
-                    first = env.getArgumentOrDefault("first", 1000),
+                    first = Validators.MaxValue("first", 10000)(env.getArgumentOrDefault("first", 1000)),
                     after = Cursor(env.getArgumentOrDefault("after", Cursor.empty().value))
                 )
             }
@@ -180,7 +180,14 @@ internal class QueryNotifikasjoner(
         val merkelapp: String,
         val tekst: String,
         val lenke: String,
-    )
+    ) {
+        init {
+            Validators.compose(
+                Validators.MaxLength("notifikasjon.tekst", 300),
+                Validators.NonIdentifying("notifikasjon.tekst")
+            )(tekst)
+        }
+    }
 
     data class EksterntVarsel(
         val id: UUID,
@@ -301,7 +308,7 @@ internal class QueryNotifikasjoner(
     data class AltinnRessursMottaker(
         val ressursId: String,
         val virksomhetsnummer: String
-    ) : Mottaker(){
+    ) : Mottaker() {
         companion object {
             fun fraDomene(domene: HendelseModel.AltinnRessursMottaker): AltinnRessursMottaker {
                 return AltinnRessursMottaker(
@@ -330,10 +337,13 @@ internal class QueryNotifikasjoner(
         val merkelapper = when {
             inputMerkelapp == null && inputMerkelapper == null ->
                 produsent.tillatteMerkelapper
+
             inputMerkelapp == null && inputMerkelapper != null ->
                 inputMerkelapper
+
             inputMerkelapp != null && inputMerkelapper == null ->
                 listOf(inputMerkelapp)
+
             else ->
                 return Error.UgyldigMerkelapp("Kan ikke spesifiesere begge filtrene 'merkelapp' og 'merkelapper'")
         }

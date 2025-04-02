@@ -3,19 +3,25 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldContainIgnoringCase
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.util.getGraphqlErrors
-import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import no.nav.arbeidsgiver.notifikasjon.produsent.tilProdusentModel
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import org.intellij.lang.annotations.Language
+import java.util.*
 
 class InputValideringTests : DescribeSpec({
-    val engine = ktorProdusentTestServer()
+    val engine = ktorProdusentTestServer(
+        produsentRepository = object : ProdusentRepositoryStub() {
+            val oppgave = EksempelHendelse.OppgaveOpprettet.tilProdusentModel()
+            override suspend fun hentNotifikasjon(id: UUID) = oppgave
+            override suspend fun hentNotifikasjon(eksternId: String, merkelapp: String) = oppgave
+        }
+    )
 
     describe("input-validering av produsent-api") {
         context("mutation.nyBeskjed") {
@@ -101,8 +107,7 @@ class InputValideringTests : DescribeSpec({
                     tekst = "x".repeat(301),
                 ).let { response ->
                     response.getGraphqlErrors().let { errors ->
-                        errors shouldHaveSize 1
-                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
+                        errors.map { it.message } shouldContain "notifikasjon.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
                     }
                 }
             }
@@ -183,6 +188,35 @@ class InputValideringTests : DescribeSpec({
                         ]""".trimIndent()
                 ).let {
                     it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+                engine.nyBeskjed(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "sms": {
+                                    "mottaker": {
+                                       "kontaktinfo": {
+                                          "tlf": "40000000"  
+                                       }
+                                    },
+                                    "smsTekst": "test",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                },
+                                "epost": {
+                                    "mottaker": {
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "epost.mottaker: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
                 }
             }
 
@@ -218,8 +252,7 @@ class InputValideringTests : DescribeSpec({
                     tekst = "x".repeat(301),
                 ).let { response ->
                     response.getGraphqlErrors().let { errors ->
-                        errors shouldHaveSize 1
-                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
+                        errors.map { it.message } shouldContain "notifikasjon.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
                     }
                 }
             }
@@ -300,6 +333,24 @@ class InputValideringTests : DescribeSpec({
                         ]""".trimIndent()
                 ).let {
                     it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+                engine.nyOppgave(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "epost": {
+                                    "mottaker": {
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (Ingen felt er satt)"
                 }
             }
 
@@ -387,8 +438,7 @@ class InputValideringTests : DescribeSpec({
                     tekst = "x".repeat(301),
                 ).let { response ->
                     response.getGraphqlErrors().let { errors ->
-                        errors shouldHaveSize 1
-                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
+                        errors.map { it.message } shouldContain "kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
                     }
                 }
             }
@@ -469,6 +519,24 @@ class InputValideringTests : DescribeSpec({
                         ]""".trimIndent()
                 ).let {
                     it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+                }
+                engine.nyKalenderavtale(
+                    eksterneVarsler = """
+                        [
+                            {
+                                "epost": {
+                                    "mottaker": {
+                                    },
+                                    "epostTittel": "tittel",
+                                    "epostHtmlBody": "html",
+                                    "sendetidspunkt": {
+                                        "sendevindu": "LOEPENDE"
+                                    }
+                                }
+                            }
+                        ]""".trimIndent()
+                ).let {
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (Ingen felt er satt)"
                 }
             }
 
@@ -555,7 +623,7 @@ class InputValideringTests : DescribeSpec({
                 engine.nySak(
                     tittel = "A".repeat(141),
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tittel': verdien overstiger maks antall tegn"
+                    it.getGraphqlErrors().map { it.message } shouldContain "sak.tittel: verdien overstiger maks antall tegn, antall=141, maks=140."
                 }
             }
 
@@ -563,7 +631,7 @@ class InputValideringTests : DescribeSpec({
                 engine.nySak(
                     tittel = "Stor Lampe identifiserende data: 99999999999"
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tittel': verdien inneholder uønsket data: personnummer (11 siffer)"
+                    it.getGraphqlErrors().map { it.message } shouldContain "sak.tittel: verdien inneholder uønsket data: personnummer (11 siffer)"
                 }
             }
 
@@ -571,7 +639,7 @@ class InputValideringTests : DescribeSpec({
                 engine.nySak(
                     tilleggsinformasjon = "A".repeat(141)
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien overstiger maks antall tegn"
+                    it.getGraphqlErrors().map { it.message } shouldContain "sak.tilleggsinformasjon: verdien overstiger maks antall tegn, antall=141, maks=140."
                 }
             }
 
@@ -579,7 +647,7 @@ class InputValideringTests : DescribeSpec({
                 engine.nySak(
                     tilleggsinformasjon = "Stor Lampe identifiserende data: 99999999999"
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien inneholder uønsket data: personnummer (11 siffer)"
+                    it.getGraphqlErrors().map { it.message } shouldContain "sak.tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
                 }
             }
 
@@ -624,10 +692,11 @@ class InputValideringTests : DescribeSpec({
 
         context("Mutation.tilleggsinformasjonSak") {
             it("tilleggsinformasjon maks lengde") {
-                engine.produsentApi("""
+                engine.produsentApi(
+                    """
                     mutation {
                         tilleggsinformasjonSak(
-                            id: "42"
+                            id: "${uuid("42")}"
                             tilleggsinformasjon: "${"A".repeat(141)}"
                         ) {
                             __typename
@@ -637,15 +706,16 @@ class InputValideringTests : DescribeSpec({
                         }
                     }""".trimIndent()
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien overstiger maks antall tegn"
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "tilleggsinformasjon: verdien overstiger maks antall tegn"
                 }
             }
 
             it("tilleggsinformasjon med identifiserende data") {
-                engine.produsentApi("""
+                engine.produsentApi(
+                    """
                     mutation {
                         tilleggsinformasjonSak(
-                            id: "42"
+                            id: "${uuid("42")}"
                             tilleggsinformasjon: "Stor Lampe identifiserende data: 99999999999"
                         ) {
                             __typename
@@ -655,14 +725,15 @@ class InputValideringTests : DescribeSpec({
                         }
                     }""".trimIndent()
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien inneholder uønsket data: personnummer (11 siffer)"
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
                 }
             }
         }
 
         context("Mutation.tilleggsinformasjonSakByGrupperingsid") {
             it("tilleggsinformasjon maks lengde") {
-                engine.produsentApi("""
+                engine.produsentApi(
+                    """
                     mutation {
                         tilleggsinformasjonSakByGrupperingsid(
                             grupperingsid: "42"
@@ -676,12 +747,13 @@ class InputValideringTests : DescribeSpec({
                         }
                     }""".trimIndent()
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien overstiger maks antall tegn"
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "tilleggsinformasjon: verdien overstiger maks antall tegn"
                 }
             }
 
             it("tilleggsinformasjon med identifiserende data") {
-                engine.produsentApi("""
+                engine.produsentApi(
+                    """
                     mutation {
                         tilleggsinformasjonSakByGrupperingsid(
                             grupperingsid: "42"
@@ -695,7 +767,7 @@ class InputValideringTests : DescribeSpec({
                         }
                     }""".trimIndent()
                 ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "'tilleggsinformasjon': verdien inneholder uønsket data: personnummer (11 siffer)"
+                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
                 }
             }
         }
@@ -1135,17 +1207,18 @@ class InputValideringTests : DescribeSpec({
                 engine.oppdaterKalenderavtale(
                     tekst = "x".repeat(301),
                 ).let { response ->
-                    response.getGraphqlErrors().let { errors ->
-                        errors shouldHaveSize 1
-                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
-                    }
+                    response.getGraphqlErrors().map {
+                        it.message
+                    } shouldContain "kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
                 }
             }
 
             it("tekst med identifiserende data") {
                 engine.oppdaterKalenderavtale(
                     tekst = "1".repeat(11)
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+                ).getGraphqlErrors().map {
+                    it.message
+                } shouldContain "kalenderavtale.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("harddelete nøyaktig ett felt") {
@@ -1282,17 +1355,18 @@ class InputValideringTests : DescribeSpec({
                 engine.oppdaterKalenderavtaleByEksternId(
                     tekst = "x".repeat(301),
                 ).let { response ->
-                    response.getGraphqlErrors().let { errors ->
-                        errors shouldHaveSize 1
-                        errors.first().message shouldContain "verdien overstiger maks antall tegn, antall=301, maks=300."
-                    }
+                    response.getGraphqlErrors().map {
+                        it.message
+                    } shouldContain "kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
                 }
             }
 
             it("tekst med identifiserende data") {
                 engine.oppdaterKalenderavtaleByEksternId(
                     tekst = "1".repeat(11)
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+                ).getGraphqlErrors().map {
+                    it.message
+                } shouldContain "kalenderavtale.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("harddelete nøyaktig ett felt") {

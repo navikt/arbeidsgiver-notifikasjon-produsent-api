@@ -2,13 +2,13 @@ import {gql, useMutation} from "@apollo/client";
 import {print} from "graphql/language";
 import React, {useContext, useEffect} from "react";
 import {Mutation} from "../api/graphql-types.ts";
-import { Button, Checkbox, TextField } from '@navikt/ds-react';
+import {Button, TextField, ToggleGroup} from '@navikt/ds-react';
 import cssClasses from "./KalenderAvtale.module.css";
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {darcula} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {GrupperingsidContext} from "../App.tsx";
-import {EksternVarsel, formateEksternVarsel} from "./EksternVarsling.tsx";
-import {MottakerRef, MottakerInput} from "./MottakerInput.tsx";
+import {EksternVarsel, formateEksternVarsel, formaterPåminnelse} from "./EksternVarsling.tsx";
+import {MottakerInput, MottakerRef} from "./MottakerInput.tsx";
 
 const NY_OPPGAVE = gql`
     mutation (
@@ -70,7 +70,6 @@ export const NyOppgave: React.FunctionComponent = () => {
     const merkelappRef = React.useRef<HTMLInputElement>(null);
     const lenkeRef = React.useRef<HTMLInputElement>(null);
     const eksternIdRef = React.useRef<HTMLInputElement>(null);
-    const paaminnelseRef = React.useRef<HTMLInputElement>(null);
     const eksternVarselRef = React.useRef<EksternVarsel>(null);
     const mottakerRef = React.useRef<MottakerRef>(null);
     const tidspunktIdRef = React.useRef<HTMLInputElement>(null);
@@ -97,12 +96,7 @@ export const NyOppgave: React.FunctionComponent = () => {
                 eksternId: nullIfEmpty(eksternIdRef.current?.value),
                 merkelapp: nullIfEmpty(merkelappRef.current?.value),
                 opprettetTidspunkt: nullIfEmpty(tidspunktIdRef.current?.value) ?? new Date().toISOString(),
-                ... harPaaminnelse ? {
-                    paaminnelse: {
-                        tidspunkt: {etterOpprettelse: nullIfEmpty(paaminnelseRef.current?.value ?? "")},
-                        eksterneVarsler: []
-                    }
-                    }:null,
+                paaminnelse: harPaaminnelse ? formaterPåminnelse(eksternVarselRef) : null,
                 eksterneVarsler: formateEksternVarsel(eksternVarselRef)
             }
         })
@@ -115,8 +109,15 @@ export const NyOppgave: React.FunctionComponent = () => {
             {print(NY_OPPGAVE)}
         </SyntaxHighlighter>
 
-        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", width: "70rem", gap: "16px"}}>
-            <div>
+        <div
+            style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                width: "105rem",
+                gap: "32px",
+            }}
+        >
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <TextField label={"Grupperingsid*"} ref={grupperingsidRef}/>
                 <TextField label={"Virksomhetsnummer*"} ref={virksomhetsnummerRef} defaultValue="211511052"/>
                 <MottakerInput ref={mottakerRef}/>
@@ -125,11 +126,22 @@ export const NyOppgave: React.FunctionComponent = () => {
                 <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
                 <TextField label={"Lenke"} ref={lenkeRef}/>
                 <TextField label={"EksternId*"} ref={eksternIdRef} defaultValue={crypto.randomUUID().toString()}/>
-                <Checkbox onChange={() => setHarPaaminnelse(!harPaaminnelse)} checked={harPaaminnelse}>Påminnelse</Checkbox>
-                {harPaaminnelse && <TextField label="Påminnelse" ref={paaminnelseRef} defaultValue="PT3M"/>}
                 <TextField label={`Opprettet (${new Date().toISOString()})`} ref={tidspunktIdRef} />
             </div>
-            <EksternVarsel ref={eksternVarselRef}/>
+            <div>
+                <EksternVarsel ref={eksternVarselRef}/>
+                <hr/>
+                <ToggleGroup
+                    defaultValue="Ingen"
+                    onChange={(v) => setHarPaaminnelse(v === "Send påminnelse")}
+                    label="Påminnelse"
+                >
+                    <ToggleGroup.Item value={"Ingen"}>Ingen</ToggleGroup.Item>
+                    <ToggleGroup.Item value={"Send påminnelse"}>
+                        Send påminnelse
+                    </ToggleGroup.Item>
+                </ToggleGroup>
+            </div>
         </div>
         <Button style={{maxWidth: "20rem"}} variant="primary"
                 onClick={handleSend}>Opprett en ny oppgave</Button>
