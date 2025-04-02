@@ -4,7 +4,6 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
 import io.micrometer.core.instrument.Tags
@@ -36,11 +35,7 @@ fun defaultHttpClient(
 
     install(HttpRequestRetry) {
         maxRetries = 5
-        retryIf { _, res ->
-            res.status == HttpStatusCode.ServiceUnavailable ||
-                    res.status == HttpStatusCode.GatewayTimeout ||
-                    res.status == HttpStatusCode.BadGateway
-        }
+        retryOnServerErrors(5)
         retryOnExceptionIf { _, cause ->
             when (cause) {
                 is SocketTimeoutException,
