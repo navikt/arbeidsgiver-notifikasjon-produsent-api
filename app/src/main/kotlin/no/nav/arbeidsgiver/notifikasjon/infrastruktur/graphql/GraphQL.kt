@@ -75,12 +75,14 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
                 timer.coRecord {
                     fetcher(env)
                 }
+            } catch (e: ValideringsFeil) {
+                handleValideringsFeil(e, env)
             } catch (e: GraphqlErrorException) {
                 handleUnexpectedError(e, e)
             } catch (e: RuntimeException) {
                 val valideringsFeil = e.findCause<ValideringsFeil>()
                 if (valideringsFeil != null) {
-                    handleUnexpectedError(valideringsFeil, valideringsFeil)
+                    handleValideringsFeil(valideringsFeil, env)
                 } else {
                     handleUnexpectedError(e, UnhandledGraphQLExceptionError(e, fieldName))
                 }
@@ -88,6 +90,15 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
         }
     }
 }
+
+/**
+ * The validation error needs to be connected to the field that caused it.
+ * Otherwise we do not adhere to the GraphQL spec.
+ */
+private fun handleValideringsFeil(
+    e: ValideringsFeil,
+    env: DataFetchingEnvironment
+) = handleUnexpectedError(e, ExceptionWhileDataFetching(env.executionStepInfo.path, e, env.field.sourceLocation))
 
 fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetcherResult<*> {
     GraphQLLogger.log.error(
