@@ -3,9 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
-import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.string.shouldContainIgnoringCase
+import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
@@ -60,9 +59,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         ]
                         """.trimIndent()
-                    ).let {
-                        it.getGraphqlErrors() shouldHaveSize 0
-                    }
+                    ).getGraphqlErrors() shouldHaveSize 0
                 }
 
                 withData(
@@ -96,28 +93,20 @@ class InputValideringTests : DescribeSpec({
                             }
                         ]
                         """.trimIndent()
-                    ).let {
-                        it.getGraphqlErrors()[0].message shouldContainIgnoringCase "ikke et gyldig norsk mobilnummer"
-                    }
+                    ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : Kontaktinfo.tlf: verdien er ikke et gyldig norsk mobilnummer."
                 }
             }
 
             it("tekst maks lengde") {
                 engine.nyBeskjed(
                     tekst = "x".repeat(301),
-                ).let { response ->
-                    response.getGraphqlErrors().let { errors ->
-                        errors.map { it.message } shouldContain "notifikasjon.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
-                    }
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : notifikasjon.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
             }
 
             it("ingen mottaker") {
                 engine.nyBeskjed(
                     mottakere = """[{}]"""
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : MottakerInput: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
             }
 
             it("to mottaker-felt oppgitt på en mottaker") {
@@ -134,13 +123,13 @@ class InputValideringTests : DescribeSpec({
                             }
                         }]
                     """.trimIndent()
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : MottakerInput: nøyaktig ett felt skal være satt. (altinn, naermesteLeder er gitt)"
             }
 
             it("tekst med identifiserende data") {
                 engine.nyBeskjed(
                     tekst = "1".repeat(11)
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : notifikasjon.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("harddelete nøyaktig ett felt") {
@@ -151,9 +140,7 @@ class InputValideringTests : DescribeSpec({
                             "om": "P2DT3H4M"
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
 
             it("eksterneVarsler nøyaktig ett felt") {
@@ -186,9 +173,8 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : EksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+
                 engine.nyBeskjed(
                     eksterneVarsler = """
                         [
@@ -215,9 +201,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "epost.mottaker: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : epost.mottaker: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
             }
 
             it("sendetidspunkt nøyaktig ett felt") {
@@ -240,9 +224,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyBeskjed) : SendetidspunktInput: nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
             }
         }
 
@@ -250,19 +232,13 @@ class InputValideringTests : DescribeSpec({
             it("tekst maks lengde") {
                 engine.nyOppgave(
                     tekst = "x".repeat(301),
-                ).let { response ->
-                    response.getGraphqlErrors().let { errors ->
-                        errors.map { it.message } shouldContain "notifikasjon.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
-                    }
-                }
+                ).getGraphqlErrors().first().message shouldBe "Exception while fetching data (/nyOppgave) : notifikasjon.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
             }
 
             it("ingen mottaker") {
                 engine.nyOppgave(
                     mottakere = """[{}]"""
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : MottakerInput: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
             }
 
             it("to mottaker-felt oppgitt på en mottaker") {
@@ -279,13 +255,13 @@ class InputValideringTests : DescribeSpec({
                             }
                         }]
                     """.trimIndent()
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : MottakerInput: nøyaktig ett felt skal være satt. (altinn, naermesteLeder er gitt)"
             }
 
             it("tekst med identifiserende data") {
                 engine.nyOppgave(
                     tekst = "1".repeat(11)
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : notifikasjon.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("harddelete nøyaktig ett felt") {
@@ -296,9 +272,7 @@ class InputValideringTests : DescribeSpec({
                             "om": "P2DT3H4M"
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
 
             it("eksterneVarsler nøyaktig ett felt") {
@@ -331,9 +305,8 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : EksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+
                 engine.nyOppgave(
                     eksterneVarsler = """
                         [
@@ -349,9 +322,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (Ingen felt er satt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : epost.mottaker: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
             }
 
             it("sendetidspunkt nøyaktig ett felt") {
@@ -374,9 +345,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : SendetidspunktInput: nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
             }
 
             it("paaminnelse.tidspunkt nøyaktig ett felt") {
@@ -389,9 +358,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : PaaminnelseTidspunktInput: nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
             }
 
             it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
@@ -426,9 +393,7 @@ class InputValideringTests : DescribeSpec({
                             ]
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyOppgave) : PaaminnelseEksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
         }
 
@@ -436,19 +401,13 @@ class InputValideringTests : DescribeSpec({
             it("tekst maks lengde") {
                 engine.nyKalenderavtale(
                     tekst = "x".repeat(301),
-                ).let { response ->
-                    response.getGraphqlErrors().let { errors ->
-                        errors.map { it.message } shouldContain "kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
-                    }
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
             }
 
             it("ingen mottaker") {
                 engine.nyKalenderavtale(
                     mottakere = """[{}]"""
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : MottakerInput: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
             }
 
             it("to mottaker-felt oppgitt på en mottaker") {
@@ -465,13 +424,13 @@ class InputValideringTests : DescribeSpec({
                             }
                         }]
                     """.trimIndent()
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : MottakerInput: nøyaktig ett felt skal være satt. (altinn, naermesteLeder er gitt)"
             }
 
             it("tekst med identifiserende data") {
                 engine.nyKalenderavtale(
                     tekst = "1".repeat(11)
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "personnummer"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : kalenderavtale.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("harddelete nøyaktig ett felt") {
@@ -482,9 +441,7 @@ class InputValideringTests : DescribeSpec({
                             "om": "P2DT3H4M"
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
 
             it("eksterneVarsler nøyaktig ett felt") {
@@ -517,9 +474,8 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : EksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
+
                 engine.nyKalenderavtale(
                     eksterneVarsler = """
                         [
@@ -535,9 +491,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (Ingen felt er satt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : epost.mottaker: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
             }
 
             it("sendetidspunkt nøyaktig ett felt") {
@@ -560,9 +514,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : SendetidspunktInput: nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
             }
 
             it("paaminnelse.tidspunkt nøyaktig ett felt") {
@@ -575,9 +527,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : PaaminnelseTidspunktInput: nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
             }
 
             it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
@@ -612,9 +562,7 @@ class InputValideringTests : DescribeSpec({
                             ]
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nyKalenderavtale) : PaaminnelseEksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
         }
 
@@ -622,41 +570,31 @@ class InputValideringTests : DescribeSpec({
             it("tittel maks lengde") {
                 engine.nySak(
                     tittel = "A".repeat(141),
-                ).let {
-                    it.getGraphqlErrors().map { it.message } shouldContain "sak.tittel: verdien overstiger maks antall tegn, antall=141, maks=140."
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nySak) : sak.tittel: verdien overstiger maks antall tegn, antall=141, maks=140."
             }
 
             it("tittel med identifiserende data") {
                 engine.nySak(
                     tittel = "Stor Lampe identifiserende data: 99999999999"
-                ).let {
-                    it.getGraphqlErrors().map { it.message } shouldContain "sak.tittel: verdien inneholder uønsket data: personnummer (11 siffer)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nySak) : sak.tittel: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("tilleggsinformasjon maks lengde") {
                 engine.nySak(
                     tilleggsinformasjon = "A".repeat(141)
-                ).let {
-                    it.getGraphqlErrors().map { it.message } shouldContain "sak.tilleggsinformasjon: verdien overstiger maks antall tegn, antall=141, maks=140."
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nySak) : sak.tilleggsinformasjon: verdien overstiger maks antall tegn, antall=141, maks=140."
             }
 
             it("tilleggsinformasjon med identifiserende data") {
                 engine.nySak(
                     tilleggsinformasjon = "Stor Lampe identifiserende data: 99999999999"
-                ).let {
-                    it.getGraphqlErrors().map { it.message } shouldContain "sak.tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nySak) : sak.tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("ingen mottaker") {
                 engine.nySak(
                     mottakere = """[{}]"""
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nySak) : MottakerInput: nøyaktig ett felt skal være satt. (Ingen felt er satt)"
             }
 
             it("to mottaker-felt oppgitt på en mottaker") {
@@ -673,7 +611,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }]
                     """.trimIndent()
-                ).getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nySak) : MottakerInput: nøyaktig ett felt skal være satt. (altinn, naermesteLeder er gitt)"
             }
 
             it("harddelete nøyaktig ett felt") {
@@ -684,9 +622,7 @@ class InputValideringTests : DescribeSpec({
                             "om": "P2DT3H4M"
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/nySak) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
         }
 
@@ -705,9 +641,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "tilleggsinformasjon: verdien overstiger maks antall tegn"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/tilleggsinformasjonSak) : tilleggsinformasjon: verdien overstiger maks antall tegn, antall=141, maks=140."
             }
 
             it("tilleggsinformasjon med identifiserende data") {
@@ -724,9 +658,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/tilleggsinformasjonSak) : tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
         }
 
@@ -746,9 +678,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "tilleggsinformasjon: verdien overstiger maks antall tegn"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/tilleggsinformasjonSakByGrupperingsid) : tilleggsinformasjon: verdien overstiger maks antall tegn, antall=141, maks=140."
             }
 
             it("tilleggsinformasjon med identifiserende data") {
@@ -766,9 +696,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/tilleggsinformasjonSakByGrupperingsid) : tilleggsinformasjon: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
         }
 
@@ -793,14 +721,13 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtfoert) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
         }
 
         context("Mutation.oppgaveUtfoertByEksternId") {
             it("harddelete nøyaktig ett felt") {
+                @Suppress("GraphQLDeprecatedSymbols")
                 engine.produsentApi(
                     """
                     mutation {
@@ -821,9 +748,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtfoertByEksternId) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
         }
 
@@ -849,9 +774,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtfoertByEksternId_V2) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
         }
 
@@ -875,9 +798,7 @@ class InputValideringTests : DescribeSpec({
                         }
                     }
                 }""".trimIndent()
-            ).let {
-                it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-            }
+            ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtgaatt) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
         }
 
         context("Mutation.oppgaveUtgaattByEksternId") {
@@ -901,9 +822,7 @@ class InputValideringTests : DescribeSpec({
                         }
                     }
                 }""".trimIndent()
-            ).let {
-                it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-            }
+            ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtgaattByEksternId) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
         }
 
         context("Mutation.oppgaveUtsettFrist") {
@@ -927,9 +846,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtsettFrist) : PaaminnelseTidspunktInput: nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
             }
 
             it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
@@ -974,9 +891,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtsettFrist) : PaaminnelseEksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
         }
 
@@ -1002,9 +917,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtsettFristByEksternId) : PaaminnelseTidspunktInput: nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
             }
 
             it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
@@ -1050,9 +963,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveUtsettFristByEksternId) : PaaminnelseEksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
         }
 
@@ -1076,9 +987,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveEndrePaaminnelse) : PaaminnelseTidspunktInput: nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
             }
 
             it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
@@ -1122,9 +1031,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveEndrePaaminnelse) : PaaminnelseEksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
         }
 
@@ -1149,9 +1056,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveEndrePaaminnelseByEksternId) : PaaminnelseTidspunktInput: nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
             }
 
             it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
@@ -1196,9 +1101,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     }""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppgaveEndrePaaminnelseByEksternId) : PaaminnelseEksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
         }
 
@@ -1206,19 +1109,13 @@ class InputValideringTests : DescribeSpec({
             it("tekst maks lengde") {
                 engine.oppdaterKalenderavtale(
                     tekst = "x".repeat(301),
-                ).let { response ->
-                    response.getGraphqlErrors().map {
-                        it.message
-                    } shouldContain "kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtale) : kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
             }
 
             it("tekst med identifiserende data") {
                 engine.oppdaterKalenderavtale(
                     tekst = "1".repeat(11)
-                ).getGraphqlErrors().map {
-                    it.message
-                } shouldContain "kalenderavtale.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtale) : kalenderavtale.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("harddelete nøyaktig ett felt") {
@@ -1232,9 +1129,7 @@ class InputValideringTests : DescribeSpec({
                             "strategi": "OVERSKRIV"
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe  "Exception while fetching data (/oppdaterKalenderavtale) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
 
             it("eksterneVarsler nøyaktig ett felt") {
@@ -1267,9 +1162,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtale) : EksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
 
             it("sendetidspunkt nøyaktig ett felt") {
@@ -1292,9 +1185,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtale) : SendetidspunktInput: nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
             }
 
             it("paaminnelse.tidspunkt nøyaktig ett felt") {
@@ -1307,9 +1198,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtale) : PaaminnelseTidspunktInput: nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
             }
 
             it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
@@ -1344,9 +1233,7 @@ class InputValideringTests : DescribeSpec({
                             ]
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtale) : PaaminnelseEksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
         }
 
@@ -1354,19 +1241,13 @@ class InputValideringTests : DescribeSpec({
             it("tekst maks lengde") {
                 engine.oppdaterKalenderavtaleByEksternId(
                     tekst = "x".repeat(301),
-                ).let { response ->
-                    response.getGraphqlErrors().map {
-                        it.message
-                    } shouldContain "kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtaleByEksternId) : kalenderavtale.tekst: verdien overstiger maks antall tegn, antall=301, maks=300."
             }
 
             it("tekst med identifiserende data") {
                 engine.oppdaterKalenderavtaleByEksternId(
                     tekst = "1".repeat(11)
-                ).getGraphqlErrors().map {
-                    it.message
-                } shouldContain "kalenderavtale.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtaleByEksternId) : kalenderavtale.tekst: verdien inneholder uønsket data: personnummer (11 siffer)"
             }
 
             it("harddelete nøyaktig ett felt") {
@@ -1380,9 +1261,7 @@ class InputValideringTests : DescribeSpec({
                             "strategi": "OVERSKRIV"
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (den, om er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtaleByEksternId) : FutureTemporalInput: nøyaktig ett felt skal være satt. (den, om er gitt)"
             }
 
             it("eksterneVarsler nøyaktig ett felt") {
@@ -1415,9 +1294,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtaleByEksternId) : EksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
 
             it("sendetidspunkt nøyaktig ett felt") {
@@ -1440,9 +1317,7 @@ class InputValideringTests : DescribeSpec({
                                 }
                             }
                         ]""".trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtaleByEksternId) : SendetidspunktInput: nøyaktig ett felt skal være satt. (tidspunkt, sendevindu er gitt)"
             }
 
             it("paaminnelse.tidspunkt nøyaktig ett felt") {
@@ -1455,9 +1330,7 @@ class InputValideringTests : DescribeSpec({
                             }
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtaleByEksternId) : PaaminnelseTidspunktInput: nøyaktig ett felt skal være satt. (konkret, etterOpprettelse er gitt)"
             }
 
             it("paaminnelse.eksterneVarsler nøyaktig ett felt") {
@@ -1492,9 +1365,7 @@ class InputValideringTests : DescribeSpec({
                             ]
                         }
                     """.trimIndent()
-                ).let {
-                    it.getGraphqlErrors()[0].message shouldContainIgnoringCase "nøyaktig ett felt skal være satt. (sms, epost er gitt)"
-                }
+                ).getGraphqlErrors()[0].message shouldBe "Exception while fetching data (/oppdaterKalenderavtaleByEksternId) : PaaminnelseEksterntVarselInput: nøyaktig ett felt skal være satt. (sms, epost er gitt)"
             }
         }
     }
