@@ -634,7 +634,9 @@ class EksternVarslingRepository(
                 where 
                     state in ('${EksterntVarselTilstand.NY}', '${EksterntVarselTilstand.SENDT}')
                     and varsel_id not in (select varsel_id from job_queue)
+                    and varsel_id not in (select varsel_id from wait_queue)
             )
+            on conflict do nothing
         """
         )
     }
