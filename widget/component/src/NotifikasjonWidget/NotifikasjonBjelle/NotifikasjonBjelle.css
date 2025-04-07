@@ -6,10 +6,21 @@
   border-radius: 1rem;
   border: 1px solid var(--a-deepblue-800);
   flex-shrink: 0;
-}
 
-.notifikasjon_bjelle_uleste {
-  background-color: var(--a-deepblue-800);
+  &.uleste {
+    background-color: var(--a-deepblue-800);
+  }
+
+  &.ingen_uleste {
+    svg path {
+      fill: var(--a-deepblue-800);
+      stroke: var(--a-deepblue-800);
+    }
+
+    p {
+      color: var(--a-deepblue-800);
+    }
+  }
 }
 
 .notifikasjon_bjelle-knapp {
@@ -37,15 +48,24 @@
   .notifikasjon_bjelle-knapp:focus,
   .notifikasjon_bjelle-knapp:hover,
   .notifikasjon_bjelle-knapp:focus-visible {
-    border: none;
-    text-decoration: underline;
-    color: var(--a-text-on-inverted);
-    background-color: var(--a-deepblue-500);
-  }
+    &.uleste {
+      border: none;
+      text-decoration: underline;
+      color: var(--a-text-on-inverted);
+      background-color: var(--a-deepblue-700);
+    }
+    &.ingen_uleste {
+      border: none;
+      text-decoration: underline;
+      color: var(--a-deepblue-800);
+      background-color: var(--a-text-on-inverted);
 
-  .notifikasjon_bjelle-knapp:focus svg path,
-  .notifikasjon_bjelle-knapp:hover svg path {
-    fill: var(--a-white);
+      svg path{
+        stroke: var(--a-deepblue-800);
+        stroke-width: 1px;
+        fill: var(--a-text-on-inverted);
+      }
+    }
   }
 }
 
@@ -75,11 +95,6 @@
   background-color: var(--a-red-500);
   transform: translate(var(--ulest-left), var(--ulest-top));
   animation: synlig 1s;
-}
-
-.notifikasjon_bjelle-ikon__ulest-sirkel--hide {
-  visibility: hidden;
-  transition: 0.2s all linear;
 }
 
 .notifikasjon_bjelle-ikon__ulest-antall {
