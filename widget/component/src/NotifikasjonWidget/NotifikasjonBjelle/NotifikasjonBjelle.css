@@ -4,18 +4,31 @@
   justify-content: center;
   background-color: transparent;
   border-radius: 1rem;
-  border: 1px solid var(--a-deepblue-800);
   flex-shrink: 0;
-
-  &.er_apen{
-    border-color: transparent;
-  }
 
   &.uleste {
     background-color: var(--a-deepblue-800);
+
+    &.er_apen {
+      background-color: var(--a-text-on-inverted);
+
+      svg path {
+        fill: var(--a-deepblue-800);
+      }
+
+      p {
+        color: var(--a-deepblue-800);
+      }
+    }
   }
 
   &.ingen_uleste {
+    border: 1px solid var(--a-deepblue-800);
+    border-color: var(--a-deepblue-800);
+    &.er_apen {
+      border-color: transparent;
+    }
+
     svg path {
       fill: var(--a-deepblue-800);
       stroke: var(--a-deepblue-800);
@@ -44,26 +57,30 @@
   }
 }
 
-.notifikasjon_bjelle-knapp:focus-visible {
-  outline-style: solid;
-}
-
 @media (hover: hover) {
   .notifikasjon_bjelle-knapp:hover,
   .notifikasjon_bjelle-knapp:focus-visible {
+    text-decoration: underline;
+
     &.uleste {
-      border: none;
-      text-decoration: underline;
       color: var(--a-text-on-inverted);
       background-color: var(--a-deepblue-700);
+
+      p {
+        color: var(--a-text-on-inverted);
+      }
+
+      svg path {
+        fill: var(--a-text-on-inverted);
+      }
     }
+
     &.ingen_uleste {
       border: none;
-      text-decoration: underline;
       color: var(--a-deepblue-800);
       background-color: var(--a-text-on-inverted);
 
-      svg path{
+      svg path {
         stroke: var(--a-deepblue-800);
         stroke-width: 1px;
         fill: var(--a-text-on-inverted);
@@ -101,60 +118,8 @@
 }
 
 .notifikasjon_bjelle-ikon__ulest-antall {
-  color: white;
+  color: var(--a-text-on-inverted) !important;
   font-weight: bold;
   font-size: 14px;
-}
-
-.notifikasjon_bjelle-understrek {
-  width: 4.5rem;
-  height: 0.25rem;
-  margin-top: 0.25rem;
-  background-color: var(--a-deepblue-500);
-}
-
-.notifikasjon_bjelle-understrek--closed {
-  visibility: hidden;
-}
-
-.notifikasjon_bjelle-ikon-svinger > svg {
-  top: 100px;
-  animation: sving 1s;
-  transform-origin: center 5px;
-}
-
-@keyframes sving {
-  0% {
-    transform: rotate(0deg);
-  }
-  20% {
-    transform: rotate(-25deg);
-  }
-  40% {
-    transform: rotate(25deg);
-  }
-  60% {
-    transform: rotate(-25deg);
-  }
-  80% {
-    transform: rotate(25deg);
-  }
-
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-
-@keyframes synlig {
-  0% {
-    opacity: 0;
-  }
-  98% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
 }
 
