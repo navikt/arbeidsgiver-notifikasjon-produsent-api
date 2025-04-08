@@ -17,7 +17,7 @@ const NotifikasjonBjelleUleste = ({
                                     focusableRef,
                                   }: Props) => {
   return (
-    <div className={'notifikasjon_bjelle uleste'}>
+    <div className={`notifikasjon_bjelle uleste ${erApen ? "er_apen" : ""}`}>
       <button
         ref={focusableRef}
         onClick={onClick}
@@ -52,7 +52,7 @@ const NotifikasjonBjelleIngenUleste = ({
                                        }: Props) => {
 
   return (
-    <div className={'notifikasjon_bjelle ingen_uleste'}>
+    <div className={`notifikasjon_bjelle ingen_uleste ${erApen ? "er_apen" : ""}`}>
       <button
         ref={focusableRef}
         onClick={onClick}
