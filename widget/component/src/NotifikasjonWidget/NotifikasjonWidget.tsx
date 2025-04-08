@@ -69,13 +69,13 @@ const NotifikasjonWidget = () => {
   const lukkÅpentPanelMedLogging = () => {
     if (erApen) {
       loggLukking()
+      setSistLest()
       setErApen(false)
     }
   }
   const åpnePanelMedLogging = (antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) => {
     loggÅpning(antallNotifikasjoner, antallUlesteNotifikasjoner)
     setErApen(true)
-    setSistLest()
   }
 
   const handleFocusOutside: { (event: MouseEvent | KeyboardEvent): void } = (
