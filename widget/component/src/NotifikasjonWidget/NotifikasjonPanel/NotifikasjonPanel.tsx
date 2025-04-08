@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import {Alert, Heading, HelpText} from '@navikt/ds-react'
+import { Alert, Heading, Link } from '@navikt/ds-react';
 import {NotifikasjonListeElement} from './NotifikasjonListeElement/NotifikasjonListeElement'
 import './NotifikasjonPanel.css'
 import {Notifikasjon, NotifikasjonerResultat} from '../../api/graphql-types'
@@ -7,6 +7,7 @@ import {useMutation} from '@apollo/client'
 import {NOTIFIKASJONER_KLIKKET_PAA} from '../../api/graphql'
 import {useAmplitude} from '../../utils/amplitude'
 import { LukkIkon } from './NotifikasjonListeElement/Ikoner'
+import { ExpandIcon } from '@navikt/aksel-icons';
 
 
 interface Props {
@@ -81,40 +82,13 @@ const NotifikasjonPanel = (
         className='notifikasjon_panel-header'
       >
         <div className="notifikasjon_panel-header-title-help">
-          <Heading level='2' size='small'>Varsler</Heading>
-          <HelpText
-            id="notifikasjon-informasjon-knapp"
-            title="Hva vises her?"
-            aria-label="Hjelpetekst. Hva vises her?"
-            placement="bottom"
-            onKeyDown={event => {
-              if (event.key === 'Tab') {
-                if (event.shiftKey) {
-                  focusNotifikasjon()
-                } else {
-                  focusXButton()
-                }
-                event.preventDefault()
-              }
-            }}
-          >
-            Notifikasjoner er under utvikling og alle notifikasjoner vises ikke her
-            ennå. Gamle notifikasjoner slettes etter hvert.
-          </HelpText>
+          <Link href={"https://arbeidsgiver.nav.no/min-side-arbeidsgiver/saksoversikt"}>
+            <Heading level='2' size='small'>Søk og filtrer på alle saker</Heading><ExpandIcon width={24} height={24}/>
+          </Link>
         </div>
         <button
           id='notifikasjon_panel-header-xbtn'
           className='notifikasjon_panel-header-xbtn'
-          onKeyDown={(event) => {
-            if (event.key === 'Tab') {
-              if (event.shiftKey) {
-                focusMoreInfo()
-              } else {
-                focusNotifikasjon()
-              }
-              event.preventDefault()
-            }
-          }}
           onClick={() => {
             lukkPanel()
           }}
