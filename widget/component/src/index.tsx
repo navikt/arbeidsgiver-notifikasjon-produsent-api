@@ -6,12 +6,12 @@ import { AmplitudeProvider } from './utils/amplitude';
 import { ConsentProvider } from './hooks/ConsentContext';
 import { UmamiScript } from './utils/umami';
 
-export type Miljø = 'local' | 'labs' | 'dev' | 'prod'
-
 export type Props = {
   apiUrl?: string,
   miljo?: Miljø
 }
+
+export type Miljø = 'local' | 'labs' | 'dev' | 'prod'
 
 export * as GQL from './api/graphql-types';
 
@@ -30,7 +30,7 @@ export const NotifikasjonWidget = (props: Props) => {
     } else {
       return (
         <NotifikasjonWidgetProvider miljo={props.miljo} apiUrl={props.apiUrl}>
-          <NotifikasjonWidgetComponent notifikasjonWidgetUmami={window.notifikasjonWidgetUmami} />
+          <NotifikasjonWidgetComponent />
         </NotifikasjonWidgetProvider>
       );
     }

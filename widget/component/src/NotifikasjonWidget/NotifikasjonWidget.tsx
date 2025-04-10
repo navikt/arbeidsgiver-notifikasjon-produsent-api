@@ -24,13 +24,7 @@ const uleste = (
   }
 };
 
-type Props = {
-  notifikasjonWidgetUmami?: {
-    track: (eventName: string, eventData?: Record<string, any>) => void;
-  }
-}
-
-const NotifikasjonWidget = ({ notifikasjonWidgetUmami }: Props) => {
+const NotifikasjonWidget = () => {
     const { loggLukking, loggLasting, loggÅpning } = useAmplitude();
     const [sistLest, _setSistLest] = useLocalStorage<string | undefined>(
       'sist_lest',
@@ -55,7 +49,8 @@ const NotifikasjonWidget = ({ notifikasjonWidgetUmami }: Props) => {
     );
 
     function trackLukking() {
-      notifikasjonWidgetUmami?.track('panel-kollaps', {
+      console.log("tracker noe...")
+      window.notifikasjonWidgetUmami?.track('panel-kollaps', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
       });
@@ -63,7 +58,8 @@ const NotifikasjonWidget = ({ notifikasjonWidgetUmami }: Props) => {
     }
 
     function trackLasting(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      notifikasjonWidgetUmami?.track('last-komponent', {
+      console.log("tracker noe...")
+      window.notifikasjonWidgetUmami?.track('last-komponent', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
         'antall-notifikasjoner': antallNotifikasjoner,
@@ -74,7 +70,8 @@ const NotifikasjonWidget = ({ notifikasjonWidgetUmami }: Props) => {
     }
 
     function trackÅpning(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      notifikasjonWidgetUmami?.track('panel-ekspander', {
+      console.log("tracker noe...")
+      window.notifikasjonWidgetUmami?.track('panel-ekspander', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
         'antall-notifikasjoner': antallNotifikasjoner,
