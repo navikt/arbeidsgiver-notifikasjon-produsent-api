@@ -49,7 +49,6 @@ const NotifikasjonWidget = () => {
     );
 
     function trackLukking() {
-      console.log("tracker noe...")
       window.notifikasjonWidgetUmami?.track('panel-kollaps', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
@@ -58,7 +57,6 @@ const NotifikasjonWidget = () => {
     }
 
     function trackLasting(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      console.log("tracker noe...")
       window.notifikasjonWidgetUmami?.track('last-komponent', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
@@ -70,7 +68,6 @@ const NotifikasjonWidget = () => {
     }
 
     function trackÅpning(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      console.log("tracker noe...")
       window.notifikasjonWidgetUmami?.track('panel-ekspander', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
