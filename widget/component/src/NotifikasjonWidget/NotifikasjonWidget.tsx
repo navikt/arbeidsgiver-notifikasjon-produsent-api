@@ -7,6 +7,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import { Notifikasjon, OppgaveTilstand } from '../api/graphql-types';
 import { getLimitedUrl, useAmplitude } from '../utils/amplitude';
 import Dropdown from './NotifikasjonPanel/Dropdown';
+import { useUmami } from '../utils/umami';
 
 const uleste = (
   sistLest: string | undefined,
@@ -26,6 +27,8 @@ const uleste = (
 
 const NotifikasjonWidget = () => {
     const { loggLukking, loggLasting, loggÅpning } = useAmplitude();
+    const umami = useUmami();
+
     const [sistLest, _setSistLest] = useLocalStorage<string | undefined>(
       'sist_lest',
       undefined,
@@ -49,7 +52,7 @@ const NotifikasjonWidget = () => {
     );
 
     function trackLukking() {
-      window.notifikasjonWidgetUmami?.track('panel-kollaps', {
+      umami?.track('panel-kollaps', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
       });
@@ -57,7 +60,7 @@ const NotifikasjonWidget = () => {
     }
 
     function trackLasting(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      window.notifikasjonWidgetUmami?.track('last-komponent', {
+      umami?.track('last-komponent', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
         'antall-notifikasjoner': antallNotifikasjoner,
@@ -68,7 +71,7 @@ const NotifikasjonWidget = () => {
     }
 
     function trackÅpning(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      window.notifikasjonWidgetUmami?.track('panel-ekspander', {
+      umami?.track('panel-ekspander', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
         'antall-notifikasjoner': antallNotifikasjoner,

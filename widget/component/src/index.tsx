@@ -4,7 +4,7 @@ import NotifikasjonWidgetComponent from './NotifikasjonWidget/NotifikasjonWidget
 import { createClient } from './api/graphql';
 import { AmplitudeProvider } from './utils/amplitude';
 import { ConsentProvider } from './hooks/ConsentContext';
-import { UmamiScript } from './utils/umami';
+import { UmamiProvider } from './utils/umami';
 
 export type Props = {
   apiUrl?: string,
@@ -48,13 +48,13 @@ export const NotifikasjonWidgetProvider = ({ apiUrl, miljo, children }: Provider
   return (
     <NotifikasjonWidgetProviderLoadedContext.Provider value={true}>
       <ConsentProvider>
-        <UmamiScript miljo={miljo}>
+        <UmamiProvider miljo={miljo}>
           <AmplitudeProvider miljo={miljo}>
             <ApolloProvider client={createClient(apiUrl)}>
               {children}
             </ApolloProvider>
           </AmplitudeProvider>
-        </UmamiScript>
+        </UmamiProvider>
       </ConsentProvider>
     </NotifikasjonWidgetProviderLoadedContext.Provider>
   );
