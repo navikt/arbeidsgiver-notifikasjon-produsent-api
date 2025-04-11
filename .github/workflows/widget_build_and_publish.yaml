@@ -44,7 +44,7 @@ jobs:
           cd widget/component
           if jq --null-input --exit-status \
               --argjson local "$(jq .version package.json)" \
-              --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
+              --argjson published "$(npm view --@navikt:registry=https://npm.pkg.github.com --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
               '$published | map(. == $local) | any'
           then
               echo "Version already published. Nothing to do."
@@ -60,7 +60,7 @@ jobs:
           cd widget/component
           if jq --null-input --exit-status \
               --argjson local "$(jq .version package.json)" \
-              --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
+              --argjson published "$(npm view --@navikt:registry=https://registry.npmjs.org --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
               '$published | map(. == $local) | any'
           then
               echo "Version already published. Nothing to do."
