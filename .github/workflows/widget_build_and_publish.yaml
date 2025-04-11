@@ -44,31 +44,16 @@ jobs:
           cd widget/component
           if jq --null-input --exit-status \
               --argjson local "$(jq .version package.json)" \
-              --argjson published "$(npm view --@navikt:registry=https://npm.pkg.github.com --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
+              --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
               '$published | map(. == $local) | any'
           then
               echo "Version already published. Nothing to do."
           else
-              npm publish --@navikt:registry=https://npm.pkg.github.com --access public
+              npm publish --access public
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - if: github.ref == 'refs/heads/main'
-        name: publish
-        run: |
-          cd widget/component
-          if jq --null-input --exit-status \
-              --argjson local "$(jq .version package.json)" \
-              --argjson published "$(npm view --@navikt:registry=https://registry.npmjs.org --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
-              '$published | map(. == $local) | any'
-          then
-              echo "Version already published. Nothing to do."
-          else
-              npm publish --@navikt:registry=https://registry.npmjs.org --access public 
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
   brukerapi-mock:
     runs-on: ubuntu-latest
@@ -80,33 +65,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: 'https://npm.pkg.github.com'
 
       - name: build
         run: |
           cd widget/brukerapi-mock
           npm run build
-
-      - if: github.ref == 'refs/heads/main'
-        name: publish
-        run: |
-          cd widget/brukerapi-mock
-          if jq --null-input --exit-status \
-              --argjson local "$(jq .version package.json)" \
-              --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjoner-brukerapi-mock versions)" \
-              '$published | map(. == $local) | any'
-          then
-              echo "Version already published. Nothing to do."
-          else
-              npm publish --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://npm.pkg.github.com'
 
       - if: github.ref == 'refs/heads/main'
         name: publish on github
