@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: 'https://npm.pkg.github.com'
           cache: 'npm'
           cache-dependency-path: widget/component/package-lock.json
 
@@ -32,26 +32,6 @@ jobs:
           cd widget/component
           npm test
 
-      - name: publish
-        run: |
-          cd widget/component
-          if jq --null-input --exit-status \
-              --argjson local "$(jq .version package.json)" \
-              --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
-              '$published | map(. == $local) | any'
-          then
-              echo "Version already published. Nothing to do."
-          else
-              npm publish --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://npm.pkg.github.com'
-
       - name: publish on github
         run: |
           cd widget/component
@@ -66,6 +46,26 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: publish
+        run: |
+          cd widget/component
+          if jq --null-input --exit-status \
+              --argjson local "$(jq .version package.json)" \
+              --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
+              '$published | map(. == $local) | any'
+          then
+              echo "Version already published. Nothing to do."
+          else
+              npm publish --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
   brukerapi-mock:
     runs-on: ubuntu-latest

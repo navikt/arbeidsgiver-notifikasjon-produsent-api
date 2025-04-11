@@ -49,15 +49,10 @@ jobs:
           then
               echo "Version already published. Nothing to do."
           else
-              npm publish --access public
+              npm publish --@navikt:registry=https://npm.pkg.github.com --access public
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
 
       - if: github.ref == 'refs/heads/main'
         name: publish
@@ -70,7 +65,7 @@ jobs:
           then
               echo "Version already published. Nothing to do."
           else
-              npm publish --access public
+              npm publish --@navikt:registry=https://registry.npmjs.org --access public 
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
