@@ -39,27 +39,6 @@ jobs:
           npm test
 
       - if: github.ref == 'refs/heads/main'
-        name: publish
-        run: |
-          cd widget/component
-          if jq --null-input --exit-status \
-              --argjson local "$(jq .version package.json)" \
-              --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
-              '$published | map(. == $local) | any'
-          then
-              echo "Version already published. Nothing to do."
-          else
-              npm publish --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://npm.pkg.github.com'
-
-      - if: github.ref == 'refs/heads/main'
         name: publish on github
         run: |
           cd widget/component
@@ -74,6 +53,27 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - if: github.ref == 'refs/heads/main'
+        name: publish
+        run: |
+          cd widget/component
+          if jq --null-input --exit-status \
+              --argjson local "$(jq .version package.json)" \
+              --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
+              '$published | map(. == $local) | any'
+          then
+              echo "Version already published. Nothing to do."
+          else
+              npm publish --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
   brukerapi-mock:
     runs-on: ubuntu-latest
@@ -127,5 +127,5 @@ jobs:
               npm publish --access public
           fi
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
