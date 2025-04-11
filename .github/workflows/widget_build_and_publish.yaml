@@ -18,7 +18,6 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
-
           cache: 'npm'
           cache-dependency-path: widget/component/package-lock.json
 
