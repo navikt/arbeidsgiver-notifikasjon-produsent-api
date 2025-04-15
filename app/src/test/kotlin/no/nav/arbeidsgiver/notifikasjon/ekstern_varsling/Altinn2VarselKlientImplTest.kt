@@ -1,10 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.types.instanceOf
-import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType.*
+import kotlinx.coroutines.test.runTest
+import no.altinn.schemas.serviceengine.formsengine._2009._10.TransportType.EMAIL_PREFERRED
 import no.altinn.schemas.services.serviceengine.notification._2015._06.NotificationResult
 import no.altinn.schemas.services.serviceengine.notification._2015._06.SendNotificationResultList
 import no.altinn.schemas.services.serviceengine.standalonenotificationbe._2009._10.StandaloneNotificationBEList
@@ -18,12 +15,13 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TokenResponse
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean
+import kotlin.test.*
 
-class Altinn2VarselKlientImplTest : DescribeSpec({
-    val altinnEndpoint = "http://localhost:9999/NotificationAgencyExternalBasic.svc"
+class Altinn2VarselKlientImplTest {
+    private val altinnEndpoint = "http://localhost:9999/NotificationAgencyExternalBasic.svc"
     val answers: MutableList<() -> SendNotificationResultList> = mutableListOf()
     val calls: MutableList<StandaloneNotificationBEList> = mutableListOf()
-    val server = JaxWsServerFactoryBean().apply {
+    private val server = JaxWsServerFactoryBean().apply {
         serviceClass = INotificationAgencyExternalBasic::class.java
         address = altinnEndpoint
         serviceBean = object : INotificationAgencyExternalBasic {
@@ -66,7 +64,7 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
         }
     }.create()
 
-    val klient = Altinn2VarselKlientImpl(
+    private val klient = Altinn2VarselKlientImpl(
         altinnEndPoint = altinnEndpoint,
         authClient = object : AuthClient {
             override suspend fun token(target: String) = TokenResponse.Success("", 3600)
@@ -75,15 +73,19 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
         }
     )
 
-    beforeSpec {
+    // TODO: optimization, use @BeforeAll
+    @BeforeTest
+    fun setUp() {
         server.start()
     }
 
-    afterSpec {
+    @AfterTest
+    fun tearDown() {
         server.stop()
     }
 
-    describe("returnerer ok for vellykket altinntjeneste kall") {
+    @Test
+    fun `returnerer ok for vellykket altinntjeneste kall`() = runTest {
         val withNotificationResult = SendNotificationResultList().apply {
             notificationResult.add(NotificationResult())
         }
@@ -101,25 +103,28 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
             )
         )
 
-        response shouldBe instanceOf<AltinnVarselKlientResponse.Ok>()
         response as AltinnVarselKlientResponse.Ok
-        response.rå shouldBe laxObjectMapper.valueToTree(withNotificationResult)
-        calls.removeLast().let {
-            it shouldBe instanceOf<StandaloneNotificationBEList>()
-            it.standaloneNotification.size shouldBe 1
-            it.standaloneNotification[0].languageID shouldBe 1044
-            it.standaloneNotification[0].notificationType.value shouldBe "TokenTextOnly"
-            it.standaloneNotification[0].reporteeNumber.value shouldBe "9876543210"
-            (it.standaloneNotification[0].service.value as Service).serviceCode shouldBe "1337"
-            (it.standaloneNotification[0].service.value as Service).serviceEdition shouldBe 42
-            it.standaloneNotification[0].receiverEndPoints.value.receiverEndPoint[0].transportType.value shouldBe EMAIL_PREFERRED
-            it.standaloneNotification[0].textTokens.value.textToken[0].tokenValue.value shouldBe "foo"
-            it.standaloneNotification[0].textTokens.value.textToken[1].tokenValue.value shouldBe "bar"
-            it.standaloneNotification[0].fromAddress.value shouldBe "ikke-svar@nav.no"
+        assertEquals(laxObjectMapper.valueToTree(withNotificationResult), response.rå)
+        with(calls.removeLast()) {
+            this as StandaloneNotificationBEList
+            assertEquals(1, standaloneNotification.size)
+            assertEquals(1044, standaloneNotification[0].languageID)
+            assertEquals("TokenTextOnly", standaloneNotification[0].notificationType.value)
+            assertEquals("9876543210", standaloneNotification[0].reporteeNumber.value)
+            assertEquals("1337", (standaloneNotification[0].service.value as Service).serviceCode)
+            assertEquals(42, (standaloneNotification[0].service.value as Service).serviceEdition)
+            assertEquals(
+                EMAIL_PREFERRED,
+                standaloneNotification[0].receiverEndPoints.value.receiverEndPoint[0].transportType.value
+            )
+            assertEquals("foo", standaloneNotification[0].textTokens.value.textToken[0].tokenValue.value)
+            assertEquals("bar", standaloneNotification[0].textTokens.value.textToken[1].tokenValue.value)
+            assertEquals("ikke-svar@nav.no", standaloneNotification[0].fromAddress.value)
         }
     }
 
-    describe("returnerer ok for kall med AltinnFault") {
+    @Test
+    fun `returnerer ok for kall med AltinnFault`() = runTest {
         val faultOF = no.altinn.services.common.fault._2009._10.ObjectFactory()
         val altinnFault = AltinnFault().apply {
             errorID = 30010
@@ -148,16 +153,16 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
             )
         )
 
-        response shouldBe instanceOf<AltinnVarselKlientResponse.Feil>()
         response as AltinnVarselKlientResponse.Feil
-        response.let {
-            it.feilkode shouldBe altinnFault.errorID.toString()
-            it.feilmelding shouldBe altinnFault.altinnErrorMessage.value
-            it.rå shouldNotBe null
+        with(response) {
+            assertEquals(altinnFault.errorID.toString(), feilkode)
+            assertEquals(altinnFault.altinnErrorMessage.value, feilmelding)
+            assertNotNull(rå)
         }
     }
 
-    describe("returnerer feil for kall med generell feil") {
+    @Test
+    fun `returnerer feil for kall med generell feil`() = runTest {
         answers.add { throw Exception("oof") }
 
         val response = klient.send(
@@ -172,13 +177,14 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
             )
         )
 
-        response shouldBe instanceOf<UkjentException>()
+        response as UkjentException
     }
 
     /**
      * TAG-2054
      */
-    describe("returnerer feil for teknisk feil som bør fosøkes på nytt") {
+    @Test
+    fun `returnerer feil for teknisk feil som bør fosøkes på nytt`() = runTest {
         val feilkode = 44
         val faultOF = no.altinn.services.common.fault._2009._10.ObjectFactory()
         val altinnFault = AltinnFault().apply {
@@ -208,8 +214,7 @@ class Altinn2VarselKlientImplTest : DescribeSpec({
             )
         )
 
-        response shouldBe instanceOf<AltinnVarselKlientResponse.Feil>()
         response as AltinnVarselKlientResponse.Feil
-        response.isRetryable() shouldBe true
+        assertEquals(true, response.isRetryable())
     }
-})
+}

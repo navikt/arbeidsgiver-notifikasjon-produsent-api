@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import io.ktor.server.testing.*
+import io.ktor.client.*
+import io.ktor.client.statement.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ifNotBlank
 import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
@@ -13,7 +14,8 @@ import no.nav.arbeidsgiver.notifikasjon.util.brukerApi
  */
 
 
-fun TestApplicationEngine.queryNotifikasjonerJson(): TestApplicationResponse = brukerApi("""
+suspend fun HttpClient.queryNotifikasjonerJson(): HttpResponse = brukerApi(
+    """
     {
         notifikasjoner {
             feilAltinn
@@ -101,15 +103,18 @@ fun TestApplicationEngine.queryNotifikasjonerJson(): TestApplicationResponse = b
             }
         }
     }
-""")
+"""
+)
 
-fun TestApplicationEngine.querySakstyperJson(): TestApplicationResponse = brukerApi("""
+suspend fun HttpClient.querySakstyperJson(): HttpResponse = brukerApi(
+    """
     query {
         sakstyper {
             navn
         }
     }
-""".trimIndent())
+""".trimIndent()
+)
 
 private data class Parameter(
     val name: String,
@@ -117,7 +122,7 @@ private data class Parameter(
     val value: Any?,
 )
 
-fun TestApplicationEngine.querySakerJson(
+suspend fun HttpClient.querySakerJson(
     virksomhetsnummer: String? = null,
     virksomhetsnumre: List<String>? = if (virksomhetsnummer == null) listOf(TEST_VIRKSOMHET_1) else null,
     offset: Int? = null,
@@ -127,11 +132,11 @@ fun TestApplicationEngine.querySakerJson(
     sakstyper: List<String>? = null,
     oppgaveTilstand: List<BrukerAPI.Notifikasjon.Oppgave.Tilstand>? = null,
     oppgaveFilter: List<BrukerAPI.OppgaveFilterInfo.OppgaveFilterType>? = null
-): TestApplicationResponse {
+): HttpResponse {
     val parameters = listOf(
         Parameter("virksomhetsnumre", "[String!]", virksomhetsnumre),
         Parameter("virksomhetsnummer", "String", virksomhetsnummer),
-        Parameter("offset",  "Int", offset),
+        Parameter("offset", "Int", offset),
         Parameter("limit", "Int", limit),
         Parameter("tekstsoek", "String", tekstsoek),
         Parameter("sakstyper", "[String!]", sakstyper),
@@ -143,7 +148,8 @@ fun TestApplicationEngine.querySakerJson(
         .ifNotBlank { "($it)" }
     val sakerArguments = parameters.joinToString(", ") { (navn) -> "$navn: \$$navn" }
         .ifNotBlank { "($it)" }
-    return brukerApi(GraphQLRequest(
+    return brukerApi(
+        GraphQLRequest(
         """
     query hentSaker$queryParameters {
         saker$sakerArguments {
@@ -229,9 +235,9 @@ fun TestApplicationEngine.querySakerJson(
 }
 
 
-fun TestApplicationEngine.queryKommendeKalenderavtalerJson(
+suspend fun HttpClient.queryKommendeKalenderavtalerJson(
     virksomhetsnumre: List<String> = listOf(TEST_VIRKSOMHET_1),
-): TestApplicationResponse = brukerApi(
+): HttpResponse = brukerApi(
     GraphQLRequest(
         """
         query kommendeKalenderavtaler(${"$"}virksomhetsnumre: [String!]!) {
