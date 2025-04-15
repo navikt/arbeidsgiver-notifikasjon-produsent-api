@@ -14,7 +14,7 @@
     "@navikt/ds-css": "^6.15.0",
     "@navikt/ds-icons": "^3.4.3",
     "@navikt/ds-react": "^6.15.0",
-    "@navikt/nav-dekoratoren-moduler": "^1.6.9",
+    "@navikt/nav-dekoratoren-moduler": "file:../component/node_modules/@navikt/nav-dekoratoren-moduler",
     "@types/node": "^20.14.11",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

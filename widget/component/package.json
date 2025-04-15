@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
   },
-  "version": "7.2.3",
+  "version": "7.3.0-rc",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "types": "./lib/esm/index.d.ts",
@@ -45,6 +45,7 @@
     "@navikt/ds-css": ">=4",
     "@navikt/ds-icons": ">=2",
     "@navikt/ds-react": ">=4",
+    "@navikt/nav-dekoratoren-moduler": ">=3.2",
     "react": "17 || 18",
     "react-dom": "17 || 18"
   }

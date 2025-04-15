@@ -25,7 +25,7 @@ const createAmpltiudeInstance = (apiKey: string): AmplitudeInstance => {
   return amplitude;
 };
 
-const getLimitedUrl = () => {
+export const getLimitedUrl = () => {
   const {origin, pathname } = window.location;
   return `${origin}/${pathname.split('/')[1]}`;
 }
