@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.dataprodukt
 
-import kotlinx.coroutines.test.runTest
 import no.nav.arbeidsgiver.notifikasjon.bruker.TEST_MOTTAKER_1
 import no.nav.arbeidsgiver.notifikasjon.bruker.TEST_MOTTAKER_2
 import no.nav.arbeidsgiver.notifikasjon.bruker.TEST_VIRKSOMHET_1
@@ -9,8 +8,8 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
 import no.nav.arbeidsgiver.notifikasjon.util.asMap
-import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import org.intellij.lang.annotations.Language
 import java.time.Instant
 import java.time.OffsetDateTime

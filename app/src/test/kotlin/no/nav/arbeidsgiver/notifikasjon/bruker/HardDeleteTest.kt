@@ -1,14 +1,13 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import kotlinx.coroutines.test.runTest
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.IdempotenceKey
-import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.test.Test

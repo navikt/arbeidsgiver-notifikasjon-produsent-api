@@ -1,4 +1,4 @@
-package no.nav.arbeidsgiver.notifikasjon.produsent.api;
+package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import io.ktor.client.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent

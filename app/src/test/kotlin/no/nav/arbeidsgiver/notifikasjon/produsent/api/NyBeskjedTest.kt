@@ -116,7 +116,7 @@ class NyBeskjedTest {
             kafkaProducer = FakeHendelseProdusent(),
             produsentRepository = produsentRepository,
         ) {
-            val sakOpprettet = HendelseModel.SakOpprettet(
+            HendelseModel.SakOpprettet(
                 virksomhetsnummer = "42",
                 merkelapp = "tag",
                 grupperingsid = "g42",

@@ -387,7 +387,7 @@ class QuerySakerTest {
                     sakstyper = listOf("merkelapp1", "merkelapp2")
                 ).getTypedContent<List<UUID>>("$.saker.saker.*.id")
             ) {
-                assertEquals(listOf(uuid("1"), uuid("2")), this)
+                assertEquals(listOf(uuid("1"), uuid("2")).sorted(), sorted())
             }
 
             with(

@@ -1,9 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.BeskjedOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
@@ -14,28 +10,36 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 
-class OppgaveUtførtTests : DescribeSpec({
+class OppgaveUtførtTest {
+
+    private val virksomhetsnummer = "123"
+    private val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
+    private val merkelapp = "tag"
+    private val eksternId = "123"
+    private val mottaker = AltinnMottaker(
+        virksomhetsnummer = virksomhetsnummer,
+        serviceCode = "1",
+        serviceEdition = "1"
+    )
+    private val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
 
-    describe("OppgaveUtført-oppførsel") {
-        val virksomhetsnummer = "123"
-        val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
-        val merkelapp = "tag"
-        val eksternId = "123"
-        val mottaker = AltinnMottaker(
-            virksomhetsnummer = virksomhetsnummer,
-            serviceCode = "1",
-            serviceEdition = "1"
-        )
-        val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
-
-        context("Eksisterende oppgave blir utført") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtført Eksisterende oppgave blir utført`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -58,7 +62,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi(
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoert(
@@ -79,29 +83,33 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer tilbake id-en") {
-                val vellykket = response.getTypedContent<MutationOppgaveUtfoert.OppgaveUtfoertVellykket>("oppgaveUtfoert")
-                vellykket.id shouldBe uuid
+            )) {
+                // returnerer tilbake id-en
+                val vellykket = getTypedContent<MutationOppgaveUtfoert.OppgaveUtfoertVellykket>("oppgaveUtfoert")
+                assertEquals(uuid, vellykket.id)
             }
 
-            it("har sendt melding til kafka") {
-                val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<OppgaveUtført>()
-                    .last()
-                hendelse.hardDelete shouldNotBe null
-            }
+            // har sendt melding til kafka
+            val hendelse = stubbedKafkaProducer.hendelser
+                .filterIsInstance<OppgaveUtført>()
+                .last()
+            assertNotNull(hendelse.hardDelete)
 
-            it("har utført-status i modellen") {
-                val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
-                oppgave.tilstand shouldBe ProdusentModel.Oppgave.Tilstand.UTFOERT
-            }
+            // har utført-status i modellen
+            val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
+            assertEquals(ProdusentModel.Oppgave.Tilstand.UTFOERT, oppgave.tilstand)
         }
+    }
 
-        context("Oppgave mangler") {
-            val (_, _, engine) = setupEngine()
-            val response = engine.produsentApi(
+    @Test
+    fun `OppgaveUtført Oppgave mangler`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoert(id: "$uuid") {
@@ -112,22 +120,29 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
             }
-        }
 
-        context("Oppgave med feil merkelapp") {
-            val (produsentModel, _, engine) = setupEngine()
+        }
+    }
+
+    @Test
+    fun `OppgaveUtført Oppgave med feil merkelapp`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = "feil merkelapp",
                 eksternId = eksternId,
                 mottakere = listOf(mottaker),
                 hendelseId = uuid,
-                notifikasjonId= uuid,
+                notifikasjonId = uuid,
                 tekst = "test",
                 lenke = "https://nav.no",
                 opprettetTidspunkt = opprettetTidspunkt,
@@ -143,7 +158,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi(
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoert(id: "$uuid") {
@@ -154,15 +169,21 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.UgyldigMerkelapp>("oppgaveUtfoert")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.UgyldigMerkelapp>("oppgaveUtfoert")
             }
         }
+    }
 
-        context("Er ikke oppgave, men beskjed") {
-            val (produsentModel, _, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtført Er ikke oppgave, men beskjed`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -183,7 +204,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
 
-            val response = engine.produsentApi(
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoert(id: "$uuid") {
@@ -194,28 +215,23 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoert")
             }
+
         }
     }
 
-    describe("oppgaveUtfoertByEksternId-oppførsel") {
-        val virksomhetsnummer = "123"
-        val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
-        val merkelapp = "tag"
-        val eksternId = "123"
-        val mottaker = AltinnMottaker(
-            virksomhetsnummer = virksomhetsnummer,
-            serviceCode = "1",
-            serviceEdition = "1"
-        )
-        val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
 
-        context("Eksisterende oppgave blir utført") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtfoertByEksternId Eksisterende oppgave blir utført`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -238,7 +254,8 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi(
+            @Suppress("GraphQLDeprecatedSymbols")
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId(
@@ -261,29 +278,36 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer tilbake id-en") {
-                val vellykket = response.getTypedContent<MutationOppgaveUtfoert.OppgaveUtfoertVellykket>("oppgaveUtfoertByEksternId")
-                vellykket.id shouldBe uuid
+            )) {
+                // returnerer tilbake id-en
+                val vellykket =
+                    getTypedContent<MutationOppgaveUtfoert.OppgaveUtfoertVellykket>("oppgaveUtfoertByEksternId")
+                assertEquals(uuid, vellykket.id)
             }
 
-            it("har sendt melding til kafka") {
-                val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<OppgaveUtført>()
-                    .last()
-                hendelse.hardDelete shouldNotBe null
-            }
 
-            it("har utført-status i modellen") {
-                val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
-                oppgave.tilstand shouldBe ProdusentModel.Oppgave.Tilstand.UTFOERT
-            }
+            // har sendt melding til kafka
+            val hendelse = stubbedKafkaProducer.hendelser
+                .filterIsInstance<OppgaveUtført>()
+                .last()
+            assertNotNull(hendelse.hardDelete)
+
+            // har utført-status i modellen
+            val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
+            assertEquals(ProdusentModel.Oppgave.Tilstand.UTFOERT, oppgave.tilstand)
         }
+    }
 
-        context("Oppgave mangler") {
-            val (_, _, engine) = setupEngine()
-            val response = engine.produsentApi(
+    @Test
+    fun `OppgaveUtfoertByEksternId Oppgave mangler`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
+            @Suppress("GraphQLDeprecatedSymbols")
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
@@ -294,15 +318,21 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
             }
         }
+    }
 
-        context("Oppgave med feil merkelapp men riktig eksternId") {
-            val (produsentModel, _, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtfoertByEksternId Oppgave med feil merkelapp men riktig eksternId`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -325,7 +355,8 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi(
+            @Suppress("GraphQLDeprecatedSymbols")
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "nope$merkelapp") {
@@ -336,15 +367,21 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
             }
         }
+    }
 
-        context("Oppgave med feil eksternId men riktig merkelapp") {
-            val (produsentModel, _, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtfoertByEksternId Oppgave med feil eksternId men riktig merkelapp`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -367,7 +404,8 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi(
+            @Suppress("GraphQLDeprecatedSymbols")
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "nope$eksternId", merkelapp: "$merkelapp") {
@@ -378,15 +416,21 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
             }
         }
+    }
 
-        context("Er ikke oppgave, men beskjed") {
-            val (produsentModel, _, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtfoertByEksternId Er ikke oppgave, men beskjed`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -407,7 +451,8 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
 
-            val response = engine.produsentApi(
+            @Suppress("GraphQLDeprecatedSymbols")
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId(eksternId: "$eksternId", merkelapp: "$merkelapp") {
@@ -418,28 +463,21 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId")
             }
         }
     }
 
-    describe("oppgaveUtfoertByEksternId_V2-oppførsel") {
-        val virksomhetsnummer = "123"
-        val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
-        val merkelapp = "tag"
-        val eksternId = "123"
-        val mottaker = AltinnMottaker(
-            virksomhetsnummer = virksomhetsnummer,
-            serviceCode = "1",
-            serviceEdition = "1"
-        )
-        val opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z")
-
-        context("Eksisterende oppgave blir utført") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtfoertByEksternId_V2 Eksisterende oppgave blir utført`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -462,7 +500,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi(
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId_V2(
@@ -485,29 +523,34 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer tilbake id-en") {
-                val vellykket = response.getTypedContent<MutationOppgaveUtfoert.OppgaveUtfoertVellykket>("oppgaveUtfoertByEksternId_V2")
-                vellykket.id shouldBe uuid
+            )) {
+                // returnerer tilbake id-en
+                val vellykket =
+                    getTypedContent<MutationOppgaveUtfoert.OppgaveUtfoertVellykket>("oppgaveUtfoertByEksternId_V2")
+                assertEquals(uuid, vellykket.id)
             }
 
-            it("har sendt melding til kafka") {
-                val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<OppgaveUtført>()
-                    .last()
-                hendelse.hardDelete shouldNotBe null
-            }
+            // har sendt melding til kafka
+            val hendelse = stubbedKafkaProducer.hendelser
+                .filterIsInstance<OppgaveUtført>()
+                .last()
+            assertNotNull(hendelse.hardDelete)
 
-            it("har utført-status i modellen") {
-                val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
-                oppgave.tilstand shouldBe ProdusentModel.Oppgave.Tilstand.UTFOERT
-            }
+            // har utført-status i modellen
+            val oppgave = produsentModel.hentNotifikasjon(uuid) as ProdusentModel.Oppgave
+            assertEquals(ProdusentModel.Oppgave.Tilstand.UTFOERT, oppgave.tilstand)
         }
+    }
 
-        context("Oppgave mangler") {
-            val (_, _, engine) = setupEngine()
-            val response = engine.produsentApi(
+    @Test
+    fun `OppgaveUtfoertByEksternId_V2 Oppgave mangler`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId_V2(eksternId: "$eksternId", merkelapp: "$merkelapp") {
@@ -518,15 +561,21 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId_V2")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId_V2")
             }
         }
+    }
 
-        context("Oppgave med feil merkelapp men riktig eksternId") {
-            val (produsentModel, _, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtfoertByEksternId_V2 Oppgave med feil merkelapp men riktig eksternId`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -549,7 +598,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi(
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId_V2(eksternId: "$eksternId", merkelapp: "nope$merkelapp") {
@@ -560,15 +609,21 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId_V2")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId_V2")
             }
         }
+    }
 
-        context("Oppgave med feil eksternId men riktig merkelapp") {
-            val (produsentModel, _, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtfoertByEksternId_V2 Oppgave med feil eksternId men riktig merkelapp`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveOpprettet = OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -591,7 +646,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
-            val response = engine.produsentApi(
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId_V2(eksternId: "nope$eksternId", merkelapp: "$merkelapp") {
@@ -602,15 +657,21 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId_V2")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId_V2")
             }
         }
+    }
 
-        context("Er ikke oppgave, men beskjed") {
-            val (produsentModel, _, engine) = setupEngine()
+    @Test
+    fun `OppgaveUtfoertByEksternId_V2 Er ikke oppgave, men beskjed`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val stubbedKafkaProducer = FakeHendelseProdusent()
+        ktorProdusentTestServer(
+            kafkaProducer = stubbedKafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val beskjedOpprettet = BeskjedOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -631,7 +692,7 @@ class OppgaveUtførtTests : DescribeSpec({
 
             produsentModel.oppdaterModellEtterHendelse(beskjedOpprettet)
 
-            val response = engine.produsentApi(
+            with(client.produsentApi(
                 """
                 mutation {
                     oppgaveUtfoertByEksternId_V2(eksternId: "$eksternId", merkelapp: "$merkelapp") {
@@ -642,22 +703,11 @@ class OppgaveUtførtTests : DescribeSpec({
                     }
                 }
                 """.trimIndent()
-            )
-
-            it("returnerer feilmelding") {
-                response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId_V2")
+            )) {
+                // returnerer feilmelding
+                getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveUtfoertByEksternId_V2")
             }
         }
     }
-})
-
-private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
-    val stubbedKafkaProducer = FakeHendelseProdusent()
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = stubbedKafkaProducer,
-        produsentRepository = produsentModel
-    )
-    return Triple(produsentModel, stubbedKafkaProducer, engine)
 }
+

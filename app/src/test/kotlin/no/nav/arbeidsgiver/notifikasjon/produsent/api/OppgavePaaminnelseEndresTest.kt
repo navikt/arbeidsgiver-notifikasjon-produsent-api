@@ -1,43 +1,44 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.FristUtsatt
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveUtgått
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.tid.inOsloAsInstant
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
-import java.time.LocalDate
+import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
-class OppgavePaaminnelseEndresTests : DescribeSpec({
+class OppgavePaaminnelseEndresTest {
 
-    describe("oppgavePåminnelseEndres-oppførsel") {
-        val virksomhetsnummer = "123"
-        val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
-        val merkelapp = "tag"
-        val eksternId = "123"
-        val mottaker = AltinnMottaker(
-            virksomhetsnummer = virksomhetsnummer,
-            serviceCode = "1",
-            serviceEdition = "1"
-        )
+    private val virksomhetsnummer = "123"
+    private val uuid = UUID.fromString("9d3e3360-1955-4955-bc22-88ccca3972cd")
+    private val merkelapp = "tag"
+    private val eksternId = "123"
+    private val mottaker = AltinnMottaker(
+        virksomhetsnummer = virksomhetsnummer,
+        serviceCode = "1",
+        serviceEdition = "1"
+    )
 
-        val oppgaveOpprettetTidspunkt = OffsetDateTime.now()
-        val konkretPaaminnelsesTidspunkt = oppgaveOpprettetTidspunkt.toLocalDateTime().plusWeeks(1)
+    private val oppgaveOpprettetTidspunkt = OffsetDateTime.now()
+    private val konkretPaaminnelsesTidspunkt = oppgaveOpprettetTidspunkt.toLocalDateTime().plusWeeks(1)
 
-        context("Oppgave har ingen påminnelse men får ny") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `Oppgave har ingen påminnelse men får ny`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -60,7 +61,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 produsentModel.oppdaterModellEtterHendelse(it)
             }
 
-            val response = engine.produsentApi(
+            val response = client.produsentApi(
                 """
                 mutation {
                     oppgaveEndrePaaminnelse(
@@ -82,25 +83,33 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 """
             )
 
-            it("returnerer tilbake oppgave id-en") {
-                val vellykket =
-                    response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
-                vellykket.id shouldBe uuid
-            }
-
-            it("har sendt melding til kafka med korrekt påminnelse") {
-                val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
-                    .last()
-                hendelse.påminnelse?.tidspunkt shouldBe HendelseModel.PåminnelseTidspunkt.Konkret(
-                    konkretPaaminnelsesTidspunkt,
-                    konkretPaaminnelsesTidspunkt.inOsloAsInstant()
-                )
-            }
+            // returnerer tilbake oppgave id-en
+            val vellykket =
+                response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
+            assertEquals(uuid, vellykket.id)
         }
 
-        context("Oppgave får fjernet påminnelse") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+        // har sendt melding til kafka med korrekt påminnelse
+        val hendelse = kafkaProducer.hendelser
+            .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
+            .last()
+        assertEquals(
+            HendelseModel.PåminnelseTidspunkt.Konkret(
+                konkretPaaminnelsesTidspunkt,
+                konkretPaaminnelsesTidspunkt.inOsloAsInstant()
+            ), hendelse.påminnelse?.tidspunkt
+        )
+    }
+
+
+    @Test
+    fun `Oppgave får fjernet påminnelse`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -129,7 +138,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 produsentModel.oppdaterModellEtterHendelse(it)
             }
 
-            val response = engine.produsentApi(
+            val response = client.produsentApi(
                 """
                 mutation {
                     oppgaveEndrePaaminnelse(
@@ -147,23 +156,28 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 """
             )
 
-            it("returnerer tilbake oppgave id-en") {
-                val vellykket =
-                    response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
-                vellykket.id shouldBe uuid
-            }
+            // returnerer tilbake oppgave id-en
+            val vellykket =
+                response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
+            assertEquals(uuid, vellykket.id)
 
-            it("har sendt melding til kafka med tom påminnelse") {
-                val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
-                    .last()
-                hendelse.påminnelse shouldBe null
-            }
+            // har sendt melding til kafka med tom påminnelse
+            val hendelse = kafkaProducer.hendelser
+                .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
+                .last()
+            assertEquals(null, hendelse.påminnelse)
         }
+    }
 
-        context("Oppgave finnes ikke") {
-            val (_, stubbedKafkaProducer, engine) = setupEngine()
-            val response = engine.produsentApi(
+    @Test
+    fun `Oppgave finnes ikke`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
+            val response = client.produsentApi(
                 """
                 mutation {
                     oppgaveEndrePaaminnelse(
@@ -181,18 +195,23 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 """
             )
 
-            it("returnerer oppgave finnes ikke") {
-                val finnesIkke = response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveEndrePaaminnelse")
-                finnesIkke.feilmelding shouldNotBe null
-            }
+            // returnerer oppgave finnes ikke
+            val finnesIkke = response.getTypedContent<Error.NotifikasjonFinnesIkke>("oppgaveEndrePaaminnelse")
+            assertNotNull(finnesIkke.feilmelding)
 
-            it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
-            }
+            // melding er ikke sendt på kafka
+            assertEquals(emptyList(), kafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>())
         }
+    }
 
-        context("Påminnelsestidspunkt er før oppgaven er opprettet") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `Påminnelsestidspunkt er før oppgaven er opprettet`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -222,9 +241,9 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
             }
 
 
-            it("Påminnelsestidspunkt er før oppgaveOpprettetTidspunkt") {
-                val response = engine.produsentApi(
-                    """
+            // Påminnelsestidspunkt er før oppgaveOpprettetTidspunkt
+            val response = client.produsentApi(
+                """
                     mutation {
                         oppgaveEndrePaaminnelse(
                             id: "$uuid",
@@ -243,20 +262,25 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                         }
                     }
                     """
-                )
-                val ugyldigPåminnelseTidspunkt =
-                    response.getTypedContent<Error.UgyldigPåminnelseTidspunkt>("oppgaveEndrePaaminnelse")
-                ugyldigPåminnelseTidspunkt.feilmelding shouldNotBe null
-            }
+            )
+            val ugyldigPåminnelseTidspunkt =
+                response.getTypedContent<Error.UgyldigPåminnelseTidspunkt>("oppgaveEndrePaaminnelse")
+            assertNotNull(ugyldigPåminnelseTidspunkt.feilmelding)
 
 
-            it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
-            }
+            // melding er ikke sendt på kafka
+            assertEquals(emptyList(), kafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>())
         }
+    }
 
-        context("Påminnelsestidspunkt er relativ til frist, men oppgaven har ingen frist") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `Påminnelsestidspunkt er relativ til frist, men oppgaven har ingen frist`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -285,9 +309,9 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 produsentModel.oppdaterModellEtterHendelse(it)
             }
 
-            it("Påminnelsestidspunkt er relativ til frist, men oppgave har ingen frist") {
-                val response = engine.produsentApi(
-                    """
+            // Påminnelsestidspunkt er relativ til frist, men oppgave har ingen frist
+            val response = client.produsentApi(
+                """
                     mutation {
                         oppgaveEndrePaaminnelse(
                             id: "$uuid",
@@ -306,19 +330,24 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                         }
                     }
                     """
-                )
-                val ugyldigPåminnelseTidspunkt =
-                    response.getTypedContent<Error.UgyldigPåminnelseTidspunkt>("oppgaveEndrePaaminnelse")
-                ugyldigPåminnelseTidspunkt.feilmelding shouldNotBe null
-            }
+            )
+            val ugyldigPåminnelseTidspunkt =
+                response.getTypedContent<Error.UgyldigPåminnelseTidspunkt>("oppgaveEndrePaaminnelse")
+            assertNotNull(ugyldigPåminnelseTidspunkt.feilmelding)
 
-            it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
-            }
+            // melding er ikke sendt på kafka
+            assertEquals(emptyList(), kafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>())
         }
+    }
 
-        context("Oppgaven har en frist, men konkret påminnelsestidspunkt er etter frist") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `Oppgaven har en frist, men konkret påminnelsestidspunkt er etter frist`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveFrist = oppgaveOpprettetTidspunkt.plusWeeks(1)
 
             OppgaveOpprettet(
@@ -349,9 +378,9 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 produsentModel.oppdaterModellEtterHendelse(it)
             }
 
-            it("Påminnelsestidspunkt er etter oppgavens frist") {
-                val response = engine.produsentApi(
-                    """
+            // Påminnelsestidspunkt er etter oppgavens frist
+            val response = client.produsentApi(
+                """
                     mutation {
                         oppgaveEndrePaaminnelse(
                             id: "$uuid",
@@ -370,19 +399,24 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                         }
                     }
                     """
-                )
-                val ugyldigPåminnelseTidspunkt =
-                    response.getTypedContent<Error.UgyldigPåminnelseTidspunkt>("oppgaveEndrePaaminnelse")
-                ugyldigPåminnelseTidspunkt.feilmelding shouldNotBe null
-            }
+            )
+            val ugyldigPåminnelseTidspunkt =
+                response.getTypedContent<Error.UgyldigPåminnelseTidspunkt>("oppgaveEndrePaaminnelse")
+            assertNotNull(ugyldigPåminnelseTidspunkt.feilmelding)
 
-            it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
-            }
+            // melding er ikke sendt på kafka
+            assertEquals(emptyList(), kafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>())
         }
+    }
 
-        context("Relativ til starttidspunkt") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `Relativ til starttidspunkt`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveFrist = oppgaveOpprettetTidspunkt.plusWeeks(1)
 
             OppgaveOpprettet(
@@ -413,9 +447,9 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 produsentModel.oppdaterModellEtterHendelse(it)
             }
 
-            it("Påminnelsestidspunkt er relativ til starttidspunkt, men notifikasjon er en oppgave (ikke kalenderavtale)") {
-                val response = engine.produsentApi(
-                    """
+            // Påminnelsestidspunkt er relativ til starttidspunkt, men notifikasjon er en oppgave (ikke kalenderavtale)
+            val response = client.produsentApi(
+                """
                     mutation {
                         oppgaveEndrePaaminnelse(
                             id: "$uuid",
@@ -434,19 +468,24 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                         }
                     }
                     """
-                )
-                val ugyldigPåminnelseTidspunkt =
-                    response.getTypedContent<Error.UgyldigPåminnelseTidspunkt>("oppgaveEndrePaaminnelse")
-                ugyldigPåminnelseTidspunkt.feilmelding shouldNotBe null
-            }
+            )
+            val ugyldigPåminnelseTidspunkt =
+                response.getTypedContent<Error.UgyldigPåminnelseTidspunkt>("oppgaveEndrePaaminnelse")
+            assertNotNull(ugyldigPåminnelseTidspunkt.feilmelding)
 
-            it("melding er ikke sendt på kafka") {
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>() shouldBe emptyList()
-            }
+            // melding er ikke sendt på kafka
+            assertEquals(emptyList(), kafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>())
         }
+    }
 
-        context("Identisk Idepotency Key") {
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `Identisk Idepotency Key`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             val oppgaveFrist = oppgaveOpprettetTidspunkt.plusWeeks(1)
 
             OppgaveOpprettet(
@@ -478,51 +517,55 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 produsentModel.oppdaterModellEtterHendelse(it)
             }
 
-            it("Mutation med identisk idepotency key kalles to ganger, men kun en melding sendes på kafka") {
-                fun kallOppgaveEndrePaaminnelse(): TestApplicationResponse {
-                    return engine.produsentApi(
-                        """
-                        mutation {
-                        oppgaveEndrePaaminnelse(
-                            id: "$uuid",
-                            paaminnelse: {
-                                eksterneVarsler:[],
-                                tidspunkt: {konkret: "$konkretPaaminnelsesTidspunkt"}
-                            }
-                            idempotencyKey: "1234"
-                        ) {
-                            __typename
-                            ... on OppgaveEndrePaaminnelseVellykket {
-                                id
-                            }
-                            ... on Error {
-                                feilmelding
-                            }
+            // Mutation med identisk idepotency key kalles to ganger, men kun en melding sendes på kafka
+            suspend fun kallOppgaveEndrePaaminnelse() = client.produsentApi(
+                """
+                    mutation {
+                    oppgaveEndrePaaminnelse(
+                        id: "$uuid",
+                        paaminnelse: {
+                            eksterneVarsler:[],
+                            tidspunkt: {konkret: "$konkretPaaminnelsesTidspunkt"}
+                        }
+                        idempotencyKey: "1234"
+                    ) {
+                        __typename
+                        ... on OppgaveEndrePaaminnelseVellykket {
+                            id
+                        }
+                        ... on Error {
+                            feilmelding
                         }
                     }
-                    """
-                    )
                 }
+                """
+            )
 
-                val vellykket1 =
-                    kallOppgaveEndrePaaminnelse().getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>(
-                        "oppgaveEndrePaaminnelse"
-                    )
-                vellykket1.id shouldBe uuid
+            val vellykket1 =
+                kallOppgaveEndrePaaminnelse().getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>(
+                    "oppgaveEndrePaaminnelse"
+                )
+            assertEquals(uuid, vellykket1.id)
 
-                val vellykket2 =
-                    kallOppgaveEndrePaaminnelse().getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>(
-                        "oppgaveEndrePaaminnelse"
-                    )
-                vellykket2.id shouldBe uuid
+            val vellykket2 =
+                kallOppgaveEndrePaaminnelse().getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>(
+                    "oppgaveEndrePaaminnelse"
+                )
+            assertEquals(uuid, vellykket2.id)
 
-                stubbedKafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
-                    .count() shouldBe 1
-            }
+            assertEquals(1, kafkaProducer.hendelser.filterIsInstance<HendelseModel.OppgavePåminnelseEndret>().count())
         }
-        context("Påminnelse blir endret relativ til op") {
+    }
 
-            val (produsentModel, stubbedKafkaProducer, engine) = setupEngine()
+    @Test
+    fun `Påminnelse blir endret relativ til op`() = withTestDatabase(Produsent.databaseConfig) { database ->
+
+        val kafkaProducer = FakeHendelseProdusent()
+        val produsentModel = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = kafkaProducer,
+            produsentRepository = produsentModel
+        ) {
             OppgaveOpprettet(
                 virksomhetsnummer = "1",
                 merkelapp = merkelapp,
@@ -543,7 +586,7 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                 sakId = null
             ).also { produsentModel.oppdaterModellEtterHendelse(it) }
 
-            val response = engine.produsentApi(
+            val response = client.produsentApi(
                 """
                         mutation {
                         oppgaveEndrePaaminnelse(
@@ -567,28 +610,20 @@ class OppgavePaaminnelseEndresTests : DescribeSpec({
                     """
             )
 
-            it("Påminnelsestidspunkt er satt relativ til opprettelse av oppgave") {
-                val vellykket =
-                    response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
-                vellykket.id shouldBe uuid
-            }
-            it("har sendt melding til kafka") {
-                val hendelse = stubbedKafkaProducer.hendelser
-                    .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
-                    .last()
-                hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt shouldBe OffsetDateTime.parse("2024-01-15T01:01:00Z").toInstant()
-            }
+            // Påminnelsestidspunkt er satt relativ til opprettelse av oppgave
+            val vellykket =
+                response.getTypedContent<MutationOppgavePåminnelse.OppgaveEndrePaaminnelseVellykket>("oppgaveEndrePaaminnelse")
+            assertEquals(uuid, vellykket.id)
+
+            // har sendt melding til kafka
+            val hendelse = kafkaProducer.hendelser
+                .filterIsInstance<HendelseModel.OppgavePåminnelseEndret>()
+                .last()
+            assertEquals(
+                OffsetDateTime.parse("2024-01-15T01:01:00Z").toInstant(),
+                hendelse.påminnelse?.tidspunkt?.påminnelseTidspunkt
+            )
         }
     }
-})
-
-private fun DescribeSpec.setupEngine(): Triple<ProdusentRepositoryImpl, FakeHendelseProdusent, TestApplicationEngine> {
-    val database = testDatabase(Produsent.databaseConfig)
-    val produsentModel = ProdusentRepositoryImpl(database)
-    val kafkaProducer = FakeHendelseProdusent()
-    val engine = ktorProdusentTestServer(
-        kafkaProducer = kafkaProducer,
-        produsentRepository = produsentModel
-    )
-    return Triple(produsentModel, kafkaProducer, engine)
 }
+

@@ -65,9 +65,7 @@ class TexasTest {
             assertEquals("pid", pid)
             assertEquals("yolo", azp)
             assertEquals("idporten-loa-high", acr)
-
-            // TODO: @JsonAnySetter broken i jackson 2.17.0-2.18.1
-            //assertEquals("jti", other["jti"])
+            assertEquals("jti", other["jti"])
         }
     }
 

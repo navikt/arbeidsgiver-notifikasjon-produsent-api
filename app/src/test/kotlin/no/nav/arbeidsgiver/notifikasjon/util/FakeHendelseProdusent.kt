@@ -16,7 +16,7 @@ open class FakeHendelseProdusent: HendelseProdusent {
 
     override suspend fun sendOgHentMetadata(hendelse: HendelseModel.Hendelse) : HendelseModel.HendelseMetadata {
         val data = serializer.serialize("", hendelse)
-        hendelser.add(deserializer.deserialize("", data)!!)
+        hendelser.add(deserializer.deserialize("", data))
         return HendelseModel.HendelseMetadata(Instant.parse("1970-01-01T00:00:00Z"))
     }
 
